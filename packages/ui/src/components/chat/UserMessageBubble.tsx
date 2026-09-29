@@ -21,7 +21,6 @@ import { FileTypeIcon, getFileTypeLabel } from './attachment-helpers'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../tooltip'
 import { useTranslation } from 'react-i18next'
 import { MessageHoverDock } from './MessageHoverDock'
-import { SideThreadMenu } from './SideThreadMenu'
 import type { SideThreadAction } from '@craft-agent/shared/side-threads'
 import {
   aggregateReactions,
@@ -371,7 +370,6 @@ export function UserMessageBubble({
 }: UserMessageBubbleProps) {
   const { t } = useTranslation()
   const hasAttachments = attachments && attachments.length > 0
-  const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
   const reactionCounts = useMemo(
     () => aggregateReactions(annotations, LOCAL_REACTION_ACTOR.id),
     [annotations],
@@ -567,22 +565,17 @@ export function UserMessageBubble({
           )
         }
       </div>
-      <div className="flex flex-wrap items-center justify-end gap-1">
+      <div className="flex items-center justify-end">
         <MessageHoverDock
           reactionCounts={reactionCounts}
-          pickerOpen={reactionPickerOpen}
           onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
           onToggleEmoji={handleToggleEmoji}
-          onTogglePicker={() => setReactionPickerOpen((open) => !open)}
           onCopy={() => { void navigator.clipboard.writeText(displayContent) }}
           onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(displayContent)) : undefined}
           onShare={onShareMessage ? () => onShareMessage(displayContent) : undefined}
           onLearn={onLearnFromMessage ? () => onLearnFromMessage(displayContent) : undefined}
-          className="opacity-100 group-focus-within:opacity-100"
+          onPickSideThread={onPickSideThread && messageId ? (action) => onPickSideThread(action, displayContent, messageId) : undefined}
         />
-        {onPickSideThread && messageId ? (
-          <SideThreadMenu onSelect={(action) => onPickSideThread(action, displayContent, messageId)} />
-        ) : null}
       </div>
     </div>
   )

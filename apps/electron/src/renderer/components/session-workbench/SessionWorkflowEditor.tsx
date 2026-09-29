@@ -49,6 +49,7 @@ import {
   type SessionMapPin,
 } from '@craft-agent/core/mindmap'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -411,6 +412,23 @@ function EditorInner({
   const viewportRef = React.useRef<Viewport | undefined>(loadPin(sessionId)?.viewport)
   const persistTimer = React.useRef<number | undefined>(undefined)
   const flowRef = React.useRef<ReactFlowInstance | null>(null)
+  /** Mini-map is opt-in (⋯ menu): hidden by default. */
+  const [showMinimap, setShowMinimap] = React.useState(false)
+  // Re-fit the viewport whenever the camera (Карта ↔ Поток) changes, so the
+  // re-laid-out nodes never land off screen.
+  const lastFitCameraRef = React.useRef<SessionMapCamera | null>(null)
+  React.useEffect(() => {
+    if (lastFitCameraRef.current === null) {
+      lastFitCameraRef.current = camera
+      return
+    }
+    if (lastFitCameraRef.current === camera) return
+    lastFitCameraRef.current = camera
+    const timer = window.setTimeout(() => {
+      flowRef.current?.fitView({ padding: 0.2, duration: 200 })
+    }, 60)
+    return () => window.clearTimeout(timer)
+  }, [camera])
   // Toolbar row width drives which controls stay inline vs. move into ⋯.
   const toolbarRef = React.useRef<HTMLDivElement>(null)
   const [toolbarWidth, setToolbarWidth] = React.useState<number | null>(null)
@@ -1184,9 +1202,14 @@ function EditorInner({
           >
             <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap">
               {toolbarLayout.showLiveChip ? (
-                <span className="shrink-0 rounded-full bg-foreground/[0.05] px-2 py-1 text-muted-foreground">
-                  {t('entityView.flowLive')}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="shrink-0 cursor-default rounded-full bg-foreground/[0.05] px-2 py-1 text-muted-foreground">
+                      {t('entityView.flowLive')}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[260px]">{t('entityView.flowLiveHint')}</TooltipContent>
+                </Tooltip>
               ) : null}
               {toolbarLayout.showSceneCount ? (
                 <span className="shrink-0 text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
@@ -1257,16 +1280,27 @@ function EditorInner({
               </Button>
               </>
               ) : null}
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
-                disabled={!selected}
-                onClick={() => rewriteSelected(draft.trim() || selected?.triggerPreview || '')}
-              >
-                {t('entityView.mapRun')}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* Wrapper keeps the tooltip alive while the button is disabled. */}
+                  <span className="inline-flex" tabIndex={selected ? -1 : 0}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      data-testid="map-toolbar-rewrite-node"
+                      className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                      disabled={!selected}
+                      onClick={() => rewriteSelected(draft.trim() || selected?.triggerPreview || '')}
+                    >
+                      {t('entityView.mapRewriteNode')}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[260px]">
+                  {selected ? t('entityView.mapRewriteNodeHint') : t('entityView.mapRewriteNodeDisabled')}
+                </TooltipContent>
+              </Tooltip>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -1322,6 +1356,9 @@ function EditorInner({
                           <DropdownMenuSeparator />
                         </>
                       ) : null}
+                      <DropdownMenuItem data-testid="map-toolbar-menu-minimap" onClick={() => setShowMinimap((v) => !v)}>
+                        {showMinimap ? t('entityView.mapHideMinimap') : t('entityView.mapShowMinimap')}
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => applyCanvasLayout('left')}>
                         {t('entityView.mapAlign')}
                       </DropdownMenuItem>
@@ -1498,7 +1535,7 @@ function EditorInner({
             {/* bgColor transparent: React Flow otherwise paints its own darker default
                 canvas colour, which made the toolbar row read as a separate band. */}
             <Background gap={24} size={1} bgColor="transparent" color="color-mix(in oklch, var(--foreground) 8%, transparent)" />
-            {!mapEmpty ? (
+            {!mapEmpty && showMinimap ? (
               <MiniMap
                 position="bottom-right"
                 pannable

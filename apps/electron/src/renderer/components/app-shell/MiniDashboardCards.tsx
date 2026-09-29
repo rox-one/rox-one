@@ -10,9 +10,11 @@ import {
 interface MiniDashboardCardsProps {
   snapshot: MiniDashboardSnapshot
   className?: string
+  /** `row`: one flat, borderless metrics row (Home). Default: card grid. */
+  variant?: 'grid' | 'row'
 }
 
-export function MiniDashboardCards({ snapshot, className }: MiniDashboardCardsProps) {
+export function MiniDashboardCards({ snapshot, className, variant = 'grid' }: MiniDashboardCardsProps) {
   const { t } = useTranslation()
   const unknown = t('dashboard.unknown')
   const tokensLabel =
@@ -31,6 +33,24 @@ export function MiniDashboardCards({ snapshot, className }: MiniDashboardCardsPr
     { key: 'tasks', label: t('dashboard.tasks'), value: tasksLabel },
     { key: 'sync', label: t('dashboard.syncCloud'), value: t(syncStatusLabelKey(snapshot.sync)) },
   ] as const
+
+  if (variant === 'row') {
+    return (
+      <div
+        className={cn('flex flex-wrap items-baseline gap-x-6 gap-y-2', className)}
+        data-mini-dashboard="row"
+      >
+        {cards.map((card) => (
+          <div key={card.key} className="flex min-w-0 flex-col whitespace-nowrap" data-dashboard-card={card.key}>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {card.label}
+            </span>
+            <span className="text-[13px] font-medium text-foreground">{card.value}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div

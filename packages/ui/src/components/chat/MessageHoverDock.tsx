@@ -1,138 +1,197 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Copy, Heart, Highlighter, MessageSquareQuote, Share2, SmilePlus, Sparkles } from 'lucide-react'
+import { Copy, Heart, Highlighter, MessageSquareQuote, MoreHorizontal, Share2, SmilePlus, Sparkles, Swords } from 'lucide-react'
+import { SIDE_THREAD_ACTIONS, type SideThreadAction } from '@craft-agent/shared/side-threads'
 import { cn } from '../../lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuSub,
+  DropdownMenuTrigger,
+  StyledDropdownMenuContent,
+  StyledDropdownMenuItem,
+  StyledDropdownMenuSubContent,
+  StyledDropdownMenuSubTrigger,
+} from '../ui/StyledDropdown'
 import {
   DEFAULT_REACTION_EMOJI,
   QUICK_REACTION_EMOJIS,
   type ReactionCount,
 } from './message-reactions'
 
+/** Extra overflow action rendered inside the «…» menu. */
+export type MessageDockExtraAction = {
+  id: string
+  label: string
+  icon?: React.ReactNode
+  onSelect: () => void
+}
+
+/** Maximum number of always-visible actions; everything else lives in «…». */
+export const MESSAGE_DOCK_MAX_VISIBLE = 3
+
 export type MessageHoverDockProps = {
   reactionCounts: ReactionCount[]
-  pickerOpen: boolean
+  /** Legacy inline picker state; reactions now live in the «…» submenu. */
+  pickerOpen?: boolean
   onToggleHeart: () => void
   onToggleEmoji: (emoji: string) => void
-  onTogglePicker: () => void
+  onTogglePicker?: () => void
   onCopy: () => void
   onQuote?: () => void
   onShare?: () => void
   onLearn?: () => void
   onHighlight?: () => void
+  /** Side-thread actions (rendered as a submenu of «…»). */
+  onPickSideThread?: (action: SideThreadAction) => void
+  /** Additional overflow actions (Markdown, Listen, Branch…). */
+  extraActions?: MessageDockExtraAction[]
   className?: string
 }
 
+const iconButton =
+  'inline-flex h-7 w-7 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground'
+
+/**
+ * Compact message action dock: at most three visible actions (heart, copy,
+ * quote) and a «…» overflow menu with everything else. Flat — no border or
+ * pill background.
+ */
 export function MessageHoverDock({
   reactionCounts,
-  pickerOpen,
   onToggleHeart,
   onToggleEmoji,
-  onTogglePicker,
   onCopy,
   onQuote,
   onShare,
   onLearn,
   onHighlight,
+  onPickSideThread,
+  extraActions = [],
   className,
 }: MessageHoverDockProps) {
   const { t } = useTranslation()
   const heart = reactionCounts.find((item) => item.emoji === DEFAULT_REACTION_EMOJI)
+  const otherReactions = reactionCounts.filter((item) => item.emoji !== DEFAULT_REACTION_EMOJI && item.count > 0)
+  // Quote is visible when available; otherwise share takes the third slot.
+  const shareVisible = !onQuote && !!onShare
 
   return (
     <div
       role="toolbar"
       aria-label={t('chat.messageDock')}
-      className={cn(
-        'flex flex-wrap items-center gap-1 rounded-full border border-border/60 bg-background/90 px-1.5 py-1 shadow-minimal',
-        className,
-      )}
+      data-message-dock="compact"
+      className={cn('flex items-center gap-0.5', className)}
     >
       <button
         type="button"
         aria-pressed={heart?.mine ?? false}
         aria-label={t('chat.reactHeart')}
         className={cn(
-          'inline-flex h-7 items-center gap-1 rounded-full px-2 text-xs',
-          heart?.mine ? 'bg-rose-500/15 text-rose-600' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+          'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
+          heart?.mine ? 'text-rose-500' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
         )}
         onClick={onToggleHeart}
       >
         <Heart className={cn('h-3.5 w-3.5', heart?.mine && 'fill-current')} />
         {heart?.count ? <span>{heart.count}</span> : null}
       </button>
-      <button
-        type="button"
-        aria-expanded={pickerOpen}
-        aria-label={t('chat.reactMore')}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-        onClick={onTogglePicker}
-      >
-        <SmilePlus className="h-3.5 w-3.5" />
-      </button>
-      {pickerOpen ? (
-        <div role="listbox" aria-label={t('chat.reactPicker')} className="flex items-center gap-0.5">
-          {QUICK_REACTION_EMOJIS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              role="option"
-              aria-label={emoji}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full text-sm hover:bg-foreground/5"
-              onClick={() => onToggleEmoji(emoji)}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-      ) : null}
-      {onHighlight ? (
-        <button
-          type="button"
-          aria-label={t('chat.highlightPassage')}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-          onClick={onHighlight}
-        >
-          <Highlighter className="h-3.5 w-3.5" />
-        </button>
-      ) : null}
-      <button
-        type="button"
-        aria-label={t('common.copy')}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-        onClick={onCopy}
-      >
+      <button type="button" aria-label={t('common.copy')} className={iconButton} onClick={onCopy}>
         <Copy className="h-3.5 w-3.5" />
       </button>
       {onQuote ? (
-        <button
-          type="button"
-          aria-label={t('chat.quoteReply')}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-          onClick={onQuote}
-        >
+        <button type="button" aria-label={t('chat.quoteReply')} className={iconButton} onClick={onQuote}>
           <MessageSquareQuote className="h-3.5 w-3.5" />
         </button>
-      ) : null}
-      {onShare ? (
-        <button
-          type="button"
-          aria-label={t('chat.shareMessage')}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-          onClick={onShare}
-        >
+      ) : shareVisible ? (
+        <button type="button" aria-label={t('chat.shareMessage')} className={iconButton} onClick={onShare}>
           <Share2 className="h-3.5 w-3.5" />
         </button>
       ) : null}
-      {onLearn ? (
+      {otherReactions.map((item) => (
         <button
+          key={item.emoji}
           type="button"
-          aria-label={t('chat.learnFromMessage')}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-          onClick={onLearn}
+          aria-pressed={item.mine}
+          aria-label={item.emoji}
+          className={cn(
+            'inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-xs',
+            item.mine ? 'bg-foreground/5 text-foreground' : 'text-muted-foreground hover:bg-foreground/5',
+          )}
+          onClick={() => onToggleEmoji(item.emoji)}
         >
-          <Sparkles className="h-3.5 w-3.5" />
+          <span>{item.emoji}</span>
+          <span>{item.count}</span>
         </button>
-      ) : null}
+      ))}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button type="button" aria-label={t('common.more')} title={t('common.more')} className={iconButton}>
+            <MoreHorizontal className="h-3.5 w-3.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <StyledDropdownMenuContent align="start" minWidth="min-w-48" sideOffset={4}>
+          <DropdownMenuSub>
+            <StyledDropdownMenuSubTrigger>
+              <SmilePlus />
+              <span>{t('chat.reactMore')}</span>
+            </StyledDropdownMenuSubTrigger>
+            <StyledDropdownMenuSubContent minWidth="min-w-0">
+              <div role="listbox" aria-label={t('chat.reactPicker')} className="flex items-center gap-0.5">
+                {QUICK_REACTION_EMOJIS.map((emoji) => (
+                  <StyledDropdownMenuItem
+                    key={emoji}
+                    role="option"
+                    aria-label={emoji}
+                    className="h-7 w-7 justify-center p-0 pr-0 text-sm"
+                    onSelect={() => onToggleEmoji(emoji)}
+                  >
+                    {emoji}
+                  </StyledDropdownMenuItem>
+                ))}
+              </div>
+            </StyledDropdownMenuSubContent>
+          </DropdownMenuSub>
+          {onHighlight ? (
+            <StyledDropdownMenuItem onSelect={onHighlight}>
+              <Highlighter />
+              <span>{t('chat.highlightPassage')}</span>
+            </StyledDropdownMenuItem>
+          ) : null}
+          {onShare && !shareVisible ? (
+            <StyledDropdownMenuItem onSelect={onShare}>
+              <Share2 />
+              <span>{t('chat.shareMessage')}</span>
+            </StyledDropdownMenuItem>
+          ) : null}
+          {onLearn ? (
+            <StyledDropdownMenuItem onSelect={onLearn}>
+              <Sparkles />
+              <span>{t('chat.learnFromMessage')}</span>
+            </StyledDropdownMenuItem>
+          ) : null}
+          {onPickSideThread ? (
+            <DropdownMenuSub>
+              <StyledDropdownMenuSubTrigger>
+                <Swords />
+                <span>{t('sideThread.menu')}</span>
+              </StyledDropdownMenuSubTrigger>
+              <StyledDropdownMenuSubContent>
+                {SIDE_THREAD_ACTIONS.map((action) => (
+                  <StyledDropdownMenuItem key={action} onSelect={() => onPickSideThread(action)}>
+                    {t(`sideThread.action.${action}`)}
+                  </StyledDropdownMenuItem>
+                ))}
+              </StyledDropdownMenuSubContent>
+            </DropdownMenuSub>
+          ) : null}
+          {extraActions.map((action) => (
+            <StyledDropdownMenuItem key={action.id} onSelect={action.onSelect}>
+              {action.icon}
+              <span>{action.label}</span>
+            </StyledDropdownMenuItem>
+          ))}
+        </StyledDropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

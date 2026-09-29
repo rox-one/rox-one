@@ -772,6 +772,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                 messages={workbenchMessages}
                 loading={sessionMindMapLoading}
                 relatedBranches={relatedBranches}
+                messageTimes={new Map((session?.messages ?? []).map((m) => [m.id, m.timestamp] as [string, number]))}
                 onCheckoutMessage={(id) => {
                   setSessionView('standard')
                   // Defer until ChatDisplay is mounted for standard view.
