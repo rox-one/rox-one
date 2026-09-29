@@ -2632,6 +2632,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "余额",
+  "profile.spent": "已花费 {{amount}}",
+  "profile.spentTooltip": "此工作区所有会话的模型总花费",
   "profile.defaultName": "用户",
   "profile.level": "等级 {{level}}",
   "profile.openSettings": "打开 {{name}} 的设置",

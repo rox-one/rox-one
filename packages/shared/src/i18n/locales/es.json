@@ -2632,6 +2632,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Saldo",
+  "profile.spent": "Gastado {{amount}}",
+  "profile.spentTooltip": "Gasto total en modelos de las sesiones de este espacio de trabajo",
   "profile.defaultName": "Usuario",
   "profile.level": "Niv. {{level}}",
   "profile.openSettings": "Abrir ajustes de {{name}}",

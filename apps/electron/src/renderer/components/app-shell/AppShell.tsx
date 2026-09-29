@@ -1365,6 +1365,25 @@ function AppShellContent({
     )
   }, [sessionMetaMap, activeWorkspaceId, remoteWorkspaceId])
 
+  // Workspace model spend (sum of per-session cost) for the profile strip —
+  // the only place balance/cost is shown.
+  const workspaceSpentUsd = useMemo(() => {
+    let total = 0
+    let known = false
+    for (const meta of workspaceSessionMetas) {
+      const cost = meta.tokenUsage?.costUsd
+      if (typeof cost === 'number' && Number.isFinite(cost) && cost > 0) {
+        total += cost
+        known = true
+      }
+    }
+    return known ? total : null
+  }, [workspaceSessionMetas])
+  const profileStripWithSpend = useMemo(
+    () => ({ ...profileStrip, spentUsd: workspaceSpentUsd }),
+    [profileStrip, workspaceSpentUsd],
+  )
+
   // Active sessions exclude archived - use this for all counts and filters except archived view
   const activeSessionMetas = useMemo(() => {
     return workspaceSessionMetas.filter(s => !s.isArchived)
@@ -2132,10 +2151,7 @@ function AppShellContent({
     }
     flattenTree(labelTree)
 
-    result.push({ id: 'nav:views', type: 'nav', action: handleViewsAllClick })
-    for (const view of sessionViewConfigs) {
-      result.push({ id: `nav:view:${view.id}`, type: 'nav', action: () => handleViewClick(view.id) })
-    }
+    // «Представления» (session views) is no longer shown in the sidebar.
 
     // 3. Destinations (matches APP_NAV_DESTINATIONS / sidebar order)
     result.push({ id: 'nav:projects', type: 'nav', action: handleProjectsClick })
@@ -2597,35 +2613,7 @@ function AppShellContent({
                       },
                       items: buildLabelSidebarItems(labelTree),
                     },
-                    {
-                      id: "nav:views",
-                      title: t("sidebar.views"),
-                      icon: Eye,
-                      tooltip: t("sidebar.viewsHint"),
-                      variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === '__all__') ? "default" as const : "ghost" as const,
-                      onClick: handleViewsAllClick,
-                      expandable: sessionViewConfigs.length > 0,
-                      expanded: isExpanded('nav:views'),
-                      onToggle: () => toggleExpanded('nav:views'),
-                      contextMenu: {
-                        type: 'views' as const,
-                        onConfigureViews: openConfigureViews,
-                      },
-                      items: sessionViewConfigs.map(view => ({
-                        id: `nav:view:${view.id}`,
-                        title: resolveViewDisplayName(view, t),
-                        icon: Eye,
-                        tooltip: resolveViewDisplayDescription(view, t) || t("sidebar.viewsHint"),
-                        variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === view.id) ? "default" as const : "ghost" as const,
-                        onClick: () => handleViewClick(view.id),
-                        contextMenu: {
-                          type: 'views' as const,
-                          viewId: defaultSessionViewIds.has(view.id) ? undefined : view.id,
-                          onConfigureViews: openConfigureViews,
-                          onDeleteView: defaultSessionViewIds.has(view.id) ? undefined : handleDeleteView,
-                        },
-                      })),
-                    },
+                    // «Представления» (session views) section intentionally hidden.
                     // --- Projects (after session chrome) ---
                     {
                       id: "nav:projects",
@@ -2831,7 +2819,7 @@ function AppShellContent({
                 </div>
                 <div className="shrink-0">
                   <SidebarChrome
-                    profile={profileStrip}
+                    profile={profileStripWithSpend}
                     onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}

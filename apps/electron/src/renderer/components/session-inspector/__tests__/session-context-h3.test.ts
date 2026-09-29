@@ -34,6 +34,8 @@ describe('H3 agent intel wiring', () => {
 
   it('does not invent a fallback model id', () => {
     expect(status).toContain('resolveModelFallbackStatus(null)')
-    expect(status).toContain("t('workbench.status.fallbackUnverified')")
+    // Only a real switch is surfaced; the inert «Живой резерв не проверен» placeholder is gone.
+    expect(status).not.toContain("t('workbench.status.fallbackUnverified')")
+    expect(status).toContain("fallback?.kind === 'switched'")
   })
 })

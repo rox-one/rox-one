@@ -497,8 +497,8 @@ function FolderTreeItem({
                         containIntrinsicSize: '0 44px',
                       }}
                       className={cn(
-                        'mb-0.5 w-full rounded-[6px] pr-2.5 py-1.5 text-left hover:bg-foreground/[0.05]',
-                        activeNoteId === note.id && 'bg-foreground/[0.08]',
+                        'notes-list-item mb-0.5 w-full rounded-[6px] pr-2.5 py-1.5 text-left hover:bg-foreground/[0.05]',
+                        activeNoteId === note.id && 'notes-list-item-active',
                         isDragging && 'opacity-50'
                       )}
                       {...dragListeners}
@@ -510,7 +510,7 @@ function FolderTreeItem({
                       {note.tags.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1" style={{ paddingLeft: '20px' }}>
                           {note.tags.slice(0, 3).map(tag => (
-                            <span key={tag} className="rounded-[4px] bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
+                            <span key={tag} className="rounded-[4px] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
                           ))}
                         </div>
                       )}
@@ -1789,14 +1789,14 @@ h1,h2,h3{margin-top:1.5em}
   return (
     <>
     <NotesEditorHeadlineStyles />
-    <div className="flex h-full min-w-0 bg-background">
+    <div className="notes-shell flex h-full min-w-0">
       <aside
-        className="shrink-0 border-r border-border/60 flex flex-col min-h-0 bg-muted/[0.16]"
+        className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
         hidden={railLayout.vaultCollapsed}
         data-testid="notes-vault-rail"
       >
-        <div className="shrink-0 px-3 py-2 border-b border-border/60">
+        <div className="shrink-0 px-3 py-2">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -1804,7 +1804,7 @@ h1,h2,h3{margin-top:1.5em}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('notes.search.placeholder')}
-                className="h-7 w-full rounded-[6px] border border-border/60 bg-background pl-7 pr-2 text-xs outline-none focus:border-foreground/30"
+                className="h-7 w-full rounded-[6px] border-0 bg-foreground/[0.06] pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/70 focus:bg-foreground/[0.09]"
               />
             </div>
             <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')}>
@@ -1818,7 +1818,7 @@ h1,h2,h3{margin-top:1.5em}
             </button>
           </div>
           {allTags.length > 0 && (
-            <div className="mt-2 max-h-36 overflow-y-auto rounded-[6px] border border-border/50 bg-background/60 p-1">
+            <div className="mt-2 max-h-36 overflow-y-auto rounded-[6px] bg-foreground/[0.03] p-1">
               <button
                 className={cn(
                   'flex w-full items-center rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
@@ -1857,8 +1857,8 @@ h1,h2,h3{margin-top:1.5em}
                           onClick={() => handleOpenNote(note.id)}
                           style={{ contentVisibility: 'auto', containIntrinsicSize: '0 44px' }}
                           className={cn(
-                            'mb-0.5 w-full rounded-[6px] px-2.5 py-1.5 text-left hover:bg-foreground/[0.05]',
-                            activeNote?.id === note.id && 'bg-foreground/[0.08]',
+                            'notes-list-item mb-0.5 w-full rounded-[6px] px-2.5 py-1.5 text-left hover:bg-foreground/[0.05]',
+                            activeNote?.id === note.id && 'notes-list-item-active',
                             isDragging && 'opacity-50'
                           )}
                           {...dragListeners}
@@ -1870,7 +1870,7 @@ h1,h2,h3{margin-top:1.5em}
                           {note.tags.length > 0 && (
                             <div className="mt-1 flex flex-wrap gap-1 pl-5">
                               {note.tags.slice(0, 3).map(tag => (
-                                <span key={tag} className="rounded-[4px] bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
+                                <span key={tag} className="rounded-[4px] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
                               ))}
                             </div>
                           )}
@@ -1951,7 +1951,7 @@ h1,h2,h3{margin-top:1.5em}
           )}
         </div>
         </DndContext>
-        <div className="shrink-0 border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
+        <div className="shrink-0 px-3 py-2 text-[11px] text-muted-foreground/80">
           {t('notes.vault.noteCount', { count: notes.length })} · {t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
       </aside>
@@ -1963,8 +1963,8 @@ h1,h2,h3{margin-top:1.5em}
         label={t('notes.layout.resizeVault')}
       />
 
-      <main className="flex-1 min-w-0 flex flex-col">
-        <div className="h-[42px] shrink-0 border-b border-border/60 px-3 flex items-center gap-2">
+      <main className="notes-content-surface flex-1 min-w-0 flex flex-col">
+        <div className="h-[42px] shrink-0 px-3 flex items-center gap-2">
           <div className="min-w-0 flex-1 flex items-center gap-2">
             {activeNote ? (
               <NotesBreadcrumbs noteId={activeNote.id} title={activeNote.title} onOpenFolder={(folder) => setQuery(folder ?? '')} />
@@ -2146,7 +2146,7 @@ h1,h2,h3{margin-top:1.5em}
               label={t('notes.layout.resizeToc')}
             />
             <div
-              className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-8 py-6"
+              className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-10 pb-16 pt-8"
               onMouseUp={(event) => {
                 const quote = window.getSelection()?.toString().trim() ?? ''
                 if (!quote) return
@@ -2279,7 +2279,7 @@ h1,h2,h3{margin-top:1.5em}
                 onTagClick={(tag) => setSelectedTag(selectedTag === tag ? null : tag)}
                 placeholder={t('notes.editor.placeholder')}
                 markdownEngine="legacy"
-                className="notes-editor-prose mx-auto w-full max-w-[640px] min-h-full"
+                className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />
               <NotesCommentHighlights
                 comments={markdownComments}

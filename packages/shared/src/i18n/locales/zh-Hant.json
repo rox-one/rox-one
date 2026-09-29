@@ -2632,6 +2632,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "餘額",
+  "profile.spent": "已花費 {{amount}}",
+  "profile.spentTooltip": "此工作區所有工作階段的模型總花費",
   "profile.defaultName": "使用者",
   "profile.level": "等級 {{level}}",
   "profile.openSettings": "開啟 {{name}} 的設定",

@@ -5,14 +5,16 @@
  * off, and not mounted in compact layout or on the session-load error screen.
  *
  * Durable Local/Remote/Offline + sync, live run/approval counts, permission
- * label, presence/usage placeholders. Transport/toolchain banners stay for
- * failed/installing states that need intervention.
+ * label, and a model-fallback note only when a switch actually happened.
+ * Balance/cost live only in the sidebar profile strip; the old presence
+ * ("0 человек 0 агентов"), unverified-fallback and usage placeholders are gone.
+ * Transport/toolchain banners stay for failed/installing states that need
+ * intervention.
  */
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { featureWorkbenchHarnessAgentIntelV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
+import { featureWorkbenchHarnessAgentIntelV1Atom, featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
 import { resolveModelFallbackStatus } from '@craft-agent/shared/agent'
-import { formatCostUsd } from '@/components/app-shell/input/turn-progress'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { backgroundTasksAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
@@ -69,9 +71,7 @@ function StatusBarInner() {
     focusedSessionId,
     focusedMeta?.permissionMode,
   )
-  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const agentIntelEnabled = useAtomValue(featureWorkbenchHarnessAgentIntelV1Atom)
-  const costLabel = chatChromeEnabled ? formatCostUsd(focusedMeta?.tokenUsage?.costUsd) : null
   const fallback = agentIntelEnabled ? resolveModelFallbackStatus(null) : null
 
   const model = buildStatusBarModel({
@@ -86,7 +86,7 @@ function StatusBarInner() {
   return (
     <div
       data-slot="status"
-      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 border-t border-border/50 px-2.5 text-muted-foreground"
+      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 px-2.5 text-muted-foreground"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
       <div className="flex min-w-0 items-center gap-1.5">
@@ -101,20 +101,11 @@ function StatusBarInner() {
       </div>
       <div className="flex min-w-0 items-center justify-end gap-1.5">
         {model.permissionMode ? <span>{permissionLabel(model.permissionMode, t)}</span> : null}
-        <span>{t('workbench.status.people', { count: model.peopleCount })}</span>
-        <span>{t('workbench.status.agents', { count: model.agentCount })}</span>
-        {fallback && (
+        {fallback?.kind === 'switched' && (
           <span data-testid="status-bar-fallback">
-            {fallback.kind === 'switched'
-              ? t('workbench.status.fallbackSwitched', { model: fallback.model })
-              : t('workbench.status.fallbackUnverified')}
+            {t('workbench.status.fallbackSwitched', { model: fallback.model })}
           </span>
         )}
-        <span data-testid="status-bar-cost">
-          {costLabel
-            ? t('workbench.status.cost', { amount: costLabel })
-            : t('workbench.status.usagePlaceholder')}
-        </span>
       </div>
     </div>
   )

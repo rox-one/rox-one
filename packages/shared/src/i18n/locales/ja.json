@@ -2632,6 +2632,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "残高",
+  "profile.spent": "使用額 {{amount}}",
+  "profile.spentTooltip": "このワークスペースのセッションでのモデル利用額の合計",
   "profile.defaultName": "ユーザー",
   "profile.level": "Lv {{level}}",
   "profile.openSettings": "{{name}} の設定を開く",
