@@ -149,6 +149,7 @@ import {
   isMemoryNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
+  isInboxNavigation,
   isHomeNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
@@ -227,6 +228,7 @@ export function shouldHideSessionsSidebar(navState: NavigationState): boolean {
     || isHomeNavigation(navState)
     || isTasksNavigation(navState)
     || isMeetingsNavigation(navState)
+    || isInboxNavigation(navState)
     || isNotesNavigation(navState)
     || isMemoryNavigation(navState)
     || isProjectsNavigation(navState)
@@ -541,8 +543,10 @@ function AppShellContent({
   const isMeetingsView = isMeetingsNavigation(navState)
   const isMemoryView = isMemoryNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
+  // Mode screens (Входящие, Лента) render their own three panels too.
+  const isModeScreenView = isInboxNavigation(navState)
   const hideModuleMiddleNav =
-    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView
+    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null

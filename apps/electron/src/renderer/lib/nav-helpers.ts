@@ -42,6 +42,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'memory':
     case 'connections':
       return false
+    case 'inbox':
     case 'tasks':
     case 'meetings':
       return navState.details !== null

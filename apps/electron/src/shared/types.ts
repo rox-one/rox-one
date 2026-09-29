@@ -2450,6 +2450,12 @@ export interface TasksNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface InboxNavigationState {
+  navigator: 'inbox'
+  details: { type: 'item'; itemId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface MeetingsNavigationState {
   navigator: 'meetings'
   details: { type: 'meeting'; meetingId: string } | null
@@ -2556,6 +2562,7 @@ export type NavigationState =
   | MemoryNavigationState
   | TasksNavigationState
   | MeetingsNavigationState
+  | InboxNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
   | ExtensionNavigationState
@@ -2611,6 +2618,10 @@ export const isTasksNavigation = (
 export const isMeetingsNavigation = (
   state: NavigationState
 ): state is MeetingsNavigationState => state.navigator === 'meetings'
+
+export const isInboxNavigation = (
+  state: NavigationState
+): state is InboxNavigationState => state.navigator === 'inbox'
 
 export const isConnectionsNavigation = (
   state: NavigationState
@@ -2702,6 +2713,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'tasks') {
     return state.details?.type === 'task' ? `tasks/task/${encodeURIComponent(state.details.taskId)}` : 'tasks'
+  }
+  if (state.navigator === 'inbox') {
+    return state.details ? `inbox/item/${encodeURIComponent(state.details.itemId)}` : 'inbox'
   }
   if (state.navigator === 'meetings') {
     return state.details?.type === 'meeting' ? `meetings/meeting/${encodeURIComponent(state.details.meetingId)}` : 'meetings'
@@ -2925,6 +2939,11 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
         details: extraScreen.itemId ? { type: 'item', itemId: extraScreen.itemId } : null,
       }
     }
+  }
+  if (key === 'inbox') return { navigator: 'inbox', details: null }
+  if (key.startsWith('inbox/item/')) {
+    const itemId = decodeURIComponent(key.slice('inbox/item/'.length))
+    return { navigator: 'inbox', details: itemId ? { type: 'item', itemId } : null }
   }
   if (key === 'meetings') return { navigator: 'meetings', details: null }
   if (key.startsWith('meetings/meeting/')) {

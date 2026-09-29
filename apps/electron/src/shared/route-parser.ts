@@ -56,7 +56,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'inbox' | 'connections' | 'home'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -100,7 +100,7 @@ export interface ParsedCompoundRoute {
  * exactly the same set of view routes the renderer can navigate to.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'inbox', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   ...EXTRA_SCREEN_IDS,
 ]
@@ -261,6 +261,13 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       }
     }
     return { navigator: 'tasks', details: null }
+  }
+
+  if (first === 'inbox') {
+    if (segments[1] === 'item' && segments[2]) {
+      return { navigator: 'inbox', details: { type: 'item', id: decodeURIComponent(segments[2]) } }
+    }
+    return { navigator: 'inbox', details: null }
   }
 
   if (first === 'meetings') {
@@ -588,6 +595,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return `tasks/task/${encodeURIComponent(parsed.details.id)}`
   }
 
+  if (parsed.navigator === 'inbox') {
+    if (!parsed.details) return 'inbox'
+    return `inbox/item/${encodeURIComponent(parsed.details.id)}`
+  }
+
   if (parsed.navigator === 'meetings') {
     if (!parsed.details) return 'meetings'
     return `meetings/meeting/${encodeURIComponent(parsed.details.id)}`
@@ -791,6 +803,13 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'task-info', id: compound.details.id, params: {} }
   }
 
+  if (compound.navigator === 'inbox') {
+    if (!compound.details) {
+      return { type: 'view', name: 'inbox', params: {} }
+    }
+    return { type: 'view', name: 'inbox-item', id: compound.details.id, params: {} }
+  }
+
   if (compound.navigator === 'meetings') {
     if (!compound.details) {
       return { type: 'view', name: 'meetings', params: {} }
@@ -982,6 +1001,13 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
       navigator: 'tasks',
       details: { type: 'task', taskId: compound.details.id },
     }
+  }
+
+  if (compound.navigator === 'inbox') {
+    if (!compound.details) {
+      return { navigator: 'inbox', details: null }
+    }
+    return { navigator: 'inbox', details: { type: 'item', itemId: compound.details.id } }
   }
 
   if (compound.navigator === 'meetings') {
@@ -1193,6 +1219,12 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'memory', details: null }
     case 'tasks':
       return { navigator: 'tasks', details: null }
+    case 'inbox':
+      return { navigator: 'inbox', details: null }
+    case 'inbox-item':
+      return parsed.id
+        ? { navigator: 'inbox', details: { type: 'item', itemId: parsed.id } }
+        : { navigator: 'inbox', details: null }
     case 'meetings':
       return { navigator: 'meetings', details: null }
     case 'meeting-info':
@@ -1435,6 +1467,13 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
     return {
       navigator: 'tasks',
       details: state.details ? { type: 'task', id: state.details.taskId } : null,
+    }
+  }
+
+  if (state.navigator === 'inbox') {
+    return {
+      navigator: 'inbox',
+      details: state.details ? { type: 'item', id: state.details.itemId } : null,
     }
   }
 

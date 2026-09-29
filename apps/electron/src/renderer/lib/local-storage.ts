@@ -103,6 +103,8 @@ export const KEYS = {
   featureWorkbenchModeMeetingsV1: 'feature-workbench-mode-meetings-v1',
   featureWorkbenchModeInboxV1: 'feature-workbench-mode-inbox-v1',
   featureWorkbenchModeFeedV1: 'feature-workbench-mode-feed-v1',
+  // Входящие: done / snoozed item ids (renderer-only triage state)
+  inboxState: 'inbox-state-v1',
   featureWorkbenchConationShell: 'feature-workbench-conation-shell',
   featureWorkbenchConationInspector: 'feature-workbench-conation-inspector',
   featureSkillsConationSurfaces: 'feature-skills-conation-surfaces',

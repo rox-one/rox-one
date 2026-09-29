@@ -49,6 +49,32 @@
   app-region: no-drag;
 }
 
+/* Counter (Входящие: requests blocking an agent). Accent fill, no outline. */
+.rox-mode-pill-badge {
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-foreground, white);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 15px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.rox-mode-pill[data-collapsed] .rox-mode-pill-badge {
+  position: absolute;
+  top: -3px;
+  right: -2px;
+}
+
+html[data-contrast="high"] .rox-mode-pill-badge {
+  background: var(--foreground);
+  color: var(--background);
+}
+
 .rox-mode-pill-icon {
   width: 14px;
   height: 14px;

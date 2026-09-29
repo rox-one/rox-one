@@ -32,6 +32,7 @@ import type { Route } from '../../shared/routes'
 import { getModeRegistry } from './mode-registry-bootstrap'
 import { CORE_MODES, resolveSeededModes } from './modes-seed'
 import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
+import { useInboxBlockingCount } from '@/hooks/useInboxItems'
 
 const MODE_ICONS: Record<string, LucideIcon> = {
   BookOpen,
@@ -66,12 +67,15 @@ function PillItems({
   collapsed,
   interactive,
   itemRefs,
+  badges,
 }: {
   modes: readonly ModeContribution[]
   activeId: string | null
   collapsed: boolean
   interactive: boolean
   itemRefs?: MutableRefObject<Map<string, HTMLButtonElement>>
+  /** Per-mode counters (Входящие: requests blocking an agent). */
+  badges?: Readonly<Record<string, number>>
 }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -82,6 +86,7 @@ function PillItems({
         const title = t(mode.titleKey)
         const disabled = !isModeNavigable(mode)
         const active = mode.id === activeId
+        const badge = disabled ? 0 : badges?.[mode.id] ?? 0
         const button = (
           <button
             key={mode.id}
@@ -92,7 +97,7 @@ function PillItems({
             type="button"
             tabIndex={interactive ? undefined : -1}
             data-mode={mode.id}
-            aria-label={title}
+            aria-label={badge ? `${title} · ${t('workbench.mode.badge', { count: badge })}` : title}
             aria-current={active ? 'page' : undefined}
             aria-disabled={disabled || undefined}
             onClick={!interactive || disabled ? undefined : () => {
@@ -102,6 +107,7 @@ function PillItems({
           >
             <Icon className="rox-mode-pill-icon" strokeWidth={1.75} aria-hidden />
             {!collapsed && <span className="rox-mode-pill-label">{title}</span>}
+            {badge > 0 && <span className="rox-mode-pill-badge" aria-hidden>{badge > 99 ? '99+' : badge}</span>}
           </button>
         )
         if (!interactive) return button
@@ -126,6 +132,8 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
   const flags = useAtomValue(modeScreenFlagsAtom)
   const modes = resolveSeededModes(getModeRegistry().list(), flags)
   const activeId = modes.find((mode) => seedById.get(mode.id)?.isActive(navState))?.id ?? null
+  const inboxBlocking = useInboxBlockingCount()
+  const badges = { inbox: inboxBlocking }
 
   const navRef = useRef<HTMLElement | null>(null)
   const fullGhostRef = useRef<HTMLDivElement | null>(null)
@@ -206,15 +214,15 @@ export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
           data-visible={indicator ? true : undefined}
           style={indicator ? { width: indicator.w, transform: `translateX(${indicator.x}px)` } : undefined}
         />
-        <PillItems modes={modes} activeId={activeId} collapsed={collapsed} interactive itemRefs={itemRefs} />
+        <PillItems modes={modes} activeId={activeId} collapsed={collapsed} interactive itemRefs={itemRefs} badges={badges} />
       </nav>
       {onMeasure && (
         <>
           <div ref={fullGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost">
-            <PillItems modes={modes} activeId={null} collapsed={false} interactive={false} />
+            <PillItems modes={modes} activeId={null} collapsed={false} interactive={false} badges={badges} />
           </div>
           <div ref={compactGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost" data-collapsed>
-            <PillItems modes={modes} activeId={null} collapsed interactive={false} />
+            <PillItems modes={modes} activeId={null} collapsed interactive={false} badges={badges} />
           </div>
         </>
       )}

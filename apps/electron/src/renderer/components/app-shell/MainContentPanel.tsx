@@ -19,6 +19,7 @@ import {
   isMemoryNavigation,
   isTasksNavigation,
   isMeetingsNavigation,
+  isInboxNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
@@ -54,6 +55,7 @@ const ConnectionsPage = React.lazy(() => import('@/pages/ConnectionsPage'))
 const ExtraScreenHost = React.lazy(() => import('@/pages/extra-screens/ExtraScreenHost'))
 const TasksPage = React.lazy(() => import('@/pages/TasksPage'))
 const MeetingsPage = React.lazy(() => import('@/pages/MeetingsPage'))
+const InboxPage = React.lazy(() => import('@/pages/InboxPage'))
 const KnowledgeEntityPage = React.lazy(() => import('@/pages/KnowledgeEntityPage'))
 const SkillInfoPage = React.lazy(() => import('@/pages/SkillInfoPage'))
 const SourceInfoPage = React.lazy(() => import('@/pages/SourceInfoPage'))
@@ -487,6 +489,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <MeetingsPage selectedId={navState.details?.meetingId ?? null} />
+      </Panel>
+    )
+  }
+
+  if (isInboxNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <InboxPage selectedId={navState.details?.itemId ?? null} />
       </Panel>
     )
   }
