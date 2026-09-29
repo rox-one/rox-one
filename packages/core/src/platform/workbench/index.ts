@@ -45,3 +45,8 @@ export {
 } from './migrate.ts';
 export type { InMemoryWorkbenchLayoutHostOptions, WorkbenchLayoutHost } from './memory-host.ts';
 export { createInMemoryWorkbenchLayoutHost } from './memory-host.ts';
+export {
+  EXTRA_SCREEN_FEATURE_FLAGS,
+  EXTRA_SCREEN_FLAG,
+  type ExtraScreenFlagId,
+} from './extra-screen-flags.ts';

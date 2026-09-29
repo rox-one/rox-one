@@ -37,6 +37,7 @@ import type {
   KnowledgeRefKind,
 } from './types'
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
+import { EXTRA_SCREEN_IDS, buildExtraScreenRoute, isExtraScreenId, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 
 // =============================================================================
 // Route Types
@@ -56,6 +57,8 @@ export interface ParsedRoute {
 // =============================================================================
 
 export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'connections' | 'home'
+  // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
+  | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
 
@@ -68,6 +71,8 @@ export interface ParsedCompoundRoute {
   sourceFilter?: SourceFilter
   /** Automation filter (only for automations navigator) */
   automationFilter?: AutomationFilter
+  /** Extra workbench screen id (only for the `screen` navigator). */
+  screen?: ExtraScreenId
   /** Sessions presentation mode (only for sessions navigator). 'board' = Kanban; 'table' = dense collection. */
   viewMode?: 'list' | 'board' | 'table' | 'heatmap'
   /**
@@ -97,6 +102,7 @@ export interface ParsedCompoundRoute {
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
   'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
+  ...EXTRA_SCREEN_IDS,
 ]
 
 /**
@@ -273,6 +279,16 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
 
   if (first === 'home') {
     return { navigator: 'home', details: null }
+  }
+
+  // Extra workbench screens: <screenId>[/item/<itemId>]
+  const extraScreen = parseExtraScreenSegments(segments)
+  if (extraScreen) {
+    return {
+      navigator: 'screen',
+      screen: extraScreen.screen,
+      details: extraScreen.itemId ? { type: 'item', id: extraScreen.itemId } : null,
+    }
   }
 
   // Browser navigator — embedded browser instance panel: browser/instance/{instanceId}
@@ -585,6 +601,10 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'home'
   }
 
+  if (parsed.navigator === 'screen' && parsed.screen) {
+    return buildExtraScreenRoute(parsed.screen, parsed.details?.id)
+  }
+
   if (parsed.navigator === 'browser') {
     if (!parsed.details) return 'browser'
     return `browser/instance/${parsed.details.id}`
@@ -786,6 +806,10 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'home', params: {} }
   }
 
+  if (compound.navigator === 'screen' && compound.screen) {
+    return { type: 'view', name: 'screen', id: compound.details?.id, params: { screen: compound.screen } }
+  }
+
   // Notes
   if (compound.navigator === 'notes') {
     if (!compound.details) {
@@ -976,6 +1000,14 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
 
   if (compound.navigator === 'home') {
     return { navigator: 'home', details: null }
+  }
+
+  if (compound.navigator === 'screen' && compound.screen) {
+    return {
+      navigator: 'screen',
+      screen: compound.screen,
+      details: compound.details ? { type: 'item', itemId: compound.details.id } : null,
+    }
   }
 
   // Notes
@@ -1183,6 +1215,11 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'connections', details: null }
     case 'home':
       return { navigator: 'home', details: null }
+    case 'screen': {
+      const screen = parsed.params.screen
+      if (!isExtraScreenId(screen)) return null
+      return { navigator: 'screen', screen, details: parsed.id ? { type: 'item', itemId: parsed.id } : null }
+    }
     case 'skill-info':
       if (parsed.id) {
         return {
@@ -1419,6 +1456,14 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
     return {
       navigator: 'home',
       details: null,
+    }
+  }
+
+  if (state.navigator === 'screen') {
+    return {
+      navigator: 'screen',
+      screen: state.screen,
+      details: state.details ? { type: 'item', id: state.details.itemId } : null,
     }
   }
 

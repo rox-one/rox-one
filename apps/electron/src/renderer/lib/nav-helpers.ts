@@ -47,6 +47,9 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'home':
       return true
+    case 'screen':
+      // Extra screens render their own list + detail in the content panel
+      return true
     case 'knowledge':
     case 'cloud-run':
     case 'extension':

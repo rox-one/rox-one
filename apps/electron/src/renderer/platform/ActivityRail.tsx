@@ -25,6 +25,7 @@ import {
   type AppNavDestination,
 } from '../components/app-shell/nav-destinations'
 import { CHROME_DENSITY } from './chrome-density'
+import { ExtraScreensRailGroup } from '../pages/extra-screens/ExtraScreensRailGroup'
 
 /** Expanded rail width — AppShell uses it to offset the absolute resize sashes. */
 export const ACTIVITY_RAIL_WIDTH = CHROME_DENSITY.railWidth
@@ -100,7 +101,7 @@ export function ActivityRail() {
   return (
     <nav
       aria-label={t('rail.title')}
-      className="chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col items-center overflow-hidden py-1.5"
+      className="chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col items-center overflow-y-auto overflow-x-hidden py-1.5"
       style={{ width: ACTIVITY_RAIL_WIDTH }}
       data-shell-role="activity-rail"
     >
@@ -109,6 +110,7 @@ export function ActivityRail() {
           <RailItem key={dest.id} dest={dest} />
         ))}
       </div>
+      <ExtraScreensRailGroup />
       <div className="mt-auto">
         <Tooltip>
           <TooltipTrigger asChild>
