@@ -117,9 +117,9 @@ export function ListRow({
       onClick={onClick}
       aria-current={active || undefined}
       className={cn(
-        'mx-1.5 flex w-[calc(100%-12px)] items-start gap-2.5 rounded-[6px] px-2.5 py-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground',
+        'relative mx-1.5 flex w-[calc(100%-12px)] items-start gap-2.5 rounded-[6px] px-2.5 py-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground',
         // HC: selection also gets an inset accent bar, not just a tint
-        active ? 'bg-foreground/[0.08] shadow-[inset_2px_0_0_var(--accent)]' : 'hover:bg-foreground/5',
+        active ? 'bg-foreground/[0.08] before:absolute before:inset-y-1 before:left-0 before:w-[2px] before:rounded-full before:bg-accent' : 'hover:bg-foreground/5',
         className,
       )}
     >
@@ -193,11 +193,13 @@ export function TextField({
   autoFocus,
   className,
   ariaLabel,
+  onBlur,
 }: {
   value: string
   onChange: (value: string) => void
   placeholder?: string
   onEnter?: () => void
+  onBlur?: () => void
   autoFocus?: boolean
   className?: string
   ariaLabel?: string
@@ -209,6 +211,7 @@ export function TextField({
       aria-label={ariaLabel ?? placeholder}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
+      onBlur={onBlur}
       onKeyDown={(event) => {
         if (event.key === 'Enter' && onEnter) {
           event.preventDefault()

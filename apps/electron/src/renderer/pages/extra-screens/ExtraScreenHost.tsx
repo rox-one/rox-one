@@ -13,6 +13,7 @@ import { EmptyState, ScreenButton } from './ui'
 
 const PAGES: Record<ExtraScreenId, React.LazyExoticComponent<React.ComponentType<{ itemId: string | null }>>> = {
   dossier: React.lazy(() => import('./dossier/DossierPage')),
+  radar: React.lazy(() => import('./radar/RadarPage')),
 }
 
 export interface ExtraScreenHostProps {
