@@ -762,7 +762,7 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
       <Section
         id="tasks"
-        title={t('projectRoadmap.tasks')}
+        title={t('projectInfo.tabTasks')}
         count={projectTasks.length}
         actions={
           <button type="button" onClick={() => navigate(routes.view.tasks())} className="h-6 rounded-md px-1.5 text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground">
@@ -796,9 +796,14 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
               </StyledDropdownMenuContent>
             </DropdownMenu>
           ) : null}
-          <TextButton type="submit" tone="ghost" testId="project-new-task" disabled={!newTaskTitle.trim()}>
+          <button
+            type="submit"
+            data-testid="project-new-task"
+            disabled={!newTaskTitle.trim()}
+            className="inline-flex h-7 shrink-0 items-center rounded-md px-2.5 text-[12px] font-medium text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          >
             {t('projectInfo.newTaskButton')}
-          </TextButton>
+          </button>
         </form>
         {projectTasks.length === 0 ? (
           <EmptyLine>{t('projectRoadmap.tasksEmpty')}</EmptyLine>
