@@ -124,7 +124,7 @@ const WRAPPED_RU: Record<string, string> = {
   "extensions.runtime.agent-runtime.hint": "Супервизор внешнего процесса агента",
   "extensions.runtime.automation-pack.hint": "Движок автоматизации (server-core)",
   "extensions.runtime.craft-native.hint": "Собственный код Craft (main/renderer)",
-  "extensions.runtime.craft-sandbox.hint": "Extension Host utilityProcess (в песочнице)",
+  "extensions.runtime.craft-sandbox.hint": "Хост расширений utilityProcess (в песочнице)",
   "extensions.runtime.mcp-source.hint": "SourceServerBuilder в server-core",
   "extensions.runtime.siyuan-plugin.hint": "Внутри runtime SiYuan (не Craft main)",
   "extensions.runtime.skill-pack.hint": "Документы SKILL.md, которые читает агент",
