@@ -1,0 +1,956 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-26",
+  "title": "CRM visibility, hidden records and email-derived context controls",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "crm-implementation",
+  "dependencies": [
+    "WP-22",
+    "WP-25"
+  ],
+  "allowedPaths": [
+    "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+    "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+    "apps/workspace-service/migrations/026_crm_visibility_preferences.sql",
+    "apps/workspace-service/migrations/26-domain-contract.sql",
+    "apps/workspace-service/src/modules/crm/commands.ts",
+    "apps/workspace-service/src/modules/crm/context-policy.ts",
+    "apps/workspace-service/src/modules/crm/repository.ts",
+    "apps/workspace-service/src/modules/crm/visibility.ts",
+    "packages/core/src/rox2/platform-contract.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/workspace-domain/crm/contracts.ts",
+    "tests/macro-integration/crm-context-visibility.test.ts",
+    "tests/macro-integration/wp-26.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/domain-screen-contracts.json",
+    "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+    "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+    "packages/core/src/rox2/platform-contract.ts",
+    "plans/macro-integration/cloud/contract-amendments.json"
+  ],
+  "goal": "Hidden Company excludes normal lists, not destructive delete; disabled email context hides bodies from team/agents; opted-out account stops target ingestion as defined",
+  "expectedResults": [
+    "Hidden Company excludes normal lists, not destructive delete",
+    "disabled email context hides bodies from team/agents",
+    "opted-out account stops target ingestion as defined",
+    "Toggle email-context off while sync receives message: ingestion/provenance continues as authorized but visible context excluded.",
+    "Unhide company does not restore disabled email-context or revoked OAuth grant.",
+    "Actor filtering cannot be bypassed by agent aggregated query or search index cached snippets."
+  ],
+  "screenRefs": [
+    {
+      "id": "CRM-01",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "search",
+        "filter",
+        "open"
+      ],
+      "placement": "Внутри Досье вкладки «Досье / Компании / Контакты»; «Список / Доска» только representations, существующие карточки доступны.",
+      "proposedRoute": "dossier?representation=list&kind=company",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "CRM-03",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "linked-tab",
+        "agent",
+        "hide",
+        "owner-edit",
+        "revenue-edit"
+      ],
+      "placement": "Сохранить карточку Досье; additive tabs «Обзор / Почта / Контакты / Задачи / Встречи / Документы / Обсуждение».",
+      "proposedRoute": "dossier/item/{canonicalCompanyId}?tab=overview",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "MAIL-06",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "open-contact",
+        "why",
+        "correct"
+      ],
+      "placement": "Context strip inside MailReader links Dossier; не отдельная CRM model в mail UI.",
+      "proposedRoute": "inbox/item/{id}?panel=crm-provenance",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-26",
+    "title": "CRM visibility, hidden records and email-derived context controls",
+    "goal": "Hidden Company excludes normal lists, not destructive delete; disabled email context hides bodies from team/agents; opted-out account stops target ingestion as defined",
+    "why": "crm.setVisibility creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "crm-implementation",
+    "dependencies": [
+      "WP-22",
+      "WP-25"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "packages/core/src/rox2/platform-contract.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/crm/contracts.ts",
+      "apps/workspace-service/src/modules/crm/commands.ts",
+      "apps/workspace-service/src/modules/crm/repository.ts",
+      "tests/macro-integration/wp-26.test.ts",
+      "apps/workspace-service/src/modules/crm/visibility.ts",
+      "apps/workspace-service/src/modules/crm/context-policy.ts",
+      "apps/workspace-service/migrations/026_crm_visibility_preferences.sql",
+      "tests/macro-integration/crm-context-visibility.test.ts",
+      "apps/workspace-service/migrations/26-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "company",
+      "contact",
+      "crm_visibility"
+    ],
+    "apiChanges": "HideRecord / SetEmailContextVisibility / QueryCompanyContext",
+    "dbChanges": "hidden flags per user/team; source ingestion policy separate from presentation; audit",
+    "events": [
+      "crm.visibility_changed"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Team/member policy + email source consent + admin pipeline roles",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Dossier / Company / Contact contextual representation",
+      "newBehavior": "CRM visibility, hidden records and email-derived context controls",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "revisioned invalidation + replay cursor"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Hidden Company excludes normal lists, not destructive delete; disabled email context hides bodies from team/agents; opted-out account stops target ingestion as defined"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken crm boundary: unauthorized actor or dropped/duplicated event must fail WP-26 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running CRM visibility, hidden records and email-derived context controls; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Hidden Company excludes normal lists, not destructive delete",
+      "disabled email context hides bodies from team/agents",
+      "opted-out account stops target ingestion as defined",
+      "Toggle email-context off while sync receives message: ingestion/provenance continues as authorized but visible context excluded.",
+      "Unhide company does not restore disabled email-context or revoked OAuth grant.",
+      "Actor filtering cannot be bypassed by agent aggregated query or search index cached snippets."
+    ],
+    "risks": [
+      "Macro email_sync is read visibility, not stopping writes; choose explicit target consent contract"
+    ],
+    "estimatedComplexity": "L",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-26",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-22",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-25",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "crm.setVisibility",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/crm.setVisibility",
+          "nativeRpc": "domain.crm.setVisibility",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "record": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "hidden": {
+              "type": "boolean"
+            },
+            "emailContextVisibility": {
+              "type": "string",
+              "enum": [
+                "private",
+                "team"
+              ]
+            }
+          },
+          "required": [
+            "record",
+            "hidden",
+            "emailContextVisibility"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/26-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "crm_visibility",
+          "crm_source_policy"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": [
+          "Separate hidden UI preferences, email-context visibility policy, connection ingest switch and source grants.",
+          "Hidden company cascade/contact policy explicit; unhide never automatically re-enables previously disabled email visibility.",
+          "Revocation recomputes authorized interaction projection/search without deleting shared unrelated CRM identity."
+        ],
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/crm/contracts.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/crm/commands.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/crm/repository.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/wp-26.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/crm/visibility.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/crm/context-policy.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/migrations/026_crm_visibility_preferences.sql",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/crm-context-visibility.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "symbols": [
+          "DossierEntity",
+          "DossierSources / buildDossierSummary"
+        ],
+        "lineStart": 71,
+        "change": "Do not treat unavailable feed/source as empty authorization granted context.",
+        "sourceEvidenceIds": [
+          "ROX-042"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "symbols": [
+          "DossierPage"
+        ],
+        "lineStart": 94,
+        "change": "Hidden and source email visibility explicit filters with empty/unavailable states.",
+        "sourceEvidenceIds": [
+          "ROX-043"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/core/src/rox2/platform-contract.ts",
+        "symbols": [
+          "Rox2Status / Rox2Entity / Rox2Relation / Rox2Event",
+          "Rox2EntityRef / formatRox2EntityId / parseRox2EntityId",
+          "Rox2Entity / Rox2Relation / Rox2Event",
+          "formatRox2EntityId / Rox2EntityRef",
+          "registerExternalBinding",
+          "ROX2_RELATION_RULES / wouldCreateRelationCycle"
+        ],
+        "change": "Extend existing module for crm.setVisibility; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "R10",
+          "R11",
+          "ROX-008",
+          "ROX-009",
+          "ROX-010",
+          "ROX-011"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-26.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-26",
+        "providerSandbox": "not needed unless operation outbound",
+        "seed": 20260956
+      },
+      "expectedObservations": [
+        "Hidden Company excludes normal lists, not destructive delete",
+        "disabled email context hides bodies from team/agents",
+        "opted-out account stops target ingestion as defined",
+        "Toggle email-context off while sync receives message: ingestion/provenance continues as authorized but visible context excluded.",
+        "Unhide company does not restore disabled email-context or revoked OAuth grant.",
+        "Actor filtering cannot be bypassed by agent aggregated query or search index cached snippets."
+      ],
+      "negativeControl": {
+        "mutation": "hidden record leaks email body to agent",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    },
+    "domainTouchpoints": [
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+        "symbol": "DossierPage",
+        "reason": "Hidden and source email visibility explicit filters with empty/unavailable states.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 94
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+        "symbol": "DossierSources / buildDossierSummary",
+        "reason": "Do not treat unavailable feed/source as empty authorization granted context.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 71
+      }
+    ],
+    "domainApiContracts": [
+      {
+        "name": "SetCrmVisibility",
+        "input": "{entityRef:EntityRef,scope:\"personal\"|\"team\",hidden:boolean,emailContextEnabled?:boolean,baseRevision:number}",
+        "output": "{revision:number}",
+        "errors": "denied|conflict"
+      },
+      {
+        "name": "GetCompanyContext",
+        "input": "{companyRef:EntityRef,kinds:EntityType[],cursor?:string}",
+        "output": "{authorizedLinks:ContextLink[],unavailableKinds:EntityType[]}",
+        "errors": "denied|not_found"
+      }
+    ],
+    "apiChangesDetail": [
+      {
+        "name": "SetCrmVisibility",
+        "input": "{entityRef:EntityRef,scope:\"personal\"|\"team\",hidden:boolean,emailContextEnabled?:boolean,baseRevision:number}",
+        "output": "{revision:number}",
+        "errors": "denied|conflict"
+      },
+      {
+        "name": "GetCompanyContext",
+        "input": "{companyRef:EntityRef,kinds:EntityType[],cursor?:string}",
+        "output": "{authorizedLinks:ContextLink[],unavailableKinds:EntityType[]}",
+        "errors": "denied|not_found"
+      }
+    ],
+    "domainConstraints": [
+      "Separate hidden UI preferences, email-context visibility policy, connection ingest switch and source grants.",
+      "Hidden company cascade/contact policy explicit; unhide never automatically re-enables previously disabled email visibility.",
+      "Revocation recomputes authorized interaction projection/search without deleting shared unrelated CRM identity."
+    ],
+    "reviewNotes": []
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-26",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-26.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "CRM hidden/email-sync visibility/permission controls and denied mail placeholders, not ACL grant by company link.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [],
+    "existingUiSeams": [],
+    "newUiFiles": [],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

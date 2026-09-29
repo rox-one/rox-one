@@ -1,0 +1,1029 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-04",
+  "title": "Durable revisioned command and outbox receipt in Project update",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "commands-implementation",
+  "dependencies": [
+    "WP-02",
+    "WP-03"
+  ],
+  "allowedPaths": [
+    "apps/workspace-service/migrations/04-domain-contract.sql",
+    "apps/workspace-service/src/modules/commands/commands.ts",
+    "apps/workspace-service/src/modules/commands/repository.ts",
+    "packages/core/src/rox2/platform-contract.ts",
+    "packages/server-core/src/handlers/rpc/command-gateway.ts",
+    "packages/server-core/src/handlers/rpc/projects.ts",
+    "packages/server-core/src/transport/types.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/projects/storage.ts",
+    "packages/shared/src/workspace-domain/commands/contracts.ts",
+    "tests/macro-integration/wp-04.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/collaboration-screen-contracts.json",
+    "plans/macro-integration/domain-screen-contracts.json",
+    "plans/macro-integration/shared-screen-contracts.json",
+    "packages/core/src/rox2/platform-contract.ts",
+    "packages/server-core/src/handlers/rpc/command-gateway.ts",
+    "packages/server-core/src/transport/types.ts",
+    "packages/server-core/src/handlers/rpc/projects.ts",
+    "packages/shared/src/projects/storage.ts",
+    "plans/macro-integration/cloud/contract-amendments.json"
+  ],
+  "goal": "Crash after commit before response: retry yields same Project revision/event; stale version 409; same key altered payload rejected; event replay dedup",
+  "expectedResults": [
+    "Crash after commit before response: retry yields same Project revision/event",
+    "stale version 409",
+    "same key altered payload rejected",
+    "event replay dedup"
+  ],
+  "screenRefs": [
+    {
+      "id": "COL-15",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "source",
+        "title",
+        "project",
+        "assign",
+        "create"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Modal max560px; source card top; title/Project/assignee/date/body; preview backlink/privacy before create.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED overlay from MessageAction; commit navigates existing tasks/task/{id}",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "CRM-02",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "move",
+        "view",
+        "stage-help"
+      ],
+      "placement": "Переключатель representation рядом с «Список»; без новой destination.",
+      "proposedRoute": "dossier?representation=board&kind=company",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "CRM-06",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "stage-reorder",
+        "delete-stage",
+        "revenue"
+      ],
+      "placement": "Admin drawer из board toolbar «Настроить стадии»; не новый Settings subsystem.",
+      "proposedRoute": "dossier?panel=pipeline-settings",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "SH-06",
+      "contractSource": "plans/macro-integration/shared-screen-contracts.json",
+      "controls": [
+        "event",
+        "filter",
+        "receipt"
+      ],
+      "placement": "Project/entity detail → Activity; Feed contextual",
+      "uiStatus": "SPECIFICATION_TARGET_EXTENSION"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-04",
+    "title": "Durable revisioned command and outbox receipt in Project update",
+    "goal": "Crash after commit before response: retry yields same Project revision/event; stale version 409; same key altered payload rejected; event replay dedup",
+    "why": "project.update creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "commands-implementation",
+    "dependencies": [
+      "WP-02",
+      "WP-03"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/core/src/rox2/platform-contract.ts",
+      "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "packages/server-core/src/transport/types.ts",
+      "packages/server-core/src/handlers/rpc/projects.ts",
+      "packages/shared/src/projects/storage.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/commands/contracts.ts",
+      "apps/workspace-service/src/modules/commands/commands.ts",
+      "apps/workspace-service/src/modules/commands/repository.ts",
+      "tests/macro-integration/wp-04.test.ts",
+      "apps/workspace-service/migrations/04-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "command_receipt",
+      "domain_event",
+      "outbox",
+      "project"
+    ],
+    "apiChanges": "UpdateProject expectedRevision/idempotencyKey; native adapter uses same gateway",
+    "dbChanges": "project mutation+receipt+event atomic; consumer inbox unique; immutable request hash",
+    "events": [
+      "entity.updated",
+      "project.updated"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Resource read/write/action grants; deny forged actor/workspace; recheck linked refs",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Native Project/entity actions",
+      "newBehavior": "Durable revisioned command and outbox receipt in Project update",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "revisioned invalidation + replay cursor"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Crash after commit before response: retry yields same Project revision/event; stale version 409; same key altered payload rejected; event replay dedup"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken commands boundary: unauthorized actor or dropped/duplicated event must fail WP-04 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Durable revisioned command and outbox receipt in Project update; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Crash after commit before response: retry yields same Project revision/event",
+      "stale version 409",
+      "same key altered payload rejected",
+      "event replay dedup"
+    ],
+    "risks": [
+      "Legacy direct store writes can bypass gateway; revision continuity across import"
+    ],
+    "estimatedComplexity": "L",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-04",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-02",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-03",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "project.update",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/project.update",
+          "nativeRpc": "domain.project.update",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "project": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            }
+          },
+          "required": [
+            "project"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/04-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "command_receipt",
+          "domain_event",
+          "outbox",
+          "consumer_inbox"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": "project mutation+receipt+event atomic; consumer inbox unique; immutable request hash",
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "interface": "project.update request/result schema + domain ports, no service I/O in core"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/commands/commands.ts",
+        "interface": "typed command/query implementation; same policy/idempotency/revision gateway"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/commands/repository.ts",
+        "interface": "domain tables/transaction/outbox/inbox; only composition root creates provider adapters"
+      },
+      {
+        "path": "tests/macro-integration/wp-04.test.ts",
+        "interface": "scenario + meaningful seeded failure control + recovery"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/core/src/rox2/platform-contract.ts",
+        "symbols": [
+          "Rox2Status / Rox2Entity / Rox2Relation / Rox2Event",
+          "Rox2EntityRef / formatRox2EntityId / parseRox2EntityId",
+          "Rox2Entity / Rox2Relation / Rox2Event",
+          "formatRox2EntityId / Rox2EntityRef",
+          "registerExternalBinding",
+          "ROX2_RELATION_RULES / wouldCreateRelationCycle"
+        ],
+        "change": "Extend existing module for project.update; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "R10",
+          "R11",
+          "ROX-008",
+          "ROX-009",
+          "ROX-010",
+          "ROX-011"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+        "symbols": [
+          "WORKSPACE_ID_PATTERN",
+          "invalidRequest",
+          "parseWorkspaceInput",
+          "authorizeWorkspace",
+          "callerWorkspaceId",
+          "requireStore",
+          "store",
+          "HANDLED_CHANNELS",
+          "registerCommandGatewayHandlers",
+          "listed",
+          "input",
+          "input"
+        ],
+        "lineStart": 20,
+        "change": "Extend existing module for project.update; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "WORKSPACE_ID_PATTERN",
+            "line": 20
+          },
+          {
+            "symbol": "invalidRequest",
+            "line": 22
+          },
+          {
+            "symbol": "parseWorkspaceInput",
+            "line": 26
+          },
+          {
+            "symbol": "authorizeWorkspace",
+            "line": 38
+          },
+          {
+            "symbol": "callerWorkspaceId",
+            "line": 43
+          },
+          {
+            "symbol": "requireStore",
+            "line": 58
+          },
+          {
+            "symbol": "store",
+            "line": 59
+          },
+          {
+            "symbol": "HANDLED_CHANNELS",
+            "line": 69
+          },
+          {
+            "symbol": "registerCommandGatewayHandlers",
+            "line": 75
+          },
+          {
+            "symbol": "listed",
+            "line": 77
+          },
+          {
+            "symbol": "input",
+            "line": 79
+          },
+          {
+            "symbol": "input",
+            "line": 84
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/transport/types.ts",
+        "symbols": [
+          "RequestContext / RpcHandlerOptions"
+        ],
+        "change": "Extend existing module for project.update; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-076"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/projects.ts",
+        "symbols": [
+          "registerProjectsHandlers"
+        ],
+        "change": "Extend existing module for project.update; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-040"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/shared/src/projects/storage.ts",
+        "symbols": [
+          "isPathInsideDirectory",
+          "resolvedBase",
+          "resolvedTarget",
+          "rel",
+          "getWorkspaceProjectsPath",
+          "getProjectPath",
+          "getProjectAssetsPath",
+          "MEMORY_FILENAME",
+          "getProjectMemoryPath",
+          "ensureProjectsDir",
+          "dir",
+          "ensureProjectAssetsDir"
+        ],
+        "lineStart": 39,
+        "change": "Extend existing module for project.update; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "isPathInsideDirectory",
+            "line": 39
+          },
+          {
+            "symbol": "resolvedBase",
+            "line": 40
+          },
+          {
+            "symbol": "resolvedTarget",
+            "line": 41
+          },
+          {
+            "symbol": "rel",
+            "line": 42
+          },
+          {
+            "symbol": "getWorkspaceProjectsPath",
+            "line": 49
+          },
+          {
+            "symbol": "getProjectPath",
+            "line": 56
+          },
+          {
+            "symbol": "getProjectAssetsPath",
+            "line": 63
+          },
+          {
+            "symbol": "MEMORY_FILENAME",
+            "line": 68
+          },
+          {
+            "symbol": "getProjectMemoryPath",
+            "line": 74
+          },
+          {
+            "symbol": "ensureProjectsDir",
+            "line": 81
+          },
+          {
+            "symbol": "dir",
+            "line": 82
+          },
+          {
+            "symbol": "ensureProjectAssetsDir",
+            "line": 91
+          }
+        ]
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-04.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-04",
+        "providerSandbox": "not needed unless operation outbound",
+        "seed": 20260934
+      },
+      "expectedObservations": [
+        "Crash after commit before response: retry yields same Project revision/event",
+        "stale version 409",
+        "same key altered payload rejected",
+        "event replay dedup"
+      ],
+      "negativeControl": {
+        "mutation": "ACK before transaction commit",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    }
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-04",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-04.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Command pending/applied/receipt detail for Project update; durable activity correlation, not full event consumer screens.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [],
+    "existingUiSeams": [],
+    "newUiFiles": [],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

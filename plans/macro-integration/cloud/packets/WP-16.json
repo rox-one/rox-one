@@ -1,0 +1,1058 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-16",
+  "title": "Notes bridge and portable files as one Page/Document graph",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "notes-implementation",
+  "dependencies": [
+    "WP-02",
+    "WP-06",
+    "WP-10"
+  ],
+  "allowedPaths": [
+    "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+    "apps/electron/src/renderer/pages/NotesPage.tsx",
+    "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+    "apps/electron/src/shared/routes.ts",
+    "apps/workspace-service/migrations/16-domain-contract.sql",
+    "apps/workspace-service/src/modules/notes/commands.ts",
+    "apps/workspace-service/src/modules/notes/repository.ts",
+    "packages/core/src/rox2/notes-engine.ts",
+    "packages/core/src/rox2/notes-repository.ts",
+    "packages/server-core/src/handlers/rpc/notes.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/workspace-domain/notes/contracts.ts",
+    "tests/macro-integration/ui/col-05.spec.ts",
+    "tests/macro-integration/ui/col-06.spec.ts",
+    "tests/macro-integration/wp-16.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/collaboration-screen-contracts.json",
+    "packages/core/src/rox2/notes-engine.ts",
+    "packages/server-core/src/handlers/rpc/notes.ts",
+    "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+    "apps/electron/src/renderer/pages/NotesPage.tsx",
+    "packages/core/src/rox2/notes-repository.ts",
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+    "apps/electron/src/shared/routes.ts"
+  ],
+  "goal": "Rename Note preserves backlinks; stale save rejected; authorized Note searchable/linkable; Markdown export/import round-trip content and mention refs",
+  "expectedResults": [
+    "Rename Note preserves backlinks",
+    "stale save rejected",
+    "authorized Note searchable/linkable",
+    "Markdown export/import round-trip content and mention refs"
+  ],
+  "screenRefs": [
+    {
+      "id": "COL-02",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "title",
+        "body",
+        "presence",
+        "mention",
+        "comment",
+        "sync",
+        "share"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Title + max70ch CRDT body; optional outline224; inspector320 Связи/Обсуждение/История.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing pages/page/{slug}; canonical-ref alias proposed",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-05",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "new",
+        "view",
+        "filter",
+        "import"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Folder rail224; central note list/view; inspector closed.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing routes.view.notes()",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-06",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "editor",
+        "wiki",
+        "properties",
+        "share",
+        "ai"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "70ch Tiptap or source view; outline224; Inspector320 properties/backlinks/assets.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing notes/note/{id}",
+      "uiStatus": "PROPOSED"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-16",
+    "title": "Notes bridge and portable files as one Page/Document graph",
+    "goal": "Rename Note preserves backlinks; stale save rejected; authorized Note searchable/linkable; Markdown export/import round-trip content and mention refs",
+    "why": "note.import creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "notes-implementation",
+    "dependencies": [
+      "WP-02",
+      "WP-06",
+      "WP-10"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/core/src/rox2/notes-engine.ts",
+      "packages/server-core/src/handlers/rpc/notes.ts",
+      "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "packages/core/src/rox2/notes-repository.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/notes/contracts.ts",
+      "apps/workspace-service/src/modules/notes/commands.ts",
+      "apps/workspace-service/src/modules/notes/repository.ts",
+      "tests/macro-integration/wp-16.test.ts",
+      "apps/workspace-service/migrations/16-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "note",
+      "page",
+      "file_alias"
+    ],
+    "apiChanges": "ImportNote / SaveNote expectedRevision / ExportMarkdown",
+    "dbChanges": "stable note UUID path alias; revision CAS; content-kind adapter; preserve local Markdown files",
+    "events": [
+      "document.content_materialized"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Resource read/write/action grants; deny forged actor/workspace; recheck linked refs",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Notes / Pages representation",
+      "newBehavior": "Notes bridge and portable files as one Page/Document graph",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "revisioned invalidation + replay cursor"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Rename Note preserves backlinks; stale save rejected; authorized Note searchable/linkable; Markdown export/import round-trip content and mention refs"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken notes boundary: unauthorized actor or dropped/duplicated event must fail WP-16 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Notes bridge and portable files as one Page/Document graph; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Rename Note preserves backlinks",
+      "stale save rejected",
+      "authorized Note searchable/linkable",
+      "Markdown export/import round-trip content and mention refs"
+    ],
+    "risks": [
+      "Existing frontend not passing expectedRevision; filesystem paths are mutable identity"
+    ],
+    "estimatedComplexity": "L",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-16",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-02",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-06",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-10",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "note.import",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/note.import",
+          "nativeRpc": "domain.note.import",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "legacyPath": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "sourceHash": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            }
+          },
+          "required": [
+            "legacyPath",
+            "content",
+            "sourceHash"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/16-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "entity_alias",
+          "note_location",
+          "document_revision"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": "stable note UUID path alias; revision CAS; content-kind adapter; preserve local Markdown files",
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/notes/contracts.ts",
+        "interface": "note.import request/result schema + domain ports, no service I/O in core"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/notes/commands.ts",
+        "interface": "typed command/query implementation; same policy/idempotency/revision gateway"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/notes/repository.ts",
+        "interface": "domain tables/transaction/outbox/inbox; only composition root creates provider adapters"
+      },
+      {
+        "path": "tests/macro-integration/wp-16.test.ts",
+        "interface": "scenario + meaningful seeded failure control + recovery"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/core/src/rox2/notes-engine.ts",
+        "symbols": [
+          "createNativeNotesEngine"
+        ],
+        "change": "Extend existing module for note.import; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-030"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/notes.ts",
+        "symbols": [
+          "noteIdFromRelativePath / assertSafeNoteId",
+          "saveNote",
+          "registerNotesHandlers.notes.SAVE"
+        ],
+        "change": "Extend existing module for note.import; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-024",
+          "ROX-025",
+          "ROX-027"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "symbols": [
+          "NoteViewFormulaExpr",
+          "JsonCanvas",
+          "NoteBaseView",
+          "NoteGraphEdgeKindFilter",
+          "NoteOutlineNode",
+          "NoteProjectionRow",
+          "NotesViewNote",
+          "NotesViewHost",
+          "rows",
+          "NotesTableView",
+          "storageKey",
+          "view"
+        ],
+        "lineStart": 39,
+        "change": "Extend existing module for note.import; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "NoteViewFormulaExpr",
+            "line": 39
+          },
+          {
+            "symbol": "JsonCanvas",
+            "line": 40
+          },
+          {
+            "symbol": "NoteBaseView",
+            "line": 41
+          },
+          {
+            "symbol": "NoteGraphEdgeKindFilter",
+            "line": 42
+          },
+          {
+            "symbol": "NoteOutlineNode",
+            "line": 43
+          },
+          {
+            "symbol": "NoteProjectionRow",
+            "line": 44
+          },
+          {
+            "symbol": "NotesViewNote",
+            "line": 48
+          },
+          {
+            "symbol": "NotesViewHost",
+            "line": 58
+          },
+          {
+            "symbol": "rows",
+            "line": 75
+          },
+          {
+            "symbol": "NotesTableView",
+            "line": 115
+          },
+          {
+            "symbol": "storageKey",
+            "line": 129
+          },
+          {
+            "symbol": "view",
+            "line": 134
+          }
+        ]
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "symbols": [
+          "NotesPage",
+          "NotesPage.saveCurrentNote"
+        ],
+        "change": "Extend existing module for note.import; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-022",
+          "ROX-026"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/core/src/rox2/notes-repository.ts",
+        "symbols": [
+          "NoteOrigin",
+          "NoteSyncState",
+          "Rox2NoteRecord",
+          "NoteReadResult",
+          "NotesRepository",
+          "createNotesRepository",
+          "records",
+          "note",
+          "nativeNoteRecord"
+        ],
+        "lineStart": 9,
+        "change": "Extend existing module for note.import; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "NoteOrigin",
+            "line": 9
+          },
+          {
+            "symbol": "NoteSyncState",
+            "line": 10
+          },
+          {
+            "symbol": "Rox2NoteRecord",
+            "line": 12
+          },
+          {
+            "symbol": "NoteReadResult",
+            "line": 21
+          },
+          {
+            "symbol": "NotesRepository",
+            "line": 27
+          },
+          {
+            "symbol": "createNotesRepository",
+            "line": 32
+          },
+          {
+            "symbol": "records",
+            "line": 33
+          },
+          {
+            "symbol": "note",
+            "line": 42
+          },
+          {
+            "symbol": "nativeNoteRecord",
+            "line": 53
+          }
+        ]
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-16.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-16",
+        "providerSandbox": "not needed unless operation outbound",
+        "seed": 20260946
+      },
+      "expectedObservations": [
+        "Rename Note preserves backlinks",
+        "stale save rejected",
+        "authorized Note searchable/linkable",
+        "Markdown export/import round-trip content and mention refs"
+      ],
+      "negativeControl": {
+        "mutation": "rename changes canonical identity",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    }
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-16",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-16.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Notes library/editor conflict bridge/import/file aliases/Page artifact-document relation; explicit move/share commands, retain native files.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [
+      "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "apps/electron/src/shared/routes.ts",
+      "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "tests/macro-integration/ui/col-05.spec.ts",
+      "tests/macro-integration/ui/col-06.spec.ts"
+    ],
+    "existingUiSeams": [
+      "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "apps/electron/src/shared/routes.ts",
+      "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx"
+    ],
+    "newUiFiles": [
+      "tests/macro-integration/ui/col-05.spec.ts",
+      "tests/macro-integration/ui/col-06.spec.ts"
+    ],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

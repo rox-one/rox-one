@@ -1,5 +1,13 @@
 # Macro → ROX: навигация и доказательства
 
+## Detailed product / cloud pack — Revision 3
+
+Новый вход: [PRD](product/PRD.md), [UI/UX](product/UI-UX-CONTRACT.md), [50 current ROX screens](product/rox-screen-audit.md), [19 collaboration screens](product/collaboration-screens.md), [24 domain screens](product/domain-screens.md), [18 shared screens](product/shared-screens.md), [cloud execution pack](../../cloud/macro-integration/README.md).
+
+61 target screens /219controls;52 individual cloud packets with full domain contracts and UI stage scope, expected results/DoD/proof schema, dependency/ownership/toolchain gates. Target screens remain PROPOSED. [Повторная проверка](24-reverification-and-product-spec.md) фиксирует Macro `5678f9bd777413f66e8bddac58f13f21150d831b`, ROX main unchangedf632, study inpute780.308original source refs rechecked:304identical/4reviewed deltas. Cloud jobs NOT_LAUNCHED; runtime feature tests future gates.
+
+Следующая секция сохраняет первоначальный baseline исследования; per-file citations не переписываются на новые SHA без проверки.
+
 Архитектурное исследование текущего кода, 2026-09-30. База Macro: `c966b79d40798c6c726a3b15fe90517941fc6e61`; база ROX: `f63294ba4fffa7238b46b24e918925a313ad0b12`. Это фиксированный baseline, а не заявление о состоянии последующих HEAD.
 
 Начать с [executive summary](00-executive-summary.md), затем [Revision 2 архитектуры](19-target-architecture.md), [плана](21-implementation-plan.md) и [тестового контракта](22-test-plan.md). Машинный план находится в `plans/macro-integration/`.

@@ -1,0 +1,1348 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-08",
+  "title": "Human Channel and entity Discussion on common Message store",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "messaging-implementation",
+  "dependencies": [
+    "WP-04",
+    "WP-03"
+  ],
+  "allowedPaths": [
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+    "apps/electron/src/renderer/components/channels/ChannelDirectory.tsx",
+    "apps/electron/src/renderer/components/channels/ChannelView.tsx",
+    "apps/electron/src/renderer/components/channels/MessageThread.tsx",
+    "apps/electron/src/renderer/components/discussions/EntityDiscussion.tsx",
+    "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+    "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "apps/electron/src/renderer/pages/ChatPage.tsx",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+    "apps/electron/src/shared/route-parser.ts",
+    "apps/electron/src/shared/routes.ts",
+    "apps/workspace-service/migrations/08-domain-contract.sql",
+    "apps/workspace-service/src/modules/messaging/commands.ts",
+    "apps/workspace-service/src/modules/messaging/repository.ts",
+    "packages/messaging-gateway/src/index.ts",
+    "packages/server-core/src/handlers/rpc/messaging.ts",
+    "packages/shared/src/agent/session-tool-defs.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/team/state.ts",
+    "packages/shared/src/team/sync.ts",
+    "packages/shared/src/team/types.ts",
+    "packages/shared/src/workspace-domain/messaging/contracts.ts",
+    "tests/macro-integration/ui/col-07.spec.ts",
+    "tests/macro-integration/ui/col-08.spec.ts",
+    "tests/macro-integration/ui/col-09.spec.ts",
+    "tests/macro-integration/ui/col-10.spec.ts",
+    "tests/macro-integration/wp-08.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/collaboration-screen-contracts.json",
+    "plans/macro-integration/domain-screen-contracts.json",
+    "plans/macro-integration/shared-screen-contracts.json",
+    "packages/shared/src/team/types.ts",
+    "packages/shared/src/team/state.ts",
+    "packages/server-core/src/handlers/rpc/messaging.ts",
+    "packages/shared/src/agent/session-tool-defs.ts",
+    "packages/shared/src/team/sync.ts",
+    "apps/electron/src/renderer/pages/ChatPage.tsx",
+    "packages/messaging-gateway/src/index.ts",
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+    "apps/electron/src/shared/routes.ts",
+    "apps/electron/src/shared/route-parser.ts",
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx"
+  ],
+  "goal": "Two users exchange channel messages; same API posts Company discussion; edit/delete/replies persist and notify authorized subscribers; agent transcript stays separate",
+  "expectedResults": [
+    "Two users exchange channel messages",
+    "same API posts Company discussion",
+    "edit/delete/replies persist and notify authorized subscribers",
+    "agent transcript stays separate"
+  ],
+  "screenRefs": [
+    {
+      "id": "COL-07",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "create-channel",
+        "dm",
+        "group",
+        "search"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Project tab Channels: project-scoped conversation directory; Каналы/Личные/Группы filters in local rail; authorized workspace search/favorites open the same contextual view. No additional native sidebar destination.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED existing projects/project/{slug}?tab=channels; search/favorite ChannelRef opens contextual HumanConversationView through typed entity route",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-08",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "compose",
+        "attach",
+        "reply",
+        "reaction",
+        "call",
+        "more"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Header title/member/read status; message timeline; sticky composer; thread aside320; no assistant bubbles by default.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED projects/project/{slug}?tab=channels&channel={canonical id}; canonical ChannelRef contextual route for search/favorites",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-09",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "send",
+        "recipient",
+        "add",
+        "mute"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Same timeline/composer COL-08; header recipients/avatar; no public channel switch.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED typed canonical ChannelRef contextual route, with Project origin when present; no AgentSession route",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-10",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "root",
+        "reply",
+        "follow",
+        "task"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "320px aside desktop or main mobile; quoted root, replies, sticky composer; close returns selected row focus.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED Project Channels/contextual ChannelRef route with thread={root}; entity detail thread={root}",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-11",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "new-thread",
+        "mention",
+        "anchor",
+        "resolve",
+        "agent"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Entity inspector320 with threads; full-screen on mobile; parent title always visible.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED entity detail ?panel=discussion&thread={root}",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-14",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "title",
+        "assignee",
+        "status",
+        "dates",
+        "checklist",
+        "dependency",
+        "source",
+        "delegate",
+        "trash"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Title/status header; tabs Детали/Обсуждение/Связи/История; structured fields left, body/checklist main.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing tasks/task/{id}",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-17",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "tabs",
+        "progress",
+        "new",
+        "agent",
+        "members"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Overview as first tab; summary/description; compact counts; tabs Задачи/Документы/Разговоры/Встречи/Файлы/Агенты/Активность/Настройки.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing routes.view.projects(slug)",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "CRM-05",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "post",
+        "mention",
+        "reply"
+      ],
+      "placement": "Внутри карточки вкладка «Обсуждение»; общая Message primitive WP08, не отдельный CRM chat.",
+      "proposedRoute": "dossier/item/{id}?tab=discussion&message={messageId}",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "MTG-05",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "join",
+        "screen",
+        "leave"
+      ],
+      "placement": "Call launched in human Channel → existing Meetings detail; no fake Session→call conversion and no second call user directory.",
+      "proposedRoute": "meetings/meeting/{callId}?tab=live",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "SH-05",
+      "contractSource": "plans/macro-integration/shared-screen-contracts.json",
+      "controls": [
+        "notification",
+        "read",
+        "unread"
+      ],
+      "placement": "Inbox → attention representations; shell indicator opens same view",
+      "uiStatus": "SPECIFICATION_TARGET_EXTENSION"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-08",
+    "title": "Human Channel and entity Discussion on common Message store",
+    "goal": "Two users exchange channel messages; same API posts Company discussion; edit/delete/replies persist and notify authorized subscribers; agent transcript stays separate",
+    "why": "message.post creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "messaging-implementation",
+    "dependencies": [
+      "WP-04",
+      "WP-03"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/shared/src/team/types.ts",
+      "packages/shared/src/team/state.ts",
+      "packages/server-core/src/handlers/rpc/messaging.ts",
+      "packages/shared/src/agent/session-tool-defs.ts",
+      "packages/shared/src/team/sync.ts",
+      "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "packages/messaging-gateway/src/index.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/messaging/contracts.ts",
+      "apps/workspace-service/src/modules/messaging/commands.ts",
+      "apps/workspace-service/src/modules/messaging/repository.ts",
+      "tests/macro-integration/wp-08.test.ts",
+      "apps/workspace-service/migrations/08-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "channel",
+      "discussion",
+      "message",
+      "thread"
+    ],
+    "apiChanges": "CreateChannel / PostMessage / EditMessage / DeleteMessage / GetTimeline",
+    "dbChanges": "channel/member, discussion parent ref, message revisions, thread parent validation",
+    "events": [
+      "message.created",
+      "message.edited",
+      "message.deleted"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Resource read/write/action grants; deny forged actor/workspace; recheck linked refs",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Human Channels/Discussion inside workspace; Agent Sessions retained separately",
+      "newBehavior": "Human Channel and entity Discussion on common Message store",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "revisioned invalidation + replay cursor"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Two users exchange channel messages; same API posts Company discussion; edit/delete/replies persist and notify authorized subscribers; agent transcript stays separate"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken messaging boundary: unauthorized actor or dropped/duplicated event must fail WP-08 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Human Channel and entity Discussion on common Message store; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Two users exchange channel messages",
+      "same API posts Company discussion",
+      "edit/delete/replies persist and notify authorized subscribers",
+      "agent transcript stays separate"
+    ],
+    "risks": [
+      "Human messages confused with agent runtime tool/thinking records; legacy team comment ID preservation"
+    ],
+    "estimatedComplexity": "XL",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-08",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-04",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-03",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "message.post",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/message.post",
+          "nativeRpc": "domain.message.post",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "parent": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "body": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "threadRoot": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "attachments": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              }
+            }
+          },
+          "required": [
+            "parent",
+            "body",
+            "attachments"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/08-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "channel",
+          "channel_member",
+          "discussion",
+          "message",
+          "thread",
+          "message_revision",
+          "message_reaction",
+          "message_read_state"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": "channel/member, discussion parent ref, message revisions, thread parent validation",
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/messaging/contracts.ts",
+        "interface": "message.post request/result schema + domain ports, no service I/O in core"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/messaging/commands.ts",
+        "interface": "typed command/query implementation; same policy/idempotency/revision gateway"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/messaging/repository.ts",
+        "interface": "domain tables/transaction/outbox/inbox; only composition root creates provider adapters"
+      },
+      {
+        "path": "tests/macro-integration/wp-08.test.ts",
+        "interface": "scenario + meaningful seeded failure control + recovery"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/shared/src/team/types.ts",
+        "symbols": [
+          "TeamLocalState / TeamTarget / TeamOutboxOp"
+        ],
+        "change": "Extend existing module for message.post; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-069"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/shared/src/team/state.ts",
+        "symbols": [
+          "TEAM_ACTIVITY_LIMIT",
+          "emptyTeamState",
+          "normalizeTeamState",
+          "base",
+          "r",
+          "arr",
+          "TeamActionContext",
+          "push",
+          "activity",
+          "requireText",
+          "v",
+          "requireMember"
+        ],
+        "lineStart": 13,
+        "change": "Extend existing module for message.post; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "TEAM_ACTIVITY_LIMIT",
+            "line": 13
+          },
+          {
+            "symbol": "emptyTeamState",
+            "line": 15
+          },
+          {
+            "symbol": "normalizeTeamState",
+            "line": 20
+          },
+          {
+            "symbol": "base",
+            "line": 21
+          },
+          {
+            "symbol": "r",
+            "line": 23
+          },
+          {
+            "symbol": "arr",
+            "line": 24
+          },
+          {
+            "symbol": "TeamActionContext",
+            "line": 37
+          },
+          {
+            "symbol": "push",
+            "line": 43
+          },
+          {
+            "symbol": "activity",
+            "line": 49
+          },
+          {
+            "symbol": "requireText",
+            "line": 57
+          },
+          {
+            "symbol": "v",
+            "line": 58
+          },
+          {
+            "symbol": "requireMember",
+            "line": 63
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/messaging.ts",
+        "symbols": [
+          "HANDLED_CHANNELS",
+          "registerMessagingHandlers",
+          "registry",
+          "listed",
+          "act",
+          "act",
+          "read"
+        ],
+        "lineStart": 21,
+        "change": "Extend existing module for message.post; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "HANDLED_CHANNELS",
+            "line": 21
+          },
+          {
+            "symbol": "registerMessagingHandlers",
+            "line": 56
+          },
+          {
+            "symbol": "registry",
+            "line": 57
+          },
+          {
+            "symbol": "listed",
+            "line": 61
+          },
+          {
+            "symbol": "act",
+            "line": 68
+          },
+          {
+            "symbol": "act",
+            "line": 123
+          },
+          {
+            "symbol": "read",
+            "line": 142
+          }
+        ]
+      },
+      {
+        "path": "packages/shared/src/agent/session-tool-defs.ts",
+        "symbols": [
+          "buildSessionToolDefs"
+        ],
+        "change": "Extend existing module for message.post; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-086"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/shared/src/team/sync.ts",
+        "symbols": [
+          "LocalOnlyTeamSyncAdapter / createTeamSyncAdapter"
+        ],
+        "change": "Extend existing module for message.post; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-070"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ChatPage.tsx",
+        "symbols": [
+          "EntityViewCapability",
+          "EntityViewId",
+          "KnowledgeSurfacePage",
+          "SessionWorkflowEditor",
+          "SessionGitOutline",
+          "SessionSecondaryFallback",
+          "buildSessionEntityCapabilities",
+          "ChatPageProps",
+          "ChatPage",
+          "siyuanConnected",
+          "sessionEntityCapabilities",
+          "session"
+        ],
+        "lineStart": 49,
+        "change": "Extend existing module for message.post; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "EntityViewCapability",
+            "line": 49
+          },
+          {
+            "symbol": "EntityViewId",
+            "line": 50
+          },
+          {
+            "symbol": "KnowledgeSurfacePage",
+            "line": 59
+          },
+          {
+            "symbol": "SessionWorkflowEditor",
+            "line": 60
+          },
+          {
+            "symbol": "SessionGitOutline",
+            "line": 65
+          },
+          {
+            "symbol": "SessionSecondaryFallback",
+            "line": 71
+          },
+          {
+            "symbol": "buildSessionEntityCapabilities",
+            "line": 79
+          },
+          {
+            "symbol": "ChatPageProps",
+            "line": 89
+          },
+          {
+            "symbol": "ChatPage",
+            "line": 93
+          },
+          {
+            "symbol": "siyuanConnected",
+            "line": 100
+          },
+          {
+            "symbol": "sessionEntityCapabilities",
+            "line": 101
+          },
+          {
+            "symbol": "session",
+            "line": 164
+          }
+        ]
+      },
+      {
+        "path": "packages/messaging-gateway/src/index.ts",
+        "symbols": [
+          "WhatsAppConfig",
+          "WhatsAppEvent",
+          "DiscordConfig",
+          "DiscordCredentials",
+          "DiscordEvent",
+          "MessagingGatewayRegistryOptions",
+          "MessagingBootstrapOptions",
+          "MessagingBootstrapHandle",
+          "PublishEventFn"
+        ],
+        "lineStart": 11,
+        "change": "Extend existing module for message.post; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "WhatsAppConfig",
+            "line": 11
+          },
+          {
+            "symbol": "WhatsAppEvent",
+            "line": 12
+          },
+          {
+            "symbol": "DiscordConfig",
+            "line": 17
+          },
+          {
+            "symbol": "DiscordCredentials",
+            "line": 18
+          },
+          {
+            "symbol": "DiscordEvent",
+            "line": 19
+          },
+          {
+            "symbol": "MessagingGatewayRegistryOptions",
+            "line": 58
+          },
+          {
+            "symbol": "MessagingBootstrapOptions",
+            "line": 62
+          },
+          {
+            "symbol": "MessagingBootstrapHandle",
+            "line": 63
+          },
+          {
+            "symbol": "PublishEventFn",
+            "line": 64
+          }
+        ]
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-08.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-08",
+        "providerSandbox": "not needed unless operation outbound",
+        "seed": 20260938
+      },
+      "expectedObservations": [
+        "Two users exchange channel messages",
+        "same API posts Company discussion",
+        "edit/delete/replies persist and notify authorized subscribers",
+        "agent transcript stays separate"
+      ],
+      "negativeControl": {
+        "mutation": "reply into thread from another parent",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    }
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-08",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-08.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Project Channels directory, Channel/DM/group composer, replies/threads/reactions/read/typing; entity Discussion shared Message parent. Live call button capability-disabled untilWP31.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [
+      "apps/electron/src/renderer/components/channels/ChannelDirectory.tsx",
+      "apps/electron/src/renderer/components/channels/ChannelView.tsx",
+      "apps/electron/src/renderer/components/channels/MessageThread.tsx",
+      "apps/electron/src/renderer/components/discussions/EntityDiscussion.tsx",
+      "tests/macro-integration/ui/col-07.spec.ts",
+      "tests/macro-integration/ui/col-08.spec.ts",
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "apps/electron/src/shared/routes.ts",
+      "apps/electron/src/shared/route-parser.ts",
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+      "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+      "packages/shared/src/workspace-domain/messaging/contracts.ts",
+      "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+      "tests/macro-integration/ui/col-09.spec.ts",
+      "tests/macro-integration/ui/col-10.spec.ts"
+    ],
+    "existingUiSeams": [
+      "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "apps/electron/src/shared/routes.ts",
+      "apps/electron/src/shared/route-parser.ts",
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx"
+    ],
+    "newUiFiles": [
+      "apps/electron/src/renderer/components/channels/ChannelDirectory.tsx",
+      "apps/electron/src/renderer/components/channels/ChannelView.tsx",
+      "apps/electron/src/renderer/components/channels/MessageThread.tsx",
+      "apps/electron/src/renderer/components/discussions/EntityDiscussion.tsx",
+      "tests/macro-integration/ui/col-07.spec.ts",
+      "tests/macro-integration/ui/col-08.spec.ts",
+      "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+      "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+      "packages/shared/src/workspace-domain/messaging/contracts.ts",
+      "tests/macro-integration/ui/col-09.spec.ts",
+      "tests/macro-integration/ui/col-10.spec.ts"
+    ],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

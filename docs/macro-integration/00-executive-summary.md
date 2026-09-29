@@ -1,5 +1,7 @@
 # Macro → ROX: executive summary
 
+Product уточнение Revision3: [PRD](product/PRD.md), [UI/UX](product/UI-UX-CONTRACT.md), [61target screens/219controls и recheck](24-reverification-and-product-spec.md), [52cloud execution packets](../../cloud/macro-integration/README.md). Это конкретное размещение и contract будущей реализации; architecture Revision2 ниже сохраняется.
+
 Исследование фиксирует **Macro `c966b79d40798c6c726a3b15fe90517941fc6e61`** и **ROX `f63294ba4fffa7238b46b24e918925a313ad0b12`**. Результат — архитектура **Revision 2**, 24 тематических документа, 38 семейств поверхностей, 162 capability rows и 52 implementation work packages. Это анализ текущего кода и план реализации; production feature parity не заявляется. Evidence registries и source diagrams позволяют проверить выводы по SHA, path, symbol и строкам.
 
 ## Что в Macro действительно нужно ROX

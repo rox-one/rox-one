@@ -1,0 +1,988 @@
+{
+  "schemaVersion": 1,
+  "screens": [
+    {
+      "id": "COL-01",
+      "title": "Страницы: библиотека",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-02",
+        "WP-10",
+        "WP-39",
+        "WP-40"
+      ],
+      "controls": [
+        "create",
+        "kind",
+        "project",
+        "open",
+        "search"
+      ]
+    },
+    {
+      "id": "COL-02",
+      "title": "Совместный документ",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-05",
+        "WP-10",
+        "WP-15",
+        "WP-16"
+      ],
+      "controls": [
+        "title",
+        "body",
+        "presence",
+        "mention",
+        "comment",
+        "sync",
+        "share"
+      ]
+    },
+    {
+      "id": "COL-03",
+      "title": "Страница-приложение",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-02",
+        "WP-03",
+        "WP-36",
+        "WP-39",
+        "WP-40"
+      ],
+      "controls": [
+        "preview",
+        "refresh",
+        "agent",
+        "source",
+        "publish"
+      ]
+    },
+    {
+      "id": "COL-04",
+      "title": "История документа",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-10",
+        "WP-15"
+      ],
+      "controls": [
+        "version",
+        "restore",
+        "export"
+      ]
+    },
+    {
+      "id": "COL-05",
+      "title": "Заметки: библиотека",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-02",
+        "WP-05",
+        "WP-06",
+        "WP-16",
+        "WP-39"
+      ],
+      "controls": [
+        "new",
+        "view",
+        "filter",
+        "import"
+      ]
+    },
+    {
+      "id": "COL-06",
+      "title": "Заметка: редактор и связи",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-05",
+        "WP-09",
+        "WP-10",
+        "WP-16",
+        "WP-36"
+      ],
+      "controls": [
+        "editor",
+        "wiki",
+        "properties",
+        "share",
+        "ai"
+      ]
+    },
+    {
+      "id": "COL-07",
+      "title": "Каналы и личные разговоры",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-01",
+        "WP-02",
+        "WP-03",
+        "WP-08",
+        "WP-40"
+      ],
+      "controls": [
+        "create-channel",
+        "dm",
+        "group",
+        "search"
+      ]
+    },
+    {
+      "id": "COL-08",
+      "title": "Канал: сообщения",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-07",
+        "WP-08",
+        "WP-09",
+        "WP-31",
+        "WP-39"
+      ],
+      "controls": [
+        "compose",
+        "attach",
+        "reply",
+        "reaction",
+        "call",
+        "more"
+      ]
+    },
+    {
+      "id": "COL-09",
+      "title": "Личный разговор",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-01",
+        "WP-03",
+        "WP-07",
+        "WP-08"
+      ],
+      "controls": [
+        "send",
+        "recipient",
+        "add",
+        "mute"
+      ]
+    },
+    {
+      "id": "COL-10",
+      "title": "Тред сообщения",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-07",
+        "WP-08",
+        "WP-09",
+        "WP-11"
+      ],
+      "controls": [
+        "root",
+        "reply",
+        "follow",
+        "task"
+      ]
+    },
+    {
+      "id": "COL-11",
+      "title": "Обсуждение сущности",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-07",
+        "WP-08",
+        "WP-09",
+        "WP-15",
+        "WP-25",
+        "WP-36"
+      ],
+      "controls": [
+        "new-thread",
+        "mention",
+        "anchor",
+        "resolve",
+        "agent"
+      ]
+    },
+    {
+      "id": "COL-12",
+      "title": "Задачи: список",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-02",
+        "WP-05",
+        "WP-11",
+        "WP-13",
+        "WP-14"
+      ],
+      "controls": [
+        "scope",
+        "entry",
+        "today",
+        "complete",
+        "filters"
+      ]
+    },
+    {
+      "id": "COL-13",
+      "title": "Задачи: доска",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-12",
+        "WP-13",
+        "WP-14"
+      ],
+      "controls": [
+        "view",
+        "move",
+        "column",
+        "count",
+        "quick"
+      ]
+    },
+    {
+      "id": "COL-14",
+      "title": "Задача: детали",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-07",
+        "WP-08",
+        "WP-09",
+        "WP-11",
+        "WP-13",
+        "WP-14",
+        "WP-36"
+      ],
+      "controls": [
+        "title",
+        "assignee",
+        "status",
+        "dates",
+        "checklist",
+        "dependency",
+        "source",
+        "delegate",
+        "trash"
+      ]
+    },
+    {
+      "id": "COL-15",
+      "title": "Создать задачу из сообщения",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-04",
+        "WP-07",
+        "WP-09",
+        "WP-11",
+        "WP-12"
+      ],
+      "controls": [
+        "source",
+        "title",
+        "project",
+        "assign",
+        "create"
+      ]
+    },
+    {
+      "id": "COL-16",
+      "title": "Повторяющаяся задача",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-05",
+        "WP-13",
+        "WP-14",
+        "WP-37"
+      ],
+      "controls": [
+        "rule",
+        "mode",
+        "zone",
+        "preview",
+        "save"
+      ]
+    },
+    {
+      "id": "COL-17",
+      "title": "Проект: обзор",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-01",
+        "WP-02",
+        "WP-03",
+        "WP-06",
+        "WP-08",
+        "WP-12",
+        "WP-36",
+        "WP-38",
+        "WP-39"
+      ],
+      "controls": [
+        "tabs",
+        "progress",
+        "new",
+        "agent",
+        "members"
+      ]
+    },
+    {
+      "id": "COL-18",
+      "title": "Проект: контекст и связи",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-02",
+        "WP-03",
+        "WP-06",
+        "WP-09",
+        "WP-12",
+        "WP-36",
+        "WP-38"
+      ],
+      "controls": [
+        "link",
+        "unlink",
+        "scope",
+        "source"
+      ]
+    },
+    {
+      "id": "COL-19",
+      "title": "Проект: создать и настроить",
+      "source": "plans/macro-integration/collaboration-screen-contracts.json",
+      "workPackages": [
+        "WP-01",
+        "WP-03",
+        "WP-12",
+        "WP-47"
+      ],
+      "controls": [
+        "name",
+        "description",
+        "directory",
+        "access",
+        "archive",
+        "delete"
+      ]
+    },
+    {
+      "id": "CRM-01",
+      "title": "Компании — список",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-22",
+        "WP-23",
+        "WP-24",
+        "WP-26",
+        "WP-38"
+      ],
+      "controls": [
+        "search",
+        "filter",
+        "open"
+      ]
+    },
+    {
+      "id": "CRM-02",
+      "title": "Компании — доска стадий",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-24",
+        "WP-04",
+        "WP-05"
+      ],
+      "controls": [
+        "move",
+        "view",
+        "stage-help"
+      ]
+    },
+    {
+      "id": "CRM-03",
+      "title": "Компания — единый контекст",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-22",
+        "WP-23",
+        "WP-24",
+        "WP-26",
+        "WP-38",
+        "WP-36"
+      ],
+      "controls": [
+        "linked-tab",
+        "agent",
+        "hide",
+        "owner-edit",
+        "revenue-edit"
+      ]
+    },
+    {
+      "id": "CRM-04",
+      "title": "Контакты и карточка человека",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-22",
+        "WP-23",
+        "WP-19"
+      ],
+      "controls": [
+        "email",
+        "company-link",
+        "merge"
+      ]
+    },
+    {
+      "id": "CRM-05",
+      "title": "Обсуждение компании/контакта",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-25",
+        "WP-08",
+        "WP-09",
+        "WP-07"
+      ],
+      "controls": [
+        "post",
+        "mention",
+        "reply"
+      ]
+    },
+    {
+      "id": "CRM-06",
+      "title": "Настройка pipeline и свойств",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-24",
+        "WP-03",
+        "WP-04"
+      ],
+      "controls": [
+        "stage-reorder",
+        "delete-stage",
+        "revenue"
+      ]
+    },
+    {
+      "id": "CRM-07",
+      "title": "Импорт CSV и результат миграции",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-22",
+        "WP-23",
+        "WP-24"
+      ],
+      "controls": [
+        "select-csv",
+        "import",
+        "retry"
+      ]
+    },
+    {
+      "id": "MAIL-01",
+      "title": "Inbox — аккаунты и папки",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-17",
+        "WP-18"
+      ],
+      "controls": [
+        "account",
+        "folder",
+        "refresh"
+      ]
+    },
+    {
+      "id": "MAIL-02",
+      "title": "Thread и чтение письма",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-17",
+        "WP-19",
+        "WP-39"
+      ],
+      "controls": [
+        "reply",
+        "attachment",
+        "task"
+      ]
+    },
+    {
+      "id": "MAIL-03",
+      "title": "Написать, ответить, переслать",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-19",
+        "WP-17"
+      ],
+      "controls": [
+        "draft",
+        "send",
+        "attach"
+      ]
+    },
+    {
+      "id": "MAIL-04",
+      "title": "Запланированная и неоднозначная отправка",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-21",
+        "WP-19"
+      ],
+      "controls": [
+        "schedule",
+        "cancel",
+        "reconcile"
+      ]
+    },
+    {
+      "id": "MAIL-05",
+      "title": "Подключение почты и доступы",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-17",
+        "WP-20",
+        "WP-21"
+      ],
+      "controls": [
+        "connect-jmap",
+        "oauth",
+        "revoke"
+      ]
+    },
+    {
+      "id": "MAIL-06",
+      "title": "Почта → контакт/компания",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-22",
+        "WP-26",
+        "WP-38"
+      ],
+      "controls": [
+        "open-contact",
+        "why",
+        "correct"
+      ]
+    },
+    {
+      "id": "CAL-01",
+      "title": "Календарь — день/неделя/месяц",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-27",
+        "WP-28",
+        "WP-29",
+        "WP-30"
+      ],
+      "controls": [
+        "range",
+        "calendars",
+        "move"
+      ]
+    },
+    {
+      "id": "CAL-02",
+      "title": "Редактор события и RSVP",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-28",
+        "WP-29"
+      ],
+      "controls": [
+        "save",
+        "rsvp",
+        "series"
+      ]
+    },
+    {
+      "id": "CAL-03",
+      "title": "Доступность и рабочее время",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-29",
+        "WP-27"
+      ],
+      "controls": [
+        "hours",
+        "calculate",
+        "slot"
+      ]
+    },
+    {
+      "id": "MTG-01",
+      "title": "Каталог встреч и звонков",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-30",
+        "WP-31",
+        "WP-35"
+      ],
+      "controls": [
+        "record",
+        "filters",
+        "import"
+      ]
+    },
+    {
+      "id": "MTG-02",
+      "title": "Планирование встречи и связанный контекст",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-30",
+        "WP-27",
+        "WP-35"
+      ],
+      "controls": [
+        "plan",
+        "event-link",
+        "context-link"
+      ]
+    },
+    {
+      "id": "MTG-03",
+      "title": "Локальная запись — активный recorder",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-35",
+        "WP-05"
+      ],
+      "controls": [
+        "pause",
+        "stop",
+        "recover"
+      ]
+    },
+    {
+      "id": "MTG-04",
+      "title": "Импорт аудио и готовность локальной ASR",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-35",
+        "WP-34"
+      ],
+      "controls": [
+        "import",
+        "transcribe",
+        "retry"
+      ]
+    },
+    {
+      "id": "MTG-05",
+      "title": "Live call — комната и участники",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-31",
+        "WP-32",
+        "WP-08"
+      ],
+      "controls": [
+        "join",
+        "screen",
+        "leave"
+      ]
+    },
+    {
+      "id": "MTG-06",
+      "title": "Согласие на запись и публикацию",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-33",
+        "WP-35",
+        "WP-39"
+      ],
+      "controls": [
+        "grant",
+        "start",
+        "revoke"
+      ]
+    },
+    {
+      "id": "MTG-07",
+      "title": "Архив звонка и запись",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-33",
+        "WP-34",
+        "WP-39"
+      ],
+      "controls": [
+        "play",
+        "retry-artifact",
+        "share"
+      ]
+    },
+    {
+      "id": "MTG-08",
+      "title": "Transcript, speaker mapping и summary evidence",
+      "source": "plans/macro-integration/domain-screen-contracts.json",
+      "workPackages": [
+        "WP-34",
+        "WP-35",
+        "WP-50",
+        "WP-13",
+        "WP-36"
+      ],
+      "controls": [
+        "seek",
+        "speaker",
+        "summary",
+        "task-proposal"
+      ]
+    },
+    {
+      "id": "SH-01",
+      "title": "Shell / navigation / multi-panel",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-40",
+        "WP-46"
+      ],
+      "controls": [
+        "destination",
+        "panel",
+        "back"
+      ]
+    },
+    {
+      "id": "SH-02",
+      "title": "Omnibox / unified search",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-06",
+        "WP-40"
+      ],
+      "controls": [
+        "query",
+        "scope",
+        "hit"
+      ]
+    },
+    {
+      "id": "SH-03",
+      "title": "Entity peek / backlinks / favorites",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-02",
+        "WP-09",
+        "WP-40"
+      ],
+      "controls": [
+        "peek",
+        "link",
+        "star"
+      ]
+    },
+    {
+      "id": "SH-04",
+      "title": "Sharing / grants / revoke",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-03",
+        "WP-51"
+      ],
+      "controls": [
+        "grant",
+        "revoke",
+        "public"
+      ]
+    },
+    {
+      "id": "SH-05",
+      "title": "Notifications / attention",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-07",
+        "WP-08",
+        "WP-09"
+      ],
+      "controls": [
+        "notification",
+        "read",
+        "unread"
+      ]
+    },
+    {
+      "id": "SH-06",
+      "title": "Activity / event provenance",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-04",
+        "WP-07",
+        "WP-37"
+      ],
+      "controls": [
+        "event",
+        "filter",
+        "receipt"
+      ]
+    },
+    {
+      "id": "SH-07",
+      "title": "Agent context / command preview",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-36",
+        "WP-50"
+      ],
+      "controls": [
+        "context",
+        "preview",
+        "toolreceipt"
+      ]
+    },
+    {
+      "id": "SH-08",
+      "title": "Session sharing / viewer",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-50"
+      ],
+      "controls": [
+        "audience",
+        "publish"
+      ]
+    },
+    {
+      "id": "SH-09",
+      "title": "Memory provenance / retraction",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-06",
+        "WP-36"
+      ],
+      "controls": [
+        "source",
+        "correction"
+      ]
+    },
+    {
+      "id": "SH-10",
+      "title": "Automation rule editor / run receipt",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-37"
+      ],
+      "controls": [
+        "trigger",
+        "action",
+        "run"
+      ]
+    },
+    {
+      "id": "SH-11",
+      "title": "Connections / workspace capabilities",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-01",
+        "WP-20",
+        "WP-27",
+        "WP-31",
+        "WP-52"
+      ],
+      "controls": [
+        "connect",
+        "probe",
+        "mode"
+      ]
+    },
+    {
+      "id": "SH-12",
+      "title": "Files / upload / safe viewer",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-39",
+        "WP-44"
+      ],
+      "controls": [
+        "upload",
+        "download",
+        "anchor"
+      ]
+    },
+    {
+      "id": "SH-13",
+      "title": "Spreadsheet Page representation",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-42"
+      ],
+      "controls": [
+        "cell",
+        "range"
+      ]
+    },
+    {
+      "id": "SH-14",
+      "title": "Canvas Page representation",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-43"
+      ],
+      "controls": [
+        "node",
+        "entitynode"
+      ]
+    },
+    {
+      "id": "SH-15",
+      "title": "Skills / Sources / coding PR review",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-45",
+        "WP-48"
+      ],
+      "controls": [
+        "skill",
+        "patch",
+        "apply"
+      ]
+    },
+    {
+      "id": "SH-16",
+      "title": "Sync/recovery status and mobile capability",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-05",
+        "WP-46",
+        "WP-51"
+      ],
+      "controls": [
+        "sync",
+        "capability"
+      ]
+    },
+    {
+      "id": "SH-17",
+      "title": "Cloud work packet review",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-45",
+        "WP-47",
+        "WP-52"
+      ],
+      "controls": [
+        "packet",
+        "results"
+      ]
+    },
+    {
+      "id": "SH-18",
+      "title": "Reminder detail / snooze / source",
+      "source": "plans/macro-integration/shared-screen-contracts.json",
+      "workPackages": [
+        "WP-14",
+        "WP-07",
+        "WP-40"
+      ],
+      "controls": [
+        "open",
+        "snooze",
+        "source"
+      ]
+    }
+  ]
+}

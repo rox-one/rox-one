@@ -1,0 +1,1168 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-11",
+  "title": "Chat → RoxTask with backlink, assignment and Project membership",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "tasks-implementation",
+  "dependencies": [
+    "WP-08",
+    "WP-09",
+    "WP-07",
+    "WP-04"
+  ],
+  "allowedPaths": [
+    "apps/electron/src/renderer/components/tasks/CreateTaskFromMessageDialog.tsx",
+    "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+    "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+    "apps/electron/src/renderer/pages/tasks/atoms.ts",
+    "apps/workspace-service/migrations/11-domain-contract.sql",
+    "apps/workspace-service/src/modules/tasks/commands.ts",
+    "apps/workspace-service/src/modules/tasks/repository.ts",
+    "packages/core/src/tasks/personal/rpc.ts",
+    "packages/core/src/tasks/personal/types.ts",
+    "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+    "packages/server-core/src/tasks/personal-persist.ts",
+    "packages/server-core/src/tasks/personal-tasks-service.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/workspace-domain/tasks/contracts.ts",
+    "tests/macro-integration/ui/col-15.spec.ts",
+    "tests/macro-integration/wp-11.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/collaboration-screen-contracts.json",
+    "packages/core/src/tasks/personal/types.ts",
+    "packages/server-core/src/tasks/personal-tasks-service.ts",
+    "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+    "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+    "packages/server-core/src/tasks/personal-persist.ts",
+    "apps/electron/src/renderer/pages/tasks/atoms.ts",
+    "packages/core/src/tasks/personal/rpc.ts",
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx"
+  ],
+  "goal": "Create from message twice with same key yields one task; source backlink visible; assignee notified; Project lists task; agent retrieves authorized conversation",
+  "expectedResults": [
+    "Create from message twice with same key yields one task",
+    "source backlink visible",
+    "assignee notified",
+    "Project lists task",
+    "agent retrieves authorized conversation"
+  ],
+  "screenRefs": [
+    {
+      "id": "COL-10",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "root",
+        "reply",
+        "follow",
+        "task"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "320px aside desktop or main mobile; quoted root, replies, sticky composer; close returns selected row focus.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED Project Channels/contextual ChannelRef route with thread={root}; entity detail thread={root}",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-12",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "scope",
+        "entry",
+        "today",
+        "complete",
+        "filters"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Personal rail224 + shared Project filters; row list; TaskDetail320/second panel.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing routes.view.tasks(id?); proposed view/scope query",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-14",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "title",
+        "assignee",
+        "status",
+        "dates",
+        "checklist",
+        "dependency",
+        "source",
+        "delegate",
+        "trash"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Title/status header; tabs Детали/Обсуждение/Связи/История; structured fields left, body/checklist main.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing tasks/task/{id}",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-15",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "source",
+        "title",
+        "project",
+        "assign",
+        "create"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Modal max560px; source card top; title/Project/assignee/date/body; preview backlink/privacy before create.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED overlay from MessageAction; commit navigates existing tasks/task/{id}",
+      "uiStatus": "PROPOSED"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-11",
+    "title": "Chat → RoxTask with backlink, assignment and Project membership",
+    "goal": "Create from message twice with same key yields one task; source backlink visible; assignee notified; Project lists task; agent retrieves authorized conversation",
+    "why": "task.createFromMessage creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "tasks-implementation",
+    "dependencies": [
+      "WP-08",
+      "WP-09",
+      "WP-07",
+      "WP-04"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/core/src/tasks/personal/types.ts",
+      "packages/server-core/src/tasks/personal-tasks-service.ts",
+      "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+      "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "packages/server-core/src/tasks/personal-persist.ts",
+      "apps/electron/src/renderer/pages/tasks/atoms.ts",
+      "packages/core/src/tasks/personal/rpc.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/tasks/contracts.ts",
+      "apps/workspace-service/src/modules/tasks/commands.ts",
+      "apps/workspace-service/src/modules/tasks/repository.ts",
+      "tests/macro-integration/wp-11.test.ts",
+      "apps/workspace-service/migrations/11-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "task",
+      "message",
+      "project_link"
+    ],
+    "apiChanges": "CreateTaskFromMessage / AssignTask / GetSourceContext",
+    "dbChanges": "RoxTask description/source refs; legacy PersonalTask mapping; one canonical task id",
+    "events": [
+      "task.created",
+      "task.assigned",
+      "entity.linked"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Resource read/write/action grants; deny forged actor/workspace; recheck linked refs",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Tasks",
+      "newBehavior": "Chat → RoxTask with backlink, assignment and Project membership",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "revisioned invalidation + replay cursor"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Create from message twice with same key yields one task; source backlink visible; assignee notified; Project lists task; agent retrieves authorized conversation"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken tasks boundary: unauthorized actor or dropped/duplicated event must fail WP-11 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Chat → RoxTask with backlink, assignment and Project membership; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Create from message twice with same key yields one task",
+      "source backlink visible",
+      "assignee notified",
+      "Project lists task",
+      "agent retrieves authorized conversation"
+    ],
+    "risks": [
+      "PersonalTask global namespace and workflow TaskSpec confusion"
+    ],
+    "estimatedComplexity": "L",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-11",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-08",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-09",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-07",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-04",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "task.createFromMessage",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/task.createFromMessage",
+          "nativeRpc": "domain.task.createFromMessage",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sourceMessage": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "project": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "assigneePrincipalIds": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10000
+              }
+            }
+          },
+          "required": [
+            "sourceMessage",
+            "title",
+            "assigneePrincipalIds"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/11-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "task",
+          "task_personal_placement",
+          "entity_link"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": "RoxTask description/source refs; legacy PersonalTask mapping; one canonical task id",
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/tasks/contracts.ts",
+        "interface": "task.createFromMessage request/result schema + domain ports, no service I/O in core"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/tasks/commands.ts",
+        "interface": "typed command/query implementation; same policy/idempotency/revision gateway"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/tasks/repository.ts",
+        "interface": "domain tables/transaction/outbox/inbox; only composition root creates provider adapters"
+      },
+      {
+        "path": "tests/macro-integration/wp-11.test.ts",
+        "interface": "scenario + meaningful seeded failure control + recovery"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/core/src/tasks/personal/types.ts",
+        "symbols": [
+          "PersonalTask / TaskLink / Recurrence / TaskProject",
+          "PersonalTask / TaskLink / TaskProject"
+        ],
+        "change": "Extend existing module for task.createFromMessage; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "R02",
+          "ROX-033"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/tasks/personal-tasks-service.ts",
+        "symbols": [
+          "backedUp",
+          "readPersonalTasks",
+          "putPersonalTasks",
+          "written",
+          "rejected",
+          "deletePersonalTasks",
+          "removed",
+          "migratePersonalTasks",
+          "existingMarker",
+          "imported",
+          "skipped",
+          "bundle"
+        ],
+        "lineStart": 23,
+        "change": "Extend existing module for task.createFromMessage; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "backedUp",
+            "line": 23
+          },
+          {
+            "symbol": "readPersonalTasks",
+            "line": 25
+          },
+          {
+            "symbol": "putPersonalTasks",
+            "line": 38
+          },
+          {
+            "symbol": "written",
+            "line": 43
+          },
+          {
+            "symbol": "rejected",
+            "line": 44
+          },
+          {
+            "symbol": "deletePersonalTasks",
+            "line": 57
+          },
+          {
+            "symbol": "removed",
+            "line": 58
+          },
+          {
+            "symbol": "migratePersonalTasks",
+            "line": 63
+          },
+          {
+            "symbol": "existingMarker",
+            "line": 68
+          },
+          {
+            "symbol": "imported",
+            "line": 72
+          },
+          {
+            "symbol": "skipped",
+            "line": 73
+          },
+          {
+            "symbol": "bundle",
+            "line": 74
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/personal-tasks.ts",
+        "symbols": [
+          "personalTasksStore / registerPersonalTasksHandlers"
+        ],
+        "change": "Extend existing module for task.createFromMessage; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-035"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "symbols": [
+          "PersonalTask",
+          "PersonalTaskStore",
+          "RecurrenceRule",
+          "TaskLink",
+          "TaskLinkKind",
+          "TaskPriority",
+          "TaskWhen",
+          "LINK_KINDS",
+          "PRIORITIES",
+          "RECURRENCES",
+          "CHIP_TONE",
+          "DetailTab"
+        ],
+        "lineStart": 12,
+        "change": "Extend existing module for task.createFromMessage; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "PersonalTask",
+            "line": 12
+          },
+          {
+            "symbol": "PersonalTaskStore",
+            "line": 13
+          },
+          {
+            "symbol": "RecurrenceRule",
+            "line": 14
+          },
+          {
+            "symbol": "TaskLink",
+            "line": 15
+          },
+          {
+            "symbol": "TaskLinkKind",
+            "line": 16
+          },
+          {
+            "symbol": "TaskPriority",
+            "line": 17
+          },
+          {
+            "symbol": "TaskWhen",
+            "line": 18
+          },
+          {
+            "symbol": "LINK_KINDS",
+            "line": 25
+          },
+          {
+            "symbol": "PRIORITIES",
+            "line": 26
+          },
+          {
+            "symbol": "RECURRENCES",
+            "line": 27
+          },
+          {
+            "symbol": "CHIP_TONE",
+            "line": 28
+          },
+          {
+            "symbol": "DetailTab",
+            "line": 30
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/tasks/personal-persist.ts",
+        "symbols": [
+          "PersonalTaskPersistStore / put",
+          "PersonalTaskPersistStore"
+        ],
+        "change": "Extend existing module for task.createFromMessage; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "R03",
+          "ROX-034"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/tasks/atoms.ts",
+        "symbols": [
+          "tasksViewAtom"
+        ],
+        "lineStart": 5,
+        "change": "Extend existing module for task.createFromMessage; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "tasksViewAtom",
+            "line": 5
+          }
+        ]
+      },
+      {
+        "path": "packages/core/src/tasks/personal/rpc.ts",
+        "symbols": [
+          "PersonalTaskMeta",
+          "PersonalTaskMigrationMarker",
+          "PersonalTasksSnapshot",
+          "PersonalTasksMigrateInput",
+          "PersonalTasksMigrateResult"
+        ],
+        "lineStart": 8,
+        "change": "Extend existing module for task.createFromMessage; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "PersonalTaskMeta",
+            "line": 8
+          },
+          {
+            "symbol": "PersonalTaskMigrationMarker",
+            "line": 11
+          },
+          {
+            "symbol": "PersonalTasksSnapshot",
+            "line": 20
+          },
+          {
+            "symbol": "PersonalTasksMigrateInput",
+            "line": 26
+          },
+          {
+            "symbol": "PersonalTasksMigrateResult",
+            "line": 31
+          }
+        ]
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-11.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-11",
+        "providerSandbox": "not needed unless operation outbound",
+        "seed": 20260941
+      },
+      "expectedObservations": [
+        "Create from message twice with same key yields one task",
+        "source backlink visible",
+        "assignee notified",
+        "Project lists task",
+        "agent retrieves authorized conversation"
+      ],
+      "negativeControl": {
+        "mutation": "create duplicate on retried message intent",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    }
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-11",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-11.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Message toolbar CreateTask dialog and Task/source chip/backlink/Project-assignee receipt; wider-audience sourceTransfer policy enforced.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [
+      "apps/electron/src/renderer/components/tasks/CreateTaskFromMessageDialog.tsx",
+      "tests/macro-integration/ui/col-15.spec.ts",
+      "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx"
+    ],
+    "existingUiSeams": [
+      "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx"
+    ],
+    "newUiFiles": [
+      "apps/electron/src/renderer/components/tasks/CreateTaskFromMessageDialog.tsx",
+      "tests/macro-integration/ui/col-15.spec.ts"
+    ],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

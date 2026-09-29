@@ -1,0 +1,1329 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-33",
+  "title": "Consent-based recording and preview with durable egress receipts",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "calls-implementation",
+  "dependencies": [
+    "WP-31",
+    "WP-32",
+    "WP-39",
+    "WP-52"
+  ],
+  "allowedPaths": [
+    "apps/electron/src/renderer/components/meetings/RecordingConsentDialog.tsx",
+    "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+    "apps/electron/src/shared/meetings-local.ts",
+    "apps/workspace-service/migrations/033_call_recording_consent_artifacts.sql",
+    "apps/workspace-service/migrations/33-domain-contract.sql",
+    "apps/workspace-service/src/jobs/call-recording-preview.ts",
+    "apps/workspace-service/src/modules/calls/commands.ts",
+    "apps/workspace-service/src/modules/calls/egress-reconciliation.ts",
+    "apps/workspace-service/src/modules/calls/recording.ts",
+    "apps/workspace-service/src/modules/calls/repository.ts",
+    "packages/core/src/meetings/model.ts",
+    "packages/server-core/src/handlers/rpc/meetings.ts",
+    "packages/server-core/src/meetings/__tests__/security.test.ts",
+    "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+    "packages/server-core/src/meetings/finalize.ts",
+    "packages/server-core/src/meetings/retention.ts",
+    "packages/server-core/src/meetings/rooms.ts",
+    "packages/server-core/src/meetings/security-policy.ts",
+    "packages/server-core/src/meetings/sharing.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/workspace-domain/calls/contracts.ts",
+    "services/rox-media-worker/src/preview.ts",
+    "tests/macro-integration/call-recording-artifact-recovery.test.ts",
+    "tests/macro-integration/ui/mtg-06.spec.ts",
+    "tests/macro-integration/wp-33.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/domain-screen-contracts.json",
+    "packages/core/src/meetings/model.ts",
+    "packages/server-core/src/meetings/rooms.ts",
+    "packages/server-core/src/handlers/rpc/meetings.ts",
+    "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+    "packages/server-core/src/meetings/finalize.ts",
+    "packages/server-core/src/meetings/sharing.ts",
+    "packages/server-core/src/meetings/security-policy.ts",
+    "packages/server-core/src/meetings/retention.ts",
+    "apps/electron/src/shared/meetings-local.ts",
+    "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+    "packages/server-core/src/meetings/__tests__/security.test.ts",
+    "plans/macro-integration/cloud/contract-amendments.json"
+  ],
+  "goal": "Recording after consent stores playable media; duplicate webhook one record; killed preview worker retries; partial object unavailable; signed URL expires",
+  "expectedResults": [
+    "Recording after consent stores playable media",
+    "duplicate webhook one record",
+    "killed preview worker retries",
+    "partial object unavailable",
+    "signed URL expires",
+    "Duplicate egress webhook and worker crash after object write produces one finalized artifact.",
+    "Participant revoke before capture start rejects; revoke while recording triggers defined stop/redaction behavior with receipt.",
+    "Truncated/hostile media times out/quarantines; ffmpeg preview retry never marks raw media/transcript ready.",
+    "Object or key deleted on retention -> signed URL fails and search/summary source removed within defined SLA."
+  ],
+  "screenRefs": [
+    {
+      "id": "MTG-06",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "grant",
+        "start",
+        "revoke"
+      ],
+      "placement": "Consent drawer linked Recording control; local capture consent and upload/room recording policy distinct.",
+      "proposedRoute": "meetings/meeting/{id}?panel=recording-consent",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "MTG-07",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "play",
+        "retry-artifact",
+        "share"
+      ],
+      "placement": "Existing detail tabs preserved; hosted archived call additive source representation, local audio player stays actual local path.",
+      "proposedRoute": "meetings/meeting/{id}?tab=recording",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-33",
+    "title": "Consent-based recording and preview with durable egress receipts",
+    "goal": "Recording after consent stores playable media; duplicate webhook one record; killed preview worker retries; partial object unavailable; signed URL expires",
+    "why": "call.startRecording creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "calls-implementation",
+    "dependencies": [
+      "WP-31",
+      "WP-32",
+      "WP-39",
+      "WP-52"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/core/src/meetings/model.ts",
+      "packages/server-core/src/meetings/rooms.ts",
+      "packages/server-core/src/handlers/rpc/meetings.ts",
+      "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+      "packages/server-core/src/meetings/finalize.ts",
+      "packages/server-core/src/meetings/sharing.ts",
+      "packages/server-core/src/meetings/security-policy.ts",
+      "packages/server-core/src/meetings/retention.ts",
+      "apps/electron/src/shared/meetings-local.ts",
+      "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+      "packages/server-core/src/meetings/__tests__/security.test.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/calls/contracts.ts",
+      "apps/workspace-service/src/modules/calls/commands.ts",
+      "apps/workspace-service/src/modules/calls/repository.ts",
+      "tests/macro-integration/wp-33.test.ts",
+      "apps/workspace-service/src/modules/calls/recording.ts",
+      "apps/workspace-service/src/modules/calls/egress-reconciliation.ts",
+      "apps/workspace-service/src/jobs/call-recording-preview.ts",
+      "services/rox-media-worker/src/preview.ts",
+      "apps/workspace-service/migrations/033_call_recording_consent_artifacts.sql",
+      "tests/macro-integration/call-recording-artifact-recovery.test.ts",
+      "apps/workspace-service/migrations/33-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "recording",
+      "file",
+      "media_job"
+    ],
+    "apiChanges": "StartRecording / StopRecording / HandleEgressWebhook / GetPreview",
+    "dbChanges": "consent version; egress unique; object finalize checksum; bounded ffmpeg job; retention",
+    "events": [
+      "call.recording_ready",
+      "recording.preview_ready"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Call/channel grant + guest expiry + recording consent",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Meetings / Call detail",
+      "newBehavior": "Consent-based recording and preview with durable egress receipts",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "media tracks+webhooks; call state via durable events"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Recording after consent stores playable media; duplicate webhook one record; killed preview worker retries; partial object unavailable; signed URL expires"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken calls boundary: unauthorized actor or dropped/duplicated event must fail WP-33 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Consent-based recording and preview with durable egress receipts; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Recording after consent stores playable media",
+      "duplicate webhook one record",
+      "killed preview worker retries",
+      "partial object unavailable",
+      "signed URL expires",
+      "Duplicate egress webhook and worker crash after object write produces one finalized artifact.",
+      "Participant revoke before capture start rejects; revoke while recording triggers defined stop/redaction behavior with receipt.",
+      "Truncated/hostile media times out/quarantines; ffmpeg preview retry never marks raw media/transcript ready.",
+      "Object or key deleted on retention -> signed URL fails and search/summary source removed within defined SLA."
+    ],
+    "risks": [
+      "LiveKit egress object format/CDN auth; ffmpeg sandbox/codecs/license"
+    ],
+    "estimatedComplexity": "XL",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-33",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-31",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-32",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-39",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-52",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "call.startRecording",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/call.startRecording",
+          "nativeRpc": "domain.call.startRecording",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "call": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "consentVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "consentingPrincipalIds": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 10000
+              }
+            }
+          },
+          "required": [
+            "call",
+            "consentVersion",
+            "consentingPrincipalIds"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/33-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "recording",
+          "media_job",
+          "object_asset",
+          "provider_receipt"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": [
+          "Unique egress session ID/provider event receipt; consent revision and participant consent evidence immutable.",
+          "Artifact object checksum/size/media codec/retention label; private object storage, signed access checked on read.",
+          "Job unique(recording_id,artifact_kind,input_checksum,processor_version); bounded ffmpeg CPU/time/container egress."
+        ],
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/calls/contracts.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/calls/commands.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/calls/repository.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/wp-33.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/calls/recording.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/calls/egress-reconciliation.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/jobs/call-recording-preview.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "services/rox-media-worker/src/preview.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/migrations/033_call_recording_consent_artifacts.sql",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/call-recording-artifact-recovery.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/core/src/meetings/model.ts",
+        "symbols": [
+          "Meeting",
+          "MEETING_KIND / MeetingEntityRef"
+        ],
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "D073",
+          "ROX-057"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/meetings/rooms.ts",
+        "symbols": [
+          "ROOM_PROVIDER_DECISION / joinRoom",
+          "ROOM_PROVIDER_DECISION / joinRoom / roomCapabilityEnabled"
+        ],
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "D072",
+          "ROX-064"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/meetings.ts",
+        "symbols": [
+          "MailLedgerEntry",
+          "ReminderLedgerEntry",
+          "proposalStores",
+          "jobStores",
+          "nativeRuntimes",
+          "mailLedgers",
+          "reminderLedgers",
+          "mailSeen",
+          "storeFor",
+          "existing",
+          "persistRoot",
+          "created"
+        ],
+        "lineStart": 31,
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "MailLedgerEntry",
+            "line": 31
+          },
+          {
+            "symbol": "ReminderLedgerEntry",
+            "line": 32
+          },
+          {
+            "symbol": "proposalStores",
+            "line": 36
+          },
+          {
+            "symbol": "jobStores",
+            "line": 37
+          },
+          {
+            "symbol": "nativeRuntimes",
+            "line": 38
+          },
+          {
+            "symbol": "mailLedgers",
+            "line": 39
+          },
+          {
+            "symbol": "reminderLedgers",
+            "line": 40
+          },
+          {
+            "symbol": "mailSeen",
+            "line": 41
+          },
+          {
+            "symbol": "storeFor",
+            "line": 43
+          },
+          {
+            "symbol": "existing",
+            "line": 44
+          },
+          {
+            "symbol": "persistRoot",
+            "line": 46
+          },
+          {
+            "symbol": "created",
+            "line": 47
+          }
+        ]
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+        "symbols": [
+          "MeetingListResult",
+          "MeetingPageItem",
+          "MeetingPageState",
+          "START_CHANNEL",
+          "CaptureStatus",
+          "MeetingsElectronApi",
+          "channelOpen",
+          "writeCaptureFlag",
+          "MeetingsWorkspaceProps",
+          "MeetingsWorkspace",
+          "load",
+          "api"
+        ],
+        "lineStart": 10,
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "MeetingListResult",
+            "line": 10
+          },
+          {
+            "symbol": "MeetingPageItem",
+            "line": 11
+          },
+          {
+            "symbol": "MeetingPageState",
+            "line": 12
+          },
+          {
+            "symbol": "START_CHANNEL",
+            "line": 15
+          },
+          {
+            "symbol": "CaptureStatus",
+            "line": 17
+          },
+          {
+            "symbol": "MeetingsElectronApi",
+            "line": 22
+          },
+          {
+            "symbol": "channelOpen",
+            "line": 37
+          },
+          {
+            "symbol": "writeCaptureFlag",
+            "line": 43
+          },
+          {
+            "symbol": "MeetingsWorkspaceProps",
+            "line": 54
+          },
+          {
+            "symbol": "MeetingsWorkspace",
+            "line": 59
+          },
+          {
+            "symbol": "load",
+            "line": 69
+          },
+          {
+            "symbol": "api",
+            "line": 70
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/meetings/finalize.ts",
+        "symbols": [
+          "applyNativeFinalizeIntent"
+        ],
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-066"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/meetings/sharing.ts",
+        "symbols": [
+          "MeetingShareRecord",
+          "SharingNativeEvidence",
+          "createShareRecord",
+          "nativeExportAvailable",
+          "sharingNativeEvidence",
+          "audienceRecap",
+          "searchVisible",
+          "exportMeeting",
+          "revokeMember"
+        ],
+        "lineStart": 9,
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "MeetingShareRecord",
+            "line": 9
+          },
+          {
+            "symbol": "SharingNativeEvidence",
+            "line": 19
+          },
+          {
+            "symbol": "createShareRecord",
+            "line": 24
+          },
+          {
+            "symbol": "nativeExportAvailable",
+            "line": 36
+          },
+          {
+            "symbol": "sharingNativeEvidence",
+            "line": 40
+          },
+          {
+            "symbol": "audienceRecap",
+            "line": 44
+          },
+          {
+            "symbol": "searchVisible",
+            "line": 49
+          },
+          {
+            "symbol": "exportMeeting",
+            "line": 55
+          },
+          {
+            "symbol": "revokeMember",
+            "line": 62
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/meetings/security-policy.ts",
+        "symbols": [
+          "staleConsent / approveThenRevoke"
+        ],
+        "lineStart": 41,
+        "change": "Replace illustrative decisions with persisted recording consent checks in actual command/provider flow.",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/meetings/retention.ts",
+        "symbols": [
+          "deleteOwnedCopies / nativeDeleteAvailable"
+        ],
+        "lineStart": 29,
+        "change": "Current native deletion unavailable flag cannot stand in for live artifact deletion receipt.",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/shared/meetings-local.ts",
+        "symbols": [
+          "LocalMeeting / LocalTranscript",
+          "LocalMeeting / MeetingsLocalApi"
+        ],
+        "lineStart": 84,
+        "change": "Show local-recording consent and upload consent as separate capabilities.",
+        "sourceEvidenceIds": [
+          "ROX-058"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+        "symbols": [
+          "record",
+          "exported",
+          "shared",
+          "revoked",
+          "record",
+          "json",
+          "record",
+          "deleted"
+        ],
+        "lineStart": 19,
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "record",
+            "line": 19
+          },
+          {
+            "symbol": "exported",
+            "line": 28
+          },
+          {
+            "symbol": "shared",
+            "line": 35
+          },
+          {
+            "symbol": "revoked",
+            "line": 36
+          },
+          {
+            "symbol": "record",
+            "line": 42
+          },
+          {
+            "symbol": "json",
+            "line": 43
+          },
+          {
+            "symbol": "record",
+            "line": 54
+          },
+          {
+            "symbol": "deleted",
+            "line": 60
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/meetings/__tests__/security.test.ts",
+        "symbols": [
+          "actor"
+        ],
+        "lineStart": 14,
+        "change": "Extend existing module for call.startRecording; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "actor",
+            "line": 14
+          }
+        ]
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-33.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-33",
+        "providerSandbox": "explicit isolated provider/media sandbox, no hosted production data",
+        "seed": 20260963
+      },
+      "expectedObservations": [
+        "Recording after consent stores playable media",
+        "duplicate webhook one record",
+        "killed preview worker retries",
+        "partial object unavailable",
+        "signed URL expires",
+        "Duplicate egress webhook and worker crash after object write produces one finalized artifact.",
+        "Participant revoke before capture start rejects; revoke while recording triggers defined stop/redaction behavior with receipt.",
+        "Truncated/hostile media times out/quarantines; ffmpeg preview retry never marks raw media/transcript ready.",
+        "Object or key deleted on retention -> signed URL fails and search/summary source removed within defined SLA."
+      ],
+      "negativeControl": {
+        "mutation": "recording ready before object finalize",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    },
+    "domainTouchpoints": [
+      {
+        "path": "packages/server-core/src/meetings/security-policy.ts",
+        "symbol": "staleConsent / approveThenRevoke",
+        "reason": "Replace illustrative decisions with persisted recording consent checks in actual command/provider flow.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 41
+      },
+      {
+        "path": "packages/server-core/src/meetings/retention.ts",
+        "symbol": "deleteOwnedCopies / nativeDeleteAvailable",
+        "reason": "Current native deletion unavailable flag cannot stand in for live artifact deletion receipt.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 29
+      },
+      {
+        "path": "apps/electron/src/shared/meetings-local.ts",
+        "symbol": "LocalMeeting / MeetingsLocalApi",
+        "reason": "Show local-recording consent and upload consent as separate capabilities.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 84
+      }
+    ],
+    "domainApiContracts": [
+      {
+        "name": "StartCallRecording",
+        "input": "{callRef:EntityRef,consentRevision:number,idempotencyKey:string}",
+        "output": "{recordingRef:EntityRef,state:\"starting\"|\"active\",receiptId:string}",
+        "errors": "consent_missing|consent_stale|denied|egress_unavailable"
+      },
+      {
+        "name": "FinalizeCallRecording",
+        "input": "{egressId:string,objectKey:string,checksum:string,sizeBytes:string}",
+        "output": "{artifactRef:EntityRef,state:\"ready\"|\"quarantined\"}",
+        "errors": "invalid_webhook|checksum_mismatch|unknown_egress"
+      }
+    ],
+    "apiChangesDetail": [
+      {
+        "name": "StartCallRecording",
+        "input": "{callRef:EntityRef,consentRevision:number,idempotencyKey:string}",
+        "output": "{recordingRef:EntityRef,state:\"starting\"|\"active\",receiptId:string}",
+        "errors": "consent_missing|consent_stale|denied|egress_unavailable"
+      },
+      {
+        "name": "FinalizeCallRecording",
+        "input": "{egressId:string,objectKey:string,checksum:string,sizeBytes:string}",
+        "output": "{artifactRef:EntityRef,state:\"ready\"|\"quarantined\"}",
+        "errors": "invalid_webhook|checksum_mismatch|unknown_egress"
+      }
+    ],
+    "domainConstraints": [
+      "Unique egress session ID/provider event receipt; consent revision and participant consent evidence immutable.",
+      "Artifact object checksum/size/media codec/retention label; private object storage, signed access checked on read.",
+      "Job unique(recording_id,artifact_kind,input_checksum,processor_version); bounded ffmpeg CPU/time/container egress."
+    ],
+    "reviewNotes": []
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native",
+    "provider-live"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-33",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-33.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Room/local-artifact consent, record/start/revoke/egress/upload/preview statuses; final checksum audience binding.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [
+      "apps/electron/src/renderer/components/meetings/RecordingConsentDialog.tsx",
+      "tests/macro-integration/ui/mtg-06.spec.ts"
+    ],
+    "existingUiSeams": [],
+    "newUiFiles": [
+      "apps/electron/src/renderer/components/meetings/RecordingConsentDialog.tsx",
+      "tests/macro-integration/ui/mtg-06.spec.ts"
+    ],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

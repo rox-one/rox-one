@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-29T23:51:53.189Z",
+  "status": "PLANNING_ARTIFACTS_VERIFIED_CLOUD_NOT_LAUNCHED",
+  "referenceCheckoutSha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b",
+  "counts": {
+    "packets": 52,
+    "screens": 61,
+    "controls": 219,
+    "gateTestsPassed": 11,
+    "additionalDraft07SchemasCompiled": 4
+  },
+  "checks": [
+    {
+      "name": "planning-integrity",
+      "command": [
+        "bun",
+        "scripts/macro-integration/cloud/cli.mjs",
+        "validate"
+      ],
+      "expectedExitCode": 0,
+      "observedExitCode": 0,
+      "logPath": "plans/macro-integration/cloud/verification/planning-integrity.log",
+      "sha256": "5040c843ece20ed1fae0cc39e7f854dd6cdb29e23310f82a3fc620b0b49ac912",
+      "stdout": "{\n  \"status\": \"passed\",\n  \"kind\": \"planning-integrity-only\",\n  \"packets\": 52,\n  \"screens\": 61,\n  \"controls\": 219\n}"
+    },
+    {
+      "name": "cloud-gate-tests",
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=tap",
+        "scripts/macro-integration/cloud/gates.test.mjs"
+      ],
+      "expectedExitCode": 0,
+      "observedExitCode": 0,
+      "logPath": "plans/macro-integration/cloud/verification/cloud-gate-tests.log",
+      "sha256": "abe6d69f699f0515d7a909a837997189de46d1ba5fa7b0358f6f1f148ce6ebcf",
+      "stdout": "TAP version 13\n# Subtest: successor opens only from verified dependency; overlapping file owners serialize\nok 1 - successor opens only from verified dependency; overlapping file owners serialize\n  ---\n  duration_ms: 11.388208\n  type: 'test'\n  ...\n# Subtest: stale spec / missing lane / unreviewed / unowned / broken test block successor\nok 2 - stale spec / missing lane / unreviewed / unowned / broken test block successor\n  ---\n  duration_ms: 1.652917\n  type: 'test'\n  ...\n# Subtest: fixture cannot satisfy provider read-back gate\nok 3 - fixture cannot satisfy provider read-back gate\n  ---\n  duration_ms: 0.329208\n  type: 'test'\n  ...\n# Subtest: unintegrated dependency commit denied by actual ancestry port\nok 4 - unintegrated dependency commit denied by actual ancestry port\n  ---\n  duration_ms: 0.341958\n  type: 'test'\n  ...\n# Subtest: parent directory lease overlaps child, unrelated paths do not\nok 5 - parent directory lease overlaps child, unrelated paths do not\n  ---\n  duration_ms: 1.030459\n  type: 'test'\n  ...\n# Subtest: preflight rejects storage/toolchain/dirty/platform/CPU failures and requires16GiB renderer\nok 6 - preflight rejects storage/toolchain/dirty/platform/CPU failures and requires16GiB renderer\n  ---\n  duration_ms: 0.343584\n  type: 'test'\n  ...\n# Subtest: real proof checksum mutation and symlink traversal rejected\nok 7 - real proof checksum mutation and symlink traversal rejected\n  ---\n  duration_ms: 10.540708\n  type: 'test'\n  ...\n# Subtest: fake changedPaths cannot conceal actual unowned file\nok 8 - fake changedPaths cannot conceal actual unowned file\n  ---\n  duration_ms: 0.570208\n  type: 'test'\n  ...\n# Subtest: receipt for successor without transitive prerequisite is not accepted\nok 9 - receipt for successor without transitive prerequisite is not accepted\n  ---\n  duration_ms: 0.252416\n  type: 'test'\n  ...\n# Subtest: infra failure and unbound caught flag do not prove mutation sensitivity\nok 10 - infra failure and unbound caught flag do not prove mutation sensitivity\n  ---\n  duration_ms: 0.227041\n  type: 'test'\n  ...\n# Subtest: actual CLI rejects an unallocated screen implementation path\nok 11 - actual CLI rejects an unallocated screen implementation path\n  ---\n  duration_ms: 9277.412084\n  type: 'test'\n  ...\n1..11\n# tests 11\n# suites 0\n# pass 11\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 16641.886292"
+    },
+    {
+      "name": "dag-ready",
+      "command": [
+        "bun",
+        "scripts/macro-integration/cloud/cli.mjs",
+        "ready",
+        "e780e73ae84c977cf81546b49140d318dfcd6049"
+      ],
+      "expectedExitCode": 0,
+      "observedExitCode": 0,
+      "logPath": "plans/macro-integration/cloud/verification/dag-ready.log",
+      "sha256": "a22a6dcde3d20725d6488941fb1c7f42e5d43e1c8699ae6420d9d3fca72d78f5",
+      "stdout": "{\n  \"inputSha\": \"e780e73ae84c977cf81546b49140d318dfcd6049\",\n  \"execution\": \"not-launched\",\n  \"ready\": [\n    \"WP-01\",\n    \"WP-48\"\n  ],\n  \"deferred\": [],\n  \"receiptErrors\": [],\n  \"verified\": [],\n  \"blocked\": [\n    {\n      \"id\": \"WP-02\",\n      \"missing\": [\n        \"WP-01\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-03\",\n      \"missing\": [\n        \"WP-01\",\n        \"WP-02\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-04\",\n      \"missing\": [\n        \"WP-02\",\n        \"WP-03\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-05\",\n      \"missing\": [\n        \"WP-04\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-06\",\n      \"missing\": [\n        \"WP-04\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-07\",\n      \"missing\": [\n        \"WP-04\",\n        \"WP-03\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-08\",\n      \"missing\": [\n        \"WP-04\",\n        \"WP-03\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-09\",\n      \"missing\": [\n        \"WP-08\",\n        \"WP-07\",\n        \"WP-06\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-10\",\n      \"missing\": [\n        \"WP-05\",\n        \"WP-03\",\n        \"WP-06\",\n        \"WP-09\",\n        \"WP-49\",\n        \"WP-51\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-11\",\n      \"missing\": [\n        \"WP-08\",\n        \"WP-09\",\n        \"WP-07\",\n        \"WP-04\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-12\",\n      \"missing\": [\n        \"WP-11\",\n        \"WP-02\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-13\",\n      \"missing\": [\n        \"WP-11\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-14\",\n      \"missing\": [\n        \"WP-13\",\n        \"WP-07\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-15\",\n      \"missing\": [\n        \"WP-10\",\n        \"WP-08\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-16\",\n      \"missing\": [\n        \"WP-02\",\n        \"WP-06\",\n        \"WP-10\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-17\",\n      \"missing\": [\n        \"WP-04\",\n        \"WP-03\",\n        \"WP-06\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-18\",\n      \"missing\": [\n        \"WP-17\",\n        \"WP-05\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-19\",\n      \"missing\": [\n        \"WP-17\",\n        \"WP-18\",\n        \"WP-39\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-20\",\n      \"missing\": [\n        \"WP-18\",\n        \"WP-19\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-21\",\n      \"missing\": [\n        \"WP-18\",\n        \"WP-19\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-22\",\n      \"missing\": [\n        \"WP-17\",\n        \"WP-18\",\n        \"WP-02\",\n        \"WP-03\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-23\",\n      \"missing\": [\n        \"WP-22\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-24\",\n      \"missing\": [\n        \"WP-22\",\n        \"WP-03\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-25\",\n      \"missing\": [\n        \"WP-24\",\n        \"WP-08\",\n        \"WP-09\",\n        \"WP-07\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-26\",\n      \"missing\": [\n        \"WP-22\",\n        \"WP-25\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-27\",\n      \"missing\": [\n        \"WP-04\",\n        \"WP-03\",\n        \"WP-02\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-28\",\n      \"missing\": [\n        \"WP-27\",\n        \"WP-06\",\n        \"WP-09\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-29\",\n      \"missing\": [\n        \"WP-28\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-30\",\n      \"missing\": [\n        \"WP-28\",\n        \"WP-12\",\n        \"WP-22\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-31\",\n      \"missing\": [\n        \"WP-08\",\n        \"WP-03\",\n        \"WP-04\",\n        \"WP-12\",\n        \"WP-52\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-32\",\n      \"missing\": [\n        \"WP-31\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-33\",\n      \"missing\": [\n        \"WP-31\",\n        \"WP-32\",\n        \"WP-39\",\n        \"WP-52\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-34\",\n      \"missing\": [\n        \"WP-33\",\n        \"WP-06\",\n        \"WP-39\",\n        \"WP-50\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-35\",\n      \"missing\": [\n        \"WP-02\",\n        \"WP-03\",\n        \"WP-04\",\n        \"WP-05\",\n        \"WP-39\",\n        \"WP-51\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-36\",\n      \"missing\": [\n        \"WP-04\",\n        \"WP-06\",\n        \"WP-09\",\n        \"WP-51\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-37\",\n      \"missing\": [\n        \"WP-07\",\n        \"WP-36\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-38\",\n      \"missing\": [\n        \"WP-12\",\n        \"WP-25\",\n        \"WP-28\",\n        \"WP-34\",\n        \"WP-36\",\n        \"WP-50\",\n        \"WP-39\",\n        \"WP-16\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-39\",\n      \"missing\": [\n        \"WP-02\",\n        \"WP-03\",\n        \"WP-04\",\n        \"WP-06\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-40\",\n      \"missing\": [\n        \"WP-02\",\n        \"WP-03\",\n        \"WP-06\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-41\",\n      \"missing\": [\n        \"WP-10\",\n        \"WP-15\",\n        \"WP-16\",\n        \"WP-21\",\n        \"WP-26\",\n        \"WP-29\",\n        \"WP-34\",\n        \"WP-35\",\n        \"WP-37\",\n        \"WP-38\",\n        \"WP-39\",\n        \"WP-40\",\n        \"WP-50\",\n        \"WP-51\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-42\",\n      \"missing\": [\n        \"WP-10\",\n        \"WP-15\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-43\",\n      \"missing\": [\n        \"WP-10\",\n        \"WP-39\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-44\",\n      \"missing\": [\n        \"WP-39\",\n        \"WP-15\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-45\",\n      \"missing\": [\n        \"WP-36\",\n        \"WP-12\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-46\",\n      \"missing\": [\n        \"WP-41\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-47\",\n      \"missing\": [\n        \"WP-31\",\n        \"WP-33\",\n        \"WP-39\",\n        \"WP-04\",\n        \"WP-10\",\n        \"WP-18\",\n        \"WP-34\",\n        \"WP-17\",\n        \"WP-35\",\n        \"WP-52\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-49\",\n      \"missing\": [\n        \"WP-02\",\n        \"WP-03\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-50\",\n      \"missing\": [\n        \"WP-36\",\n        \"WP-03\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-51\",\n      \"missing\": [\n        \"WP-03\",\n        \"WP-04\",\n        \"WP-05\"\n      ],\n      \"invalidReceipt\": false\n    },\n    {\n      \"id\": \"WP-52\",\n      \"missing\": [\n        \"WP-01\",\n        \"WP-03\",\n        \"WP-04\",\n        \"WP-51\"\n      ],\n      \"invalidReceipt\": false\n    }\n  ]\n}"
+    },
+    {
+      "name": "local-preflight",
+      "command": [
+        "bun",
+        "scripts/macro-integration/cloud/cli.mjs",
+        "preflight",
+        "e780e73ae84c977cf81546b49140d318dfcd6049"
+      ],
+      "expectedExitCode": 2,
+      "observedExitCode": 2,
+      "logPath": "plans/macro-integration/cloud/verification/local-preflight.log",
+      "sha256": "3fba8668bc1c87c422aa9f70ea77e9ba449eee499a43cf68a266df63f5007a17",
+      "stdout": "{\n  \"status\": \"blocked\",\n  \"checks\": [\n    {\n      \"name\": \"commit\",\n      \"passed\": true,\n      \"observed\": {\n        \"actual\": \"e780e73ae84c977cf81546b49140d318dfcd6049\",\n        \"expected\": \"e780e73ae84c977cf81546b49140d318dfcd6049\"\n      }\n    },\n    {\n      \"name\": \"clean-checkout\",\n      \"passed\": false,\n      \"observed\": {\n        \"dirty\": true\n      }\n    },\n    {\n      \"name\": \"disk\",\n      \"passed\": true,\n      \"observed\": {\n        \"actualGiB\": 59.99702453613281,\n        \"minimumGiB\": 8\n      }\n    },\n    {\n      \"name\": \"memory\",\n      \"passed\": true,\n      \"observed\": {\n        \"actualGiB\": 64,\n        \"minimumGiB\": 8\n      }\n    },\n    {\n      \"name\": \"cpu\",\n      \"passed\": true,\n      \"observed\": {\n        \"actual\": 10,\n        \"minimum\": 4\n      }\n    },\n    {\n      \"name\": \"platform\",\n      \"passed\": false,\n      \"observed\": {\n        \"actual\": \"darwin\",\n        \"lane\": \"linux-domain\"\n      }\n    },\n    {\n      \"name\": \"bun\",\n      \"passed\": false,\n      \"observed\": {\n        \"actual\": \"1.4.2\",\n        \"expected\": \"1.3.14\"\n      }\n    },\n    {\n      \"name\": \"node\",\n      \"passed\": false,\n      \"observed\": {\n        \"actual\": 26,\n        \"expected\": 22\n      }\n    }\n  ],\n  \"kind\": \"machine-prerequisites-only\",\n  \"providers\": \"not-probed, no secret access or launch\"\n}"
+    },
+    {
+      "name": "render-packet",
+      "status": "passed",
+      "command": [
+        "bun",
+        "scripts/macro-integration/cloud/cli.mjs",
+        "render",
+        "WP-10"
+      ],
+      "sha256": "295dc8036ca78a483619b98f2696dd9f2f88722bdf58807da8a8a6bc32b13a38",
+      "meaning": "actual rendered prompt hash, no job submission"
+    },
+    {
+      "name": "additional-draft07-schemas",
+      "status": "passed",
+      "compiled": 4,
+      "unionEquality": "leaf/supplement/full request equal",
+      "meaning": "schema compilation only; no server export-policy execution"
+    }
+  ],
+  "launch": {
+    "status": "PREPARED_NOT_LAUNCHED",
+    "submittedJobs": 0,
+    "implementedNewFeatureReceipts": 0,
+    "readyRoots": [
+      "WP-01",
+      "WP-48"
+    ],
+    "localPreflight": "blocked as expected: current macOS/toolchain/dirty artifact preparation does not satisfy pinned clean Linux lane"
+  },
+  "independentReviews": [
+    {
+      "agent": "macro_collab",
+      "scope": "canonical sourceTransfer union/full request + exact Message/dialog path normalization",
+      "schemaCases": {
+        "accepted": 4,
+        "rejected": 17
+      }
+    },
+    {
+      "agent": "rox_audit",
+      "scope": "19screen owners/77implementation-path occurrences + actual allocation-guard CLI test + sourceTransfer equality",
+      "schemaCases": {
+        "accepted": 2,
+        "rejected": 6
+      }
+    },
+    {
+      "agent": "macro_domains",
+      "scope": "actual routed domain/shared host seams identified and allocated by root",
+      "resolution": {
+        "status": "PASS_READ_ONLY",
+        "closedFindings": 9,
+        "existingFiles": 10,
+        "ownerAssignments": 18,
+        "checks": [
+          "path exists",
+          "manifest/packet allowedPaths",
+          "readFirst",
+          "existingUiSeams/assignedUiPaths",
+          "not newUiFiles",
+          "root/nestedMeetingsPage remain distinct"
+        ]
+      }
+    }
+  ],
+  "attemptHistory": [
+    "Initial disk-full native screenshot failed; subsequent capture timed out; later installed shell/Tasks screenshot and AX navigation succeeded, binary SHA/fonts/new E2E not verified",
+    "Initial legacy gate fixture suite3/7 during schema synchronization, repaired11/11 current",
+    "CLI stale domain input digest was rejected during concurrent spec editing; final rebuilt manifest current",
+    "Missing UI file allocation identified and corrected; actual baseline/mutant guard rejects unallocated path"
+  ],
+  "limits": [
+    "No new feature implementation",
+    "No cloud runner allocation or paid provider call",
+    "Local preflight blocked is an observed guard outcome, not cloud success",
+    "Artifact hashes/receipt guards cannot independently attest worker honesty or production behavior"
+  ],
+  "currentArtifactHashes": [
+    {
+      "path": "plans/macro-integration/collaboration-screen-contracts.json",
+      "sha256": "63c95d71b0f263a1d593a4539be9acdda6cc40f0a3897457ef311f8c8633b89b"
+    },
+    {
+      "path": "plans/macro-integration/domain-screen-contracts.json",
+      "sha256": "17c6876ff3903c4ea6369bd9b9f321550f5a346021ed9179e045b19ee686c59b"
+    },
+    {
+      "path": "plans/macro-integration/shared-screen-contracts.json",
+      "sha256": "f3195ebd4e24b811cab0c9c8e1e2da29f4aac7c1b46a75d0be44f6c510578aa8"
+    },
+    {
+      "path": "plans/macro-integration/cloud/ui-slices.json",
+      "sha256": "64503f3a114312930098039cd61d6c487a2c79f85dc6e12b095197a6a61f9c02"
+    },
+    {
+      "path": "plans/macro-integration/cloud/contract-amendments.json",
+      "sha256": "0d525c24c846cbf4ad3a6c7b235d9774f16a0ef70197117768563d737188cf4d"
+    },
+    {
+      "path": "docs/macro-integration/product/PRD.md",
+      "sha256": "9709318c206281fa9a5783f24031c77b6d36de2c60d909d4e4b8dea7491dafb6"
+    },
+    {
+      "path": "docs/macro-integration/product/UI-UX-CONTRACT.md",
+      "sha256": "1d913a2c22f87c2d3dd87e529e1e983c050602f70693879bf667cee30dfaaa78"
+    },
+    {
+      "path": "docs/macro-integration/19-target-architecture.md",
+      "sha256": "951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"
+    },
+    {
+      "path": "docs/macro-integration/18-licensing.md",
+      "sha256": "e433a3e9c6b4db406e39335382249a6a0b71f799f385ec3af5543845de926cf1"
+    },
+    {
+      "path": "plans/macro-integration/work-packages.json",
+      "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"
+    },
+    {
+      "path": "plans/macro-integration/dependency-dag.json",
+      "sha256": "f74014a13fb1a3b78ef6c5d778a6bdd448af7944e92fb05ab96c21517c8e3c35"
+    },
+    {
+      "path": "cloud/macro-integration/AGENTS.md",
+      "sha256": "925e9e52d1281c4e2d5ad5fcda90c2acbc031e608c8b0271e7971c19bb0cb048"
+    },
+    {
+      "path": "cloud/macro-integration/SPEC.md",
+      "sha256": "eebd13530ccd287e7525aee8b5f28cb7fea2852796dc95280dd059f459cedf4b"
+    },
+    {
+      "path": "cloud/macro-integration/completion.schema.json",
+      "sha256": "2a9af6e7a76ef32f4d9d3e59220a5c898dbad379aaa1e9315d8aa1928272005d"
+    },
+    {
+      "path": "scripts/macro-integration/cloud/gates.mjs",
+      "sha256": "bacb23add2f8743a3b732c6780186a804eab2d87228e7ad782140a3dec4d1594"
+    },
+    {
+      "path": "scripts/macro-integration/cloud/cli.mjs",
+      "sha256": "ff32580ea977c1150835cc4b2266df97c9299ab9fa14b168d7462ede872f5b28"
+    },
+    {
+      "path": "scripts/macro-integration/cloud/build.mjs",
+      "sha256": "baaebc849cca481ffa05b2ad2e73524c81ae2fa1bcde8f558346ddee423b34b7"
+    }
+  ],
+  "nativeObservation": "docs/macro-integration/product/native-ui-observation.md"
+}

@@ -1,0 +1,1262 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-17",
+  "title": "Preserve JMAP Mail and expose provider-neutral domain",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "mail-implementation",
+  "dependencies": [
+    "WP-04",
+    "WP-03",
+    "WP-06"
+  ],
+  "allowedPaths": [
+    "apps/electron/src/main/mail/__tests__/mail-model.test.ts",
+    "apps/electron/src/main/mail/local-ipc.ts",
+    "apps/electron/src/main/mail/mail-model.ts",
+    "apps/electron/src/main/mail/mail-service.ts",
+    "apps/electron/src/preload/bootstrap.ts",
+    "apps/electron/src/renderer/pages/InboxPage.tsx",
+    "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+    "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+    "apps/electron/src/shared/mail-local.ts",
+    "apps/workspace-service/migrations/017_mail_accounts_entities_aliases.sql",
+    "apps/workspace-service/migrations/17-domain-contract.sql",
+    "apps/workspace-service/src/modules/mail/adapters/jmap-adapter.ts",
+    "apps/workspace-service/src/modules/mail/commands.ts",
+    "apps/workspace-service/src/modules/mail/repository.ts",
+    "apps/workspace-service/src/modules/mail/service.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/mail/__tests__/mail.test.ts",
+    "packages/shared/src/mail/jmap-client.ts",
+    "packages/shared/src/mail/provisioning.ts",
+    "packages/shared/src/workspace-domain/mail/commands.ts",
+    "packages/shared/src/workspace-domain/mail/contracts.ts",
+    "packages/shared/src/workspace-domain/mail/provider-contract.ts",
+    "packages/shared/src/workspace-domain/mail/types.ts",
+    "tests/macro-integration/mail-domain-jmap-regression.test.ts",
+    "tests/macro-integration/wp-17.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/domain-screen-contracts.json",
+    "packages/shared/src/mail/jmap-client.ts",
+    "apps/electron/src/main/mail/mail-service.ts",
+    "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+    "apps/electron/src/main/mail/local-ipc.ts",
+    "apps/electron/src/main/mail/mail-model.ts",
+    "apps/electron/src/shared/mail-local.ts",
+    "apps/electron/src/preload/bootstrap.ts",
+    "packages/shared/src/mail/provisioning.ts",
+    "packages/shared/src/mail/__tests__/mail.test.ts",
+    "apps/electron/src/main/mail/__tests__/mail-model.test.ts",
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+    "apps/electron/src/renderer/pages/InboxPage.tsx"
+  ],
+  "goal": "Existing Stalwart inbox/detail/draft/send still work; threads canonical/searchable; other user cannot read account; actual send uses provider receipt",
+  "expectedResults": [
+    "Existing Stalwart inbox/detail/draft/send still work",
+    "threads canonical/searchable",
+    "other user cannot read account",
+    "actual send uses provider receipt",
+    "Existing JMAP mailbox provisioning, push, inbox, draft, move/flag/send pass without connecting Gmail.",
+    "Two workspaces with same email address cannot see each other’s metadata via IPC broadcast or attachment retrieval.",
+    "Remote submission rejected in loopback environment remains explicit unsupported path; do not turn fixture success into production receipt."
+  ],
+  "screenRefs": [
+    {
+      "id": "MAIL-01",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "account",
+        "folder",
+        "refresh"
+      ],
+      "placement": "Сохранить existing Inbox All/Decisions/Messages; «Почта» секция navigator получает account switch, не заменяет notification inbox.",
+      "proposedRoute": "inbox?account={accountId}&folder={folderId}",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "MAIL-02",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "reply",
+        "attachment",
+        "task"
+      ],
+      "placement": "Existing MailReader остаётся message view внутри additive Thread wrapper; old mail: item aliases сохраняются.",
+      "proposedRoute": "inbox/item/{canonicalThreadRef}?account={accountId}&message={messageId}",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "MAIL-03",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "draft",
+        "send",
+        "attach"
+      ],
+      "placement": "Existing MailCompose preserved; account From, receipt status and attachment object refs added.",
+      "proposedRoute": "inbox?compose={draftId}&account={accountId}",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    },
+    {
+      "id": "MAIL-05",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "connect-jmap",
+        "oauth",
+        "revoke"
+      ],
+      "placement": "Inbox «Добавить аккаунт» opens existing Connections contextual panel; no second accounts settings system.",
+      "proposedRoute": "connections?kind=mail&account={accountId}",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-17",
+    "title": "Preserve JMAP Mail and expose provider-neutral domain",
+    "goal": "Existing Stalwart inbox/detail/draft/send still work; threads canonical/searchable; other user cannot read account; actual send uses provider receipt",
+    "why": "mail.openThread creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "mail-implementation",
+    "dependencies": [
+      "WP-04",
+      "WP-03",
+      "WP-06"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/shared/src/mail/jmap-client.ts",
+      "apps/electron/src/main/mail/mail-service.ts",
+      "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+      "apps/electron/src/main/mail/local-ipc.ts",
+      "apps/electron/src/main/mail/mail-model.ts",
+      "apps/electron/src/shared/mail-local.ts",
+      "apps/electron/src/preload/bootstrap.ts",
+      "packages/shared/src/mail/provisioning.ts",
+      "packages/shared/src/mail/__tests__/mail.test.ts",
+      "apps/electron/src/main/mail/__tests__/mail-model.test.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/mail/contracts.ts",
+      "apps/workspace-service/src/modules/mail/commands.ts",
+      "apps/workspace-service/src/modules/mail/repository.ts",
+      "tests/macro-integration/wp-17.test.ts",
+      "packages/shared/src/workspace-domain/mail/types.ts",
+      "packages/shared/src/workspace-domain/mail/provider-contract.ts",
+      "packages/shared/src/workspace-domain/mail/commands.ts",
+      "apps/workspace-service/src/modules/mail/service.ts",
+      "apps/workspace-service/src/modules/mail/adapters/jmap-adapter.ts",
+      "apps/workspace-service/migrations/017_mail_accounts_entities_aliases.sql",
+      "tests/macro-integration/mail-domain-jmap-regression.test.ts",
+      "apps/workspace-service/migrations/17-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "mail_account",
+      "mail_thread",
+      "mail_message",
+      "mail_label"
+    ],
+    "apiChanges": "GetMailThread / QueryInbox / SendMail adapter port; retain JMAP bridge",
+    "dbChanges": "provider account aliases; mail entity metadata and immutable message body; token references separate",
+    "events": [
+      "mail.message_received",
+      "mail.message_sent"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Account owner/delegated inbox; links never grant email-body access",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Inbox / Mail",
+      "newBehavior": "Preserve JMAP Mail and expose provider-neutral domain",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "provider cursor/watch changes and verified read-back"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Existing Stalwart inbox/detail/draft/send still work; threads canonical/searchable; other user cannot read account; actual send uses provider receipt"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken mail boundary: unauthorized actor or dropped/duplicated event must fail WP-17 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Preserve JMAP Mail and expose provider-neutral domain; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Existing Stalwart inbox/detail/draft/send still work",
+      "threads canonical/searchable",
+      "other user cannot read account",
+      "actual send uses provider receipt",
+      "Existing JMAP mailbox provisioning, push, inbox, draft, move/flag/send pass without connecting Gmail.",
+      "Two workspaces with same email address cannot see each other’s metadata via IPC broadcast or attachment retrieval.",
+      "Remote submission rejected in loopback environment remains explicit unsupported path; do not turn fixture success into production receipt."
+    ],
+    "risks": [
+      "Existing loopback sender restrictions must remain capability-based; API connection not mailbox authority"
+    ],
+    "estimatedComplexity": "L",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-17",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-04",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-03",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-06",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "mail.openThread",
+        "kind": "query",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/mail.openThread",
+          "nativeRpc": "domain.mail.openThread",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "account": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "thread": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            }
+          },
+          "required": [
+            "account",
+            "thread"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/17-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "mail_account",
+          "mail_thread",
+          "mail_message",
+          "mail_label",
+          "provider_connection"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": [
+          "UNIQUE(workspace_id,provider,provider_account_id); account owner/connection grants separate from entity sharing.",
+          "UNIQUE(account_id,remote_entity_type,remote_id) aliases; Message-ID nonunique across mailbox copies.",
+          "Body blobs and attachments inherit source-mail read policy; token reference only, no OAuth secret in entity/event/search document."
+        ],
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/mail/contracts.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/commands.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/repository.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/wp-17.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "packages/shared/src/workspace-domain/mail/types.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "packages/shared/src/workspace-domain/mail/provider-contract.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "packages/shared/src/workspace-domain/mail/commands.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/service.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/adapters/jmap-adapter.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/migrations/017_mail_accounts_entities_aliases.sql",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/mail-domain-jmap-regression.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/shared/src/mail/jmap-client.ts",
+        "symbols": [
+          "JmapClient.compose",
+          "JmapClient"
+        ],
+        "change": "Extend existing module for mail.openThread; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "D069",
+          "ROX-050"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/main/mail/mail-service.ts",
+        "symbols": [
+          "MailService",
+          "MailService.send",
+          "MailService.jmap / startPush",
+          "MailService.send / saveDraft"
+        ],
+        "change": "Extend existing module for mail.openThread; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "D068",
+          "D088",
+          "ROX-048",
+          "ROX-049"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+        "symbols": [
+          "api",
+          "unwrap",
+          "autoEnsureTried",
+          "MailSelection",
+          "useMail",
+          "openId",
+          "ready",
+          "refreshStatus",
+          "a",
+          "s",
+          "refresh",
+          "a"
+        ],
+        "lineStart": 11,
+        "change": "Extend existing module for mail.openThread; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "api",
+            "line": 11
+          },
+          {
+            "symbol": "unwrap",
+            "line": 15
+          },
+          {
+            "symbol": "autoEnsureTried",
+            "line": 20
+          },
+          {
+            "symbol": "MailSelection",
+            "line": 22
+          },
+          {
+            "symbol": "useMail",
+            "line": 27
+          },
+          {
+            "symbol": "openId",
+            "line": 38
+          },
+          {
+            "symbol": "ready",
+            "line": 39
+          },
+          {
+            "symbol": "refreshStatus",
+            "line": 41
+          },
+          {
+            "symbol": "a",
+            "line": 42
+          },
+          {
+            "symbol": "s",
+            "line": 44
+          },
+          {
+            "symbol": "refresh",
+            "line": 49
+          },
+          {
+            "symbol": "a",
+            "line": 50
+          }
+        ]
+      },
+      {
+        "path": "apps/electron/src/main/mail/local-ipc.ts",
+        "symbols": [
+          "registerMailIpc",
+          "credentialManagerSecrets"
+        ],
+        "lineStart": 91,
+        "change": "Добавить account/workspace context каждому IPC и фильтровать broadcast по получателю; сохранить existing MailLocalApi compatibility.; Миграция global rox-mail.<address> secret lookup в scoped account token reference с совместимым чтением старого keychain.",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/main/mail/mail-model.ts",
+        "symbols": [
+          "toSummary / toMessage / threadHeaders"
+        ],
+        "lineStart": 25,
+        "change": "Адаптация JMAP id, Message-ID, References; не приравнивать provider id и canonical id.",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/shared/mail-local.ts",
+        "symbols": [
+          "MAIL_IPC / MailMessage / MailLocalApi",
+          "MailLocalApi / MailMessage / MailSummary / MailListQuery"
+        ],
+        "lineStart": 126,
+        "change": "Сейчас single-mailbox IPC; нейтральные идентификаторы и provider aliases должны попасть в contract.",
+        "sourceEvidenceIds": [
+          "ROX-047"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/preload/bootstrap.ts",
+        "symbols": [
+          "mailLocal"
+        ],
+        "lineStart": 582,
+        "change": "Обновить IPC arguments и expose bindings вместе с shared MailLocalApi.",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/shared/src/mail/provisioning.ts",
+        "symbols": [
+          "provisionMailbox / MailboxSecretStore"
+        ],
+        "lineStart": 75,
+        "change": "Сохранить Stalwart/JMAP provisioning и ранее выданные credentials.",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/shared/src/mail/__tests__/mail.test.ts",
+        "symbols": [
+          "v",
+          "fakeStalwart",
+          "accounts",
+          "seq",
+          "creds",
+          "name",
+          "acc",
+          "json",
+          "fetchImpl",
+          "who",
+          "responses",
+          "c"
+        ],
+        "lineStart": 21,
+        "change": "Extend existing module for mail.openThread; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "v",
+            "line": 21
+          },
+          {
+            "symbol": "fakeStalwart",
+            "line": 46
+          },
+          {
+            "symbol": "accounts",
+            "line": 47
+          },
+          {
+            "symbol": "seq",
+            "line": 48
+          },
+          {
+            "symbol": "creds",
+            "line": 49
+          },
+          {
+            "symbol": "name",
+            "line": 52
+          },
+          {
+            "symbol": "acc",
+            "line": 53
+          },
+          {
+            "symbol": "json",
+            "line": 57
+          },
+          {
+            "symbol": "fetchImpl",
+            "line": 58
+          },
+          {
+            "symbol": "who",
+            "line": 59
+          },
+          {
+            "symbol": "responses",
+            "line": 65
+          },
+          {
+            "symbol": "c",
+            "line": 72
+          }
+        ]
+      },
+      {
+        "path": "apps/electron/src/main/mail/__tests__/mail-model.test.ts",
+        "symbols": [
+          "f"
+        ],
+        "lineStart": 21,
+        "change": "Extend existing module for mail.openThread; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "f",
+            "line": 21
+          }
+        ]
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-17.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-17",
+        "providerSandbox": "explicit isolated provider/media sandbox, no hosted production data",
+        "seed": 20260947
+      },
+      "expectedObservations": [
+        "Existing Stalwart inbox/detail/draft/send still work",
+        "threads canonical/searchable",
+        "other user cannot read account",
+        "actual send uses provider receipt",
+        "Existing JMAP mailbox provisioning, push, inbox, draft, move/flag/send pass without connecting Gmail.",
+        "Two workspaces with same email address cannot see each other’s metadata via IPC broadcast or attachment retrieval.",
+        "Remote submission rejected in loopback environment remains explicit unsupported path; do not turn fixture success into production receipt."
+      ],
+      "negativeControl": {
+        "mutation": "read another account body via thread alias",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    },
+    "domainTouchpoints": [
+      {
+        "path": "apps/electron/src/main/mail/local-ipc.ts",
+        "symbol": "registerMailIpc",
+        "reason": "Добавить account/workspace context каждому IPC и фильтровать broadcast по получателю; сохранить existing MailLocalApi compatibility.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 91
+      },
+      {
+        "path": "apps/electron/src/main/mail/local-ipc.ts",
+        "symbol": "credentialManagerSecrets",
+        "reason": "Миграция global rox-mail.<address> secret lookup в scoped account token reference с совместимым чтением старого keychain.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 26
+      },
+      {
+        "path": "apps/electron/src/shared/mail-local.ts",
+        "symbol": "MailLocalApi / MailMessage / MailSummary / MailListQuery",
+        "reason": "Сейчас single-mailbox IPC; нейтральные идентификаторы и provider aliases должны попасть в contract.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 126
+      },
+      {
+        "path": "apps/electron/src/main/mail/mail-model.ts",
+        "symbol": "toSummary / toMessage / threadHeaders",
+        "reason": "Адаптация JMAP id, Message-ID, References; не приравнивать provider id и canonical id.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 25
+      },
+      {
+        "path": "apps/electron/src/preload/bootstrap.ts",
+        "symbol": "mailLocal",
+        "reason": "Обновить IPC arguments и expose bindings вместе с shared MailLocalApi.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 582
+      },
+      {
+        "path": "packages/shared/src/mail/provisioning.ts",
+        "symbol": "provisionMailbox / MailboxSecretStore",
+        "reason": "Сохранить Stalwart/JMAP provisioning и ранее выданные credentials.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 75
+      }
+    ],
+    "domainApiContracts": [
+      {
+        "name": "GetMailThread",
+        "input": "{accountRef:EntityRef,threadRef:EntityRef,cursor?:string}",
+        "output": "{thread:MailThread,messages:MailMessage[],nextCursor?:string}",
+        "errors": "not_found|denied|account_disconnected"
+      },
+      {
+        "name": "QueryInbox",
+        "input": "{accountRef:EntityRef,labelRef?:EntityRef,cursor?:string,limit:number}",
+        "output": "{items:MailThreadSummary[],nextCursor?:string}",
+        "errors": "denied|unsupported_capability"
+      }
+    ],
+    "apiChangesDetail": [
+      {
+        "name": "GetMailThread",
+        "input": "{accountRef:EntityRef,threadRef:EntityRef,cursor?:string}",
+        "output": "{thread:MailThread,messages:MailMessage[],nextCursor?:string}",
+        "errors": "not_found|denied|account_disconnected"
+      },
+      {
+        "name": "QueryInbox",
+        "input": "{accountRef:EntityRef,labelRef?:EntityRef,cursor?:string,limit:number}",
+        "output": "{items:MailThreadSummary[],nextCursor?:string}",
+        "errors": "denied|unsupported_capability"
+      }
+    ],
+    "domainConstraints": [
+      "UNIQUE(workspace_id,provider,provider_account_id); account owner/connection grants separate from entity sharing.",
+      "UNIQUE(account_id,remote_entity_type,remote_id) aliases; Message-ID nonunique across mailbox copies.",
+      "Body blobs and attachments inherit source-mail read policy; token reference only, no OAuth secret in entity/event/search document."
+    ],
+    "reviewNotes": [
+      "MailLocalApi is real local capability; server meetings conation/mail-channels.liveMailEnabled=false is a separate blocked adapter, not proof mail absent."
+    ]
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native",
+    "provider-live"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-17",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-17.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Inbox JMAP account/folder/thread selection and neutral Mail refs; retain actionable attention sections.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [
+      "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+      "apps/electron/src/renderer/pages/InboxPage.tsx"
+    ],
+    "existingUiSeams": [
+      "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+      "apps/electron/src/renderer/pages/InboxPage.tsx"
+    ],
+    "newUiFiles": [],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

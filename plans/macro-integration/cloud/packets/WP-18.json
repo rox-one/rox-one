@@ -1,0 +1,1004 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-18",
+  "title": "Mail sync cursor, webhook dedup and full refresh recovery",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "mail-implementation",
+  "dependencies": [
+    "WP-17",
+    "WP-05"
+  ],
+  "allowedPaths": [
+    "apps/electron/src/main/mail/mail-service.ts",
+    "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+    "apps/workspace-service/migrations/018_mail_cursors_ingestion_tombstones.sql",
+    "apps/workspace-service/migrations/18-domain-contract.sql",
+    "apps/workspace-service/src/jobs/mail-sync.ts",
+    "apps/workspace-service/src/modules/mail/commands.ts",
+    "apps/workspace-service/src/modules/mail/repository.ts",
+    "apps/workspace-service/src/modules/mail/sync.ts",
+    "apps/workspace-service/src/modules/mail/webhooks.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/mail/jmap-client.ts",
+    "packages/shared/src/workspace-domain/mail/contracts.ts",
+    "tests/macro-integration/mail-cursor-tombstone-recovery.test.ts",
+    "tests/macro-integration/wp-18.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/domain-screen-contracts.json",
+    "packages/shared/src/mail/jmap-client.ts",
+    "apps/electron/src/main/mail/mail-service.ts",
+    "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+    "plans/macro-integration/cloud/contract-amendments.json"
+  ],
+  "goal": "Duplicate/out-of-order webhook imports message once; expired cursor rebuilds without loss; disconnect reconnect resumes; deletion replay does not resurrect",
+  "expectedResults": [
+    "Duplicate/out-of-order webhook imports message once",
+    "expired cursor rebuilds without loss",
+    "disconnect reconnect resumes",
+    "deletion replay does not resurrect",
+    "Replay same webhook 10 times and in inverse order yields one normalized message and monotonic latest state.",
+    "Provider cursor expired/invalid -> bounded rebuild; crash after rows but before cursor does not lose message.",
+    "Delete then replay older create keeps tombstone; reconnect does not resurrect revoked account.",
+    "Authenticate webhooks always in target; Macro gmail_webhook_auth compile feature is not acceptable default."
+  ],
+  "screenRefs": [
+    {
+      "id": "MAIL-01",
+      "contractSource": "plans/macro-integration/domain-screen-contracts.json",
+      "controls": [
+        "account",
+        "folder",
+        "refresh"
+      ],
+      "placement": "Сохранить existing Inbox All/Decisions/Messages; «Почта» секция navigator получает account switch, не заменяет notification inbox.",
+      "proposedRoute": "inbox?account={accountId}&folder={folderId}",
+      "uiStatus": "SPECIFICATION_PROPOSED_EXTENSION"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-18",
+    "title": "Mail sync cursor, webhook dedup and full refresh recovery",
+    "goal": "Duplicate/out-of-order webhook imports message once; expired cursor rebuilds without loss; disconnect reconnect resumes; deletion replay does not resurrect",
+    "why": "mail.ingestDelta creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "mail-implementation",
+    "dependencies": [
+      "WP-17",
+      "WP-05"
+    ],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/shared/src/mail/jmap-client.ts",
+      "apps/electron/src/main/mail/mail-service.ts",
+      "apps/electron/src/renderer/pages/inbox/mail/useMail.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/mail/contracts.ts",
+      "apps/workspace-service/src/modules/mail/commands.ts",
+      "apps/workspace-service/src/modules/mail/repository.ts",
+      "tests/macro-integration/wp-18.test.ts",
+      "apps/workspace-service/src/modules/mail/sync.ts",
+      "apps/workspace-service/src/modules/mail/webhooks.ts",
+      "apps/workspace-service/src/jobs/mail-sync.ts",
+      "apps/workspace-service/migrations/018_mail_cursors_ingestion_tombstones.sql",
+      "tests/macro-integration/mail-cursor-tombstone-recovery.test.ts",
+      "apps/workspace-service/migrations/18-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "provider_cursor",
+      "mail_message",
+      "sync_job"
+    ],
+    "apiChanges": "SyncMail / HandleProviderChange / ResumeBackfill",
+    "dbChanges": "account cursor transaction after durable ingest; inbox dedup; tombstone; reset/backfill leases",
+    "events": [
+      "mail.sync_advanced",
+      "provider.sync_failed"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Account owner/delegated inbox; links never grant email-body access",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Inbox / Mail",
+      "newBehavior": "Mail sync cursor, webhook dedup and full refresh recovery",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "provider cursor/watch changes and verified read-back"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "Duplicate/out-of-order webhook imports message once; expired cursor rebuilds without loss; disconnect reconnect resumes; deletion replay does not resurrect"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken mail boundary: unauthorized actor or dropped/duplicated event must fail WP-18 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Mail sync cursor, webhook dedup and full refresh recovery; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "Duplicate/out-of-order webhook imports message once",
+      "expired cursor rebuilds without loss",
+      "disconnect reconnect resumes",
+      "deletion replay does not resurrect",
+      "Replay same webhook 10 times and in inverse order yields one normalized message and monotonic latest state.",
+      "Provider cursor expired/invalid -> bounded rebuild; crash after rows but before cursor does not lose message.",
+      "Delete then replay older create keeps tombstone; reconnect does not resurrect revoked account.",
+      "Authenticate webhooks always in target; Macro gmail_webhook_auth compile feature is not acceptable default."
+    ],
+    "risks": [
+      "Gmail history/JMAP state/IMAP UIDVALIDITY have different semantics"
+    ],
+    "estimatedComplexity": "XL",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-18",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [
+      {
+        "producer": "WP-17",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      },
+      {
+        "producer": "WP-05",
+        "requiredArtifacts": [
+          "accepted typed interface",
+          "applied migration or N/A receipt",
+          "scenario verification receipt"
+        ]
+      }
+    ],
+    "operations": [
+      {
+        "name": "mail.ingestDelta",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/mail.ingestDelta",
+          "nativeRpc": "domain.mail.ingestDelta",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "account": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "providerCursor": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "changeBatchKey": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            }
+          },
+          "required": [
+            "account",
+            "providerCursor",
+            "changeBatchKey"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/18-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "provider_sync_cursor",
+          "provider_event_inbox",
+          "mail_sync_job"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "text canonical kind:id for entity-owned tables",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "entity_identity",
+            "definition": "Entity-owned row composite FK (workspace_id,entity_id) -> entity; principal/receipt/job tables own typed key"
+          },
+          {
+            "name": "idempotency",
+            "definition": "UNIQUE(workspace_id, actor_principal_id, idempotency_key) for command_receipt; request_hash checked on conflict"
+          },
+          {
+            "name": "alias_identity",
+            "definition": "UNIQUE(workspace_id,provider,account,remote_type,remote_id) in alias tables"
+          },
+          {
+            "name": "event_delivery",
+            "definition": "UNIQUE(consumer_id,event_id); claimed lease separate processed; aggregate_revision+policy/tombstone fence enforced"
+          }
+        ],
+        "domainConstraints": [
+          "UNIQUE(connection_id,delivery_id) inbound receipts; lease generation fences competing workers.",
+          "Cursor advances only in same transaction as normalized mutation + tombstones + outbox.",
+          "Backfill generation with provider checkpoint; do not delete rows from incomplete snapshot."
+        ],
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/mail/contracts.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/commands.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/repository.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/wp-18.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/sync.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/mail/webhooks.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/src/jobs/mail-sync.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "apps/workspace-service/migrations/018_mail_cursors_ingestion_tombstones.sql",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      },
+      {
+        "path": "tests/macro-integration/mail-cursor-tombstone-recovery.test.ts",
+        "status": "PROPOSED_NEW",
+        "interface": "Owned domain interface/job/migration/test; use typed contracts and common authority"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/shared/src/mail/jmap-client.ts",
+        "symbols": [
+          "JmapClient.compose",
+          "JmapClient"
+        ],
+        "lineStart": 140,
+        "change": "Use provider state tokens; retain same-origin protection and query/change semantics.",
+        "sourceEvidenceIds": [
+          "D069",
+          "ROX-050"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/main/mail/mail-service.ts",
+        "symbols": [
+          "MailService",
+          "MailService.send",
+          "MailService.jmap / startPush",
+          "MailService.send / saveDraft",
+          "startPush / list"
+        ],
+        "lineStart": 298,
+        "change": "Push EventSource triggers ingestion through account-scoped sync, reconnect/full refresh receipt.",
+        "sourceEvidenceIds": [
+          "D068",
+          "D088",
+          "ROX-048",
+          "ROX-049"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+        "symbols": [
+          "api",
+          "unwrap",
+          "autoEnsureTried",
+          "MailSelection",
+          "useMail",
+          "openId",
+          "ready",
+          "refreshStatus",
+          "a",
+          "s",
+          "refresh",
+          "a"
+        ],
+        "lineStart": 11,
+        "change": "Extend existing module for mail.ingestDelta; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "api",
+            "line": 11
+          },
+          {
+            "symbol": "unwrap",
+            "line": 15
+          },
+          {
+            "symbol": "autoEnsureTried",
+            "line": 20
+          },
+          {
+            "symbol": "MailSelection",
+            "line": 22
+          },
+          {
+            "symbol": "useMail",
+            "line": 27
+          },
+          {
+            "symbol": "openId",
+            "line": 38
+          },
+          {
+            "symbol": "ready",
+            "line": 39
+          },
+          {
+            "symbol": "refreshStatus",
+            "line": 41
+          },
+          {
+            "symbol": "a",
+            "line": 42
+          },
+          {
+            "symbol": "s",
+            "line": 44
+          },
+          {
+            "symbol": "refresh",
+            "line": 49
+          },
+          {
+            "symbol": "a",
+            "line": 50
+          }
+        ]
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-18.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-18",
+        "providerSandbox": "explicit isolated provider/media sandbox, no hosted production data",
+        "seed": 20260948
+      },
+      "expectedObservations": [
+        "Duplicate/out-of-order webhook imports message once",
+        "expired cursor rebuilds without loss",
+        "disconnect reconnect resumes",
+        "deletion replay does not resurrect",
+        "Replay same webhook 10 times and in inverse order yields one normalized message and monotonic latest state.",
+        "Provider cursor expired/invalid -> bounded rebuild; crash after rows but before cursor does not lose message.",
+        "Delete then replay older create keeps tombstone; reconnect does not resurrect revoked account.",
+        "Authenticate webhooks always in target; Macro gmail_webhook_auth compile feature is not acceptable default."
+      ],
+      "negativeControl": {
+        "mutation": "advance cursor before durable ingest",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    },
+    "domainTouchpoints": [
+      {
+        "path": "apps/electron/src/main/mail/mail-service.ts",
+        "symbol": "startPush / list",
+        "reason": "Push EventSource triggers ingestion through account-scoped sync, reconnect/full refresh receipt.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 298
+      },
+      {
+        "path": "packages/shared/src/mail/jmap-client.ts",
+        "symbol": "JmapClient",
+        "reason": "Use provider state tokens; retain same-origin protection and query/change semantics.",
+        "classification": "EXISTING_VERIFIED",
+        "lineStart": 140
+      }
+    ],
+    "domainApiContracts": [
+      {
+        "name": "IngestProviderChange",
+        "input": "{connectionId:string,deliveryId:string,cursorHint?:string}",
+        "output": "{accepted:boolean,jobId:string}",
+        "errors": "invalid_signature|disconnected|stale_binding"
+      },
+      {
+        "name": "SyncMail",
+        "input": "{accountRef:EntityRef,expectedCursor?:string,mode:\"delta\"|\"rebuild\"}",
+        "output": "{cursor:string,applied:number,deleted:number,receiptId:string}",
+        "errors": "cursor_expired|rate_limited|provider_unavailable"
+      }
+    ],
+    "apiChangesDetail": [
+      {
+        "name": "IngestProviderChange",
+        "input": "{connectionId:string,deliveryId:string,cursorHint?:string}",
+        "output": "{accepted:boolean,jobId:string}",
+        "errors": "invalid_signature|disconnected|stale_binding"
+      },
+      {
+        "name": "SyncMail",
+        "input": "{accountRef:EntityRef,expectedCursor?:string,mode:\"delta\"|\"rebuild\"}",
+        "output": "{cursor:string,applied:number,deleted:number,receiptId:string}",
+        "errors": "cursor_expired|rate_limited|provider_unavailable"
+      }
+    ],
+    "domainConstraints": [
+      "UNIQUE(connection_id,delivery_id) inbound receipts; lease generation fences competing workers.",
+      "Cursor advances only in same transaction as normalized mutation + tombstones + outbox.",
+      "Backfill generation with provider checkpoint; do not delete rows from incomplete snapshot."
+    ],
+    "reviewNotes": []
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native",
+    "provider-live"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-18",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-18.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Mail refresh/sync cursor/freshness/error/recovery states; unread cursor count not capped unlabeled50.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [],
+    "existingUiSeams": [],
+    "newUiFiles": [],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}

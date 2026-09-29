@@ -1,5 +1,20 @@
 # План исследования и владельцы
 
+## Revision 3 execution graph
+
+| Task | Owner | Inputs/dependencies | Artifact | Verification | State |
+|---|---|---|---|---|---|
+| source-head-recheck | lead | original308evidence, GitHub remote | reverification.json +24doc | blobcompare304same/4delta-reviewed | complete |
+| current-screen-audit | rox_audit | ROXsource |50screens/68refs/115controls | immutableobjects/ranges | complete |
+| collab-leafspec | macro_collab | source+Revision2 |19screens/96controls | queries/commands/roles/routes/interactions | complete |
+| domain-leafspec | macro_domains | source+Revision2 |24screens/75controls/58DoD | consent/availability/RSVP/owner/revenue | complete |
+| shared-prd-ui | lead | audits | masterPRD/UIcontract/18sharedscreens/48controls |51typedops/domain-specificnegativecases | complete |
+| cloud-contracts | lead |52WPs+leafspecs |52packets/manifest/ui-slices/schema/CLI | DAG/hash/leases/lane/prereq/proofgate | complete |
+| independent-challenge | workers | allnewdocs/tooling | product/cloud/source review | repair supported findings+negativeprobes | complete |
+| final-delivery | lead | allcorrectedbytes | final validation/commit/push/readback | source/schema/Mermaid/tooltests/remotehash | artifact_complete; remote receipt in session completion checkpoint |
+
+Decisions:Project-first Channels, CRM Досье, Calendar Meetings, Inbox existing actionable attention preserved, source excerpt no auto-disclosure, current font semantics retained. Per-WP UI scope supplements shared finalscreen DoD; full surface not declared done at first mechanism slice. Historical completed research graph below.
+
 | ID | Владелец | Вход | Зависимости | Артефакт | Проверка | Статус |
 |---|---|---|---|---|---|---|
 | baseline | lead | GitHub HEAD, local worktrees | — | fixed SHA, clean audit trees | rev-parse, status | complete |

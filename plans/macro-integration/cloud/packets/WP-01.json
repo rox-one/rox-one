@@ -1,0 +1,1220 @@
+{
+  "schemaVersion": 1,
+  "id": "WP-01",
+  "title": "Private shared Project: authenticated actor and workspace boundary",
+  "status": "planned",
+  "repository": "rox-one/rox-one",
+  "sourceBaseline": "e780e73ae84c977cf81546b49140d318dfcd6049",
+  "integrationBasePolicy": "scheduler supplies exact current inputSha; original source baseline is reference, never reset over prerequisite commits",
+  "ownerRole": "identity-implementation",
+  "dependencies": [],
+  "allowedPaths": [
+    "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx",
+    "apps/electron/src/renderer/hooks/useProjects.ts",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+    "apps/workspace-service/migrations/01-domain-contract.sql",
+    "apps/workspace-service/src/modules/identity/commands.ts",
+    "apps/workspace-service/src/modules/identity/repository.ts",
+    "packages/core/src/rox2/platform-contract.ts",
+    "packages/server-core/src/handlers/rpc/identity.ts",
+    "packages/server-core/src/handlers/rpc/projects.ts",
+    "packages/server-core/src/transport/server.ts",
+    "packages/server-core/src/transport/types.ts",
+    "packages/shared/src/i18n/locales/de.json",
+    "packages/shared/src/i18n/locales/en.json",
+    "packages/shared/src/i18n/locales/es.json",
+    "packages/shared/src/i18n/locales/fr.json",
+    "packages/shared/src/i18n/locales/hu.json",
+    "packages/shared/src/i18n/locales/ja.json",
+    "packages/shared/src/i18n/locales/pl.json",
+    "packages/shared/src/i18n/locales/ru.json",
+    "packages/shared/src/i18n/locales/zh-Hans.json",
+    "packages/shared/src/i18n/locales/zh-Hant.json",
+    "packages/shared/src/orgs/types.ts",
+    "packages/shared/src/projects/storage.ts",
+    "packages/shared/src/workspace-domain/identity/contracts.ts",
+    "tests/macro-integration/ui/col-19.spec.ts",
+    "tests/macro-integration/wp-01.test.ts"
+  ],
+  "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
+  "readFirst": [
+    "AGENTS.md",
+    "cloud/macro-integration/AGENTS.md",
+    "docs/macro-integration/product/PRD.md",
+    "docs/macro-integration/product/UI-UX-CONTRACT.md",
+    "docs/macro-integration/19-target-architecture.md",
+    "docs/macro-integration/18-licensing.md",
+    "plans/macro-integration/collaboration-screen-contracts.json",
+    "plans/macro-integration/shared-screen-contracts.json",
+    "packages/core/src/rox2/platform-contract.ts",
+    "packages/server-core/src/transport/types.ts",
+    "packages/server-core/src/handlers/rpc/identity.ts",
+    "packages/shared/src/orgs/types.ts",
+    "packages/server-core/src/handlers/rpc/projects.ts",
+    "packages/shared/src/projects/storage.ts",
+    "apps/electron/src/renderer/hooks/useProjects.ts",
+    "packages/server-core/src/transport/server.ts",
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+    "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx"
+  ],
+  "goal": "A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace",
+  "expectedResults": [
+    "A opens private Project in native ROX",
+    "B without membership gets 403 and no title through RPC/HTTP",
+    "client cannot forge principal/workspace"
+  ],
+  "screenRefs": [
+    {
+      "id": "COL-07",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "create-channel",
+        "dm",
+        "group",
+        "search"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Project tab Channels: project-scoped conversation directory; Каналы/Личные/Группы filters in local rail; authorized workspace search/favorites open the same contextual view. No additional native sidebar destination.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED existing projects/project/{slug}?tab=channels; search/favorite ChannelRef opens contextual HumanConversationView through typed entity route",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-09",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "send",
+        "recipient",
+        "add",
+        "mute"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Same timeline/composer COL-08; header recipients/avatar; no public channel switch.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "PROPOSED typed canonical ChannelRef contextual route, with Project origin when present; no AgentSession route",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-17",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "tabs",
+        "progress",
+        "new",
+        "agent",
+        "members"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Overview as first tab; summary/description; compact counts; tabs Задачи/Документы/Разговоры/Встречи/Файлы/Агенты/Активность/Настройки.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing routes.view.projects(slug)",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "COL-19",
+      "contractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+      "controls": [
+        "name",
+        "description",
+        "directory",
+        "access",
+        "archive",
+        "delete"
+      ],
+      "placement": {
+        "shell": "Existing APP_NAV_DESTINATIONS/NavigationProvider panels; preserve current focused-panel behavior",
+        "header": "40px compact breadcrumb/title/status/actions",
+        "layout": "Modal max560 create; detail settings sections Основное/Контекст агента/Локальная папка/Доступ/Архив.",
+        "desktop": "Content >=1100px: optional rail224px, inspector320px, main min420px. Below threshold collapsible sheets. Document max70ch.",
+        "mobile": "390px one active main area; sheets focus-trapped; tap target>=44px; board only its own scroll region",
+        "zoom": "200% reflow; every control reachable by keyboard",
+        "typography": "Existing semantic font-sans/font-chat for UI/document/help, font-mono only code or selected preference. Inherit current preference; proposed readable controls12–13px and document14px/1.55 max70ch, no global font reset.",
+        "motion": "120–180ms response to disclosure/filter; stable keys; reduced-motion disables spatial motion"
+      },
+      "proposedRoute": "existing projects list create overlay; projects/project/{slug}?tab=settings proposed",
+      "uiStatus": "PROPOSED"
+    },
+    {
+      "id": "SH-11",
+      "contractSource": "plans/macro-integration/shared-screen-contracts.json",
+      "controls": [
+        "connect",
+        "probe",
+        "mode"
+      ],
+      "placement": "Connections → provider detail",
+      "uiStatus": "SPECIFICATION_TARGET_EXTENSION"
+    }
+  ],
+  "domainSpecification": {
+    "id": "WP-01",
+    "title": "Private shared Project: authenticated actor and workspace boundary",
+    "goal": "A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace",
+    "why": "project.createShared creates a verified user-visible domain behavior through existing ROX; mechanism gap and preserved capabilities described in its evidence-backed surface audit.",
+    "status": "planned",
+    "ownerRole": "identity-implementation",
+    "dependencies": [],
+    "affectedRepositories": [
+      "rox-one/rox-one"
+    ],
+    "sourceReferenceRepositories": [
+      "macro-inc/macro"
+    ],
+    "baseline": {
+      "macro": {
+        "repository": "macro-inc/macro",
+        "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+      },
+      "rox": {
+        "repository": "rox-one/rox-one",
+        "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+      }
+    },
+    "affectedFiles": [
+      "packages/core/src/rox2/platform-contract.ts",
+      "packages/server-core/src/transport/types.ts",
+      "packages/server-core/src/handlers/rpc/identity.ts",
+      "packages/shared/src/orgs/types.ts",
+      "packages/server-core/src/handlers/rpc/projects.ts",
+      "packages/shared/src/projects/storage.ts",
+      "apps/electron/src/renderer/hooks/useProjects.ts",
+      "packages/server-core/src/transport/server.ts"
+    ],
+    "newFiles": [
+      "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "apps/workspace-service/src/modules/identity/commands.ts",
+      "apps/workspace-service/src/modules/identity/repository.ts",
+      "tests/macro-integration/wp-01.test.ts",
+      "apps/workspace-service/migrations/01-domain-contract.sql"
+    ],
+    "domainEntities": [
+      "principal",
+      "workspace",
+      "project"
+    ],
+    "apiChanges": "CreateSharedProject / GetProject; Actor injected in RPC and HTTP",
+    "dbChanges": "principal, auth_subject_alias, workspace_member, project; unique workspace membership",
+    "events": [
+      "workspace.member_joined",
+      "project.created"
+    ],
+    "permissions": {
+      "authority": "authenticated server actor + workspace/resource policy; local standalone explicit mode",
+      "specific": "Resource read/write/action grants; deny forged actor/workspace; recheck linked refs",
+      "executionPolicy": "agent allow-all does not override resource ACL; outbound side effects obey explicit execution grants"
+    },
+    "ui": {
+      "existingSurface": "Projects / Settings / Connections",
+      "newBehavior": "Private shared Project: authenticated actor and workspace boundary",
+      "states": [
+        "loading",
+        "empty",
+        "permission_denied",
+        "offline_queued",
+        "retryable_error",
+        "applied_verified"
+      ]
+    },
+    "realtime": {
+      "durability": "domain events from transaction outbox; lossy presence separate",
+      "specific": "revisioned invalidation + replay cursor"
+    },
+    "tests": [
+      {
+        "kind": "integration",
+        "assertion": "A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace"
+      },
+      {
+        "kind": "negative-control",
+        "assertion": "Seed broken identity boundary: unauthorized actor or dropped/duplicated event must fail WP-01 acceptance"
+      },
+      {
+        "kind": "persistence-recovery",
+        "assertion": "Restart between persisted command and reply while running Private shared Project: authenticated actor and workspace boundary; state/receipt/canonical ID remain consistent"
+      }
+    ],
+    "acceptanceCriteria": [
+      "A opens private Project in native ROX",
+      "B without membership gets 403 and no title through RPC/HTTP",
+      "client cannot forge principal/workspace"
+    ],
+    "risks": [
+      "Existing RequestContext lacks authenticated principal; local profile must not become remote identity by email"
+    ],
+    "estimatedComplexity": "XL",
+    "estimateMeaning": "relative engineering scope; M=bounded adapter, L=multi-layer slice, XL=new runtime/provider/domain; no calendar commitment",
+    "observability": {
+      "required": [
+        "commandId",
+        "causationId",
+        "correlationId",
+        "aggregateRevision",
+        "policyEpoch",
+        "projectionWatermark",
+        "retry/DLQ counters"
+      ],
+      "privacy": "no raw email/body/transcript/tokens in logs"
+    },
+    "documentation": [
+      "docs/macro-integration/21-implementation-plan.md#wp-01",
+      "docs/macro-integration/22-test-plan.md"
+    ],
+    "featureCompleteness": [
+      "UI",
+      "routing",
+      "entity model",
+      "persistence",
+      "commands",
+      "queries",
+      "realtime where needed",
+      "permissions",
+      "sharing",
+      "search",
+      "mentions",
+      "notifications",
+      "activity",
+      "agent access",
+      "API/MCP where applicable",
+      "observability",
+      "tests",
+      "documentation",
+      "failure states",
+      "loading states",
+      "empty states",
+      "offline/reconnect where applicable"
+    ],
+    "licensePolicy": "BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+    "verificationGate": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+    "inputs": [],
+    "operations": [
+      {
+        "name": "project.createShared",
+        "kind": "command",
+        "transport": {
+          "http": "POST /v1/workspaces/{workspaceId}/commands/project.createShared",
+          "nativeRpc": "domain.project.createShared",
+          "authentication": "transport-derived principal; body actor field rejected",
+          "envelope": "RoxCommand v2 idempotencyKey/expectedRevision/workspaceId; query pagination+authorized cursor"
+        },
+        "requestSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "workspaceName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "private",
+                "members"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "workspaceName",
+            "visibility"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "Rox2CanonicalResult",
+          "entity": "Rox2EntityRef",
+          "receipt": "commandId/requestHash/observedRevision/verifiedAt; provider result remains queued/unknown until reconciled",
+          "queryData": "authorized typed domain DTO; no hidden total/title"
+        },
+        "errors": [
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "WORKSPACE_MISMATCH",
+          "INVALID_PAYLOAD",
+          "REVISION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "PROVIDER_UNAVAILABLE",
+          "UNKNOWN_EXTERNAL_EFFECT",
+          "SCHEMA_VERSION_UNSUPPORTED",
+          "REVOKE_FENCE_PENDING"
+        ],
+        "expectedRevisionPolicy": "required for mutable existing aggregate; create idempotency required; CRDT update uses document causal frontier + policy fence instead of scalar content CAS",
+        "responseSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "applied",
+                "queued",
+                "reconciling",
+                "ambiguous",
+                "pending_fence",
+                "rejected",
+                "unavailable"
+              ]
+            },
+            "commandId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestHash": {
+              "type": "string",
+              "minLength": 1
+            },
+            "observedRevision": {
+              "type": "string"
+            },
+            "entity": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "receiptId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "data": {
+              "type": "object",
+              "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+            }
+          },
+          "required": [
+            "status",
+            "receiptId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workspaceId",
+                "entityId"
+              ]
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "minorUnits": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "currency",
+                "minorUnits"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "migrations": [
+      {
+        "artifact": "apps/workspace-service/migrations/01-domain-contract.sql",
+        "status": "proposed migration identifier; actual filename generated by selected migrator, no fabricated timestamp",
+        "tables": [
+          "project",
+          "workspace",
+          "workspace_member",
+          "principal",
+          "auth_subject_alias",
+          "project_create_receipt"
+        ],
+        "commonColumns": {
+          "workspace_id": "uuid NOT NULL except globally auth principals",
+          "entity_id": "Project bootstrap uses project_id UUID; WP-02 backfills entity registry with stable project:<id>",
+          "schema_version": "integer NOT NULL CHECK >0",
+          "revision": "bigint NOT NULL CHECK >=0",
+          "created_at": "timestamptz",
+          "updated_at": "timestamptz",
+          "deleted_at": "timestamptz NULL for retained entities"
+        },
+        "constraints": [
+          {
+            "name": "workspace_member_identity",
+            "definition": "UNIQUE(workspace_id,principal_id); principal UUID FK to verified principal"
+          },
+          {
+            "name": "project_identity",
+            "definition": "UNIQUE(workspace_id,project_id); owner principal belongs to workspace"
+          },
+          {
+            "name": "bootstrap_receipt",
+            "definition": "Minimal project_create_receipt unique(workspace_id,actor_principal_id,idempotency_key) plus request_hash"
+          }
+        ],
+        "domainConstraints": "principal, auth_subject_alias, workspace_member, project; unique workspace membership",
+        "indexes": [
+          "workspace + entity primary lookup",
+          "domain filter + stable cursor sort",
+          "event pending lease/status/time",
+          "backlink target/type indexes when links introduced"
+        ],
+        "forward": "additive migration; backfill with aliases/provenance; reject ambiguous IDs into quarantine",
+        "rollback": "before cutover restore writer route and snapshot; after accepted shared writes forward repair or verified reverse replay; never delete recent writes"
+      }
+    ],
+    "newArtifacts": [
+      {
+        "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+        "interface": "project.createShared request/result schema + domain ports, no service I/O in core"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/identity/commands.ts",
+        "interface": "typed command/query implementation; same policy/idempotency/revision gateway"
+      },
+      {
+        "path": "apps/workspace-service/src/modules/identity/repository.ts",
+        "interface": "domain tables/transaction/outbox/inbox; only composition root creates provider adapters"
+      },
+      {
+        "path": "tests/macro-integration/wp-01.test.ts",
+        "interface": "scenario + meaningful seeded failure control + recovery"
+      }
+    ],
+    "entryPoints": [
+      {
+        "path": "packages/core/src/rox2/platform-contract.ts",
+        "symbols": [
+          "Rox2Status / Rox2Entity / Rox2Relation / Rox2Event",
+          "Rox2EntityRef / formatRox2EntityId / parseRox2EntityId",
+          "Rox2Entity / Rox2Relation / Rox2Event",
+          "formatRox2EntityId / Rox2EntityRef",
+          "registerExternalBinding",
+          "ROX2_RELATION_RULES / wouldCreateRelationCycle"
+        ],
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "R10",
+          "R11",
+          "ROX-008",
+          "ROX-009",
+          "ROX-010",
+          "ROX-011"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/transport/types.ts",
+        "symbols": [
+          "RequestContext / RpcHandlerOptions"
+        ],
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-076"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/identity.ts",
+        "symbols": [
+          "HANDLED_CHANNELS",
+          "IdentityGetStateArgs",
+          "IdentityConnectArgs",
+          "IdentityDisconnectArgs",
+          "IdentityRefreshArgs",
+          "knowledgeStatusToService",
+          "mapLlmProvider",
+          "needle",
+          "buildAggregatedState",
+          "store",
+          "base",
+          "owned"
+        ],
+        "lineStart": 31,
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "HANDLED_CHANNELS",
+            "line": 31
+          },
+          {
+            "symbol": "IdentityGetStateArgs",
+            "line": 39
+          },
+          {
+            "symbol": "IdentityConnectArgs",
+            "line": 43
+          },
+          {
+            "symbol": "IdentityDisconnectArgs",
+            "line": 51
+          },
+          {
+            "symbol": "IdentityRefreshArgs",
+            "line": 55
+          },
+          {
+            "symbol": "knowledgeStatusToService",
+            "line": 59
+          },
+          {
+            "symbol": "mapLlmProvider",
+            "line": 66
+          },
+          {
+            "symbol": "needle",
+            "line": 67
+          },
+          {
+            "symbol": "buildAggregatedState",
+            "line": 81
+          },
+          {
+            "symbol": "store",
+            "line": 82
+          },
+          {
+            "symbol": "base",
+            "line": 83
+          },
+          {
+            "symbol": "owned",
+            "line": 85
+          }
+        ]
+      },
+      {
+        "path": "packages/shared/src/orgs/types.ts",
+        "symbols": [
+          "OrgRole",
+          "Organization",
+          "OrgMember",
+          "OrgInvite",
+          "OrgInvitePublic",
+          "OrgsStoreFile",
+          "CreateOrganizationInput",
+          "InviteToOrgInput",
+          "AcceptInviteInput",
+          "OrganizationWithMembers"
+        ],
+        "lineStart": 10,
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "OrgRole",
+            "line": 10
+          },
+          {
+            "symbol": "Organization",
+            "line": 12
+          },
+          {
+            "symbol": "OrgMember",
+            "line": 20
+          },
+          {
+            "symbol": "OrgInvite",
+            "line": 31
+          },
+          {
+            "symbol": "OrgInvitePublic",
+            "line": 45
+          },
+          {
+            "symbol": "OrgsStoreFile",
+            "line": 47
+          },
+          {
+            "symbol": "CreateOrganizationInput",
+            "line": 54
+          },
+          {
+            "symbol": "InviteToOrgInput",
+            "line": 59
+          },
+          {
+            "symbol": "AcceptInviteInput",
+            "line": 65
+          },
+          {
+            "symbol": "OrganizationWithMembers",
+            "line": 71
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/projects.ts",
+        "symbols": [
+          "registerProjectsHandlers"
+        ],
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-040"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      },
+      {
+        "path": "packages/shared/src/projects/storage.ts",
+        "symbols": [
+          "isPathInsideDirectory",
+          "resolvedBase",
+          "resolvedTarget",
+          "rel",
+          "getWorkspaceProjectsPath",
+          "getProjectPath",
+          "getProjectAssetsPath",
+          "MEMORY_FILENAME",
+          "getProjectMemoryPath",
+          "ensureProjectsDir",
+          "dir",
+          "ensureProjectAssetsDir"
+        ],
+        "lineStart": 39,
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "isPathInsideDirectory",
+            "line": 39
+          },
+          {
+            "symbol": "resolvedBase",
+            "line": 40
+          },
+          {
+            "symbol": "resolvedTarget",
+            "line": 41
+          },
+          {
+            "symbol": "rel",
+            "line": 42
+          },
+          {
+            "symbol": "getWorkspaceProjectsPath",
+            "line": 49
+          },
+          {
+            "symbol": "getProjectPath",
+            "line": 56
+          },
+          {
+            "symbol": "getProjectAssetsPath",
+            "line": 63
+          },
+          {
+            "symbol": "MEMORY_FILENAME",
+            "line": 68
+          },
+          {
+            "symbol": "getProjectMemoryPath",
+            "line": 74
+          },
+          {
+            "symbol": "ensureProjectsDir",
+            "line": 81
+          },
+          {
+            "symbol": "dir",
+            "line": 82
+          },
+          {
+            "symbol": "ensureProjectAssetsDir",
+            "line": 91
+          }
+        ]
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+        "symbols": [
+          "UseProjectsResult",
+          "useProjects",
+          "setProjectsAtom",
+          "refresh",
+          "result",
+          "list",
+          "off",
+          "projects"
+        ],
+        "lineStart": 13,
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "DECLARATIONS_VERIFIED; flow/change ownership reviewed at slice implementation",
+        "declarations": [
+          {
+            "symbol": "UseProjectsResult",
+            "line": 13
+          },
+          {
+            "symbol": "useProjects",
+            "line": 18
+          },
+          {
+            "symbol": "setProjectsAtom",
+            "line": 20
+          },
+          {
+            "symbol": "refresh",
+            "line": 22
+          },
+          {
+            "symbol": "result",
+            "line": 29
+          },
+          {
+            "symbol": "list",
+            "line": 30
+          },
+          {
+            "symbol": "off",
+            "line": 46
+          },
+          {
+            "symbol": "projects",
+            "line": 48
+          }
+        ]
+      },
+      {
+        "path": "packages/server-core/src/transport/server.ts",
+        "symbols": [
+          "WsRpcServerOptions"
+        ],
+        "change": "Extend existing module for project.createShared; shared writer routed through authenticated authority, standalone adapter preserved",
+        "sourceEvidenceIds": [
+          "ROX-077"
+        ],
+        "baselineSha": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "SYMBOL_VERIFIED"
+      }
+    ],
+    "verification": {
+      "runner": "bun test tests/macro-integration/wp-01.test.ts; relevant existing package tests; browser/Electron scenario harness for UI",
+      "fixtures": {
+        "workspace": "W1 shared",
+        "actors": [
+          "A owner",
+          "B member",
+          "C outsider"
+        ],
+        "privateMarker": "PRIVATE_WP-01",
+        "providerSandbox": "not needed unless operation outbound",
+        "seed": 20260931
+      },
+      "expectedObservations": [
+        "A opens private Project in native ROX",
+        "B without membership gets 403 and no title through RPC/HTTP",
+        "client cannot forge principal/workspace"
+      ],
+      "negativeControl": {
+        "mutation": "forge actor in payload",
+        "expected": "specific assertion fails; baseline infrastructure error distinguished from caught mutation",
+        "holdout": "independent evaluator injects second failure variant"
+      },
+      "artifacts": [
+        "UI screenshot/ARIA assertion where changed",
+        "typed API read-back",
+        "canonical entity ID+revision",
+        "DB row/unique key count",
+        "command/provider receipts",
+        "event/projection watermark",
+        "failure trace with reproduction seed"
+      ],
+      "completeness": [
+        "UI",
+        "routing",
+        "entity model",
+        "persistence",
+        "commands",
+        "queries",
+        "realtime where needed",
+        "permissions",
+        "sharing",
+        "search",
+        "mentions",
+        "notifications",
+        "activity",
+        "agent access",
+        "API/MCP where applicable",
+        "observability",
+        "tests",
+        "documentation",
+        "failure states",
+        "loading states",
+        "empty states",
+        "offline/reconnect where applicable"
+      ]
+    },
+    "bootstrapContract": {
+      "owns": [
+        "transport-authenticated Actor",
+        "workspace membership",
+        "minimal Project identity row",
+        "owner-only policy enforced server-side",
+        "Project create transaction+idempotent receipt",
+        "native Project RPC/list/detail"
+      ],
+      "laterGeneralization": [
+        "WP-02 registry kinds/aliases/relations",
+        "WP-03 full grant roles/inheritance/revoke",
+        "WP-04 generic outbox/inbox/revision command framework"
+      ],
+      "acceptanceScope": "minimal private Project feature; not complete Project cross-surface parity"
+    }
+  },
+  "lanes": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native"
+  ],
+  "requiredEvidence": [
+    "commitSha",
+    "inputSha",
+    "specDigest",
+    "changedPaths",
+    "test command/output hash/expected-observed",
+    "negativeControl and reproduction seed",
+    "reload/recovery evidence",
+    "per-lane outcome",
+    "screenshots/ARIA for visible change",
+    "permission and source provenance checks",
+    "provider read-back if external effect",
+    "independent review"
+  ],
+  "delivery": {
+    "branch": "impl/macro-wp-01",
+    "output": "commit + patch/draft PR + completion receipt; no automatic merge/deploy",
+    "receiptPath": "plans/macro-integration/cloud/receipts/WP-01.json",
+    "state": "verified only when every required lane passes; blocked/pending lanes keep implementation incomplete"
+  },
+  "failurePolicy": "stop dependent step on required missing input; continue independent allowed work; no fake provider/device success",
+  "testScope": "project targeted tests first, then required gates; no optional entire-repo sweeps; current baseline failures recorded separately",
+  "license": "behavior reimplementation unless exact source origin approved; no blind AGPL/proprietary UI source copy",
+  "uiSlice": {
+    "goal": "Project create/private read and authenticated workspace selector; identity controls only, no channel UI yet.",
+    "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
+    "assignedUiPaths": [
+      "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx",
+      "tests/macro-integration/ui/col-19.spec.ts"
+    ],
+    "existingUiSeams": [
+      "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx"
+    ],
+    "newUiFiles": [
+      "tests/macro-integration/ui/col-19.spec.ts"
+    ],
+    "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
+  },
+  "contractSupplement": {
+    "path": "plans/macro-integration/cloud/contract-amendments.json",
+    "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
+  },
+  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+}
