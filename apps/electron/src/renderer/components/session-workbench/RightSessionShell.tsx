@@ -80,7 +80,7 @@ export function RightSessionShell({
           data-testid={RIGHT_SESSION_PROMPT_TEST_ID}
           value={prompt}
           onChange={(e) => onPromptChange(e.target.value)}
-          className="min-h-0 flex-1 w-full resize-none rounded-[8px] border border-border/60 bg-background p-2.5 text-xs leading-relaxed outline-none focus:border-foreground/30"
+          className="min-h-0 flex-1 w-full resize-none rounded-[8px] border border-border/60 bg-background p-2.5 text-xs leading-relaxed outline-none focus-visible:border-foreground/30"
           placeholder={t('notes.sideSession.promptPlaceholder')}
         />
         <div className="flex items-center justify-end gap-2 shrink-0">

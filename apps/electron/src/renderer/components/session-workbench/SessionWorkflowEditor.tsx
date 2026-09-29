@@ -183,7 +183,7 @@ const PALETTE_ICONS: Record<SessionNodeKind, LucideIcon> = {
 function BranchNode({ data }: NodeProps<Node<BranchNodeData, 'branch'>>) {
   return (
     <div
-      className="w-[168px] min-w-0 rounded-xl border border-white/10 bg-card/80 px-2.5 py-1.5 text-left shadow-strong backdrop-blur-xl"
+      className="w-[168px] min-w-0 rounded-xl bg-card/80 px-2.5 py-1.5 text-left shadow-strong backdrop-blur-xl"
       title={data.name}
     >
       <Handle type="target" position={Position.Left} className="!h-2.5 !w-2.5 !border-border !bg-background/90" />
@@ -246,7 +246,7 @@ function DraftNode({ id, data, selected }: NodeProps<Node<DraftNodeData, 'draft'
         // Flat surfaces, no nested outlines; selection is one accent ring.
         'group relative flex h-full w-full min-w-0 flex-col overflow-hidden rounded-lg p-2 text-left',
         role === 'sticky' && 'bg-amber-300/20',
-        role === 'frame' && 'bg-foreground/[0.02] outline-dashed outline-1 outline-foreground/25',
+        role === 'frame' && 'bg-foreground/[0.02] outline-dashed outline-1 outline-foreground/10',
         role === 'group' && 'bg-violet-400/[0.06]',
         role === 'node' && 'bg-foreground/[0.05]',
         selected && 'ring-2 ring-accent',
@@ -1497,7 +1497,7 @@ function EditorInner({
           >
             {/* bgColor transparent: React Flow otherwise paints its own darker default
                 canvas colour, which made the toolbar row read as a separate band. */}
-            <Background gap={24} size={1} bgColor="transparent" color="hsl(var(--border) / 0.4)" />
+            <Background gap={24} size={1} bgColor="transparent" color="color-mix(in oklch, var(--foreground) 8%, transparent)" />
             {!mapEmpty ? (
               <MiniMap
                 position="bottom-right"
