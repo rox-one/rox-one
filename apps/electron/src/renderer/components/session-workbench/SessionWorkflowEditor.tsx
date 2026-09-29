@@ -974,7 +974,7 @@ function EditorInner({
           >
             <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap">
               {toolbarLayout.showLiveChip ? (
-                <span className="shrink-0 rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
+                <span className="shrink-0 rounded-full bg-foreground/[0.05] px-2 py-1 text-muted-foreground">
                   {t('entityView.flowLive')}
                 </span>
               ) : null}
@@ -982,12 +982,12 @@ function EditorInner({
                 <span className="shrink-0 text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
               ) : null}
               {toolbarLayout.showKindChips && selected ? (
-                <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
+                <span className="min-w-0 truncate rounded-full bg-foreground/[0.05] px-2 py-1 text-muted-foreground">
                   {selectedKindLabel}
                 </span>
               ) : null}
               {toolbarLayout.showKindChips && selectedDraft ? (
-                <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
+                <span className="min-w-0 truncate rounded-full bg-foreground/[0.05] px-2 py-1 text-muted-foreground">
                   {t(SESSION_NODE_KIND_I18N[selectedDraft.kind])}
                 </span>
               ) : null}
@@ -1029,7 +1029,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
+                className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                 onClick={() => {
                   flowRef.current?.fitView({ padding: 0.2 })
                 }}
@@ -1040,7 +1040,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
+                className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                 onClick={resetLayout}
               >
                 {t('entityView.mapResetLayout')}
@@ -1051,7 +1051,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
+                className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                 disabled={!selected}
                 onClick={() => {
                   const prompt = draft.trim() || selected?.triggerPreview
@@ -1066,7 +1066,7 @@ function EditorInner({
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
+                    className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                     data-testid="map-toolbar-more"
                     aria-label={t('entityView.mapMoreActions')}
                   >

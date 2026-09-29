@@ -15,6 +15,11 @@ describe('flat map + terminal chrome', () => {
     expect(groupTag).not.toContain('shadow-strong')
     expect(groupTag).not.toContain('rounded-full')
     expect(groupTag).not.toContain('bg-background/60')
+    // Buttons are flat at rest (no per-button pill fill); only the active
+    // camera mode is filled.
+    expect(editor).not.toContain('map-toolbar-btn h-7 rounded-full')
+    expect(editor).not.toContain('map-toolbar-btn h-7 rounded-md bg-foreground')
+    expect(editor).toContain("camera === 'map' && 'bg-foreground/10")
   })
 
   it('toolbar row shares the content background (no radial glow band)', () => {
