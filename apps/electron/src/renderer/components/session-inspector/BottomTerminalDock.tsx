@@ -24,7 +24,12 @@ export function BottomTerminalDock() {
   const cwd = sessionId ? sessionMetaMap.get(sessionId)?.workingDirectory : undefined
   const drag = React.useRef<{ startY: number; startH: number } | null>(null)
   // Focus the command input only after an explicit open (not on restore at launch).
+  const wasOpenRef = React.useRef(open)
   const [focusOnOpen, setFocusOnOpen] = React.useState(false)
+  React.useEffect(() => {
+    if (open && !wasOpenRef.current) setFocusOnOpen(true)
+    wasOpenRef.current = open
+  }, [open])
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -47,22 +52,9 @@ export function BottomTerminalDock() {
     window.addEventListener('pointercancel', up)
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        aria-label={t('inspector.terminal')}
-        onClick={() => {
-          setFocusOnOpen(true)
-          setOpen(true)
-        }}
-        className="chrome-strip rox-shell-pane rox-shell-divider-t pointer-events-auto flex h-[22px] shrink-0 items-center px-2 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        data-bottom-terminal="collapsed"
-      >
-        <span className="chrome-label truncate font-medium tracking-tight">{t('inspector.terminal')}</span>
-      </button>
-    )
-  }
+  // Collapsed: no permanent strip. The single entry point is the top-bar
+  // terminal button (data-testid="bottom-terminal-toggle").
+  if (!open) return null
 
   return (
     <div

@@ -15,7 +15,7 @@ describe('sash terminal clearance', () => {
     expect(appShell).toContain('bottomTerminalOpenAtom')
     expect(appShell).toContain('bottomDockHeightAtom')
     expect(appShell).toContain(
-      'const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 28) + PANEL_EDGE_INSET + 4',
+      'const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4',
     )
     expect(appShell).toContain('top: PANEL_STACK_TOP_INSET')
     expect(appShell).toContain('bottom: terminalClearance')

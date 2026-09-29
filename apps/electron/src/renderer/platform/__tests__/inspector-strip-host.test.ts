@@ -30,6 +30,6 @@ describe('ship-rox-inspector-strip-host', () => {
 
   it('docks BottomTerminalDock outside InspectorHost so terminal stays reachable when R is collapsed', () => {
     expect(host.indexOf('<BottomTerminalDock />')).toBeLessThan(host.indexOf('<InspectorHost />'))
-    expect(inspector).toContain('data-testid="bottom-terminal-toggle"')
+    expect(inspector).not.toContain('data-testid="bottom-terminal-toggle"')
   })
 })

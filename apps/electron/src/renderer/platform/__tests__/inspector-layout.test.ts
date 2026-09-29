@@ -17,7 +17,7 @@ const base: InspectorLayoutInput = {
 
 describe('one-surface inspector layout', () => {
   it('shows the panel at its stored width when there is room', () => {
-    expect(resolveInspectorLayout(base)).toEqual({ panelShown: true, collapsedReason: null, width: 420 })
+    expect(resolveInspectorLayout(base)).toEqual({ panelShown: true, collapsedReason: null, overlay: false, width: 420 })
   })
 
   it('collapses an empty session Files panel by default', () => {
@@ -46,11 +46,12 @@ describe('one-surface inspector layout', () => {
     expect(layout.collapsedReason).toBe('squeezed')
   })
 
-  it('an explicit open wins over the squeeze at the panel minimum width', () => {
+  it('an explicit open without room overlays the content instead of squeezing it', () => {
     expect(resolveInspectorLayout({ ...base, availableWidth: 120, userOpened: true })).toEqual({
       panelShown: true,
       collapsedReason: null,
-      width: 280,
+      overlay: true,
+      width: 420,
     })
   })
 
