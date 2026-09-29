@@ -3,7 +3,7 @@
  *
  * Handles workspace setup and configuration persistence.
  */
-import { getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
+import { fetchRoxBalance, getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { isSetupDeferred, setSetupDeferred } from '@craft-agent/shared/config'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
@@ -32,6 +32,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE,
   RPC_CHANNELS.onboarding.DEFER_SETUP,
   RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
+  RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
 ] as const
 
 export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -202,5 +203,25 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     const act = rpcOnboardingActResult({ source: 'native', action: 'write', nativeId: 'omp' })
     if (!isClaimableLive(act)) return { success: false, error: 'onboarding omp credential is not live' }
     return saveOmpRoxCredential(typeof apiKey === 'string' ? apiKey : '')
+  })
+  // Real rox.one balance for the connected Rox cloud account (#1076 added this
+  // handler to the unregistered apps/electron/src/main/onboarding.ts, so every
+  // client got «No handler for: onboarding:getRoxBalance»). The token never
+  // leaves this process; without a live session the UI shows «—».
+  server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async () => {
+    const manager = getCredentialManager()
+    try {
+      if (!(await manager.hasRoxCloudSession())) return { status: 'disconnected' as const }
+      const session = await manager.getRoxCloudSession()
+      if (!session?.accessToken) return { status: 'disconnected' as const }
+      const { balanceRox } = await fetchRoxBalance(session.accessToken)
+      const balance = Number.parseFloat(String(balanceRox))
+      if (!Number.isFinite(balance)) return { status: 'error' as const, message: 'invalid balance payload' }
+      return { status: 'ok' as const, balance }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      log?.warn('[Onboarding] Rox balance fetch failed:', message)
+      return { status: 'error' as const, message }
+    }
   })
 }

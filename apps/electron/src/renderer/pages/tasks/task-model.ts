@@ -1,6 +1,7 @@
 /**
  * Pure view-model helpers for the Задачи screen (no React, no window).
  */
+import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import {
   isOpenTask,
   matchesFilter,
@@ -37,6 +38,7 @@ const BOARD_STATUSES = new Set(['todo', 'in-progress', 'needs-review'])
 
 export function matchesAgentView(session: AgentSessionLike, view: AgentViewId): boolean {
   if (session.hidden || session.isArchived) return false
+  if (isInternalAgentSession(session)) return false
   switch (view) {
     case 'board':
       return BOARD_STATUSES.has(session.sessionStatus ?? '')

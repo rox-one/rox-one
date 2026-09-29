@@ -9,6 +9,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { inboxStateAtom } from '@/atoms/inbox'
+import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import {
   buildInboxItems,
   inboxCounts,
@@ -82,7 +83,8 @@ export function useInboxItems(options: { withRemote?: boolean } = {}) {
   }, [withRemote, load])
 
   const sessions = useMemo(
-    () => [...sessionMap.values()].filter((s) => !workspaceId || !s.workspaceId || s.workspaceId === workspaceId),
+    () => [...sessionMap.values()].filter((s) =>
+      (!workspaceId || !s.workspaceId || s.workspaceId === workspaceId) && !isInternalAgentSession(s)),
     [sessionMap, workspaceId],
   )
 

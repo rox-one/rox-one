@@ -13,6 +13,15 @@ describe('pickRecentHomeSessions', () => {
     expect(picked.map((session) => session.id)).toEqual(['fresh', 'created-only', 'old'])
   })
 
+  it('drops Rox-internal one-shot runs (memory distiller)', () => {
+    const picked = pickRecentHomeSessions([
+      { id: 'distiller', lastMessageAt: 99, preview: 'You are the memory distiller for a coding agent. Distill…' },
+      { id: 'titled', lastMessageAt: 98, name: 'You are the memory distiller for a coding agent.' },
+      { id: 'real', lastMessageAt: 10, name: 'Рефакторинг' },
+    ])
+    expect(picked.map((session) => session.id)).toEqual(['real'])
+  })
+
   it('returns an empty list when nothing is eligible', () => {
     expect(pickRecentHomeSessions([{ id: 'x', hidden: true }])).toEqual([])
   })
