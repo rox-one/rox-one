@@ -7,7 +7,7 @@
  * Add a screen = append its id here + register it in
  * `renderer/pages/extra-screens/registry.ts`.
  */
-export const EXTRA_SCREEN_IDS = ['dossier', 'radar'] as const
+export const EXTRA_SCREEN_IDS = ['dossier', 'radar', 'decisions'] as const
 
 export type ExtraScreenId = (typeof EXTRA_SCREEN_IDS)[number]
 
