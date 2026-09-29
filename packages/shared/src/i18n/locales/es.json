@@ -1102,6 +1102,7 @@
   "entityView.mapStatus.waiting": "Esperando",
   "entityView.mapSticky": "Nota adhesiva",
   "entityView.mapTile": "Mosaico",
+  "entityView.mapToolbarView": "View",
   "entityView.mapValidationBlocked": "El flujo no es válido",
   "entityView.mapVersionSaved": "Versión guardada",
   "entityView.mindmapSiyuan": "SiYuan map",

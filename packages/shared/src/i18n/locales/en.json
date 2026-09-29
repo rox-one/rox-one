@@ -1103,6 +1103,7 @@
   "entityView.mapStatus.waiting": "Waiting",
   "entityView.mapSticky": "Sticky note",
   "entityView.mapTile": "Tile",
+  "entityView.mapToolbarView": "View",
   "entityView.mapValidationBlocked": "Workflow is invalid",
   "entityView.mapVersionSaved": "Version saved",
   "entityView.mindmapSiyuan": "SiYuan map",

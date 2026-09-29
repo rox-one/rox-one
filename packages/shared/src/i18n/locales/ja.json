@@ -1102,6 +1102,7 @@
   "entityView.mapStatus.waiting": "保留",
   "entityView.mapSticky": "付箋",
   "entityView.mapTile": "タイル",
+  "entityView.mapToolbarView": "View",
   "entityView.mapValidationBlocked": "ワークフローが無効です",
   "entityView.mapVersionSaved": "バージョンを保存しました",
   "entityView.mindmapSiyuan": "SiYuan map",

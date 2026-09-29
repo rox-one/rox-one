@@ -1105,6 +1105,7 @@
   "entityView.mapStatus.waiting": "Ожидание",
   "entityView.mapSticky": "Стикер",
   "entityView.mapTile": "Плиткой",
+  "entityView.mapToolbarView": "Вид",
   "entityView.mapValidationBlocked": "Спецификация невалидна",
   "entityView.mapVersionSaved": "Версия сохранена",
   "entityView.mindmapSiyuan": "Карта SiYuan",
