@@ -4877,6 +4877,7 @@
   "workbench.status.runs_many": "{{count}} runs",
   "workbench.status.runs_one": "{{count}} run",
   "workbench.status.runs_other": "{{count}} runs",
+  "workbench.status.sessionCostTooltip": "현재 세션 비용",
   "workbench.status.syncOk": "Sync OK",
   "workbench.status.usagePlaceholder": "Usage",
   "workflows.confirm": "실행 전 확인",

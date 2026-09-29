@@ -1,10 +1,17 @@
 /**
- * Mode Bar — static application modes (ADR-0001). Destinations live here
- * when top-chrome v2 is on; the activity rail then holds global actions.
+ * Mode Bar — static application modes (ADR-0001), rendered as ONE centered
+ * segmented pill in the titlebar. Every registered mode lives in the pill
+ * (no overflow menu); the active one gets an accent-tinted segment that
+ * slides between items.
  *
  * Modes with `rootRoute: null` render disabled with a tooltip. They are not
  * empty pages.
+ *
+ * Styling lives in `components/app-shell/titlebar-mode-pill.css` (plain CSS:
+ * this folder is outside the Tailwind @source globs). The pill itself is
+ * `-webkit-app-region: no-drag`; the titlebar around it stays draggable.
  */
+import { useCallback, useLayoutEffect, useRef, useState, type MutableRefObject } from 'react'
 import {
   BookOpen,
   Calendar,
@@ -12,21 +19,13 @@ import {
   Inbox,
   ListTodo,
   MessageSquare,
-  MoreHorizontal,
   Rss,
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { isModeNavigable, listPinnedModes } from '@craft-agent/core/platform'
+import { isModeNavigable, type ModeContribution } from '@craft-agent/core/platform'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  StyledDropdownMenuContent,
-  StyledDropdownMenuItem,
-} from '@/components/ui/styled-dropdown'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
-import { cn } from '@/lib/utils'
 import type { Route } from '../../shared/routes'
 import { getModeRegistry } from './mode-registry-bootstrap'
 import { CORE_MODES } from './modes-seed'
@@ -43,112 +42,177 @@ const MODE_ICONS: Record<string, LucideIcon> = {
 
 const seedById = new Map(CORE_MODES.map((mode) => [mode.contribution.id, mode]))
 
-function ModeItem({
-  id,
-  icon,
-  title,
-  disabled,
-  tooltip,
-  active,
-  onSelect,
-}: {
-  id: string
-  icon: string
-  title: string
-  disabled: boolean
-  tooltip: string
-  active: boolean
-  onSelect: () => void
-}) {
-  const Icon = MODE_ICONS[icon] ?? Inbox
-  const button = (
-    <button
-      type="button"
-      data-mode={id}
-      aria-label={title}
-      aria-current={active ? 'page' : undefined}
-      aria-disabled={disabled || undefined}
-      onClick={disabled ? undefined : onSelect}
-      className={cn(
-        'titlebar-no-drag chrome-label flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
-        disabled
-          ? 'cursor-not-allowed text-muted-foreground/40'
-          : active
-            ? 'bg-accent/10 text-accent'
-            : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-      )}
-    >
-      <Icon className="h-3.5 w-3.5 shrink-0" />
-      <span className="max-w-[9rem] truncate">{title}</span>
-    </button>
-  )
+export interface ModeBarMetrics {
+  /** Pill width with icons + labels. */
+  full: number
+  /** Pill width with icons only. */
+  compact: number
+}
 
+export interface ModeBarProps {
+  /** Icon-only segments (labels move into tooltips). */
+  collapsed?: boolean
+  /** Reports the natural pill widths so the titlebar can decide when to collapse. */
+  onMeasure?: (metrics: ModeBarMetrics) => void
+}
+
+function PillItems({
+  modes,
+  activeId,
+  collapsed,
+  interactive,
+  itemRefs,
+}: {
+  modes: readonly ModeContribution[]
+  activeId: string | null
+  collapsed: boolean
+  interactive: boolean
+  itemRefs?: MutableRefObject<Map<string, HTMLButtonElement>>
+}) {
+  const { t } = useTranslation()
+  const { navigate } = useNavigation()
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="bottom">{tooltip}</TooltipContent>
-    </Tooltip>
+    <>
+      {modes.map((mode) => {
+        const Icon = MODE_ICONS[mode.icon] ?? Inbox
+        const title = t(mode.titleKey)
+        const disabled = !isModeNavigable(mode)
+        const active = mode.id === activeId
+        const button = (
+          <button
+            key={mode.id}
+            ref={itemRefs ? (el) => {
+              if (el) itemRefs.current.set(mode.id, el)
+              else itemRefs.current.delete(mode.id)
+            } : undefined}
+            type="button"
+            tabIndex={interactive ? undefined : -1}
+            data-mode={mode.id}
+            aria-label={title}
+            aria-current={active ? 'page' : undefined}
+            aria-disabled={disabled || undefined}
+            onClick={!interactive || disabled ? undefined : () => {
+              if (mode.rootRoute) void navigate(mode.rootRoute as Route)
+            }}
+            className="rox-mode-pill-item titlebar-no-drag"
+          >
+            <Icon className="rox-mode-pill-icon" strokeWidth={1.75} aria-hidden />
+            {!collapsed && <span className="rox-mode-pill-label">{title}</span>}
+          </button>
+        )
+        if (!interactive) return button
+        // Expanded + available: the label is visible, so no tooltip noise.
+        if (!collapsed && !disabled) return button
+        return (
+          <Tooltip key={mode.id}>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent side="bottom">
+              {disabled ? `${title} · ${t('workbench.mode.unavailable')}` : title}
+            </TooltipContent>
+          </Tooltip>
+        )
+      })}
+    </>
   )
 }
 
-export function ModeBar() {
-  const { t } = useTranslation()
-  const { navigate } = useNavigation()
+export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
+  const { t, i18n } = useTranslation()
   const navState = useNavigationState()
-  const { pinned, overflow } = listPinnedModes(getModeRegistry().list())
+  const modes = getModeRegistry().list()
+  const activeId = modes.find((mode) => seedById.get(mode.id)?.isActive(navState))?.id ?? null
+
+  const navRef = useRef<HTMLElement | null>(null)
+  const fullGhostRef = useRef<HTMLDivElement | null>(null)
+  const compactGhostRef = useRef<HTMLDivElement | null>(null)
+  const itemRefs = useRef(new Map<string, HTMLButtonElement>())
+  const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null)
+  const [ready, setReady] = useState(false)
+
+  const modeKey = modes.map((mode) => `${mode.id}:${mode.rootRoute ? 1 : 0}`).join('|')
+
+  // Sliding indicator geometry follows the active segment.
+  const syncIndicator = useCallback(() => {
+    const el = activeId ? itemRefs.current.get(activeId) : undefined
+    setIndicator((prev) => {
+      if (!el) return prev === null ? prev : null
+      const next = { x: el.offsetLeft, w: el.offsetWidth }
+      return prev && prev.x === next.x && prev.w === next.w ? prev : next
+    })
+  }, [activeId])
+
+  useLayoutEffect(() => {
+    syncIndicator()
+  }, [syncIndicator, collapsed, modeKey, i18n.language])
+
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (!nav || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => syncIndicator())
+    observer.observe(nav)
+    return () => observer.disconnect()
+  }, [syncIndicator])
+
+  // Enable the slide transition only after the first placement so the
+  // indicator never animates in from x=0 on mount.
+  useLayoutEffect(() => {
+    if (ready || !indicator) return
+    const frame = requestAnimationFrame(() => setReady(true))
+    return () => cancelAnimationFrame(frame)
+  }, [indicator, ready])
+
+  // Natural widths for the titlebar's collapse decision (fonts may load late).
+  useLayoutEffect(() => {
+    const full = fullGhostRef.current
+    const compact = compactGhostRef.current
+    if (!full || !compact || !onMeasure) return
+    let last = ''
+    const report = () => {
+      const metrics = {
+        full: Math.ceil(full.getBoundingClientRect().width),
+        compact: Math.ceil(compact.getBoundingClientRect().width),
+      }
+      const key = `${metrics.full}:${metrics.compact}`
+      if (key === last) return
+      last = key
+      onMeasure(metrics)
+    }
+    report()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(report)
+    observer.observe(full)
+    observer.observe(compact)
+    return () => observer.disconnect()
+  }, [onMeasure, modeKey, i18n.language])
 
   return (
-    <nav aria-label={t('workbench.modes')} className="flex min-w-0 items-center gap-0.5 overflow-x-auto">
-      {pinned.map((mode) => {
-        const seed = seedById.get(mode.id)
-        const title = t(mode.titleKey)
-        const disabled = !isModeNavigable(mode)
-        const active = seed?.isActive(navState) ?? false
-        return (
-          <ModeItem
-            key={mode.id}
-            id={mode.id}
-            icon={mode.icon}
-            title={title}
-            disabled={disabled}
-            tooltip={disabled ? t('workbench.mode.unavailable') : title}
-            active={active}
-            onSelect={() => {
-              if (mode.rootRoute) void navigate(mode.rootRoute as Route)
-            }}
-          />
-        )
-      })}
-      {overflow.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('workbench.mode.more')}
-              className="titlebar-no-drag flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-            >
-              <MoreHorizontal className="h-3.5 w-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <StyledDropdownMenuContent align="start" minWidth="min-w-44">
-            {overflow.map((mode) => {
-              const disabled = !isModeNavigable(mode)
-              return (
-                <StyledDropdownMenuItem
-                  key={mode.id}
-                  disabled={disabled}
-                  title={disabled ? t('workbench.mode.unavailable') : undefined}
-                  onSelect={() => {
-                    if (mode.rootRoute) void navigate(mode.rootRoute as Route)
-                  }}
-                >
-                  {t(mode.titleKey)}
-                </StyledDropdownMenuItem>
-              )
-            })}
-          </StyledDropdownMenuContent>
-        </DropdownMenu>
+    <>
+      <nav
+        ref={navRef}
+        aria-label={t('workbench.modes')}
+        className="rox-mode-pill titlebar-no-drag"
+        data-collapsed={collapsed || undefined}
+        data-ready={ready || undefined}
+        data-testid="titlebar-mode-pill"
+      >
+        <span
+          aria-hidden
+          className="rox-mode-pill-indicator"
+          data-visible={indicator ? true : undefined}
+          style={indicator ? { width: indicator.w, transform: `translateX(${indicator.x}px)` } : undefined}
+        />
+        <PillItems modes={modes} activeId={activeId} collapsed={collapsed} interactive itemRefs={itemRefs} />
+      </nav>
+      {onMeasure && (
+        <>
+          <div ref={fullGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost">
+            <PillItems modes={modes} activeId={null} collapsed={false} interactive={false} />
+          </div>
+          <div ref={compactGhostRef} aria-hidden className="rox-mode-pill rox-mode-pill-ghost" data-collapsed>
+            <PillItems modes={modes} activeId={null} collapsed interactive={false} />
+          </div>
+        </>
       )}
-    </nav>
+    </>
   )
 }

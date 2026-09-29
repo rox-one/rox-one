@@ -4877,6 +4877,7 @@
   "workbench.status.runs_many": "{{count}} Läufe",
   "workbench.status.runs_one": "{{count}} Lauf",
   "workbench.status.runs_other": "{{count}} Läufe",
+  "workbench.status.sessionCostTooltip": "Kosten der aktiven Sitzung",
   "workbench.status.syncOk": "Sync OK",
   "workbench.status.usagePlaceholder": "Nutzung",
   "workflows.confirm": "Vor dem Start bestätigen",

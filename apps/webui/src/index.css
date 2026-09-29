@@ -26,6 +26,7 @@
  * inherit across @import boundaries.
  */
 @import "../../electron/src/renderer/index.css";
+@import "../../electron/src/renderer/components/app-shell/titlebar-mode-pill.css";
 
 /*
  * Web UI responsive layout is handled by container queries and isAutoCompact

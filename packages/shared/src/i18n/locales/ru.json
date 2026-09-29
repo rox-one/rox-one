@@ -4884,6 +4884,7 @@
   "workbench.status.runs_many": "{{count}} запусков",
   "workbench.status.runs_one": "{{count}} запуск",
   "workbench.status.runs_other": "{{count}} запусков",
+  "workbench.status.sessionCostTooltip": "Стоимость текущей сессии",
   "workbench.status.syncOk": "Синхронизация в порядке",
   "workbench.status.usagePlaceholder": "Использование",
   "workflows.confirm": "Подтвердите запуск",
