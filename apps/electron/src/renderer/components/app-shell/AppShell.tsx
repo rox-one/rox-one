@@ -103,6 +103,7 @@ import {
   resolveWorkbenchAvailability,
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
+import { useExtraScreensBackground } from "@/pages/extra-screens/background"
 import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
@@ -1113,6 +1114,7 @@ function AppShellContent({
   useAction('nav.focusChat', () => focusZone('chat', { intent: 'keyboard' }))
   // ⌥⌘1…7 → titlebar modes (flag-aware)
   useModeHotkeys()
+  useExtraScreensBackground(activeWorkspaceId ?? null)
 
   // Tab navigation between zones
   useAction('nav.nextZone', () => {
