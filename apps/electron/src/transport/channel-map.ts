@@ -845,6 +845,8 @@ export const CHANNEL_MAP = {
   testAutomation: invoke(RPC_CHANNELS.automations.TEST),
   setAutomationEnabled: invoke(RPC_CHANNELS.automations.SET_ENABLED),
   duplicateAutomation: invoke(RPC_CHANNELS.automations.DUPLICATE),
+  updateAutomation: invoke(RPC_CHANNELS.automations.UPDATE),
+  createAutomation: invoke(RPC_CHANNELS.automations.CREATE),
   deleteAutomation: invoke(RPC_CHANNELS.automations.DELETE),
   getAutomationHistory: invoke(RPC_CHANNELS.automations.GET_HISTORY),
   getAutomationLastExecuted: invoke(RPC_CHANNELS.automations.GET_LAST_EXECUTED),

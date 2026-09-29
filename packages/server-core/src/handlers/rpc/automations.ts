@@ -34,11 +34,11 @@ function withConfigMutex<T>(workspaceRoot: string, fn: () => Promise<T>): Promis
 
 // Shared helper: resolve workspace, read automations.json, validate matcher, mutate, write back
 interface AutomationsConfigJson { automations?: Record<string, Record<string, unknown>[]>; [key: string]: unknown }
-async function withAutomationMatcher(workspaceId: string, eventName: string, matcherIndex: number, mutate: (matchers: Record<string, unknown>[], index: number, config: AutomationsConfigJson, genId: () => string) => void) {
+async function withAutomationMatcher<T = void>(workspaceId: string, eventName: string, matcherIndex: number, mutate: (matchers: Record<string, unknown>[], index: number, config: AutomationsConfigJson, genId: () => string) => T): Promise<T> {
   const workspace = getWorkspaceByNameOrId(workspaceId)
   if (!workspace) throw new Error('Workspace not found')
 
-  await withConfigMutex(workspace.rootPath, async () => {
+  return withConfigMutex(workspace.rootPath, async () => {
     const configPath = resolveAutomationsConfigPath(workspace.rootPath)
 
     const raw = await readFile(configPath, 'utf-8')
@@ -50,7 +50,7 @@ async function withAutomationMatcher(workspaceId: string, eventName: string, mat
       throw new Error(`Invalid automation reference: ${eventName}[${matcherIndex}]`)
     }
 
-    mutate(matchers, matcherIndex, config, generateShortId)
+    const result = mutate(matchers, matcherIndex, config, generateShortId)
 
     // Backfill missing IDs on all matchers before writing
     for (const eventMatchers of Object.values(eventMap)) {
@@ -61,7 +61,76 @@ async function withAutomationMatcher(workspaceId: string, eventName: string, mat
     }
 
     atomicWriteFileSync(configPath, JSON.stringify(config, null, 2) + '\n')
+    return result
   })
+}
+
+/** Keys the automations editor may write on a matcher. Anything else already
+ *  on the matcher (graph metadata, attributeAllowList, …) is preserved. */
+const EDITABLE_MATCHER_KEYS = [
+  'name', 'matcher', 'cron', 'timezone', 'permissionMode', 'labels',
+  'enabled', 'conditions', 'telegramTopic', 'actions',
+] as const
+
+const KNOWN_EVENTS = new Set<string>([
+  'LabelAdd', 'LabelRemove', 'LabelConfigChange', 'PermissionModeChange', 'FlagChange',
+  'TodoStateChange', 'SessionStatusChange', 'SchedulerTick',
+  'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'Notification', 'UserPromptSubmit',
+  'SessionStart', 'SessionEnd', 'Stop', 'SubagentStart', 'SubagentStop', 'PreCompact',
+  'PermissionRequest', 'Setup',
+])
+
+interface AutomationEditPayload { event: string; matcher: Record<string, unknown> }
+
+function parseEditPayload(raw: unknown): AutomationEditPayload {
+  if (!raw || typeof raw !== 'object') throw new Error('Invalid automation payload')
+  const { event, matcher } = raw as { event?: unknown; matcher?: unknown }
+  if (typeof event !== 'string' || !KNOWN_EVENTS.has(event)) throw new Error(`Unknown automation event: ${String(event)}`)
+  if (!matcher || typeof matcher !== 'object' || Array.isArray(matcher)) throw new Error('Invalid automation matcher')
+  return { event, matcher: matcher as Record<string, unknown> }
+}
+
+/** Merge editable fields onto `base` (undefined / empty removes the key). */
+function applyMatcherEdit(base: Record<string, unknown>, edit: Record<string, unknown>, event: string): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...base }
+  for (const key of EDITABLE_MATCHER_KEYS) {
+    if (!(key in edit)) continue
+    const value = edit[key]
+    const empty = value === undefined || value === null || value === ''
+      || (Array.isArray(value) && value.length === 0 && key !== 'actions')
+    if (empty) delete next[key]
+    else next[key] = value
+  }
+  if (next.enabled === true) delete next.enabled
+  // Cron only applies to SchedulerTick; regex matchers never do.
+  if (event === 'SchedulerTick') delete next.matcher
+  else { delete next.cron; delete next.timezone }
+  return next
+}
+
+/** Validate a single matcher in isolation so an unrelated legacy entry elsewhere
+ *  in automations.json cannot block editing this one. */
+function assertValidMatcher(event: string, matcher: Record<string, unknown>): void {
+  const actions = Array.isArray(matcher.actions) ? matcher.actions as Array<Record<string, unknown>> : []
+  if (actions.length === 0) throw new Error('At least one action is required')
+  for (const action of actions) {
+    if (action?.type === 'prompt' && (typeof action.prompt !== 'string' || action.prompt.trim() === '')) {
+      throw new Error('Prompt cannot be empty')
+    }
+  }
+  const validation = validateAutomationsConfig({ version: 2, automations: { [event]: [matcher] } })
+  if (!validation.valid) throw new Error(validation.errors.join('; '))
+}
+
+async function readConfigOrEmpty(configPath: string): Promise<AutomationsConfigJson> {
+  try {
+    return JSON.parse(await readFile(configPath, 'utf-8')) as AutomationsConfigJson
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { version: 2, automations: {} }
+    }
+    throw error
+  }
 }
 
 export const HANDLED_CHANNELS = [
@@ -70,6 +139,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.automations.TEST,
   RPC_CHANNELS.automations.SET_ENABLED,
   RPC_CHANNELS.automations.DUPLICATE,
+  RPC_CHANNELS.automations.UPDATE,
+  RPC_CHANNELS.automations.CREATE,
   RPC_CHANNELS.automations.DELETE,
   RPC_CHANNELS.automations.GET_HISTORY,
   RPC_CHANNELS.automations.GET_LAST_EXECUTED,
@@ -79,6 +150,13 @@ export const HANDLED_CHANNELS = [
 
 export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
+  // Mutations push CHANGED directly so every window refreshes immediately,
+  // independent of the (debounced) config file watcher.
+  const notifyChanged = (workspaceId: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    const id = workspace?.id ?? workspaceId
+    pushTyped(server, RPC_CHANNELS.automations.CHANGED, { to: 'workspace', workspaceId: id }, id)
+  }
 
   // Get automations config for a workspace (read-only, resolves path server-side)
   server.handle(RPC_CHANNELS.automations.GET, async (_ctx, workspaceId: string) => {
@@ -320,6 +398,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
       }
     }
 
+    // History changed (and lastExecutedAt with it) — let lists refresh.
+    if (payload.automationId) notifyChanged(payload.workspaceId)
     return { actions: results } satisfies import('@craft-agent/shared/protocol').TestAutomationResult
   })
 
@@ -334,18 +414,70 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
         matchers[idx].enabled = false
       }
     })
+    notifyChanged(workspaceId)
   })
 
   // Duplicate an automation matcher
   server.handle(RPC_CHANNELS.automations.DUPLICATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number) => {
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) return
-    await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, _config, genId) => {
+    const id = await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, _config, genId) => {
       const clone = JSON.parse(JSON.stringify(matchers[idx]))
       clone.id = genId()
       clone.name = clone.name ? `${clone.name} Copy` : 'Untitled Copy'
       matchers.splice(idx + 1, 0, clone)
+      return clone.id as string
     })
+    notifyChanged(workspaceId)
+    return { id }
+  })
+
+  // Replace one matcher's editable fields (id and unknown keys preserved).
+  // Changing the event moves the matcher to the end of that event's list.
+  server.handle(RPC_CHANNELS.automations.UPDATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, rawPayload: unknown) => {
+    const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
+    if (!isClaimableLive(act)) throw new Error('automations update is not live')
+    const payload = parseEditPayload(rawPayload)
+    const result = await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, config, genId) => {
+      const current = matchers[idx]!
+      const next = applyMatcherEdit(current, payload.matcher, payload.event)
+      if (!next.id) next.id = genId()
+      assertValidMatcher(payload.event, next)
+      if (payload.event === eventName) {
+        matchers[idx] = next
+        return { id: next.id as string, event: eventName, matcherIndex: idx }
+      }
+      const eventMap = (config.automations ??= {})
+      matchers.splice(idx, 1)
+      if (matchers.length === 0) delete eventMap[eventName]
+      const target = (eventMap[payload.event] ??= [])
+      target.push(next)
+      return { id: next.id as string, event: payload.event, matcherIndex: target.length - 1 }
+    })
+    notifyChanged(workspaceId)
+    return result
+  })
+
+  // Append a new matcher (creates automations.json if missing, without seeding).
+  server.handle(RPC_CHANNELS.automations.CREATE, async (_ctx, workspaceId: string, rawPayload: unknown) => {
+    const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: 'create' })
+    if (!isClaimableLive(act)) throw new Error('automations create is not live')
+    const payload = parseEditPayload(rawPayload)
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    const result = await withConfigMutex(workspace.rootPath, async () => {
+      const configPath = resolveAutomationsConfigPath(workspace.rootPath)
+      const config = await readConfigOrEmpty(configPath)
+      const next = applyMatcherEdit({ id: generateShortId() }, payload.matcher, payload.event)
+      assertValidMatcher(payload.event, next)
+      const eventMap = (config.automations ??= {})
+      const target = (eventMap[payload.event] ??= [])
+      target.push(next)
+      atomicWriteFileSync(configPath, JSON.stringify(config, null, 2) + '\n')
+      return { id: next.id as string, event: payload.event, matcherIndex: target.length - 1 }
+    })
+    notifyChanged(workspaceId)
+    return result
   })
 
   // Delete an automation matcher
@@ -364,6 +496,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
         if (eventMap) delete eventMap[eventName]
       }
     })
+    notifyChanged(workspaceId)
   })
 
   // Read execution history for a specific automation
@@ -443,18 +576,19 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   })
 
   // Return last execution timestamp for all automations
-  server.handle(RPC_CHANNELS.automations.GET_LAST_EXECUTED, async (_ctx, workspaceId: string) => {
+  // `detailed` adds the last run's ok flag: { [id]: { ts, ok } } instead of { [id]: ts }.
+  server.handle(RPC_CHANNELS.automations.GET_LAST_EXECUTED, async (_ctx, workspaceId: string, detailed?: boolean) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
     const historyPath = join(workspace.rootPath, HISTORY_FILE)
     try {
       const content = await readFile(historyPath, 'utf-8')
-      const result: Record<string, number> = {}
+      const result: Record<string, number | { ts: number; ok: boolean }> = {}
       for (const line of content.trim().split('\n')) {
         try {
           const entry = JSON.parse(line)
-          if (entry.id && entry.ts) result[entry.id] = entry.ts
+          if (entry.id && entry.ts) result[entry.id] = detailed ? { ts: entry.ts, ok: entry.ok !== false } : entry.ts
         } catch { /* skip malformed lines */ }
       }
       return result

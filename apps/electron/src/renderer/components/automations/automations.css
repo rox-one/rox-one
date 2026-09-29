@@ -1,0 +1,258 @@
+/* =============================================================================
+   AUTOMATIONS — list (navigator column) + single-automation editor.
+   Flat and borderless: surfaces separate by faint foreground tints and spacing,
+   never by 1px lines. Type is the UI face (Arial Narrow via --font-sans).
+   High contrast strengthens fills/text and relies on focus outlines, still
+   without hairline separators.
+   ============================================================================= */
+
+.rox-autom-list,
+.rox-autom-editor {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+}
+
+/* ---------- shared controls ---------- */
+
+.rox-autom-input,
+.rox-autom-select,
+.rox-autom-textarea {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  border-radius: 7px;
+  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  padding: 6px 9px;
+  transition: background-color 120ms ease;
+}
+.rox-autom-select { appearance: none; -webkit-appearance: none; padding-right: 24px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 13px) 55%, calc(100% - 9px) 55%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+.rox-autom-select option { background: var(--background); color: var(--foreground); }
+.rox-autom-textarea { resize: vertical; min-height: 96px; font-size: 13.5px; }
+.rox-autom-input:hover,
+.rox-autom-select:hover,
+.rox-autom-textarea:hover { background-color: color-mix(in oklch, var(--foreground) 8%, transparent); }
+.rox-autom-input:focus-visible,
+.rox-autom-select:focus-visible,
+.rox-autom-textarea:focus-visible {
+  background-color: color-mix(in oklch, var(--foreground) 8%, transparent);
+  outline: 2px solid color-mix(in oklch, var(--focus) 70%, transparent);
+  outline-offset: 0;
+}
+.rox-autom-input.is-invalid { background-color: color-mix(in oklch, var(--destructive) 14%, transparent); }
+.rox-autom-mono { font-family: var(--font-mono); font-size: 12px; }
+
+.rox-autom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: color-mix(in oklch, var(--foreground) 6%, transparent);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: default;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+.rox-autom-btn:hover { background: color-mix(in oklch, var(--foreground) 11%, transparent); }
+.rox-autom-btn:disabled { opacity: 0.45; pointer-events: none; }
+.rox-autom-btn:focus-visible,
+.rox-autom-chip:focus-visible,
+.rox-autom-row:focus-visible,
+.rox-autom-switch:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--focus) 75%, transparent);
+  outline-offset: 1px;
+}
+.rox-autom-btn.is-primary { background: var(--foreground); color: var(--background); }
+.rox-autom-btn.is-primary:hover { background: color-mix(in oklch, var(--foreground) 85%, var(--background)); }
+.rox-autom-btn.is-ghost { background: transparent; }
+.rox-autom-btn.is-ghost:hover { background: color-mix(in oklch, var(--foreground) 7%, transparent); }
+.rox-autom-btn.is-danger { background: transparent; color: var(--destructive); }
+.rox-autom-btn.is-danger:hover { background: color-mix(in oklch, var(--destructive) 12%, transparent); }
+.rox-autom-btn.is-icon { width: 28px; padding: 0; justify-content: center; }
+
+.rox-autom-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+  color: color-mix(in oklch, var(--foreground) 80%, transparent);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: default;
+}
+.rox-autom-chip:hover { background: color-mix(in oklch, var(--foreground) 10%, transparent); }
+.rox-autom-chip[aria-pressed="true"] { background: var(--foreground); color: var(--background); }
+
+/* On/off switch: a filled track, no outline ring. */
+.rox-autom-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 28px;
+  height: 16px;
+  border: 0;
+  padding: 0;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--foreground) 22%, transparent);
+  cursor: default;
+  transition: background-color 140ms ease;
+}
+.rox-autom-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--background);
+  transition: transform 140ms ease;
+}
+.rox-autom-switch[aria-checked="true"] { background: var(--success); }
+.rox-autom-switch[aria-checked="true"]::after { transform: translateX(12px); }
+
+.rox-autom-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; background: color-mix(in oklch, var(--foreground) 25%, transparent); }
+.rox-autom-dot.is-ok { background: var(--success); }
+.rox-autom-dot.is-error { background: var(--destructive); }
+.rox-autom-dot.is-running { background: var(--accent); animation: rox-autom-pulse 1s ease-in-out infinite; }
+@keyframes rox-autom-pulse { 50% { opacity: 0.35; } }
+
+/* ---------- list ---------- */
+
+.rox-autom-list { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.rox-autom-list-top { display: flex; gap: 6px; padding: 8px 10px 6px; }
+.rox-autom-group-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 14px 4px;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: color-mix(in oklch, var(--foreground) 55%, transparent);
+}
+.rox-autom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 12px);
+  margin: 0 6px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+.rox-autom-row:hover { background: color-mix(in oklch, var(--foreground) 5%, transparent); }
+.rox-autom-row[aria-selected="true"] { background: color-mix(in oklch, var(--foreground) 9%, transparent); }
+.rox-autom-row.is-multi { background: color-mix(in oklch, var(--accent) 14%, transparent); }
+.rox-autom-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.rox-autom-row-name { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rox-autom-row-sub { font-size: 12px; color: color-mix(in oklch, var(--foreground) 55%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rox-autom-row.is-off .rox-autom-row-name { color: color-mix(in oklch, var(--foreground) 55%, transparent); }
+.rox-autom-row-meta { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: color-mix(in oklch, var(--foreground) 50%, transparent); white-space: nowrap; }
+.rox-autom-empty { padding: 24px 16px; font-size: 13px; color: color-mix(in oklch, var(--foreground) 55%, transparent); text-align: center; }
+
+/* ---------- editor ---------- */
+
+.rox-autom-editor { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.rox-autom-editor-bar { display: flex; align-items: center; gap: 8px; padding: 10px 20px 6px; flex-wrap: wrap; }
+.rox-autom-title-input {
+  flex: 1;
+  min-width: 180px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1.2;
+  padding: 4px 6px;
+  border-radius: 7px;
+}
+.rox-autom-title-input:hover,
+.rox-autom-title-input:focus-visible { background: color-mix(in oklch, var(--foreground) 5%, transparent); }
+.rox-autom-status { font-size: 12px; color: color-mix(in oklch, var(--foreground) 55%, transparent); white-space: nowrap; }
+.rox-autom-status.is-dirty { color: var(--info); }
+.rox-autom-status.is-error { color: var(--destructive); }
+.rox-autom-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 20px 32px; }
+.rox-autom-summary { padding: 0 26px 8px; font-size: 13px; color: color-mix(in oklch, var(--foreground) 60%, transparent); }
+.rox-autom-step {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 12px;
+  padding: 14px 16px 16px 10px;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: color-mix(in oklch, var(--foreground) 2.5%, transparent);
+}
+.rox-autom-step-num {
+  width: 24px; height: 24px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in oklch, var(--foreground) 9%, transparent);
+  font-size: 12px;
+}
+.rox-autom-step-head { display: flex; align-items: baseline; gap: 10px; min-height: 24px; }
+.rox-autom-step-title { font-size: 15px; }
+.rox-autom-step-hint { font-size: 12px; color: color-mix(in oklch, var(--foreground) 50%, transparent); }
+.rox-autom-step-body { grid-column: 2; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.rox-autom-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.rox-autom-label { font-size: 12px; color: color-mix(in oklch, var(--foreground) 58%, transparent); }
+.rox-autom-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.rox-autom-inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rox-autom-note { font-size: 12px; color: color-mix(in oklch, var(--foreground) 52%, transparent); }
+.rox-autom-error { font-size: 12px; color: var(--destructive); }
+.rox-autom-cond { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border-radius: 8px; background: color-mix(in oklch, var(--foreground) 3.5%, transparent); flex-wrap: wrap; }
+.rox-autom-history-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 7px; font-size: 13px; }
+.rox-autom-history-row:hover { background: color-mix(in oklch, var(--foreground) 4%, transparent); }
+.rox-autom-history-row .rox-autom-when { width: 132px; flex-shrink: 0; color: color-mix(in oklch, var(--foreground) 60%, transparent); font-variant-numeric: tabular-nums; }
+.rox-autom-history-row .rox-autom-what { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rox-autom-link { border: 0; background: transparent; padding: 0; color: var(--accent); font: inherit; cursor: default; }
+.rox-autom-link:hover { text-decoration: underline; }
+.rox-autom-section-title { margin: 22px 0 6px 10px; font-size: 15px; }
+
+/* ---------- high contrast ---------- */
+
+html[data-contrast="high"] .rox-autom-input,
+html[data-contrast="high"] .rox-autom-select,
+html[data-contrast="high"] .rox-autom-textarea { background-color: color-mix(in oklch, var(--foreground) 12%, transparent); }
+html[data-contrast="high"] .rox-autom-btn,
+html[data-contrast="high"] .rox-autom-chip { background: color-mix(in oklch, var(--foreground) 14%, transparent); color: var(--foreground); }
+html[data-contrast="high"] .rox-autom-btn.is-ghost,
+html[data-contrast="high"] .rox-autom-btn.is-danger { background: transparent; }
+html[data-contrast="high"] .rox-autom-btn.is-primary,
+html[data-contrast="high"] .rox-autom-chip[aria-pressed="true"] { background: var(--foreground); color: var(--background); }
+html[data-contrast="high"] .rox-autom-row-sub,
+html[data-contrast="high"] .rox-autom-row-meta,
+html[data-contrast="high"] .rox-autom-group-title,
+html[data-contrast="high"] .rox-autom-label,
+html[data-contrast="high"] .rox-autom-note,
+html[data-contrast="high"] .rox-autom-step-hint,
+html[data-contrast="high"] .rox-autom-summary,
+html[data-contrast="high"] .rox-autom-status,
+html[data-contrast="high"] .rox-autom-history-row .rox-autom-when { color: color-mix(in oklch, var(--foreground) 85%, transparent); }
+html[data-contrast="high"] .rox-autom-row[aria-selected="true"] { background: color-mix(in oklch, var(--foreground) 20%, transparent); }
+html[data-contrast="high"] .rox-autom-step { background: color-mix(in oklch, var(--foreground) 6%, transparent); }
+html[data-contrast="high"] .rox-autom-switch { background: color-mix(in oklch, var(--foreground) 45%, transparent); }
+html[data-contrast="high"] .rox-autom-switch[aria-checked="true"] { background: var(--success); }
+html[data-contrast="high"] .rox-autom-link { text-decoration: underline; }

@@ -1,164 +1,103 @@
 /**
  * AutomationsListPanel
  *
- * Navigator panel for displaying automations in the 2nd column.
- * Follows the SourcesListPanel pattern with avatar, title, subtitle, badges.
- * Title and Plus button are handled by the shared PanelHeader in AppShell.
+ * Navigator column for automations: search + «Новая автоматизация», then a
+ * compact list grouped by trigger type (По расписанию / По событиям /
+ * Агентные). Each row shows the name, a human trigger summary
+ * («каждый день в 9:00», «когда добавлена метка urgent»), the last run
+ * status/time and an on/off switch.
  *
- * Supports CMD/CTRL+click multi-select and Shift+click range select,
- * using the shared EntityRow + createEntitySelection infrastructure.
+ * Supports CMD/CTRL+click multi-select and Shift+click range select via the
+ * shared automationSelection store (MultiSelectPanel on the right).
  */
 
 import * as React from 'react'
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Webhook } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@craft-agent/ui'
+import { Plus, Search, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
-import { EntityRow } from '@/components/ui/entity-row'
-import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
-import { SessionSearchHeader } from '@/components/app-shell/SessionSearchHeader'
-import { AutomationMenu } from './AutomationMenu'
-import { BatchAutomationMenu } from './BatchAutomationMenu'
-import { AutomationAvatar } from './AutomationAvatar'
-import { SendResourceToWorkspaceDialog } from '@/components/app-shell/SendResourceToWorkspaceDialog'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { automationSelection } from '@/hooks/useEntitySelection'
-import { APP_EVENTS, AGENT_EVENTS, getEventDisplayName, type AutomationListItem, type AutomationListFilter } from './types'
+import {
+  AUTOMATION_GROUPS,
+  describeTrigger,
+  getAutomationGroup,
+  getEventDisplayName,
+  type AutomationGroup,
+  type AutomationListFilter,
+  type AutomationListItem,
+  type AutomationTrigger,
+} from './types'
 import { formatShortRelativeTime } from './utils'
+import './automations.css'
 
-const {
-  useSelection: useAutomationSelection,
-} = automationSelection
+const { useSelection: useAutomationSelection } = automationSelection
 
-
-/** Tiny inline badge used for event name and action type in automation rows */
-function MicroBadge({ children, colorClass }: { children: React.ReactNode; colorClass: string }) {
-  return (
-    <span className={cn('shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded', colorClass)}>
-      {children}
-    </span>
-  )
+const GROUP_TITLE_KEYS: Record<AutomationGroup, string> = {
+  scheduled: 'automations.groupScheduled',
+  event: 'automations.groupEvent',
+  agent: 'automations.groupAgent',
 }
 
-// ============================================================================
-// Automation Item
-// ============================================================================
-
-interface AutomationItemProps {
-  automation: AutomationListItem
-  isSelected: boolean
-  isInMultiSelect: boolean
-  isMultiSelectActive: boolean
-  isFirst: boolean
-  onClick: () => void
-  onToggleSelect?: () => void
-  onRangeSelect?: () => void
-  onDelete: () => void
-  onToggleEnabled: () => void
-  onTest: () => void
-  onDuplicate: () => void
-  onSendToWorkspace?: () => void
+const FILTER_TO_GROUP: Record<string, AutomationGroup | undefined> = {
+  scheduled: 'scheduled',
+  app: 'event',
+  agent: 'agent',
 }
 
-function AutomationItem({
-  automation,
-  isSelected,
-  isInMultiSelect,
-  isMultiSelectActive,
-  isFirst,
-  onClick,
-  onToggleSelect,
-  onRangeSelect,
-  onDelete,
-  onToggleEnabled,
-  onTest,
-  onDuplicate,
-  onSendToWorkspace,
-}: AutomationItemProps) {
-  const { t } = useTranslation()
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (e.button === 2) {
-      // Right-click: auto-add to selection if multi-select active
-      if (isMultiSelectActive && !isInMultiSelect && onToggleSelect) onToggleSelect()
-      return
-    }
-    if ((e.metaKey || e.ctrlKey) && onToggleSelect) {
-      e.preventDefault()
-      onToggleSelect()
-      return
-    }
-    if (e.shiftKey && onRangeSelect) {
-      e.preventDefault()
-      onRangeSelect()
-      return
-    }
-    onClick()
-  }, [isMultiSelectActive, isInMultiSelect, onToggleSelect, onRangeSelect, onClick])
+/** Default event for a new automation created while a group filter is active. */
+const NEW_EVENT_FOR_GROUP: Record<AutomationGroup, AutomationTrigger> = {
+  scheduled: 'SchedulerTick',
+  event: 'LabelAdd',
+  agent: 'SessionEnd',
+}
 
+export function AutomationSwitch({
+  checked,
+  onToggle,
+  label,
+}: {
+  checked: boolean
+  onToggle: () => void
+  label: string
+}) {
   return (
-    <EntityRow
-      className={cn('automation-item', !automation.enabled && 'opacity-50')}
-      showSeparator={!isFirst}
-      separatorClassName="pl-10 pr-4"
-      isSelected={isSelected}
-      isInMultiSelect={isInMultiSelect}
-      onMouseDown={handleClick}
-      icon={<AutomationAvatar event={automation.event} size="sm" />}
-      title={automation.name}
-      badges={
-        <>
-          <MicroBadge colorClass="bg-foreground/8 text-foreground/60">
-            {getEventDisplayName(automation.event)}
-          </MicroBadge>
-          {automation.actions.some(a => a.type === 'prompt') && (
-            <MicroBadge colorClass="bg-accent/10 text-accent">
-              {t('automations.badgePrompt')}
-            </MicroBadge>
-          )}
-          {automation.actions.some(a => a.type === 'webhook') && (
-            <MicroBadge colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400">
-              {t('automations.badgeWebhook')}
-            </MicroBadge>
-          )}
-        </>
-      }
-      trailing={
-        automation.lastExecutedAt ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="shrink-0 text-[11px] text-foreground/40 whitespace-nowrap cursor-default">
-                {formatShortRelativeTime(automation.lastExecutedAt, t)}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={4}>
-              {t('automations.lastRan', { time: formatShortRelativeTime(automation.lastExecutedAt, t) })}
-            </TooltipContent>
-          </Tooltip>
-        ) : undefined
-      }
-      menuContent={
-        <AutomationMenu
-          automationId={automation.id}
-          automationName={automation.name}
-          enabled={automation.enabled}
-          onToggleEnabled={onToggleEnabled}
-          onTest={onTest}
-          onDuplicate={onDuplicate}
-          onDelete={onDelete}
-          onSendToWorkspace={onSendToWorkspace}
-        />
-      }
-      contextMenuContent={isMultiSelectActive && isInMultiSelect ? <BatchAutomationMenu /> : undefined}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      title={label}
+      className="rox-autom-switch"
+      data-testid="automation-switch"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation()
+        onToggle()
+      }}
     />
   )
 }
 
-// ============================================================================
-// AutomationsListPanel
-// ============================================================================
+export function LastRunMeta({ automation }: { automation: AutomationListItem }) {
+  const { t } = useTranslation()
+  if (!automation.lastExecutedAt) {
+    return <span className="rox-autom-row-meta">{t('automations.neverRan')}</span>
+  }
+  const failed = automation.lastRunOk === false
+  return (
+    <span
+      className="rox-autom-row-meta"
+      title={t('automations.lastRan', { time: new Date(automation.lastExecutedAt).toLocaleString() })}
+    >
+      <span className={cn('rox-autom-dot', failed ? 'is-error' : 'is-ok')} aria-hidden />
+      {failed ? t('automations.lastRunFailed') : null}
+      {formatShortRelativeTime(automation.lastExecutedAt, t)}
+    </span>
+  )
+}
 
 export interface AutomationsListPanelProps {
   automations: AutomationListItem[]
@@ -177,180 +116,206 @@ export function AutomationsListPanel({
   automations,
   automationFilter,
   onAutomationClick,
-  onDeleteAutomation,
   onToggleAutomation,
-  onTestAutomation,
-  onDuplicateAutomation,
   selectedAutomationId,
-  workspaceRootPath,
   className,
 }: AutomationsListPanelProps) {
-  const { t } = useTranslation()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchActive, setSearchActive] = useState(false)
-  const { workspaces, activeWorkspaceId } = useAppShellContext()
-  const hasOtherWorkspaces = workspaces.length > 1
-
-  // Send to Workspace dialog state
-  const [sendDialogOpen, setSendDialogOpen] = useState(false)
-  const [sendResourceId, setSendResourceId] = useState<string | null>(null)
-  const [sendResourceLabel, setSendResourceLabel] = useState('')
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language || 'ru'
+  const { activeWorkspaceId } = useAppShellContext()
+  const [query, setQuery] = useState('')
+  const [creating, setCreating] = useState(false)
 
   const {
     select: selectAutomation,
-    toggle: toggleAutomation,
+    toggle: toggleAutomationSelection,
     selectRange,
     isMultiSelectActive,
     isSelected: isInSelection,
   } = useAutomationSelection()
 
-  const isSearchMode = searchActive && searchQuery.length >= 2
+  const onlyGroup = FILTER_TO_GROUP[automationFilter?.kind ?? 'all']
 
-  // Filter automations based on sidebar-driven filter (from route)
-  const categoryFiltered = React.useMemo(() => {
-    const kind = automationFilter?.kind ?? 'all'
-    if (kind === 'all') return automations
-    if (kind === 'scheduled') return automations.filter(a => a.event === 'SchedulerTick')
-    if (kind === 'app') return automations.filter(a => (APP_EVENTS as string[]).includes(a.event) && a.event !== 'SchedulerTick')
-    if (kind === 'agent') return automations.filter(a => (AGENT_EVENTS as string[]).includes(a.event))
-    return automations
-  }, [automations, automationFilter?.kind])
+  const groups = React.useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const byGroup: Record<AutomationGroup, AutomationListItem[]> = { scheduled: [], event: [], agent: [] }
+    for (const a of automations) {
+      const group = getAutomationGroup(a.event)
+      if (onlyGroup && group !== onlyGroup) continue
+      if (q) {
+        const haystack = [
+          a.name,
+          describeTrigger(a, t, locale),
+          getEventDisplayName(a.event, t),
+          ...a.actions.map((x) => (x.type === 'prompt' ? x.prompt : x.url)),
+        ].join(' ').toLowerCase()
+        if (!haystack.includes(q)) continue
+      }
+      byGroup[group].push(a)
+    }
+    // Enabled first, then by name — stable, so rows don't jump after each run.
+    for (const g of AUTOMATION_GROUPS) {
+      byGroup[g].sort((a, b) => Number(b.enabled) - Number(a.enabled) || a.name.localeCompare(b.name, locale))
+    }
+    return byGroup
+  }, [automations, query, onlyGroup, t, locale])
 
-  // Further filter by search query (name, summary, event display name)
-  const searchFiltered = React.useMemo(() => {
-    if (!isSearchMode) return categoryFiltered
-    const q = searchQuery.toLowerCase()
-    return categoryFiltered.filter(a =>
-      a.name.toLowerCase().includes(q) ||
-      a.summary.toLowerCase().includes(q) ||
-      getEventDisplayName(a.event).toLowerCase().includes(q)
-    )
-  }, [categoryFiltered, isSearchMode, searchQuery])
+  const flatIds = React.useMemo(
+    () => AUTOMATION_GROUPS.flatMap((g) => groups[g].map((a) => a.id)),
+    [groups],
+  )
+  const visibleCount = flatIds.length
 
-  // Sort: most recently executed first, never-run at the bottom
-  const filteredAutomations = React.useMemo(() => {
-    return [...searchFiltered].sort((a, b) => {
-      if (!a.lastExecutedAt && !b.lastExecutedAt) return 0
-      if (!a.lastExecutedAt) return 1
-      if (!b.lastExecutedAt) return -1
-      return new Date(b.lastExecutedAt).getTime() - new Date(a.lastExecutedAt).getTime()
-    })
-  }, [searchFiltered])
+  const handleRowMouseDown = useCallback((e: React.MouseEvent, id: string) => {
+    const index = flatIds.indexOf(id)
+    if (e.button === 2) return
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault()
+      toggleAutomationSelection(id, index)
+      return
+    }
+    if (e.shiftKey) {
+      e.preventDefault()
+      selectRange(index, flatIds)
+      return
+    }
+    selectAutomation(id, index)
+    onAutomationClick(id)
+  }, [flatIds, toggleAutomationSelection, selectRange, selectAutomation, onAutomationClick])
 
-  const handleItemClick = useCallback((automationId: string, index: number) => {
-    selectAutomation(automationId, index)
-    onAutomationClick(automationId)
-  }, [selectAutomation, onAutomationClick])
-
-  const handleToggleSelect = useCallback((automationId: string, index: number) => {
-    toggleAutomation(automationId, index)
-  }, [toggleAutomation])
-
-  const handleRangeSelect = useCallback((toIndex: number) => {
-    const allIds = filteredAutomations.map(a => a.id)
-    selectRange(toIndex, allIds)
-  }, [filteredAutomations, selectRange])
-
-  // Empty state
-  if (automations.length === 0) {
-    return (
-      <div className={cn('flex flex-col flex-1 min-h-0', className)}>
-        <EntityListEmptyScreen
-          icon={<Webhook />}
-          title={t('automations.noAutomationsConfigured')}
-          description={t('automations.emptyDescription')}
-          docKey="automations"
-        >
-          {workspaceRootPath && (
-            <EditPopover
-              align="center"
-              trigger={
-                <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors">
-                  {t('automations.addAutomation')}
-                </button>
-              }
-              {...getEditConfig('automation-config', workspaceRootPath)}
-            />
-          )}
-        </EntityListEmptyScreen>
-      </div>
-    )
-  }
+  const handleCreate = useCallback(async () => {
+    if (!activeWorkspaceId || creating) return
+    setCreating(true)
+    const event = NEW_EVENT_FOR_GROUP[onlyGroup ?? 'scheduled']
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    try {
+      const created = await window.electronAPI.createAutomation(activeWorkspaceId, {
+        event,
+        matcher: {
+          name: t('automations.newAutomationDefaultName'),
+          enabled: false,
+          ...(event === 'SchedulerTick' ? { cron: '0 9 * * *', timezone } : {}),
+          permissionMode: 'safe',
+          actions: [{ type: 'prompt', prompt: t('automations.newAutomationDefaultPrompt') }],
+        },
+      })
+      setQuery('')
+      onAutomationClick(created.id)
+    } catch (err) {
+      toast.error(t('automations.createFailed'), { description: err instanceof Error ? err.message : undefined })
+    } finally {
+      setCreating(false)
+    }
+  }, [activeWorkspaceId, creating, onlyGroup, t, onAutomationClick])
 
   return (
-    <div className={cn('flex flex-col flex-1 min-h-0', className)}>
-      {/* Search header */}
-      {searchActive && (
-        <SessionSearchHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSearchClose={() => {
-            setSearchActive(false)
-            setSearchQuery('')
-          }}
-          placeholder={t('automations.searchPlaceholder')}
-          resultCount={isSearchMode ? filteredAutomations.length : undefined}
-        />
-      )}
-
-      {/* Filtered empty state */}
-      {filteredAutomations.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-1">
-          <p className="text-sm text-muted-foreground">
-            {isSearchMode ? t('automations.noAutomationsFound') : t('automations.noAutomationsConfigured')}
-          </p>
-          {isSearchMode && (
+    <div className={cn('rox-autom-list', className)} data-testid="automations-list">
+      <div className="rox-autom-list-top">
+        <div className="relative flex-1 min-w-0">
+          <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 opacity-50" />
+          <input
+            className="rox-autom-input"
+            style={{ paddingLeft: 26, paddingRight: query ? 26 : 9 }}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setQuery('') }}
+            placeholder={t('automations.searchPlaceholder')}
+            aria-label={t('automations.searchPlaceholder')}
+          />
+          {query && (
             <button
-              onClick={() => setSearchQuery('')}
-              className="text-xs text-foreground hover:underline"
+              type="button"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+              onClick={() => setQuery('')}
+              aria-label={t('automations.clearSearch')}
             >
-              {t('automations.clearSearch')}
+              <X className="size-3.5" />
             </button>
           )}
         </div>
-      ) : (
-        <ScrollArea className="flex-1">
-          <div className="pb-2" data-list-role="automations">
-            <div className="pt-1">
-              {filteredAutomations.map((automation, index) => (
-                <AutomationItem
-                  key={automation.id}
-                  automation={automation}
-                  isSelected={selectedAutomationId === automation.id}
-                  isInMultiSelect={isMultiSelectActive && isInSelection(automation.id)}
-                  isMultiSelectActive={isMultiSelectActive}
-                  isFirst={index === 0}
-                  onClick={() => handleItemClick(automation.id, index)}
-                  onToggleSelect={() => handleToggleSelect(automation.id, index)}
-                  onRangeSelect={() => handleRangeSelect(index)}
-                  onDelete={() => onDeleteAutomation?.(automation.id)}
-                  onToggleEnabled={() => onToggleAutomation?.(automation.id)}
-                  onTest={() => onTestAutomation?.(automation.id)}
-                  onDuplicate={() => onDuplicateAutomation?.(automation.id)}
-                  onSendToWorkspace={hasOtherWorkspaces ? () => {
-                    setSendResourceId(automation.id)
-                    setSendResourceLabel(automation.name)
-                    setSendDialogOpen(true)
-                  } : undefined}
-                />
-              ))}
-            </div>
-          </div>
-        </ScrollArea>
-      )}
+        <button
+          type="button"
+          className="rox-autom-btn is-icon"
+          onClick={handleCreate}
+          disabled={!activeWorkspaceId || creating}
+          title={t('automations.newAutomation')}
+          aria-label={t('automations.newAutomation')}
+          data-testid="automation-new"
+        >
+          <Plus className="size-4" />
+        </button>
+      </div>
 
-      {/* Send to Workspace dialog */}
-      {sendResourceId && (
-        <SendResourceToWorkspaceDialog
-          open={sendDialogOpen}
-          onOpenChange={setSendDialogOpen}
-          resourceType="automation"
-          resourceIds={[sendResourceId]}
-          resourceLabel={sendResourceLabel}
-          workspaces={workspaces}
-          activeWorkspaceId={activeWorkspaceId}
-        />
-      )}
+      <ScrollArea className="flex-1">
+        <div className="pb-3" data-list-role="automations">
+          {automations.length === 0 ? (
+            <div className="rox-autom-empty">
+              <p>{t('automations.noAutomationsConfigured')}</p>
+              <button type="button" className="rox-autom-btn is-primary mt-3" onClick={handleCreate} disabled={creating}>
+                <Plus className="size-3.5" />
+                {t('automations.newAutomation')}
+              </button>
+            </div>
+          ) : visibleCount === 0 ? (
+            <div className="rox-autom-empty">
+              <p>{t('automations.noAutomationsFound')}</p>
+              {query && (
+                <button type="button" className="rox-autom-link mt-1" onClick={() => setQuery('')}>
+                  {t('automations.clearSearch')}
+                </button>
+              )}
+            </div>
+          ) : (
+            AUTOMATION_GROUPS.map((group) => {
+              const items = groups[group]
+              if (items.length === 0) return null
+              const enabledCount = items.filter((a) => a.enabled).length
+              return (
+                <section key={group} aria-label={t(GROUP_TITLE_KEYS[group])} data-group={group}>
+                  <div className="rox-autom-group-title">
+                    <span>{t(GROUP_TITLE_KEYS[group])}</span>
+                    <span title={t('automations.enabledOfTotal', { enabled: enabledCount, total: items.length })}>
+                      {enabledCount}/{items.length}
+                    </span>
+                  </div>
+                  {items.map((automation) => {
+                    const selected = selectedAutomationId === automation.id
+                    const inMulti = isMultiSelectActive && isInSelection(automation.id)
+                    return (
+                      <div
+                        key={automation.id}
+                        role="option"
+                        tabIndex={0}
+                        aria-selected={selected}
+                        data-automation-id={automation.id}
+                        className={cn('rox-autom-row automation-item', !automation.enabled && 'is-off', inMulti && 'is-multi')}
+                        onMouseDown={(e) => handleRowMouseDown(e, automation.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            onAutomationClick(automation.id)
+                          }
+                        }}
+                      >
+                        <div className="rox-autom-row-main">
+                          <span className="rox-autom-row-name">{automation.name}</span>
+                          <span className="rox-autom-row-sub">{describeTrigger(automation, t, locale)}</span>
+                        </div>
+                        <LastRunMeta automation={automation} />
+                        <AutomationSwitch
+                          checked={automation.enabled}
+                          onToggle={() => onToggleAutomation?.(automation.id)}
+                          label={automation.enabled ? t('automations.menuDisable') : t('automations.menuEnable')}
+                        />
+                      </div>
+                    )
+                  })}
+                </section>
+              )
+            })
+          )}
+        </div>
+      </ScrollArea>
     </div>
   )
 }

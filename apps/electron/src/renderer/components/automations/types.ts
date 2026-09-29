@@ -10,7 +10,8 @@
  * See apps/electron/CLAUDE.md "Common Mistake: Node.js APIs in Renderer".
  */
 
-import { computeNextRuns } from './utils'
+import i18n from 'i18next'
+import { computeNextRuns, type TranslateFn } from './utils'
 import type { PermissionMode } from '../../../shared/types'
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
 import { DEFAULT_WEBHOOK_METHOD } from './constants'
@@ -231,6 +232,8 @@ export interface AutomationListItem {
   telegramTopic?: string
   /** Timestamp of last execution (ms since epoch) */
   lastExecutedAt?: number
+  /** Whether the last execution succeeded (undefined = never ran / unknown) */
+  lastRunOk?: boolean
 }
 
 // ============================================================================
@@ -329,8 +332,142 @@ export const EVENT_DISPLAY_NAMES: Record<AutomationTrigger, string> = {
   Setup:                'Initial Setup',
 }
 
-export function getEventDisplayName(event: AutomationTrigger): string {
+/**
+ * Localized event name (`automations.event.<Event>`). Falls back to the English
+ * map when i18n isn't initialised (unit tests) or the key is missing.
+ */
+export function getEventDisplayName(event: AutomationTrigger, t?: TranslateFn): string {
+  const key = `automations.event.${event}`
+  if (t) {
+    const value = t(key)
+    if (value && value !== key) return value
+  } else if (i18n.isInitialized && i18n.exists(key)) {
+    return i18n.t(key)
+  }
   return EVENT_DISPLAY_NAMES[event] ?? event
+}
+
+// ============================================================================
+// Grouping + human trigger summaries (list rows, editor header)
+// ============================================================================
+
+export type AutomationGroup = 'scheduled' | 'event' | 'agent'
+
+export const AUTOMATION_GROUPS: AutomationGroup[] = ['scheduled', 'event', 'agent']
+
+export function getAutomationGroup(event: AutomationTrigger | string): AutomationGroup {
+  if (event === 'SchedulerTick') return 'scheduled'
+  if ((AGENT_EVENTS as string[]).includes(event)) return 'agent'
+  return 'event'
+}
+
+/** Events offered in the trigger picker, per group (order = picker order). */
+export const EVENT_PICKER_GROUPS: Record<AutomationGroup, AutomationTrigger[]> = {
+  scheduled: ['SchedulerTick'],
+  event: ['LabelAdd', 'LabelRemove', 'SessionStatusChange', 'FlagChange', 'PermissionModeChange', 'TodoStateChange', 'LabelConfigChange'],
+  agent: ['SessionStart', 'SessionEnd', 'Stop', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PermissionRequest', 'Notification', 'SubagentStart', 'SubagentStop', 'PreCompact', 'Setup'],
+}
+
+/** Events whose regex `matcher` is meaningful, with the field it filters. */
+export const EVENT_MATCH_FIELD: Partial<Record<AutomationTrigger, 'label' | 'status' | 'mode' | 'flag' | 'tool' | 'text' | 'agent' | 'source'>> = {
+  LabelAdd: 'label',
+  LabelRemove: 'label',
+  SessionStatusChange: 'status',
+  PermissionModeChange: 'mode',
+  FlagChange: 'flag',
+  PreToolUse: 'tool',
+  PostToolUse: 'tool',
+  PostToolUseFailure: 'tool',
+  PermissionRequest: 'tool',
+  Notification: 'text',
+  SubagentStart: 'agent',
+  SubagentStop: 'agent',
+  SessionStart: 'source',
+}
+
+/** Strip a simple anchored regex (`^urgent$`) down to its literal for display. */
+function matcherLiteral(matcher: string): string {
+  return matcher.replace(/^\^/, '').replace(/\$$/, '').replace(/\\(.)/g, '$1')
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0')
+}
+
+function isInt(part: string | undefined): part is string {
+  return !!part && /^\d+$/.test(part)
+}
+
+/** Short localized weekday name for a cron day-of-week number (0/7 = Sunday). */
+export function weekdayShortName(dow: number, locale: string): string {
+  // 2024-01-07 was a Sunday.
+  const date = new Date(2024, 0, 7 + (dow % 7))
+  try {
+    return date.toLocaleDateString(locale, { weekday: 'short' }).replace(/\.$/, '')
+  } catch {
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dow % 7]!
+  }
+}
+
+/**
+ * Human schedule phrase, lower-case so it reads inside a sentence:
+ * «каждый день в 9:00», «по будням в 10:00», «каждые 15 мин».
+ */
+export function describeSchedule(cron: string | undefined, t: TranslateFn, locale = 'ru'): string {
+  if (!cron) return t('automations.sched.none')
+  const parts = cron.trim().split(/\s+/)
+  if (parts.length !== 5) return t('automations.sched.custom', { cron })
+  const [minute, hour, dom, month, dow] = parts as [string, string, string, string, string]
+  const time = isInt(hour) && isInt(minute) ? `${Number(hour)}:${pad2(Number(minute))}` : null
+
+  if (cron.trim() === '* * * * *') return t('automations.sched.everyMinute')
+  if (/^\*\/\d+$/.test(minute) && hour === '*' && dom === '*' && month === '*' && dow === '*') {
+    return t('automations.sched.everyNMinutes', { n: Number(minute.slice(2)) })
+  }
+  if (isInt(minute) && hour === '*' && dom === '*' && month === '*' && dow === '*') {
+    return t('automations.sched.hourly', { minute: pad2(Number(minute)) })
+  }
+  if (time && month === '*') {
+    if (dom === '*') {
+      if (dow === '*') return t('automations.sched.daily', { time })
+      if (dow === '1-5') return t('automations.sched.weekdays', { time })
+      if (dow === '0,6' || dow === '6,0') return t('automations.sched.weekends', { time })
+      if (/^[0-7](,[0-7])*$/.test(dow)) {
+        const days = dow.split(',').map((d) => weekdayShortName(Number(d), locale)).join(', ')
+        return t('automations.sched.weekly', { days, time })
+      }
+    } else if (isInt(dom) && dow === '*') {
+      return t('automations.sched.monthly', { day: Number(dom), time })
+    }
+  }
+  return t('automations.sched.custom', { cron })
+}
+
+/**
+ * One-line human trigger summary for a list row / editor header:
+ * «каждый день в 9:00», «когда добавлена метка urgent», «когда агент остановился».
+ */
+export function describeTrigger(
+  item: Pick<AutomationListItem, 'event' | 'cron' | 'matcher'>,
+  t: TranslateFn,
+  locale = 'ru',
+): string {
+  if (item.event === 'SchedulerTick') return describeSchedule(item.cron, t, locale)
+  const key = `automations.when.${item.event}`
+  if (item.matcher && EVENT_MATCH_FIELD[item.event]) {
+    if (item.event === 'FlagChange') {
+      const literal = matcherLiteral(item.matcher)
+      if (literal === 'true') return t('automations.when.FlagChange_on')
+      if (literal === 'false') return t('automations.when.FlagChange_off')
+    }
+    const matchKey = `${key}_match`
+    const value = matcherLiteral(item.matcher)
+    const phrase = t(matchKey, { value })
+    if (phrase && phrase !== matchKey) return phrase
+  }
+  const phrase = t(key)
+  if (phrase && phrase !== key) return phrase
+  return t('automations.when.generic', { event: getEventDisplayName(item.event, t) })
 }
 
 /** Maps permission mode values to user-friendly labels */
