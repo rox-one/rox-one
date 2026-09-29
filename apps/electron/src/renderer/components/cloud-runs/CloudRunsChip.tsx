@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { useRegisterModal } from '@/context/ModalContext'
+import { navigate, routes } from '@/lib/navigate'
 
 type RunState = 'queued' | 'start' | 'ready' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired'
 interface ListedRun {
@@ -60,8 +61,14 @@ function formatUsage(
   return t('cloudRuns.usageTokens', { prompt: tok(promptTokens), completion: tok(completionTokens), cpu })
 }
 
+/** Raw provider errors that mean «no Daytona key» (e.g. the secret-ref message). */
+export function isDaytonaKeyMissingError(message: string): boolean {
+  return /DAYTONA_API_KEY|requires secret reference|daytona.*(api key|secret)/i.test(message)
+}
+
 function translateCloudRunsError(message: string, t: (key: string) => string): string {
   if (message.startsWith('security.assurance.')) return t(message)
+  if (isDaytonaKeyMissingError(message)) return t('cloudRuns.keyMissingError')
   return message
 }
 
@@ -124,6 +131,10 @@ function CloudRunsChipInner({
   const [busy, setBusy] = React.useState<string | null>(null)
   const [refreshError, setRefreshError] = React.useState<string | null>(null)
   const isAvailable = availability === 'enabled'
+  // null = not known yet. false = provider key missing → banner + submit disabled.
+  const [tokenConfigured, setTokenConfigured] = React.useState<boolean | null>(null)
+  const keyMissing = isAvailable && tokenConfigured === false
+  const canSubmit = isAvailable && !keyMissing
   useRegisterModal(open, () => setOpen(false))
 
   const refresh = React.useCallback(async () => {
@@ -144,10 +155,11 @@ function CloudRunsChipInner({
       .then((cfg) => {
         setEstimatedTokens(cfg.estimatedRunTokens ?? null)
         setProvider(cfg.provider ?? 'daytona')
+        setTokenConfigured(typeof cfg.tokenConfigured === 'boolean' ? cfg.tokenConfigured : null)
         if (cfg.personas && cfg.provider === 'daytona') setPersonas(true)
       })
       .catch(() => null)
-  }, [isAvailable])
+  }, [isAvailable, open])
 
   React.useEffect(() => {
     if (!open || !isAvailable) return
@@ -259,6 +271,28 @@ function CloudRunsChipInner({
                 </Button>
               </div>
             )}
+            {keyMissing && (
+              <div
+                role="alert"
+                data-cloud-runs-key-missing
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-foreground">{t('cloudRuns.keyMissingTitle')}</div>
+                  <div className="whitespace-normal break-words text-xs text-muted-foreground">{t('cloudRuns.keyMissingBody')}</div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setOpen(false)
+                    navigate(routes.view.settings('cloudRuns'))
+                  }}
+                >
+                  {t('cloudRuns.keyMissingAction')}
+                </Button>
+              </div>
+            )}
             {refreshError && (
               <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
                 <span className="min-w-0 whitespace-normal break-words">{refreshError}</span>
@@ -292,7 +326,7 @@ function CloudRunsChipInner({
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder={t('cloudRuns.topicPlaceholder')}
                   onKeyDown={(e) => {
-                    if (isAvailable && e.key === 'Enter' && topic.trim()) {
+                    if (canSubmit && e.key === 'Enter' && topic.trim()) {
                       void act('submit', async () => {
                         await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas: provider === 'daytona' && personas, omp: provider === 'daytona' && omp })
                         setTopic('')
@@ -323,7 +357,7 @@ function CloudRunsChipInner({
                   <Sparkles className="h-4 w-4" />
                 </Button>
                 <Button
-                  disabled={!isAvailable || !topic.trim() || busy === 'submit'}
+                  disabled={!canSubmit || !topic.trim() || busy === 'submit'}
                   onClick={() =>
                     void act('submit', async () => {
                       await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas: provider === 'daytona' && personas, omp: provider === 'daytona' && omp })
@@ -353,7 +387,7 @@ function CloudRunsChipInner({
                   <p className="min-w-0 whitespace-normal break-words text-sm text-muted-foreground">{t('cloudRuns.empty')}</p>
                   <Button
                     size="sm"
-                    disabled={!isAvailable || !topic.trim() || busy === 'submit'}
+                    disabled={!canSubmit || !topic.trim() || busy === 'submit'}
                     onClick={() => {
                       if (!topic.trim()) {
                         toast.message(t('cloudRuns.topicPlaceholder'))
@@ -615,7 +649,7 @@ function CloudRunsChipInner({
                   placeholder={t('cloudRuns.forkPlaceholder')}
                   autoFocus
                   onKeyDown={(e) => {
-                    if (isAvailable && e.key === 'Enter' && forkQuestion.trim()) {
+                    if (canSubmit && e.key === 'Enter' && forkQuestion.trim()) {
                       void act('fork', async () => {
                         await window.electronAPI.submitCloudRun({ topic: forkQuestion.trim(), sessionId, fromRunId: forkTarget })
                         setForkTarget(null)
@@ -627,7 +661,7 @@ function CloudRunsChipInner({
                 />
                 <Button
                   size="sm"
-                  disabled={!isAvailable || !forkQuestion.trim() || busy === 'fork'}
+                  disabled={!canSubmit || !forkQuestion.trim() || busy === 'fork'}
                   onClick={() =>
                     void act('fork', async () => {
                       await window.electronAPI.submitCloudRun({ topic: forkQuestion.trim(), sessionId, fromRunId: forkTarget })

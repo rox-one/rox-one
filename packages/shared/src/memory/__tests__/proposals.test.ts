@@ -165,3 +165,59 @@ describe('Issue 13 — lifecycle', () => {
     expect(redactProposalSecrets('token ghp_abcdefghijklmnopqrstuvwxyz0123')).toContain('[credential-ref]')
   })
 })
+
+describe('Russian transcripts and LLM extraction', () => {
+  it('matches Cyrillic rule, preference, recurring and event hints (\\b does not work on Cyrillic)', async () => {
+    const { isRuleHint, isPreferenceHint, isRecurringHint, isEventHint } = await import('../proposals.ts')
+    expect(isRuleHint('Всегда запускай тесты перед коммитом')).toBe(true)
+    expect(isRuleHint('никогда не пушь в main напрямую')).toBe(true)
+    expect(isPreferenceHint('Я предпочитаю короткие ответы на русском')).toBe(true)
+    expect(isRecurringHint('Каждый понедельник присылай сводку задач')).toBe(true)
+    expect(isEventHint('Встреча с инвестором 14.10 в 11:00')).toBe(true)
+    // No false positive on a word that merely contains the hint.
+    expect(isRuleHint('Невсегдашний пример без правил')).toBe(false)
+  })
+
+  it('classifies Russian lines and extracts them from a transcript', () => {
+    expect(classifyProposalKind('Никогда не удаляй ветки без спроса')).toBe('rule')
+    expect(classifyProposalKind('Каждое утро составляй план дня')).toBe('recurring_action')
+    expect(classifyProposalKind('Мой пароль от сервера лежит в 1Password')).toBe('credential_ref')
+    const proposals = extractProposalsFromTranscript({
+      sessionId: 's1',
+      workspaceId: 'w1',
+      trigger: 'brain',
+      messages: [
+        { id: 'm1', role: 'user', content: 'Всегда отвечай на русском языке, пожалуйста.' },
+        { id: 'm2', role: 'assistant', content: 'Хорошо.' },
+        { id: 'm3', role: 'user', content: 'Каждый понедельник делай обзор недели.' },
+      ],
+    })
+    expect(proposals.map((p) => p.sourceMessageIds[0])).toEqual(['m1', 'm3'])
+    expect(proposals[1]?.kind).toBe('recurring_action')
+  })
+
+  it('builds an LLM prompt and parses fenced JSON back to message ids', async () => {
+    const { buildProposalExtractionPrompt, parseProposalExtractionResponse, proposalsFromLlmCandidates } = await import('../proposals.ts')
+    const messages = [
+      { id: 'm1', role: 'user', content: 'Я работаю в Rox, стек — Bun и Electron.' },
+      { id: 'tool', role: 'tool', content: 'ignored' },
+      { id: 'm2', role: 'assistant', content: 'Понял.' },
+    ]
+    const built = buildProposalExtractionPrompt(messages, ['Always use bun'])
+    expect(built.indexToMessageId).toEqual(['m1', 'm2'])
+    expect(built.prompt).toContain('#1 [user]')
+    expect(built.prompt).toContain('Always use bun')
+    const parsed = parseProposalExtractionResponse(
+      '```json\n{"proposals":[{"text":"Пользователь работает в Rox на Bun и Electron","kind":"fact","sources":[1]},{"text":"token sk-abcdefghijklmnopqrstu","kind":"fact","sources":[2]}]}\n```',
+      built.indexToMessageId,
+    )
+    expect(parsed).not.toBeNull()
+    expect(parsed?.[0]?.sourceMessageIds).toEqual(['m1'])
+    const proposals = proposalsFromLlmCandidates({ sessionId: 's', workspaceId: 'w', trigger: 'brain', messages }, parsed ?? [])
+    expect(proposals[0]?.kind).toBe('fact')
+    expect(proposals[1]?.kind).toBe('credential_ref')
+    expect(proposals[1]?.text).not.toContain('sk-abcdefghijklmnopqrstu')
+    expect(parseProposalExtractionResponse('not json at all', [])).toBeNull()
+    expect(parseProposalExtractionResponse('{"proposals":[]}', [])).toEqual([])
+  })
+})

@@ -9,12 +9,17 @@ import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { getProjectMemoryPath, loadProjectById } from '@craft-agent/shared/projects'
 import {
   approveProposal,
+  buildProposalExtractionPrompt,
   deleteProposal,
   detectProposalConflicts,
   editProposal,
   extractProposalsFromTranscript,
   isPendingProposal,
+  parseProposalExtractionResponse,
+  proposalTranscriptMessages,
+  proposalsFromLlmCandidates,
   rejectProposal,
+  ROX_PROPOSAL_MODEL_POLICY,
   type MemoryProposal,
   type MemoryProposalScope,
   type MemoryProposalTrigger,
@@ -99,24 +104,35 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
     })
     if (!isClaimableLive(act)) throw new Error('memory extract is not live')
     const ctx = storeFor(args.workspaceId)
-    if (!ctx) return { disabled: false, proposals: [] as MemoryProposal[], preview: [] as string[] }
+    const empty = { proposals: [] as MemoryProposal[], preview: [] as string[], scannedMessages: 0, source: 'none' as const }
+    if (!ctx) return { disabled: false, ...empty }
     if (!workspaceMemoryEnabled(ctx.root)) {
-      return { disabled: true, proposals: [] as MemoryProposal[], preview: [] as string[] }
+      return { disabled: true, ...empty }
     }
-    const extracted = extractProposalsFromTranscript({
+    const messages = args.messages ?? []
+    const scannedMessages = proposalTranscriptMessages(messages).length
+    const rules = existingRules(ctx.root)
+    const input = {
       sessionId: args.sessionId,
       workspaceId: args.workspaceId,
       projectId: args.projectId,
       trigger: args.trigger,
-      messages: args.messages ?? [],
-      existingRules: existingRules(ctx.root),
-    })
+      messages,
+      existingRules: rules,
+    }
+    const { extracted, source, warning } = await extractWithLlmFallback(
+      input,
+      deps.sessionManager?.querySessionLlm?.bind(deps.sessionManager),
+    )
     const saved = ctx.store.saveMany(extracted)
     broadcast(args.workspaceId)
     return {
       disabled: false,
       proposals: saved.filter((p) => isPendingProposal(p)),
       preview: saved.map((p) => p.text),
+      scannedMessages,
+      source,
+      warning,
     }
   })
 
@@ -211,4 +227,44 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
     broadcast(workspaceId)
     return true
   })
+}
+
+type SessionLlmQuery = (
+  sessionId: string,
+  request: { prompt: string; systemPrompt?: string; maxTokens?: number; temperature?: number },
+  options?: { preferFastModel?: boolean },
+) => Promise<{ text: string; model?: string; warning?: string }>
+
+/**
+ * Real LLM extraction (rox/fast or the connection's mini model) with the
+ * regex extractor as fallback. The LLM error is returned as `warning` so the
+ * renderer can show it instead of silently showing nothing.
+ */
+export async function extractWithLlmFallback(
+  input: Parameters<typeof extractProposalsFromTranscript>[0],
+  query: SessionLlmQuery | undefined,
+): Promise<{ extracted: MemoryProposal[]; source: 'llm' | 'regex' | 'none'; warning?: string }> {
+  if (proposalTranscriptMessages(input.messages).length === 0) {
+    return { extracted: [], source: 'none' }
+  }
+  let warning: string | undefined
+  if (query) {
+    try {
+      const built = buildProposalExtractionPrompt(input.messages, input.existingRules ?? [])
+      const result = await query(
+        input.sessionId,
+        { systemPrompt: built.systemPrompt, prompt: built.prompt, maxTokens: 1024, temperature: 0 },
+        { preferFastModel: true },
+      )
+      const candidates = parseProposalExtractionResponse(result.text, built.indexToMessageId)
+      if (candidates === null) throw new Error('The model answer could not be read as a list of memories')
+      return {
+        extracted: proposalsFromLlmCandidates(input, candidates, result.model ?? ROX_PROPOSAL_MODEL_POLICY.model),
+        source: 'llm',
+      }
+    } catch (error) {
+      warning = error instanceof Error ? error.message : String(error)
+    }
+  }
+  return { extracted: extractProposalsFromTranscript(input), source: 'regex', warning }
 }

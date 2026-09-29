@@ -14,6 +14,11 @@ describe('Issue 13 memory proposal UI wiring', () => {
     expect(card).toContain("approveMemoryProposal")
     expect(card).toContain("memory.proposal.approveProject")
     expect(card).toContain("memory.proposal.learn")
+    // Loading state, explicit empty result and real errors (no silent nothing).
+    expect(card).toContain("memory.proposal.learning")
+    expect(card).toContain("memory.proposal.nothingFound")
+    expect(card).toContain("memory.proposal.llmFailed")
+    expect(card).toContain("scannedMessages")
     expect(chat).toContain('SessionMemoryProposalLane')
     expect(memory).toContain('data-memory-proposal-review')
     expect(memory).toContain('MemoryProposalCard')

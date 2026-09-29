@@ -1763,6 +1763,12 @@ export interface ElectronAPI {
     disabled: boolean
     proposals: import('@craft-agent/shared/memory/proposals').MemoryProposal[]
     preview: string[]
+    /** User/assistant messages the extractor read. */
+    scannedMessages?: number
+    /** 'llm' = model extraction, 'regex' = fallback, 'none' = nothing to read. */
+    source?: 'llm' | 'regex' | 'none'
+    /** Model error when extraction fell back to the regex path. */
+    warning?: string
   }>
   approveMemoryProposal(
     workspaceId: string,

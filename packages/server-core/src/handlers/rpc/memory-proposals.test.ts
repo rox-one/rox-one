@@ -143,3 +143,55 @@ describe('memory proposal RPC (Issue 13)', () => {
     expect(listed.some((p) => p.id === id)).toBe(false)
   })
 })
+
+describe('memory proposal LLM extraction with regex fallback', () => {
+  const input = {
+    sessionId: 'sess_ru',
+    workspaceId: 'ws1',
+    trigger: 'brain' as const,
+    messages: [
+      { id: 'm1', role: 'user', content: 'Всегда отвечай мне по-русски и коротко.' },
+      { id: 'm2', role: 'assistant', content: 'Хорошо, буду отвечать коротко.' },
+    ],
+  }
+
+  it('uses the model answer and asks for the fast tier', async () => {
+    const { extractWithLlmFallback } = await import('./memory-proposals')
+    const calls: Array<{ options?: { preferFastModel?: boolean } }> = []
+    const result = await extractWithLlmFallback(input, async (_sessionId, _request, options) => {
+      calls.push({ options })
+      return { text: '{"proposals":[{"text":"Отвечать пользователю по-русски и коротко","kind":"preference","sources":[1]}]}', model: 'rox/fast' }
+    })
+    expect(calls[0]?.options?.preferFastModel).toBe(true)
+    expect(result.source).toBe('llm')
+    expect(result.extracted).toHaveLength(1)
+    expect(result.extracted[0]?.sourceMessageIds).toEqual(['m1'])
+    expect(result.extracted[0]?.cost.model).toBe('rox/fast')
+  })
+
+  it('falls back to the RU-aware regex and reports the model error', async () => {
+    const { extractWithLlmFallback } = await import('./memory-proposals')
+    const result = await extractWithLlmFallback(input, async () => {
+      throw new Error('401 Unauthorized: invalid API key')
+    })
+    expect(result.source).toBe('regex')
+    expect(result.warning).toContain('401')
+    expect(result.extracted.map((p) => p.sourceMessageIds[0])).toContain('m1')
+  })
+
+  it('reports how many messages were scanned through the RPC', async () => {
+    const { invoke } = createHarness()
+    const extracted = await invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, {
+      workspaceId: 'ws1',
+      sessionId: 'sess_empty',
+      trigger: 'brain',
+      messages: [
+        { id: 'm1', role: 'user', content: 'Привет' },
+        { id: 'm2', role: 'assistant', content: 'Здравствуйте!' },
+      ],
+    }) as { proposals: unknown[]; scannedMessages: number; source: string }
+    expect(extracted.proposals).toEqual([])
+    expect(extracted.scannedMessages).toBe(2)
+    expect(extracted.source).toBe('regex')
+  })
+})

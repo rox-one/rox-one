@@ -13,10 +13,9 @@ const chatDisplay = readFileSync(
 )
 
 describe('side thread wiring', () => {
-  it('places magic prompt improvement beside cloud execution', () => {
-    expect(inputContainer).toContain('MagicPromptChip')
+  it('keeps a single improve action: no template «Magic» chip beside cloud execution', () => {
+    expect(inputContainer).not.toContain('MagicPromptChip')
     expect(inputContainer).toContain('CloudRunsChip')
-    expect(inputContainer).toMatch(/MagicPromptChip[\s\S]{0,400}CloudRunsChip/)
   })
 
   it('keeps return-to-parent navigation in the chat banner', () => {

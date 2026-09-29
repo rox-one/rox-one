@@ -15,7 +15,7 @@ import {
   StyledDropdownMenuSubContent,
   DropdownMenuSub,
 } from '@/components/ui/styled-dropdown'
-import { Check, ChevronDown, FolderKanban, Info, Tag, Wand2 } from 'lucide-react'
+import { Check, ChevronDown, FolderKanban, Info, Tag } from 'lucide-react'
 import { PERMISSION_MODE_CONFIG, type PermissionMode } from '@craft-agent/shared/agent/modes'
 import { ActiveTasksBar, type BackgroundTask } from './ActiveTasksBar'
 import type { TerminalOverlayData } from './TaskActionMenu'
@@ -290,25 +290,8 @@ export function ActiveOptionBadges({
 
       </div>
 
-      {/* Right side: Improve Prompt sits with Info, not in the composer attach row. */}
+      {/* Right side. Improve Prompt lives only in the composer (Sparkles). */}
       <div className="flex shrink-0 items-center gap-1">
-        {sessionId && (
-          <button
-            type="button"
-            aria-label={t('chat.improvePrompt')}
-            title={t('chat.improvePromptTooltip')}
-            onClick={() => window.dispatchEvent(new Event('craft:improve-prompt'))}
-            className={cn(
-              'h-[30px] w-[30px] text-xs font-medium rounded-[8px] flex items-center justify-center shrink-0',
-              'outline-none select-none transition-colors shadow-minimal',
-              'hover:bg-foreground/5',
-              'bg-[color-mix(in_srgb,var(--background)_97%,var(--foreground)_3%)]',
-              'text-foreground/80',
-            )}
-          >
-            <Wand2 className="h-3.5 w-3.5 shrink-0" />
-          </button>
-        )}
         <FilesPopoverButton sessionId={sessionId} sessionFolderPath={sessionFolderPath} />
       </div>
     </div>

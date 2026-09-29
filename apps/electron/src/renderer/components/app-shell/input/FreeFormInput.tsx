@@ -713,7 +713,10 @@ export function FreeFormInput({
   const handleImprovePrompt = React.useCallback(async () => {
     if (!sessionId || improvingPrompt) return
     const draft = input.trim()
-    if (!draft) return
+    if (!draft) {
+      toast.info(t('chat.improvePromptEmpty'))
+      return
+    }
     setImprovingPrompt(true)
     try {
       const result = await window.electronAPI.sessionCommand(sessionId, {
@@ -725,7 +728,7 @@ export function FreeFormInput({
         onInputChange?.(result.text)
         richInputRef.current?.setSelectionRange(result.text.length, result.text.length)
       } else {
-        toast.error(t('chat.improvePromptFailed'), { description: result?.error })
+        toast.error(t('chat.improvePromptFailed'), { description: result?.error || t('chat.improvePromptNoAnswer') })
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : undefined
@@ -2393,7 +2396,8 @@ export function FreeFormInput({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  disabled={disabled || disableSend || improvingPrompt || !input.trim()}
+                  disabled={disabled || disableSend || improvingPrompt}
+                  aria-busy={improvingPrompt}
                   onClick={() => { void handleImprovePrompt() }}
                   aria-label={t('chat.improvePromptAria')}
                   className="input-toolbar-btn inline-flex items-center h-6 px-1.5 shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors disabled:opacity-40"
@@ -2402,7 +2406,7 @@ export function FreeFormInput({
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                {improvingPrompt ? t('chat.improvingPrompt') : t('chat.improvePrompt')}
+                {improvingPrompt ? t('chat.improvingPrompt') : t('chat.improvePromptTooltip')}
               </TooltipContent>
             </Tooltip>
           )}
