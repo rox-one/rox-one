@@ -23,6 +23,8 @@ export function BottomTerminalDock() {
   const sessionId = route ? parseSessionIdFromRoute(route) : null
   const cwd = sessionId ? sessionMetaMap.get(sessionId)?.workingDirectory : undefined
   const drag = React.useRef<{ startY: number; startH: number } | null>(null)
+  // Focus the command input only after an explicit open (not on restore at launch).
+  const [focusOnOpen, setFocusOnOpen] = React.useState(false)
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault()
@@ -50,7 +52,10 @@ export function BottomTerminalDock() {
       <button
         type="button"
         aria-label={t('inspector.terminal')}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setFocusOnOpen(true)
+          setOpen(true)
+        }}
         className="chrome-strip rox-shell-pane rox-shell-divider-t pointer-events-auto flex h-[22px] shrink-0 items-center px-2 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         data-bottom-terminal="collapsed"
       >
@@ -86,7 +91,7 @@ export function BottomTerminalDock() {
         </Tooltip>
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <InspectorTerminal cwd={cwd} />
+        <InspectorTerminal cwd={cwd} autoFocus={focusOnOpen} />
       </div>
     </div>
   )

@@ -347,8 +347,12 @@ async function createInitialWindows(): Promise<void> {
     }
     const defaultPath = join(getDefaultWorkspacesDir(), 'my-workspace')
     const workspaceName = resolveWorkspaceMachineName()
-    // Seed workspace icon from the app mark when available (discovered via icon.png)
+    // Seed workspace icon from the full-bleed Rox avatar (workspace-icon.png),
+    // falling back to the app icon (icon.png) for older resource layouts.
     const appIconPath = [
+      join(__dirname, 'resources/workspace-icon.png'),
+      join(__dirname, '../resources/workspace-icon.png'),
+      join(process.resourcesPath ?? '', 'app/resources/workspace-icon.png'),
       join(__dirname, 'resources/icon.png'),
       join(__dirname, '../resources/icon.png'),
       join(process.resourcesPath ?? '', 'app/resources/icon.png'),

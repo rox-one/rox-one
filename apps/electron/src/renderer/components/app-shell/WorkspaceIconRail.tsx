@@ -393,7 +393,7 @@ export function WorkspaceIconRail({
 												<img
 													src={bundledRoxLogo}
 													alt=""
-													className="h-full w-full object-contain p-0.5"
+													className="h-full w-full object-cover"
 												/>
 											}
 										/>
