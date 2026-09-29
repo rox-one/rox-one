@@ -105,6 +105,7 @@ import {
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
+import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
@@ -307,6 +308,7 @@ function AppShellContent({
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
   // PR-2: the rail offset follows the same two-key decision as the host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
@@ -2504,7 +2506,7 @@ function AppShellContent({
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
           onOpenMap={handleOpenMap}
           mapAvailable={Boolean(effectiveSessionId)}
-          showInspectorToggle={unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled}
+          showInspectorToggle={(unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled) && !inspectorSuppressed}
           compactHeaderRenderer={compactHeaderRenderer}
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
           isCompactSettingsMode={isWebUI && isAutoCompact && isSettingsNavigation(navState)}

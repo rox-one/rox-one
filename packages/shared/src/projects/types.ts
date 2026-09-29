@@ -7,6 +7,8 @@
  * File structure:
  * {workspaceRootPath}/projects/{projectSlug}/
  *   ├── config.json   - Project settings
+ *   ├── roadmap.json  - Goal, definition of done, milestones, requirements, inputs (see roadmap.ts)
+ *   ├── roadmap.md    - Human-readable mirror of roadmap.json
  *   └── assets/       - Uploaded files (PDFs, images, text)
  */
 
@@ -110,4 +112,6 @@ export interface ProjectPromptContext {
   memoryPath: string;
   /** MEMORY.md content, already capped by loadProjectMemory. */
   memoryContent?: string;
+  /** Compact roadmap (goal, definition of done, milestones, requirements) from roadmap.json. */
+  roadmapContent?: string;
 }

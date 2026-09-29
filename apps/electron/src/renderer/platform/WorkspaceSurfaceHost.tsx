@@ -13,6 +13,7 @@ import {
 import { BottomTerminalDock } from '@/components/session-inspector/BottomTerminalDock'
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
+import { useInspectorSuppressed } from './inspector-suppression'
 import { PanelHost } from './PanelHost'
 import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchAvailability } from './workbench-rollout'
@@ -38,6 +39,7 @@ export function WorkspaceSurfaceHost({
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const chromeCollapsed = useAtomValue(inspectorChromeCollapsedAtom)
+  const inspectorSuppressed = useInspectorSuppressed()
   const availability = resolveWorkbenchAvailability(
     operatorCapability,
     userPreference === undefined ? persistedPreference : userPreference,
@@ -64,7 +66,7 @@ export function WorkspaceSurfaceHost({
         <BottomTerminalDock />
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
-      {(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />}
+      {!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />}
       <PanelHost slot="inspector" />
     </div>
   )

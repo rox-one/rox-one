@@ -44,3 +44,14 @@ export {
 } from './storage.ts';
 
 export type { UploadProjectAssetInput } from './storage.ts';
+
+export * from './roadmap.ts';
+export * from './roadmap-ai.ts';
+export {
+  getProjectRoadmapPath,
+  getProjectRoadmapMarkdownPath,
+  loadProjectRoadmap,
+  saveProjectRoadmap,
+  loadProjectRoadmapPromptText,
+} from './roadmap-storage.ts';
+export type { LoadedRoadmap } from './roadmap-storage.ts';

@@ -846,6 +846,10 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.projects.LIST_ASSETS,
   RPC_CHANNELS.projects.UPLOAD_ASSET,
   RPC_CHANNELS.projects.DELETE_ASSET,
+  RPC_CHANNELS.projects.GET_ROADMAP,
+  RPC_CHANNELS.projects.SAVE_ROADMAP,
+  RPC_CHANNELS.projects.AI_STATUS,
+  RPC_CHANNELS.projects.AI_ROADMAP,
   RPC_CHANNELS.projects.CHANGED,
 
   // pages — workspace pages (mini dashboards)

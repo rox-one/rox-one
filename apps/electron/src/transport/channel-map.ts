@@ -782,6 +782,10 @@ export const CHANNEL_MAP = {
   listProjectAssets: invoke(RPC_CHANNELS.projects.LIST_ASSETS),
   uploadProjectAsset: invoke(RPC_CHANNELS.projects.UPLOAD_ASSET),
   deleteProjectAsset: invoke(RPC_CHANNELS.projects.DELETE_ASSET),
+  getProjectRoadmap: invoke(RPC_CHANNELS.projects.GET_ROADMAP),
+  saveProjectRoadmap: invoke(RPC_CHANNELS.projects.SAVE_ROADMAP),
+  getProjectAiStatus: invoke(RPC_CHANNELS.projects.AI_STATUS),
+  runProjectRoadmapAi: invoke(RPC_CHANNELS.projects.AI_ROADMAP),
   onProjectsChanged: listener(RPC_CHANNELS.projects.CHANGED),
 
   // Pages

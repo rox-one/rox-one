@@ -20,6 +20,7 @@ import {
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
 import { PanelHost } from './PanelHost'
+import { useInspectorSuppressed } from './inspector-suppression'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 
 export { ActivityRail, ACTIVITY_RAIL_WIDTH, ACTIVITY_RAIL_COLLAPSED_WIDTH } from './ActivityRail'
@@ -41,6 +42,7 @@ export {
 export { resolveWorkbenchChrome, shouldShowStatusBar } from './workbench-chrome'
 
 export function UnifiedShellLayout({ children }: { children: ReactNode }) {
+  const inspectorSuppressed = useInspectorSuppressed()
   const chrome = resolveWorkbenchChrome({
     unifiedShell: useAtomValue(featureUnifiedShellAtom),
     modeRegistry: useAtomValue(featureWorkbenchModeRegistryV1Atom),
@@ -62,7 +64,7 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
-      {chrome.showInspector && <InspectorHost />}
+      {chrome.showInspector && !inspectorSuppressed && <InspectorHost />}
       <PanelHost slot="inspector" />
     </>
   )

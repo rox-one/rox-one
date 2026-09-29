@@ -817,6 +817,10 @@ export const RPC_CHANNELS = {
     LIST_ASSETS: 'projects:listAssets',
     UPLOAD_ASSET: 'projects:uploadAsset',
     DELETE_ASSET: 'projects:deleteAsset',
+    GET_ROADMAP: 'projects:getRoadmap',
+    SAVE_ROADMAP: 'projects:saveRoadmap',
+    AI_STATUS: 'projects:aiStatus',
+    AI_ROADMAP: 'projects:aiRoadmap',
     CHANGED: 'projects:changed',
   },
   pages: {

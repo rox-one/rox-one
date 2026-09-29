@@ -93,6 +93,8 @@
     "./privacy": "./src/privacy/index.ts",
     "./projects": "./src/projects/index.ts",
     "./projects/types": "./src/projects/types.ts",
+    "./projects/roadmap": "./src/projects/roadmap.ts",
+    "./projects/roadmap-ai": "./src/projects/roadmap-ai.ts",
     "./prompts": "./src/prompts/index.ts",
     "./protocol": "./src/protocol/index.ts",
     "./resources": "./src/resources/index.ts",
