@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { decideStartupAppState, probeSetupNeeds } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
@@ -755,25 +756,20 @@ export default function App() {
         const wsId = await window.electronAPI.getWindowWorkspace()
         setWindowWorkspaceId(wsId)
 
-        const needs = await window.electronAPI.getSetupNeeds()
-        setSetupNeeds(needs)
-
-        if (needs.isFullyConfigured && usernameConfirmed) {
-          // If no workspace is selected (thin client without CRAFT_WORKSPACE_ID),
-          // show workspace picker before entering the main app
-          if (!wsId) {
-            setAppState('workspace-picker')
-          } else {
-            setAppState('ready')
-          }
+        // Retry transient RPC failures (server booting, reconnect, lock clash):
+        // an error must not send an already set-up user back to onboarding.
+        const probe = await probeSetupNeeds(() => window.electronAPI.getSetupNeeds())
+        if (probe.ok) {
+          setSetupNeeds(probe.needs)
         } else {
-          // New user, incomplete setup, or unconfirmed display name
-          setAppState('onboarding')
+          console.error('[App] getSetupNeeds failed after retries:', probe.error)
         }
+        // Onboarding only for a new user, incomplete setup, or unconfirmed
+        // display name; no workspace (thin client) → workspace picker.
+        setAppState(decideStartupAppState({ probe, usernameConfirmed, workspaceId: wsId }))
       } catch (error) {
         console.error('Failed to check auth state:', error)
-        // If check fails, show onboarding to be safe
-        setAppState('onboarding')
+        setAppState(usernameConfirmed ? 'workspace-picker' : 'onboarding')
       }
     }
 

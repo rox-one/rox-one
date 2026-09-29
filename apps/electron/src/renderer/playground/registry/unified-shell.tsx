@@ -62,7 +62,7 @@ function HydrateShell({ enabled, inspectorVisible, inspectorSection, railCollaps
     if (localStorage.getItem(getKeyString(KEYS.featureUnifiedShell)) === null) setFlag(enabled)
     if (localStorage.getItem(getKeyString(KEYS.inspectorVisible)) === null) setInspectorVisible(inspectorVisible)
     if (localStorage.getItem(getKeyString(KEYS.inspectorSection)) === null) setInspectorSection(inspectorSection)
-    if (localStorage.getItem(getKeyString(KEYS.activityRailCollapsed)) === null) setRailCollapsed(railCollapsed)
+    if (localStorage.getItem(getKeyString(KEYS.activityRailCollapsedV2)) === null) setRailCollapsed(railCollapsed)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

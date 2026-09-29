@@ -20,12 +20,12 @@ import {
   Cable,
   DatabaseZap,
   FolderKanban,
-  Inbox,
-  ListChecks,
   ListTodo,
+  MessageSquare,
   NotebookPen,
   PanelsTopLeft,
   Settings,
+  Workflow,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -55,6 +55,7 @@ export type AppNavDestinationId =
   | 'skills'
   | 'memory'
   | 'tasks'
+  | 'meetings'
   | 'projects'
   | 'pages'
   | 'automations'
@@ -88,7 +89,10 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'sessions',
     linkId: 'nav:allSessions',
-    icon: Inbox,
+    // MessageSquare = the Mode Bar «Сессии» icon. The Inbox glyph belongs to
+    // «Входящие» (routes.view.inbox); using it here made «Сессии» look like
+    // the inbox screen.
+    icon: MessageSquare,
     labelKey: 'sidebar.allSessions',
     route: () => routes.view.allSessions(),
     isActive: isSessionsNavigation,
@@ -120,7 +124,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'tasks',
     linkId: 'nav:tasks',
-    icon: ListChecks,
+    icon: ListTodo, // same glyph as the Mode Bar «Задачи»
     labelKey: 'sidebar.tasks',
     route: () => routes.view.tasks(),
     isActive: isTasksNavigation,
@@ -160,7 +164,7 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   {
     id: 'automations',
     linkId: 'nav:automations',
-    icon: ListTodo,
+    icon: Workflow, // ListTodo is «Задачи»
     labelKey: 'sidebar.automations',
     route: () => routes.view.automations(),
     isActive: isAutomationsNavigation,

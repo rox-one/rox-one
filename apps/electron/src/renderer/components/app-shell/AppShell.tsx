@@ -96,8 +96,7 @@ import {
 import { APP_NAV_DESTINATIONS_BY_ID } from "./nav-destinations"
 import {
   WorkspaceSurfaceHost,
-  ACTIVITY_RAIL_WIDTH,
-  ACTIVITY_RAIL_COLLAPSED_WIDTH,
+  activityRailWidth,
   StatusBarHost,
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
@@ -321,7 +320,7 @@ function AppShellContent({
   // Collapsed terminal has no bottom strip (the TopBar button is the entry point).
   const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
   const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
-    ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
+    ? activityRailWidth(activityRailCollapsed) + PANEL_GAP
     : 0
   // The sessions sidebar (statuses / labels / views) is contextual to Chats:
   // Settings and the full-width module screens hide it so their content is

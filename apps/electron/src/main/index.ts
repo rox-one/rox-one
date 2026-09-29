@@ -1369,6 +1369,7 @@ app.whenReady().then(async () => {
       pendingDeepLink = null
     }
 
+    appInitialized = true
     mainLog.info('App initialized successfully')
     if (isDebugMode) {
       mainLog.info('Debug mode enabled - logs at:', getLogFilePath())
@@ -1408,6 +1409,10 @@ app.on('window-all-closed', () => {
 
 // Track if we're in the process of quitting (to avoid re-entry)
 let isQuitting = false
+// Set once whenReady() init finishes. A launch that failed init (e.g. another
+// instance holds the server lock for the same config dir) never restored any
+// window, so its quit must not clobber that instance's window-state.json.
+let appInitialized = false
 
 /**
  * Capture the current multi-window state and persist it to disk.
@@ -1537,6 +1542,8 @@ app.on('before-quit', async (event) => {
     // hook already saved the real state — don't let this late save overwrite it.
     if (windows.length === 0 && isUpdating()) {
       mainLog.warn('[window-state] skip save: empty snapshot during update-quit (pre-update snapshot wins)')
+    } else if (windows.length === 0 && !appInitialized) {
+      mainLog.warn('[window-state] skip save: init failed and no windows (keep the existing window-state.json)')
     } else {
       captureAndSaveWindowState('before-quit')
     }
