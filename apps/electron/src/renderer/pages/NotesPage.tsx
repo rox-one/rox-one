@@ -652,6 +652,16 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     catch { return true }
   })
   const [railLayout, setRailLayout] = useNotesRailLayout()
+  // Width of the document row (СОДЕРЖАНИЕ | note | КОММЕНТАРИИ) so the side
+  // rails can yield before the note column gets unreadably narrow.
+  const [docRowEl, setDocRowEl] = React.useState<HTMLDivElement | null>(null)
+  const [docRowWidth, setDocRowWidth] = React.useState(0)
+  React.useEffect(() => {
+    if (!docRowEl || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => setDocRowWidth(entry?.contentRect.width ?? 0))
+    observer.observe(docRowEl)
+    return () => observer.disconnect()
+  }, [docRowEl])
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const [commandIndex, setCommandIndex] = React.useState(0)
@@ -1001,7 +1011,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     [allAssets]
   )
   const activeNoteStats = activeNote
-    ? `${activeNote.links.length}↗ · ${activeNote.backlinks.length}↙ · ${content.length} chars`
+    ? `${activeNote.links.length}↗ · ${activeNote.backlinks.length}↙ · ${t('notes.header.charCount', { count: content.length })}`
     : ''
   const activeNoteTasks = React.useMemo(
     () => activeNote ? extractTasks(activeNote, content) : [],
@@ -1786,6 +1796,18 @@ h1,h2,h3{margin-top:1.5em}
     return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('notes.empty.selectWorkspace')}</div>
   }
 
+  // Display-only: rails the user left open auto-hide (comments first, then
+  // the outline) while the note column would drop below NOTE_COLUMN_MIN.
+  // Persisted rail preferences are untouched.
+  const NOTE_COLUMN_MIN = 460
+  const noteColumnWidth = (toc: boolean, comments: boolean) =>
+    docRowWidth - (toc ? railLayout.toc : 0) - (comments ? railLayout.comments : 0)
+  const roomFor = (toc: boolean, comments: boolean) =>
+    docRowWidth <= 0 || noteColumnWidth(toc, comments) >= NOTE_COLUMN_MIN
+  const commentsShown = !railLayout.commentsCollapsed
+    && (Boolean(commentDraftQuote) || roomFor(!railLayout.tocCollapsed, true))
+  const tocShown = !railLayout.tocCollapsed && roomFor(true, commentsShown)
+
   return (
     <>
     <NotesEditorHeadlineStyles />
@@ -1965,13 +1987,13 @@ h1,h2,h3{margin-top:1.5em}
 
       <main className="notes-content-surface flex-1 min-w-0 flex flex-col">
         <div className="h-[42px] shrink-0 px-3 flex items-center gap-2">
-          <div className="min-w-0 flex-1 flex items-center gap-2">
+          <div className="min-w-0 flex-1 flex items-center gap-2 overflow-hidden">
             {activeNote ? (
               <NotesBreadcrumbs noteId={activeNote.id} title={activeNote.title} onOpenFolder={(folder) => setQuery(folder ?? '')} />
             ) : (
               <div className="truncate text-sm font-medium">{t('notes.header.title')}</div>
             )}
-            {activeNote && <div className="shrink-0 text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
+            {activeNote && <div className="min-w-0 truncate text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
           </div>
           {dailyDate && (
             <div className="mr-1 flex items-center gap-1">
@@ -2112,8 +2134,8 @@ h1,h2,h3{margin-top:1.5em}
               }}
             />
           ) : (
-            <div className="flex h-full min-h-0">
-            {!railLayout.tocCollapsed ? (
+            <div ref={setDocRowEl} className="flex h-full min-h-0">
+            {tocShown ? (
             <NotesToc
               markdown={content}
               width={railLayout.toc}
@@ -2283,7 +2305,7 @@ h1,h2,h3{margin-top:1.5em}
               />
               <NotesCommentHighlights
                 comments={markdownComments}
-                hidden={railLayout.commentsCollapsed}
+                hidden={!commentsShown}
                 contentKey={content}
                 onActivate={(comment, rect) => {
                   const editor = document.querySelector('.notes-editor')?.getBoundingClientRect()
@@ -2295,10 +2317,10 @@ h1,h2,h3{margin-top:1.5em}
                   })
                 }}
               />
-              {commentTooltip && railLayout.commentsCollapsed ? (
+              {commentTooltip && !commentsShown ? (
                 <NotesCommentTooltip comment={{ id: 'tooltip', quote: commentTooltip.quote, body: commentTooltip.body, createdAt: 0 }} top={commentTooltip.top} left={commentTooltip.left} />
               ) : null}
-              {railLayout.commentsCollapsed && commentDraftQuote ? (
+              {!commentsShown && commentDraftQuote ? (
                 <NotesCommentComposer
                   className="absolute right-3 z-20"
                   top={commentComposerTop}
@@ -2325,7 +2347,7 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
               {richParts.frontmatter && (
-                <div className="mt-4 rounded-[6px] border border-border/60 bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
+                <div className="mx-auto mt-4 max-w-[70ch] rounded-[6px] bg-foreground/[0.04] px-3 py-2 text-[11px] text-muted-foreground">
                   {t('notes.frontmatterPreserved')}
                 </div>
               )}
@@ -2348,7 +2370,7 @@ h1,h2,h3{margin-top:1.5em}
               onToggle={() => setRailLayout({ commentsCollapsed: !railLayout.commentsCollapsed })}
               label={t('notes.layout.resizeComments')}
             />
-            {activeNote && !railLayout.commentsCollapsed ? (
+            {activeNote && commentsShown ? (
               <NotesComments
                 noteId={activeNote.id}
                 draftQuote={commentDraftQuote}

@@ -19,7 +19,21 @@ import {
   featureWorkbenchTopChromeV2Atom,
 } from '@/atoms/unified-shell'
 import { HARNESS_SKIP_LIST } from '@craft-agent/core/platform'
+import { BUILT_MODE_SCREENS, MODE_SCREEN_FLAG_ATOMS, type ModeScreenId } from '@/atoms/mode-flags'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
+
+function ModeScreenToggle({ id }: { id: ModeScreenId }) {
+  const { t } = useTranslation()
+  const [enabled, setEnabled] = useAtom(MODE_SCREEN_FLAG_ATOMS[id])
+  return (
+    <SettingsToggle
+      label={t(`settings.appearance.workbenchModeScreen.${id}`)}
+      description={t('settings.appearance.workbenchModeScreenDesc')}
+      checked={enabled}
+      onCheckedChange={setEnabled}
+    />
+  )
+}
 
 export function WorkbenchChromeSettings() {
   const { t } = useTranslation()
@@ -114,6 +128,14 @@ export function WorkbenchChromeSettings() {
           checked={harnessAgentTeams}
           onCheckedChange={setHarnessAgentTeams}
         />
+      </SettingsCard>
+    </SettingsSection>
+    <SettingsSection
+      title={t('settings.appearance.workbenchModeScreens')}
+      description={t('settings.appearance.workbenchModeScreensDesc')}
+    >
+      <SettingsCard>
+        {BUILT_MODE_SCREENS.map((id) => <ModeScreenToggle key={id} id={id} />)}
       </SettingsCard>
     </SettingsSection>
     <SettingsSection

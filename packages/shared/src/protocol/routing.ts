@@ -868,6 +868,13 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.pages.REGENERATE_THUMBNAIL,
   RPC_CHANNELS.pages.CHANGED,
 
+  // personalTasks — local config-dir task files; migration source is local renderer storage
+  RPC_CHANNELS.personalTasks.LIST,
+  RPC_CHANNELS.personalTasks.PUT,
+  RPC_CHANNELS.personalTasks.DELETE,
+  RPC_CHANNELS.personalTasks.MIGRATE,
+  RPC_CHANNELS.personalTasks.CHANGED,
+
   // kanban — workspace board config
   RPC_CHANNELS.kanban.GET_CONFIG,
   RPC_CHANNELS.kanban.SET_CONFIG,

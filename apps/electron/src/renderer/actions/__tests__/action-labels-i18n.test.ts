@@ -46,6 +46,13 @@ const EXISTING_LABEL_KEYS = [
 ] as const
 
 const NEW_LABEL_KEYS = [
+  'shortcuts.action.modeSlot1',
+  'shortcuts.action.modeSlot2',
+  'shortcuts.action.modeSlot3',
+  'shortcuts.action.modeSlot4',
+  'shortcuts.action.modeSlot5',
+  'shortcuts.action.modeSlot6',
+  'shortcuts.action.modeSlot7',
   'shortcuts.action.advisorReview',
   'shortcuts.action.sessionWorkflow',
   'shortcuts.action.simplifyDiff',

@@ -45,6 +45,11 @@ export const WORKBENCH_FLAG = {
   conationCal: 'workbench.conation.cal',
   conationDssClient: 'workbench.conation.dssClient',
   conationSessionApply: 'workbench.conation.sessionApply',
+  /** Mode screens (titlebar pill). The seed sets rootRoute only while the flag is on. */
+  modeTasksV1: 'workbench.mode.tasks.v1',
+  modeMeetingsV1: 'workbench.mode.meetings.v1',
+  modeInboxV1: 'workbench.mode.inbox.v1',
+  modeFeedV1: 'workbench.mode.feed.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -199,6 +204,12 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
     dependencies: [],
     rollbackSafe: true,
   },
+  // Mode screens: default ON (Mark reviews them); turning one off only hides
+  // the pill entry / hotkey — data and routes stay intact.
+  { id: WORKBENCH_FLAG.modeTasksV1, defaultValue: true, dependencies: [], rollbackSafe: true, migrationRequired: true },
+  { id: WORKBENCH_FLAG.modeMeetingsV1, defaultValue: true, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.modeInboxV1, defaultValue: true, dependencies: [], rollbackSafe: true },
+  { id: WORKBENCH_FLAG.modeFeedV1, defaultValue: true, dependencies: [], rollbackSafe: true },
 ];
 
 export function resolveEnabledFlags(

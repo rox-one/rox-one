@@ -147,7 +147,7 @@ export class PersonalTaskStore {
     }
     if (!title) throw new Error('Task title is required')
     const task: PersonalTask = {
-      id: mint('task'),
+      id: this.uniqueId('task'),
       title,
       notes: input.notes ?? '',
       list,
@@ -272,6 +272,36 @@ export class PersonalTaskStore {
 
   auditLog() {
     return [...this.bundle.audit]
+  }
+
+  /**
+   * The mint counter restarts per process, so a reloaded store would hand out
+   * `task-1` again. Skip ids already in the bundle — with one file per task
+   * on disk, a duplicate id would overwrite an existing task.
+   */
+  private uniqueId(prefix: string): string {
+    const taken = new Set(this.bundle.tasks.map((task) => task.id))
+    let id = mint(prefix)
+    while (taken.has(id)) id = mint(prefix)
+    return id
+  }
+
+  /** Remove tasks (and their subtasks) from the bundle. */
+  remove(id: string): string[] {
+    const ids = new Set([id])
+    let grew = true
+    while (grew) {
+      grew = false
+      for (const task of this.bundle.tasks) {
+        if (task.parentId && ids.has(task.parentId) && !ids.has(task.id)) {
+          ids.add(task.id)
+          grew = true
+        }
+      }
+    }
+    this.bundle.tasks = this.bundle.tasks.filter((task) => !ids.has(task.id))
+    this.audit('delete', id)
+    return [...ids]
   }
 
   private nextOrder(list: TaskListId): number {

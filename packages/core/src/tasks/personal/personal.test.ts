@@ -158,3 +158,25 @@ describe('personal tasks (issue 17)', () => {
     expect(filterAndSortTasks(store.list(), morning, { filter: 'all', sort: 'priority' })[0]?.id).toBe(inbox.id)
   })
 })
+
+describe('personal task ids after reload', () => {
+  it('never re-mints an id that is already in the bundle', () => {
+    resetPersonalTaskIds()
+    const first = new PersonalTaskStore()
+    const a = first.create({ title: 'a' })
+    resetPersonalTaskIds() // new process: counter restarts
+    const reloaded = PersonalTaskStore.fromJson(first.exportJson())
+    const b = reloaded.create({ title: 'b' })
+    expect(b.id).not.toBe(a.id)
+    expect(new Set(reloaded.list().map((t) => t.id)).size).toBe(2)
+  })
+
+  it('remove() drops the task together with its subtasks', () => {
+    const store = new PersonalTaskStore()
+    const parent = store.create({ title: 'p' })
+    const child = store.addSubtask(parent.id, 'c')
+    store.create({ title: 'other' })
+    expect(store.remove(parent.id).sort()).toEqual([child.id, parent.id].sort())
+    expect(store.list().map((t) => t.title)).toEqual(['other'])
+  })
+})

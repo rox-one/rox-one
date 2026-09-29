@@ -2066,6 +2066,13 @@ export interface ElectronAPI {
   regeneratePageThumbnail(workspaceId: string, pageSlug: string): Promise<boolean>
   onPagesChanged(callback: (workspaceId: string, pages: import('@craft-agent/shared/pages/types').LoadedPage[]) => void): () => void
 
+  // Personal tasks (config-dir persist; localStorage is a cache)
+  personalTasksList(): Promise<import('@craft-agent/core/tasks/personal').PersonalTasksSnapshot>
+  personalTasksPut(tasks: import('@craft-agent/core/tasks/personal').PersonalTask[], meta?: import('@craft-agent/core/tasks/personal').PersonalTaskMeta | null): Promise<{ written: number; rejected: string[] }>
+  personalTasksDelete(ids: string[]): Promise<{ removed: number }>
+  personalTasksMigrate(input: import('@craft-agent/core/tasks/personal').PersonalTasksMigrateInput): Promise<import('@craft-agent/core/tasks/personal').PersonalTasksMigrateResult>
+  onPersonalTasksChanged(callback: (payload: { at: number }) => void): () => void
+
   // Kanban board config (workspace-scoped)
   getKanbanConfig(workspaceId: string): Promise<import('@craft-agent/shared/kanban').KanbanBoardConfig>
   setKanbanConfig(workspaceId: string, config: import('@craft-agent/shared/kanban').KanbanBoardConfig): Promise<import('@craft-agent/shared/kanban').KanbanBoardConfig>
