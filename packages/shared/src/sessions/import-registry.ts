@@ -64,6 +64,29 @@ export function loadForeignImportScanCache(workspaceRoot: string): ForeignIndexE
   }
 }
 
+export function loadForeignImportScanCacheFile(workspaceRoot: string): {
+  scannedAt: number | null
+  entries: ForeignIndexEntry[]
+  empties: Record<string, number>
+} {
+  const path = foreignImportScanCachePath(workspaceRoot)
+  if (!existsSync(path)) return { scannedAt: null, entries: [], empties: {} }
+  try {
+    const raw = JSON.parse(readFileSync(path, 'utf8')) as {
+      scannedAt?: number
+      entries?: ForeignIndexEntry[]
+      empties?: Record<string, number>
+    }
+    return {
+      scannedAt: typeof raw.scannedAt === 'number' ? raw.scannedAt : null,
+      entries: Array.isArray(raw.entries) ? raw.entries : [],
+      empties: raw.empties && typeof raw.empties === 'object' ? raw.empties : {},
+    }
+  } catch {
+    return { scannedAt: null, entries: [], empties: {} }
+  }
+}
+
 export function findScannedForeignSource(
   workspaceRoot: string,
   sourcePath: string,

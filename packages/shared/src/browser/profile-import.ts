@@ -313,6 +313,7 @@ export function chromiumRootRel(platform: NodeJS.Platform): string[] {
       'Library/Application Support/com.operasoftware.Opera',
       'Library/Application Support/com.operasoftware.OperaGX',
       'Library/Application Support/Vivaldi',
+      'Library/Application Support/Arc/User Data',
       'Library/Application Support/zen',
       'Library/Application Support/Zen',
       'Library/Application Support/app.zen-browser.zen',

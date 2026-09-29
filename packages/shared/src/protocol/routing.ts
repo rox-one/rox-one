@@ -100,6 +100,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.workspace.OPEN_IN_EDITOR,
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
   RPC_CHANNELS.sessions.FOREIGN_PERSIST,
+  RPC_CHANNELS.sessions.FOREIGN_AUTO_STATUS,
+  RPC_CHANNELS.sessions.FOREIGN_AUTO_RUN,
+  RPC_CHANNELS.sessions.FOREIGN_AUTO_SET,
 
   // skills — local filesystem actions (guarded for remote)
   RPC_CHANNELS.skills.OPEN_EDITOR,
@@ -252,6 +255,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.browserProfile.IMPORT,
   RPC_CHANNELS.browserProfile.ROLLBACK,
   RPC_CHANNELS.browserProfile.DELETE,
+  RPC_CHANNELS.browserProfile.COOKIE_AUTO_STATUS,
+  RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET,
+  RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN,
 
   // gitbash — Windows-specific local
   RPC_CHANNELS.gitbash.CHECK,

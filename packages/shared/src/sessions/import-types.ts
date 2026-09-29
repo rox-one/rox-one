@@ -76,3 +76,26 @@ export interface ForeignDiscoverResult {
   cachePath: string
   truncated?: boolean
 }
+
+/** Background (automatic) foreign chat import status. */
+export type ForeignAutoImportState = 'idle' | 'scanning' | 'importing' | 'done' | 'error' | 'disabled'
+
+export interface ForeignAutoImportStatus {
+  workspaceId: string | null
+  enabled: boolean
+  state: ForeignAutoImportState
+  /** Chats found in local sources (non-empty). */
+  found: number
+  /** Chats already present in Rox. */
+  alreadyImported: number
+  /** Created in the last run. */
+  imported: number
+  /** Appended with new turns in the last run. */
+  updated: number
+  /** Older (or over-limit) chats not imported automatically. */
+  remaining: number
+  /** Per-source counts of found chats. */
+  bySource: Record<string, number>
+  lastRunAt: number | null
+  error?: string
+}

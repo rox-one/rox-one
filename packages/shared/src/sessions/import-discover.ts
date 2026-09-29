@@ -13,7 +13,7 @@ import {
   redactSecrets,
 } from './import-convert.ts'
 import { isSensitiveAgentCwd, splitForeignSourceRef } from './import-home.ts'
-import { foreignImportScanCachePath } from './import-registry.ts'
+import { foreignImportScanCachePath, loadForeignImportScanCacheFile } from './import-registry.ts'
 import type { ForeignDiscoverResult, ForeignIndexEntry, ForeignSessionKind } from './import-types.ts'
 
 export const MAX_SCAN_ENTRIES = 100_000
@@ -26,6 +26,8 @@ export interface DiscoverForeignOptions {
   now?: number
   maxEntries?: number
   maxPerKind?: number
+  /** Reuse unchanged entries from the previous scan cache (incremental rescans). */
+  reuseCache?: boolean
 }
 
 function listDirs(path: string): string[] {
@@ -91,11 +93,14 @@ function shouldSkipFile(file: string): boolean {
   return SKIP_BASENAMES.has(basename(file))
 }
 
-function expandChatSources(
+type EntryFor = (kind: ForeignSessionKind, sourcePath: string) => ForeignIndexEntry
+
+function* expandChatSources(
   kind: ForeignSessionKind,
   file: string,
   consider: (entry: ForeignIndexEntry) => boolean,
-): boolean {
+  entryFor: EntryFor,
+): Generator<void, boolean> {
   if (shouldSkipFile(file)) return true
   if (basename(file) === 'conversations.json') {
     const listed = listChatExportConversations(file)
@@ -103,22 +108,26 @@ function expandChatSources(
       for (const conv of listed) {
         const sourcePath = `${file}#${conv.id}`
         if (!consider(toEntry(kind, sourcePath, convertForeignSource(sourcePath, kind)))) return false
+        yield
       }
       return true
     }
   }
-  return consider(toEntry(kind, file, convertForeignSource(file, kind)))
+  const ok = consider(entryFor(kind, file))
+  yield
+  return ok
 }
 
-function scanKindFiles(
+function* scanKindFiles(
   kind: ForeignSessionKind,
   roots: string[],
   suffixes: string[],
   depth: number,
   consider: (entry: ForeignIndexEntry) => boolean,
   halted: () => boolean,
+  entryFor: EntryFor,
   filter?: (file: string) => boolean,
-): void {
+): Generator<void, void> {
   if (halted()) return
   for (const root of roots) {
     for (const suffix of suffixes) {
@@ -126,7 +135,7 @@ function scanKindFiles(
         if (halted()) return
         if (shouldSkipFile(file)) continue
         if (filter && !filter(file)) continue
-        if (!expandChatSources(kind, file, consider)) return
+        if (!(yield* expandChatSources(kind, file, consider, entryFor))) return
       }
     }
   }
@@ -166,7 +175,7 @@ function toEntry(
   }
 }
 
-export function discoverForeignSessions(options: DiscoverForeignOptions): ForeignDiscoverResult {
+function* discoverForeignSessionsIter(options: DiscoverForeignOptions): Generator<void, ForeignDiscoverResult> {
   const home = options.homeDir ?? homedir()
   const entries: ForeignIndexEntry[] = []
   const counts: Partial<Record<ForeignSessionKind, number>> = {}
@@ -174,6 +183,29 @@ export function discoverForeignSessions(options: DiscoverForeignOptions): Foreig
   const maxPerKind = options.maxPerKind ?? MAX_SCAN_PER_KIND
   let truncated = false
   let halt = false
+
+  // Incremental rescans: reuse the previous scan's entry for any source whose
+  // mtime has not changed, so only new or modified chats are re-parsed.
+  const reuse = new Map<string, ForeignIndexEntry>()
+  const emptyPrev = new Map<string, number>()
+  const emptyNext: Record<string, number> = {}
+  if (options.reuseCache) {
+    const prev = loadForeignImportScanCacheFile(options.workspaceRoot)
+    for (const entry of prev.entries) reuse.set(entry.sourcePath, entry)
+    for (const [path, mtime] of Object.entries(prev.empties)) emptyPrev.set(path, mtime)
+  }
+  const entryFor: EntryFor = (kind, sourcePath) => {
+    const mtime = mtimeMs(sourcePath)
+    const prev = reuse.get(sourcePath)
+    if (prev && prev.kind === kind && mtime !== undefined && prev.mtimeMs === mtime) return prev
+    if (mtime !== undefined && emptyPrev.get(sourcePath) === mtime) {
+      emptyNext[sourcePath] = mtime
+      return { id: `${kind}:${sourcePath}`, kind, sourcePath, userTurns: 0, mtimeMs: mtime, skipReason: 'empty' }
+    }
+    const entry = toEntry(kind, sourcePath, convertForeignSource(sourcePath, kind))
+    if (entry.userTurns === 0 && mtime !== undefined) emptyNext[sourcePath] = mtime
+    return entry
+  }
 
   const add = (entry: ForeignIndexEntry): 'ok' | 'skip' | 'kind-full' | 'full' => {
     if (entry.userTurns === 0) return 'skip'
@@ -206,7 +238,8 @@ export function discoverForeignSessions(options: DiscoverForeignOptions): Foreig
       if (!existsSync(join(sessionDir, 'summary.json')) && !existsSync(join(sessionDir, 'chat_history.jsonl'))) {
         continue
       }
-      if (!consider(toEntry('grok', sessionDir, convertForeignSource(sessionDir, 'grok')))) break grok
+      if (!consider(entryFor('grok', sessionDir))) break grok
+      yield
     }
   }
 
@@ -214,14 +247,16 @@ export function discoverForeignSessions(options: DiscoverForeignOptions): Foreig
   claude: for (const projectDir of listDirs(claudeRoot)) {
     if (halt) break
     for (const jsonl of listFiles(projectDir, '.jsonl')) {
-      if (!consider(toEntry('claude', jsonl, convertForeignSource(jsonl, 'claude')))) break claude
+      if (!consider(entryFor('claude', jsonl))) break claude
+      yield
     }
   }
 
   const codexRoot = join(home, '.codex', 'sessions')
   if (!halt) {
     for (const jsonl of walkFiles(codexRoot, '.jsonl', 4)) {
-      if (!consider(toEntry('codex', jsonl, convertForeignSource(jsonl, 'codex')))) break
+      if (!consider(entryFor('codex', jsonl))) break
+      yield
     }
   }
 
@@ -247,35 +282,74 @@ export function discoverForeignSessions(options: DiscoverForeignOptions): Foreig
   const hermesRoot = join(home, '.hermes', 'sessions')
   if (!halt) {
     for (const jsonl of walkFiles(hermesRoot, '.jsonl', 3)) {
-      if (!consider(toEntry('hermes', jsonl, convertForeignSource(jsonl, 'hermes')))) break
+      if (!consider(entryFor('hermes', jsonl))) break
+      yield
     }
   }
 
   const homeJoin = (...segments: string[]) => join(home, ...segments)
   const transcriptDir = (file: string) => file.replaceAll('\\', '/').includes('/agent-transcripts/')
-  const sessionsDir = (file: string) => file.replaceAll('\\', '/').includes('/sessions/')
+  // OMP / pi keep the main transcript at sessions/<cwd>/<id>.jsonl and put
+  // sub-agent transcripts in sessions/<cwd>/<id>/*.jsonl. Only top-level
+  // sessions are chats the user had; sub-agent logs would flood the list.
+  const sessionsDir = (file: string) => {
+    const posix = file.replaceAll('\\', '/')
+    const at = posix.lastIndexOf('/sessions/')
+    if (at < 0) return false
+    const rest = posix.slice(at + '/sessions/'.length)
+    return rest.split('/').length <= 2
+  }
   const halted = () => halt
 
-  scanKindFiles('chatgpt', [homeJoin('.chatgpt'), homeJoin('Downloads', 'chatgpt'), homeJoin('Downloads', 'ChatGPT')], ['.json', '.jsonl'], 3, consider, halted)
-  scanKindFiles('deepseek', [homeJoin('.deepseek'), homeJoin('Downloads', 'deepseek')], ['.json', '.jsonl'], 3, consider, halted)
-  scanKindFiles('gemini', [homeJoin('.gemini')], ['.jsonl', '.json'], 4, consider, halted)
-  scanKindFiles('qwen', [homeJoin('.qwen')], ['.jsonl', '.json'], 4, consider, halted)
-  scanKindFiles('amp', [homeJoin('.local', 'share', 'amp'), homeJoin('.amp'), homeJoin('Library', 'Application Support', 'amp'), homeJoin('AppData', 'Roaming', 'amp')], ['.json'], 3, consider, halted)
-  scanKindFiles('cursor', [homeJoin('.cursor', 'projects')], ['.jsonl'], 4, consider, halted, transcriptDir)
-  scanKindFiles('openclaw', [homeJoin('.openclaw')], ['.jsonl'], 5, consider, halted)
-  scanKindFiles('omp', [homeJoin('.omp')], ['.jsonl'], 4, consider, halted, sessionsDir)
-  scanKindFiles('pi', [homeJoin('.pi')], ['.jsonl'], 4, consider, halted, sessionsDir)
-  scanKindFiles('kiro', [homeJoin('.kiro', 'projects')], ['.jsonl'], 4, consider, halted, transcriptDir)
-  scanKindFiles('kimi', [homeJoin('.kimi')], ['.jsonl', '.json'], 3, consider, halted)
-  scanKindFiles('glm', [homeJoin('.glm')], ['.jsonl', '.json'], 3, consider, halted)
-  scanKindFiles('z', [homeJoin('.zai'), homeJoin('.zagent')], ['.jsonl', '.json'], 3, consider, halted)
+  yield* scanKindFiles('chatgpt', [homeJoin('.chatgpt'), homeJoin('Downloads', 'chatgpt'), homeJoin('Downloads', 'ChatGPT')], ['.json', '.jsonl'], 3, consider, halted, entryFor)
+  yield* scanKindFiles('deepseek', [homeJoin('.deepseek'), homeJoin('Downloads', 'deepseek')], ['.json', '.jsonl'], 3, consider, halted, entryFor)
+  yield* scanKindFiles('gemini', [homeJoin('.gemini')], ['.jsonl', '.json'], 4, consider, halted, entryFor)
+  yield* scanKindFiles('qwen', [homeJoin('.qwen')], ['.jsonl', '.json'], 4, consider, halted, entryFor)
+  yield* scanKindFiles('amp', [homeJoin('.local', 'share', 'amp'), homeJoin('.amp'), homeJoin('Library', 'Application Support', 'amp'), homeJoin('AppData', 'Roaming', 'amp')], ['.json'], 3, consider, halted, entryFor)
+  yield* scanKindFiles('cursor', [homeJoin('.cursor', 'projects')], ['.jsonl'], 4, consider, halted, entryFor, transcriptDir)
+  yield* scanKindFiles('openclaw', [homeJoin('.openclaw')], ['.jsonl'], 5, consider, halted, entryFor)
+  yield* scanKindFiles('omp', [homeJoin('.omp')], ['.jsonl'], 4, consider, halted, entryFor, sessionsDir)
+  yield* scanKindFiles('pi', [homeJoin('.pi')], ['.jsonl'], 4, consider, halted, entryFor, sessionsDir)
+  yield* scanKindFiles('kiro', [homeJoin('.kiro', 'projects')], ['.jsonl'], 4, consider, halted, entryFor, transcriptDir)
+  yield* scanKindFiles('kimi', [homeJoin('.kimi')], ['.jsonl', '.json'], 3, consider, halted, entryFor)
+  yield* scanKindFiles('glm', [homeJoin('.glm')], ['.jsonl', '.json'], 3, consider, halted, entryFor)
+  yield* scanKindFiles('z', [homeJoin('.zai'), homeJoin('.zagent')], ['.jsonl', '.json'], 3, consider, halted, entryFor)
 
   const scannedAt = options.now ?? Date.now()
   const cachePath = foreignImportScanCachePath(options.workspaceRoot)
   if (options.writeCache !== false) {
     mkdirSync(dirname(cachePath), { recursive: true })
-    writeFileSync(cachePath, `${JSON.stringify({ scannedAt, entries, truncated }, null, 2)}\n`)
+    writeFileSync(cachePath, `${JSON.stringify({ scannedAt, entries, truncated, empties: emptyNext })}\n`)
   }
 
   return { entries, scannedAt, cachePath, truncated }
+}
+
+/** Synchronous scan (tests, CLI). Prefer discoverForeignSessionsAsync in the app. */
+export function discoverForeignSessions(options: DiscoverForeignOptions): ForeignDiscoverResult {
+  const iter = discoverForeignSessionsIter(options)
+  for (;;) {
+    const step = iter.next()
+    if (step.done) return step.value
+  }
+}
+
+/**
+ * Same scan, but yields to the event loop every `sliceMs` of work so the
+ * Electron main process stays responsive while thousands of chats are parsed.
+ */
+export async function discoverForeignSessionsAsync(
+  options: DiscoverForeignOptions & { sliceMs?: number },
+): Promise<ForeignDiscoverResult> {
+  const sliceMs = options.sliceMs ?? 12
+  const iter = discoverForeignSessionsIter(options)
+  let sliceStart = Date.now()
+  for (;;) {
+    const step = iter.next()
+    if (step.done) return step.value
+    if (Date.now() - sliceStart >= sliceMs) {
+      await new Promise<void>((resolve) => setImmediate(resolve))
+      sliceStart = Date.now()
+    }
+  }
 }
