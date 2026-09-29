@@ -11,9 +11,14 @@ import * as storage from './local-storage'
 export const SHELL_LAYOUT_SCHEMA_VERSION = 1 as const
 export const SHELL_LAYOUT_KEYBOARD_DEBOUNCE_MS = 250
 
+/**
+ * Shared default width for the left sidebar and the right inspector panel so
+ * both side columns open at the same width. User-resized widths still persist.
+ */
+export const SIDE_PANEL_DEFAULT_WIDTH = 320
 export const SIDEBAR_WIDTH_MIN = 180
 export const SIDEBAR_WIDTH_MAX = 360
-export const SIDEBAR_WIDTH_DEFAULT = 220
+export const SIDEBAR_WIDTH_DEFAULT = SIDE_PANEL_DEFAULT_WIDTH
 export const NAVIGATOR_WIDTH_MIN = 240
 export const NAVIGATOR_WIDTH_MAX = 480
 export const NAVIGATOR_WIDTH_DEFAULT = 300
@@ -143,4 +148,33 @@ export function createLayoutCommitDebouncer(
       }
     },
   }
+}
+
+/**
+ * One-shot layout v2 migration (runs before the first render):
+ * - left sidebar and right inspector widths wider than the shared default are
+ *   brought down to it once, so both side columns start equal; narrower
+ *   user widths are kept and later resizes persist as before;
+ * - the activity rail is expanded once (it is expanded by default; stale
+ *   collapsed flags were written by the component playground).
+ */
+export function migrateSidePanelDefaults(store: ShellLayoutStore = defaultStore): boolean {
+  if (store.get<boolean>(storage.KEYS.sidePanelDefaultsV2, false)) return false
+  const sidebar = store.get<number | null>(storage.KEYS.sidebarWidth, null)
+  if (typeof sidebar === 'number' && sidebar > SIDE_PANEL_DEFAULT_WIDTH) {
+    store.set(storage.KEYS.sidebarWidth, SIDE_PANEL_DEFAULT_WIDTH)
+  }
+  const snapshot = store.get<ShellLayoutPreferencesV1 | null>(storage.KEYS.shellLayout, null, '_default')
+  if (snapshot && typeof snapshot.sidebarWidth === 'number' && snapshot.sidebarWidth > SIDE_PANEL_DEFAULT_WIDTH) {
+    store.set(storage.KEYS.shellLayout, { ...snapshot, sidebarWidth: SIDE_PANEL_DEFAULT_WIDTH }, '_default')
+  }
+  const inspector = store.get<number | null>(storage.KEYS.inspectorPanelWidth, null)
+  if (typeof inspector === 'number' && inspector > SIDE_PANEL_DEFAULT_WIDTH) {
+    store.set(storage.KEYS.inspectorPanelWidth, SIDE_PANEL_DEFAULT_WIDTH)
+  }
+  if (store.get<boolean | null>(storage.KEYS.activityRailCollapsed, null) === true) {
+    store.set(storage.KEYS.activityRailCollapsed, false)
+  }
+  store.set(storage.KEYS.sidePanelDefaultsV2, true)
+  return true
 }

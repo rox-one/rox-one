@@ -598,6 +598,9 @@ export const TiptapSlashMenu = Extension.create({
 
           if (!selection.empty) return false
           if (selection instanceof NodeSelection) return false
+          // Only while the user is typing: never pop up on load/setContent
+          // (e.g. the caret landing after `<!-- /rox:daily-sessions -->`).
+          if (!editor.view.hasFocus()) return false
           if (editor.isActive('codeBlock')) return false
           if (editor.isActive('code')) return false
 
@@ -610,12 +613,28 @@ export const TiptapSlashMenu = Extension.create({
         render: () => {
           let menu: SlashMenuView | null = null
 
+          // A query with spaces that matches nothing is prose (a path, a URL,
+          // a comment marker), not a command: stay closed instead of showing
+          // the empty «Команды не найдены» popup.
+          const isStrayQuery = (props: SuggestionProps<SlashCommandItem>) =>
+            props.items.length === 0 && /\s/.test(props.query)
+
           return {
             onStart: (props) => {
+              if (isStrayQuery(props)) return
               menu = new SlashMenuView(props)
             },
             onUpdate: (props) => {
-              menu?.update(props)
+              if (isStrayQuery(props)) {
+                menu?.destroy()
+                menu = null
+                return
+              }
+              if (!menu) {
+                menu = new SlashMenuView(props)
+                return
+              }
+              menu.update(props)
             },
             onKeyDown: (props) => {
               return menu?.onKeyDown(props) ?? false

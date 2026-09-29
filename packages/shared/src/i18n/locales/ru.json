@@ -2639,6 +2639,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Баланс",
+  "profile.spent": "Расход {{amount}}",
+  "profile.spentTooltip": "Суммарные траты на модели по сессиям этого рабочего пространства",
   "profile.defaultName": "Пользователь",
   "profile.level": "Ур. {{level}}",
   "profile.openSettings": "Открыть настройки — {{name}}",

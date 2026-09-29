@@ -20,6 +20,7 @@ import { LatexBlock } from './extensions/LatexBlock'
 import { RichBlockInteractions } from './extensions/RichBlockInteractions'
 import { WikiLink } from './extensions/WikiLink'
 import { HashTag } from './extensions/HashTag'
+import { MarkdownComment } from './extensions/MarkdownComment'
 import { cn } from '../../lib/utils'
 import 'katex/dist/katex.min.css'
 import './tiptap-editor.css'
@@ -324,6 +325,7 @@ export function TiptapMarkdownEditor({
 
     return [
       ...base,
+      MarkdownComment,
       LegacyMarkdown.configure({
         html: false,
         transformPastedText: true,

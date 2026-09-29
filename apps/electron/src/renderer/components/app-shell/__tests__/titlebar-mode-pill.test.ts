@@ -51,10 +51,11 @@ describe('titlebar mode pill source contract', () => {
     expect(topBar).toContain('calc(50% - ${leftInset / 2}px)')
   })
 
-  it('drops the inert Presence/Usage placeholders from the titlebar', () => {
+  it('keeps cost/usage out of the titlebar (balance lives in the profile strip)', () => {
     expect(topBar).not.toContain('workbench.presence.placeholder')
     expect(topBar).not.toContain('workbench.status.usagePlaceholder')
-    expect(topBar).toContain('workbench.status.sessionCostTooltip')
+    expect(topBar).not.toContain('workbench.status.sessionCostTooltip')
+    expect(topBar).not.toContain('TopBarUsageSlot')
   })
 
   it('uses the plate-free portrait for the titlebar mark', () => {

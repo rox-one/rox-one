@@ -2632,6 +2632,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "잔액",
+  "profile.spent": "사용액 {{amount}}",
+  "profile.spentTooltip": "이 워크스페이스 세션의 총 모델 사용 비용",
   "profile.defaultName": "사용자",
   "profile.level": "레벨 {{level}}",
   "profile.openSettings": "{{name}} 설정 열기",

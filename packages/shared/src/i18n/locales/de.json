@@ -2632,6 +2632,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Guthaben",
+  "profile.spent": "Ausgaben {{amount}}",
+  "profile.spentTooltip": "Gesamte Modellkosten aller Sitzungen in diesem Arbeitsbereich",
   "profile.defaultName": "Benutzer",
   "profile.level": "Lvl {{level}}",
   "profile.openSettings": "Einstellungen für {{name}} öffnen",

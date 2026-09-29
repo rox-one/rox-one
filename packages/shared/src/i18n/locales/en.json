@@ -2633,6 +2633,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Balance",
+  "profile.spent": "Spent {{amount}}",
+  "profile.spentTooltip": "Total model spend across this workspace's sessions",
   "profile.defaultName": "User",
   "profile.level": "Lv {{level}}",
   "profile.openSettings": "Open settings for {{name}}",

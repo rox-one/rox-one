@@ -39,7 +39,6 @@ import {
   featureUnifiedShellAtom,
   featureWorkbenchAtom,
   featureWorkbenchBrowserSurfaceV2Atom,
-  featureWorkbenchHarnessChatChromeV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTopChromeV2Atom,
   bottomTerminalOpenAtom,
@@ -49,9 +48,6 @@ import {
   inspectorVisibleAtom,
   topBarSurfaceTabsSlotAtom,
 } from "@/atoms/unified-shell"
-import { focusedSessionIdAtom } from "@/atoms/panel-stack"
-import { sessionMetaMapAtom } from "@/atoms/sessions"
-import { formatCostUsd } from "./input/turn-progress"
 import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
 import { resolveModePillLayout } from "./mode-pill-layout"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
@@ -412,9 +408,6 @@ export function TopBar({
       {/* === RIGHT: Browser strip + add + help === */}
       {!isCompact && (
       <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8 }}>
-        {chrome.utilityRail && (
-          <TopBarUsageSlot />
-        )}
         {!chrome.hideBrowserTabStrip && (
         <div className="min-w-0">
           <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
@@ -551,37 +544,5 @@ export function TopBar({
         </div>
       )}
     </div>
-  )
-}
-
-/**
- * Focused-session cost as a compact icon + value. Hidden when there is no
- * cost to show (the old "Presence"/"Usage" text placeholders were inert).
- */
-function TopBarUsageSlot() {
-  const { t } = useTranslation()
-  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
-  const focusedSessionId = useAtomValue(focusedSessionIdAtom)
-  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const costLabel = chatChromeEnabled
-    ? formatCostUsd(focusedSessionId ? sessionMetaMap.get(focusedSessionId)?.tokenUsage?.costUsd : undefined)
-    : null
-  if (!costLabel) return null
-  const tooltip = t("workbench.status.sessionCostTooltip")
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          className="rox-titlebar-cost titlebar-no-drag mr-1"
-          data-testid="topbar-session-cost"
-          aria-label={`${tooltip}: ${costLabel}`}
-          role="status"
-        >
-          <Icons.Coins className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden />
-          <span>{t("workbench.status.cost", { amount: costLabel })}</span>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{tooltip}</TooltipContent>
-    </Tooltip>
   )
 }

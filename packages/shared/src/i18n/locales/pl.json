@@ -2638,6 +2638,8 @@
   "profile.balance": "{{amount}}",
   "profile.balanceEmpty": "—",
   "profile.balanceLabel": "Saldo",
+  "profile.spent": "Wydano {{amount}}",
+  "profile.spentTooltip": "Łączny koszt modeli w sesjach tego obszaru roboczego",
   "profile.defaultName": "Użytkownik",
   "profile.level": "Poz. {{level}}",
   "profile.openSettings": "Otwórz ustawienia: {{name}}",

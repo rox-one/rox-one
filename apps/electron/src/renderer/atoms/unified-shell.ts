@@ -13,6 +13,7 @@
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
+import { SIDE_PANEL_DEFAULT_WIDTH } from '@/lib/shell-layout-preferences'
 
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). Master stays off. */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
@@ -227,7 +228,7 @@ export const inspectorSectionAtom = atomWithStorage<InspectorSectionId>(
 /** Inspector panel width in px (drag-resized). */
 export const inspectorPanelWidthAtom = atomWithStorage<number>(
   getKeyString(KEYS.inspectorPanelWidth),
-  420,
+  SIDE_PANEL_DEFAULT_WIDTH,
   undefined,
   { getOnInit: true },
 )

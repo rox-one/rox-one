@@ -3,27 +3,101 @@ import { MessageSquarePlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
+/**
+ * Note reading surface: tone steps instead of borders. Side panels (notes
+ * list, СОДЕРЖАНИЕ, КОММЕНТАРИИ) sit one step off the page tone; the content
+ * column is the page itself. Title/headings are full-contrast, body text a
+ * notch softer, secondary UI muted. Flat — no outlines or white rules.
+ */
 export function NotesEditorHeadlineStyles() {
   return (
     <style>{`
-      .notes-editor-prose .ProseMirror > :first-child {
-        font-size: 1.75rem;
+      .notes-shell {
+        background: var(--background);
+      }
+      .notes-side-surface {
+        background: color-mix(in oklab, var(--foreground) 4%, var(--background));
+      }
+      .notes-content-surface {
+        background: var(--background);
+      }
+      .notes-list-item-active {
+        background: color-mix(in oklab, var(--accent) 16%, transparent);
+        color: var(--foreground);
+      }
+      .notes-list-item-active svg {
+        color: var(--accent);
+      }
+      .notes-list-item-active .truncate {
         font-weight: 600;
-        letter-spacing: -0.025em;
-        line-height: 1.2;
-        margin-bottom: 1.25rem;
       }
       .notes-editor .ProseMirror {
-        color: hsl(var(--foreground));
+        color: color-mix(in oklab, var(--foreground) 84%, transparent);
+        font-size: 15px;
+        line-height: 1.7;
       }
-      .notes-authoring-palette,
-      [data-testid="notes-comments-rail"] {
-        border-color: hsl(var(--foreground) / 0.35);
+      .notes-editor-prose .ProseMirror > :first-child {
+        color: var(--foreground);
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        margin-top: 0;
+        margin-bottom: 1.5rem;
       }
-      [data-testid="notes-comments-rail"] article,
-      [data-testid="notes-comments-compose"] textarea {
-        border-color: hsl(var(--foreground) / 0.28);
-        color: hsl(var(--foreground));
+      .notes-editor-prose .ProseMirror h1,
+      .notes-editor-prose .ProseMirror h2,
+      .notes-editor-prose .ProseMirror h3 {
+        color: var(--foreground);
+        letter-spacing: -0.01em;
+      }
+      .notes-editor-prose .ProseMirror h1:not(:first-child) {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin: 2.25rem 0 0.75rem;
+      }
+      .notes-editor-prose .ProseMirror h2 {
+        font-size: 1.3rem;
+        font-weight: 650;
+        line-height: 1.25;
+        margin: 2rem 0 0.6rem;
+      }
+      .notes-editor-prose .ProseMirror h3 {
+        font-size: 1.08rem;
+        font-weight: 600;
+        line-height: 1.3;
+        margin: 1.5rem 0 0.4rem;
+      }
+      .notes-editor-prose .ProseMirror p {
+        margin: 0 0 0.85em;
+      }
+      .notes-editor-prose .ProseMirror ul,
+      .notes-editor-prose .ProseMirror ol {
+        margin: 0.25em 0 1em;
+      }
+      .notes-editor-prose .ProseMirror li + li {
+        margin-top: 0.2em;
+      }
+      .notes-editor-prose .ProseMirror li::marker {
+        color: color-mix(in oklab, var(--foreground) 45%, transparent);
+      }
+      .notes-editor-prose .ProseMirror blockquote {
+        color: color-mix(in oklab, var(--foreground) 70%, transparent);
+        background: color-mix(in oklab, var(--foreground) 3.5%, transparent);
+        border: 0;
+        border-radius: 6px;
+        padding: 0.5em 0.9em;
+      }
+      .notes-editor-prose .ProseMirror hr {
+        border: 0;
+        height: 1px;
+        background: color-mix(in oklab, var(--foreground) 8%, transparent);
+        margin: 2rem 0;
+      }
+      [data-testid="notes-toc-rail"] button:hover,
+      [data-testid="notes-comments-rail"] article {
+        color: var(--foreground);
       }
       mark.notes-comment-hl,
       button.notes-comment-hl {
@@ -96,11 +170,11 @@ export function NotesToc({
   const headings = React.useMemo(() => extractHeadings(markdown), [markdown])
   return (
     <aside
-      className="sticky top-0 flex shrink-0 flex-col self-stretch overflow-y-auto border-r border-border/50 px-3 py-4"
+      className="notes-side-surface sticky top-0 flex shrink-0 flex-col self-stretch overflow-y-auto px-3 py-4"
       style={{ width: width ?? 180 }}
       data-testid="notes-toc-rail"
     >
-      <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
+      <div className="mb-2 px-1.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
         {t('notes.toc.title')}
       </div>
       {headings.length === 0 ? (
@@ -277,8 +351,8 @@ export function NotesComments({
   }, [body, comments, draftQuote, noteId, onClearDraft, onCommit])
 
   return (
-    <aside className="relative flex shrink-0 flex-col border-l border-foreground/[0.06] bg-background" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
-      <div className="flex h-9 shrink-0 items-center gap-1.5 border-b border-foreground/[0.06] px-3 text-[10px] font-medium uppercase tracking-wider text-foreground/70">
+    <aside className="notes-side-surface relative flex shrink-0 flex-col" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
+      <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
         <MessageSquarePlus className="h-3.5 w-3.5" />
         {t('notes.comments.title')}
       </div>
@@ -289,7 +363,7 @@ export function NotesComments({
           </p>
         ) : null}
         {comments.map((comment) => (
-          <article key={comment.id} className="mb-3 rounded-[6px] border border-foreground/[0.08] bg-background px-2.5 py-2">
+          <article key={comment.id} className="mb-2 rounded-[6px] bg-foreground/[0.05] px-2.5 py-2">
             {comment.quote ? (
               <button
                 type="button"

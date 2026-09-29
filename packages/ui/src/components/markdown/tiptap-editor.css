@@ -648,3 +648,8 @@
   color: color-mix(in oklch, var(--foreground) 55%, transparent);
   padding: 8px;
 }
+
+/* Machine comment markers (<!-- rox:… -->) are kept in the doc but never shown. */
+.tiptap-prose .tiptap-md-comment {
+  display: none;
+}

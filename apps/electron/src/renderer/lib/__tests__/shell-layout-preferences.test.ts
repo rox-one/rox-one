@@ -4,6 +4,8 @@ import {
   NAVIGATOR_WIDTH_DEFAULT,
   SHELL_LAYOUT_KEYBOARD_DEBOUNCE_MS,
   SIDEBAR_WIDTH_DEFAULT,
+  SIDE_PANEL_DEFAULT_WIDTH,
+  migrateSidePanelDefaults,
   SIDEBAR_WIDTH_MAX,
   clampNavigatorWidth,
   clampSidebarWidth,
@@ -104,5 +106,45 @@ describe('shell layout preferences (ZS-06)', () => {
     commitShellLayout({ workspaceId: 'b', sidebarWidth: 330 }, store)
     expect(loadShellLayout('a', store).sidebarWidth).toBe(200)
     expect(loadShellLayout('b', store).sidebarWidth).toBe(330)
+  })
+})
+
+describe('side panel defaults (layout v2)', () => {
+  it('left sidebar and right inspector share one default width', async () => {
+    expect(SIDEBAR_WIDTH_DEFAULT).toBe(SIDE_PANEL_DEFAULT_WIDTH)
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const atoms = readFileSync(join(import.meta.dir, '..', '..', 'atoms', 'unified-shell.ts'), 'utf8')
+    expect(atoms).toMatch(/inspectorPanelWidthAtom = atomWithStorage<number>\(\s*getKeyString\(KEYS\.inspectorPanelWidth\),\s*SIDE_PANEL_DEFAULT_WIDTH,/)
+  })
+
+  it('narrows wider stored widths once, keeps narrower ones, expands the rail', () => {
+    const store = memoryStore({
+      'sidebar-width': 360,
+      'inspector-panel-width': 1205,
+      'activity-rail-collapsed': true,
+    })
+    expect(migrateSidePanelDefaults(store)).toBe(true)
+    expect(store.data['sidebar-width']).toBe(SIDE_PANEL_DEFAULT_WIDTH)
+    expect(store.data['inspector-panel-width']).toBe(SIDE_PANEL_DEFAULT_WIDTH)
+    expect(store.data['activity-rail-collapsed']).toBe(false)
+    // Later user resizes stick: the migration never runs again.
+    store.data['sidebar-width'] = 350
+    store.data['activity-rail-collapsed'] = true
+    expect(migrateSidePanelDefaults(store)).toBe(false)
+    expect(store.data['sidebar-width']).toBe(350)
+    expect(store.data['activity-rail-collapsed']).toBe(true)
+    expect(loadShellLayout(null, store).sidebarWidth).toBe(350)
+  })
+
+  it('leaves narrower user widths and fresh installs untouched', () => {
+    const narrow = memoryStore({ 'sidebar-width': 200, 'inspector-panel-width': 300 })
+    migrateSidePanelDefaults(narrow)
+    expect(narrow.data['sidebar-width']).toBe(200)
+    expect(narrow.data['inspector-panel-width']).toBe(300)
+    const fresh = memoryStore()
+    migrateSidePanelDefaults(fresh)
+    expect(fresh.data['sidebar-width']).toBeUndefined()
+    expect(loadShellLayout(null, fresh).sidebarWidth).toBe(SIDE_PANEL_DEFAULT_WIDTH)
   })
 })

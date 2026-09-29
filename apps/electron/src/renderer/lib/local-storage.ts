@@ -118,6 +118,8 @@ export const KEYS = {
   panelState: 'panel-registry-state',
   // Zen Shell geometry snapshot (ZS-06). Workspace-scoped; dual-writes legacy width keys.
   shellLayout: 'shell-layout-v1',
+  // One-shot: equal left/right side-panel defaults + expanded activity rail (layout v2).
+  sidePanelDefaultsV2: 'side-panel-defaults-v2',
 } as const
 
 export const EVENTS = {
