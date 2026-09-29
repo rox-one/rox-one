@@ -11,6 +11,7 @@ import { routes } from '../../shared/routes'
 import {
   isHomeNavigation,
   isKnowledgeNavigation,
+  isMeetingsNavigation,
   isSessionsNavigation,
   isTasksNavigation,
   type NavigationState,
@@ -54,13 +55,14 @@ export const CORE_MODES: readonly SeededMode[] = [
       id: 'meetings',
       titleKey: 'workbench.mode.meetings',
       icon: 'Calendar',
-      rootRoute: null,
+      rootRoute: routes.view.meetings(),
       order: 30,
       defaultPinned: true,
       layoutProfileId: 'agent',
-      requiredCapabilities: ['meetings.pipeline.v1'],
+      // Capability 'meetings.pipeline.v1' is the workbench.mode.meetings.v1 flag.
     },
-    isActive: () => false,
+    isActive: isMeetingsNavigation,
+    flag: 'meetings',
   },
   {
     contribution: {

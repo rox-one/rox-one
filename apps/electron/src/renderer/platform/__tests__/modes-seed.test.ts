@@ -4,13 +4,13 @@ import { CORE_MODES, modeForSlot, resolveSeededModes } from '../modes-seed'
 import { __resetModeRegistryForTests, getModeRegistry } from '../mode-registry-bootstrap'
 
 describe('CORE_MODES seed', () => {
-  it('pins home, chat, tasks, and knowledge as the live modes', () => {
+  it('pins home, chat, meetings, tasks, and knowledge as the live modes', () => {
     const contributions = CORE_MODES.map((mode) => mode.contribution)
     const live = CORE_MODES.filter((mode) => isModeNavigable(mode.contribution))
     const { pinned, overflow } = listPinnedModes(contributions)
-    expect(live.map((mode) => mode.contribution.id)).toEqual(['home', 'chat', 'tasks', 'knowledge'])
-    expect(pinned.map((mode) => mode.id)).toEqual(['home', 'chat', 'tasks', 'knowledge'])
-    expect(overflow.map((mode) => mode.id)).toEqual(['meetings', 'feed', 'inbox'])
+    expect(live.map((mode) => mode.contribution.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'knowledge'])
+    expect(pinned.map((mode) => mode.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'knowledge'])
+    expect(overflow.map((mode) => mode.id)).toEqual(['feed', 'inbox'])
     expect(CORE_MODES.map((mode) => mode.contribution.id)).toEqual([
       'home',
       'chat',
@@ -41,6 +41,16 @@ describe('mode-screen flags (workbench.mode.<id>.v1)', () => {
     expect(off.find((mode) => mode.id === 'tasks')?.rootRoute).toBeNull()
     // Unflagged modes are untouched.
     expect(off.find((mode) => mode.id === 'chat')?.rootRoute).toBe(on.find((mode) => mode.id === 'chat')?.rootRoute)
+  })
+
+  it('keeps Встречи navigable while its flag is on and disables it when off', () => {
+    const on = resolveSeededModes(contributions, { meetings: true })
+    const off = resolveSeededModes(contributions, { meetings: false })
+    expect(on.find((mode) => mode.id === 'meetings')?.rootRoute).toBe('meetings')
+    expect(off.find((mode) => mode.id === 'meetings')?.rootRoute).toBeNull()
+    const seeded = CORE_MODES.find((mode) => mode.contribution.id === 'meetings')
+    expect(seeded?.isActive({ navigator: 'meetings', details: null })).toBe(true)
+    expect(seeded?.isActive({ navigator: 'tasks', details: null } as never)).toBe(false)
   })
 
   it('maps ⌥⌘1…7 to the pill order', () => {
