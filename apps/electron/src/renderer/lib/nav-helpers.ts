@@ -43,6 +43,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'connections':
       return false
     case 'inbox':
+    case 'feed':
     case 'tasks':
     case 'meetings':
       return navState.details !== null

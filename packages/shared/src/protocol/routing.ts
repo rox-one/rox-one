@@ -883,6 +883,16 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.personalTasks.MIGRATE,
   RPC_CHANNELS.personalTasks.CHANGED,
 
+  // feed — device-local sources, fetched items and X token (Лента)
+  RPC_CHANNELS.feed.LIST,
+  RPC_CHANNELS.feed.CHANGED,
+  RPC_CHANNELS.feed.SOURCES_ADD,
+  RPC_CHANNELS.feed.SOURCES_REMOVE,
+  RPC_CHANNELS.feed.SOURCES_UPDATE,
+  RPC_CHANNELS.feed.REFRESH,
+  RPC_CHANNELS.feed.X_SET_TOKEN,
+  RPC_CHANNELS.feed.X_CLEAR,
+
   // kanban — workspace board config
   RPC_CHANNELS.kanban.GET_CONFIG,
   RPC_CHANNELS.kanban.SET_CONFIG,

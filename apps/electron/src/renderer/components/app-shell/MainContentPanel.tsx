@@ -20,6 +20,7 @@ import {
   isTasksNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
+  isFeedNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
@@ -55,6 +56,7 @@ const ExtraScreenHost = React.lazy(() => import('@/pages/extra-screens/ExtraScre
 const TasksPage = React.lazy(() => import('@/pages/TasksPage'))
 const MeetingsPage = React.lazy(() => import('@/pages/MeetingsPage'))
 const InboxPage = React.lazy(() => import('@/pages/InboxPage'))
+const FeedPage = React.lazy(() => import('@/pages/FeedPage'))
 const KnowledgeEntityPage = React.lazy(() => import('@/pages/KnowledgeEntityPage'))
 const SkillInfoPage = React.lazy(() => import('@/pages/SkillInfoPage'))
 const SourceInfoPage = React.lazy(() => import('@/pages/SourceInfoPage'))
@@ -456,6 +458,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <InboxPage selectedId={navState.details?.itemId ?? null} />
+      </Panel>
+    )
+  }
+
+  if (isFeedNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <FeedPage selectedId={navState.details?.itemId ?? null} />
       </Panel>
     )
   }

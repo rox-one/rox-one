@@ -2105,6 +2105,15 @@ export interface ElectronAPI {
   personalTasksDelete(ids: string[]): Promise<{ removed: number }>
   personalTasksMigrate(input: import('@craft-agent/core/tasks/personal').PersonalTasksMigrateInput): Promise<import('@craft-agent/core/tasks/personal').PersonalTasksMigrateResult>
   onPersonalTasksChanged(callback: (payload: { at: number }) => void): () => void
+  // Лента (feed:*)
+  feedList(workspaceId?: string | null): Promise<import('@craft-agent/shared/feed').FeedListResult>
+  feedAddSource(url: string, intervalMin?: number): Promise<{ ok: true; source: import('@craft-agent/shared/feed').FeedSource } | { ok: false; error: 'invalid-url' | 'duplicate' | 'too-many' }>
+  feedRemoveSource(id: string): Promise<{ removed: boolean }>
+  feedUpdateSource(id: string, patch: { intervalMin?: number; title?: string }): Promise<import('@craft-agent/shared/feed').FeedSource | null>
+  feedRefresh(id?: string | null): Promise<{ ok: boolean }>
+  feedSetXToken(token: string): Promise<import('@craft-agent/shared/feed').XConnectionStatus>
+  feedClearX(): Promise<import('@craft-agent/shared/feed').XConnectionStatus>
+  onFeedChanged(callback: (payload: { at: number }) => void): () => void
 
   // Kanban board config (workspace-scoped)
   getKanbanConfig(workspaceId: string): Promise<import('@craft-agent/shared/kanban').KanbanBoardConfig>
@@ -2461,6 +2470,12 @@ export interface InboxNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface FeedNavigationState {
+  navigator: 'feed'
+  details: { type: 'item'; itemId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface MeetingsNavigationState {
   navigator: 'meetings'
   details: { type: 'meeting'; meetingId: string } | null
@@ -2567,6 +2582,7 @@ export type NavigationState =
   | MemoryNavigationState
   | TasksNavigationState
   | MeetingsNavigationState
+  | FeedNavigationState
   | InboxNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
@@ -2623,6 +2639,10 @@ export const isTasksNavigation = (
 export const isMeetingsNavigation = (
   state: NavigationState
 ): state is MeetingsNavigationState => state.navigator === 'meetings'
+
+export const isFeedNavigation = (
+  state: NavigationState
+): state is FeedNavigationState => state.navigator === 'feed'
 
 export const isInboxNavigation = (
   state: NavigationState
@@ -2721,6 +2741,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'inbox') {
     return state.details ? `inbox/item/${encodeURIComponent(state.details.itemId)}` : 'inbox'
+  }
+  if (state.navigator === 'feed') {
+    return state.details ? `feed/item/${encodeURIComponent(state.details.itemId)}` : 'feed'
   }
   if (state.navigator === 'meetings') {
     return state.details?.type === 'meeting' ? `meetings/meeting/${encodeURIComponent(state.details.meetingId)}` : 'meetings'
@@ -2949,6 +2972,11 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
   if (key.startsWith('inbox/item/')) {
     const itemId = decodeURIComponent(key.slice('inbox/item/'.length))
     return { navigator: 'inbox', details: itemId ? { type: 'item', itemId } : null }
+  }
+  if (key === 'feed') return { navigator: 'feed', details: null }
+  if (key.startsWith('feed/item/')) {
+    const itemId = decodeURIComponent(key.slice('feed/item/'.length))
+    return { navigator: 'feed', details: itemId ? { type: 'item', itemId } : null }
   }
   if (key === 'meetings') return { navigator: 'meetings', details: null }
   if (key.startsWith('meetings/meeting/')) {

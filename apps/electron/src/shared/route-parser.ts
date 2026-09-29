@@ -56,7 +56,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'inbox' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'feed' | 'inbox' | 'connections' | 'home'
   // Extra workbench screens («Ещё»): one navigator, screen id in `screen`
   | 'screen'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
@@ -100,7 +100,7 @@ export interface ParsedCompoundRoute {
  * exactly the same set of view routes the renderer can navigate to.
  */
 export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'inbox', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'feed', 'inbox', 'connections', 'home',
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
   ...EXTRA_SCREEN_IDS,
 ]
@@ -268,6 +268,13 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       return { navigator: 'inbox', details: { type: 'item', id: decodeURIComponent(segments[2]) } }
     }
     return { navigator: 'inbox', details: null }
+  }
+
+  if (first === 'feed') {
+    if (segments[1] === 'item' && segments[2]) {
+      return { navigator: 'feed', details: { type: 'item', id: decodeURIComponent(segments[2]) } }
+    }
+    return { navigator: 'feed', details: null }
   }
 
   if (first === 'meetings') {
@@ -600,6 +607,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return `inbox/item/${encodeURIComponent(parsed.details.id)}`
   }
 
+  if (parsed.navigator === 'feed') {
+    if (!parsed.details) return 'feed'
+    return `feed/item/${encodeURIComponent(parsed.details.id)}`
+  }
+
   if (parsed.navigator === 'meetings') {
     if (!parsed.details) return 'meetings'
     return `meetings/meeting/${encodeURIComponent(parsed.details.id)}`
@@ -810,6 +822,13 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'inbox-item', id: compound.details.id, params: {} }
   }
 
+  if (compound.navigator === 'feed') {
+    if (!compound.details) {
+      return { type: 'view', name: 'feed', params: {} }
+    }
+    return { type: 'view', name: 'feed-item', id: compound.details.id, params: {} }
+  }
+
   if (compound.navigator === 'meetings') {
     if (!compound.details) {
       return { type: 'view', name: 'meetings', params: {} }
@@ -1008,6 +1027,13 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
       return { navigator: 'inbox', details: null }
     }
     return { navigator: 'inbox', details: { type: 'item', itemId: compound.details.id } }
+  }
+
+  if (compound.navigator === 'feed') {
+    if (!compound.details) {
+      return { navigator: 'feed', details: null }
+    }
+    return { navigator: 'feed', details: { type: 'item', itemId: compound.details.id } }
   }
 
   if (compound.navigator === 'meetings') {
@@ -1225,6 +1251,12 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return parsed.id
         ? { navigator: 'inbox', details: { type: 'item', itemId: parsed.id } }
         : { navigator: 'inbox', details: null }
+    case 'feed':
+      return { navigator: 'feed', details: null }
+    case 'feed-item':
+      return parsed.id
+        ? { navigator: 'feed', details: { type: 'item', itemId: parsed.id } }
+        : { navigator: 'feed', details: null }
     case 'meetings':
       return { navigator: 'meetings', details: null }
     case 'meeting-info':
@@ -1473,6 +1505,13 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
   if (state.navigator === 'inbox') {
     return {
       navigator: 'inbox',
+      details: state.details ? { type: 'item', id: state.details.itemId } : null,
+    }
+  }
+
+  if (state.navigator === 'feed') {
+    return {
+      navigator: 'feed',
       details: state.details ? { type: 'item', id: state.details.itemId } : null,
     }
   }

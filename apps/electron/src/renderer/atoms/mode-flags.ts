@@ -40,7 +40,7 @@ export const MODE_SCREEN_FLAG_ATOMS = {
 } as const
 
 /** Mode screens that are actually built (Settings shows toggles only for these). */
-export const BUILT_MODE_SCREENS: readonly ModeScreenId[] = ['tasks', 'meetings', 'inbox']
+export const BUILT_MODE_SCREENS: readonly ModeScreenId[] = ['tasks', 'meetings', 'inbox', 'feed']
 
 export type ModeScreenFlags = Record<ModeScreenId, boolean>
 

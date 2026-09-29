@@ -814,6 +814,14 @@ export const CHANNEL_MAP = {
   personalTasksDelete: invoke(RPC_CHANNELS.personalTasks.DELETE),
   personalTasksMigrate: invoke(RPC_CHANNELS.personalTasks.MIGRATE),
   onPersonalTasksChanged: listener(RPC_CHANNELS.personalTasks.CHANGED),
+  feedList: invoke(RPC_CHANNELS.feed.LIST),
+  feedAddSource: invoke(RPC_CHANNELS.feed.SOURCES_ADD),
+  feedRemoveSource: invoke(RPC_CHANNELS.feed.SOURCES_REMOVE),
+  feedUpdateSource: invoke(RPC_CHANNELS.feed.SOURCES_UPDATE),
+  feedRefresh: invoke(RPC_CHANNELS.feed.REFRESH),
+  feedSetXToken: invoke(RPC_CHANNELS.feed.X_SET_TOKEN),
+  feedClearX: invoke(RPC_CHANNELS.feed.X_CLEAR),
+  onFeedChanged: listener(RPC_CHANNELS.feed.CHANGED),
 
   // Kanban board config
   getKanbanConfig: invoke(RPC_CHANNELS.kanban.GET_CONFIG),

@@ -13,6 +13,7 @@ import {
   isKnowledgeNavigation,
   isMeetingsNavigation,
   isInboxNavigation,
+  isFeedNavigation,
   isNotesNavigation,
   isSessionsNavigation,
   isTasksNavigation,
@@ -101,13 +102,14 @@ export const CORE_MODES: readonly SeededMode[] = [
       id: 'feed',
       titleKey: 'workbench.mode.feed',
       icon: 'Rss',
-      rootRoute: null,
+      rootRoute: routes.view.feed(),
       order: 60,
       defaultPinned: true,
       layoutProfileId: 'research',
-      requiredCapabilities: ['feed.ingest'],
+      // Capability 'feed.ingest' is the workbench.mode.feed.v1 flag (feed:list aggregator).
     },
-    isActive: () => false,
+    isActive: isFeedNavigation,
+    flag: 'feed',
   },
   {
     contribution: {
