@@ -26,8 +26,11 @@ export function WidgetFrame({
   edit,
   children,
   testId,
+  action,
 }: {
   title: string
+  /** Small header action (e.g. «Запись»), hidden in edit mode. */
+  action?: React.ReactNode
   /** Click-through to the widget's screen. */
   onOpen?: () => void
   meta?: React.ReactNode
@@ -72,6 +75,7 @@ export function WidgetFrame({
         )}
         <span className="min-w-0 flex-1" />
         {!edit && meta ? <span className="shrink-0 truncate text-[12px] text-muted-foreground">{meta}</span> : null}
+        {!edit && action ? <span className="ml-1 flex shrink-0 items-center">{action}</span> : null}
         {edit ? (
           <div className="flex shrink-0 items-center gap-1">
             <div className="flex items-center rounded-[6px] bg-foreground/[0.06] p-0.5" role="radiogroup" aria-label={t('workbench.home.edit.size')}>
@@ -117,8 +121,11 @@ export function WidgetRow({
   trailing,
   sub,
   testId,
+  aside,
 }: {
   onClick?: () => void
+  /** Control rendered next to the row (outside its button), e.g. a toggle. */
+  aside?: React.ReactNode
   leading?: React.ReactNode
   title: React.ReactNode
   trailing?: React.ReactNode
@@ -137,12 +144,13 @@ export function WidgetRow({
   )
   const cls = 'rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-1 text-left'
   return (
-    <li className="min-w-0" data-home-row={testId}>
+    <li className={cn('min-w-0', aside != null && 'flex items-center gap-1')} data-home-row={testId}>
       {onClick ? (
         <button type="button" className={cls} onClick={onClick}>{body}</button>
       ) : (
         <div className={cls}>{body}</div>
       )}
+      {aside != null ? <span className="flex shrink-0 items-center pr-1.5">{aside}</span> : null}
     </li>
   )
 }
@@ -196,4 +204,43 @@ export function Dot({ tone }: { tone: 'accent' | 'success' | 'warning' | 'danger
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="px-0 pb-0.5 pt-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">{children}</div>
+}
+
+/** Flat on/off switch (tone steps, no outline; HC gets a stronger track). */
+export function Toggle({ checked, onChange, label, disabled }: { checked: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'rox-home-toggle relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors disabled:opacity-50',
+        checked ? 'bg-accent' : 'bg-foreground/20',
+      )}
+    >
+      <span className={cn('inline-block h-3 w-3 rounded-full bg-background transition-transform', checked ? 'translate-x-[14px]' : 'translate-x-0.5')} />
+    </button>
+  )
+}
+
+/** Compact pill button used inside widgets (e.g. «Запись», «Добавить»). */
+export function WidgetButton({ children, onClick, tone, disabled, title }: { children: React.ReactNode; onClick: () => void; tone?: 'danger'; disabled?: boolean; title?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={cn(
+        'flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-[6px] px-2 text-[12px] font-bold disabled:opacity-60',
+        tone === 'danger' ? 'bg-destructive/15 text-destructive hover:bg-destructive/25' : 'bg-foreground/[0.08] text-foreground hover:bg-foreground/[0.14]',
+      )}
+    >
+      {children}
+    </button>
+  )
 }

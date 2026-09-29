@@ -244,6 +244,8 @@ export interface MeetingsOverview<T extends MeetingLike> {
   live: T | null
   upcoming: T[]
   last: T | null
+  /** Finished meetings, newest first. */
+  recent: T[]
 }
 
 export function buildMeetingsOverview<T extends MeetingLike>(meetings: readonly T[], now: number, upcomingLimit = 2): MeetingsOverview<T> {
@@ -255,7 +257,7 @@ export function buildMeetingsOverview<T extends MeetingLike>(meetings: readonly 
   const done = meetings
     .filter((m) => m.status === 'ready')
     .sort((a, b) => (b.endedAt ?? b.startedAt ?? b.createdAt) - (a.endedAt ?? a.startedAt ?? a.createdAt))
-  return { live, upcoming, last: done[0] ?? null }
+  return { live, upcoming, last: done[0] ?? null, recent: done.slice(0, 4) }
 }
 
 // ---------------------------------------------------------------------------
@@ -364,4 +366,142 @@ export function formatUsd(cost: number): string {
   if (cost === 0) return '$0'
   if (cost < 0.01) return '<$0.01'
   return `$${cost.toFixed(2)}`
+}
+
+// ---------------------------------------------------------------------------
+// Трекер задач
+// ---------------------------------------------------------------------------
+
+export const TASK_LISTS = ['inbox', 'today', 'upcoming', 'anytime', 'someday'] as const
+export type TaskListKey = (typeof TASK_LISTS)[number]
+
+export interface TaskTrackerStats {
+  open: number
+  overdue: number
+  /** Open and due today, or filed under «Сегодня». */
+  today: number
+  doneToday: number
+  doneWeek: number
+  byList: Record<TaskListKey, number>
+}
+
+export function taskTrackerStats(tasks: readonly TaskLike[], now: number): TaskTrackerStats {
+  const dayStart = startOfLocalDay(now)
+  const dayEnd = dayStart + DAY_MS
+  const weekStart = dayStart - 6 * DAY_MS
+  const byList = Object.fromEntries(TASK_LISTS.map((l) => [l, 0])) as Record<TaskListKey, number>
+  let open = 0
+  let overdue = 0
+  let today = 0
+  let doneToday = 0
+  let doneWeek = 0
+  for (const task of tasks) {
+    if (task.completedAt) {
+      if (task.completedAt >= dayStart) doneToday += 1
+      if (task.completedAt >= weekStart) doneWeek += 1
+      continue
+    }
+    if (task.cancelledAt) continue
+    open += 1
+    if ((TASK_LISTS as readonly string[]).includes(task.list)) byList[task.list as TaskListKey] += 1
+    if (task.dueAt != null && task.dueAt < dayStart) overdue += 1
+    if (task.list === 'today' || (task.dueAt != null && task.dueAt >= dayStart && task.dueAt < dayEnd)) today += 1
+  }
+  return { open, overdue, today, doneToday, doneWeek, byList }
+}
+
+// ---------------------------------------------------------------------------
+// Звонки
+// ---------------------------------------------------------------------------
+
+export interface CallLike extends MeetingLike {
+  source: string
+  audio: unknown
+  durationMs: number
+}
+
+/** Recorded/imported calls, newest first. Planned meetings without audio are not calls. */
+export function recentCalls<T extends CallLike>(meetings: readonly T[], limit = 5): T[] {
+  return meetings
+    .filter((m) => m.audio != null || m.source === 'microphone' || m.source === 'import' || m.status === 'recording' || m.status === 'paused')
+    .sort((a, b) => (b.startedAt ?? b.createdAt) - (a.startedAt ?? a.createdAt))
+    .slice(0, limit)
+}
+
+export function formatDuration(ms: number): string {
+  const totalSec = Math.max(0, Math.round(ms / 1000))
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`
+}
+
+// ---------------------------------------------------------------------------
+// Календарь на неделю
+// ---------------------------------------------------------------------------
+
+export type CalendarEventKind = 'meeting' | 'task' | 'automation' | 'note'
+
+export interface CalendarEvent {
+  kind: CalendarEventKind
+  id: string
+  title: string
+  at: number
+  /** For tasks: overdue but still open (shown on today). */
+  overdue?: boolean
+}
+
+export interface CalendarDay {
+  start: number
+  events: CalendarEvent[]
+}
+
+export interface WeekCalendarInput {
+  meetings: readonly MeetingLike[]
+  tasks: readonly TaskLike[]
+  /** Pre-computed upcoming automation runs (croner lives in the widget). */
+  automationRuns: readonly { id: string; title: string; at: number }[]
+  notes: readonly { id: string; title: string; createdAt: number }[]
+}
+
+/**
+ * Seven local days starting today. Meetings by planned/actual start, open
+ * tasks by due date (overdue open tasks pinned to today), automation runs by
+ * next fire time, notes by creation date.
+ */
+export function buildWeekCalendar(input: WeekCalendarInput, now: number, days = 7): CalendarDay[] {
+  const first = startOfLocalDay(now)
+  const out: CalendarDay[] = []
+  for (let i = 0; i < days; i += 1) {
+    const d = new Date(first)
+    d.setDate(d.getDate() + i)
+    out.push({ start: d.getTime(), events: [] })
+  }
+  const end = (() => {
+    const d = new Date(first)
+    d.setDate(d.getDate() + days)
+    return d.getTime()
+  })()
+  const put = (event: CalendarEvent) => {
+    if (event.at < first || event.at >= end) return
+    for (let i = out.length - 1; i >= 0; i -= 1) {
+      if (event.at >= out[i]!.start) {
+        out[i]!.events.push(event)
+        return
+      }
+    }
+  }
+  for (const m of input.meetings) {
+    const at = m.scheduledAt ?? m.startedAt ?? m.createdAt
+    put({ kind: 'meeting', id: m.id, title: m.title, at })
+  }
+  for (const t of input.tasks) {
+    if (t.completedAt || t.cancelledAt || t.dueAt == null) continue
+    if (t.dueAt < first) put({ kind: 'task', id: t.id, title: t.title, at: first, overdue: true })
+    else put({ kind: 'task', id: t.id, title: t.title, at: t.dueAt })
+  }
+  for (const r of input.automationRuns) put({ kind: 'automation', id: `${r.id}@${r.at}`, title: r.title, at: r.at })
+  for (const n of input.notes) put({ kind: 'note', id: n.id, title: n.title, at: n.createdAt })
+  for (const day of out) day.events.sort((a, b) => a.at - b.at)
+  return out
 }

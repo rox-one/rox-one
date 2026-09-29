@@ -2,6 +2,10 @@ import { describe, expect, it } from 'bun:test'
 import {
   buildAutomationsOverview,
   buildMeetingsOverview,
+  buildWeekCalendar,
+  formatDuration,
+  recentCalls,
+  taskTrackerStats,
   buildUsageOverview,
   connectionUsage,
   radarSignals,
@@ -104,5 +108,54 @@ describe('home automations / meetings / tasks / radar', () => {
     })
     expect(r.items.map((i) => i.id)).toEqual(['x3', 'x1'])
     expect(r.sweptAt).toBe(2)
+  })
+})
+
+describe('task tracker / calls / week calendar', () => {
+  const now = new Date(2026, 8, 29, 14, 0).getTime()
+  const day = 86_400_000
+  const today = startOfLocalDay(now)
+  const task = (id: string, extra: Record<string, unknown> = {}) => ({ id, title: id, list: 'anytime', priority: 'none', createdAt: now - 10 * day, ...extra })
+
+  it('counts open / overdue / today / done and open tasks by list', () => {
+    const stats = taskTrackerStats([
+      task('a', { list: 'today' }),
+      task('b', { dueAt: today - day }),
+      task('c', { list: 'inbox', dueAt: today + 3600_000 }),
+      task('d', { completedAt: now - 3600_000 }),
+      task('e', { completedAt: now - 3 * day }),
+      task('f', { cancelledAt: now }),
+      task('g', { list: 'someday' }),
+    ], now)
+    expect(stats).toEqual({ open: 4, overdue: 1, today: 2, doneToday: 1, doneWeek: 2, byList: { inbox: 1, today: 1, upcoming: 0, anytime: 1, someday: 1 } })
+  })
+
+  it('calls are recorded/imported meetings, newest first; planned-only meetings are not calls', () => {
+    const m = (id: string, extra: Record<string, unknown>) => ({ id, title: id, status: 'ready' as const, createdAt: now, source: 'none', audio: null, durationMs: 0, ...extra })
+    const calls = recentCalls([
+      m('planned', { status: 'planned', scheduledAt: now + day }),
+      m('old', { source: 'microphone', audio: {}, startedAt: now - 2 * day }),
+      m('new', { source: 'import', audio: {}, startedAt: now - day }),
+      m('live', { status: 'recording', source: 'microphone', startedAt: now }),
+    ])
+    expect(calls.map((c) => c.id)).toEqual(['live', 'new', 'old'])
+    expect(formatDuration(65_000)).toBe('1:05')
+    expect(formatDuration(3_725_000)).toBe('1:02:05')
+  })
+
+  it('builds 7 days from today: meetings, due tasks (overdue pinned to today), automation runs, notes', () => {
+    const days = buildWeekCalendar({
+      meetings: [{ id: 'm1', title: 'Sync', status: 'planned', createdAt: now - day, scheduledAt: today + day + 10 * 3600_000 }],
+      tasks: [task('late', { dueAt: today - 2 * day }), task('soon', { dueAt: today + 2 * day }), task('done', { dueAt: today + day, completedAt: now }), task('far', { dueAt: today + 30 * day })],
+      automationRuns: [{ id: 'a1', title: 'Digest', at: today + 9 * 3600_000 }, { id: 'a1', title: 'Digest', at: today + 8 * day }],
+      notes: [{ id: 'n1', title: 'Idea', createdAt: now - 60_000 }, { id: 'n0', title: 'Old', createdAt: now - 5 * day }],
+    }, now)
+    expect(days).toHaveLength(7)
+    expect(days[0]!.start).toBe(today)
+    expect(days[0]!.events.map((e) => `${e.kind}:${e.title}`)).toEqual(['task:late', 'automation:Digest', 'note:Idea'])
+    expect(days[0]!.events[0]!.overdue).toBe(true)
+    expect(days[1]!.events.map((e) => e.id)).toEqual(['m1'])
+    expect(days[2]!.events.map((e) => e.id)).toEqual(['soon'])
+    expect(days.flatMap((d) => d.events).length).toBe(5)
   })
 })

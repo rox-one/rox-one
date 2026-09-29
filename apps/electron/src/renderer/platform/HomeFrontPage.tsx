@@ -2,9 +2,9 @@
  * Workbench Home Front Page — mode `home`.
  *
  * A composable dashboard: the user assembles it from widgets (Недавние
- * сессии, Центр агентов, Расход и токены, Модели, Задачи, Встречи, Входящие,
- * Решения, Лента, Автоматизации, Радар, Фокус, Заметки, Баланс, Быстрые
- * действия…). «Настроить» toggles edit mode: «+ Виджет» picker, drag to
+ * сессии, Центр агентов, Расход и токены, Модели, Задачи, Трекер задач,
+ * Встречи, Звонки, Календарь на неделю, Входящие, Трекер входящих, Решения,
+ * Лента, Автоматизации, Радар, Фокус, Заметки, Баланс, Быстрые действия…). «Настроить» toggles edit mode: «+ Виджет» picker, drag to
  * reorder (pointer or keyboard), S/M/L size, remove, reset. Otherwise a clean
  * view. Layout persists locally (see platform/home/dashboard-layout.ts).
  * Every widget reads real stores/IPC and clicks through to its screen.
@@ -12,7 +12,7 @@
 import * as React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Plus, RotateCcw, SlidersHorizontal } from 'lucide-react'
+import { Check, Plus, RotateCcw, SlidersHorizontal, X } from 'lucide-react'
 import {
   DndContext,
   PointerSensor,
@@ -29,6 +29,9 @@ import { cn } from '@/lib/utils'
 import {
   DEFAULT_HOME_LAYOUT,
   HOME_GRID_COLUMNS,
+  HOME_WIDGET_DEFAULT_SIZE,
+  HOME_WIDGET_GROUPS,
+  HOME_WIDGET_IDS,
   HOME_LAYOUT_NS,
   addWidget,
   availableWidgets,
@@ -133,41 +136,70 @@ function SortableWidget({
   )
 }
 
-function WidgetPicker({ layout, onAdd }: { layout: HomeDashboardLayout; onAdd: (id: HomeWidgetId) => void }) {
+function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayout; onToggle: (id: HomeWidgetId, add: boolean) => void; onClose: () => void }) {
   const { t } = useTranslation()
-  const available = availableWidgets(layout)
+  const used = new Set(layout.widgets.map((w) => w.id))
   return (
-    <section className="rox-home-widget rounded-[10px] px-3 pb-3 pt-2" aria-label={t('workbench.home.picker.title')} data-home-picker="">
-      <div className="flex h-7 items-center">
-        <h2 className="text-[12px] font-bold uppercase tracking-wide text-muted-foreground">{t('workbench.home.picker.title')}</h2>
+    <section className="rox-home-widget rounded-[12px] px-4 pb-4 pt-3" aria-label={t('workbench.home.picker.title')} data-home-picker="">
+      <div className="flex items-center gap-2">
+        <h2 className="text-[15px] font-bold text-foreground">{t('workbench.home.picker.title')}</h2>
+        <span className="text-[12px] text-muted-foreground">{t('workbench.home.picker.count', { used: used.size, total: HOME_WIDGET_IDS.length })}</span>
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-6 w-6 items-center justify-center rounded-[4px] text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+          aria-label={t('workbench.home.picker.close')}
+          title={t('workbench.home.picker.close')}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
-      {available.length === 0 ? (
-        <p className="text-[13px] text-muted-foreground">{t('workbench.home.picker.allAdded')}</p>
-      ) : (
-        <ul className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(208px, 1fr))' }}>
-          {available.map((id) => {
-            const def = HOME_WIDGETS[id]
-            const Icon = def.icon
-            return (
-              <li key={id} className="min-w-0">
-                <button
-                  type="button"
-                  onClick={() => onAdd(id)}
-                  data-home-add={id}
-                  className="rox-home-tile flex w-full min-w-0 items-start gap-2 rounded-[8px] px-2.5 py-2 text-left"
-                >
-                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-[13px] font-bold text-foreground">{t(def.titleKey)}</span>
-                    <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{t(def.descriptionKey)}</span>
-                  </span>
-                  <Plus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+      <p className="mt-0.5 text-[12px] text-muted-foreground">{t('workbench.home.picker.hint')}</p>
+      <div className="mt-2 flex flex-col gap-3">
+        {HOME_WIDGET_GROUPS.map((group) => (
+          <div key={group.id} data-home-picker-group={group.id}>
+            <h3 className="pb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{t(`workbench.home.picker.group.${group.id}`)}</h3>
+            <ul className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(232px, 1fr))' }}>
+              {group.widgets.map((id) => {
+                const def = HOME_WIDGETS[id]
+                const Icon = def.icon
+                const added = used.has(id)
+                return (
+                  <li key={id} className="min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => onToggle(id, !added)}
+                      aria-pressed={added}
+                      data-home-add={id}
+                      title={added ? t('workbench.home.picker.removeHint') : t('workbench.home.picker.addHint')}
+                      className={cn(
+                        'rox-home-tile group flex h-full w-full min-w-0 items-start gap-2.5 rounded-[10px] px-3 py-2.5 text-left',
+                        added && 'rox-home-tile-added',
+                      )}
+                    >
+                      <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px]', added ? 'bg-accent/20 text-accent' : 'bg-foreground/[0.08] text-foreground')}>
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="truncate text-[13px] font-bold text-foreground">{t(def.titleKey)}</span>
+                          <span className="shrink-0 rounded-[4px] bg-foreground/[0.06] px-1 text-[10px] font-bold leading-4 text-muted-foreground">{HOME_WIDGET_DEFAULT_SIZE[id]}</span>
+                        </span>
+                        <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{t(def.descriptionKey)}</span>
+                      </span>
+                      <span className={cn('mt-0.5 flex h-5 shrink-0 items-center gap-0.5 rounded-[4px] px-1 text-[11px] font-bold', added ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground')}>
+                        {added ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                        {added ? t('workbench.home.picker.added') : t('workbench.home.picker.add')}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
     </section>
   )
 }
@@ -266,7 +298,11 @@ export function HomeFrontPage() {
         ) : null}
 
         {editing && pickerOpen ? (
-          <WidgetPicker layout={layout} onAdd={(id) => save(addWidget(layout, id))} />
+          <WidgetPicker
+            layout={layout}
+            onToggle={(id, add) => save(add ? addWidget(layout, id) : removeWidget(layout, id))}
+            onClose={() => setPickerOpen(false)}
+          />
         ) : null}
 
         <div ref={gridRef} className="min-w-0">

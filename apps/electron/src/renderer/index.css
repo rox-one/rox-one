@@ -1232,3 +1232,16 @@ html[data-contrast="high"] .rox-home-tile:hover,
 html[data-contrast="high"] .rox-home-add-cell:hover {
   background-color: color-mix(in oklch, var(--foreground) 20%, transparent);
 }
+/* Picker tile for a widget already on Главная; switch track in HC. */
+.rox-home-tile.rox-home-tile-added {
+  background-color: color-mix(in oklch, var(--accent) 10%, transparent);
+}
+.rox-home-tile.rox-home-tile-added:hover {
+  background-color: color-mix(in oklch, var(--accent) 16%, transparent);
+}
+html[data-contrast="high"] .rox-home-tile.rox-home-tile-added {
+  background-color: color-mix(in oklch, var(--accent) 24%, transparent);
+}
+html[data-contrast="high"] .rox-home-toggle[aria-checked="false"] {
+  background-color: color-mix(in oklch, var(--foreground) 45%, transparent);
+}

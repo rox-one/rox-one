@@ -12,16 +12,21 @@ import {
   AlertTriangle,
   Bot,
   CalendarClock,
+  BellDot,
+  CalendarDays,
   Coins,
   Cpu,
   FileText,
   Gavel,
   Inbox as InboxIcon,
   LayoutGrid,
+  ListChecks,
   ListTodo,
   MessageSquare,
   Mic,
   NotebookPen,
+  Phone,
+  Plus,
   Radar as RadarIcon,
   Rss,
   Search,
@@ -35,12 +40,13 @@ import type { NoteSummary } from '@craft-agent/shared/protocol'
 import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
-import { parseAutomationsConfig } from '@/components/automations/types'
+import { parseAutomationsConfig, type AutomationListItem } from '@/components/automations/types'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { useInboxItems } from '@/hooks/useInboxItems'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
+import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
 import { useFeedItems, usePersonalTasks } from '@/lib/extra-screens/use-rox-sources'
 import { focusMinutesOn, isFocusRunning, loadFocusState, localDay, subscribeFocusState, type FocusState } from '@/lib/focus-session'
 import { startRecording, useRecorder } from '@/lib/meetings/recorder'
@@ -49,13 +55,19 @@ import { cn } from '@/lib/utils'
 import { buildAgentCenter } from '@/pages/extra-screens/agents/agent-center-model'
 import { DECISIONS_NS, loadDecisions } from '@/pages/extra-screens/decisions/decisions-store'
 import { RADAR_NS, loadRadar } from '@/pages/extra-screens/radar/radar-store'
-import { isActive, sortInbox } from '@/pages/inbox/inbox-model'
+import { ALL_KINDS, isActive, sortInbox } from '@/pages/inbox/inbox-model'
 import { getSessionTitle } from '@/utils/session'
 import { isHomeSessionInWorkspace, pickRecentHomeSessions } from '../home-model'
 import { buildMiniDashboard, formatDashboardCost, formatTokenCount, syncStatusLabelKey } from '../mini-dashboard'
 import type { HomeWidgetId } from './dashboard-layout'
 import {
+  TASK_LISTS,
   buildAutomationsOverview,
+  buildWeekCalendar,
+  formatDuration,
+  recentCalls,
+  taskTrackerStats,
+  type CalendarEventKind,
   buildMeetingsOverview,
   buildUsageOverview,
   connectionUsage,
@@ -67,7 +79,7 @@ import {
   topOpenTasks,
   usageByModel,
 } from './home-data'
-import { Dot, SectionLabel, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
+import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
@@ -96,6 +108,7 @@ function useFormat() {
     const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' })
     const dayTime = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' })
+    const dayMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' })
     const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 })
     return {
       ago(ts: number, now: number): string {
@@ -110,6 +123,8 @@ function useFormat() {
         return startOfLocalDay(ts) === startOfLocalDay(now) ? time.format(ts) : dayTime.format(ts)
       },
       weekday: (ts: number) => weekday.format(ts),
+      dayMonth: (ts: number) => dayMonth.format(ts),
+      time: (ts: number) => time.format(ts),
       num: (n: number) => num.format(n),
     }
   }, [locale])
@@ -180,21 +195,20 @@ function SummaryWidget({ edit, span }: WidgetProps) {
 // Быстрые действия
 // ---------------------------------------------------------------------------
 
-function QuickActionsWidget({ edit, span }: WidgetProps) {
+/** «Запись»: start a local meeting recording, or jump to the live one. */
+function useRecordAction(): { recording: string | null; busy: boolean; error: string | null; record: () => Promise<void> } {
   const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
-  const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
   const recorder = useRecorder()
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState<string | null>(null)
   const recording = recorder.status !== 'idle' && recorder.meetingId ? recorder.meetingId : null
-
   const record = async () => {
     if (recording) {
       navigate(routes.view.meetings(recording))
       return
     }
-    setBusy('record')
+    setBusy(true)
     setError(null)
     const locale = i18n.resolvedLanguage || 'ru'
     const date = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(Date.now())
@@ -202,10 +216,36 @@ function QuickActionsWidget({ edit, span }: WidgetProps) {
       const result = await startRecording({ title: t('meetings.local.defaultTitle', { date }), workspaceId: workspace?.id ?? null })
       if (result.ok) navigate(routes.view.meetings(result.meeting.id))
       else setError(t('workbench.home.quick.recordFailed', { code: result.code }))
+    } catch {
+      setError(t('workbench.home.quick.recordFailed', { code: 'error' }))
     } finally {
-      setBusy(null)
+      setBusy(false)
     }
   }
+  return { recording, busy, error, record }
+}
+
+function RecordButton({ rec }: { rec: ReturnType<typeof useRecordAction> }) {
+  const { t } = useTranslation()
+  return (
+    <WidgetButton tone={rec.recording ? 'danger' : undefined} disabled={rec.busy} onClick={() => void rec.record()} title={rec.error ?? undefined}>
+      <Mic className="h-3 w-3" />
+      {rec.recording ? t('workbench.home.quick.recording') : t('workbench.home.meetings.record')}
+    </WidgetButton>
+  )
+}
+
+function QuickActionsWidget({ edit, span }: WidgetProps) {
+  const { t } = useTranslation()
+  const workspace = useActiveWorkspace()
+  const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
+  const rec = useRecordAction()
+  const [noteError, setError] = useState<string | null>(null)
+  const [noteBusy, setBusy] = useState<string | null>(null)
+  const recording = rec.recording
+  const record = rec.record
+  const busy = rec.busy ? 'record' : noteBusy
+  const error = rec.error ?? noteError
 
   const newNote = async () => {
     if (!workspace?.id || typeof window.electronAPI?.createNote !== 'function') {
@@ -218,7 +258,8 @@ function QuickActionsWidget({ edit, span }: WidgetProps) {
       const note = await window.electronAPI.createNote(workspace.id, t('notes.untitled'))
       navigate(routes.view.notes(note.id))
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      console.warn('[home] create note failed', e)
+      setError(t('workbench.home.quick.noteFailed'))
     } finally {
       setBusy(null)
     }
@@ -514,7 +555,8 @@ function BalanceWidget({ edit }: WidgetProps) {
       setState(await api.getRoxBalance())
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
-      // A server without the balance RPC is «unavailable», not an error.
+      // Never surfaced: logged for diagnostics, the widget shows «—».
+      console.warn('[home] balance unavailable:', message)
       setState(/no handler/i.test(message) ? { status: 'unavailable' } : { status: 'error', message })
     }
   }, [])
@@ -527,19 +569,18 @@ function BalanceWidget({ edit }: WidgetProps) {
   return (
     <WidgetFrame testId="balance" title={t('workbench.home.w.balance')} onOpen={open} edit={edit}>
       <div className="flex h-full min-h-0 flex-col">
-        {state.status === 'ok' ? (
-          <WidgetStat label={t('workbench.home.balance.credits')} value={<span className="text-[28px] leading-9">{fmt.num(state.balance)}</span>} />
-        ) : state.status === 'loading' ? (
-          <WidgetStat label={t('workbench.home.balance.credits')} value="…" />
-        ) : (
-          <div className="min-h-0 flex-1">
-            <WidgetEmpty
-              text={state.status === 'disconnected' ? t('workbench.home.balance.disconnected') : state.status === 'unavailable' ? t('workbench.home.balance.unavailable') : t('workbench.home.balance.error')}
-              hint={state.status === 'disconnected' ? t('workbench.home.balance.disconnectedHint') : state.status === 'error' ? state.message : undefined}
-              action={state.status === 'disconnected' ? { label: t('workbench.home.balance.connect'), onClick: open } : undefined}
-            />
+        <WidgetStat
+          label={t('workbench.home.balance.credits')}
+          value={<span className="text-[28px] leading-9">{state.status === 'ok' ? fmt.num(state.balance) : state.status === 'loading' ? '…' : '—'}</span>}
+        />
+        {state.status === 'disconnected' ? (
+          <div className="flex min-w-0 flex-col items-start gap-1 px-1.5">
+            <WidgetButton onClick={open}>{t('workbench.home.balance.connect')}</WidgetButton>
+            <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.balance.disconnectedHint')}</span>
           </div>
-        )}
+        ) : state.status === 'error' || state.status === 'unavailable' ? (
+          <p className="px-1.5 text-[12px] leading-4 text-muted-foreground" data-home-balance-note="">{t('workbench.home.balance.error')}</p>
+        ) : null}
         <span className="flex-1" />
         {usage.hasData ? (
           <div className="grid grid-cols-2 gap-1">
@@ -619,55 +660,116 @@ function useLocalMeetings(workspaceId: string | null): { available: boolean; loa
   return state
 }
 
-function MeetingsWidget({ edit }: WidgetProps) {
+function transcriptTone(status: string): 'success' | 'danger' | 'accent' | 'muted' {
+  return status === 'done' ? 'success' : status === 'failed' ? 'danger' : status === 'running' || status === 'queued' ? 'accent' : 'muted'
+}
+
+function MeetingsWidget({ edit, span }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
+  const rec = useRecordAction()
   const { available, loaded, meetings } = useLocalMeetings(workspace?.id ?? null)
-  const overview = useMemo(() => buildMeetingsOverview(meetings, now), [meetings, now])
+  const overview = useMemo(() => buildMeetingsOverview(meetings, now, span >= 12 ? 4 : 2), [meetings, now, span])
   const open = (id?: string) => navigate(routes.view.meetings(id))
-  const transcriptTone = (status: string) => (status === 'done' ? 'success' : status === 'failed' ? 'danger' : status === 'running' || status === 'queued' ? 'accent' : 'muted') as 'success' | 'danger' | 'accent' | 'muted'
-  const empty = loaded && !overview.live && overview.upcoming.length === 0 && !overview.last
+  const empty = loaded && !overview.live && overview.upcoming.length === 0 && overview.recent.length === 0
+  const recent = overview.recent.slice(0, span >= 12 ? 4 : overview.upcoming.length > 0 ? 2 : 3)
   return (
-    <WidgetFrame testId="meetings" title={t('workbench.home.w.meetings')} onOpen={() => open()} edit={edit}>
+    <WidgetFrame testId="meetings" title={t('workbench.home.w.meetings')} onOpen={() => open()} edit={edit} action={available ? <RecordButton rec={rec} /> : undefined}>
       {!available ? (
         <WidgetEmpty text={t('workbench.home.meetings.unavailable')} />
       ) : empty ? (
         <WidgetEmpty text={t('workbench.home.meetings.empty')} hint={t('workbench.home.meetings.emptyHint')} action={{ label: t('workbench.home.meetings.plan'), onClick: () => open() }} />
       ) : (
-        <div className="flex h-full min-h-0 flex-col">
-          {overview.live ? (
-            <WidgetList>
-              <WidgetRow onClick={() => open(overview.live!.id)} leading={<Mic className="h-3.5 w-3.5 text-destructive" />} title={overview.live.title} trailing={t('workbench.home.meetings.live')} />
-            </WidgetList>
-          ) : null}
-          <SectionLabel>{t('workbench.home.meetings.upcoming')}</SectionLabel>
-          {overview.upcoming.length === 0 ? (
-            <p className="text-[12px] leading-4 text-muted-foreground">{t('workbench.home.meetings.noUpcoming')}</p>
-          ) : (
-            <WidgetList>
-              {overview.upcoming.map((m) => (
-                <WidgetRow key={m.id} testId={m.id} onClick={() => open(m.id)} leading={<CalendarClock className="h-3.5 w-3.5" />} title={m.title} trailing={m.scheduledAt ? fmt.when(m.scheduledAt, now) : undefined} />
-              ))}
-            </WidgetList>
-          )}
-          {overview.last ? (
-            <>
-              <SectionLabel>{t('workbench.home.meetings.last')}</SectionLabel>
+        <div className={cn('grid h-full min-h-0 gap-x-4', span >= 12 ? 'grid-cols-2' : 'grid-cols-1')}>
+          <div className="min-w-0">
+            {overview.live ? (
               <WidgetList>
-                <WidgetRow
-                  testId={overview.last.id}
-                  onClick={() => open(overview.last!.id)}
-                  leading={<Dot tone={transcriptTone(overview.last.transcript.status)} />}
-                  title={overview.last.title}
-                  sub={t(`workbench.home.meetings.transcript.${overview.last.transcript.status}`)}
-                  trailing={fmt.when(overview.last.endedAt ?? overview.last.startedAt ?? overview.last.createdAt, now)}
-                />
+                <WidgetRow onClick={() => open(overview.live!.id)} leading={<Mic className="h-3.5 w-3.5 text-destructive" />} title={overview.live.title} trailing={t('workbench.home.meetings.live')} />
               </WidgetList>
-            </>
+            ) : null}
+            <SectionLabel>{t('workbench.home.meetings.upcoming')}</SectionLabel>
+            {overview.upcoming.length === 0 ? (
+              <p className="text-[12px] leading-4 text-muted-foreground">{t('workbench.home.meetings.noUpcoming')}</p>
+            ) : (
+              <WidgetList>
+                {overview.upcoming.map((m) => (
+                  <WidgetRow key={m.id} testId={m.id} onClick={() => open(m.id)} leading={<CalendarClock className="h-3.5 w-3.5" />} title={m.title} trailing={m.scheduledAt ? fmt.when(m.scheduledAt, now) : undefined} />
+                ))}
+              </WidgetList>
+            )}
+          </div>
+          {recent.length > 0 ? (
+            <div className="min-w-0">
+              <SectionLabel>{t('workbench.home.meetings.recent')}</SectionLabel>
+              <WidgetList>
+                {recent.map((m) => (
+                  <WidgetRow
+                    key={m.id}
+                    testId={m.id}
+                    onClick={() => open(m.id)}
+                    leading={<Dot tone={transcriptTone(m.transcript.status)} />}
+                    title={m.title}
+                    sub={t(`workbench.home.meetings.transcript.${m.transcript.status}`)}
+                    trailing={fmt.when(m.endedAt ?? m.startedAt ?? m.createdAt, now)}
+                  />
+                ))}
+              </WidgetList>
+            </div>
           ) : null}
         </div>
+      )}
+    </WidgetFrame>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Звонки
+// ---------------------------------------------------------------------------
+
+function CallsWidget({ edit, span }: WidgetProps) {
+  const { t } = useTranslation()
+  const fmt = useFormat()
+  const now = useNow(60_000)
+  const workspace = useActiveWorkspace()
+  const rec = useRecordAction()
+  const { available, loaded, meetings } = useLocalMeetings(workspace?.id ?? null)
+  const calls = useMemo(() => recentCalls(meetings, span >= 12 ? 8 : 4), [meetings, span])
+  const totalMs = useMemo(() => recentCalls(meetings, Number.MAX_SAFE_INTEGER).filter((m) => (m.startedAt ?? m.createdAt) >= startOfLocalDay(now) - 6 * 86_400_000).reduce((sum, m) => sum + (m.durationMs || 0), 0), [meetings, now])
+  const open = (id?: string) => navigate(routes.view.meetings(id))
+  return (
+    <WidgetFrame
+      testId="calls"
+      title={t('workbench.home.w.calls')}
+      onOpen={() => open()}
+      edit={edit}
+      meta={calls.length && totalMs > 0 ? t('workbench.home.calls.week', { duration: formatDuration(totalMs) }) : undefined}
+      action={available && calls.length > 0 ? <RecordButton rec={rec} /> : undefined}
+    >
+      {!available ? (
+        <WidgetEmpty text={t('workbench.home.meetings.unavailable')} />
+      ) : loaded && calls.length === 0 ? (
+        <WidgetEmpty text={t('workbench.home.calls.empty')} hint={t('workbench.home.calls.emptyHint')} action={{ label: rec.recording ? t('workbench.home.quick.recording') : t('workbench.home.meetings.record'), onClick: () => void rec.record() }} />
+      ) : (
+        <WidgetList columns={span >= 12 ? 2 : 1}>
+          {calls.map((m) => {
+            const live = m.status === 'recording' || m.status === 'paused'
+            return (
+              <WidgetRow
+                key={m.id}
+                testId={m.id}
+                onClick={() => open(m.id)}
+                leading={live ? <Mic className="h-3.5 w-3.5 text-destructive" /> : <Phone className="h-3.5 w-3.5" />}
+                title={m.title}
+                sub={live
+                  ? t('workbench.home.meetings.live')
+                  : `${m.durationMs > 0 ? `${formatDuration(m.durationMs)} · ` : ''}${t(`workbench.home.meetings.transcript.${m.transcript.status}`)}`}
+                trailing={fmt.when(m.startedAt ?? m.createdAt, now)}
+              />
+            )
+          })}
+        </WidgetList>
       )}
     </WidgetFrame>
   )
@@ -715,15 +817,11 @@ function FocusWidget({ edit }: WidgetProps) {
 // Автоматизации
 // ---------------------------------------------------------------------------
 
-type AutomationsState = { available: boolean; loaded: boolean; items: ReturnType<typeof parseAutomationsConfig>; last: Record<string, { ts: number; ok: boolean }> }
+type AutomationsState = { available: boolean; loaded: boolean; items: AutomationListItem[]; last: Record<string, { ts: number; ok: boolean }> }
 
-function AutomationsWidget({ edit }: WidgetProps) {
-  const { t } = useTranslation()
-  const fmt = useFormat()
-  const now = useNow(60_000)
-  const workspace = useActiveWorkspace()
-  const workspaceId = workspace?.id ?? null
+function useAutomationsData(workspaceId: string | null): AutomationsState & { setItems: (fn: (items: AutomationListItem[]) => AutomationListItem[]) => void; reload: () => void } {
   const [state, setState] = useState<AutomationsState>({ available: true, loaded: false, items: [], last: {} })
+  const [tick, setTick] = useState(0)
   useEffect(() => {
     const api = window.electronAPI
     if (!workspaceId || typeof api?.getAutomations !== 'function') {
@@ -745,27 +843,77 @@ function AutomationsWidget({ edit }: WidgetProps) {
     void load()
     const off = typeof api.onAutomationsChanged === 'function' ? api.onAutomationsChanged(() => { void load() }) : undefined
     return () => { cancelled = true; off?.() }
-  }, [workspaceId])
-  const overview = useMemo(() => buildAutomationsOverview(state.items, state.last, (a) => {
-    if (!a.cron) return null
+  }, [workspaceId, tick])
+  const setItems = useCallback((fn: (items: AutomationListItem[]) => AutomationListItem[]) => setState((prev) => ({ ...prev, items: fn(prev.items) })), [])
+  const reload = useCallback(() => setTick((n) => n + 1), [])
+  return { ...state, setItems, reload }
+}
+
+function nextCronRun(a: { cron?: string; timezone?: string }): number | null {
+  if (!a.cron) return null
+  try {
+    return new Cron(a.cron, a.timezone ? { timezone: a.timezone } : {}).nextRun()?.getTime() ?? null
+  } catch {
+    return null
+  }
+}
+
+/** Fire times of enabled cron automations before `until` (capped per automation). */
+function cronRunsUntil(items: readonly AutomationListItem[], until: number, cap = 24): { id: string; title: string; at: number }[] {
+  const out: { id: string; title: string; at: number }[] = []
+  for (const a of items) {
+    if (!a.enabled || !a.cron) continue
     try {
-      return new Cron(a.cron, a.timezone ? { timezone: a.timezone } : {}).nextRun()?.getTime() ?? null
-    } catch {
-      return null
-    }
-  }, now), [state.items, state.last, now])
+      const runs = new Cron(a.cron, a.timezone ? { timezone: a.timezone } : {}).nextRuns(cap)
+      for (const r of runs) {
+        const at = r.getTime()
+        if (at >= until) break
+        out.push({ id: a.id, title: a.name, at })
+      }
+    } catch { /* invalid cron: the Автоматизации screen flags it */ }
+  }
+  return out
+}
+
+function AutomationsWidget({ edit, span }: WidgetProps) {
+  const { t } = useTranslation()
+  const fmt = useFormat()
+  const now = useNow(60_000)
+  const workspace = useActiveWorkspace()
+  const workspaceId = workspace?.id ?? null
+  const data = useAutomationsData(workspaceId)
+  const [toggleError, setToggleError] = useState(false)
+  const overview = useMemo(() => buildAutomationsOverview(data.items, data.last, nextCronRun, now), [data.items, data.last, now])
   const open = (automationId?: string) => navigate(routes.view.automations(automationId ? { automationId } : undefined))
+  const toggle = (item: AutomationListItem, enabled: boolean) => {
+    if (!workspaceId || typeof window.electronAPI?.setAutomationEnabled !== 'function') return
+    setToggleError(false)
+    data.setItems((items) => items.map((a) => (a.id === item.id ? { ...a, enabled } : a)))
+    window.electronAPI.setAutomationEnabled(workspaceId, item.event, item.matcherIndex, enabled).then(
+      () => data.reload(),
+      () => {
+        data.setItems((items) => items.map((a) => (a.id === item.id ? { ...a, enabled: item.enabled } : a)))
+        setToggleError(true)
+      },
+    )
+  }
+  // Rows: scheduled ones by next run, then the rest (event/paused) so every
+  // automation can be switched from here.
+  const nextAt = new Map(overview.next.map((n) => [n.id, n.at]))
+  const rows = [...data.items]
+    .sort((a, b) => (nextAt.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (nextAt.get(b.id) ?? Number.MAX_SAFE_INTEGER) || Number(b.enabled) - Number(a.enabled))
+    .slice(0, Math.max(1, (span >= 12 ? 6 : 4) - Math.min(overview.failures.length, 2)))
   return (
     <WidgetFrame
       testId="automations"
       title={t('workbench.home.w.automations')}
       onOpen={() => open()}
       edit={edit}
-      meta={state.items.length ? t('workbench.home.automations.counts', { enabled: overview.enabled, paused: overview.paused }) : undefined}
+      meta={data.items.length ? t('workbench.home.automations.counts', { enabled: overview.enabled, paused: overview.paused }) : undefined}
     >
-      {!state.available ? (
+      {!data.available ? (
         <WidgetEmpty text={t('workbench.home.automations.unavailable')} />
-      ) : state.loaded && state.items.length === 0 ? (
+      ) : data.loaded && data.items.length === 0 ? (
         <WidgetEmpty text={t('workbench.home.automations.empty')} hint={t('workbench.home.automations.emptyHint')} action={{ label: t('workbench.home.automations.create'), onClick: () => open() }} />
       ) : (
         <div className="flex h-full min-h-0 flex-col">
@@ -773,22 +921,30 @@ function AutomationsWidget({ edit }: WidgetProps) {
             <>
               <SectionLabel>{t('workbench.home.automations.failures')}</SectionLabel>
               <WidgetList>
-                {overview.failures.map((f) => (
+                {overview.failures.slice(0, 2).map((f) => (
                   <WidgetRow key={f.id} testId={`fail-${f.id}`} onClick={() => open(f.id)} leading={<AlertTriangle className="h-3.5 w-3.5 text-destructive" />} title={f.name} trailing={fmt.ago(f.at, now)} />
                 ))}
               </WidgetList>
             </>
           ) : null}
           <SectionLabel>{t('workbench.home.automations.next')}</SectionLabel>
-          {overview.next.length === 0 ? (
-            <p className="text-[12px] leading-4 text-muted-foreground">{t('workbench.home.automations.noSchedule')}</p>
-          ) : (
-            <WidgetList>
-              {overview.next.map((n) => (
-                <WidgetRow key={n.id} testId={n.id} onClick={() => open(n.id)} leading={<Workflow className="h-3.5 w-3.5" />} title={n.name} trailing={fmt.when(n.at, now)} />
-              ))}
-            </WidgetList>
-          )}
+          <WidgetList>
+            {rows.map((a) => {
+              const at = nextAt.get(a.id)
+              return (
+                <WidgetRow
+                  key={a.id}
+                  testId={a.id}
+                  onClick={() => open(a.id)}
+                  leading={<Workflow className={cn('h-3.5 w-3.5', !a.enabled && 'opacity-50')} />}
+                  title={<span className={cn(!a.enabled && 'text-muted-foreground')}>{a.name}</span>}
+                  trailing={!a.enabled ? t('workbench.home.automations.paused') : at != null ? fmt.when(at, now) : a.cron ? '—' : t('workbench.home.automations.onEvent')}
+                  aside={<Toggle checked={a.enabled} onChange={(next) => toggle(a, next)} label={t(a.enabled ? 'workbench.home.automations.pause' : 'workbench.home.automations.resume', { name: a.name })} />}
+                />
+              )
+            })}
+          </WidgetList>
+          {toggleError ? <p className="mt-1 text-[12px] text-destructive" role="alert">{t('toast.failedToToggleAutomation')}</p> : null}
         </div>
       )}
     </WidgetFrame>
@@ -834,12 +990,7 @@ function FeedWidget({ edit, span }: WidgetProps) {
 // Заметки
 // ---------------------------------------------------------------------------
 
-function NotesWidget({ edit, span }: WidgetProps) {
-  const { t } = useTranslation()
-  const fmt = useFormat()
-  const now = useNow(60_000)
-  const workspace = useActiveWorkspace()
-  const workspaceId = workspace?.id ?? null
+function useNotes(workspaceId: string | null): { available: boolean; loaded: boolean; notes: NoteSummary[] } {
   const [state, setState] = useState<{ available: boolean; loaded: boolean; notes: NoteSummary[] }>({ available: true, loaded: false, notes: [] })
   useEffect(() => {
     const api = window.electronAPI
@@ -849,14 +1000,23 @@ function NotesWidget({ edit, span }: WidgetProps) {
     }
     let cancelled = false
     const load = () => api.listNotes(workspaceId).then(
-      (notes) => { if (!cancelled) setState({ available: true, loaded: true, notes: recentByUpdated(notes ?? [], 10) }) },
+      (notes) => { if (!cancelled) setState({ available: true, loaded: true, notes: Array.isArray(notes) ? notes : [] }) },
       () => { if (!cancelled) setState({ available: false, loaded: true, notes: [] }) },
     )
     void load()
     const off = typeof api.onNotesChanged === 'function' ? api.onNotesChanged(() => { void load() }) : undefined
     return () => { cancelled = true; off?.() }
   }, [workspaceId])
-  const shown = state.notes.slice(0, span >= 12 ? 10 : 5)
+  return state
+}
+
+function NotesWidget({ edit, span }: WidgetProps) {
+  const { t } = useTranslation()
+  const fmt = useFormat()
+  const now = useNow(60_000)
+  const workspace = useActiveWorkspace()
+  const state = useNotes(workspace?.id ?? null)
+  const shown = useMemo(() => recentByUpdated(state.notes, span >= 12 ? 10 : 5), [state.notes, span])
   return (
     <WidgetFrame testId="notes" title={t('workbench.home.w.notes')} onOpen={() => navigate(routes.view.notes())} edit={edit}>
       {!state.available ? (
@@ -948,6 +1108,243 @@ function RadarWidget({ edit, span }: WidgetProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Трекер задач
+// ---------------------------------------------------------------------------
+
+function TaskTrackerWidget({ edit, span }: WidgetProps) {
+  const { t } = useTranslation()
+  const now = useNow(60_000)
+  const tasks = usePersonalTasks()
+  const stats = useMemo(() => taskTrackerStats(tasks, now), [tasks, now])
+  const [draft, setDraft] = useState('')
+  const [added, setAdded] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => {
+    if (!added) return
+    const timer = window.setTimeout(() => setAdded(null), 2500)
+    return () => window.clearTimeout(timer)
+  }, [added])
+  const add = () => {
+    const title = draft.trim()
+    if (!title) return
+    try {
+      createPersonalTask({ title, list: 'inbox' })
+      setDraft('')
+      setFailed(false)
+      setAdded(title)
+    } catch (e) {
+      console.warn('[home] quick add task failed', e)
+      setFailed(true)
+    }
+  }
+  const open = () => navigate(routes.view.tasks())
+  const listTone: Record<string, string> = { inbox: 'bg-foreground/45', today: 'bg-accent', upcoming: 'bg-foreground/70', anytime: 'bg-foreground/30', someday: 'bg-foreground/15' }
+  const total = Math.max(1, stats.open)
+  return (
+    <WidgetFrame testId="taskTracker" title={t('workbench.home.w.taskTracker')} onOpen={open} edit={edit} meta={stats.doneToday ? t('workbench.home.taskTracker.doneToday', { count: stats.doneToday }) : undefined}>
+      <div className="flex h-full min-h-0 flex-col">
+        <div className={cn('grid gap-1', span >= 6 ? 'grid-cols-4' : 'grid-cols-2')}>
+          <WidgetStat label={t('workbench.home.taskTracker.open')} value={stats.open} onClick={open} />
+          <WidgetStat label={t('workbench.home.taskTracker.overdue')} value={stats.overdue} tone={stats.overdue ? 'danger' : undefined} onClick={open} />
+          {span >= 6 ? <WidgetStat label={t('workbench.home.taskTracker.today')} value={stats.today} tone={stats.today ? 'accent' : undefined} onClick={open} /> : null}
+          {span >= 6 ? <WidgetStat label={t('workbench.home.taskTracker.doneWeek')} value={stats.doneWeek} /> : null}
+        </div>
+        {stats.open > 0 ? (
+          <div className="mt-1 px-1.5">
+            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.08]" role="img" aria-label={t('workbench.home.taskTracker.byStatus')}>
+              {TASK_LISTS.filter((l) => stats.byList[l] > 0).map((l) => (
+                <span key={l} className={listTone[l]} style={{ width: `${(stats.byList[l] / total) * 100}%` }} />
+              ))}
+            </div>
+            <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-muted-foreground">
+              {TASK_LISTS.filter((l) => stats.byList[l] > 0).map((l) => (
+                <li key={l} className="flex items-center gap-1">
+                  <span className={cn('inline-block h-2 w-2 rounded-full', listTone[l])} aria-hidden="true" />
+                  <span>{t(`tasks.projection.${l}`)}</span>
+                  <span className="font-bold tabular-nums text-foreground">{stats.byList[l]}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="mt-1 px-1.5 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.tasks.emptyHint')}</p>
+        )}
+        <span className="flex-1" />
+        <form
+          className="flex items-center gap-1 rounded-[6px] bg-foreground/[0.06] px-1.5"
+          onSubmit={(event) => { event.preventDefault(); add() }}
+          data-home-quick-add=""
+        >
+          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder={t('workbench.home.taskTracker.quickAdd')}
+            aria-label={t('workbench.home.taskTracker.quickAdd')}
+            className="h-7 min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
+          />
+          {draft.trim() ? <WidgetButton onClick={add}>{t('workbench.home.taskTracker.add')}</WidgetButton> : null}
+        </form>
+        <p className={cn('h-4 truncate text-[11px] leading-4', failed ? 'text-destructive' : 'text-muted-foreground')} aria-live="polite">
+          {failed ? t('workbench.home.taskTracker.addFailed') : added ? t('workbench.home.taskTracker.added', { title: added }) : ''}
+        </p>
+      </div>
+    </WidgetFrame>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Трекер входящих
+// ---------------------------------------------------------------------------
+
+function InboxTrackerWidget({ edit, span }: WidgetProps) {
+  const { t } = useTranslation()
+  const { counts, loaded } = useInboxItems({ withRemote: true })
+  const kinds = ALL_KINDS.filter((k) => counts.byKind[k] > 0)
+  const open = () => navigate(routes.view.inbox())
+  const max = Math.max(1, ...kinds.map((k) => counts.byKind[k]))
+  return (
+    <WidgetFrame testId="inboxTracker" title={t('workbench.home.w.inboxTracker')} onOpen={open} edit={edit} meta={counts.snoozed ? t('workbench.home.inboxTracker.snoozed', { count: counts.snoozed }) : undefined}>
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="grid grid-cols-3 gap-1">
+          <WidgetStat label={t('workbench.home.inboxTracker.decisions')} value={counts.decisions} tone={counts.decisions ? 'warning' : undefined} onClick={open} />
+          <WidgetStat label={t('workbench.home.inboxTracker.blocking')} value={counts.blocking} tone={counts.blocking ? 'danger' : undefined} onClick={open} />
+          <WidgetStat label={t('workbench.home.inboxTracker.messages')} value={counts.messages} onClick={open} />
+        </div>
+        <SectionLabel>{t('workbench.home.inboxTracker.byType')}</SectionLabel>
+        {kinds.length === 0 ? (
+          <p className="text-[12px] leading-4 text-muted-foreground">{loaded ? t('workbench.home.inbox.empty') : '…'}</p>
+        ) : (
+          <ul className={cn('-mx-1.5 min-w-0', span >= 12 ? 'grid grid-cols-2 gap-x-4' : 'flex flex-col')}>
+            {kinds.slice(0, span >= 12 ? 8 : 4).map((k) => (
+              <li key={k} className="min-w-0" data-home-row={`kind-${k}`}>
+                <button type="button" onClick={open} className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-1 text-left">
+                  <span className="w-[42%] min-w-0 shrink-0 truncate text-[13px] leading-5 text-foreground">{t(`inbox.kind.${k}`)}</span>
+                  <span className="flex h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-foreground/[0.08]">
+                    <span className={cn('rounded-full', k === 'error' ? 'bg-destructive' : (['permission', 'credential', 'plan', 'memory', 'skill', 'sender'] as string[]).includes(k) ? 'bg-[var(--warning,#d9a13b)]' : 'bg-foreground/50')} style={{ width: `${(counts.byKind[k] / max) * 100}%` }} />
+                  </span>
+                  <span className="w-6 shrink-0 text-right text-[12px] font-bold tabular-nums text-foreground">{counts.byKind[k]}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </WidgetFrame>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Календарь на неделю
+// ---------------------------------------------------------------------------
+
+const CALENDAR_ICON: Record<CalendarEventKind, React.ComponentType<{ className?: string }>> = {
+  meeting: CalendarClock,
+  task: ListTodo,
+  automation: Workflow,
+  note: FileText,
+}
+
+function CalendarWidget({ edit, span }: WidgetProps) {
+  const { t } = useTranslation()
+  const fmt = useFormat()
+  const now = useNow(5 * 60_000)
+  const workspace = useActiveWorkspace()
+  const workspaceId = workspace?.id ?? null
+  const { meetings } = useLocalMeetings(workspaceId)
+  const tasks = usePersonalTasks()
+  const automations = useAutomationsData(workspaceId)
+  const notes = useNotes(workspaceId)
+  const days = useMemo(() => {
+    const first = startOfLocalDay(now)
+    const until = new Date(first)
+    until.setDate(until.getDate() + 7)
+    return buildWeekCalendar({
+      meetings,
+      tasks,
+      automationRuns: cronRunsUntil(automations.items, until.getTime()),
+      notes: notes.notes.map((n) => ({ id: n.id, title: n.title || t('notes.untitled'), createdAt: n.createdAt })),
+    }, now)
+  }, [meetings, tasks, automations.items, notes.notes, now, t])
+  const openEvent = (kind: CalendarEventKind, id: string) => {
+    if (kind === 'meeting') navigate(routes.view.meetings(id))
+    else if (kind === 'task') navigate(routes.view.tasks(id))
+    else if (kind === 'automation') navigate(routes.view.automations({ automationId: id.split('@')[0] }))
+    else navigate(routes.view.notes(id))
+  }
+  const total = days.reduce((sum, d) => sum + d.events.length, 0)
+  const wide = span >= 6
+  const perDay = span >= 12 ? 5 : 3
+  const today = startOfLocalDay(now)
+  return (
+    <WidgetFrame testId="calendar" title={t('workbench.home.w.calendar')} onOpen={() => navigate(routes.view.meetings())} edit={edit} meta={t('workbench.home.calendar.events', { count: total })}>
+      <div className="flex h-full min-h-0 flex-col">
+        {wide ? (
+          <div className="grid min-h-0 flex-1 gap-1" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }} data-home-calendar="week">
+            {days.map((day) => {
+              const isToday = day.start === today
+              const shown = day.events.slice(0, perDay)
+              return (
+                <div key={day.start} className={cn('flex min-h-0 min-w-0 flex-col rounded-[6px] px-1 py-1', isToday ? 'bg-foreground/[0.08]' : 'bg-foreground/[0.03]')} data-home-day={isToday ? 'today' : ''}>
+                  <div className="flex items-baseline gap-1 px-0.5">
+                    <span className={cn('text-[11px] uppercase tracking-wide', isToday ? 'font-bold text-foreground' : 'text-muted-foreground')}>{fmt.weekday(day.start)}</span>
+                    <span className={cn('truncate text-[12px] tabular-nums', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>{fmt.dayMonth(day.start)}</span>
+                  </div>
+                  <ul className="mt-0.5 flex min-h-0 flex-col gap-px">
+                    {shown.map((e) => {
+                      const Icon = CALENDAR_ICON[e.kind]
+                      return (
+                        <li key={`${e.kind}-${e.id}`} className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => openEvent(e.kind, e.id)}
+                            title={`${t(`workbench.home.calendar.kind.${e.kind}`)} · ${e.title}`}
+                            className="rox-home-row flex w-full min-w-0 items-center gap-1 rounded-[4px] px-0.5 text-left text-[12px] leading-4"
+                          >
+                            <Icon className={cn('h-3 w-3 shrink-0', e.overdue ? 'text-destructive' : 'text-muted-foreground')} />
+                            {e.kind !== 'task' && e.kind !== 'note' ? <span className="shrink-0 tabular-nums text-muted-foreground">{fmt.time(e.at)}</span> : null}
+                            <span className={cn('min-w-0 flex-1 truncate', e.overdue ? 'text-destructive' : 'text-foreground')}>{e.title}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                    {day.events.length > shown.length ? <li className="px-0.5 text-[11px] text-muted-foreground">{t('workbench.home.calendar.more', { count: day.events.length - shown.length })}</li> : null}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <ul className="-mx-1.5 flex min-h-0 flex-1 flex-col" data-home-calendar="list">
+            {days.map((day) => {
+              const isToday = day.start === today
+              const first = day.events[0]
+              return (
+                <li key={day.start} className="min-w-0">
+                  <button
+                    type="button"
+                    disabled={!first}
+                    onClick={() => first && openEvent(first.kind, first.id)}
+                    className="rox-home-row flex w-full min-w-0 items-center gap-2 rounded-[6px] px-1.5 py-0.5 text-left disabled:cursor-default"
+                  >
+                    <span className={cn('w-12 shrink-0 text-[12px] uppercase', isToday ? 'font-bold text-accent' : 'text-muted-foreground')}>{fmt.weekday(day.start)} {new Date(day.start).getDate()}</span>
+                    <span className={cn('min-w-0 flex-1 truncate text-[12px]', first ? 'text-foreground' : 'text-muted-foreground')}>{first ? first.title : '—'}</span>
+                    {day.events.length > 1 ? <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">+{day.events.length - 1}</span> : null}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+        <p className="mt-1 truncate text-[11px] text-muted-foreground" title={t('workbench.home.calendar.external')} data-home-calendar-note="">
+          {t('workbench.home.calendar.external')}
+        </p>
+      </div>
+    </WidgetFrame>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -976,5 +1373,9 @@ export const HOME_WIDGETS: Record<HomeWidgetId, HomeWidgetDef> = {
   notes: { id: 'notes', titleKey: 'workbench.home.w.notes', descriptionKey: 'workbench.home.d.notes', icon: NotebookPen, Component: NotesWidget },
   decisions: { id: 'decisions', titleKey: 'workbench.home.w.decisions', descriptionKey: 'workbench.home.d.decisions', icon: Gavel, Component: DecisionsWidget },
   radar: { id: 'radar', titleKey: 'workbench.home.w.radar', descriptionKey: 'workbench.home.d.radar', icon: RadarIcon, Component: RadarWidget },
+  taskTracker: { id: 'taskTracker', titleKey: 'workbench.home.w.taskTracker', descriptionKey: 'workbench.home.d.taskTracker', icon: ListChecks, Component: TaskTrackerWidget },
+  inboxTracker: { id: 'inboxTracker', titleKey: 'workbench.home.w.inboxTracker', descriptionKey: 'workbench.home.d.inboxTracker', icon: BellDot, Component: InboxTrackerWidget },
+  calls: { id: 'calls', titleKey: 'workbench.home.w.calls', descriptionKey: 'workbench.home.d.calls', icon: Phone, Component: CallsWidget },
+  calendar: { id: 'calendar', titleKey: 'workbench.home.w.calendar', descriptionKey: 'workbench.home.d.calendar', icon: CalendarDays, Component: CalendarWidget },
 }
 

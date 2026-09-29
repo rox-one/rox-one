@@ -25,6 +25,10 @@ export const HOME_WIDGET_IDS = [
   'notes',
   'decisions',
   'radar',
+  'taskTracker',
+  'inboxTracker',
+  'calls',
+  'calendar',
 ] as const
 
 export type HomeWidgetId = (typeof HOME_WIDGET_IDS)[number]
@@ -37,9 +41,18 @@ export interface HomeWidgetPlacement {
 }
 
 export interface HomeDashboardLayout {
-  version: 1
+  version: 2
   widgets: HomeWidgetPlacement[]
 }
+
+/** Picker groups (order = picker order). */
+export const HOME_WIDGET_GROUPS: readonly { id: string; widgets: readonly HomeWidgetId[] }[] = [
+  { id: 'overview', widgets: ['summary', 'quickActions', 'calendar', 'focus'] },
+  { id: 'work', widgets: ['taskTracker', 'tasks', 'inboxTracker', 'inbox', 'decisions', 'notes'] },
+  { id: 'meetings', widgets: ['meetings', 'calls'] },
+  { id: 'agents', widgets: ['recentSessions', 'agents', 'automations', 'feed', 'radar'] },
+  { id: 'spend', widgets: ['usage', 'models', 'balance'] },
+]
 
 export const HOME_LAYOUT_NS = 'home-dashboard'
 
@@ -61,32 +74,45 @@ export const HOME_WIDGET_DEFAULT_SIZE: Record<HomeWidgetId, HomeWidgetSize> = {
   notes: 'S',
   decisions: 'S',
   radar: 'S',
+  taskTracker: 'M',
+  inboxTracker: 'S',
+  calls: 'S',
+  calendar: 'L',
 }
 
 /**
- * Default: three even rows of 12 columns at desktop widths. Радар stays in the
- * picker — it needs topics set up on its own screen first.
+ * Default: even 12-column rows at desktop widths (S=3, M=6, L=12). Радар stays
+ * in the picker — it needs topics set up on its own screen first.
  */
 export const DEFAULT_HOME_LAYOUT: HomeDashboardLayout = {
-  version: 1,
+  version: 2,
   widgets: [
     { id: 'summary', size: 'M' },
     { id: 'quickActions', size: 'M' },
-    { id: 'recentSessions', size: 'M' },
+    { id: 'calendar', size: 'L' },
+    { id: 'taskTracker', size: 'M' },
+    { id: 'inboxTracker', size: 'S' },
     { id: 'agents', size: 'S' },
-    { id: 'inbox', size: 'S' },
+    { id: 'recentSessions', size: 'M' },
+    { id: 'meetings', size: 'S' },
+    { id: 'calls', size: 'S' },
     { id: 'usage', size: 'M' },
     { id: 'models', size: 'S' },
     { id: 'balance', size: 'S' },
-    { id: 'tasks', size: 'S' },
-    { id: 'meetings', size: 'S' },
-    { id: 'focus', size: 'S' },
     { id: 'automations', size: 'S' },
+    { id: 'tasks', size: 'S' },
+    { id: 'inbox', size: 'S' },
+    { id: 'focus', size: 'S' },
     { id: 'feed', size: 'M' },
     { id: 'notes', size: 'S' },
     { id: 'decisions', size: 'S' },
   ],
 }
+
+/** The v1 default (first release of the dashboard) — used to upgrade untouched layouts. */
+const V1_DEFAULT_IDS = 'summary,quickActions,recentSessions,agents,inbox,usage,models,balance,tasks,meetings,focus,automations,feed,notes,decisions'
+/** Widgets introduced in v2; appended to customised v1 layouts. */
+const V2_NEW_WIDGETS: readonly HomeWidgetId[] = ['calendar', 'taskTracker', 'inboxTracker', 'calls']
 
 export function isHomeWidgetId(value: unknown): value is HomeWidgetId {
   return typeof value === 'string' && (HOME_WIDGET_IDS as readonly string[]).includes(value)
@@ -97,7 +123,7 @@ function isSize(value: unknown): value is HomeWidgetSize {
 }
 
 export function cloneLayout(layout: HomeDashboardLayout): HomeDashboardLayout {
-  return { version: 1, widgets: layout.widgets.map((w) => ({ ...w })) }
+  return { version: 2, widgets: layout.widgets.map((w) => ({ ...w })) }
 }
 
 /** Corrupt/unknown payload → default; unknown ids and duplicates are dropped. */
@@ -114,8 +140,16 @@ export function normalizeHomeLayout(raw: unknown): HomeDashboardLayout {
     seen.add(id)
     widgets.push({ id, size: isSize(size) ? size : HOME_WIDGET_DEFAULT_SIZE[id] })
   }
+  // v1 → v2: an untouched v1 default becomes the richer v2 default; a
+  // customised v1 layout keeps the user's arrangement and gains the new widgets.
+  if ((raw as { version?: unknown }).version !== 2) {
+    if (widgets.map((w) => w.id).join(',') === V1_DEFAULT_IDS) return cloneLayout(DEFAULT_HOME_LAYOUT)
+    for (const id of V2_NEW_WIDGETS) {
+      if (!seen.has(id)) widgets.push({ id, size: HOME_WIDGET_DEFAULT_SIZE[id] })
+    }
+  }
   // An explicitly emptied dashboard stays empty (the user removed everything).
-  return { version: 1, widgets }
+  return { version: 2, widgets }
 }
 
 export function availableWidgets(layout: HomeDashboardLayout): HomeWidgetId[] {
@@ -125,16 +159,16 @@ export function availableWidgets(layout: HomeDashboardLayout): HomeWidgetId[] {
 
 export function addWidget(layout: HomeDashboardLayout, id: HomeWidgetId, size?: HomeWidgetSize): HomeDashboardLayout {
   if (layout.widgets.some((w) => w.id === id)) return layout
-  return { version: 1, widgets: [...layout.widgets, { id, size: size ?? HOME_WIDGET_DEFAULT_SIZE[id] }] }
+  return { version: 2, widgets: [...layout.widgets, { id, size: size ?? HOME_WIDGET_DEFAULT_SIZE[id] }] }
 }
 
 export function removeWidget(layout: HomeDashboardLayout, id: HomeWidgetId): HomeDashboardLayout {
   if (!layout.widgets.some((w) => w.id === id)) return layout
-  return { version: 1, widgets: layout.widgets.filter((w) => w.id !== id) }
+  return { version: 2, widgets: layout.widgets.filter((w) => w.id !== id) }
 }
 
 export function resizeWidget(layout: HomeDashboardLayout, id: HomeWidgetId, size: HomeWidgetSize): HomeDashboardLayout {
-  return { version: 1, widgets: layout.widgets.map((w) => (w.id === id ? { ...w, size } : w)) }
+  return { version: 2, widgets: layout.widgets.map((w) => (w.id === id ? { ...w, size } : w)) }
 }
 
 /** Move `activeId` to the position of `overId` (drag-and-drop reorder). */
@@ -145,7 +179,7 @@ export function moveWidget(layout: HomeDashboardLayout, activeId: HomeWidgetId, 
   const widgets = layout.widgets.slice()
   const [moved] = widgets.splice(from, 1)
   widgets.splice(to, 0, moved!)
-  return { version: 1, widgets }
+  return { version: 2, widgets }
 }
 
 /** Keyboard reorder: shift by ±1 inside bounds. */
