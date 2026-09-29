@@ -151,9 +151,9 @@ export function useAutomations(
   const handleDuplicateAutomation = useCallback((automationId: string) => {
     const automation = findAutomation(automationId)
     if (!automation || !activeWorkspaceId) return
-    window.electronAPI.duplicateAutomation(activeWorkspaceId, automation.event, automation.matcherIndex)
+    window.electronAPI.duplicateAutomation(activeWorkspaceId, automation.event, automation.matcherIndex, t('automations.copyName', { name: automation.name }))
       .catch(() => toast.error(t('toast.failedToDuplicateAutomation')))
-  }, [findAutomation, activeWorkspaceId])
+  }, [findAutomation, activeWorkspaceId, t])
 
   // Delete: show confirmation dialog
   const handleDeleteAutomation = useCallback((automationId: string) => {

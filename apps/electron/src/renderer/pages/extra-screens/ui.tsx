@@ -16,7 +16,7 @@ export function ScreenRoot({ children, className }: { children: React.ReactNode;
 }
 
 /** Left list column (tone step 1). */
-export function ScreenColumn({ children, className, width = 360 }: { children: React.ReactNode; className?: string; width?: number }) {
+export function ScreenColumn({ children, className, width = 360 }: { children: React.ReactNode; className?: string; width?: number | string }) {
   return (
     <section
       className={cn('flex h-full min-h-0 shrink-0 flex-col bg-foreground/[0.03]', className)}

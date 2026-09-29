@@ -129,6 +129,7 @@
   "automations.condTime": "Idő",
   "automations.condValuePlaceholder": "érték",
   "automations.connectorsOptional": "Az Apple Reminders, Mail.ru, Yandex, Outlook és Google opcionális.",
+  "automations.copyName": "{{name}} (másolat)",
   "automations.copyPayload": "Tartalom másolása",
   "automations.createFailed": "Nem sikerült létrehozni az automatizálást",
   "automations.cronAdvanced": "Haladó",

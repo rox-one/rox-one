@@ -129,6 +129,7 @@
   "automations.condTime": "時間",
   "automations.condValuePlaceholder": "值",
   "automations.connectorsOptional": "Apple Reminders、Mail.ru、Yandex、Outlook 與 Google 皆為選用。",
+  "automations.copyName": "{{name}}（副本）",
   "automations.copyPayload": "複製載荷",
   "automations.createFailed": "無法建立自動化",
   "automations.cronAdvanced": "進階",

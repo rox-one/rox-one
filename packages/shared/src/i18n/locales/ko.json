@@ -129,6 +129,7 @@
   "automations.condTime": "시간",
   "automations.condValuePlaceholder": "값",
   "automations.connectorsOptional": "Apple Reminders, Mail.ru, Yandex, Outlook, Google는 선택 사항입니다.",
+  "automations.copyName": "{{name}} (사본)",
   "automations.copyPayload": "페이로드 복사",
   "automations.createFailed": "자동화를 만들 수 없습니다",
   "automations.cronAdvanced": "고급",
