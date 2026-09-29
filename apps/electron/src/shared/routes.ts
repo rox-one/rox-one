@@ -171,6 +171,9 @@ export const routes = {
     tasks: (taskId?: string) =>
       taskId ? `tasks/task/${encodeURIComponent(taskId)}` as const : 'tasks' as const,
 
+    /** Mode screen `inbox` — `inbox[/item/{itemId}]` */
+    inbox: (itemId?: string) =>
+      itemId ? `inbox/item/${encodeURIComponent(itemId)}` as const : 'inbox' as const,
     meetings: (meetingId?: string) =>
       meetingId ? `meetings/meeting/${encodeURIComponent(meetingId)}` as const : 'meetings' as const,
 

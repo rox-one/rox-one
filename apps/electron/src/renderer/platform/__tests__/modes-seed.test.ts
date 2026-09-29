@@ -4,13 +4,13 @@ import { CORE_MODES, modeForSlot, resolveSeededModes } from '../modes-seed'
 import { __resetModeRegistryForTests, getModeRegistry } from '../mode-registry-bootstrap'
 
 describe('CORE_MODES seed', () => {
-  it('pins home, chat, meetings, tasks and notes as the live modes', () => {
+  it('pins home, chat, meetings, tasks, notes and inbox as the live modes', () => {
     const contributions = CORE_MODES.map((mode) => mode.contribution)
     const live = CORE_MODES.filter((mode) => isModeNavigable(mode.contribution))
     const { pinned, overflow } = listPinnedModes(contributions)
-    expect(live.map((mode) => mode.contribution.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes'])
-    expect(pinned.map((mode) => mode.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes'])
-    expect(overflow.map((mode) => mode.id)).toEqual(['feed', 'inbox'])
+    expect(live.map((mode) => mode.contribution.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes', 'inbox'])
+    expect(pinned.map((mode) => mode.id)).toEqual(['home', 'chat', 'meetings', 'tasks', 'notes', 'inbox'])
+    expect(overflow.map((mode) => mode.id)).toEqual(['feed'])
     expect(CORE_MODES.map((mode) => mode.contribution.id)).toEqual([
       'home',
       'chat',
@@ -48,6 +48,15 @@ describe('mode-screen flags (workbench.mode.<id>.v1)', () => {
     const off = resolveSeededModes(contributions, { meetings: false })
     expect(on.find((mode) => mode.id === 'meetings')?.rootRoute).toBe('meetings')
     expect(off.find((mode) => mode.id === 'meetings')?.rootRoute).toBeNull()
+  })
+
+  it('keeps Входящие navigable while its flag is on and disables it when off', () => {
+    const on = resolveSeededModes(contributions, { inbox: true })
+    const off = resolveSeededModes(contributions, { inbox: false })
+    expect(on.find((mode) => mode.id === 'inbox')?.rootRoute).toBe('inbox')
+    expect(off.find((mode) => mode.id === 'inbox')?.rootRoute).toBeNull()
+    const seeded = CORE_MODES.find((mode) => mode.contribution.id === 'inbox')
+    expect(seeded?.isActive({ navigator: 'inbox', details: null })).toBe(true)
   })
 
   it('maps ⌥⌘1…7 to the pill order', () => {

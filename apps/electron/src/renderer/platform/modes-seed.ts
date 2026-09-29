@@ -12,6 +12,7 @@ import {
   isHomeNavigation,
   isKnowledgeNavigation,
   isMeetingsNavigation,
+  isInboxNavigation,
   isNotesNavigation,
   isSessionsNavigation,
   isTasksNavigation,
@@ -113,13 +114,14 @@ export const CORE_MODES: readonly SeededMode[] = [
       id: 'inbox',
       titleKey: 'workbench.mode.inbox',
       icon: 'Inbox',
-      rootRoute: null,
+      rootRoute: routes.view.inbox(),
       order: 70,
       defaultPinned: true,
       layoutProfileId: 'agent',
-      requiredCapabilities: ['notifications.in-app.v1'],
+      // Capability 'notifications.in-app.v1' is the workbench.mode.inbox.v1 flag.
     },
-    isActive: () => false,
+    isActive: isInboxNavigation,
+    flag: 'inbox',
   },
 ]
 
