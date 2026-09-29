@@ -6,13 +6,24 @@ import {
   type SessionSceneGraph,
 } from '@craft-agent/core/mindmap'
 import { deriveSessionNodeKind, type SessionNodeKind } from './node-kinds'
+import { DEFAULT_SCENE_SIZE, type NodeSize } from './map-node-size'
 
-export type SceneNodeData = { scene: SessionScene; kind: SessionNodeKind; kindLabel?: string }
+export type SceneNodeData = {
+  scene: SessionScene
+  kind: SessionNodeKind
+  kindLabel?: string
+  /** Persist a NodeResizer result (position may shift when resizing from the left/top). */
+  onResize?: (id: string, box: { x: number; y: number } & NodeSize) => void
+}
 
 export type FlowSceneNode = {
   id: string
   type: 'scene'
   position: { x: number; y: number }
+  /** Default width, or the user-resized width from the pin. */
+  width: number
+  /** Only set after the user resized the node; otherwise content height. */
+  height?: number
   data: SceneNodeData
 }
 
@@ -28,7 +39,7 @@ export function autoScenePosition(
   lane: number,
   camera: SessionMapCamera,
 ): { x: number; y: number } {
-  const xStep = camera === 'flow' ? 280 : 200
+  const xStep = camera === 'flow' ? 300 : 250
   const yStep = camera === 'flow' ? 140 : 108
   return { x: 24 + depth * xStep, y: 24 + lane * yStep }
 }
@@ -75,7 +86,9 @@ export function toFlowElements(
     nodes.push({
       id: scene.id,
       type: 'scene',
-      position: pinned ?? autoScenePosition(d, row, camera),
+      position: pinned ? { x: pinned.x, y: pinned.y } : autoScenePosition(d, row, camera),
+      width: pinned?.width ?? DEFAULT_SCENE_SIZE.width,
+      ...(pinned?.height ? { height: pinned.height } : {}),
       data: { scene, kind: deriveSessionNodeKind(scene) },
     })
   }

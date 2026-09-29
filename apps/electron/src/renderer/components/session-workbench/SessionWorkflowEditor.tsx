@@ -6,15 +6,18 @@ import {
   ReactFlowProvider,
   MiniMap,
   Background,
+  ConnectionMode,
   Handle,
+  NodeResizer,
   Position,
   applyNodeChanges,
+  getBezierPath,
   type Connection,
+  type ConnectionLineComponentProps,
   type Edge,
   type Node,
   type NodeChange,
   type NodeProps,
-  type OnConnectEnd,
   type ReactFlowInstance,
   type Viewport,
 } from '@xyflow/react'
@@ -27,22 +30,15 @@ import {
   Flag,
   GitBranch,
   GitMerge,
+  Plus,
   Split,
   Square,
+  StickyNote,
   Trash2,
   UserRound,
+  X,
   type LucideIcon,
 } from 'lucide-react'
-import {
-  ContextMenu,
-  ContextMenuTrigger,
-  StyledContextMenuContent,
-  StyledContextMenuItem,
-  StyledContextMenuSeparator,
-  StyledContextMenuSub,
-  StyledContextMenuSubContent,
-  StyledContextMenuSubTrigger,
-} from '@/components/ui/styled-context-menu'
 import {
   parseSessionMapPin,
   projectSessionScenes,
@@ -61,6 +57,9 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
@@ -71,7 +70,6 @@ import { holesFromScene } from './holes-from-scene'
 import { isSessionMapEmpty } from './map-empty-actions'
 import { mapToolbarDensity, mapToolbarLayout } from './map-toolbar-density'
 import {
-  canPersistDraftEdge,
   createSessionDraftEdge,
   createSessionDraftNode,
   parseSessionDraftGraph,
@@ -91,6 +89,22 @@ import {
   type DistributeMode,
 } from './canvas-layout'
 import { sceneVisualStatus } from './SceneNode'
+import {
+  classifyMapConnection,
+  connectionRejectMessageKey,
+  contextNotesForScene,
+  draftEdgeKind,
+  withContextNotes,
+} from './map-connection-rules'
+import {
+  defaultDraftSize,
+  draftNodesWithSize,
+  MIN_DRAFT_SIZE,
+  nodeBox,
+  pinWithSceneSize,
+  type NodeSize,
+} from './map-node-size'
+import { shortSceneTitle } from './scene-tools'
 import { draftGraphToSpec, loadWorkflowDocument, persistWorkflowDocument, specToDraftGraph } from './workflow-document'
 import {
   compareVersions,
@@ -184,8 +198,11 @@ type DraftNodeData = {
   placeholder: string
   deleteAriaLabel: string
   runStatus?: string
+  /** Short title of the scene this note is anchored to (never the raw scn_ id). */
+  anchorLabel?: string | null
   onChangeTitle: (id: string, title: string) => void
   onDelete: (id: string) => void
+  onResize: (id: string, box: { x: number; y: number } & NodeSize) => void
 }
 
 const DRAFT_NODE_ICONS: Record<SessionNodeKind, LucideIcon> = PALETTE_ICONS
@@ -204,12 +221,12 @@ function notifyWorkflowRun(run: WorkflowRun, t: (key: string) => string) {
 
 function draftRunStatusClassName(status: string): string {
   if (status === 'waiting_approval') {
-    return 'border-amber-400/40 bg-amber-400/10 text-amber-100'
+    return 'bg-amber-400/15 text-amber-200'
   }
   if (status === 'done') {
-    return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100'
+    return 'bg-emerald-400/15 text-emerald-200'
   }
-  return 'border-white/15 bg-white/5 text-muted-foreground'
+  return 'bg-foreground/[0.06] text-muted-foreground'
 }
 
 function draftRunStatusLabel(status: string, t: (key: string) => string): string {
@@ -218,7 +235,7 @@ function draftRunStatusLabel(status: string, t: (key: string) => string): string
   return status
 }
 
-function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) {
+function DraftNode({ id, data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) {
   const { t } = useTranslation()
   const Icon = DRAFT_NODE_ICONS[data.draft.kind]
   const role = data.draft.role ?? 'node'
@@ -226,40 +243,37 @@ function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) 
     <div
       data-role={role}
       className={cn(
-        'group relative min-w-0 overflow-hidden border p-2 text-left shadow-strong backdrop-blur-xl',
-        role === 'sticky' && 'w-[180px] rounded-md border-amber-400/40 bg-amber-300/20',
-        role === 'frame' && 'w-[280px] rounded-md border-dashed border-foreground/35 bg-transparent',
-        role === 'group' && 'w-[260px] rounded-md border-dashed border-violet-400/35 bg-foreground/[0.04]',
-        role === 'node' && 'w-[224px] rounded-lg border-border/70 bg-background/80',
-        selected && 'border-violet-400/70 ring-1 ring-violet-400/30',
+        // Flat surfaces, no nested outlines; selection is one accent ring.
+        'group relative flex h-full w-full min-w-0 flex-col overflow-hidden rounded-lg p-2 text-left',
+        role === 'sticky' && 'bg-amber-300/20',
+        role === 'frame' && 'bg-foreground/[0.02] outline-dashed outline-1 outline-foreground/25',
+        role === 'group' && 'bg-violet-400/[0.06]',
+        role === 'node' && 'bg-foreground/[0.05]',
+        selected && 'ring-2 ring-accent',
       )}
     >
-      <Handle type="target" position={Position.Left} className="!h-2.5 !w-2.5 !border-border !bg-background/90" />
-      <div className="mb-2 flex items-center gap-2">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-muted-foreground">
-          <Icon className="h-3.5 w-3.5" />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      <NodeResizer
+        isVisible={Boolean(selected)}
+        minWidth={MIN_DRAFT_SIZE.width}
+        minHeight={MIN_DRAFT_SIZE.height}
+        lineClassName="!border-accent/60"
+        handleClassName="!h-2 !w-2 !rounded-sm !border-0 !bg-accent"
+        onResizeEnd={(_event, box) => data.onResize(id, box)}
+      />
+      <Handle type="target" position={Position.Left} className="rox-map-handle !h-2.5 !w-2.5 !border-0 !bg-foreground/40" />
+      <div className="mb-1.5 flex min-w-0 items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 flex-1 truncate text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
           {data.kindLabel}
         </span>
-        {data.draft.anchorSceneId ? (
-          <span className="shrink-0 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
-            {data.draft.anchorSceneId}
-          </span>
-        ) : null}
         {data.runStatus ? (
-          <span
-            className={cn(
-              'shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[9px]',
-              draftRunStatusClassName(data.runStatus),
-            )}
-          >
+          <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 text-[10px]', draftRunStatusClassName(data.runStatus))}>
             {draftRunStatusLabel(data.runStatus, t)}
           </span>
         ) : null}
         <button
           type="button"
-          className="nodrag flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-70 hover:bg-foreground/10 hover:text-foreground hover:opacity-100 focus-visible:bg-foreground/10 focus-visible:text-foreground focus-visible:opacity-100"
+          className="nodrag flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-0 hover:bg-foreground/10 hover:text-foreground group-hover:opacity-70 focus-visible:opacity-100"
           aria-label={data.deleteAriaLabel}
           onClick={(event) => {
             event.stopPropagation()
@@ -269,16 +283,72 @@ function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) 
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
+      {data.anchorLabel ? (
+        <div className="mb-1 min-w-0 truncate text-[10px] text-muted-foreground/80" title={data.anchorLabel}>
+          ↳ {data.anchorLabel}
+        </div>
+      ) : null}
       <textarea
-        className="nodrag nowheel min-h-[64px] w-full resize-none rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-xs leading-4 outline-none placeholder:text-muted-foreground/50 focus:border-violet-400/60"
+        className="nodrag nowheel min-h-[48px] w-full flex-1 resize-none rounded-md bg-transparent px-1 py-1 text-xs leading-4 outline-none placeholder:text-muted-foreground/50 focus:bg-foreground/[0.04]"
         value={data.draft.title}
         placeholder={data.placeholder}
         onChange={(event) => data.onChangeTitle(data.draft.id, event.target.value)}
       />
-      <Handle type="source" position={Position.Right} className="!h-2.5 !w-2.5 !border-border !bg-background/90" />
+      <Handle type="source" position={Position.Right} className="rox-map-handle !h-2.5 !w-2.5 !border-0 !bg-foreground/40" />
     </div>
   )
 }
+
+/** Connection preview: accent when the drop target is valid, red when not. */
+function MapConnectionLine({ fromX, fromY, toX, toY, fromPosition, toPosition, connectionStatus }: ConnectionLineComponentProps) {
+  const [path] = getBezierPath({
+    sourceX: fromX,
+    sourceY: fromY,
+    sourcePosition: fromPosition,
+    targetX: toX,
+    targetY: toY,
+    targetPosition: toPosition,
+  })
+  const stroke =
+    connectionStatus === 'valid'
+      ? 'rgb(52 211 153)'
+      : connectionStatus === 'invalid'
+        ? 'rgb(251 113 133)'
+        : 'rgb(148 163 184)'
+  return (
+    <g data-connection-status={connectionStatus ?? 'none'}>
+      <path d={path} fill="none" stroke={stroke} strokeWidth={1.8} strokeDasharray="5 4" />
+      <circle cx={toX} cy={toY} r={3} fill={stroke} />
+    </g>
+  )
+}
+
+/** Primary node types offered by the canvas «+» picker and double-click. */
+type MapPickerItem =
+  | { id: string; kind: SessionNodeKind; chrome?: undefined; labelKey: string; icon: LucideIcon }
+  | { id: string; chrome: 'sticky' | 'frame' | 'group'; kind?: undefined; labelKey: string; icon: LucideIcon }
+
+const MAP_PICKER_PRIMARY: MapPickerItem[] = [
+  { id: 'note', kind: 'note', labelKey: 'entityView.mapKindNote', icon: FileText },
+  { id: 'sticky', chrome: 'sticky', labelKey: 'entityView.mapSticky', icon: StickyNote },
+  { id: 'model', kind: 'model', labelKey: 'entityView.mapKindModel', icon: Cpu },
+  { id: 'tool', kind: 'tool', labelKey: 'entityView.mapKindTool', icon: DatabaseZap },
+  { id: 'condition', kind: 'condition', labelKey: 'entityView.mapKindCondition', icon: Split },
+  { id: 'output', kind: 'output', labelKey: 'entityView.mapKindOutput', icon: Flag },
+  { id: 'frame', chrome: 'frame', labelKey: 'entityView.mapFrame', icon: Square },
+]
+
+const MAP_PICKER_MORE: MapPickerItem[] = [
+  { id: 'memory', kind: 'memory', labelKey: 'entityView.mapKindMemory', icon: Brain },
+  { id: 'subflow', kind: 'subflow', labelKey: 'entityView.mapKindSubflow', icon: GitBranch },
+  { id: 'merge', kind: 'merge', labelKey: 'entityView.mapKindMerge', icon: GitMerge },
+  { id: 'human_input', kind: 'human_input', labelKey: 'entityView.mapKindHumanInput', icon: UserRound },
+  { id: 'group', chrome: 'group', labelKey: 'entityView.mapGroup', icon: Square },
+]
+
+type NodeMenuState =
+  | { x: number; y: number; target: 'scene' | 'draft'; id: string }
+  | { x: number; y: number; target: 'edge'; id: string }
 
 const nodeTypes = { scene: SceneNode, branch: BranchNode, draft: DraftNode }
 
@@ -332,6 +402,12 @@ function EditorInner({
   const [contextTargetId, setContextTargetId] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState('')
   const [fanOutOpen, setFanOutOpen] = React.useState(false)
+  /** Canvas node-type picker («+» button or double-click on empty canvas). */
+  const [picker, setPicker] = React.useState<{ left: number; top: number } | null>(null)
+  const [pickerMore, setPickerMore] = React.useState(false)
+  /** Node-only context menu (never on the empty canvas). */
+  const [nodeMenu, setNodeMenu] = React.useState<NodeMenuState | null>(null)
+  const canvasRef = React.useRef<HTMLDivElement>(null)
   const viewportRef = React.useRef<Viewport | undefined>(loadPin(sessionId)?.viewport)
   const persistTimer = React.useRef<number | undefined>(undefined)
   const flowRef = React.useRef<ReactFlowInstance | null>(null)
@@ -367,6 +443,8 @@ function EditorInner({
     setSelectedId(null)
     setSelectedDraftEdgeId(null)
     setContextTargetId(null)
+    setPicker(null)
+    setNodeMenu(null)
   }, [sessionId])
 
   React.useEffect(() => {
@@ -473,6 +551,17 @@ function EditorInner({
     [draftEdges, draftNodes, persistDraftGraph, selectedDraftEdgeId],
   )
 
+  const resizeScene = React.useCallback(
+    (id: string, box: { x: number; y: number } & NodeSize) => {
+      persistPin(
+        pinWithSceneSize(pin, { sessionId, camera, viewport: viewportRef.current }, id, box),
+      )
+    },
+    // persistPin is declared below; it is stable for a given session.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [camera, pin, sessionId],
+  )
+
   const labeledProjected = React.useMemo(
     () =>
       projected.map((node) => {
@@ -483,30 +572,48 @@ function EditorInner({
           data: {
             ...data,
             kindLabel: t('entityView.mapKindInferred', { kind: t(SESSION_NODE_KIND_I18N[data.kind]) }),
+            onResize: resizeScene,
           },
         }
       }),
-    [projected, t],
+    [projected, resizeScene, t],
+  )
+
+  const resizeDraft = React.useCallback(
+    (id: string, box: { x: number; y: number } & NodeSize) => {
+      persistDraftGraph({ nodes: draftNodesWithSize(draftNodes, id, box), edges: draftEdges })
+    },
+    [draftEdges, draftNodes, persistDraftGraph],
   )
 
   const lastRun = workflowDoc.runs[workflowDoc.runs.length - 1] as WorkflowRun | undefined
   const draftFlowNodes = React.useMemo<Node<DraftNodeData, 'draft'>[]>(
     () =>
-      draftNodes.map((draftNode) => ({
-        id: draftNode.id,
-        type: 'draft',
-        position: draftNode.position,
-        data: {
-          draft: draftNode,
-          kindLabel: t(SESSION_NODE_KIND_I18N[draftNode.kind]),
-          placeholder: t(SESSION_DRAFT_PROMPT_I18N[draftNode.kind]),
-          deleteAriaLabel: t('entityView.mapDeleteDraftNode'),
-          runStatus: lastRun?.status[draftNode.id],
-          onChangeTitle: updateDraftTitle,
-          onDelete: deleteDraftNode,
-        },
-      })),
-    [deleteDraftNode, draftNodes, lastRun, t, updateDraftTitle],
+      draftNodes.map((draftNode) => {
+        const size = draftNode.size ?? defaultDraftSize(draftNode.role)
+        const anchor = draftNode.anchorSceneId
+          ? graph.scenes.find((scene) => scene.id === draftNode.anchorSceneId)
+          : undefined
+        return {
+          id: draftNode.id,
+          type: 'draft' as const,
+          position: draftNode.position,
+          width: size.width,
+          ...(draftNode.size ? { height: draftNode.size.height } : {}),
+          data: {
+            draft: draftNode,
+            kindLabel: t(SESSION_NODE_KIND_I18N[draftNode.kind]),
+            placeholder: t(SESSION_DRAFT_PROMPT_I18N[draftNode.kind]),
+            deleteAriaLabel: t('entityView.mapDeleteDraftNode'),
+            runStatus: lastRun?.status[draftNode.id],
+            anchorLabel: shortSceneTitle(anchor),
+            onChangeTitle: updateDraftTitle,
+            onDelete: deleteDraftNode,
+            onResize: resizeDraft,
+          },
+        }
+      }),
+    [deleteDraftNode, draftNodes, graph.scenes, lastRun, resizeDraft, t, updateDraftTitle],
   )
 
   const flowSeedNodes = React.useMemo(
@@ -518,7 +625,7 @@ function EditorInner({
   const projectedKey = React.useMemo(
     () =>
       flowSeedNodes
-        .map((n) => `${n.id}:${n.position.x}:${n.position.y}:${isDraftFlowNode(n) ? n.data.draft.title : ''}`)
+        .map((n) => `${n.id}:${n.position.x}:${n.position.y}:${n.width ?? ''}x${n.height ?? ''}:${isDraftFlowNode(n) ? n.data.draft.title : ''}`)
         .join('|') +
       ':' +
       camera +
@@ -560,17 +667,29 @@ function EditorInner({
             ? { stroke: 'rgb(167 139 250)', strokeWidth: 2 }
             : { stroke: 'hsl(var(--border))', strokeWidth: 1.2 },
       }))
-      const draftFlowEdges: Edge[] = draftEdges.map((edge) => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        data: { kind: 'draft' },
-        selected: edge.id === selectedDraftEdgeId,
-        style: { stroke: 'rgb(96 165 250)', strokeWidth: 1.8, strokeDasharray: '5 4' },
-      }))
+      const draftFlowEdges: Edge[] = draftEdges.map((edge) => {
+        const kind = draftEdgeKind(edge)
+        return {
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          data: { kind: kind === 'context' ? 'context' : 'draft' },
+          selected: edge.id === selectedDraftEdgeId,
+          // Every user-drawn edge says what it means: workflow step or context link.
+          label: kind === 'context' ? t('entityView.mapEdgeContext') : t('entityView.mapEdgeStep'),
+          labelStyle: { fontSize: 10, fill: 'var(--muted-foreground)' },
+          labelBgStyle: { fill: 'var(--background)', fillOpacity: 0.9 },
+          labelBgPadding: [4, 2] as [number, number],
+          labelBgBorderRadius: 4,
+          style:
+            kind === 'context'
+              ? { stroke: 'rgb(251 191 36)', strokeWidth: 1.4, strokeDasharray: '2 4' }
+              : { stroke: 'rgb(96 165 250)', strokeWidth: 1.8, strokeDasharray: '5 4' },
+        }
+      })
       return [...sceneEdges, ...draftFlowEdges]
     },
-    [draftEdges, projectedEdges, selectedDraftEdgeId],
+    [draftEdges, projectedEdges, selectedDraftEdgeId, t],
   )
 
   const persistPin = React.useCallback(
@@ -603,31 +722,31 @@ function EditorInner({
     setNodes((prev) => applyNodeChanges(changes, prev))
   }, [])
 
-  const onConnect = React.useCallback(
-    (connection: Connection) => {
-      if (!connection.source || !connection.target || connection.source === connection.target) return
-      const knownDraftIds = new Set(draftNodes.map((node) => node.id))
-      const isDraftOnly = knownDraftIds.has(connection.source) && knownDraftIds.has(connection.target)
-      if (!isDraftOnly) {
-        toast.message(t('entityView.workbenchForkHint'))
-        return
-      }
-      const next = createSessionDraftEdge({ source: connection.source, target: connection.target })
-      if (!canPersistDraftEdge(next, draftNodes, draftEdges)) return
-      persistDraftGraph({ nodes: draftNodes, edges: [...draftEdges, next] })
-    },
-    [draftEdges, draftNodes, persistDraftGraph, t],
+  const sceneIds = React.useMemo(() => new Set(graph.scenes.map((scene) => scene.id)), [graph.scenes])
+
+  const verdictFor = React.useCallback(
+    (connection: { source?: string | null; target?: string | null }) =>
+      classifyMapConnection(connection, { draftNodes, draftEdges, sceneIds }),
+    [draftEdges, draftNodes, sceneIds],
   )
 
-  const onConnectEnd = React.useCallback<OnConnectEnd>(
-    (_event, state) => {
-      if (state.toNode) return
-      if (!state.fromNode) return
-      if (isDraftFlowNode(state.fromNode as Node | undefined)) return
-      const from = sceneOf(state.fromNode as Node | undefined)
-      if (from) onFork?.(from.triggerMessageId)
+  // Hover feedback while dragging a connection (valid → green line, invalid → red).
+  const isValidConnection = React.useCallback(
+    (connection: Edge | Connection) => verdictFor(connection).ok,
+    [verdictFor],
+  )
+
+  const onConnect = React.useCallback(
+    (connection: Connection) => {
+      const verdict = verdictFor(connection)
+      if (!verdict.ok) {
+        toast.message(t(connectionRejectMessageKey(verdict.reason)))
+        return
+      }
+      const next = createSessionDraftEdge({ source: verdict.source, target: verdict.target, kind: verdict.kind })
+      persistDraftGraph({ nodes: draftNodes, edges: [...draftEdges, next] })
     },
-    [onFork],
+    [draftEdges, draftNodes, persistDraftGraph, t, verdictFor],
   )
 
   const rememberContextPosition = React.useCallback((event: MouseEvent | React.MouseEvent) => {
@@ -637,13 +756,6 @@ function EditorInner({
       hasContextPositionRef.current = true
     }
   }, [])
-
-  const rememberTriggerPosition = React.useCallback(
-    (event: React.MouseEvent) => {
-      rememberContextPosition(event)
-    },
-    [rememberContextPosition],
-  )
 
   const anchorScene = React.useMemo(() => {
     if (contextTargetId) {
@@ -701,26 +813,20 @@ function EditorInner({
     [anchorScene?.id, draftEdges, draftNodes, persistDraftGraph, t],
   )
 
+  const boxOf = React.useCallback(
+    (node: Node) =>
+      nodeBox(node, isDraftFlowNode(node) ? defaultDraftSize(node.data.draft.role) : undefined),
+    [],
+  )
+
   const applyCanvasLayout = React.useCallback(
     (mode: AlignMode | DistributeMode | 'tile') => {
       const selectedBoxes = nodes
         .filter((node) => node.selected)
-        .map((node) => ({
-          id: node.id,
-          x: node.position.x,
-          y: node.position.y,
-          width: 198,
-          height: 88,
-        }))
+        .map((node) => boxOf(node))
       const nextBoxes =
         mode === 'tile'
-          ? tileBoxes(selectedBoxes.length ? selectedBoxes : nodes.map((node) => ({
-              id: node.id,
-              x: node.position.x,
-              y: node.position.y,
-              width: 198,
-              height: 88,
-            })))
+          ? tileBoxes(selectedBoxes.length ? selectedBoxes : nodes.map((node) => boxOf(node)))
           : mode === 'horizontal' || mode === 'vertical'
             ? distributeBoxes(selectedBoxes, mode)
             : alignBoxes(selectedBoxes, mode)
@@ -743,12 +849,12 @@ function EditorInner({
           ...Object.fromEntries(
             nextBoxes
               .filter((box) => !draftNodes.some((draft) => draft.id === box.id))
-              .map((box) => [box.id, { x: box.x, y: box.y }]),
+              .map((box) => [box.id, { ...(pin?.nodes[box.id] ?? {}), x: box.x, y: box.y }]),
           ),
         },
       })
     },
-    [camera, draftEdges, draftNodes, nodes, persistDraftGraph, persistPin, pin?.nodes, sessionId],
+    [boxOf, camera, draftEdges, draftNodes, nodes, persistDraftGraph, persistPin, pin?.nodes, sessionId],
   )
 
   const currentSpec = React.useCallback(() => {
@@ -780,7 +886,10 @@ function EditorInner({
     const extras = draftNodes.filter((node) => !node.anchorSceneId && !promoted.nodes.some((item) => item.id === node.id))
     persistDraftGraph({
       nodes: [...specToDraftGraph(promoted).nodes, ...extras],
-      edges: [...specToDraftGraph(promoted).edges, ...draftEdges.filter((edge) => extras.some((node) => node.id === edge.source || node.id === edge.target))],
+      edges: [
+        ...specToDraftGraph(promoted).edges,
+        ...draftEdges.filter((edge) => extras.some((node) => node.id === edge.source || node.id === edge.target)),
+      ],
     })
     toast.success(t('entityView.mapPromoteTrace'))
   }, [draftEdges, draftNodes, graph.scenes, persistDraftGraph, sessionId, t])
@@ -919,6 +1028,10 @@ function EditorInner({
   const selectedKind = selected ? sceneLabelKind(selected) : null
   const selectedKindLabel = selectedKind ? t('entityView.mapKindInferred', { kind: t(SESSION_NODE_KIND_I18N[selectedKind]) }) : ''
   const selectedStatus = selected ? sceneVisualStatus(selected.tools, true) : null
+  const selectedContextNotes = React.useMemo(
+    () => (selected ? contextNotesForScene(selected.id, draftGraph) : []),
+    [draftGraph, selected],
+  )
 
   React.useEffect(() => {
     if (!selected) return
@@ -927,13 +1040,119 @@ function EditorInner({
     flowRef.current?.fitView({ nodes: [{ id: selected.id }], padding: 0.35 })
   }, [selected])
 
+  /**
+   * «Переписать в новой ветке»: creates a branch from the scene with the new
+   * prompt. Notes attached to the scene with context edges are appended.
+   */
+  const rewriteScene = React.useCallback(
+    (scene: NonNullable<typeof selected>, prompt: string) => {
+      const text = prompt.trim()
+      if (!text) return
+      const notes = contextNotesForScene(scene.id, draftGraph)
+      onRewrite?.(scene.triggerMessageId, withContextNotes(text, notes, t('entityView.mapContextNotesHeading')))
+    },
+    [draftGraph, onRewrite, t],
+  )
+  const rewriteSelected = (prompt: string) => {
+    if (selected) rewriteScene(selected, prompt)
+  }
+
+  const closeInspector = React.useCallback(() => {
+    setSelectedId(null)
+    setContextTargetId(null)
+  }, [])
+
+  const openPicker = React.useCallback((clientX: number, clientY: number, flowPosition?: { x: number; y: number }) => {
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const position = flowPosition ?? flowRef.current?.screenToFlowPosition({ x: clientX, y: clientY })
+    if (position) {
+      contextPositionRef.current = position
+      hasContextPositionRef.current = true
+    }
+    setNodeMenu(null)
+    setPickerMore(false)
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, Math.max(min, max)))
+    setPicker({
+      left: clamp(clientX - rect.left, 8, rect.width - 216),
+      top: clamp(clientY - rect.top, 8, rect.height - 320),
+    })
+  }, [])
+
+  const openPickerFromPlus = React.useCallback(() => {
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const center = flowRef.current?.screenToFlowPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    })
+    openPicker(rect.left + 12, rect.bottom - 332, center)
+  }, [openPicker])
+
+  const pickNodeType = (item: MapPickerItem) => {
+    setPicker(null)
+    switch (item.id) {
+      case 'note':
+        handleCreateNode('note')
+        return
+      case 'sticky':
+        handleCreateChrome('sticky')
+        return
+      case 'frame':
+        handleCreateChrome('frame')
+        return
+      case 'group':
+        handleCreateChrome('group')
+        return
+      default:
+        if (item.kind) handleCreateNode(item.kind)
+    }
+  }
+
+  /** Create a note next to a scene and attach it as context (scene → note). */
+  const attachNoteToScene = React.useCallback(
+    (sceneId: string) => {
+      const sceneNode = nodes.find((node) => node.id === sceneId)
+      const box = sceneNode ? boxOf(sceneNode) : { x: 24, y: 24, width: 220, height: 96 }
+      const note = createSessionDraftNode({
+        kind: 'note',
+        position: { x: box.x + box.width + 48, y: box.y },
+        anchorSceneId: sceneId,
+        title: '',
+      })
+      const edge = createSessionDraftEdge({ source: sceneId, target: note.id, kind: 'context' })
+      persistDraftGraph({ nodes: [...draftNodes, note], edges: [...draftEdges, edge] })
+      setSelectedId(note.id)
+      setContextTargetId(null)
+    },
+    [boxOf, draftEdges, draftNodes, nodes, persistDraftGraph],
+  )
+
+  const menuScene = nodeMenu?.target === 'scene' ? graph.scenes.find((scene) => scene.id === nodeMenu.id) ?? null : null
+  const menuDraft = nodeMenu?.target === 'draft' ? draftNodes.find((node) => node.id === nodeMenu.id) ?? null : null
+  const inspectorOpen = Boolean(selected || selectedDraft)
+  const selectedDraftAnchor = selectedDraft?.anchorSceneId
+    ? shortSceneTitle(graph.scenes.find((scene) => scene.id === selectedDraft.anchorSceneId))
+    : null
+
+  const inspectorButton = 'h-7 justify-start rounded-md px-2 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground'
+
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
         <div
           className="session-workflow-editor relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background"
-          onContextMenu={rememberTriggerPosition}
           onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              if (picker) {
+                event.preventDefault()
+                setPicker(null)
+                return
+              }
+              if (inspectorOpen) {
+                event.preventDefault()
+                closeInspector()
+              }
+              return
+            }
             if (!selectedId) return
             if (!(event.altKey || event.metaKey) || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
             event.preventDefault()
@@ -942,24 +1161,15 @@ function EditorInner({
                 : event.key === 'ArrowRight' ? 'right'
                   : event.key === 'ArrowUp' ? 'top'
                     : 'bottom'
-            const target = keyboardConnectTarget(
-              selectedId,
-              direction,
-              nodes.map((node) => ({
-                id: node.id,
-                x: node.position.x,
-                y: node.position.y,
-                width: 198,
-                height: 88,
-              })),
-            )
+            const boxes = nodes.map((node) => boxOf(node))
+            const target = keyboardConnectTarget(selectedId, direction, boxes)
             if (!target) return
-            const magnet = magneticPorts(
-              { id: selectedId, x: 0, y: 0, width: 198, height: 88 },
-              { id: target, x: 1, y: 0, width: 198, height: 88 },
-            )
-            const next = createSessionDraftEdge({ source: selectedId, target })
-            if (canPersistDraftEdge(next, draftNodes, draftEdges)) {
+            const fromBox = boxes.find((box) => box.id === selectedId)
+            const toBox = boxes.find((box) => box.id === target)
+            const magnet = fromBox && toBox ? magneticPorts(fromBox, toBox) : null
+            const verdict = verdictFor({ source: selectedId, target })
+            if (verdict.ok) {
+              const next = createSessionDraftEdge({ source: verdict.source, target: verdict.target, kind: verdict.kind })
               persistDraftGraph({ nodes: draftNodes, edges: [...draftEdges, next] })
             }
             void magnet
@@ -1053,10 +1263,7 @@ function EditorInner({
                 variant="ghost"
                 className="map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                 disabled={!selected}
-                onClick={() => {
-                  const prompt = draft.trim() || selected?.triggerPreview
-                  if (selected && prompt) onRewrite?.(selected.triggerMessageId, prompt)
-                }}
+                onClick={() => rewriteSelected(draft.trim() || selected?.triggerPreview || '')}
               >
                 {t('entityView.mapRun')}
               </Button>
@@ -1133,8 +1340,21 @@ function EditorInner({
                       <DropdownMenuItem onClick={() => handleRun('pipeline')}>
                         {t('entityView.mapRunPipeline')}
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleExport}>
+                        {t('entityView.mapExportSpec')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleForkVersion}>
+                        {t('entityView.mapForkVersion')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleCompareVersions}>
+                        {t('entityView.mapCompareVersions')}
+                      </DropdownMenuItem>
                     </>
                   )}
+                  <DropdownMenuItem data-testid="map-toolbar-import" onClick={() => importRef.current?.click()}>
+                    {t('entityView.mapImportSpec')}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <input
@@ -1151,73 +1371,8 @@ function EditorInner({
             </div>
           </div>
 
-          <div className="relative min-h-0 flex-1">
-          {selected && (
-            <div className="pointer-events-auto absolute right-3 top-3 z-10 flex w-[min(18rem,calc(100%-1.5rem))] flex-col gap-2 rounded-lg border border-border/60 bg-background/80 p-3 shadow-strong backdrop-blur-2xl" data-testid="session-canvas-inspector">
-              <div className="flex items-center gap-2">
-                <span className="rounded-full border border-border/60 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                  {selectedKindLabel}
-                </span>
-                {selectedStatus ? (
-                  <span className="rounded-full border border-border/50 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {t(`entityView.mapStatus.${selectedStatus}`)}
-                  </span>
-                ) : null}
-                <span className="truncate text-xs text-muted-foreground">{selected.triggerPreview || selected.id}</span>
-              </div>
-              <label className="sr-only" htmlFor="session-map-compose">
-                {t('entityView.mapComposeLabel')}
-              </label>
-              <textarea
-                id="session-map-compose"
-                className="min-h-[96px] w-full resize-y rounded-[16px] border border-transparent bg-background/55 px-2.5 py-2 text-xs shadow-minimal outline-none ring-0 backdrop-blur-xl placeholder:text-muted-foreground/60 focus:border-violet-400/60"
-                placeholder={t('entityView.mapComposePlaceholder')}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                    e.preventDefault()
-                    const prompt = draft.trim()
-                    if (prompt) onRewrite?.(selected.triggerMessageId, prompt)
-                  }
-                }}
-              />
-              <div className="inline-flex min-w-0 flex-wrap items-center gap-1">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                  onClick={() => onFork?.(selected.triggerMessageId)}
-                >
-                  {t('entityView.workbenchFork')}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                  onClick={() => setFanOutOpen(true)}
-                >
-                  {t('entityView.fanOutShort')}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                  disabled={!draft.trim()}
-                  onClick={() => {
-                    const prompt = draft.trim()
-                    if (prompt) onRewrite?.(selected.triggerMessageId, prompt)
-                  }}
-                >
-                  {t('entityView.workbenchRewrite')}
-                </Button>
-              </div>
-            </div>
-          )}
-
+          <div className="relative flex min-h-0 flex-1">
+          <div ref={canvasRef} className="relative min-h-0 min-w-0 flex-1">
           {graph.scenes.length === 0 && draftNodes.length === 0 ? (
             <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center gap-1 px-6 text-center text-sm text-muted-foreground">
               <p>{t('entityView.workbenchNoScenes')}</p>
@@ -1231,38 +1386,38 @@ function EditorInner({
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onConnect={onConnect}
-            onConnectEnd={onConnectEnd}
+            connectionMode={ConnectionMode.Loose}
+            isValidConnection={isValidConnection}
+            connectionLineComponent={MapConnectionLine}
+            zoomOnDoubleClick={false}
             onPaneClick={() => {
               setSelectedId(null)
               setSelectedDraftEdgeId(null)
               setContextTargetId(null)
+              setPicker(null)
             }}
             onDoubleClick={(event) => {
               const target = event.target as HTMLElement
               if (target.classList.contains('react-flow__pane')) {
-                hasContextPositionRef.current = true
-                rememberContextPosition(event)
-                handleCreateNode('note')
+                openPicker(event.clientX, event.clientY)
               }
             }}
-            onPaneContextMenu={(event) => {
-              rememberContextPosition(event)
-              setContextTargetId(selectedId ?? graph.scenes[0]?.id ?? null)
-            }}
             onNodeContextMenu={(event, node) => {
+              event.preventDefault()
               rememberContextPosition(event)
               if (node.type === 'scene' || node.type === 'draft') {
-                setSelectedId(node.id)
+                setPicker(null)
                 setSelectedDraftEdgeId(null)
                 setContextTargetId(node.type === 'scene' ? node.id : null)
+                setNodeMenu({ x: event.clientX, y: event.clientY, target: node.type, id: node.id })
               }
             }}
             onEdgeContextMenu={(event, edge) => {
-              rememberContextPosition(event)
+              event.preventDefault()
               if (draftEdges.some((draftEdge) => draftEdge.id === edge.id)) {
-                setSelectedId(null)
+                setPicker(null)
                 setSelectedDraftEdgeId(edge.id)
-                setContextTargetId(null)
+                setNodeMenu({ x: event.clientX, y: event.clientY, target: 'edge', id: edge.id })
               }
             }}
             onEdgeClick={(_event, edge) => {
@@ -1273,6 +1428,7 @@ function EditorInner({
               }
             }}
             onNodeClick={(_e, node) => {
+              setPicker(null)
               if (node.type === 'branch') {
                 const id = (node.data as BranchNodeData).id
                 onOpenSession?.(id)
@@ -1316,7 +1472,7 @@ function EditorInner({
                   ...(viewportRef.current ? { viewport: viewportRef.current } : {}),
                   nodes: {
                     ...(pin?.nodes ?? {}),
-                    [node.id]: { x: node.position.x, y: node.position.y },
+                    [node.id]: { ...(pin?.nodes[node.id] ?? {}), x: node.position.x, y: node.position.y },
                   },
                 })
               }
@@ -1352,8 +1508,280 @@ function EditorInner({
               />
             ) : null}
           </ReactFlow>
+
+          {/* Visible node creation: «+» (bottom-left) and double-click open the same type picker. */}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            data-testid="map-add-node"
+            aria-label={t('entityView.mapAddNode')}
+            title={t('entityView.mapAddNodeHint')}
+            className="absolute bottom-3 left-3 z-10 h-8 gap-1 rounded-md bg-foreground/[0.06] px-2.5 text-[11px] text-foreground hover:bg-foreground/10"
+            onClick={openPickerFromPlus}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {t('entityView.mapAddNodeShort')}
+          </Button>
+
+          {picker ? (
+            <div
+              role="menu"
+              aria-label={t('entityView.mapAddNode')}
+              data-testid="map-node-picker"
+              className="absolute z-20 w-52 rounded-lg bg-popover p-1 text-popover-foreground shadow-strong"
+              style={{ left: picker.left, top: picker.top }}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.stopPropagation()
+                  setPicker(null)
+                }
+              }}
+            >
+              <div className="px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                {t('entityView.mapAddNode')}
+              </div>
+              {[...MAP_PICKER_PRIMARY, ...(pickerMore ? MAP_PICKER_MORE : [])].map((item, index) => {
+                const Icon = item.icon
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="menuitem"
+                    autoFocus={index === 0}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06] focus-visible:bg-foreground/[0.06] focus-visible:outline-none"
+                    onClick={() => pickNodeType(item)}
+                  >
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    {t(item.labelKey)}
+                  </button>
+                )
+              })}
+              {!pickerMore ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-foreground/[0.06]"
+                  onClick={() => setPickerMore(true)}
+                >
+                  {t('entityView.mapAddNodeMore')}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           </div>
 
+          {inspectorOpen ? (
+            <aside
+              data-testid="session-canvas-inspector"
+              aria-label={t('entityView.mapInspector')}
+              className="relative z-10 flex w-72 shrink-0 flex-col gap-3 overflow-y-auto bg-foreground/[0.03] p-3"
+            >
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  {selected ? selectedKindLabel : selectedDraft ? t(SESSION_NODE_KIND_I18N[selectedDraft.kind]) : ''}
+                </span>
+                {selectedStatus ? (
+                  <span className="shrink-0 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                    {t(`entityView.mapStatus.${selectedStatus}`)}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground"
+                  aria-label={t('common.close')}
+                  title={t('entityView.mapInspectorClose')}
+                  onClick={closeInspector}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {selected ? (
+                <>
+                  <div className="line-clamp-3 break-words text-xs font-medium leading-4 text-foreground">
+                    {selected.triggerPreview || selected.id}
+                  </div>
+                  <label className="text-[11px] text-muted-foreground" htmlFor="session-map-compose">
+                    {t('entityView.mapComposeLabel')}
+                  </label>
+                  <textarea
+                    id="session-map-compose"
+                    className="min-h-[96px] w-full resize-y rounded-md bg-foreground/[0.04] px-2.5 py-2 text-xs outline-none placeholder:text-muted-foreground/60 focus:bg-foreground/[0.06]"
+                    placeholder={t('entityView.mapComposePlaceholder')}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                        e.preventDefault()
+                        rewriteScene(selected, draft)
+                      }
+                    }}
+                  />
+                  {selectedContextNotes.length > 0 ? (
+                    <div className="flex flex-col gap-1 rounded-md bg-amber-400/[0.06] px-2 py-1.5" data-testid="map-inspector-context-notes">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {t('entityView.mapContextNotesTitle', { n: selectedContextNotes.length })}
+                      </div>
+                      {selectedContextNotes.map((note, index) => (
+                        <div key={index} className="line-clamp-2 text-[11px] text-foreground/90">{note}</div>
+                      ))}
+                    </div>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8 rounded-md text-[11px]"
+                    disabled={!draft.trim()}
+                    onClick={() => rewriteScene(selected, draft)}
+                  >
+                    {t('entityView.workbenchRewriteBranch')}
+                  </Button>
+                  <p className="text-[10px] leading-4 text-muted-foreground">{t('entityView.mapRewriteHint')}</p>
+                  <div className="flex flex-col">
+                    <Button type="button" size="sm" variant="ghost" className={inspectorButton} onClick={() => onFork?.(selected.triggerMessageId)}>
+                      <GitBranch className="h-3.5 w-3.5" />
+                      {t('entityView.workbenchFork')}
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" className={inspectorButton} onClick={() => setFanOutOpen(true)}>
+                      <Split className="h-3.5 w-3.5" />
+                      {t('entityView.fanOutShort')}
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" className={inspectorButton} onClick={() => attachNoteToScene(selected.id)}>
+                      <StickyNote className="h-3.5 w-3.5" />
+                      {t('entityView.mapAttachNote')}
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" className={inspectorButton} onClick={() => onOpenMessage?.(selected.triggerMessageId)}>
+                      <FileText className="h-3.5 w-3.5" />
+                      {t('entityView.mapOpenInChat')}
+                    </Button>
+                  </div>
+                </>
+              ) : null}
+
+              {selectedDraft ? (
+                <>
+                  {selectedDraftAnchor ? (
+                    <div className="min-w-0 truncate text-[11px] text-muted-foreground" title={selectedDraftAnchor}>
+                      ↳ {selectedDraftAnchor}
+                    </div>
+                  ) : null}
+                  <textarea
+                    aria-label={t('entityView.mapComposeLabel')}
+                    className="min-h-[96px] w-full resize-y rounded-md bg-foreground/[0.04] px-2.5 py-2 text-xs outline-none placeholder:text-muted-foreground/60 focus:bg-foreground/[0.06]"
+                    placeholder={t(SESSION_DRAFT_PROMPT_I18N[selectedDraft.kind])}
+                    value={selectedDraft.title}
+                    onChange={(event) => updateDraftTitle(selectedDraft.id, event.target.value)}
+                  />
+                  <p className="text-[10px] leading-4 text-muted-foreground">{t('entityView.mapEdgeLegend')}</p>
+                  <div className="flex flex-col">
+                    <Button type="button" size="sm" variant="ghost" className={inspectorButton} onClick={() => handleRun('node')}>
+                      {t('entityView.mapRunNode')}
+                    </Button>
+                    <Button type="button" size="sm" variant="ghost" className={inspectorButton} onClick={() => handleRun('from-here')}>
+                      {t('entityView.mapRunFromHere')}
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" size="sm" variant="ghost" className={inspectorButton}>
+                          {t('entityView.mapConvertNode')}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-[12rem]">
+                        {SESSION_NODE_KINDS.map((kind) => (
+                          <DropdownMenuItem key={kind} onClick={() => handleConvert(kind)}>
+                            {t(SESSION_NODE_KIND_I18N[kind])}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className={cn(inspectorButton, 'text-destructive hover:text-destructive')}
+                      onClick={() => deleteDraftNode(selectedDraft.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {t('entityView.mapDeleteDraftNode')}
+                    </Button>
+                  </div>
+                </>
+              ) : null}
+            </aside>
+          ) : null}
+          </div>
+
+          {/* Node-only context menu, anchored at the cursor. */}
+          <DropdownMenu open={nodeMenu !== null} onOpenChange={(open) => { if (!open) setNodeMenu(null) }}>
+            <DropdownMenuTrigger asChild>
+              <span
+                aria-hidden
+                className="pointer-events-none fixed h-0 w-0"
+                style={{ left: nodeMenu?.x ?? 0, top: nodeMenu?.y ?? 0 }}
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[13rem]" data-testid="map-node-menu">
+              {menuScene ? (
+                <>
+                  <DropdownMenuItem onClick={() => { setSelectedId(menuScene.id); setContextTargetId(menuScene.id) }}>
+                    {t('entityView.mapOpenInspector')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onOpenMessage?.(menuScene.triggerMessageId)}>
+                    {t('entityView.mapOpenInChat')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSelectedId(menuScene.id); setContextTargetId(menuScene.id) }}>
+                    {t('entityView.workbenchRewriteBranch')}…
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onFork?.(menuScene.triggerMessageId)}>
+                    {t('entityView.workbenchFork')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => attachNoteToScene(menuScene.id)}>
+                    {t('entityView.mapAttachNote')}
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+              {menuDraft ? (
+                <>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>{t('entityView.mapConvertNode')}</DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="min-w-[12rem]">
+                      {SESSION_NODE_KINDS.map((kind) => (
+                        <DropdownMenuItem key={kind} onClick={() => { setSelectedId(menuDraft.id); handleConvert(kind) }}>
+                          {t(SESSION_NODE_KIND_I18N[kind])}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuItem onClick={() => handleRun('node')}>
+                    {t('entityView.mapRunNode')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleRun('from-here')}>
+                    {t('entityView.mapRunFromHere')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleRun('selection')}>
+                    {t('entityView.mapRunSelection')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleReplay}>
+                    {t('entityView.mapReplayRun')}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive" onClick={() => deleteDraftNode(menuDraft.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t('entityView.mapDeleteDraftNode')}
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+              {nodeMenu?.target === 'edge' ? (
+                <DropdownMenuItem className="text-destructive" onClick={() => deleteDraftEdge(nodeMenu.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {t('entityView.mapDeleteConnection')}
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* «Рассылка» opens only from the inspector. */}
           <SessionFanOutSheet
             open={fanOutOpen}
             onOpenChange={setFanOutOpen}
@@ -1362,124 +1790,6 @@ function EditorInner({
             onCreateChildSessions={onCreateChildSessions}
           />
         </div>
-      </ContextMenuTrigger>
-      <StyledContextMenuContent minWidth="min-w-64">
-        <StyledContextMenuSub>
-          <StyledContextMenuSubTrigger>{t('entityView.mapAddNode')}</StyledContextMenuSubTrigger>
-          <StyledContextMenuSubContent minWidth="min-w-56">
-            {SESSION_NODE_KINDS.map((kind) => {
-              const Icon = PALETTE_ICONS[kind]
-              return (
-                <StyledContextMenuItem key={kind} onSelect={() => handleCreateNode(kind)}>
-                  <Icon className="h-3.5 w-3.5" />
-                  {t(SESSION_NODE_KIND_I18N[kind])}
-                </StyledContextMenuItem>
-              )
-            })}
-          </StyledContextMenuSubContent>
-        </StyledContextMenuSub>
-        <StyledContextMenuItem onSelect={() => handleCreateChrome('sticky')}>
-          {t('entityView.mapSticky')}
-        </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={() => handleCreateChrome('frame')}>
-          {t('entityView.mapFrame')}
-        </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={() => handleCreateChrome('group')}>
-          {t('entityView.mapGroup')}
-        </StyledContextMenuItem>
-        <StyledContextMenuSeparator />
-        <StyledContextMenuItem onSelect={() => flowRef.current?.fitView({ padding: 0.2 })}>
-          {t('entityView.mapFit')}
-        </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={resetLayout}>
-          {t('entityView.mapResetLayout')}
-        </StyledContextMenuItem>
-        {mapEmpty ? null : (
-          <>
-            <StyledContextMenuItem onSelect={handlePromoteTrace}>
-              {t('entityView.mapPromoteTrace')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={handleSaveVersion}>
-              {t('entityView.mapSaveVersion')}
-            </StyledContextMenuItem>
-          </>
-        )}
-        <StyledContextMenuItem onSelect={handleExport}>
-          {t('entityView.mapExportSpec')}
-        </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={() => importRef.current?.click()}>
-          {t('entityView.mapImportSpec')}
-        </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={handleForkVersion}>
-          {t('entityView.mapForkVersion')}
-        </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={handleCompareVersions}>
-          {t('entityView.mapCompareVersions')}
-        </StyledContextMenuItem>
-        {selected ? (
-          <>
-            <StyledContextMenuSeparator />
-            <StyledContextMenuItem onSelect={() => onFork?.(selected.triggerMessageId)}>
-              {t('entityView.workbenchFork')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => setFanOutOpen(true)}>
-              {t('entityView.fanOutShort')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem
-              onSelect={() => {
-                const prompt = draft.trim()
-                if (prompt) onRewrite?.(selected.triggerMessageId, prompt)
-              }}
-            >
-              {t('entityView.workbenchRewrite')}
-            </StyledContextMenuItem>
-          </>
-        ) : null}
-        {selectedDraft ? (
-          <>
-            <StyledContextMenuSeparator />
-            <StyledContextMenuSub>
-              <StyledContextMenuSubTrigger>{t('entityView.mapConvertNode')}</StyledContextMenuSubTrigger>
-              <StyledContextMenuSubContent minWidth="min-w-56">
-                {SESSION_NODE_KINDS.map((kind) => (
-                  <StyledContextMenuItem key={kind} onSelect={() => handleConvert(kind)}>
-                    {t(SESSION_NODE_KIND_I18N[kind])}
-                  </StyledContextMenuItem>
-                ))}
-              </StyledContextMenuSubContent>
-            </StyledContextMenuSub>
-            <StyledContextMenuItem onSelect={() => handleRun('node')}>
-              {t('entityView.mapRunNode')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => handleRun('from-here')}>
-              {t('entityView.mapRunFromHere')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => handleRun('selection')}>
-              {t('entityView.mapRunSelection')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => handleRun('pipeline')}>
-              {t('entityView.mapRunPipeline')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={handleReplay}>
-              {t('entityView.mapReplayRun')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem variant="destructive" onSelect={() => deleteDraftNode(selectedDraft.id)}>
-              <Trash2 className="h-3.5 w-3.5" />
-              {t('entityView.mapDeleteDraftNode')}
-            </StyledContextMenuItem>
-          </>
-        ) : null}
-        {selectedDraftEdgeId ? (
-          <>
-            <StyledContextMenuSeparator />
-            <StyledContextMenuItem variant="destructive" onSelect={() => deleteDraftEdge(selectedDraftEdgeId)}>
-              <Trash2 className="h-3.5 w-3.5" />
-              {t('entityView.mapDeleteConnection')}
-            </StyledContextMenuItem>
-          </>
-        ) : null}
-      </StyledContextMenuContent>
-    </ContextMenu>
   )
 }
 

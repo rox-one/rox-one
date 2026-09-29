@@ -31,9 +31,10 @@ export function draftGraphToSpec(graph: SessionDraftGraph, now = Date.now()): Se
       now: node.createdAt || now + index,
     }),
   )
-  spec.edges = graph.edges.map((edge) =>
-    createCanvasEdge({ source: edge.source, target: edge.target, now: edge.createdAt }),
-  )
+  // Context edges (scene → note) are map annotations, not workflow steps.
+  spec.edges = graph.edges
+    .filter((edge) => edge.kind !== 'context')
+    .map((edge) => createCanvasEdge({ source: edge.source, target: edge.target, now: edge.createdAt }))
   return spec
 }
 

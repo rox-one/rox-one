@@ -51,9 +51,8 @@ describe('workflow spec editor wiring', () => {
     expect(editorSource).toMatch(
       /\{mapEmpty \? \(\s*<DropdownMenuItem disabled data-testid="map-toolbar-empty-hint">\s*\{t\('entityView\.mapEmptyHint'\)\}[\s\S]*?applyCanvasLayout\('left'\)[\s\S]*?applyCanvasLayout\('tile'\)[\s\S]*?onClick=\{handleSaveVersion\}[\s\S]*?handleRun\('pipeline'\)/,
     )
-    // Canvas context menu: promote trace + save version sit behind the guard.
-    expect(editorSource).toMatch(
-      /\{mapEmpty \? null : \(\s*<>\s*<StyledContextMenuItem onSelect=\{handlePromoteTrace\}>[\s\S]*?<StyledContextMenuItem onSelect=\{handleSaveVersion\}>/,
-    )
+    // The whole-canvas context menu is gone; document actions live in the ⋯ menu.
+    expect(editorSource).not.toContain('StyledContextMenuItem')
+    expect(editorSource).toMatch(/onClick=\{handleExport\}[\s\S]*?onClick=\{handleForkVersion\}[\s\S]*?onClick=\{handleCompareVersions\}/)
   })
 })

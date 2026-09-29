@@ -9,6 +9,8 @@ export type SessionDraftNode = {
   anchorSceneId: string | null
   createdAt: number
   role?: 'node' | 'sticky' | 'frame' | 'group'
+  /** User-resized box; absent = default size for the role. */
+  size?: { width: number; height: number }
 }
 
 export type SessionDraftEdge = {
@@ -16,6 +18,11 @@ export type SessionDraftEdge = {
   source: string
   target: string
   createdAt: number
+  /**
+   * `step` (default): draft → draft workflow order.
+   * `context`: scene → draft note attached as context to that scene.
+   */
+  kind?: 'step' | 'context'
 }
 
 export type SessionDraftGraph = {
@@ -77,16 +84,19 @@ export function createSessionDraftEdge({
   source,
   target,
   now = Date.now(),
+  kind = 'step',
 }: {
   source: string
   target: string
   now?: number
+  kind?: 'step' | 'context'
 }): SessionDraftEdge {
   return {
-    id: `draft_edge_${source}_${target}`,
+    id: kind === 'context' ? `draft_ctx_${source}_${target}` : `draft_edge_${source}_${target}`,
     source,
     target,
     createdAt: now,
+    ...(kind === 'context' ? { kind } : {}),
   }
 }
 
@@ -116,15 +126,25 @@ export function wouldCreateDraftEdgeCycle(
 export function canPersistDraftEdge(
   edge: Pick<SessionDraftEdge, 'source' | 'target'>,
   nodes: ReadonlyArray<SessionDraftNode>,
-  edges: ReadonlyArray<Pick<SessionDraftEdge, 'source' | 'target'>>,
+  edges: ReadonlyArray<Pick<SessionDraftEdge, 'source' | 'target' | 'kind'>>,
 ): boolean {
   const knownNodeIds = new Set(nodes.map((node) => node.id))
+  const steps = edges.filter((existing) => existing.kind !== 'context')
   return (
     edge.source !== edge.target &&
     knownNodeIds.has(edge.source) &&
     knownNodeIds.has(edge.target) &&
-    !edges.some((existing) => existing.source === edge.source && existing.target === edge.target) &&
-    !wouldCreateDraftEdgeCycle(edges, edge)
+    !steps.some((existing) => existing.source === edge.source && existing.target === edge.target) &&
+    !wouldCreateDraftEdgeCycle(steps, edge)
+  )
+}
+
+function isNodeSize(value: unknown): value is { width: number; height: number } {
+  if (!value || typeof value !== 'object') return false
+  const size = value as { width?: unknown; height?: unknown }
+  return (
+    typeof size.width === 'number' && Number.isFinite(size.width) && size.width > 0 &&
+    typeof size.height === 'number' && Number.isFinite(size.height) && size.height > 0
   )
 }
 
@@ -149,7 +169,8 @@ function isDraftNode(value: unknown): value is SessionDraftNode {
     typeof position?.y === 'number' &&
     (node.anchorSceneId === null || typeof node.anchorSceneId === 'string') &&
     typeof node.createdAt === 'number' &&
-    (node.role === undefined || node.role === 'node' || node.role === 'sticky' || node.role === 'frame' || node.role === 'group')
+    (node.role === undefined || node.role === 'node' || node.role === 'sticky' || node.role === 'frame' || node.role === 'group') &&
+    (node.size === undefined || isNodeSize(node.size))
   )
 }
 
@@ -161,7 +182,8 @@ function isDraftEdge(value: unknown): value is SessionDraftEdge {
     typeof edge.source === 'string' &&
     typeof edge.target === 'string' &&
     edge.source !== edge.target &&
-    typeof edge.createdAt === 'number'
+    typeof edge.createdAt === 'number' &&
+    (edge.kind === undefined || edge.kind === 'step' || edge.kind === 'context')
   )
 }
 
@@ -178,8 +200,14 @@ export function parseSessionDraftGraph(raw: string | null, sessionId: string): S
     if (Array.isArray(parsed.edges)) {
       for (const edge of parsed.edges) {
         if (!isDraftEdge(edge)) continue
+        if (edge.kind === 'context') {
+          // scene → note: only the note end is a draft node; scenes come from the transcript.
+          if (!knownNodeIds.has(edge.target) && !knownNodeIds.has(edge.source)) continue
+          edges.push(edge)
+          continue
+        }
         if (!knownNodeIds.has(edge.source) || !knownNodeIds.has(edge.target)) continue
-        if (wouldCreateDraftEdgeCycle(edges, edge)) continue
+        if (wouldCreateDraftEdgeCycle(edges.filter((e) => e.kind !== 'context'), edge)) continue
         edges.push(edge)
       }
     }
