@@ -893,6 +893,8 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.feed.REFRESH,
   RPC_CHANNELS.feed.X_SET_TOKEN,
   RPC_CHANNELS.feed.X_CLEAR,
+  RPC_CHANNELS.feed.SOURCES_PREVIEW,
+  RPC_CHANNELS.feed.ITEMS_ANNOTATE,
 
   // kanban — workspace board config
   RPC_CHANNELS.kanban.GET_CONFIG,

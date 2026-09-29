@@ -822,6 +822,8 @@ export const CHANNEL_MAP = {
   feedRefresh: invoke(RPC_CHANNELS.feed.REFRESH),
   feedSetXToken: invoke(RPC_CHANNELS.feed.X_SET_TOKEN),
   feedClearX: invoke(RPC_CHANNELS.feed.X_CLEAR),
+  feedPreviewSource: invoke(RPC_CHANNELS.feed.SOURCES_PREVIEW),
+  feedAnnotate: invoke(RPC_CHANNELS.feed.ITEMS_ANNOTATE),
   onFeedChanged: listener(RPC_CHANNELS.feed.CHANGED),
 
   // Kanban board config

@@ -13,14 +13,21 @@ import {
   FEED_DEFAULT_INTERVAL_MIN,
   FEED_MIN_INTERVAL_MIN,
   addedLines,
+  isFeedColor,
+  normalizeFeedTags,
   detectFeedSource,
   discoverFeedLinks,
   pageText,
   pageTitle,
   parseFeed,
   textHash,
+  type FeedAddSourceOptions,
+  type FeedAnnotationPatch,
   type FeedItem,
+  type FeedItemAnnotation,
+  type FeedPreviewResult,
   type FeedSource,
+  type FeedSourcePatch,
   type ParsedFeed,
   type XConnectionStatus,
 } from '@craft-agent/shared/feed'
@@ -33,6 +40,9 @@ export const FEED_ITEMS_PER_SOURCE = 100
 export const FEED_MAX_NEWS_ITEMS = 1500
 export const FEED_MAX_SUBSCRIPTION_ITEMS = 400
 export const FEED_X_INTERVAL_MIN = 15
+export const FEED_MAX_ANNOTATIONS = 5000
+export const FEED_STATE_VERSION = 2
+const PREVIEW_ITEMS = 5
 const PAGE_TEXT_CAP = 20_000
 
 interface StoredSource extends FeedSource {
@@ -42,11 +52,42 @@ interface StoredSource extends FeedSource {
   pageText?: string
 }
 
+/**
+ * v1 → v2: adds `annotations` (tags/color/star/read per item id) and optional
+ * source fields (color, tags, paused, lastOkAt). v1 files load unchanged; a
+ * v1 reader keeps sources/items intact and only drops `annotations`.
+ */
 interface FeedState {
-  version: 1
+  version: typeof FEED_STATE_VERSION
   sources: StoredSource[]
   items: FeedItem[]
+  annotations: Record<string, FeedItemAnnotation>
   x?: { lastFetchAt?: number; sinceId?: string; lastError?: string }
+}
+
+function cleanAnnotation(a: unknown): FeedItemAnnotation | null {
+  if (!a || typeof a !== 'object') return null
+  const r = a as Record<string, unknown>
+  const out: FeedItemAnnotation = {}
+  const tags = normalizeFeedTags(r.tags)
+  if (tags.length) out.tags = tags
+  if (isFeedColor(r.color)) out.color = r.color
+  if (r.starred === true) out.starred = true
+  if (typeof r.readAt === 'number' && Number.isFinite(r.readAt)) out.readAt = r.readAt
+  return Object.keys(out).length ? out : null
+}
+
+function cleanSource(s: StoredSource): StoredSource {
+  const out = { ...s }
+  if (out.color !== undefined && !isFeedColor(out.color)) delete out.color
+  if (out.tags !== undefined) {
+    const tags = normalizeFeedTags(out.tags)
+    if (tags.length) out.tags = tags
+    else delete out.tags
+  }
+  if (out.paused !== undefined && out.paused !== true) delete out.paused
+  delete out.checking
+  return out
 }
 
 export interface FeedServiceLogger {
@@ -68,9 +109,13 @@ export type AddSourceResult =
   | { ok: true; source: FeedSource }
   | { ok: false; error: 'invalid-url' | 'duplicate' | 'too-many' }
 
-function publicSource(s: StoredSource): FeedSource {
-  const { etag: _e, lastModified: _l, pageHash: _h, pageText: _t, ...rest } = s
-  return rest
+function publicSource(s: StoredSource, checking = false): FeedSource {
+  const { etag: _e, lastModified: _l, pageHash: _h, pageText: _t, checking: _c, ...rest } = s
+  return checking ? { ...rest, checking: true } : rest
+}
+
+function urlKey(url: string): string {
+  return url.replace(/\/$/, '').toLowerCase()
 }
 
 function clip(s: string | undefined, n: number): string | undefined {
@@ -125,14 +170,22 @@ export class FeedService {
   // ── persistence ──────────────────────────────────────────────────────────
   private load(): FeedState {
     if (this.state) return this.state
-    let st: FeedState = { version: 1, sources: [], items: [] }
+    let st: FeedState = { version: FEED_STATE_VERSION, sources: [], items: [], annotations: {} }
     try {
       if (existsSync(this.file)) {
-        const raw = JSON.parse(readFileSync(this.file, 'utf-8')) as Partial<FeedState>
+        const raw = JSON.parse(readFileSync(this.file, 'utf-8')) as Partial<Omit<FeedState, 'version'>> & { version?: number }
+        const annotations: Record<string, FeedItemAnnotation> = {}
+        if (raw.annotations && typeof raw.annotations === 'object') {
+          for (const [id, a] of Object.entries(raw.annotations)) {
+            const clean = cleanAnnotation(a)
+            if (clean) annotations[id] = clean
+          }
+        }
         st = {
-          version: 1,
-          sources: Array.isArray(raw.sources) ? raw.sources.filter((s) => s && typeof s.id === 'string' && typeof s.url === 'string') : [],
+          version: FEED_STATE_VERSION,
+          sources: Array.isArray(raw.sources) ? raw.sources.filter((s) => s && typeof s.id === 'string' && typeof s.url === 'string').map(cleanSource) : [],
           items: Array.isArray(raw.items) ? raw.items.filter((i) => i && typeof i.id === 'string' && typeof i.at === 'number') : [],
+          annotations,
           ...(raw.x ? { x: raw.x } : {}),
         }
       }
@@ -166,7 +219,11 @@ export class FeedService {
 
   // ── queries ──────────────────────────────────────────────────────────────
   listSources(): FeedSource[] {
-    return this.load().sources.map(publicSource)
+    return this.load().sources.map((s) => publicSource(s, this.busy.has(s.id)))
+  }
+
+  listAnnotations(): Record<string, FeedItemAnnotation> {
+    return { ...this.load().annotations }
   }
 
   listItems(): FeedItem[] {
@@ -193,22 +250,26 @@ export class FeedService {
   }
 
   // ── mutations ────────────────────────────────────────────────────────────
-  addSource(input: string, intervalMin?: number): AddSourceResult {
+  addSource(input: string, intervalMinOrOpts?: number | FeedAddSourceOptions): AddSourceResult {
+    const opts: FeedAddSourceOptions = typeof intervalMinOrOpts === 'number' ? { intervalMin: intervalMinOrOpts } : intervalMinOrOpts ?? {}
     const det = detectFeedSource(input)
     if (!det) return { ok: false, error: 'invalid-url' }
     const st = this.load()
     if (st.sources.length >= FEED_MAX_SOURCES) return { ok: false, error: 'too-many' }
-    const key = det.url.replace(/\/$/, '').toLowerCase()
-    if (st.sources.some((s) => s.url.replace(/\/$/, '').toLowerCase() === key)) return { ok: false, error: 'duplicate' }
+    if (this.isDuplicate(det.url)) return { ok: false, error: 'duplicate' }
     const now = this.now()
+    const title = typeof opts.title === 'string' ? opts.title.trim().slice(0, 200) : ''
+    const tags = normalizeFeedTags(opts.tags)
     const source: StoredSource = {
       id: `src-${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       url: det.url,
       kind: det.kind,
-      ...(det.title ? { title: det.title } : {}),
+      ...(title ? { title } : det.title ? { title: det.title } : {}),
+      ...(isFeedColor(opts.color) ? { color: opts.color } : {}),
+      ...(tags.length ? { tags } : {}),
       ...(det.feedUrl ? { feedUrl: det.feedUrl } : {}),
       ...(det.handle ? { handle: det.handle } : {}),
-      intervalMin: clampInterval(intervalMin),
+      intervalMin: clampInterval(opts.intervalMin),
       addedAt: now,
       lastStatus: 'pending',
     }
@@ -223,18 +284,137 @@ export class FeedService {
     const before = st.sources.length
     st.sources = st.sources.filter((s) => s.id !== id)
     if (st.sources.length === before) return false
+    const gone = new Set(st.items.filter((i) => i.sourceId === id).map((i) => i.id))
     st.items = st.items.filter((i) => i.sourceId !== id)
+    for (const itemId of Object.keys(st.annotations)) if (gone.has(itemId) || itemId.startsWith(`news:${id}:`)) delete st.annotations[itemId]
     this.changed()
     return true
   }
 
-  updateSource(id: string, patch: { intervalMin?: number; title?: string }): FeedSource | null {
+  isDuplicate(url: string): boolean {
+    const key = urlKey(url)
+    return this.load().sources.some((s) => urlKey(s.url) === key)
+  }
+
+  updateSource(id: string, patch: FeedSourcePatch): FeedSource | null {
     const s = this.load().sources.find((x) => x.id === id)
     if (!s) return null
     if (patch.intervalMin !== undefined) s.intervalMin = clampInterval(patch.intervalMin)
     if (typeof patch.title === 'string') s.title = patch.title.trim().slice(0, 200) || s.title
+    if (patch.color === null) delete s.color
+    else if (isFeedColor(patch.color)) s.color = patch.color
+    if (patch.tags !== undefined) {
+      const tags = normalizeFeedTags(patch.tags)
+      if (tags.length) s.tags = tags
+      else delete s.tags
+    }
+    if (patch.paused === true) s.paused = true
+    else if (patch.paused === false) delete s.paused
     this.changed()
-    return publicSource(s)
+    return publicSource(s, this.busy.has(s.id))
+  }
+
+  /** Tags / color / star / read for one or more items (any tab). */
+  annotate(ids: readonly string[], patch: FeedAnnotationPatch): number {
+    const st = this.load()
+    const now = this.now()
+    let n = 0
+    for (const raw of ids.slice(0, 2000)) {
+      if (typeof raw !== 'string' || !raw || raw.length > 500) continue
+      const cur: FeedItemAnnotation = { ...(st.annotations[raw] ?? {}) }
+      if (patch.tags !== undefined) {
+        const tags = normalizeFeedTags(patch.tags)
+        if (tags.length) cur.tags = tags
+        else delete cur.tags
+      }
+      if (patch.color === null) delete cur.color
+      else if (isFeedColor(patch.color)) cur.color = patch.color
+      if (patch.starred === true) cur.starred = true
+      else if (patch.starred === false) delete cur.starred
+      if (patch.read === true) cur.readAt = cur.readAt ?? now
+      else if (patch.read === false) delete cur.readAt
+      if (Object.keys(cur).length) st.annotations[raw] = cur
+      else delete st.annotations[raw]
+      n++
+    }
+    this.capAnnotations()
+    if (n) this.changed()
+    return n
+  }
+
+  private capAnnotations(): void {
+    const st = this.load()
+    const ids = Object.keys(st.annotations)
+    if (ids.length <= FEED_MAX_ANNOTATIONS) return
+    // Keep user-meaningful marks (tags/color/star) first, then the newest reads.
+    const weight = (a: FeedItemAnnotation) => (a.tags?.length || a.color || a.starred ? 1 : 0)
+    ids.sort((a, b) => weight(st.annotations[b]!) - weight(st.annotations[a]!) || (st.annotations[b]!.readAt ?? 0) - (st.annotations[a]!.readAt ?? 0))
+    for (const id of ids.slice(FEED_MAX_ANNOTATIONS)) delete st.annotations[id]
+  }
+
+  /**
+   * Dry run for the add-source flow: resolves the input the same way the
+   * poller does (direct/derived feed → autodiscovery → page) and returns the
+   * first items. Nothing is persisted.
+   */
+  async preview(input: string): Promise<FeedPreviewResult> {
+    const det = detectFeedSource(input)
+    if (!det) return { ok: false, error: 'invalid-url' }
+    const duplicate = this.isDuplicate(det.url)
+    try {
+      if (det.kind === 'x') {
+        if (!det.handle) return { ok: false, error: 'x-no-handle', kind: 'x', url: det.url, duplicate }
+        const x = await this.getX()
+        if (!x.connected) return { ok: false, error: 'x-not-connected', kind: 'x', url: det.url, duplicate }
+        const posts = await x.userPosts(det.handle)
+        return {
+          ok: true, kind: 'x', url: det.url, title: det.title, via: 'x', itemCount: posts.length, duplicate,
+          items: posts.slice(0, PREVIEW_ITEMS).map((p) => ({ title: clip(p.text, 200) ?? '', url: `https://x.com/${det.handle}/status/${p.id}`, ...(p.createdAt ? { at: p.createdAt } : {}) })),
+        }
+      }
+      const target = det.feedUrl ?? det.url
+      const res = await fetchText(target, {}, this.fetchImpl)
+      if (res.status >= 400) return { ok: false, error: `http-${res.status}`, kind: det.kind, url: det.url, duplicate }
+      let feed = parseFeed(res.text)
+      let feedUrl = det.feedUrl
+      let via: 'feed' | 'autodiscovery' | 'page' = 'feed'
+      if (feed && !feedUrl) feedUrl = target
+      if (!feed && !det.feedUrl) {
+        for (const link of discoverFeedLinks(res.text, res.finalUrl).slice(0, 3)) {
+          try {
+            const r2 = await fetchText(link, {}, this.fetchImpl)
+            const f2 = r2.status < 400 ? parseFeed(r2.text) : null
+            if (f2) { feed = f2; feedUrl = link; via = 'autodiscovery'; break }
+          } catch {
+            // next candidate
+          }
+        }
+      }
+      if (feed) {
+        const kind = det.kind === 'unknown' || det.kind === 'rss' || det.kind === 'atom' ? feed.format : det.kind
+        const now = this.now()
+        return {
+          ok: true, kind, url: det.url, title: det.title ?? feed.title, feedUrl, via, itemCount: feed.items.length, duplicate,
+          items: feed.items.slice(0, PREVIEW_ITEMS).map((it) => ({
+            title: clip(it.title, 200) ?? it.url ?? '',
+            ...(it.url ? { url: it.url } : {}),
+            ...(it.at && it.at <= now + 86_400_000 ? { at: it.at } : {}),
+            ...(it.summary ? { summary: clip(it.summary, 240) } : {}),
+          })),
+        }
+      }
+      if (det.feedUrl) return { ok: false, error: 'not-a-feed', kind: det.kind, url: det.url, duplicate }
+      const looksHtml = /html/i.test(res.contentType) || /<html[\s>]/i.test(res.text.slice(0, 4096))
+      if (!looksHtml) return { ok: false, error: 'unrecognized-content', kind: det.kind, url: det.url, duplicate }
+      const lines = pageText(res.text).split('\n').map((l) => l.trim()).filter((l) => l.length > 24).slice(0, 3)
+      return {
+        ok: true, kind: det.kind === 'youtube' ? 'youtube' : 'page', url: det.url, title: pageTitle(res.text), via: 'page', itemCount: 0, duplicate,
+        items: lines.map((l) => ({ title: clip(l, 200) ?? l })),
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? (e.name === 'AbortError' ? 'timeout' : e.message) : String(e)
+      return { ok: false, error: msg.slice(0, 300), kind: det.kind, url: det.url, duplicate }
+    }
   }
 
   async refresh(id?: string): Promise<void> {
@@ -243,7 +423,7 @@ export class FeedService {
       else await this.pollSource(id)
       return
     }
-    for (const s of [...this.load().sources]) await this.pollSource(s.id)
+    for (const s of [...this.load().sources]) if (!s.paused) await this.pollSource(s.id)
     await this.pollX()
   }
 
@@ -272,7 +452,7 @@ export class FeedService {
     this.ticking = true
     try {
       const now = this.now()
-      for (const s of [...this.load().sources]) if (this.isDue(s, now)) await this.pollSource(s.id)
+      for (const s of [...this.load().sources]) if (!s.paused && this.isDue(s, now)) await this.pollSource(s.id)
       const last = this.load().x?.lastFetchAt ?? 0
       if (now - last >= FEED_X_INTERVAL_MIN * 60_000) await this.pollX()
     } finally {
@@ -333,8 +513,14 @@ export class FeedService {
     if (!source) return
     this.busy.add(id)
     try {
+      this.onChange?.()
+    } catch {
+      // «checking» push is best-effort
+    }
+    try {
       await this.pollSourceInner(source)
       source.lastStatus = 'ok'
+      source.lastOkAt = this.now()
       delete source.lastError
     } catch (e) {
       const msg = e instanceof Error ? (e.name === 'AbortError' ? 'timeout' : e.message) : String(e)

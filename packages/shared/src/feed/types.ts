@@ -53,6 +53,52 @@ export interface FeedItem {
   automationId?: string
 }
 
+/** Color labels for items and sources (Лента). */
+export type FeedColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'violet' | 'gray'
+
+export const FEED_COLORS: readonly FeedColor[] = ['red', 'orange', 'yellow', 'green', 'blue', 'violet', 'gray'] as const
+
+export function isFeedColor(v: unknown): v is FeedColor {
+  return typeof v === 'string' && (FEED_COLORS as readonly string[]).includes(v)
+}
+
+/** User annotations on a feed item, keyed by item id (any tab). */
+export interface FeedItemAnnotation {
+  tags?: string[]
+  color?: FeedColor
+  starred?: boolean
+  /** Read time, ms epoch. */
+  readAt?: number
+}
+
+/** Patch for feed:items:annotate. `null` clears color; tags replace the list. */
+export interface FeedAnnotationPatch {
+  tags?: string[]
+  color?: FeedColor | null
+  starred?: boolean
+  read?: boolean
+}
+
+export const FEED_MAX_TAGS = 12
+export const FEED_MAX_TAG_LENGTH = 32
+
+/** Trim, collapse spaces, drop leading '#', dedupe case-insensitively, cap count and length. */
+export function normalizeFeedTags(tags: unknown): string[] {
+  if (!Array.isArray(tags)) return []
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const raw of tags) {
+    if (typeof raw !== 'string') continue
+    const v = raw.replace(/\s+/g, ' ').trim().replace(/^#+\s*/, '').slice(0, FEED_MAX_TAG_LENGTH)
+    const key = v.toLowerCase()
+    if (!v || seen.has(key)) continue
+    seen.add(key)
+    out.push(v)
+    if (out.length >= FEED_MAX_TAGS) break
+  }
+  return out
+}
+
 /** Detected source type. `page` = no feed found, tracked by page diff. */
 export type FeedSourceKind = 'rss' | 'atom' | 'youtube' | 'github' | 'x' | 'page' | 'unknown'
 
@@ -75,7 +121,63 @@ export interface FeedSource {
   /** Error code or message for the last failed fetch. */
   lastError?: string
   itemCount?: number
+  /** Last successful fetch, ms epoch. */
+  lastOkAt?: number
+  /** User color label; items inherit it unless they have their own. */
+  color?: FeedColor
+  /** Default tags applied (virtually) to every item of the source. */
+  tags?: string[]
+  /** Paused sources are not polled in the background. */
+  paused?: boolean
+  /** A fetch is in flight right now (not persisted). */
+  checking?: boolean
 }
+
+/** Patch for feed:sources:update. `null` clears color. */
+export interface FeedSourcePatch {
+  intervalMin?: number
+  title?: string
+  color?: FeedColor | null
+  tags?: string[]
+  paused?: boolean
+}
+
+/** Options for feed:sources:add beyond the URL. */
+export interface FeedAddSourceOptions {
+  intervalMin?: number
+  title?: string
+  color?: FeedColor
+  tags?: string[]
+}
+
+/** feed:sources:preview — dry-run fetch before saving a source. */
+export interface FeedPreviewItem {
+  title: string
+  url?: string
+  at?: number
+  summary?: string
+}
+
+export type FeedPreviewResult =
+  | {
+      ok: true
+      kind: FeedSourceKind
+      url: string
+      title?: string
+      feedUrl?: string
+      /** How the items were found. */
+      via: 'feed' | 'autodiscovery' | 'page' | 'x'
+      itemCount: number
+      items: FeedPreviewItem[]
+      duplicate: boolean
+    }
+  | {
+      ok: false
+      error: string
+      kind?: FeedSourceKind
+      url?: string
+      duplicate?: boolean
+    }
 
 export type XConnectionState = 'not-connected' | 'connected' | 'error'
 
@@ -91,6 +193,8 @@ export interface FeedListResult {
   sources: FeedSource[]
   x: XConnectionStatus
   generatedAt: number
+  /** Tags/colors/star/read per item id. Absent on older servers. */
+  annotations?: Record<string, FeedItemAnnotation>
 }
 
 export const FEED_INTERVALS_MIN: readonly number[] = [15, 30, 60, 180, 720, 1440] as const
