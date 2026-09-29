@@ -879,7 +879,7 @@ function EditorInner({
   )
 
   const selected = graph.scenes.find((s) => s.id === selectedId) ?? null
-  const mapEmpty = isSessionMapEmpty({ scenes: graph?.scenes, draftNodes })
+  const mapEmpty = isSessionMapEmpty({ scenes: graph.scenes, draftNodes })
   const selectedDraft = draftNodes.find((node) => node.id === selectedId) ?? null
 
   const resetLayout = () => {
