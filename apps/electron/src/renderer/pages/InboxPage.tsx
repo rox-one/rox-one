@@ -3,8 +3,9 @@
  * credential requests, plans, knowledge (memory) proposals, skill candidates,
  * new messenger senders and unread agent replies. Every action goes through
  * the existing IPC for that source; done/snooze is renderer-only triage.
- * Mail is not connected (no JMAP bridge) and meeting proposals have no
- * list RPC yet — both are stated, not faked.
+ * Mail (Rox Mail over JMAP, local Stalwart pilot) has its own «Почта»
+ * section; unread inbox mail also surfaces in «Все». Meeting proposals have
+ * no list RPC yet — stated, not faked.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTeamInboxNav } from '@/components/team/TeamInboxNavItem'
@@ -33,6 +34,7 @@ import {
   reopen,
   snooze,
   snoozeTargets,
+  sortInbox,
   type CredentialLike,
   type InboxFilter,
   type InboxItem,
@@ -42,6 +44,10 @@ import {
   type PendingSkillLike,
   type PermissionLike,
 } from './inbox/inbox-model'
+import type { MailFolder } from '../../shared/mail-local'
+import { useMail } from './inbox/mail/useMail'
+import { MailCompose, MailListPanel, MailNavSection, MailReader, folderLabel, useComposeState } from './inbox/mail/MailPanels'
+import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './inbox/mail/mail-view'
 
 const KIND_GLYPH: Record<InboxKind, string> = {
   permission: '⚿',
@@ -52,6 +58,7 @@ const KIND_GLYPH: Record<InboxKind, string> = {
   sender: '☺',
   reply: '◧',
   error: '!',
+  mail: '✉',
 }
 
 const KIND_TONE: Record<InboxKind, Tone> = {
@@ -63,12 +70,21 @@ const KIND_TONE: Record<InboxKind, Tone> = {
   sender: 'muted',
   reply: 'muted',
   error: 'danger',
+  mail: 'info',
 }
 
 const KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error']
 
-function sameFilter(a: InboxFilter, b: InboxFilter): boolean {
+/** Inbox views plus a mail folder (`mail` = JMAP mailbox id, 'inbox' before the list loads). */
+type PageFilter = InboxFilter | { mail: string }
+
+function isMailFilter(f: PageFilter): f is { mail: string } {
+  return typeof f === 'object' && 'mail' in f
+}
+
+function sameFilter(a: PageFilter, b: PageFilter): boolean {
   if (typeof a === 'string' || typeof b === 'string') return a === b
+  if (isMailFilter(a) || isMailFilter(b)) return isMailFilter(a) && isMailFilter(b) && a.mail === b.mail
   return a.kind === b.kind
 }
 
@@ -76,7 +92,12 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const teamInbox = useTeamInboxNav()
   const { t, i18n } = useTranslation()
   const { items, state, setState, counts, now, errors, reload, workspaceId, shell } = useInboxItems({ withRemote: true })
-  const [filter, setFilter] = useState<InboxFilter>('all')
+  const [filter, setFilter] = useState<PageFilter>('all')
+  const mail = useMail({ active: true })
+  const composeState = useComposeState(mail)
+  const [mailSelected, setMailSelected] = useState<string | null>(null)
+  const [pinnedMail, setPinnedMail] = useState<InboxItem | null>(null)
+  const inMail = isMailFilter(filter)
   const [localSelected, setLocalSelected] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -93,11 +114,58 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const dateFmt = useMemo(() => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), [locale])
   const when = (at: number) => (new Date(at).toDateString() === new Date(now).toDateString() ? timeFmt.format(at) : dateFmt.format(at))
 
-  const visible = useMemo(() => filterInbox(items, state, filter, now), [items, state, filter, now])
-  const selected = useMemo(() => items.find((i) => i.id === currentId) ?? null, [items, currentId])
+  // Unread inbox mail joins «Все»/«Сообщения»; the open one stays pinned after it is marked read.
+  const noSubject = t('inbox.mail.noSubject')
+  const mailReady = mail.status?.state === 'ready'
+  const unreadMailIds = useMemo(() => new Set(mail.unread.map((m) => mailItemId(m.id))), [mail.unread])
+  const mailItems = useMemo(() => {
+    if (!mailReady) return []
+    const list = mail.unread.map((m) => mailToInboxItem(m, noSubject))
+    if (pinnedMail && !unreadMailIds.has(pinnedMail.id)) list.push(pinnedMail)
+    return list
+  }, [mailReady, mail.unread, noSubject, pinnedMail, unreadMailIds])
+  const allItems = useMemo(() => {
+    if (!mailItems.length) return items
+    return sortInbox([...items, ...mailItems])
+  }, [items, mailItems])
+  const allCounts = useMemo(() => {
+    const n = mailReady ? mail.unread.length : 0
+    return { ...counts, all: counts.all + n, messages: counts.messages + n, byKind: { ...counts.byKind, mail: n } }
+  }, [counts, mailReady, mail.unread.length])
+
+  const visible = useMemo(() => (isMailFilter(filter) ? [] : filterInbox(allItems, state, filter, now)), [allItems, state, filter, now])
+  const selected = useMemo(() => (inMail ? null : allItems.find((i) => i.id === currentId) ?? null), [allItems, currentId, inMail])
+  const selectedEmailId = selected?.kind === 'mail' ? emailIdFromItem(selected.id) : null
   const decisions = visible.filter((i) => i.group === 'decision')
   const messages = visible.filter((i) => i.group === 'message')
   const ordered = useMemo(() => [...decisions, ...messages], [decisions, messages])
+
+  useEffect(() => {
+    if (inMail) return
+    if (selectedEmailId && selected) {
+      setPinnedMail(selected)
+      void mail.open(selectedEmailId)
+    } else {
+      setPinnedMail(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEmailId, inMail])
+
+  const selectMail = useCallback((id: string | null) => {
+    setMailSelected(id)
+    composeState.close()
+    void mail.open(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mail.open])
+  const openFolder = (f: MailFolder) => {
+    setFilter({ mail: f.id })
+    mail.setFolder({ folderId: f.id === 'inbox' ? null : f.id, role: f.role })
+    selectMail(null)
+  }
+  const mailNext = (id: string) => {
+    const idx = mail.items.findIndex((i) => i.id === id)
+    return mail.items[idx + 1]?.id ?? mail.items[idx - 1]?.id ?? null
+  }
 
   useEffect(() => {
     setActionError(null)
@@ -114,6 +182,13 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
 
   const done = (item: InboxItem) => {
     const next = nextAfter(item.id)
+    if (item.kind === 'mail') {
+      const emailId = emailIdFromItem(item.id)
+      if (emailId && unreadMailIds.has(item.id)) void mail.act((a) => a.setFlags([emailId], { seen: true })).catch(() => undefined)
+      setPinnedMail(null)
+      select(next)
+      return
+    }
     setState((s) => markDone(s, item.id, Date.now()))
     if (item.kind === 'reply' || item.kind === 'error') {
       if (item.sessionId) void window.electronAPI?.sessionCommand?.(item.sessionId, { type: 'markRead' })
@@ -147,9 +222,21 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, [contenteditable="true"]')) return
-      if (event.metaKey || event.ctrlKey || event.altKey || !selected) return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (inMail) {
+        const m = mail.message && mail.message.id === mailSelected ? mail.message : null
+        if (!m || composeState.compose) return
+        const next = mailNext(m.id)
+        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => selectMail(next), (e) => mail.setError(String(e))) }
+        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => selectMail(next), (e) => mail.setError(String(e))) }
+        if (event.key === 'r') { event.preventDefault(); composeState.start('reply', m) }
+        if (event.key === 'Escape') selectMail(null)
+        return
+      }
+      if (!selected) return
       if (event.key === 'e') { event.preventDefault(); done(selected) }
-      if (event.key === 's') { event.preventDefault(); snoozeItem(selected, snoozeTargets(Date.now()).tomorrow) }
+      if (event.key === 's' && selected.kind !== 'mail') { event.preventDefault(); snoozeItem(selected, snoozeTargets(Date.now()).tomorrow) }
+      if (event.key === 'r' && selected.kind === 'mail' && mail.message) { event.preventDefault(); composeState.start('reply', mail.message) }
       if (event.key === 'Escape') select(null)
     }
     window.addEventListener('keydown', onKey)
@@ -161,9 +248,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   const navigator = (
     <>
       <NavTitle>{t('inbox.title')}</NavTitle>
-      <NavItem label={t('inbox.view.all')} count={counts.all} active={sameFilter(filter, 'all')} onClick={() => setFilter('all')} testId="inbox-nav-all" />
+      <NavItem label={t('inbox.view.all')} count={allCounts.all} active={sameFilter(filter, 'all')} onClick={() => setFilter('all')} testId="inbox-nav-all" />
       <NavItem label={t('inbox.view.decisions')} count={counts.decisions} dot={counts.blocking ? 'warning' : undefined} active={sameFilter(filter, 'decisions')} onClick={() => setFilter('decisions')} testId="inbox-nav-decisions" />
-      <NavItem label={t('inbox.view.messages')} count={counts.messages} active={sameFilter(filter, 'messages')} onClick={() => setFilter('messages')} />
+      <NavItem label={t('inbox.view.messages')} count={allCounts.messages} active={sameFilter(filter, 'messages')} onClick={() => setFilter('messages')} />
       <NavItem label={t('inbox.view.snoozed')} count={counts.snoozed} active={sameFilter(filter, 'snoozed')} onClick={() => setFilter('snoozed')} />
       <NavItem label={t('inbox.view.done')} count={counts.done} active={sameFilter(filter, 'done')} onClick={() => setFilter('done')} />
       <NavSection title={t('inbox.types')}>
@@ -177,9 +264,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
           />
         ))}
       </NavSection>
+      <MailNavSection mail={mail} activeFolderId={inMail ? filter.mail : null} onSelectFolder={openFolder} />
       <NavSection title={t('inbox.notConnected')}>
         <NavItem label={t('inbox.kind.meetingProposals')} dot="muted" onClick={() => navigate(routes.view.meetings())} testId="inbox-nav-meetings" />
-        <NavItem label={t('inbox.kind.mail')} dot="muted" disabled />
         {teamInbox.enabled && !teamInbox.connected ? (
           <NavItem label={t('teamCollab.inboxNav')} count={teamInbox.count || undefined} dot="muted" onClick={() => navigate(routes.view.settings('organizations'))} testId="inbox-nav-team" />
         ) : null}
@@ -192,7 +279,7 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       key={item.id}
       testId={`inbox-row-${item.kind}`}
       selected={item.id === currentId}
-      unread={item.group === 'message' && state.done[item.id] === undefined}
+      unread={item.kind === 'mail' ? unreadMailIds.has(item.id) : item.group === 'message' && state.done[item.id] === undefined}
       onClick={() => select(item.id)}
     >
       <span aria-hidden className="w-4 shrink-0 pt-px text-center text-text-muted">{KIND_GLYPH[item.kind]}</span>
@@ -208,7 +295,16 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
   )
 
   const errorEntries = Object.entries(errors).filter(([, v]) => v)
-  const listPanel = (
+  const mailFolder = inMail ? mail.folders.find((f) => f.id === filter.mail) : undefined
+  const listPanel = inMail ? (
+    <MailListPanel
+      mail={mail}
+      title={mailFolder ? folderLabel(t, mailFolder) : t('inbox.kind.mail')}
+      selectedId={mailSelected}
+      onSelect={selectMail}
+      onCompose={() => composeState.start('new', null)}
+    />
+  ) : (
     <>
       <ListHeader
         title={typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
@@ -360,7 +456,39 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     }
   }
 
-  const detail = selected ? (
+  const composeDetail = composeState.compose ? (
+    <MailCompose key={composeState.compose.key} mail={mail} draft={composeState.compose.draft} source={composeState.compose.source} onClose={() => composeState.close()} />
+  ) : null
+  const openMessage = mail.message
+  const detail = composeDetail ?? (inMail ? (
+    openMessage && openMessage.id === mailSelected ? (
+      <MailReader
+        mail={mail}
+        message={openMessage}
+        onCompose={(mode) => composeState.start(mode, openMessage)}
+        onEditDraft={composeState.edit}
+        onAfterRemove={() => selectMail(mailNext(openMessage.id))}
+      />
+    ) : (
+      <EmptyState title={t('inbox.selectTitle')} body={t('inbox.selectBody')} />
+    )
+  ) : selected?.kind === 'mail' ? (
+    <div className="flex flex-col" data-testid="inbox-detail" data-kind="mail">
+      {openMessage && openMessage.id === selectedEmailId ? (
+        <MailReader
+          compact
+          mail={mail}
+          message={openMessage}
+          onCompose={(mode) => composeState.start(mode, openMessage)}
+          onEditDraft={composeState.edit}
+          onAfterRemove={() => { setPinnedMail(null); select(nextAfter(selected.id)) }}
+        />
+      ) : null}
+      <div className="px-5 pb-4">
+        <Button onClick={() => done(selected)} title="E">{t('inbox.done')}</Button>
+      </div>
+    </div>
+  ) : selected ? (
     <div className="flex flex-col px-5 py-4" data-testid="inbox-detail" data-kind={selected.kind}>
       <div className="flex items-center gap-2 text-[12px] text-text-muted">
         <Badge tone={KIND_TONE[selected.kind]}>{kindLabel(selected.kind)}</Badge>
@@ -376,13 +504,13 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
     <EmptyState title={t('inbox.resolvedTitle')} body={t('inbox.resolvedBody')} action={<Button onClick={() => select(null)}>{t('common.backToList')}</Button>} />
   ) : (
     <EmptyState title={t('inbox.selectTitle')} body={t('inbox.selectBody')} />
-  )
+  ))
 
   const status = (
     <>
       <span>{t('inbox.status.blocking', { count: counts.blocking })}</span>
       <span aria-hidden>·</span>
-      <span>{t('inbox.status.mail')}</span>
+      <span data-testid="mail-status">{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', error: mail.status?.error ?? '', flag: mail.status?.flag ?? '' })}</span>
     </>
   )
 

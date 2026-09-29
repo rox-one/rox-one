@@ -68,6 +68,7 @@
     "./interceptor": "./src/interceptor-common.ts",
     "./kanban": "./src/kanban/index.ts",
     "./kanban/browser": "./src/kanban/browser.ts",
+    "./mail": "./src/mail/index.ts",
     "./knowledge/oem-pin": "./src/knowledge/oem-pin.ts",
     "./knowledge/provider-gate": "./src/knowledge/provider-gate.ts",
     "./knowledge/vault-insights": "./src/knowledge/vault-insights.ts",
