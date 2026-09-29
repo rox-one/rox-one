@@ -786,7 +786,7 @@ function FocusWidget({ edit }: WidgetProps) {
   const now = useNow(running ? 1000 : 60_000)
   const tasks = usePersonalTasks()
   const today = focusMinutesOn(focus, localDay(now), now)
-  const top3 = focus.top3.map((id) => tasks.find((task) => task.id === id)).filter((task): task is NonNullable<typeof task> => !!task)
+  const top3 = focus.top3.map((id) => tasks.find((task) => task.id === id)).filter((task): task is NonNullable<typeof task> => !!task && !task.trashedAt)
   const left = running && focus.active ? Math.max(0, focus.active.endsAt - now) : 0
   const mm = String(Math.floor(left / 60_000)).padStart(2, '0')
   const ss = String(Math.floor((left % 60_000) / 1000)).padStart(2, '0')

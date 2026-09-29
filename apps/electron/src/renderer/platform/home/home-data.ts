@@ -272,12 +272,14 @@ export interface TaskLike {
   dueAt?: number
   completedAt?: number
   cancelledAt?: number
+  /** Moved to Корзина (#1084) — never counted or shown. */
+  trashedAt?: number
   createdAt: number
   order?: number
 }
 
 export function isOpenTaskLike(task: TaskLike): boolean {
-  return !task.completedAt && !task.cancelledAt
+  return !task.completedAt && !task.cancelledAt && !task.trashedAt
 }
 
 const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2, none: 3 }
@@ -396,6 +398,7 @@ export function taskTrackerStats(tasks: readonly TaskLike[], now: number): TaskT
   let doneToday = 0
   let doneWeek = 0
   for (const task of tasks) {
+    if (task.trashedAt) continue
     if (task.completedAt) {
       if (task.completedAt >= dayStart) doneToday += 1
       if (task.completedAt >= weekStart) doneWeek += 1
@@ -496,7 +499,7 @@ export function buildWeekCalendar(input: WeekCalendarInput, now: number, days = 
     put({ kind: 'meeting', id: m.id, title: m.title, at })
   }
   for (const t of input.tasks) {
-    if (t.completedAt || t.cancelledAt || t.dueAt == null) continue
+    if (t.completedAt || t.cancelledAt || t.trashedAt || t.dueAt == null) continue
     if (t.dueAt < first) put({ kind: 'task', id: t.id, title: t.title, at: first, overdue: true })
     else put({ kind: 'task', id: t.id, title: t.title, at: t.dueAt })
   }

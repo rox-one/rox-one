@@ -126,6 +126,8 @@ describe('task tracker / calls / week calendar', () => {
       task('e', { completedAt: now - 3 * day }),
       task('f', { cancelledAt: now }),
       task('g', { list: 'someday' }),
+      task('trashed', { list: 'today', dueAt: today - day, completedAt: now, trashedAt: now }),
+      task('trashed-open', { list: 'today', dueAt: today - day, trashedAt: now }),
     ], now)
     expect(stats).toEqual({ open: 4, overdue: 1, today: 2, doneToday: 1, doneWeek: 2, byList: { inbox: 1, today: 1, upcoming: 0, anytime: 1, someday: 1 } })
   })
@@ -146,7 +148,7 @@ describe('task tracker / calls / week calendar', () => {
   it('builds 7 days from today: meetings, due tasks (overdue pinned to today), automation runs, notes', () => {
     const days = buildWeekCalendar({
       meetings: [{ id: 'm1', title: 'Sync', status: 'planned', createdAt: now - day, scheduledAt: today + day + 10 * 3600_000 }],
-      tasks: [task('late', { dueAt: today - 2 * day }), task('soon', { dueAt: today + 2 * day }), task('done', { dueAt: today + day, completedAt: now }), task('far', { dueAt: today + 30 * day })],
+      tasks: [task('binned', { dueAt: today, trashedAt: now }), task('late', { dueAt: today - 2 * day }), task('soon', { dueAt: today + 2 * day }), task('done', { dueAt: today + day, completedAt: now }), task('far', { dueAt: today + 30 * day })],
       automationRuns: [{ id: 'a1', title: 'Digest', at: today + 9 * 3600_000 }, { id: 'a1', title: 'Digest', at: today + 8 * day }],
       notes: [{ id: 'n1', title: 'Idea', createdAt: now - 60_000 }, { id: 'n0', title: 'Old', createdAt: now - 5 * day }],
     }, now)
