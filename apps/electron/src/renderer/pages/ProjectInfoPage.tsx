@@ -425,7 +425,7 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
               title={t('projectInfo.tabAssets')}
               actions={
                 <label
-                  className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[6px] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   {t('projectInfo.uploadAssets')}
@@ -518,7 +518,7 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                         iconClassName="h-5 w-5 text-foreground/60"
                       />
                     </div>
-                    <label className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors cursor-pointer">
+                    <label className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-[6px] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors cursor-pointer">
                       <ImagePlus className="h-3.5 w-3.5" />
                       {t('projectInfo.iconUpload')}
                       <input

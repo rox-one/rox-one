@@ -64,14 +64,15 @@ export function ProjectsHomeInMain({
           <span className="text-sm font-medium">{t('sidebar.allProjects')}</span>
           <span className="text-xs text-foreground/40">{projects.length}</span>
         </div>
-        <button
+        {/* Empty list: the empty state carries the single «Добавить проект» CTA. */}
+        {projects.length > 0 && <button
           type="button"
           onClick={openAdd}
           disabled={!workspaceId}
           className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
         >
           {t('projectsList.addProject')}
-        </button>
+        </button>}
       </div>
       <div className="min-h-0 flex-1 overflow-hidden">
         <ProjectsListPanel
