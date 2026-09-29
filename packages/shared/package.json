@@ -107,6 +107,7 @@
     "./sources/types": "./src/sources/types.ts",
     "./tasks": "./src/tasks/index.ts",
     "./team": "./src/team/index.ts",
+    "./feed": "./src/feed/index.ts",
     "./toolchain": "./src/toolchain/index.ts",
     "./toolchain-runtime": "./src/toolchain-runtime.ts",
     "./toolchain/types": "./src/toolchain/types.ts",

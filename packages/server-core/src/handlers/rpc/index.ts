@@ -42,6 +42,7 @@ import { registerProjectsHandlers } from './projects'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
+import { registerFeedHandlers } from './feed'
 import { registerCollectionHandlers } from './collection'
 
 import { registerSkillsHandlers } from './skills'
@@ -115,6 +116,7 @@ export function registerCoreRpcHandlers(
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)
+  registerFeedHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 
   registerSkillsHandlers(server, deps)

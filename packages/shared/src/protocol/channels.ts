@@ -851,6 +851,17 @@ export const RPC_CHANNELS = {
     MIGRATE: 'personalTasks:migrate',
     CHANGED: 'personalTasks:changed',
   },
+  /** Лента aggregator: agents/team/news/subscriptions (server-core/src/feed). */
+  feed: {
+    LIST: 'feed:list',
+    CHANGED: 'feed:changed',
+    SOURCES_ADD: 'feed:sources:add',
+    SOURCES_REMOVE: 'feed:sources:remove',
+    SOURCES_UPDATE: 'feed:sources:update',
+    REFRESH: 'feed:refresh',
+    X_SET_TOKEN: 'feed:x:setToken',
+    X_CLEAR: 'feed:x:clear',
+  },
   kanban: {
     GET_CONFIG: 'kanban:getConfig',
     SET_CONFIG: 'kanban:setConfig',

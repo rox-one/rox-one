@@ -174,6 +174,9 @@ export const routes = {
     /** Mode screen `inbox` — `inbox[/item/{itemId}]` */
     inbox: (itemId?: string) =>
       itemId ? `inbox/item/${encodeURIComponent(itemId)}` as const : 'inbox' as const,
+    /** Mode screen `feed` — `feed[/item/{itemId}]` */
+    feed: (itemId?: string) =>
+      itemId ? `feed/item/${encodeURIComponent(itemId)}` as const : 'feed' as const,
     meetings: (meetingId?: string) =>
       meetingId ? `meetings/meeting/${encodeURIComponent(meetingId)}` as const : 'meetings' as const,
 
