@@ -118,6 +118,7 @@ export const DEFAULT_STATUS_IDS = new Set(['backlog', 'todo', 'needs-review', 'd
 const DEFAULT_STATUS_ENGLISH_LABELS: Record<string, string> = {
   backlog: 'Backlog',
   todo: 'Todo',
+  'in-progress': 'In Progress',
   'needs-review': 'Needs Review',
   done: 'Done',
   cancelled: 'Cancelled',
@@ -134,8 +135,8 @@ export function resolveStatusDisplayLabel(
   state: { id: string; label: string },
   t: TFunction,
 ): string {
-  if (DEFAULT_STATUS_IDS.has(state.id)) {
-    const defaultEnglish = DEFAULT_STATUS_ENGLISH_LABELS[state.id]
+  const defaultEnglish = DEFAULT_STATUS_ENGLISH_LABELS[state.id]
+  if (defaultEnglish) {
     // Only translate when the persisted label matches the default English seed
     if (state.label === defaultEnglish) {
       return t(`status.${state.id}`, defaultEnglish)
@@ -169,6 +170,8 @@ const DEFAULT_LABEL_ENGLISH_NAMES: Record<string, string> = {
   feedback: 'Feedback',
   priority: 'Priority',
   project: 'Project',
+  // Seeded by the default scheduled automations (automations/default-seed-template.ts)
+  scheduled: 'Scheduled',
 }
 
 /**
@@ -183,7 +186,9 @@ export function resolveLabelDisplayName(
   t: TFunction,
 ): string {
   const defaultEnglish = DEFAULT_LABEL_ENGLISH_NAMES[label.id]
-  if (defaultEnglish && label.name === defaultEnglish) {
+  // Translate the untouched English seed, or the id-derived fallback name used
+  // when a label entry has no config yet (e.g. "scheduled").
+  if (defaultEnglish && (label.name === defaultEnglish || label.name === label.id)) {
     return t(`label.default.${label.id}`, defaultEnglish)
   }
   return label.name

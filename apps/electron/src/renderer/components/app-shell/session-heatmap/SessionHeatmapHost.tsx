@@ -42,6 +42,7 @@ import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import type { SessionStatus } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 const PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const
@@ -106,7 +107,7 @@ function formatRelative(ts: number | null | undefined): string {
 
 function formatDate(ts: number | null | undefined): string {
   if (ts == null || !Number.isFinite(ts)) return '—'
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return new Date(ts).toLocaleDateString(getAppLocale(), { month: 'short', day: 'numeric' })
 }
 
 function dayMetricValue(session: CollectionSessionMeta, id: HeatmapDayOrderBy): string {
@@ -267,7 +268,7 @@ export function SessionHeatmapHost() {
   const focusedDateLabel = React.useMemo(() => {
     const [y, m, d] = focusedKey.split('-').map(Number)
     if (!y || !m || !d) return focusedKey
-    return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    return new Date(y, m - 1, d).toLocaleDateString(getAppLocale(), {
       weekday: 'long',
       month: 'long',
       day: 'numeric',

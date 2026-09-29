@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
-import type { SessionStatus } from '@/config/session-status-config'
+import { useTranslation } from 'react-i18next'
+import { resolveStatusDisplayLabel, type SessionStatus } from '@/config/session-status-config'
 
 interface StatusBadgeProps {
   status: SessionStatus
@@ -16,6 +17,7 @@ interface StatusBadgeProps {
  * When `live`, the dot gains a ping ring to signal an in-flight turn.
  */
 export function StatusBadge({ status, live = false, className }: StatusBadgeProps) {
+  const { t } = useTranslation()
   const color = status.resolvedColor
   return (
     <span
@@ -42,7 +44,7 @@ export function StatusBadge({ status, live = false, className }: StatusBadgeProp
           aria-hidden
         />
       </span>
-      {status.label}
+      {resolveStatusDisplayLabel(status, t)}
     </span>
   )
 }

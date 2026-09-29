@@ -13,6 +13,8 @@
  */
 
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
+import { resolveLabelDisplayName } from '@/config/session-status-config'
 import { LabelValuePopover } from './label-value-popover'
 import { LabelIcon, LabelValueTypeIcon } from './label-icon'
 import { MetadataBadge } from './metadata-badge'
@@ -59,6 +61,7 @@ export function LabelBadgeRow({
   className,
 }: LabelBadgeRowProps) {
   const { isDark } = useTheme()
+  const { t } = useTranslation()
 
   // Track which badge's popover is open (by index)
   const [openIndex, setOpenIndex] = React.useState<number | null>(null)
@@ -106,7 +109,7 @@ export function LabelBadgeRow({
             onRemove={() => handleRemove(index)}
           >
             <MetadataBadge
-              label={resolvedConfig.name}
+              label={resolveLabelDisplayName(resolvedConfig, t)}
               value={displayValue}
               onValueClick={resolvedConfig.valueType === 'link' && parsed.rawValue ? () => openLabelLink(parsed.rawValue!) : undefined}
               icon={<LabelIcon label={resolvedConfig} size="lg" />}

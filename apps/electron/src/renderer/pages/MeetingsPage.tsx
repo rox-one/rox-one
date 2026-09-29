@@ -58,6 +58,7 @@ import {
   resolveMeetingSelectionApi,
   type MeetingSelectionApi,
 } from './meetings/selection'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 export type { MeetingListItem }
 
@@ -69,7 +70,7 @@ export default function MeetingsPage(props: {
   actorId?: string
   api?: (MeetingProposalApi & Partial<MeetingOpenTargetApi> & Partial<MeetingCatalogApi> & Partial<MeetingSearchApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi> & Partial<MeetingSelectionApi>) | null
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const shell = useOptionalAppShellContext()
   const workspaceId = props.workspaceId ?? shell?.activeWorkspaceId ?? null
   const actorId = props.actorId ?? 'local-actor'
@@ -118,9 +119,9 @@ export default function MeetingsPage(props: {
   const selectedMissing = !!selectedId && !selected && !selectionError && (props.meetings !== undefined || currentLoadedSelection !== null)
   const selectedLoading = !!selectedId && !selected && !selectedMissing && !selectionError
   const weekHeaders = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat(undefined, { weekday: 'short' })
+    const formatter = new Intl.DateTimeFormat(i18n.resolvedLanguage || i18n.language || getAppLocale(), { weekday: 'short' })
     return Array.from({ length: 7 }, (_, index) => formatter.format(new Date(2024, 0, 1 + index)))
-  }, [])
+  }, [i18n.resolvedLanguage, i18n.language])
 
   useEffect(() => {
     if (props.meetings !== undefined) return

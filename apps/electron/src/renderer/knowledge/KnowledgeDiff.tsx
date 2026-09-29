@@ -34,6 +34,7 @@ import {
   type KnowledgeMutationsApi,
   type TranslateFn,
 } from './proposal-actions'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 /** TTL of an approved proposal server-side (spec 05 §3.7) — UI hint only. */
 const APPROVAL_TTL_MS = 24 * 60 * 60 * 1000
@@ -298,7 +299,7 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
         </div>
         <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
           {proposal.targetRef.kind} · {proposal.targetRef.id} ·{' '}
-          {new Date(proposal.createdAt).toLocaleString()}
+          {new Date(proposal.createdAt).toLocaleString(getAppLocale())}
         </p>
         {proposal.status === 'conflict' && (
           <p className="mt-1 text-[12px] leading-snug text-destructive">
@@ -316,7 +317,7 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
         <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 overflow-hidden p-3">
           <DiffColumn
             title={t('knowledge.diff.base')}
-            meta={new Date(proposal.baseReadAt).toLocaleString()}
+            meta={new Date(proposal.baseReadAt).toLocaleString(getAppLocale())}
           >
             <PlainContentView content={proposal.preState} />
           </DiffColumn>
@@ -332,7 +333,7 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
         <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-hidden p-3">
           <DiffColumn
             title={t('knowledge.diff.base')}
-            meta={new Date(proposal.baseReadAt).toLocaleString()}
+            meta={new Date(proposal.baseReadAt).toLocaleString(getAppLocale())}
           >
             <PlainContentView content={proposal.preState} />
           </DiffColumn>

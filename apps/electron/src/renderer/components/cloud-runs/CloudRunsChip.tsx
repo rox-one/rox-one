@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useRegisterModal } from '@/context/ModalContext'
 import { navigate, routes } from '@/lib/navigate'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 type RunState = 'queued' | 'start' | 'ready' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired'
 interface ListedRun {
@@ -577,7 +578,7 @@ function CloudRunsChipInner({
                       />
                       <span className="min-w-0 flex-1 whitespace-normal break-words" title={schedule.topic}>{schedule.topic}</span>
                       <span className="shrink-0 text-muted-foreground">{t('cloudRuns.everyHours', { hours: schedule.everyHours })}</span>
-                      {schedule.lastFireAt && <span className="shrink-0 text-muted-foreground/60">{new Date(schedule.lastFireAt).toLocaleDateString()}</span>}
+                      {schedule.lastFireAt && <span className="shrink-0 text-muted-foreground/60">{new Date(schedule.lastFireAt).toLocaleDateString(getAppLocale())}</span>}
                       <Button
                         aria-label={t('cloudRuns.deleteSchedule')}
                         size="sm"

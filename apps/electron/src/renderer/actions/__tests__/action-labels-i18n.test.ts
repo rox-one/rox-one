@@ -131,7 +131,7 @@ describe('action labels are i18n', () => {
 
   it('English locale keeps the existing action labels', async () => {
     await setupI18n().changeLanguage('en')
-    expect(i18n.t('shortcuts.action.newChat')).toBe('New Chat')
+    expect(i18n.t('shortcuts.action.newChat')).toBe('New Session')
     expect(i18n.t('shortcuts.action.omnibox')).toBe('Command Palette')
     expect(i18n.t('shortcuts.action.settings')).toBe('Settings')
     expect(i18n.t('workspace.openInEditor')).toBe('Open in editor')
@@ -144,12 +144,12 @@ describe('action labels are i18n', () => {
 
   it('Russian copy is distinct from English', async () => {
     await setupI18n().changeLanguage('ru')
-    expect(i18n.t('shortcuts.action.newChat')).toBe('Новый чат')
+    expect(i18n.t('shortcuts.action.newChat')).toBe('Новая сессия')
     expect(i18n.t('shortcuts.action.omnibox')).toBe('Палитра команд')
     expect(i18n.t('shortcuts.action.advisorReview')).toBe('Проверка советника')
     expect(i18n.t('shortcuts.action.sessionWorkflow')).toBe('Рабочий процесс сессии')
     expect(i18n.t('shortcuts.action.simplifyDiff')).toBe('Упростить diff')
-    expect(i18n.t('shortcuts.action.newChat')).not.toBe('New Chat')
+    expect(i18n.t('shortcuts.action.newChat')).not.toBe('New Session')
   })
 
   it('all 12 locales define the wired action label keys', () => {
