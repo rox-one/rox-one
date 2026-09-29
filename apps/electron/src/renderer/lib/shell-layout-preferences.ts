@@ -34,11 +34,23 @@ export interface ShellLayoutPreferencesV1 {
 export interface ShellLayoutStore {
   get<T>(key: storage.StorageKey, fallback: T, suffix?: string): T
   set<T>(key: storage.StorageKey, value: T, suffix?: string): void
+  /** Suffixes stored under `key` (e.g. workspace ids of shell-layout snapshots). */
+  suffixes?(key: storage.StorageKey): string[]
 }
 
 const defaultStore: ShellLayoutStore = {
   get: storage.get,
   set: storage.set,
+  suffixes(key) {
+    if (typeof localStorage === 'undefined') return []
+    const prefix = `${storage.getKeyString(key)}:`
+    const out: string[] = []
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const name = localStorage.key(i)
+      if (name?.startsWith(prefix)) out.push(name.slice(prefix.length))
+    }
+    return out
+  },
 }
 
 export function clampSidebarWidth(value: number): number {
@@ -151,7 +163,7 @@ export function createLayoutCommitDebouncer(
 }
 
 /**
- * One-shot layout v2 migration (runs before the first render):
+ * One-shot side-panel migration (runs before the first render):
  * - left sidebar and right inspector widths wider than the shared default are
  *   brought down to it once, so both side columns start equal; narrower
  *   user widths are kept and later resizes persist as before;
@@ -159,14 +171,20 @@ export function createLayoutCommitDebouncer(
  *   collapsed flags were written by the component playground).
  */
 export function migrateSidePanelDefaults(store: ShellLayoutStore = defaultStore): boolean {
-  if (store.get<boolean>(storage.KEYS.sidePanelDefaultsV2, false)) return false
+  if (store.get<boolean>(storage.KEYS.sidePanelDefaults, false)) return false
   const sidebar = store.get<number | null>(storage.KEYS.sidebarWidth, null)
   if (typeof sidebar === 'number' && sidebar > SIDE_PANEL_DEFAULT_WIDTH) {
     store.set(storage.KEYS.sidebarWidth, SIDE_PANEL_DEFAULT_WIDTH)
   }
-  const snapshot = store.get<ShellLayoutPreferencesV1 | null>(storage.KEYS.shellLayout, null, '_default')
-  if (snapshot && typeof snapshot.sidebarWidth === 'number' && snapshot.sidebarWidth > SIDE_PANEL_DEFAULT_WIDTH) {
-    store.set(storage.KEYS.shellLayout, { ...snapshot, sidebarWidth: SIDE_PANEL_DEFAULT_WIDTH }, '_default')
+  // Every shell-layout snapshot (the '_default' one and each workspace's):
+  // commitShellLayout merges from the workspace snapshot and dual-writes the
+  // legacy key, so a stale snapshot would bring the old width back.
+  const snapshotIds = new Set(['_default', ...(store.suffixes?.(storage.KEYS.shellLayout) ?? [])])
+  for (const id of snapshotIds) {
+    const snapshot = store.get<ShellLayoutPreferencesV1 | null>(storage.KEYS.shellLayout, null, id)
+    if (snapshot && typeof snapshot.sidebarWidth === 'number' && snapshot.sidebarWidth > SIDE_PANEL_DEFAULT_WIDTH) {
+      store.set(storage.KEYS.shellLayout, { ...snapshot, sidebarWidth: SIDE_PANEL_DEFAULT_WIDTH }, id)
+    }
   }
   const inspector = store.get<number | null>(storage.KEYS.inspectorPanelWidth, null)
   if (typeof inspector === 'number' && inspector > SIDE_PANEL_DEFAULT_WIDTH) {
@@ -175,6 +193,6 @@ export function migrateSidePanelDefaults(store: ShellLayoutStore = defaultStore)
   if (store.get<boolean | null>(storage.KEYS.activityRailCollapsed, null) === true) {
     store.set(storage.KEYS.activityRailCollapsed, false)
   }
-  store.set(storage.KEYS.sidePanelDefaultsV2, true)
+  store.set(storage.KEYS.sidePanelDefaults, true)
   return true
 }
