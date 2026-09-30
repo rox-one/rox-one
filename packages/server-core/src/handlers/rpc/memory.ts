@@ -271,11 +271,16 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       return { preferences, context: '', workspaceMemory: null }
     }
     const wsStore = new MemoryFileStore('workspace', workspace.rootPath)
-    const fullBundle = (): MemoryContextDto => ({
-      preferences,
-      context: wsStore.readContext(),
-      workspaceMemory: wsStore.loadWorkspaceMemory(),
-    })
+    const fullBundle = (): MemoryContextDto => {
+      const workspaceMemory = wsStore.loadWorkspaceMemory()
+      return {
+        preferences,
+        context: wsStore.readContext(),
+        // The legacy bundle includes machine-global preferences. A native
+        // principal's workspace grant does not authorize that private content.
+        workspaceMemory: ctx.principal ? { ...workspaceMemory, preferences: '' } : workspaceMemory,
+      }
+    }
     if (!query?.trim()) return fullBundle()
     try {
       const limit = getMemoryConfig().ftsLimit ?? 20

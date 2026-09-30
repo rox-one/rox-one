@@ -27,6 +27,7 @@ import {
 } from '@craft-agent/shared/privacy'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { deleteProtectedCookieKey } from './browser-protected-cookie-key'
 import {
   isClaimableLive,
   rpcBrowserProfileImportActResult,
@@ -102,25 +103,6 @@ function storeProtectedCookieKey(reference: string, key: Buffer): boolean {
         input: password,
         encoding: 'utf8',
         stdio: ['pipe', 'ignore', 'ignore'],
-      }).status === 0
-    }
-  } catch {
-    return false
-  }
-  return false
-}
-
-function deleteProtectedCookieKey(reference: string): boolean {
-  const service = 'rox.browser-profile-cookie-vault'
-  try {
-    if (process.platform === 'darwin') {
-      execFileSync('security', ['delete-generic-password', '-s', service, '-a', reference], { stdio: 'ignore' })
-      return true
-    }
-    if (process.platform === 'linux') {
-      return spawnSync('secret-tool', ['clear', 'service', service, 'account', reference], {
-        encoding: 'utf8',
-        stdio: ['ignore', 'ignore', 'ignore'],
       }).status === 0
     }
   } catch {

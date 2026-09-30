@@ -44,6 +44,8 @@ export interface ImportConsent {
 export interface ProtectedCookieImport {
   read(profile: DiscoveredProfile, domains: readonly string[]): string | null
   storeKey(key: Buffer): string | null
+  /** Idempotent custody removal: true only for deleted or authoritatively absent.
+   * Denied, locked and unknown states must return false so recovery is retained. */
   deleteKey?(reference: string): boolean
 }
 

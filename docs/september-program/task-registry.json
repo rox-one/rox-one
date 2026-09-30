@@ -2708,9 +2708,10 @@
             "NATIVE-CONFIGURATION-HELPER-20260930",
             "PRIVACY-COOKIE-CUSTODY-20260930",
             "PRIVACY-COOKIE-CONSENT-20260930",
-            "NATIVE-NOTES-UI-BOUNDED-20260930"
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
           ],
-          "summary": "Local provider-scope consent and replica-purpose enforcement have partial source/unit evidence; complete profile/privacy UI and remote lifecycle criteria remain pending."
+          "summary": "Existing bounded profile/privacy evidence gains Darwin custody retry verification; full privacy UI/provider deletion lifecycle remains pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -2722,7 +2723,8 @@
             "NATIVE-CONFIGURATION-HELPER-20260930",
             "PRIVACY-COOKIE-CUSTODY-20260930",
             "PRIVACY-COOKIE-CONSENT-20260930",
-            "NATIVE-NOTES-UI-BOUNDED-20260930"
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -4685,16 +4687,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
+          "summary": "Production native RPC owner/provenance/isolation/revoke/restart and host-preference response privacy verified; NativeJournal/team/offline/provider criteria remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -4767,16 +4773,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
+          "summary": "Production owner-filtered lesson backup/archive recovery preserves exact source and provenance; full three-column UI/search/rotation criteria remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -5017,16 +5027,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
+          "summary": "Shipped signed-catalog fixture contract and tampering rejection verified; actual search/bulk install/update/uninstall and platforms remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -5101,16 +5115,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
+          "summary": "Bounded Darwin protected cookie-key deletion retry verified after lost phase write; Linux, actual import UI and full source/account criteria remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -8051,16 +8069,18 @@
           "status": "IN_PROGRESS",
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
-            "RUNTIME-LOCAL-MECHANISMS-20260930"
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
           ],
-          "summary": "Durable workspace daily allowance reservation/settlement/unresolved crash recovery is implemented and tested. Full actual foreground/background worker-stop and provider usage criteria remain pending."
+          "summary": "Actual SIGKILL/new-process ledger recovery and idempotent reconciliation verified; actual paid-provider/background cancellation and platform criteria remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
           "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
-            "RUNTIME-LOCAL-MECHANISMS-20260930"
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -9783,9 +9803,10 @@
             "BUILD-RENDERER-NATIVE-ENTRY-20260930",
             "TYPECHECK-ELECTRON-NATIVE-ENTRY-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
           ],
-          "summary": "Baseline source is published for review; native creation follow-up passes stable-source shared/server/Electron+full UI/core unions, typechecks and rebuilt main/preload. Full original integration/product/platform acceptance remains pending."
+          "summary": "Runtime follow-up has unchanged-source shared/server unions and independent reviews; renderer follow-up is a separate candidate, complete integration/platform acceptance pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -9815,7 +9836,8 @@
             "TYPECHECK-ELECTRON-NATIVE-ENTRY-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "RUNTIME-ACCEPTANCE-WAVE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10055,6 +10077,13 @@
       "observedAt": "2026-09-30T11:25:02.924Z",
       "sourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
       "scope": "NAMED_SOURCE_PATHS_ONLY; NOT_ALL_REPOSITORY_FILES"
+    },
+    "runtimeAcceptanceEvidence": "runtime-acceptance-20260930.json",
+    "runtimeAcceptanceCandidate": {
+      "status": "VERIFIED_CANDIDATE; SOURCE_PUSH_READBACK_PENDING",
+      "manifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "sourceCount": 4846,
+      "fullTasksAccepted": 0
     }
   }
 }

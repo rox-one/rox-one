@@ -163,3 +163,13 @@ Native creation must first obtain a server-canonical no-write plan and current r
 Disposal during context lookup, private IPC OPEN, plan renewal or enqueue must prevent subsequent submission and close any late handle. An already persisted intent remains recoverable with the same operation ID, including a successful commit whose response was lost. A duplicate canonical path must fail without overwrite. Existing edits retain the authoritative snapshot/revision requirement; new offline authoring without a canonical plan and other creation-like routes remain separate work.
 
 Acceptance retains actual new-creation UI/restart and private custody audit in addition to WS/SQLite tests. The follow-up's actual UI gate is pending while the supported Sky surface is unresponsive. Fixture receipt decryption does not accept the private profile's OS custody. The genuine Linux arm64 baseline is a separate source revision and does not stand in for iOS/Windows/cloud/desktop acceptance.
+
+## Runtime privacy and recovery acceptance wave (2026-09-30)
+
+Native Memory responses must omit machine-private preferences at every response depth while preserving authorized workspace content, server-owned lesson identity and explicit provenance. Existing authenticated legacy Memory semantics remain compatible. Grant checks and owner-filtered legacy storage do not establish NativeJournal receipts, team sharing or offline multi-device Memory.
+
+Cookie-key rollback/deletion must permit retry when the protected key was deleted but its recovery phase was not saved. Success requires scoped deletion or authoritative absence, preserving prior and unrelated keys. Darwin CLI exit 44 is ambiguous and cannot establish absence; the private status-preserving Security.framework fallback accepts only success or item-not-found and requests no authentication UI or credential data. Ambiguous Linux results retain recovery bytes and deny completion. Fault injection and the sole synthetic host fixture are bounded evidence, not power-loss or existing-user-key acceptance.
+
+Daily budget recovery must preserve unresolved reservations after actual process loss, block retries conservatively across midnight, isolate workspaces and settle an exact receipt idempotently. Native local work and ledger recovery do not establish paid-provider cancellation or complete runtime enforcement.
+
+The native shell must not request unclassified legacy host session inventory. Absence of that capability is distinct from an authorized Notes operation being denied; genuine authorization failures stay visible. Source contracts and all original task/requirement criteria remain unchanged. The new runtime evidence is bounded by its source hashes and explicit platform limits.

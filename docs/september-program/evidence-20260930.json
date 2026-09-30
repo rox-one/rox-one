@@ -2580,5 +2580,146 @@
     "requirements": 489,
     "dependencyEdges": 464,
     "fullTasksAccepted": 0
+  },
+  "runtimeAcceptanceFollowup": {
+    "schemaVersion": 1,
+    "id": "RUNTIME-ACCEPTANCE-WAVE-20260930",
+    "observedAt": "2026-09-30T13:11:26.806Z",
+    "inputRevision": "3ea573a052efda5df1dceef26731942b302565c7",
+    "publication": {
+      "status": "VERIFIED_CANDIDATE; SOURCE_PUSH_READBACK_PENDING",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "fullProductDelivery": "PENDING"
+    },
+    "sourceBinding": {
+      "sourceCount": 4846,
+      "manifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "unchangedAcrossGates": true,
+      "selectedChangedSources": [
+        {
+          "path": "packages/server-core/src/handlers/rpc/memory.ts",
+          "sha256": "3c886797d399fb4f0196c0608ab245efc8163e59a610c9f71649f8e614fe0b50"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/memory-native-acceptance.test.ts",
+          "sha256": "dcf14a6f84c0482476449eef4f70fd46000e0c6b313d2bbc77c75edd405fd97b"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
+          "sha256": "76c13a3c5c23c923bea7920e425e88dc100c3bb740ac36d22c489cd56379f662"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/browser-protected-cookie-key.ts",
+          "sha256": "b544e6058a4e24a06b242d339b6bf1f91d639d9d0595c04bb34f8fe9199a44d8"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/browser-protected-cookie-key.test.ts",
+          "sha256": "fb550e594e1ffad2b072d6722e6df68d056ef601c562bf979a1ebc00a7bfb2d1"
+        },
+        {
+          "path": "packages/shared/src/browser/profile-import.ts",
+          "sha256": "9202ba44388a0e7103280f81cf4eda64d18506ac055410df21028f8752bc80e2"
+        },
+        {
+          "path": "packages/shared/src/browser/__tests__/profile-import-key-custody-recovery.test.ts",
+          "sha256": "e33b494ff851bbc3fba25edddc6239c3f21b115bb209e74683c41885b8272679"
+        },
+        {
+          "path": "packages/shared/src/agent/core/__tests__/budget-process-loss-acceptance.test.ts",
+          "sha256": "e19e7156bccb049f80c7d0c0168c5d33bb40774c4c490ceb7f4347e6dbb4f37c"
+        }
+      ]
+    },
+    "memory": {
+      "status": "BOUNDED_VERIFIED",
+      "behavior": "Native GET_CONTEXT removes host preferences at every response depth; authorized legacy behavior preserved. Real WS checks bind owner/source, workspace/read-only/revoke and restart. Production backup/archive recovery preserves source and provenance.",
+      "review": "Independent fresh-process production WS/store review passed; helper internally reads then projects host preferences.",
+      "limits": [
+        "Archive interrupted state is a fault fixture, not SIGKILL",
+        "NativeJournal receipts, team sharing, offline UI and actual model-context use remain pending"
+      ]
+    },
+    "cookieCustody": {
+      "status": "BOUNDED_DARWIN_VERIFIED",
+      "behavior": "Failure after successful synthetic key deletion but before phase persistence can retry rollback/deletion. Exact scoped CLI success or status-preserving native success/known absence is required.",
+      "nativeFallback": "Private SecItemDelete; fixed generic-password class/service, exact account argv, authenticationUIFail; only 0/-25300 accepted. CLI44 is not absence proof.",
+      "hostCanary": "Only one task-owned synthetic account; first/repeat/cleanup verified. Initial lost-reference mistake, constrained attributes-only recovery and native invalid-owner failure retained in private history.",
+      "review": "Independent 18-test real-filesystem/command-adapter review passed; no reviewer key operations.",
+      "limits": [
+        "Linux ambiguous absence remains fail closed with recovery bytes retained",
+        "No actual SIGKILL/power-loss or existing-user-key claim",
+        "Retained CLI stage has existing OS authentication semantics; only native fallback has no-prompt policy"
+      ]
+    },
+    "budget": {
+      "status": "BOUNDED_PROCESS_LOSS_VERIFIED",
+      "behavior": "Actual child SIGKILL after committed reservation/local work; fresh-process unresolved recovery blocks retry including midnight, workspace isolation, idempotent reconciliation and 23/25-hour DST days.",
+      "review": "Independent 3-test SIGKILL/reopen rerun passed.",
+      "limits": [
+        "No paid-provider cancellation/full background runtime/Windows UI acceptance",
+        "Live other-process reservations are conservatively unresolved; no multi-runtime coordinator proof"
+      ]
+    },
+    "marketplace": {
+      "status": "BASELINE_FIXTURE_CONTRACT_RESOLVED",
+      "behavior": "Exact shipped signed catalog/superpowers fixture, real source/ref/14 pins. Production Ed25519 verification accepts shipped signature and rejects altered body/signature; SHA sidecar matches.",
+      "baselineRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+      "catalogSha256": "661c03ed9e41de587ba657ce80b2f28545cb490c71b7758bebd843bcfe1de2ef",
+      "signatureSha256": "ae875ff8a31a4c01f5b83fd40a5d0c90e5862b979d10a6879de5a588388496b8",
+      "limits": [
+        "No signing/private-key read/fabricated shipped entry",
+        "Installation-lock projection is not actual installation or full marketplace acceptance"
+      ]
+    },
+    "linuxCreation": {
+      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "environment": "Actual OrbStack NixOS aarch64 with existing Bun 1.4.2, Node 24.20.0, Git 2.55.0; public source fetch and unchanged lock",
+      "result": "82 pass / 0 fail / 722 assertions / 13 files; shared/server/Electron TypeScript pass",
+      "failureHistory": "Electron default ~2 GiB heap aborted with OOM134; distinct bounded 4 GiB retry passed. No install/build/private transfer.",
+      "limits": [
+        "Headless arm64 creation gate, not desktop/cloud/x64/Windows/iOS acceptance"
+      ]
+    },
+    "gates": [
+      {
+        "artifact": "shared.union.memory-custody-budget.txt",
+        "sha256": "ddda54edba5e214aa23dc3d3399e33f63962f4f59b206c90c87790ccfaf6a7ca",
+        "result": "4908 pass / 12 skip / 0 fail; 21479 assertions; 470 files; 98.30 s"
+      },
+      {
+        "artifact": "server.union.memory-custody-budget.txt",
+        "sha256": "c29e89f6fbeb7cf57d19e52421d1e974267a8f8c5cd3bdd2dd0028e8ee092343",
+        "result": "1504 pass / 8 skip / 0 fail; 6133 assertions; 236 files; 26.67 s"
+      },
+      {
+        "artifact": "memory-independent-review.txt",
+        "sha256": "1304b5b8f989a96eb73832e7ecdce900fd76af18c7cf5e08d9f9bbd7f0e6a5cf",
+        "result": "3 fresh-process tests pass; actual production WS/SQLite/file assertions"
+      },
+      {
+        "artifact": "key-custody-independent-review-tests.txt",
+        "sha256": "aa5d2e99e0b45ea5f763e9b37f767fcfef3b365fd47eb789306714c28852692e",
+        "result": "18 pass / 0 fail; 125 assertions; 3 files"
+      },
+      {
+        "artifact": "budget-process-loss-independent-20260930.txt",
+        "sha256": "c55743250b6e82b3ff40af79605d02a2f636e8956d40215bae5ff883b311a793",
+        "result": "3 pass / 0 fail; 34 assertions"
+      },
+      {
+        "artifact": "verification.txt",
+        "sha256": "016c6717b778ae258a6de5b27a5251a7fa382d782d70c16b7cdebfc98231bcfb",
+        "result": "82 pass / 0 fail; 722 assertions; 13 files; scoped typechecks pass"
+      }
+    ],
+    "originalTasks": 109,
+    "requirements": 489,
+    "dependencyEdges": 464,
+    "fullTasksAccepted": 0
   }
 }
