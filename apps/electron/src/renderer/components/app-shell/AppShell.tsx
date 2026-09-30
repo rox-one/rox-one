@@ -321,7 +321,11 @@ function AppShellContent({
   const bottomDockHeight = useAtomValue(bottomDockHeightAtom)
   // Collapsed terminal has no bottom strip (the TopBar button is the entry point).
   const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
-  const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
+  // Match WorkspaceSurfaceHost: top chrome only mounts the activity rail when
+  // Workbench is enabled. A standalone top-chrome flag must not reserve space
+  // or hide the only navigation sidebar.
+  const activityRailMounted = unifiedShellEnabled || (workbenchEnabled && topChromeEnabled)
+  const unifiedRailOffset = activityRailMounted
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
   // The sessions sidebar (statuses / labels / views) is contextual to Chats:
@@ -329,7 +333,7 @@ function AppShellContent({
   // not squeezed. Only when the activity rail is mounted (it keeps navigation
   // reachable). Display-only: the persisted visibility is untouched.
   const earlyNavState = useNavigationState()
-  const routeHidesSessionsSidebar = (unifiedShellEnabled || topChromeEnabled)
+  const routeHidesSessionsSidebar = activityRailMounted
     && shouldHideSessionsSidebar(earlyNavState)
   const isSidebarVisible = storedSidebarVisible && !routeHidesSessionsSidebar
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
