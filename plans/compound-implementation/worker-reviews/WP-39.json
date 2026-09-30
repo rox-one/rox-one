@@ -1,0 +1,511 @@
+{
+  "task_id": "WP-39-preflight",
+  "attempt_id": "3b7d91f613d7a41481c7ffd66bb3e96e",
+  "packet_hash": "eaef45d091fc2c0ad82366398c50a2cd1d43d02ec8143d3d76f8772b9802e820",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-39",
+  "featureComplete": false,
+  "mode": "SOURCE_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "scope": {
+    "ownedReport": "plans/compound-implementation/worker-reviews/WP-39.json",
+    "productChangesMade": false,
+    "buildsTestsUiNetworkRun": false,
+    "inspectionBoundary": "WP-39 affected files, their direct imported definitions, normative specification and report-verifier definition; no renderer or other domain subsystem implementation inspected",
+    "authority": "Lead owns wave0 and all source integration. Implementation may start only after wave0 commit and accepted dependency receipts.",
+    "toolLimitsObserved": [
+      "Codegraph reports no index for this checkout; no indexing attempted.",
+      "find could not judge candidates because its provider returned 402. Literal symbol searches and scoped reads were used instead; this failure is not evidence of missing code."
+    ],
+    "promptEvolution": "No prompt/skill mutation: this worker owns only the report; temporary search-provider failure supplies no basis for a permanent behavior change."
+  },
+  "dependencies": ["WP-02", "WP-03", "WP-04", "WP-06"],
+  "dependencyAcceptance": {
+    "requiredForEachProducer": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "currentState": "Not inspected or accepted by this worker. The dispatch depends_on=[] schedules preflight only; it does not remove the four implementation dependencies.",
+    "portsRequired": {
+      "WP-02": "Scoped canonical file identity, legacy alias binding, typed parent attachment/backlink relations and both-endpoint checks.",
+      "WP-03": "Transport-derived actor, current resource read/write/action policy, policy epoch, revoke and subscription invalidation.",
+      "WP-04": "One transactional command gateway, immutable request hash/idempotency receipt, expectedRevision CAS, outbox/inbox and crash-safe reply semantics.",
+      "WP-06": "Authorized file/parent metadata and derived-content projection, watermark, tombstone/revoke filtering for search and agent reads."
+    }
+  },
+  "foundationGates": [
+    {
+      "gate": "Committed wave0 and accepted foundation interface versions",
+      "kind": "dispatch integration gate, not a new DAG edge",
+      "evidence": "Worker prompt requires wave0 commit and accepted dependency receipts. docs/macro-integration/21-implementation-plan.md:3,7 requires compile/schema acceptance of proposed DTOs and one shared-file owner.",
+      "missingPrerequisite": "Lead's wave0 commit and revision-bound WP-02/03/04/06 acceptance artifacts; replace all provisional API names below with the accepted ports.",
+      "impact": "This report is contribution preparation, not authorization to alter currently integrating files."
+    },
+    {
+      "gate": "WP-01 authenticated identity bootstrap",
+      "kind": "transitive explicit dependency, not a surprising extra edge",
+      "evidence": "docs/macro-integration/21-implementation-plan.md:27-54 places WP-01 before registry/grants. Inspected RequestContext at packages/server-core/src/transport/types.ts:7-11 contains clientId/workspaceId/webContentsId, not a principal.",
+      "missingPrerequisite": "Authenticated actor injection accepted through WP-02/03; workspace or local profile alone must not act as a remote principal.",
+      "impact": "file.finalize and all blob reads must reject forged actor/workspace rather than infer identity from an attachment path."
+    },
+    {
+      "gate": "WP-05 durable shared projection/offline replay",
+      "kind": "hidden feature-completeness gate, not an amendment to dependencies",
+      "evidence": "WP-39 UI explicitly includes offline_queued at work-packages.json:35675-35681; docs/macro-integration/22-test-plan.md:222 requires durable drafts/replay/rejection. WP-05 owns that mechanism at 21-implementation-plan.md:84-100.",
+      "missingPrerequisite": "Accepted shared queue/cursor adapter and restart/reconnect/revoked-replay receipt.",
+      "impact": "Do not build a second file queue. API implementation can proceed after explicit dependencies; offline UI completeness cannot be claimed without this mechanism."
+    },
+    {
+      "gate": "WP-51 shared single-writer and revoke fence",
+      "kind": "hidden cutover/security gate",
+      "evidence": "21-implementation-plan.md:1020-1036 requires legacy shared writers rejected and revoke completion fenced. Existing STORE_ATTACHMENT writes disk at files.ts:372-377; uploadProjectAsset and deleteProjectAsset write/unlink directly at storage.ts:418-482. WP-39 operation lists REVOKE_FENCE_PENDING at work-packages.json:35982-35994.",
+      "missingPrerequisite": "Accepted ResolveWriterMode/fence behavior for file adapters, plus bounded current-policy enforcement on downloads and queued writes.",
+      "impact": "Adding file.finalize alone leaves legacy path-based reads/writes outside shared ACL. Extend the existing authority guard, never introduce a second one."
+    },
+    {
+      "gate": "Shared Page attachment host and editor binding",
+      "kind": "hidden cross-surface verification gate",
+      "evidence": "WP-39 requires Task/chat/Page identity equality; 21-implementation-plan.md:5,180-188 makes WP-49 and WP-51 mandatory before shared Page. Inspected buildPageShareBundle:122-213 only bundles artifact HTML and optional snapshot.",
+      "missingPrerequisite": "Accepted Page attachment/ref rendering port and a real shared Page surface from WP-10/WP-49/WP-51. Lead must map actual renderer symbols before applying UI patches; they are outside this inspection boundary.",
+      "impact": "Do not force HTML Page conversion or create a parallel file viewer. File APIs alone cannot prove the Page leg of the acceptance scenario."
+    },
+    {
+      "gate": "Canonical chat/Task attachment hosts",
+      "kind": "hidden cross-surface integration prerequisite",
+      "evidence": "21-implementation-plan.md:162-219 assigns conversation/mention/Task behavior to WP-08/09/11; WP-39:803 requires all three surfaces. StoredAttachment:234-247 currently carries a session UUID and local storedPath, not a Rox2EntityRef.",
+      "missingPrerequisite": "Parent attachment command/query integration and existing host component mapping from chat/Task owners; their implementation readiness was not inspected.",
+      "impact": "Represent one file through typed links to multiple authorized parents, not three uploads or a session path masquerading as a Task file. These are integration receipts, not silently added DAG edges."
+    },
+    {
+      "gate": "WP-50 provenance for private derived attachments and agent context",
+      "kind": "hidden sharing/agent-security gate",
+      "evidence": "21-implementation-plan.md:5,1002-1018 requires provenance before shared transcripts/context and invalidation of derived summaries. files.ts:401-441 creates Office markdown and thumbnails; Page bundle publishes HTML/snapshot bytes without attachment provenance.",
+      "missingPrerequisite": "Accepted source-ref/revision/ACL-taint port for derived thumbnails, markdown, prompt/tool/context outputs and shared/exported content.",
+      "impact": "Revoking the original file must also deny future derived reads/exports; retain privately permitted owner data without promising to un-read delivered bytes."
+    },
+    {
+      "gate": "WP-52 object-storage and authenticated deployment capability",
+      "kind": "hidden runtime verification gate",
+      "evidence": "21-implementation-plan.md:1038-1055 requires real PostgreSQL/object roundtrip, authenticated clients and object endpoint/TLS readiness. WP-39:36251-36252 says only composition root creates provider adapters; 22-test-plan.md:7,150 requires genuine surface and object recovery observations.",
+      "missingPrerequisite": "Composition-root object adapter, quarantined staging namespace, private read endpoint, credential references, capability/read-back receipts and isolated deployment.",
+      "impact": "No signed URL or finalized live object claim from an in-memory fixture or an unverified local file. Full LiveKit/STT is not needed for WP-39 file-only behavior."
+    },
+    {
+      "gate": "WP-48 exact license audit before upstream dependency reuse",
+      "kind": "conditional release gate",
+      "evidence": "WP-39 licensePolicy at work-packages.json:35753 is BEHAVIOR_REIMPLEMENTATION; 21-implementation-plan.md:965-982 denies copied files absent a scoped decision.",
+      "missingPrerequisite": "Exact lock-pinned component decision if a new MIME/parser/object dependency or upstream code is proposed.",
+      "impact": "Preserve existing mechanisms; no Macro source copying or unreviewed parser import."
+    },
+    {
+      "gate": "Operational retention and restore acceptance",
+      "kind": "hidden full-system proof gate, not an implementation dependency on WP-47",
+      "evidence": "21-implementation-plan.md:960 requires retention dry-run, legal hold, real object deletion and revoked projections. 22-test-plan.md:193,243-247 binds proof to schema/image/source and restore evidence.",
+      "missingPrerequisite": "Selected retention/hold policy, execution runner and SLA; WP-39 supplies its deletion/ref behavior to downstream restore/retention acceptance.",
+      "impact": "Do not wait for a downstream package to implement DeleteFile, but do not label unlinkSync as verified retention."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/files/contracts.ts",
+    "apps/workspace-service/src/modules/files/commands.ts",
+    "apps/workspace-service/src/modules/files/repository.ts",
+    "tests/macro-integration/wp-39.test.ts",
+    "apps/workspace-service/migrations/39-domain-contract.sql"
+  ],
+  "ownedContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/files/contracts.ts",
+      "change": "Implement strict file.finalize payload {file,uploadId,checksum,sizeBytes} exactly as specified; use accepted Rox2EntityRef/RoxCommand/canonical result types. Define StartUpload, FinalizeUpload, Attach, SignedDownload, DeleteFile DTOs and pure ports against accepted foundation interfaces. Actor is transport input, never body data. Domain result must separate queued/reconciling/ambiguous/pending_fence from applied/verified.",
+      "prerequisite": "Accepted foundation types and complete secondary-operation contracts; the published primary finalize schema alone does not define TTL, MIME allowlist, attachment inheritance or retention periods."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/files/commands.ts",
+      "change": "Use the common policy/idempotency/revision gateway. StartUpload reserves an actor/workspace-bound staging job. FinalizeUpload reads actual staged object metadata/bytes through the injected object port, verifies checksum, exact byte count and allowed detected MIME, checks current policy, and persists either quarantine or ready state with a receipt/event. Attach checks file and parent rights independently. SignedDownload authorizes original and derived objects against current epoch and returns bounded expiry. DeleteFile tombstones references and reconciles retained-object cleanup rather than issuing unconditional unlink.",
+      "prerequisite": "Accepted gateway/registry/policy/projection ports and object staging/finalize semantics. All names in this paragraph are proposed, not existing exported symbols."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/files/repository.ts",
+      "change": "Persist scoped file/object_asset/attachment/upload_job metadata through the selected shared repository transaction. Atomically persist canonical ID/revision, command receipt and outbox event; reuse foundation receipt/outbox/inbox tables. Object I/O is injected, not instantiated here. Record pending/reconciling unknown object effects for restart read-back. Enforce actor ownership, workspace FK, attachment uniqueness, current policy and deletion fences.",
+      "prerequisite": "Selected database driver, migrator, foundation transaction API and accepted object-result reconciliation contract."
+    },
+    {
+      "path": "apps/workspace-service/migrations/39-domain-contract.sql",
+      "change": "Add proposed file/object_asset/attachment/upload_job tables with scoped typed keys, common revision/schema/timestamps/deleted_at constraints, checksum/size/MIME/quarantine state, parent relation and retention/hold metadata; reference accepted entity table by composite workspace/entity FK. Add stable cursor and target/backlink indexes. Do not duplicate command_receipt, alias, outbox or inbox owned by foundations. Backfill local identities through accepted aliases and quarantine ambiguous mappings.",
+      "prerequisite": "Selected migrator generates actual filename; this path is normative proposed identifier, not a fabricated migration execution receipt. Forward repair or verified reverse replay is required after shared writes."
+    },
+    {
+      "path": "tests/macro-integration/wp-39.test.ts",
+      "change": "Exercise four acceptance criteria against real selected domain adapters and the public transport path, with positive/denied actors, command crash/retry and event replay oracles. Seed=20260969, marker=PRIVATE_WP-39. Detect attaching a private foreign upload by ID, dropped and duplicated events, and an independent holdout mutant. Couple runtime UI scenario receipts to the same canonical ID/revision and schema/source hashes; test file alone is not surface proof.",
+      "prerequisite": "Accepted dependencies, isolated real storage/runtime, host surfaces, failure-injection and independent evaluator. No test executed by preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/files.ts",
+      "symbol": "HANDLED_CHANNELS; registerFilesHandlers; STORE_ATTACHMENT handler",
+      "change": "Register domain.file.finalize and the accepted file operations through the existing handler module. At STORE_ATTACHMENT, resolve accepted writer mode before mkdir/randomUUID/writeFile; shared uploads go through authenticated service start/finalize/attach commands and return canonical authorized DTO/receipt. Keep current disk/image/Office pipeline only for explicit standalone authority. Never allocate a new canonical ID on retry.",
+      "reason": "files.ts:229-264 generates a per-store UUID and local path; 372-441 writes disk and returns path metadata without a shared command receipt. Adding a new endpoint without cutting over old shared writes violates one authority."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/files.ts",
+      "symbol": "READ; READ_DATA_URL; READ_PREVIEW_DATA_URL; READ_BINARY; READ_ATTACHMENT; READ_USER_ATTACHMENT; GENERATE_THUMBNAIL",
+      "change": "Resolve shared file references through current file/linked-parent ACL and quarantine/tombstone fences before original or derived bytes/metadata are read. Use accepted object/download port and preserve typed permission/unavailable errors, not null as denied or empty. Retain validateFilePath, including explicit local picker home opt-in, for standalone paths. Shared thumbnail generation uses verified object content rather than caller base64/MIME as authority.",
+      "reason": "Current path containment and sensitive-file block are useful standalone mechanisms, not resource ACL. Extension MIME at 71-84 and raw base64 processing at 213-224 do not verify uploaded MIME, policy epoch or file identity."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/files.ts",
+      "symbol": "RPC_CHANNELS.fs.SEARCH handler",
+      "change": "For shared attachment mention/search selection, query the WP-06 authorized canonical file projection with a bounded policy-bound cursor; do not use local BFS or return server paths for shared entities. Keep current filesystem search for explicit standalone workspace files.",
+      "reason": "460-545 searches names/paths, caps at 50, logs raw query and returns [] on error. It has no canonical current resource policy or revision watermark."
+    },
+    {
+      "path": "packages/shared/src/projects/storage.ts",
+      "symbol": "uploadProjectAsset; listProjectAssets; deleteProjectAsset; deleteProject",
+      "change": "Wire the lead's accepted writer-mode boundary to prevent these filesystem writers from operating on shared Project/file identities. Shared upload/list/delete uses the same files service and attachment relation, with current ACL and typed query results; local filesystem implementations remain explicitly standalone. Project deletion must not recursively remove shared objects still referenced or retained elsewhere.",
+      "reason": "418-457 directly decodes/copies contents and infers MIME from filename; 463-482 unlinks without reference/hold checks; 338-342 recursively removes all Project assets. No parallel manifest/store should be added here."
+    },
+    {
+      "path": "packages/shared/src/projects/types.ts",
+      "symbol": "ProjectAsset; ProjectPromptContext.assets",
+      "change": "Adapt shared asset projections to carry a canonical file ref/revision plus authorized preview/download state instead of requiring absolutePath. Keep standalone path DTO explicitly discriminated using accepted foundation authority types; use the same refs in agent manifest/context. Migrate consumers through their owners, not compatibility aliases claiming local paths are shared IDs.",
+      "reason": "ProjectAsset:62-69 has only filename/size/MIME/time/absolutePath; prompt asset entries:108 contain no identity or revision. This DTO seam blocks cross-surface identity and safe agent read-back."
+    },
+    {
+      "path": "packages/core/src/types/message.ts",
+      "symbol": "StoredAttachment; Message.attachments; StoredMessage.attachments",
+      "change": "Add the accepted shared attachment projection/ref shape with canonical file identity, revision and authorized derived-object refs; discriminate it from standalone StoredAttachment paths. Migrate shared persisted/hydrated attachments to the canonical shape through aliases/provenance. Preserve original bytes separately from resized/markdown agent representations.",
+      "reason": "234-247 stores a UUID and storedPath/thumbnailPath/markdownPath. 276 and 370 reuse that shape in message persistence. Path copies and image resizing cannot serve as immutable shared file identity."
+    },
+    {
+      "path": "packages/shared/src/pages/share-bundle.ts",
+      "symbol": "BuildPageShareBundleOptions; PagePublicManifest; PageShareBundle; buildPageShareBundle",
+      "change": "Consume an accepted pre-authorized file-ref projection at the shared publication boundary; keep this builder free of service I/O. Validate linked attachment audiences/source revision and exclude private/quarantined/deleted or stale-epoch derived assets. Do not embed long-lived shared signed URLs, local paths, private asset metadata or private derived snapshots into a public bundle. Preserve field-by-field manifest construction, script-grant refusal, view-only acknowledgment and all byte caps. Shared attachment export must obey accepted revalidation/expiry policy; unchanged standalone HTML publishing remains explicit.",
+      "reason": "122-213 publishes exact HTML and optional snapshot, has no attachment relation/policy input, and its public copy is not equivalent to a revocable private signed download. Existing sanitation intentionally does not inspect HTML content."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.file",
+      "change": "Publish accepted native shared operation channels, including exactly domain.file.finalize, alongside explicitly standalone file methods; route HTTP file.finalize through the same gateway. Lead assigns existing routing/bridge owners to migrate all callers and channel signatures.",
+      "reason": "155-165 currently declares only path reads/dialog/store/thumbnail. No file.finalize, Attach, SignedDownload or DeleteFile channel exists in this group."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "FileAttachment; FileSearchResult",
+      "change": "Use the accepted shared upload/ref DTO and canonical query result for shared callers rather than path/base64 fields as authority. Keep picker/draft content explicitly standalone; distinguish receipt/status and denied/unavailable from empty lists.",
+      "reason": "625-634 describes local content and 644-649 returns names/paths only; it cannot communicate canonical ref, revision, quarantine or policy-fenced status."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext",
+      "change": "Request to WP-01/03 owner: expose the accepted transport-authenticated actor and authority context to files handlers; validate command workspace against transport membership/context and reject body actor. Do not derive a new independent file principal type.",
+      "reason": "7-11 lacks authenticated principal and policy context. ctx.workspaceId plus window binding alone is insufficient for the specified shared actor/workspace boundary."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Request composition-owner injection of accepted files domain/object/query ports and writer-mode resolver using existing service dependency pattern. Concrete provider adapters are created only by the lead-owned composition root. Reuse WP-04 gateway once accepted; existing PendingCommandsStore is not evidence of the required shared transactional gateway.",
+      "reason": "56-72 contains local session/platform dependencies and optional restart-safe pending command store, but no files domain authority port. Module-local adapter construction would establish a competing convention."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-39 section",
+      "change": "At implementation integration, document accepted file upload/finalize/attachment/download/delete contracts, authority cutover, configured MIME/size/TTL/retention limits, cross-surface host ownership and prerequisite receipts. Do not change planned/NOT_VERIFIED to complete from this preflight.",
+      "reason": "791-808 currently specifies proposed work and acceptance, not selected limits or implementation behavior."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Notes/Files checklist; feature completeness checklist; evidence/receipt record",
+      "change": "Record actual WP-39 upload/ACL/preview/expiry/retention/restart scenarios, caught seeded controls, environment/source/schema/image hashes and UI receipts after implementation. Include standalone regressions and future-read limitations of revocation.",
+      "reason": "186,199-222,243-247 require meaningful behavior proof, no private metadata leaks and revision-bound results. No runtime proof exists in this worker."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Task/chat/Page attachments open same file identity",
+      "currentEvidence": "files.ts:260-264 allocates randomUUID and session file path; StoredAttachment:234-247 persists those paths; ProjectAsset:62-69 is filename/path based; share-bundle.ts:76-106,122-213 has no canonical attachment DTO. These seams do not demonstrate cross-surface identity.",
+      "requiredChange": "Finalize exactly one scoped file through registry+receipt; attach it to Task, chat message and Page with typed parent links; authorized open uses the same Rox2EntityRef/revision/checksum, not a copied session UUID or filename. Preserve local attachment/Project/Page surfaces and standalone imports through aliases.",
+      "verification": "A uploads once and attaches through actual three host surfaces; API/DB read-back shows one canonical file and three authorized references; opening/reload/rename/retry preserve ID and bytes. B reads only allowed parents, C and a W2 forged ref reveal neither title nor preview. Capture UI/ARIA plus ref/revision/checksum/row counts.",
+      "missingPrerequisites": ["Accepted WP-02/03/04/06 receipts", "Lead mapping of Task/chat/Page renderer and command ports", "Page/Task/chat shared host readiness and alias backfill"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "bad MIME/oversize fails",
+      "currentEvidence": "files.ts:180-205 has a 50MiB picker cap but readFileAttachment applies a separate 20MiB cap at utils/files.ts:117,372-374. STORE_ATTACHMENT only rejects empty input and allows decoded-size variance of 100 bytes at 236-278; image-specific resize/validation follows at 281-369. Text write at 374-377 does not compare actual bytes. Project upload:433-457 has no size/checksum/detected MIME gate; getMimeType:328-352 is extension based.",
+      "requiredChange": "Start/finalize enforce selected byte limit for every input and actual staged-object size; compute checksum from stored original bytes and detect/validate MIME before ready state or parser/preview execution. Rejected/unverified object stays inaccessible in quarantine, with typed error and file.quarantined event/receipt. Agent resizing/truncated text are derived content, not finalized original bytes.",
+      "verification": "Boundary max and max+1 actual bytes; declared size vs actual; wrong checksum; spoofed extension/MIME; malformed image/Office; direct API bypass of picker. Rejected inputs cannot attach/download/preview/search; quarantine survives restart. Valid original checksum is unchanged when agent image resize or Office markdown is generated.",
+      "missingPrerequisites": ["Accepted upload policy with MIME allowlist, maximum bytes, checksum algorithm/encoding and parser capabilities", "Verified staging object port and selected parser license audit"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "signed URL revoke short expiry",
+      "currentEvidence": "files.ts:62-125 reads local bytes/data URLs after path validation, with no expiry or token/policy epoch. validateFilePath:92-162 provides directory/sensitive-file containment, not resource grants. RequestContext:7-11 has no actor. No SignedDownload channel in RPC_CHANNELS.file:155-165.",
+      "requiredChange": "SignedDownload authorizes original and derived object plus linked refs using authenticated current policy; issue a scoped short-lived capability bound to file revision/policy epoch and enforce the accepted revoke fence at the download boundary. If selected object provider cannot revoke an issued URL, use the existing authenticated service download boundary rather than promising immediate provider-URL invalidation. Prevent reissue after revoke; clear revoked future preview reads. Choose and publish explicit TTL/revoke SLA without inventing a numeric requirement here.",
+      "verification": "A obtains URL, validates bytes/expiry, B authorized then revoked while preview open; old URL access obeys selected bounded revoke contract, new issuance/read/thumbnail denied, expired/tampered/W2 capabilities denied. Repeat across service restart and stale policy token. Logs contain no token value. Already-delivered plaintext is not claimed unreadable.",
+      "missingPrerequisites": ["Accepted WP-03 revoke and WP-51 fence semantics", "Selected signing/download adapter, TTL and revoke deadline", "Real object endpoint/TLS capability receipt from runtime owner"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "delete retained asset references handled",
+      "currentEvidence": "storage.ts:463-482 directly unlinks one local asset and 338-342 recursively deletes all assets on Project deletion. STORE_ATTACHMENT:443-448 only cleans files after storage failure. There is no reference/hold/retention transaction in these inspected seams. WP-39 migration explicitly requires deleted_at and attachment/object state.",
+      "requiredChange": "DeleteFile uses expectedRevision/current policy and a canonical tombstone. Distinguish detaching one parent from deleting the file; account for all authorized surviving refs and derived assets, retention/legal hold, projections and public export copies. Persist cleanup job/result and file.deleted in the shared receipt/outbox transaction; reconcile object deletion across timeout/crash without losing required audit. Shared Project deletion must not bypass this path.",
+      "verification": "Attach one file to three parents; detach/delete one parent without removing remaining allowed bytes. Delete file while hold/retention is active and verify tombstone/denied ordinary reads but retained object/audit; release hold/expire policy and read back physical original+derived deletion. Crash before/after metadata commit and object delete, retry, stale revision, duplicate/out-of-order delete events, restore replay: no resurrection or orphan reference.",
+      "missingPrerequisites": ["Accepted retention/hold policy and detach-vs-delete result contract", "WP-02 typed refs, WP-03 policy, WP-04 receipt/outbox, WP-06 tombstones", "Object deletion/reconciliation capability and retention runner"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Existing attachment/Project/file viewer surface is mandated by WP-39:35673. files.ts returns StoredAttachment at 429-441; ProjectAsset and PageShareBundle are existing DTO seams. Renderer files were not inspected in this worker scope.",
+      "requiredChange": "Lead maps and updates existing upload, attachment chip, Project asset and preview consumers to canonical DTO/receipt status; no second surface. Provide translated statuses through existing t() and ten locales, preserving existing design/accessibility.",
+      "verification": "Real Electron/browser interactions upload, attach, open, revoke, error, retry, delete and reload with screenshot/ARIA/keyboard/focus evidence on the changed surfaces.",
+      "missingPrerequisites": ["Renderer owner/symbol mapping and accepted shared DTOs", "Actual runtime fixture"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "RPC_CHANNELS.file:155-165 exposes local path operations; FileSearchResult:644-649 is path based.",
+      "requiredChange": "Route canonical refs and native domain.file.finalize through accepted command/open resolver; preserve existing panels/history and map old local aliases rather than establishing a new files destination.",
+      "verification": "Open same ref from all parents, deep link and restored tab after rename/restart; missing/denied link shows no hidden filename and does not fall back to arbitrary path.",
+      "missingPrerequisites": ["Accepted registry/routing port and existing caller migration by lead"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "StoredAttachment:235 uses unscoped id; ProjectAsset:63 uses filename. WP-39:35655-35661 mandates file/attachment/upload_job and object metadata.",
+      "requiredChange": "Use WP-02 canonical scoped identity and alias provenance for originals, typed parent relations, upload-job ownership and distinct derived-object refs; do not merge assets solely by filename or checksum across ACLs.",
+      "verification": "Repeated binding/retry preserves identity; equal filenames and bytes in W1/W2 remain policy separated; rename/import aliases resolve without duplicate and ambiguous mapping quarantines.",
+      "missingPrerequisites": ["WP-02 accepted types, registry migration and alias scenario receipt"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "files.ts:372-441 persists disk bytes without domain receipt; storage.ts:433-457 persists file contents independently. Normative repository/migration files were not found at their exact paths.",
+      "requiredChange": "Implement file tables in selected shared repository and use accepted atomic metadata/receipt/outbox transaction; staging and cleanup effects retain restart-reconcilable jobs. Local files are standalone authority or projections/imports, never shared second store.",
+      "verification": "Restart at upload reservation, object write, metadata commit and before reply; same command yields same file/revision/receipt/event. Verify DB unique counts and independent object read-back.",
+      "missingPrerequisites": ["Selected migrator/transaction API, applied file migration and real object port"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "files.ts:229 accepts sessionId/FileAttachment with no idempotency or expectedRevision. work-packages.json:35789-35994 defines finalize transport, strict fields, errors and revision policy.",
+      "requiredChange": "Implement all five named file APIs on the common WP-04 gateway, exact finalize schema, transport actor, workspace matching, expectedRevision for mutable aggregates and actor-scoped idempotency/requestHash. Emit no live applied result before verified persisted state.",
+      "verification": "Identical retry one receipt/event; altered payload same key IDEMPOTENCY_CONFLICT; stale revision REVISION_CONFLICT; body actor/extra property rejected; UNAUTHENTICATED/FORBIDDEN/WORKSPACE_MISMATCH and fence failures distinguished.",
+      "missingPrerequisites": ["Accepted WP-04 command API and WP-03 actor/policy", "Complete StartUpload/Attach/SignedDownload/DeleteFile contracts"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "listProjectAssets:372-400 enumerates/stat-sorts local assets and exposes absolutePath; READ handlers return bytes without typed file DTO.",
+      "requiredChange": "Add authorized file metadata, attachment list and download/preview queries in normative commands/contracts module, backed by canonical source and stable policy-bound cursors. Hide counts/titles/paths for inaccessible entities.",
+      "verification": "Authorized stable pages across concurrent updates; cursor copied to another actor/workspace denied; revoked/deleted/quarantined item absent including total/title; distinguish genuinely empty from permission/unavailable.",
+      "missingPrerequisites": ["Accepted policy-bound pagination/query port and DTO schema"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "STORE_ATTACHMENT:429-454 returns local result without outbox event. WP-39:35662-35686 specifies file.uploaded/quarantined/deleted and revisioned invalidation/replay cursor.",
+      "requiredChange": "Publish those events transactionally through WP-04 outbox, authorize audiences/current epoch, deduplicate inbox delivery and reject stale revision/policy/tombstone replay; reuse shared projection cursor.",
+      "verification": "Two clients see same ready/quarantine/delete state; consumer crash, dropped event recovery and duplicate/out-of-order delivery converge once; revoked subscriber receives no private metadata.",
+      "missingPrerequisites": ["WP-04 outbox/inbox and WP-03 subscription policy", "WP-05 shared cursor/projection mechanism"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "RequestContext:7-11 has workspace but no actor; validateFilePath:92-162 only contains local paths. rpcFilesActResult is a native result label, not authorization; rpcNativeActResult:477-494 treats native writes as live without resource grant lookup.",
+      "requiredChange": "Use accepted authenticated policy for file, upload and every parent, derived object, search/link/export and agent access; viewer cannot write/share/delete; agent allow-all does not bypass resource ACL; guard all legacy shared writers and future reads.",
+      "verification": "Owner/editor/viewer/guest/outsider, foreign upload ID, forged workspace/actor, revoked cached link and allow-all Agent-V all exercise real transport; assert absence of bytes/title/preview as well as error.",
+      "missingPrerequisites": ["WP-03 accepted policy/actor epoch and WP-51 legacy fence"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "buildPageShareBundle:139-159 rejects script grants and requires usable-action acknowledgment; 169-213 permits optional snapshot and exact HTML, not a file-audience policy.",
+      "requiredChange": "Preserve public bundle allowlist/caps/grant rules and add accepted authorized attachment projection; share permissions and inheritance must be explicit, with expiring link and derived-source audience intersection. Static public byte export and revocable download must be distinguished.",
+      "verification": "Public Page containing private attachment/derived snapshot denied or safely excludes it without leakage; authorized scoped link expires/revokes; stale grant, script grant, oversized bundle and standalone HTML publishing regressions exercised.",
+      "missingPrerequisites": ["Accepted shared export policy, WP-03 grants and WP-50 provenance"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "files.ts:460-545 is local name/path BFS, not authorized shared index; ProjectPromptContext assets:108 is filename metadata. WP-06 is an explicit dependency.",
+      "requiredChange": "Register canonical file/attachment and allowed derived-content projection with WP-06; upsert on ready revision, remove/tombstone on delete, check current ACL before every result/snippet and expose watermark. Quarantine is not searchable.",
+      "verification": "PRIVATE_WP-39 found only by authorized actor after watermark; revoke before delayed index update still hides title/snippet/count; delete/replay never resurrects and consumer crash does not lose a valid file.",
+      "missingPrerequisites": ["WP-06 accepted extractor/query/invalidator interface and receipt"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "files.ts:456-460 explicitly identifies fs.SEARCH as @ mention selection; FileSearchResult:644-649 lacks canonical ref/source revision.",
+      "requiredChange": "Use authorized canonical file targets in existing mention selection and accepted occurrence/link ports; retain source revision and remove/edit occurrence backlinks without widening target ACL. Standalone path mention behavior stays separate.",
+      "verification": "File mention opens same canonical ref; edited/deleted occurrence updates backlink; foreign/revoked mention exposes no private metadata or implicit grant.",
+      "missingPrerequisites": ["Accepted WP-08/09 mention/occurrence host integration and WP-02/03/06 ports"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-39 featureCompleteness includes notifications at 35741; existing file store result at 429-454 has no recipient-policy operation. 22-test-plan.md:212 requires dedup/recipient state, not a no-op.",
+      "requiredChange": "Expose file/attachment cause/ref/revision to the accepted attention mechanism for parent attachment/mention actions; apply current recipient ACL and existing dedup/seen/done/mute/snooze policy. Do not invent a files notification store or unconditional upload ping.",
+      "verification": "Attachment/mention action intended to notify produces one authorized notification despite retry/replay/overlapping reasons; revoked/outsider gets neither title nor attention item; recipient state persists reload.",
+      "missingPrerequisites": ["Attention owner WP-07 integration and accepted parent-action notification semantics"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "WP-39 specifies three file events at 35662-35665; current STORE_ATTACHMENT logs local conversions/errors and returns only attachment metadata.",
+      "requiredChange": "Populate existing activity/audit projection from the transactional file events with authenticated actor, cause, canonical ref and revision, enforcing current audience and privacy rather than a new file activity log.",
+      "verification": "One activity record per accepted command/event; failed quarantine/delete outcome accurately reflected; outsider cannot view metadata; raw body/transcript/token absent.",
+      "missingPrerequisites": ["Accepted activity event consumer and WP-04 event/receipt schema"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "ProjectPromptContext:102-112 carries local asset paths and filenames; StoredAttachment:241-246 contains local/derived paths; files.ts:401-423 converts Office data for agent use. READ_USER_ATTACHMENT is deliberately not exposed to agents at 173-179.",
+      "requiredChange": "Use common authorized file/ref/context ports with acting user and source revision/provenance for agent reads. Preserve the separate local picker trust boundary; do not expose home-inclusive READ_USER_ATTACHMENT as an agent shortcut. Derived thumbnails/markdown follow source ACL and grant intersection.",
+      "verification": "Agent-A reads allowed attachment with canonical citation/revision; Agent-V allow-all cannot mutate/share; revoked source cannot be retrieved from cached context or shared derived summary. Owner's permitted private transcript remains separate.",
+      "missingPrerequisites": ["WP-06 authorized context and agent host mapping", "WP-50 provenance and WP-03 acting-user policy"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Primary operation requires POST /v1/workspaces/{workspaceId}/commands/file.finalize and native domain.file.finalize at work-packages.json:35793-35798; RPC_CHANNELS.file currently lacks it.",
+      "requiredChange": "Expose native RPC and HTTP through the same domain gateway/result serializer; bind agent/API/MCP callers where accepted host tools expose file operations, preserving identical policy/idempotency/revision behavior. MCP caller mapping is a lead discovery request, not an assumed existing file tool.",
+      "verification": "Same payload from HTTP/native/actual agent dispatcher produces same canonical receipt or denial; no body actor or forged workspace accepted and no unauthorized DTO fields serialized.",
+      "missingPrerequisites": ["Accepted transport/composition/host-tool mapping and strict contract schemas"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "files.ts:416 logs conversion path; 461 logs basePath/query; local errors have no command/policy/watermark context. WP-39:35713-35723 specifies seven correlation/counter fields and privacy.",
+      "requiredChange": "Emit commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters through accepted logger/metrics ports; shared logs must omit raw private filename/path/query/content/token and provider signed URL values.",
+      "verification": "Upload/quarantine/revoke/delete/retry traces correlate receipt/event/job without leaking PRIVATE_WP-39 or tokens; forced backlog/retry/DLQ is observable and status does not claim healthy applied state.",
+      "missingPrerequisites": ["Accepted observability context and privacy-safe event schema"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative tests/macro-integration/wp-39.test.ts was not found; WP-39:35688-35700 and 36477-36508 prescribe integration, sensitive controls, recovery and artifacts. No tests run in preflight.",
+      "requiredChange": "Implement meaningful acceptance/regression cases for identity, MIME/size, ACL/expiry, retention and crash/replay; use real selected adapters where behavior depends on storage. Add UI scenario proof and independent negative-control evaluator instead of source-string/wiring tests.",
+      "verification": "Future bun test tests/macro-integration/wp-39.test.ts plus relevant existing package tests and actual Electron/browser scenario. Healthy baseline passes; attach-private-foreign-ID and dropped/duplicated event mutants fail specific assertions; independent holdout failure detected, infrastructure failure classified separately.",
+      "missingPrerequisites": ["Implemented files slice, accepted dependencies, runtime and independent evaluator"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:791-808 and 22-test-plan.md are explicitly future plans, not selected behavior or receipts.",
+      "requiredChange": "Update lead-owned existing documentation with accepted contracts, byte/MIME/checksum/TTL/retention/hold units and values, authority modes, caller changes, upload/quarantine cleanup, expiry/revoke limits, recovery and actual evidence. Keep preflight completion distinct from feature completeness.",
+      "verification": "Each behavior/limit/recovery instruction corresponds to exercised API/UI/operator scenario on delivered revision; no fixture/live or planned/verified substitution.",
+      "missingPrerequisites": ["Accepted final behavior and exact-version runtime verification"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "READ_ATTACHMENT and READ_USER_ATTACHMENT return null on exceptions at files.ts:166-209; fs.SEARCH returns [] at 542-544. STORE_ATTACHMENT converts failures into a generic thrown string at 450-452.",
+      "requiredChange": "Shared paths expose typed denied/terminal/retryable/revision-conflict/quarantine/reauth/unavailable/ambiguous/pending_fence statuses and preserve draft/receipt; no null/empty success masking. Keep standalone behavior explicitly separate rather than silently changing unrelated local contracts.",
+      "verification": "Inject policy denial, malformed/oversize MIME, processor missing, object timeout before and after success, CAS conflict, cleanup failure and revoke fence; actual surface shows correct state and recoverable action, no false ready badge.",
+      "missingPrerequisites": ["Accepted error/result contracts and renderer state adapter"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "WP-39 UI lists loading/applied_verified at 35675-35681; current result DTOs have no upload-job verification stage.",
+      "requiredChange": "Represent upload/finalize/scan/preview/reconcile loading and stale refresh in canonical job/query projections; show applied_verified only after persisted/object read-back receipt, not merely after a local RPC acknowledgment.",
+      "verification": "Delay object/finalize/preview/query replies and reload mid-stage; existing surfaces show loading/stale state rather than empty or falsely ready, then transition using actual receipt.",
+      "missingPrerequisites": ["Accepted upload status DTO and renderer owner mapping"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "listProjectAssets:376-400 returns a local array; file reads can return null and fs.SEARCH [] on errors. Those shapes cannot distinguish shared empty from denied/unavailable.",
+      "requiredChange": "Return typed authorized empty results and explicit denied/unconfigured/offline/quarantined/unavailable states; no private count/title in empty-state text.",
+      "verification": "Genuinely empty authorized parent, all refs deleted, revoked parent, disconnected service and quarantined upload produce distinct visible states with no private metadata.",
+      "missingPrerequisites": ["Authorized query/result schema and existing UI adaptation"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "WP-39 mandates offline_queued; STORE_ATTACHMENT is a one-shot local writer and contains no durable shared replay/cursor logic in inspected code.",
+      "requiredChange": "Use WP-05 shared queue/projection for upload intent/attachment mutations and accepted object-job continuation; preserve private local draft bytes when upload cannot proceed. Reconnect revalidates actor/ACL/revision, retries same intent once and quarantines revoked draft rather than showing applied.",
+      "verification": "Offline selection/attach, client restart, reconnect accepted once with same file/receipt; revoke while queued rejects replay without private export; interrupted object upload resumes/reconciles without duplicate canonical object or false success.",
+      "missingPrerequisites": ["WP-05 durable queue/cursor and accepted object upload recovery protocol", "WP-51 policy fence"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Migration identity, event-delivery and rollback constraints",
+      "currentEvidence": "work-packages.json:36193-36238 specifies four domain tables, composite entity FK, actor-scoped receipt unique key, alias namespace unique key, consumer/event dedup, stable indices and forward repair after cutover.",
+      "requiredChange": "Implement selected additive migration and alias/provenance backfill; reuse foundation common tables/constraints and enforce upload/attachment keys. Keep claimed lease distinct from processed state; never drop recent shared writes as rollback.",
+      "verification": "Fresh apply/backfill/restart; duplicate/foreign refs and altered idempotency payload rejected; ambiguous IDs quarantined; snapshot-before-cutover and forward-repair/reverse-replay exercises preserve accepted writes and object links.",
+      "missingPrerequisites": ["Selected migrator, WP-02/04 schemas, accepted backup/cutover plan"],
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "License behavior reimplementation",
+      "currentEvidence": "WP-39:35753 specifies BEHAVIOR_REIMPLEMENTATION and dependency reuse only after exact audit; no upstream source was inspected or copied here.",
+      "requiredChange": "Reimplement behavior against ROX mechanisms; any added parser/MIME/blob dependency requires scoped origin/license/component decision. Keep imported code and notices within accepted release policy.",
+      "verification": "Future lock-pinned SBOM/component decisions and file-origin review agree with actual delivered artifact; unreviewed copied dependency/control denied.",
+      "missingPrerequisites": ["WP-48 audit receipt if any upstream dependency or new component is used"],
+      "state": "NOT_VERIFIED_RELEASE_GATE"
+    },
+    {
+      "criterion": "Real changed surface and relevant failure/reload path observed",
+      "currentEvidence": "WP-39:35754 explicitly says fixture is not a live receipt; 22-test-plan.md:243-247 requires exact implementation/image/schema, seed, actor, command, event, policy and artifact evidence. This worker only read source and prepared a report.",
+      "requiredChange": "Lead integrates accepted slice then records implemented/verified/delivered separately with full user scenarios, sensitive controls, reload/recovery and authorized storage read-back. A valid preflight JSON or a passing contract test cannot mark feature complete.",
+      "verification": "Revision-bound actual UI/API/agent observation, original+derived object read-back, file/ref/revision and unique row counts, receipts/event watermarks, failure trace seed=20260969, private-safe screenshots/traces; retain all failed attempts.",
+      "missingPrerequisites": ["Committed integrated implementation and isolated runtime", "All preceding acceptance gates and actual live scenario evidence"],
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/server-core/src/handlers/rpc/files.ts","symbol":"HANDLED_CHANNELS; registerFilesHandlers; READ_DATA_URL; STORE_ATTACHMENT","lineStart":24,"lineEnd":454,"sha256":"55136639f9da66bce52cf635ff7ebb74ee0e8d265a75a54117697469fe686b68"},
+    {"path":"packages/server-core/src/handlers/rpc/files.ts","symbol":"RPC_CHANNELS.fs.SEARCH handler","lineStart":456,"lineEnd":546,"sha256":"55136639f9da66bce52cf635ff7ebb74ee0e8d265a75a54117697469fe686b68"},
+    {"path":"packages/shared/src/projects/storage.ts","symbol":"deleteProject; listProjectAssets; uploadProjectAsset; deleteProjectAsset","lineStart":334,"lineEnd":483,"sha256":"19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path":"packages/shared/src/pages/share-bundle.ts","symbol":"PagePublicManifest; BuildPageShareBundleOptions; buildPageShareBundle","lineStart":76,"lineEnd":214,"sha256":"aa1521109a3a47d544006d149cd9f1eca23c51bff42f14cecb55092738b0e001"},
+    {"path":"packages/core/src/types/message.ts","symbol":"StoredAttachment; Message.attachments","lineStart":234,"lineEnd":276,"sha256":"f37d78960e6e3309b86902133419d89fb841d6564598c23234ec80b7a0ee51ca"},
+    {"path":"packages/shared/src/projects/types.ts","symbol":"ProjectAsset; ProjectPromptContext","lineStart":59,"lineEnd":113,"sha256":"a40c43fc73a8918b91b9608c67c303be48432f3d2f84d8bdf15b8ac8e1e8d6fc"},
+    {"path":"packages/shared/src/protocol/dto.ts","symbol":"FileAttachment; FileSearchResult","lineStart":625,"lineEnd":649,"sha256":"30fa78f688e035c3ad38b0c1280418c81108b7c7a0ed12939472b32ecc0ade8a"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.file","lineStart":155,"lineEnd":169,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/utils/files.ts","symbol":"MAX_FILE_SIZE; MAX_TEXT_SIZE; getMimeType; readFileAttachment","lineStart":117,"lineEnd":425,"sha256":"5e8d95f2b41b8ecf3d919fc17b84875c1109cddce36d58210b1ff1b217a7e3b3"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext; RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/handlers/utils.ts","symbol":"getWorkspaceAllowedDirs; validateFilePath","lineStart":56,"lineEnd":163,"sha256":"df9c0503c86dee9045fb42be828fb7a4974055782556b5ecb3182f07d283917d"},
+    {"path":"packages/core/src/rox2/rpc-native-actions.ts","symbol":"rpcNativeReadResult; rpcNativeActResult; rpcFilesReadResult; rpcFilesActResult","lineStart":430,"lineEnd":736,"sha256":"692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages[WP-39] dependencies/acceptance/featureCompleteness/operations/migrations/verification","lineStart":35615,"lineEnd":36534,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-39","lineStart":791,"lineEnd":808,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-50; WP-51; WP-52 foundation gates","lineStart":1002,"lineEnd":1055,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness checklist; invariant/receipt gates","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "evidenceFreshness": {
+    "inputManifestDigestMatched": true,
+    "hashMethod": "Read-only shasum -a 256 of concrete inspected whole files; line evidence from scoped read/grep",
+    "inputRevisionMeaning": "Dispatch input HEAD only; inspected working-tree bytes may include lead-owned changes and are bound to the recorded whole-file hashes, not asserted identical to the commit.",
+    "recheckTrigger": "Any source/specification hash change or newly accepted foundation interface; lead must reject or refresh stale evidence before applying patches.",
+    "runtimeEvidence": [],
+    "featureVerification": "NOT_RUN_BY_DESIGN",
+    "reportVerificationHistory": [
+      {
+        "attempt": 1,
+        "result": "REJECTED_STALE_SOURCE",
+        "error": "Source changed after inspection: packages/shared/src/protocol/dto.ts",
+        "inspectedSha256": "9715263692a742a23936b0068ddc1e56d09a2be27c682371df67ec5de9d7a6ce",
+        "refreshedSha256": "30fa78f688e035c3ad38b0c1280418c81108b7c7a0ed12939472b32ecc0ade8a",
+        "recovery": "Rehashed all referenced files; only dto.ts differed. Re-read FileAttachment/FileSearchResult at lines 625-649 in snapshot 5ADB: scoped fields and line positions unchanged. Updated whole-file digest; no product edit and no claim about unrelated changed DTO sections."
+      }
+    ],
+    "newFilesObservation": "Exact normative five new file paths were not found by glob at inspection time; no claim about differently named wave0 foundations or uninspected runtime files."
+  },
+  "nextExecutableAction": {
+    "now": "Lead consumes this source-backed preflight and assigns shared patch requests to current owners; no product implementation by this worker.",
+    "afterGates": "After wave0 commit and accepted WP-02/03/04/06 interfaces/migrations/scenario receipts, recheck the recorded digests, settle secondary API/policy contracts with the existing foundation/composition owners, implement contracts.ts and the additive file migration/repository against those accepted ports, then commands.ts and native/HTTP adapters. Cut over shared legacy writers/readers and host DTOs before exercising actual Task/chat/Page scenario.",
+    "firstCodeContribution": "packages/shared/src/workspace-domain/files/contracts.ts strict file.finalize schema and accepted pure domain ports, not a standalone second store.",
+    "verificationOrder": "Compile/schema contract gate after integration, real storage/API smoke, all acceptance/negative/crash/recovery scenarios, actual existing surfaces and agent dispatcher, exact-version evidence and existing documentation updates. Tests/builds/UI/network remain prohibited during this preflight."
+  },
+  "risks": [
+    "Primary file.finalize schema is precise, but secondary operations, MIME/byte policy, checksum algorithm, URL TTL/revoke SLA, parent ACL inheritance and retention/hold policy are not specified numerically in the inspected WP-39 record. Do not infer them from unrelated local/API image limits.",
+    "Three existing attachment identities differ: per-session random UUID, Project filename/path and Page HTML/snapshot. A canonical gateway without caller migration would preserve divergence.",
+    "Local getFileType defaults unknown files to text and readFileAttachment truncates large text. Shared finalization must not hash truncated/converted bytes as the original object.",
+    "STORE_ATTACHMENT may resize images and convert Office files; thumbnails/markdown are separately retained sensitive derivatives and must carry source revision/policy/provenance.",
+    "Directory allowlists, sensitive-path blocks and native live-result helpers do not implement authenticated shared ACL. Legacy path reads/writes can bypass a newly added shared endpoint unless cutover is complete.",
+    "Direct provider presigned URLs may remain usable until expiry despite server ACL revoke. Select a real enforceable download boundary and prove the bounded contract; do not silently promise immediate revocation.",
+    "Static public HTML/snapshot export is a copy, not a revocable private file capability. Embedded private bytes or derived summaries outlive URL revoke unless sharing policy rejects the export.",
+    "Blob I/O and PostgreSQL are not one transaction. Missing staging/read-back/reconciliation semantics can leave orphaned objects, false finalized results or duplicate cleanup after timeout/restart.",
+    "Deleting a Project currently recursively removes assets; shared detach/delete/retention must account for cross-surface references and legal hold instead of copying local unlink semantics.",
+    "No renderer, Task/chat domain implementation, object provider or foundation runtime was inspected under this worker boundary. Their readiness and exact patch symbols must be supplied by lead-owned integration receipts, not inferred from proposed plan names.",
+    "Whole-file hashes may become stale during root integration. Report verifier checks current bytes; any mismatch means the affected evidence must be reread and refreshed, not accepted as runtime completion.",
+    "Feature completeness includes attention, mentions, activity, agent and offline behavior beyond the four headline assertions; none may be converted to N/A merely because its host foundation is missing."
+  ]
+}

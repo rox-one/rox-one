@@ -1,0 +1,487 @@
+{
+  "task_id": "WP-05-preflight",
+  "attempt_id": "fb9ea0af1fc78fbf25ac68aaf2923009",
+  "packet_hash": "f960c7925ec0e737ebb42cff4f0bc2387198d4abd640846e513b14fee5c1895a",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-05",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; report is not implementation or a runtime receipt",
+  "workTier": "bounded-workflow; one owned report, scoped read-only inspection, lead owns integration",
+  "dependencies": ["WP-04"],
+  "dependencyReceiptsRequired": {
+    "WP-04": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceStatus": {
+    "revisionBinding": "input_revision is the assigned revision, not a newly observed Git HEAD; Git was not queried or changed",
+    "workingTree": "Inspected live files while lead wave0 integration may be uncommitted. Whole-file SHA-256 values bind the inspected bytes; they do not establish that those bytes belong to input_revision. Lead must rehash and refresh changed references after wave0 commit and WP-04 integration.",
+    "specManifest": "Observed work-packages.json SHA-256 equals packet input_manifest: 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "sourceDiscovery": "Codegraph reported no project index. Scoped find failed because its judge provider returned insufficient credits; inspection continued with read and literal grep on normative paths and direct imports.",
+    "runtimeVerification": "NOT_RUN: no builds, product tests, UI, network operations, source edits, or Git operations performed",
+    "newArtifactPresence": "glob reported missing commands contract directory, workspace-service commands directory, workspace-service migrations directory, and wp-05.test.ts at inspection time; absence is time-bound and must be refreshed after dependency integration"
+  },
+  "foundationGates": [
+    {
+      "id": "F0",
+      "gate": "Lead wave0 commit and accepted WP-04 dependency receipts precede implementation",
+      "explicitDagEdge": false,
+      "evidence": "Dispatch instruction and work-packages.json:3596-3604; WP-04 is the sole explicit edge, but a ready source snapshot and accepted receipts are distinct readiness requirements.",
+      "missingPrerequisite": "Committed wave0 input and the three accepted WP-04 receipts have not been supplied to this preflight worker.",
+      "integrationRequest": "Rebase the implementation packet onto lead's committed input without changing this report's assigned input_revision; refresh hashes for shared files. Do not start source work against this report alone."
+    },
+    {
+      "id": "F1",
+      "gate": "Authenticated principal/device/session and resource policy, not workspace selection or owner approval",
+      "explicitDagEdge": false,
+      "evidence": "RequestContext at transport/types.ts:7-11 has only clientId/workspaceId/webContentsId. authorizeWorkspace at command-gateway.ts:38-55 compares workspace strings; APPROVE uses literal owner at 89-94. Architecture:63-97 requires transport-injected AuthenticatedActor. Policy/registry foundations are transitive through WP-04, not extra declared WP-05 edges.",
+      "missingPrerequisite": "Accepted transport actor injection and current workspace/resource/linked-reference policy port from dependency integration, including actual backend population of the context.",
+      "integrationRequest": "Lead must supply authenticated context construction and actor-policy ports; an optional type field or a forged body actor is not sufficient. Preserve the execution-approval gateway separately."
+    },
+    {
+      "id": "F2",
+      "gate": "Single-writer authority routing and revoked projection delivery fence",
+      "explicitDagEdge": false,
+      "evidence": "19-target-architecture.md:50,103,107,115-116,128 explicitly assigns legacy writer guard/fenced delivery to WP-51. WP-05 acceptance requires revoked drafts rejected; its DAG does not list WP-51. PersonalTaskStore.update and personalTasksPut currently expose writable local mechanisms.",
+      "missingPrerequisite": "A supported standalone/shared authority discriminator and traced rejection of legacy writes to shared IDs; current-policy check and audience/cursor fencing at replay/delivery. Full CRDT shard fence is not established by this task inspection.",
+      "integrationRequest": "Lead must resolve the hidden WP-51 foundation ordering or extract its minimal Task authority/policy-delivery guard into an accepted earlier foundation. Do not invent a second router or claim global WP-51 completeness from a Task-only guard."
+    },
+    {
+      "id": "F3",
+      "gate": "Typed canonical shared Task mutation exists before the offline Task scenario",
+      "explicitDagEdge": false,
+      "evidence": "Architecture:118 says WP-04 updates Project before canonical Task WP-11. WP-05:3531,3543 requires offline task editing. PersonalTask at types.ts:42-75 is a local record with no workspace/principal/revision; update at store.ts:207-214 is an unrestricted local patch. A replay mechanism cannot supply a missing canonical Task writer by replaying personalTasksPut.",
+      "missingPrerequisite": "Accepted Task command schema, canonical task identity/registry entry, resource-policy checks, expectedRevision write port, and source-to-shared mapping. WP-11 is not an explicit WP-05 dependency.",
+      "integrationRequest": "Lead must resolve Task bootstrap placement without substituting a Project edit for the named Task acceptance. Specify the minimal shared Task edit port delivered by foundations versus later WP-11 chat/assignment behavior; no silent promotion of personal tasks."
+    },
+    {
+      "id": "F4",
+      "gate": "Client SQLite ownership, schema dialect and migrator must be selected",
+      "explicitDagEdge": false,
+      "evidence": "WP-05:4003-4047 places client_projection/local_outbox/projection_cursor in a proposed workspace-service migration with generic uuid/bigint/timestamptz columns, while 19-target-architecture.md:32,50,109 separates Postgres shared authority from client SQLite projection/outbox. Existing cache.ts persists JSON via Kv, not transactional SQLite.",
+      "missingPrerequisite": "Actual migrator, SQLite database host/lifetime, authenticated device/workspace partitioning, native client repository port and approved SQLite representation of the generic schema constraints.",
+      "integrationRequest": "Lead must distinguish service receipt/event tables reused from WP-04 from per-client SQLite tables. Generate the real migration filename with the selected migrator; keep projection/outbox/cursor atomic and never use renderer localStorage as the shared authoritative DB."
+    },
+    {
+      "id": "F5",
+      "gate": "Batch replay and query/result contracts need concrete DTOs",
+      "explicitDagEdge": false,
+      "evidence": "WP-05:3620-3626 constrains batch size but leaves command items as generic object; 3805-3850 requires one top-level status/receiptId. SyncSince/GetCommandReceipt have names but no complete query schemas. Existing pushPersonalTaskDiff returns boolean and discards per-command state.",
+      "missingPrerequisite": "Accepted RoxCommand v2 action-discriminated payload schemas; batch result with per-command IDs/receipts inside a validated data DTO; principal/workspace-bound bounded cursor; SyncSince and GetCommandReceipt request/result codecs.",
+      "integrationRequest": "Extend WP-04 contracts rather than duplicate them. Specify mixed accepted/rejected batch behavior, duplicate command handling, request-hash mismatch, ordered pending edits and cursor expiration recovery. Keep required top-level receiptId and reject unknown mutation fields."
+    },
+    {
+      "id": "F6",
+      "gate": "Existing native surface consumers and composition must adopt the new mode-aware ports",
+      "explicitDagEdge": false,
+      "evidence": "personal-tasks-sync.ts:24-29,91-109,135-145 provides helper APIs only, not a rendered status surface. Protocol channels.ts:679-683,866-872 declares only approval/personal channels. HandlerDeps:70-71 injects the execution pending store, not shared replay/client persistence. Inspection intentionally did not traverse unrelated renderer consumers or backend composition implementations.",
+      "missingPrerequisite": "Lead-owned traced callers/host composition, typed preload/domain API exposure, native Project/entity action integration, persisted queue restoration before hydration and i18n updates for changed visible states.",
+      "integrationRequest": "Lead must map and patch real consumers outside this worker's allowed read set. Exposing helpers or adding channel strings alone cannot meet UI/routing/reconnect acceptance. No new task panel or second surface."
+    },
+    {
+      "id": "F7",
+      "gate": "Published kind-registration conformance includes search/mentions/notifications/agent access",
+      "explicitDagEdge": false,
+      "evidence": "19-target-architecture.md:156 and 22-test-plan.md:197-222 forbid enabling a kind without its cross-surface contracts. WP-05:3570-3592 repeats the full checklist. These mechanisms are not supplied by the inspected personal cache/sync seams and are not additional explicit WP-05 DAG edges.",
+      "missingPrerequisite": "Accepted existing registry descriptor/consumer/tool contracts, or lead-owned delivery/order decision for missing shared Task conformance contributions. Search/agent/permissions cannot be waived because later packages implement them.",
+      "integrationRequest": "Record actual integration receipts per checklist item and resolve hidden gates before feature-complete. Preserve projected references and policy/tombstone epochs so accepted replay can be consumed once without leaking quarantined edits."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/commands/contracts.ts",
+    "apps/workspace-service/src/modules/commands/commands.ts",
+    "apps/workspace-service/src/modules/commands/repository.ts",
+    "tests/macro-integration/wp-05.test.ts",
+    "apps/workspace-service/migrations/05-domain-contract.sql"
+  ],
+  "newFileOwnershipNote": "These are the exact normative implementation newFiles, not permission for this preflight worker to write them. The first three are also proposed by WP-04 and must be extended under one lead-assigned commands-area owner after WP-04 rather than recreated. The migration path is a proposed identifier; actual filename belongs to the selected migrator. This preflight owns only plans/compound-implementation/worker-reviews/WP-05.json.",
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / Rox2Status / Rox2Receipt / Rox2Event / queuedResult / isClaimableLive",
+      "change": "Reuse WP-04's accepted RoxCommand v2 and authenticated/domain event shapes. Add only missing replay/client projection typed status/receipt fields or pure adapters. Keep workspace-scoped refs, aggregateRevision/policyEpoch/causation/correlation and requestHash/receiptId evidence. Translate applied only after durable verified receipt; queued/reconciling/ambiguous/pending_fence/rejected/unavailable must not claim succeeded+verified. Validate native expectedRevision separately from isRevisionedEntityRef, which requires remote accountNamespace.",
+      "reason": "Current receipt lacks command hash/receipt identity and event lacks workspace/policy epoch. Canonical triad must remain the single status convention, with no service I/O in core."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext / RpcHandlerOptions",
+      "change": "Adopt the foundation's immutable AuthenticatedActor and explicit authority mode in the context, populated by authenticated host transports. Require them for shared replay/query handlers and reject missing/mismatched workspace membership; do not derive actor from clientId or webContentsId. Keep standalone host compatibility only through explicit local-authority routing.",
+      "reason": "Current context establishes workspace selection but contains no authenticated resource actor. Type changes alone cannot confer authorization."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "symbol": "HANDLED_CHANNELS / registerCommandGatewayHandlers / authorizeWorkspace / requireStore",
+      "change": "Register domain.command.replay plus accepted SyncSince/GetCommandReceipt channels via the same authenticated shared command port. Validate strict envelopes, max 1000 commands, bounded cursor and each linked ref; dispatch using transport actor and current policy. Read receipts through current ACL and return per-command canonical result. Preserve command:list/approve/deny and their PendingCommandsStore as execution consent; never send domain replay to decide/takeApproved.",
+      "reason": "Existing handlers operate only on owner-approved execution commands, not idempotent revisioned domain writes. Current invalidRequest folds workspace failures into INVALID_REF and cannot model the replay error taxonomy."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps.commandGateway",
+      "change": "Leave commandGateway typed as PendingCommandsStore; inject an independently typed accepted domain/client ports dependency for replay, sync cursor, receipt lookup and durable client queue transactions. Composition remains owned by the host/root; shared writes cannot select a local store fallback when service is unavailable.",
+      "reason": "Existing dependency is the wrong store. A new property must reference the accepted WP-04/WP-05 contract rather than introducing a parallel authority or untyped callback."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.commandGateway / RPC_CHANNELS.personalTasks",
+      "change": "Add the accepted domain replay/sync/receipt channel group, with domain.command.replay exactly matching the normative native RPC route. Keep personalTasks channels as explicit standalone local-authority operations and approval channels separate. Root must update corresponding typed API exposure/routing consumers using the established generation convention.",
+      "reason": "Current declarations expose personal list/put/delete/migrate and execution decisions, but no shared replay or durable cursor query."
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "symbol": "ErrorCode / KNOWN_ERROR_CODES / CodedError / isErrorCode",
+      "change": "Under protocol owner, propagate the normative shared-domain errors UNAUTHENTICATED, FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED, REVOKE_FENCE_PENDING in both union and recognition set, reusing dependency additions if already present. Branch renderer decisions on wire error codes, never instanceof.",
+      "reason": "Current known codes do not represent replay's domain error taxonomy; unknown codes cannot silently become generic retry success."
+    },
+    {
+      "path": "packages/core/src/tasks/personal/cache.ts",
+      "symbol": "loadPersonalTaskCache / persistPersonalTaskCache / PERSONAL_TASKS_QUARANTINE_KEY / PERSONAL_TASKS_STAGING_KEY",
+      "change": "Preserve standalone corrupt-original quarantine and staging keys unchanged. Guard the local-authority adapter from accepting shared entities; shared mode uses a host-injected SQLite projection/outbox transaction. Policy-rejected drafts are workspace/principal/device-scoped typed outbox quarantine entries with terminal rejection evidence, not overwritten personal corrupt-cache quarantine blobs. Do not add a second canonical personal cache or a JSON shared queue.",
+      "reason": "Existing quarantine is corruption recovery, not revoked mutation quarantine, and Kv has no transaction. One browser key currently has no workspace/principal scope."
+    },
+    {
+      "path": "packages/core/src/tasks/personal/store.ts",
+      "symbol": "PersonalTaskStore.create / update / complete / importBundle / snapshot / tryFromJson",
+      "change": "Keep this class the standalone personal model behind the accepted authority router; do not make its mutable bundle the shared canonical writer. Build shared Task intents through accepted typed task commands with canonical Rox2EntityRef, expectedRevision and idempotency key, validate mutable fields and linked targets server-side, and persist intents before exposing durable-local success. Shared projection updates use verified server rows with a separate local draft overlay, not Object.assign into a canonical local master.",
+      "reason": "Local IDs and Partial<Omit<PersonalTask,...>> carry neither ACL nor CAS. Reusing local IDs across shared workspaces without explicit mapping risks collision and silent exposure."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/personal-tasks-sync.ts",
+      "symbol": "PersonalTasksApi / hydratePersonalTasksFrom / diffPersonalTaskBundles / pushPersonalTaskDiff / putPersonalTaskConfirmed",
+      "change": "Introduce the accepted mode-aware sync adapter at this existing seam. Standalone keeps personalTasksList/Put/Delete/Migrate semantics. Shared startup loads persisted projection, queue and authorized cursor before remote refresh; writes await durable enqueue, replay stable IDs/hashes/revisions after reconnect, reconcile unknown replies via GetCommandReceipt, and atomically apply authorized SyncSince events with watermark. Use typed per-command states rather than boolean for shared results; rejection moves the exact draft to local quarantine and never advances a synced baseline. Personal migration must never upload a whole personal bundle into a shared workspace.",
+      "reason": "hydratePersonalTasksFrom awaits server list before any local recovery; pushPersonalTaskDiff returns false on failures but cannot distinguish retryable transport failure, partial mutation, policy rejection or unknown commit."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/commands/contracts.ts",
+      "symbol": "WP-04 command envelope/receipt ports; proposed ReplayCommand / SyncSince / GetCommandReceipt codecs",
+      "change": "After WP-04 acceptance, extend in place with strict action-discriminated replay items, max batch 1000, cursor max length 10000, authorized paginated change DTOs, per-command results and typed client queue/projection ports. Preserve the normative top-level status/receiptId result and canonical triad mapping. Service principal is an injected argument, never a accepted body actor field.",
+      "reason": "The same normative new path is shared with WP-04; recreating it or accepting arbitrary nested command objects would fork the contract and bypass validation."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/commands.ts",
+      "symbol": "WP-04 command gateway; proposed replay / syncSince / getCommandReceipt",
+      "change": "Reuse WP-04 transaction/idempotency gateway per inner command, recheck current policy and linked refs during execution and receipt/query reads, return stable results for duplicate same-hash requests, reject changed payload keys and stale revisions. Authenticate HTTP POST /v1/workspaces/{workspaceId}/commands/command.replay and native RPC identically. Order pending edits with their actual revision dependencies; never blindly rebase a stale Task patch or classify an unavailable provider as applied.",
+      "reason": "Replay must reuse the single authority, not duplicate command handling or trust the ACL epoch captured when the client went offline."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/repository.ts",
+      "symbol": "WP-04 receipt/outbox/inbox transaction repository; proposed client projection repository port",
+      "change": "Extend existing accepted receipt/event facilities rather than create another command_receipt store. Implement durable projection/outbox/cursor repository operations through the selected client SQLite adapter: enqueue stable command/request hash with observed revision; separate lease from completion; reconcile applied receipts; apply inbox dedup+projection+watermark atomically; fence tombstones/policy epochs; retain rejected payload as private quarantined draft. Server authority domain+receipt+outbox commit remains atomic in its own database, not a fictitious cross-client/server transaction.",
+      "reason": "Restart and lost reply semantics require separate durable boundaries; a cursor advanced before projection persistence loses events, and a reused execution pending JSON store has neither idempotency nor fences."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-05 section",
+      "change": "After implementation and evidence, document actual authority modes, command/replay/cursor DTOs, queued versus verified statuses, quarantine recovery, selected migration artifact and resolved hidden Task/WP-51 gates. Keep unresolved gates visible and dependencies unchanged until lead explicitly revises the plan.",
+      "reason": "Current section is a planned behavior record, not runtime evidence or an operational recovery guide."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Feature completeness checklist / evidence receipt record",
+      "change": "Attach implementation-revision-bound offline Task scenarios, startup recovery, revoked replay/current ACL read checks, unique receipt/event counts, cursor watermark assertions, negative controls and native surface receipts; document genuine unavailable states without recasting missing acceptance as N/A.",
+      "reason": "Published plan expressly requires actual changed surface and caught seeded controls, not helper fixtures or code inspection alone."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Offline task edit remains queued",
+      "currentEvidence": "cache.ts:33-44 stores a personal JSON snapshot. PersonalTaskStore.update:207-214 immediately mutates a local bundle. pushPersonalTaskDiff:134-145 only returns false on RPC failure; no durable command identity/state is retained by these seams.",
+      "requiredChange": "At the existing Task action/sync seam route shared mode to a typed canonical Task edit, atomically persist stable envelope/hash/revision in client local_outbox and draft overlay, then expose offline_queued with unverified triad. Keep canonical projection unmodified by unacknowledged local edits.",
+      "verification": "Future seed 20260935 native Task action offline: inspect durable queued row and original canonical revision, reload and compare exact draft, verify no applied/server receipt or shared event. Inject SQLite enqueue failure and assert no saved/queued-success claim.",
+      "missingPrerequisite": "F3 canonical Task mutation, F4 client database, F6 actual action consumers; WP-04 accepted contract/receipts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "reconnect accepted once",
+      "currentEvidence": "PersonalTasksApi.put returns counts/rejected IDs and diff comparison uses JSON equality. PendingCommandsStore.create:129-147 mints a fresh execution command; it is not an idempotency store.",
+      "requiredChange": "Replay unchanged queued command identity/key/hash through WP-04 gateway under current actor/policy; apply one canonical Task revision/event and stable receipt. Query receipt on unknown reply; consume events once and advance watermark only in committed projection transaction.",
+      "verification": "Restore connectivity and duplicate/reorder replay; count exactly one canonical write, one semantic event and one same-key receipt; drop reply after server commit, retry/restart, compare canonical ID/revision/requestHash/receiptId and client watermark. Test same key changed payload and stale expectedRevision are rejected.",
+      "missingPrerequisite": "WP-04 durable idempotency/outbox acceptance; F3/F5/F6.",
+      "state": "missing"
+    },
+    {
+      "criterion": "revoked queued mutation rejected and draft quarantined",
+      "currentEvidence": "cache.ts:24-30 quarantines malformed JSON only. authorizeWorkspace:38-55 checks a selected workspace, not principal/resource grants. Current sync boolean cannot represent terminal policy rejection.",
+      "requiredChange": "Revalidate actor workspace/resource/action/linked refs and current policy fence on replay. Store rejection receipt and terminal private quarantine of the exact draft; remove retry eligibility, do not mark synced, and purge unauthorized shared projection/subscriptions. No automatic personal-to-shared retry/upload.",
+      "verification": "B queues Task edit offline; A revokes B before reconnect. B receives rejected/FORBIDDEN or pending fence until rejected, server Task revision/event unchanged, draft persists privately after restart, future fetch/subscribe denied without private title/body. Seed mark-rejected-draft-synced and independent unauthorized/dropped-event variant; acceptance assertion must fail specifically.",
+      "missingPrerequisite": "F1 resource actor/policy and F2 authority/delivery fence; F4 quarantine persistence and F5 typed results.",
+      "state": "missing"
+    },
+    {
+      "criterion": "restart restores queue",
+      "currentEvidence": "hydratePersonalTasksFrom:91-108 starts with awaited remote list and restores only canonical personal/migration snapshot. PendingCommandsStore persists execution approval JSON, which is the wrong command domain.",
+      "requiredChange": "Restore client projection, queue status/lease, exact payload/hash/revision, receipt linkage, quarantine and cursor before network hydration; recover abandoned leases. Persist inbox effect+processed+watermark atomically and reconcile committed-but-unreplied commands through receipt lookup.",
+      "verification": "Kill client after enqueue before send, after send before receipt, after receipt before projection acknowledgement; kill service between canonical commit and response. Relaunch and compare queue/receipt/canonical ID/revision. Inject projection transaction failure and verify cursor did not advance; reprocess event once.",
+      "missingPrerequisite": "F4 selected SQLite host/migrator; accepted WP-04 crash semantics; F5 receipt query.",
+      "state": "missing"
+    },
+    {
+      "criterion": "standalone personal task regression",
+      "currentEvidence": "Existing PersonalTaskStore preserves local bundles, recurrence and source links; cache corruption protects original/staging. hydratePersonalTasksFrom preserves raw pre-migration blob and migrates once. personal.test.ts:85-114 contains export/reload/quarantine assertions; test files were inspected, not run.",
+      "requiredChange": "Keep explicit standalone local authority and existing personal RPC/cache migration paths; isolate mode selection and shared canonical refs without forced migration/cloud sync or new personal store. Reject shared refs through direct legacy writers.",
+      "verification": "Future bun test packages/core/src/tasks/personal plus relevant existing renderer/server suites. Exercise native standalone create/edit/complete/recurrence/import/export and reload, malformed/versioned cache quarantine and pre-migration preservation. Network/service absence must not disable standalone; assert no personal bundle appears in shared service.",
+      "missingPrerequisite": "F2 authority discriminator, F6 native callers and host routing; regression suite execution is prohibited in preflight.",
+      "state": "preserved_source_mechanism_runtime_unverified"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Normative existing surface is Native Project/entity actions; inspected personal-tasks-sync.ts exposes helpers only and a generic PersonalTaskCreationError.",
+      "requiredChange": "Wire typed shared statuses into existing Task/entity actions with loading/empty/permission_denied/offline_queued/retryable_error/applied_verified and private draft quarantine, using t() and all ten locales. No second task panel.",
+      "verification": "Actual Electron interactions/screenshots/ARIA for baseline, offline edit, reconnect, rejection and reload; inspect keyboard/focus and changed status presentation at the exact implementation SHA.",
+      "missingPrerequisite": "F6 lead-owned consumer trace/patches and runnable native surface.",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Rox2EntityRef and format/parseRox2EntityId at platform-contract.ts:218-239 provide canonical IDs; personal tasks use local task IDs with unscoped TaskLink refs.",
+      "requiredChange": "Reuse existing navigation/entity action routes with workspace-scoped canonical task refs; preserve standalone routes and restore selected entity/draft after reload without routing revoked shared content.",
+      "verification": "Open canonical ref, navigate history/tab/panel, reload/offline/reconnect and assert same entity identity; forged cross-workspace/deep link denied without title/body.",
+      "missingPrerequisite": "F3 canonical mapping and F6 routing consumers outside allowed inspected set.",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Rox2EntityRef carries workspace/entity/revision/account namespace. PersonalTask has only local id and optional updatedAt, no scalar aggregate revision or authenticated scope.",
+      "requiredChange": "Use registered task canonical identity and typed mutable fields/alias provenance; preserve local bundle identity in standalone. Reject ambiguous mapping into quarantine, never treat native expectedRevision as requiring account namespace.",
+      "verification": "Stable IDs across duplicate replay/restart; cross-workspace/account collision denied or quarantined; unknown fields/schema versions rejected; native CAS works without provider account namespace.",
+      "missingPrerequisite": "F3 shared Task descriptor/mutation and accepted registry foundation.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "cache.ts provides separate Kv.setItem calls, not projection/queue/cursor transaction. Specification requires client SQLite and separate personal authority.",
+      "requiredChange": "Implement client_projection/local_outbox/projection_cursor with selected migration and scoped constraints; reuse server receipt/event tables. Keep one writer per mode and support additive migration, quarantine and safe forward repair after accepted writes.",
+      "verification": "Fresh install/migration/restart and transaction failure injection; verify composite identity, idempotency and inbox uniqueness, persisted cursor, no lost draft or recent-write deletion during recovery.",
+      "missingPrerequisite": "F4 dialect/database/migrator and F2 writer guard.",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "registerCommandGatewayHandlers registers list/approve/deny only; authorizeWorkspace is not resource ACL. PersonalTaskStore.update performs no expectedRevision check.",
+      "requiredChange": "Strict RoxCommand v2 replay with transport actor, current grants/linked refs, schemaVersion, idempotency/request hash and required expectedRevision for existing Task edits; no CRDT replay semantics for Task status.",
+      "verification": "Authorized edit and duplicate, concurrent stale edit conflict, same-key altered payload conflict, forged actor/workspace/target, unknown fields and unsupported schema rejection over native RPC and HTTP.",
+      "missingPrerequisite": "WP-04 accepted gateway; F1/F3/F5 and real HTTP/native composition.",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "PersonalTasksApi lists full personal snapshot; no inspected SyncSince/GetCommandReceipt port or authorized bounded cursor.",
+      "requiredChange": "Define typed scoped SyncSince and receipt lookup queries, stable bounded pagination/cursor with current ACL on every read, watermark and explicit cursor recovery; return no hidden totals/titles.",
+      "verification": "Paged gap replay and expiry recovery, outsider/now-revoked receipt and entity read denial, cursor forged from other actor/workspace rejected; committed unknown reply resolved to same receipt.",
+      "missingPrerequisite": "F1 authenticated query policy; F5 cursor/receipt DTOs.",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "WP-05 requires projection.advanced and command.rejected with revisioned invalidation/replay cursor; Rox2Event carries optional audit fields only.",
+      "requiredChange": "Deliver authorized domain events from durable transaction outbox and consume with lease/inbox dedup. Enforce aggregate revision, policy/tombstone fences and atomic watermark; gaps invoke SyncSince, not unconditional snapshot overwrite.",
+      "verification": "Duplicate/reordered/dropped event, consumer crash before/after processing, stale update after tombstone/revoke, reconnect gap recovery and denied subscription. Event/projection watermark must match the accepted canonical revision.",
+      "missingPrerequisite": "WP-04 outbox/inbox receipt and F2 delivery-policy fence.",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "authorizeRox2Action:598-609 is a pure actor-grant helper; entity.permissions is explicitly not actor ACL. RequestContext lacks authenticated actor.",
+      "requiredChange": "Evaluate workspace/resource/action and every linked reference via accepted current policy, inject actor only from transport and separate agent execution grants; allow-all cannot bypass viewer/editor/admin/guest/revoke policy.",
+      "verification": "A owner/B writer/V viewer/C outsider/expired guest/Agent-V allow-all paths; replay, lookup, subscriptions and linked refs denied consistently without metadata leakage.",
+      "missingPrerequisite": "F1 policy actor port and F2 revoke enforcement.",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Architecture:50-55 prohibits silent cloud sync and implicit access through links; inspected personal DTO/store has no shared grant model.",
+      "requiredChange": "Bind shared projection/query/replay to explicit resource grants and inheritance rules; revoked or expired grants invalidate future reads/writes. Keep quarantined drafts owner-local and prevent personal-to-team automatic import.",
+      "verification": "Explicit grant permits only intended task, revoke/expiry denies subsequent replay/read/deep link; linked private source is not widened; personal marker absent from teammate/API projections.",
+      "missingPrerequisite": "Accepted policy/sharing foundation and F2/F3; no N/A waiver for missing grants.",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "19-target-architecture.md:156 and checklist require extractor/upsert/delete/current ACL/watermark; no search consumer is present in inspected cache/sync paths.",
+      "requiredChange": "Use accepted Task descriptor/event projection contracts for only committed revisions; replay emits one indexable event; denied/quarantined drafts never index. Resolve missing extractor/consumer as hidden conformance gate, not a duplicate WP-05 search store.",
+      "verification": "After accepted replay/watermark search returns canonical task once; revoke before index refresh denies snippet/title; tombstone removes result; rejected draft marker absent.",
+      "missingPrerequisite": "F7 actual authorized Task search integration/receipt, commonly later search package capability; not yet evidenced through WP-04.",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "TaskLink at types.ts:17-22 is a local kind/id/label, not a revisioned occurrence or target policy. Published conformance/checklist requires mention resolver.",
+      "requiredChange": "Preserve accepted Task source/mention refs and occurrence revision in typed replay; apply target policy, no implicit grant. Route committed mention deltas through existing shared occurrence consumer once; quarantined draft is not a public occurrence.",
+      "verification": "Replay edit with an authorized mention and then removal; one occurrence/backlink delta per accepted revision, denied target produces no metadata leak, duplicate replay or rejected draft no mention effects.",
+      "missingPrerequisite": "F7 accepted mention/Task schema and consumer integration; no unimplemented-to-N/A conversion.",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Durable replay spec includes event dedup but inspected personal sync does not implement recipient policy/attention state. Checklist explicitly requires notifications.",
+      "requiredChange": "Pass only committed authorized Task event refs/revisions through existing notification policy; reuse unique semantic event/recipient receipt. Do not notify rejected drafts or expose raw private payload; preserve seen/done/mute/snooze contracts.",
+      "verification": "Duplicate replay/event gives one intended recipient effect; rejected/unauthorized edit gives none; recipient revoke denies payload; existing seen/done/mute/snooze behavior survives reload.",
+      "missingPrerequisite": "F7 real notification consumer/attention integration receipt, not supplied by inspected paths.",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event has optional actor/cause/revision fields; personal audit event only at/action/taskId/detail. Shared activity requires domain committed causation/revision.",
+      "requiredChange": "Emit projection.advanced/command.rejected with canonical actor/resource IDs, causation/correlation/revision/policy epoch and safe audit payload, routing accepted mutations once into existing activity consumer. Quarantine must not publish draft text.",
+      "verification": "Read authorized activity after replay: one effect, correct actor/cause/revision; denied actor cannot read private event, logs/audit omit raw draft body and private marker.",
+      "missingPrerequisite": "WP-04 domain event/audit contract and F7 activity consumer.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Rox2Context.permissionMode is an execution preference; architecture requires common domain tools with acting user/resource policy and prohibits unsafe legacy shared writes.",
+      "requiredChange": "Expose replay/query/Task action ports through existing authorized agent tool/context registration, enforcing acting-user and provenance. Queued draft is explicitly pending/local, never a canonical shared success; agent allow-all does not override resource ACL.",
+      "verification": "Real dispatcher Agent-A reads canonical revision/receipt and edits once; Agent-V allow-all and outsider replay/read are denied; revoked/rejected draft excluded from shared context/export.",
+      "missingPrerequisite": "F6/F7 accepted tool registration and lead-owned writer/provenance trace outside this inspection set.",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative POST route and native domain.command.replay are specified; current gateway handles only command:* execution approvals and personal API shape is not domain replay.",
+      "requiredChange": "Bind HTTP/native domain replay and existing applicable agent/MCP bridge to one typed command/query gateway with identical authentication, validation, errors and receipts; no new independent MCP authority.",
+      "verification": "Equivalent authorized/forged/stale/duplicate commands through HTTP, native RPC and applicable real tool route produce matching canonical receipts/errors; no payload actor accepted.",
+      "missingPrerequisite": "F1/F5/F6 actual route/bridge composition; applicability must be evidenced by root, not waived because bridge absent.",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "WP-05:3554-3564 requires commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark, retry/DLQ counters and private-content exclusion; current personal boolean result discards these fields.",
+      "requiredChange": "Carry correlation fields through enqueue/replay/receipt/projection/quarantine and record safe queue lag/retry/DLQ/denial counters. Do not log email, body, transcript, tokens or exact quarantined draft content.",
+      "verification": "Correlate one lost-reply/restart/revoke scenario end to end using safe IDs/watermarks; assert retry counter increments without duplicate effects and private marker/secrets absent from captured logs.",
+      "missingPrerequisite": "WP-04 shared tracing envelope and actual client/service instrumentation sink.",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative wp-05.test.ts is absent at inspection; existing personal tests contain real source-level regression assertions, not shared feature receipts.",
+      "requiredChange": "Implement normative integration/negative-control/persistence-recovery cases with seed 20260935. Assert domain counts/receipts/revisions/current ACL and durable queue transitions, not wiring, source strings, mocks or bare no-throw.",
+      "verification": "Future bun test tests/macro-integration/wp-05.test.ts plus relevant existing package tests; baseline passes before seeded controls. Unauthorized actor or dropped/duplicated event and mark-rejected-draft-synced must fail their intended assertions; independent holdout variant required.",
+      "missingPrerequisite": "Real dependency runtime/service/client migration and fixture setup; execution explicitly prohibited in this preflight.",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:84-102 and 22-test-plan.md describe planned WP-05 and evidence expectations, not an implemented recovery route.",
+      "requiredChange": "Update named existing sections with actual mode routing, DTO/error/status semantics, migration/rollback, quarantine/export/retry/reauth procedures, hidden gate decisions and revision-bound observed results. No feature-complete claim from this preflight.",
+      "verification": "Review documentation against actual tested API/UI/recovery and migration receipts after implementation; include exact implementation SHA/schema and private evidence artifact references.",
+      "missingPrerequisite": "Implemented contracts and observed runtime receipts; docs are shared lead-owned files.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "pushPersonalTaskDiff returns false for RPC exceptions/partial rejection; PersonalTaskCreationError retains attempted task but does not classify policy/CAS/reauth/unknown effects.",
+      "requiredChange": "Expose typed retryable_error, terminal rejected/quarantine, revision/idempotency conflict, unauthenticated/reauth, unavailable, ambiguous/reconciling and pending_fence states. Retry only eligible durable commands; resolve unknown server commit via receipt query before repeat.",
+      "verification": "Transport drop before and after commit, rejection, schema mismatch, persistence failure, stale version, same-key altered payload and unavailable service each show correct UI/queue state; no false synced or destructive draft loss.",
+      "missingPrerequisite": "F5 typed errors/results and F6 actual status surface.",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "hydratePersonalTasksFrom awaits remote list; no status field reports stale/refresh/loading or queued restoration.",
+      "requiredChange": "Load durable local projection/drafts first, distinguish stale projection and refresh from remote verified state, and avoid replacing restored queued edits with a remote snapshot during startup.",
+      "verification": "Delay/deny service startup and reconnect fetch while queue exists; actual UI shows restored draft+loading/stale state, not empty/synced, and pending changes survive eventual refresh.",
+      "missingPrerequisite": "F4 projection restore and F6 UI state owner.",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "loadPersonalTaskCache returns empty on missing personal key; this cannot represent shared denied/unconfigured/unavailable response. Existing helper snapshot has no shared availability field.",
+      "requiredChange": "Separate genuinely authorized empty shared projection from not loaded, offline stale, permission denied, missing service configuration and unavailable query; preserve standalone empty cache behavior.",
+      "verification": "Native surface with authorized zero tasks, denied workspace, absent service, unavailable query and offline persisted projection must present distinct truthful states and no private metadata.",
+      "missingPrerequisite": "F5 query availability semantics and F6 native presentation.",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Current personal helpers retain a snapshot on failure, but provide neither durable per-command queue nor reconnect cursor or terminal rejected draft state.",
+      "requiredChange": "Implement mode-aware persist-first enqueue/restore/replay/reconcile/projection advancement/quarantine state machine using one accepted client port and one authenticated server gateway, with deterministic recovery of abandoned processing leases.",
+      "verification": "Run named offline Task/reconnect/revoke/restart scenarios with event duplication/reordering, independent device reads and state/receipt/ID consistency; observe actual surface plus persisted database rows/watermark.",
+      "missingPrerequisite": "All F1-F6 foundations and WP-04 receipts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Negative-control: unauthorized actor or dropped/duplicated event fails acceptance; rejected draft cannot be marked synced",
+      "currentEvidence": "WP-05:3533-3535 and 4342-4345 require seeded sensitivity and independent holdout. No WP-05 tests or mutation evidence exists in inspected paths.",
+      "requiredChange": "Create meaningful scenario assertions tying forbidden writes, canonical event uniqueness, watermark completeness and draft quarantine to observed UI/API/DB state, then seed one broken boundary at a time.",
+      "verification": "Baseline first passes; mutant marking rejected draft synced fails exact status/persisted-state assertion. Unauthorized actor bypass and dropped/duplicated event each fail relevant domain assertions, not a setup timeout; independent second variant evaluated without revealing mutation.",
+      "missingPrerequisite": "Implemented runtime, evaluator and real scenario harness after dependency acceptance.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply preserves state/receipt/canonical ID",
+      "currentEvidence": "WP-05:3537-3539 requires crash boundary; current personal put count cannot recover authoritative command receipt after unknown response.",
+      "requiredChange": "Retain stable command ID/key/hash and queued/reconciling state through client/service crashes; reuse WP-04 committed receipt and query it under current policy before issuing another effect.",
+      "verification": "Crash service after mutation+receipt+outbox commit before HTTP/native reply, restart both service/client, replay and query; assert same receipt/entity/revision, one event/write and queue resolved only from verified evidence.",
+      "missingPrerequisite": "WP-04 transactional crash receipt and F4/F5 durable client/query integration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Normative API schema, errors and status evidence",
+      "currentEvidence": "Replay batch max 1000 and cursor length 1..10000 are published; result requires status+receiptId, and applied is not itself the existing triad. Protocol ErrorCode lacks required domain codes.",
+      "requiredChange": "Implement strict outer and nested mutation validation; define action DTOs/mixed batch data, reject actor/workspace forgery, preserve ten named errors and all seven receipt statuses, map them truthfully to triad and validate authorized response data before serialization.",
+      "verification": "Boundary cases for 0/1000/1001 commands, empty/oversized cursor, nested actor/unknown fields, missing CAS, unsupported schema, each error/status and mixed batch; equivalent HTTP/RPC readback with no hidden title/total.",
+      "missingPrerequisite": "F5 accepted DTO resolution and shared protocol owner updates.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Migration, rollback and database constraints",
+      "currentEvidence": "WP-05:4003-4047 proposes client_projection/local_outbox/projection_cursor and identity/idempotency/inbox/fence constraints; migration directory was absent. Generic server column types do not select a SQLite dialect.",
+      "requiredChange": "Generate selected migration artifact, enforce scoped entity/command/event uniqueness and nonnegative revisions/schema checks, additive backfill with provenance and ambiguous-ID quarantine; document before-cutover writer/snapshot rollback and forward repair after accepted shared writes.",
+      "verification": "Real fresh and upgraded database migration/readback, duplicate/mismatched key enforcement, lease/crash recovery, stale policy/tombstone rejection and restore without deleting accepted writes; bind schema revision to scenario receipt.",
+      "missingPrerequisite": "F4 migrator and storage placement decision; WP-04 existing schema receipt.",
+      "state": "missing"
+    },
+    {
+      "criterion": "License policy and real-surface verification gate",
+      "currentEvidence": "WP-05:3594-3595 requires BEHAVIOR_REIMPLEMENTATION and exact license audit before upstream dependency; fixtures are not live receipts. This inspection imports no upstream code and runs no product.",
+      "requiredChange": "Reimplement behavior through existing ROX seams; if a new upstream dependency is selected, require exact audited license/SBOM through lead-owned process. Collect true native/HTTP/agent acceptance evidence at delivered source/schema revision, with artifact hashes and failure history.",
+      "verification": "Inspect actual dependency/license evidence and implementation receipts; UI screenshots/ARIA plus interactions, typed API readback, canonical ID/revision, DB counts, command/event/watermark and seed traces. No complete claim until all missing criteria resolved.",
+      "missingPrerequisite": "Future implemented artifact and lead-owned verification delivery; preflight intentionally cannot supply feature receipts.",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/tasks/personal/cache.ts","symbol":"loadPersonalTaskCache / persistPersonalTaskCache","lineStart":9,"lineEnd":45,"sha256":"534511c2b262597a8055e896323be6cfc1cba209bae17bf9e92e22c7bb90cd34"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.tryFromJson / create / update","lineStart":73,"lineEnd":215,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"TaskLink / PersonalTask / PersonalTaskBundle","lineStart":17,"lineEnd":119,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"packages/core/src/tasks/personal/rpc.ts","symbol":"PersonalTasksSnapshot / PersonalTasksMigrateInput / PersonalTasksMigrateResult","lineStart":7,"lineEnd":35,"sha256":"0077c76f097d4d5f6b89ae21d0bea3703a8cd9b7fe374859b41df7f32ed5e395"},
+    {"path":"apps/electron/src/renderer/lib/personal-tasks-sync.ts","symbol":"PersonalTasksApi / hydratePersonalTasksFrom / pushPersonalTaskDiff","lineStart":24,"lineEnd":146,"sha256":"501953889a635bd5bcdc735220d2565336f49db04dbe8f01e40cc518ecf301a3"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Receipt / Rox2Status / Rox2Event","lineStart":99,"lineEnd":141,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"formatRox2EntityId / parseRox2EntityId / Rox2EntityRef","lineStart":218,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"isClaimableLive / queuedResult","lineStart":539,"lineEnd":562,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event","lineStart":598,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/server-core/src/handlers/rpc/command-gateway.ts","symbol":"authorizeWorkspace / requireStore / HANDLED_CHANNELS / registerCommandGatewayHandlers","lineStart":38,"lineEnd":114,"sha256":"2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / RpcHandlerOptions / RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps.commandGateway","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/command-gateway/pending-commands.ts","symbol":"PendingCommand / PendingCommandsStore.create / decide / takeApproved","lineStart":17,"lineEnd":185,"sha256":"f92bb1201eac36d1dd4e020ee633fbc13d90e22fdfae47a87a1f874b9e3c1228"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.commandGateway","lineStart":679,"lineEnd":683,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.personalTasks","lineStart":866,"lineEnd":872,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/types.ts","symbol":"ErrorCode / KNOWN_ERROR_CODES / isErrorCode / CodedError","lineStart":95,"lineEnd":178,"sha256":"ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path":"packages/core/src/tasks/personal/personal.test.ts","symbol":"import/export and corruption quarantine regression assertions","lineStart":85,"lineEnd":114,"sha256":"4e1d5322f668921f490116e9fae83aaec943cf45714fe7632692b7e23b4f497d"},
+    {"path":"packages/core/src/tasks/personal/things.test.ts","symbol":"repeat rules / completeTask checklist recurrence regression","lineStart":61,"lineEnd":75,"sha256":"1b1fda8ce1ed38494e426c40304002bdc13dc60adfa414a7b8193bdd0bea9294"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-05 dependencies / newFiles / acceptance / operation / migration / verification","lineStart":3456,"lineEnd":4381,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/19-target-architecture.md","symbol":"Single writer / authenticated command contract / WP-51 guard / kind conformance","lineStart":50,"lineEnd":160,"sha256":"951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-05","lineStart":84,"lineEnd":102,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness / invariant controls / evidence record","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "owner": "lead integration owner",
+    "action": "Accept this source-backed preflight report; finish wave0 commit and acquire WP-04's accepted typed-interface/migration/scenario receipts. Refresh the inspected shared-file hashes against that exact snapshot, then resolve hidden foundation requests F1-F7, particularly canonical Task edit bootstrap, WP-51 authority guard ordering and client SQLite migration placement. Dispatch commands-area contributions as in-place extensions of WP-04, with one writer per shared file; only then begin WP-05 implementation.",
+    "firstImplementationContributionAfterGates": "Extend accepted commands/contracts.ts with validated ReplayCommand, authorized SyncSince/GetCommandReceipt, per-command batch result and client projection/outbox ports, then implement repository transactions/migration, authenticated replay/query gateway, existing native sync/action integration and normative scenario suite in that dependency order.",
+    "preflightVerification": "Report JSON readback and structural/source-hash checks only; no product verification or feature completion claimed. Packet verification_argv is provided for lead acceptance, not reported as executed here."
+  },
+  "risks": [
+    "Silent personal-to-team exposure if hydratePersonalTasksFrom's whole-bundle migration is reused in shared mode.",
+    "Dual writable authorities if shared replay coexists with personalTasksPut/Delete or direct PersonalTaskStore writes to shared IDs.",
+    "Hidden Task bootstrap gate: WP-04 supplies Project update, whereas WP-05 acceptance names Task editing before WP-11 canonical Task behavior.",
+    "WP-51 single-writer/fence is a published foundation gate but not an explicit WP-05 edge; lead must resolve ordering, not silently add dependencies or ignore it.",
+    "Three normative new paths are also WP-04 artifacts. Parallel recreation or competing ownership would overwrite accepted contracts/repositories.",
+    "Service migration path and generic Postgres-shaped columns do not settle client SQLite ownership/dialect; no fictitious cross-server/client transaction.",
+    "Batch schema does not yet constrain nested actions or per-command receipts; outer validation alone allows forged/unknown mutations and hides mixed rejections.",
+    "Boolean diff success can discard partial acceptance, mark a rejected draft synced, or overwrite persisted pending edits during hydration.",
+    "Cursor advanced before committed projection/inbox effect loses events; processing lease mistaken for processed ACK loses recovery; stale revision can resurrect revoked/tombstoned data.",
+    "Task edits are CAS revisioned commands, not CRDT. Multiple queued edits need accepted ordering/revision dependency semantics, not blind last-write wins or automatic conflict rebasing.",
+    "Execution PendingCommandsStore TTL/retention/owner decision is not domain idempotency, ACL or receipt evidence and must remain separate.",
+    "One personal corruption quarantine key cannot safely hold multiple revoked drafts or partition authenticated device/workspace data.",
+    "Native mutable refs must not require a provider account namespace merely because isRevisionedEntityRef is a remote-evidence helper.",
+    "Search/mentions/notifications/activity/agent completeness is a published conformance gate; missing downstream implementations are not N/A and helper/API fixtures are not native receipts.",
+    "Root may change inspected files concurrently. References are bounded to whole-file hashes and require refresh on drift; unobserved consumer/composition behavior is explicitly missing, not inferred as working."
+  ]
+}

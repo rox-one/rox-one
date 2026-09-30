@@ -1,0 +1,2945 @@
+{
+  "schemaVersion": 1,
+  "scope": "IMPLEMENT_IT_ALL",
+  "status": "ACTIVE",
+  "sourceBase": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "specRevision": "242492868a11b4d9af1c1011f20b31a346875f0a",
+  "branch": "feat/rox-compound-workspace-20260930",
+  "updatedAt": "2026-09-30T09:49:16.324888+00:00",
+  "packageCount": 143,
+  "packages": [
+    {
+      "id": "WP-01",
+      "title": "Private shared Project: authenticated actor and workspace boundary",
+      "program": "macro",
+      "dependencies": [],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [
+        {
+          "kind": "DATABASE_ADAPTER_READINESS_ONLY",
+          "artifact": "plans/compound-implementation/wp01-postgres-readiness.json",
+          "featureImplemented": false
+        }
+      ],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-02",
+      "title": "Canonical Rox2 registry, alias import and typed backlinks",
+      "program": "macro",
+      "dependencies": [
+        "WP-01"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-02.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-03",
+      "title": "Unified resource grants and revocation during open surface",
+      "program": "macro",
+      "dependencies": [
+        "WP-01",
+        "WP-02"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-03.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-04",
+      "title": "Durable revisioned command and outbox receipt in Project update",
+      "program": "macro",
+      "dependencies": [
+        "WP-02",
+        "WP-03"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-04.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-05",
+      "title": "Shared client projection and offline replay with policy rejection",
+      "program": "macro",
+      "dependencies": [
+        "WP-04"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-05.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-06",
+      "title": "Search and Memory projection for authorized Page/Task",
+      "program": "macro",
+      "dependencies": [
+        "WP-04"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-06.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-07",
+      "title": "Assignment and mention attention with one durable Notification",
+      "program": "macro",
+      "dependencies": [
+        "WP-04",
+        "WP-03"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-07.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-08",
+      "title": "Human Channel and entity Discussion on common Message store",
+      "program": "macro",
+      "dependencies": [
+        "WP-04",
+        "WP-03"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-08.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-09",
+      "title": "Cross-entity mention extraction, linking and recipient policy",
+      "program": "macro",
+      "dependencies": [
+        "WP-08",
+        "WP-07",
+        "WP-06"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-09.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-10",
+      "title": "Two-user collaborative document inside existing ROX Pages",
+      "program": "macro",
+      "dependencies": [
+        "WP-05",
+        "WP-03",
+        "WP-06",
+        "WP-09",
+        "WP-49",
+        "WP-51"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-10.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-11",
+      "title": "Chat → RoxTask with backlink, assignment and Project membership",
+      "program": "macro",
+      "dependencies": [
+        "WP-08",
+        "WP-09",
+        "WP-07",
+        "WP-04"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-11.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-12",
+      "title": "Project as context container with typed domain memberships",
+      "program": "macro",
+      "dependencies": [
+        "WP-11",
+        "WP-02"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-12.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-13",
+      "title": "Task status, priority, assignee and date command completeness",
+      "program": "macro",
+      "dependencies": [
+        "WP-11"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-13.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-14",
+      "title": "Recurring task completion and reminder scheduler",
+      "program": "macro",
+      "dependencies": [
+        "WP-13",
+        "WP-07"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-14.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-15",
+      "title": "Document anchors, history and collaborative undo",
+      "program": "macro",
+      "dependencies": [
+        "WP-10",
+        "WP-08"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-15.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-16",
+      "title": "Notes bridge and portable files as one Page/Document graph",
+      "program": "macro",
+      "dependencies": [
+        "WP-02",
+        "WP-06",
+        "WP-10"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-16.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-17",
+      "title": "Preserve JMAP Mail and expose provider-neutral domain",
+      "program": "macro",
+      "dependencies": [
+        "WP-04",
+        "WP-03",
+        "WP-06"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-17.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-18",
+      "title": "Mail sync cursor, webhook dedup and full refresh recovery",
+      "program": "macro",
+      "dependencies": [
+        "WP-17",
+        "WP-05"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-18.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-19",
+      "title": "Compose, reply, forward and draft attachment upload",
+      "program": "macro",
+      "dependencies": [
+        "WP-17",
+        "WP-18",
+        "WP-39"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-19.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-20",
+      "title": "Gmail and Microsoft mail adapters behind capability contract",
+      "program": "macro",
+      "dependencies": [
+        "WP-18",
+        "WP-19"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-20.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-21",
+      "title": "IMAP/SMTP adapter and scheduled-send durable jobs",
+      "program": "macro",
+      "dependencies": [
+        "WP-18",
+        "WP-19"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-21.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-22",
+      "title": "New inbound sender creates Contact/Company with provenance",
+      "program": "macro",
+      "dependencies": [
+        "WP-17",
+        "WP-18",
+        "WP-02",
+        "WP-03"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-22.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-23",
+      "title": "Dossier person/company migration and reversible identity merge",
+      "program": "macro",
+      "dependencies": [
+        "WP-22"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-23.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-24",
+      "title": "CRM board/list stages, owner, revenue and scoped admin controls",
+      "program": "macro",
+      "dependencies": [
+        "WP-22",
+        "WP-03"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-24.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-25",
+      "title": "CRM Company/Contact shared discussions and mention notifications",
+      "program": "macro",
+      "dependencies": [
+        "WP-24",
+        "WP-08",
+        "WP-09",
+        "WP-07"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-25.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-26",
+      "title": "CRM visibility, hidden records and email-derived context controls",
+      "program": "macro",
+      "dependencies": [
+        "WP-22",
+        "WP-25"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-26.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-27",
+      "title": "Google Calendar sync replaces unavailable production adapter",
+      "program": "macro",
+      "dependencies": [
+        "WP-04",
+        "WP-03",
+        "WP-02"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-27.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-28",
+      "title": "Create event, attendees, move and resize with provider read-back",
+      "program": "macro",
+      "dependencies": [
+        "WP-27",
+        "WP-06",
+        "WP-09"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-28.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-29",
+      "title": "Calendar recurrence exceptions, multi-calendar and availability",
+      "program": "macro",
+      "dependencies": [
+        "WP-28"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-29.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-30",
+      "title": "Calendar-linked Meetings and contacts/projects context",
+      "program": "macro",
+      "dependencies": [
+        "WP-28",
+        "WP-12",
+        "WP-22"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-30.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-31",
+      "title": "Launch LiveKit call from authorized human Channel",
+      "program": "macro",
+      "dependencies": [
+        "WP-08",
+        "WP-03",
+        "WP-04",
+        "WP-12",
+        "WP-52"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-31.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-32",
+      "title": "Guest access, screen sharing and participant lifecycle",
+      "program": "macro",
+      "dependencies": [
+        "WP-31"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-32.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-33",
+      "title": "Consent-based recording and preview with durable egress receipts",
+      "program": "macro",
+      "dependencies": [
+        "WP-31",
+        "WP-32",
+        "WP-39",
+        "WP-52"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-33.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-34",
+      "title": "Transcript diarization, summary evidence and search archive",
+      "program": "macro",
+      "dependencies": [
+        "WP-33",
+        "WP-06",
+        "WP-39",
+        "WP-50"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-34.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-35",
+      "title": "Retain local Meetings recording/import/finalize and recovery",
+      "program": "macro",
+      "dependencies": [
+        "WP-02",
+        "WP-03",
+        "WP-04",
+        "WP-05",
+        "WP-39",
+        "WP-51"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-35.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-36",
+      "title": "Agent/MCP domain actions use same ACL and command receipts",
+      "program": "macro",
+      "dependencies": [
+        "WP-04",
+        "WP-06",
+        "WP-09",
+        "WP-51"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-36.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-37",
+      "title": "Automations consume canonical events with dedup and budgets",
+      "program": "macro",
+      "dependencies": [
+        "WP-07",
+        "WP-36"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-37.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-38",
+      "title": "Company account workspace aggregates every linked surface",
+      "program": "macro",
+      "dependencies": [
+        "WP-12",
+        "WP-25",
+        "WP-28",
+        "WP-34",
+        "WP-36",
+        "WP-50",
+        "WP-39",
+        "WP-16"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-38.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-39",
+      "title": "Files/attachments complete upload, ACL, preview and retention",
+      "program": "macro",
+      "dependencies": [
+        "WP-02",
+        "WP-03",
+        "WP-04",
+        "WP-06"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-39.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-40",
+      "title": "Favorites, recents and deep links across canonical kinds",
+      "program": "macro",
+      "dependencies": [
+        "WP-02",
+        "WP-03",
+        "WP-06"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-40.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-41",
+      "title": "Integrated E2E scenarios, seeded failures and disaster restore",
+      "program": "macro",
+      "dependencies": [
+        "WP-10",
+        "WP-15",
+        "WP-16",
+        "WP-21",
+        "WP-26",
+        "WP-29",
+        "WP-34",
+        "WP-35",
+        "WP-37",
+        "WP-38",
+        "WP-39",
+        "WP-40",
+        "WP-50",
+        "WP-51"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-41.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-42",
+      "title": "Spreadsheet headless domain and React Page representation",
+      "program": "macro",
+      "dependencies": [
+        "WP-10",
+        "WP-15"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-42.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-43",
+      "title": "Canvas representation with safe revisioned whole-file edits",
+      "program": "macro",
+      "dependencies": [
+        "WP-10",
+        "WP-39"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-43.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-44",
+      "title": "PDF, code, image and video contextual viewers",
+      "program": "macro",
+      "dependencies": [
+        "WP-39",
+        "WP-15"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-44.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-45",
+      "title": "Coding agent PR review and reusable Skill surfaces",
+      "program": "macro",
+      "dependencies": [
+        "WP-36",
+        "WP-12"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-45.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-46",
+      "title": "Mobile/desktop reconnect and capability-specific UX contract",
+      "program": "macro",
+      "dependencies": [
+        "WP-41"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-46.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-47",
+      "title": "Self-host deployment, telemetry and retention runbook",
+      "program": "macro",
+      "dependencies": [
+        "WP-31",
+        "WP-33",
+        "WP-39",
+        "WP-04",
+        "WP-10",
+        "WP-18",
+        "WP-34",
+        "WP-17",
+        "WP-35",
+        "WP-52"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-47.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-48",
+      "title": "Exact artifact SBOM and code-origin release gate",
+      "program": "macro",
+      "dependencies": [],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-48.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-49",
+      "title": "Editor binding spike: Tiptap/Loro versus React Lexical/Loro",
+      "program": "macro",
+      "dependencies": [
+        "WP-02",
+        "WP-03"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-49.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-50",
+      "title": "Agent transcript provenance and safe mixed-audience sharing",
+      "program": "macro",
+      "dependencies": [
+        "WP-36",
+        "WP-03"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-50.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-51",
+      "title": "Single-writer mode guard and sync revocation fence",
+      "program": "macro",
+      "dependencies": [
+        "WP-03",
+        "WP-04",
+        "WP-05"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-51.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "WP-52",
+      "title": "Bootstrap shared service and self-host provider/media sandbox",
+      "program": "macro",
+      "dependencies": [
+        "WP-01",
+        "WP-03",
+        "WP-04",
+        "WP-51"
+      ],
+      "spec": "plans/macro-integration/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/WP-52.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-FOCUS-01",
+      "title": "Главная: заменить толстую рамку быстрого ввода задачи на спокойный доступный focus-индикатор",
+      "program": "suite",
+      "dependencies": [],
+      "spec": "docs/rox-suite/published/RS-FOCUS-01.md",
+      "issue": 1091,
+      "status": "ROOT_INTEGRATION",
+      "runtimeEvidence": [
+        {
+          "scope": "WAVE0_SCOPED_INTEGRATION",
+          "log": "/tmp/rox-wave0-checkpoint-tests.log",
+          "sha256": "8f86d85b26d699ebf40ddbf0c904e12277a8d4a9dff447ee1facc6f68e3814c6",
+          "passed": 133,
+          "failed": 0,
+          "assertions": 1780,
+          "files": 13,
+          "fullFeatureDoD": false
+        }
+      ],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "remainingAcceptance": [
+        "Current editor/watcher fixes: fresh builds and native rerun",
+        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Delivered revision and final full-program acceptance"
+      ]
+    },
+    {
+      "id": "RS-SHEET-01",
+      "title": "Rox Sheets: сохраняемая таблица с формулами, совместным редактированием и связями с сущностями",
+      "program": "suite",
+      "dependencies": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-SHEET-01.md",
+      "issue": 1092,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-SHEET-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-SLIDE-01",
+      "title": "Rox Slides: редактор презентаций, показ, комментарии и экспорт как общая Document entity",
+      "program": "suite",
+      "dependencies": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-SLIDE-01.md",
+      "issue": 1093,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-SLIDE-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-BASE-01",
+      "title": "Rox Base: типизированные записи и views Table/Board/Form поверх единого entity graph",
+      "program": "suite",
+      "dependencies": [
+        "RS-DRV-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-BASE-01.md",
+      "issue": 1094,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-BASE-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-FORM-01",
+      "title": "Rox Forms: form builder, безопасная публикация и response-to-entity workflows",
+      "program": "suite",
+      "dependencies": [
+        "RS-DRV-01",
+        "RS-BASE-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-FORM-01.md",
+      "issue": 1095,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-FORM-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-AUT-01",
+      "title": "Automations: расширить текущий граф до визуального canvas с palette, ports и inspector",
+      "program": "suite",
+      "dependencies": [],
+      "spec": "docs/rox-suite/published/RS-AUT-01.md",
+      "issue": 1096,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-AUT-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-AUT-02",
+      "title": "Automations: каталог connector actions, Auth и типизированные Input/Output/Error mappings",
+      "program": "suite",
+      "dependencies": [
+        "RS-AUT-01",
+        "RS-MCP-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-AUT-02.md",
+      "issue": 1097,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-AUT-02.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-AUT-03",
+      "title": "Automations: durable event workflow runtime с Scheduler, DateTime, ветвлениями и возобновлением",
+      "program": "suite",
+      "dependencies": [
+        "RS-AUT-01",
+        "RS-AUT-02"
+      ],
+      "spec": "docs/rox-suite/published/RS-AUT-03.md",
+      "issue": 1098,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-AUT-03.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-AUT-04",
+      "title": "Automations: Debug, журнал узлов, ошибки, конфигурация и проверяемые результаты запусков",
+      "program": "suite",
+      "dependencies": [
+        "RS-AUT-03"
+      ],
+      "spec": "docs/rox-suite/published/RS-AUT-04.md",
+      "issue": 1099,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-AUT-04.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-AUT-05",
+      "title": "Automations: draft/publish versioning, guided tutorial и шаблон Scheduler → DateTime → Connector",
+      "program": "suite",
+      "dependencies": [
+        "RS-AUT-01",
+        "RS-AUT-02",
+        "RS-AUT-03",
+        "RS-AUT-04"
+      ],
+      "spec": "docs/rox-suite/published/RS-AUT-05.md",
+      "issue": 1100,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-AUT-05.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MTG-01",
+      "title": "[ROX Suite][Meetings] Landing: действия, история и сохранение локальной записи",
+      "program": "suite",
+      "dependencies": [],
+      "spec": "docs/rox-suite/published/RS-MTG-01.md",
+      "issue": 1101,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-MTG-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MTG-02",
+      "title": "[ROX Suite][Meetings] Join и preflight: реальные комнаты, устройства и scoped guests",
+      "program": "suite",
+      "dependencies": [
+        "RS-MTG-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-MTG-02.md",
+      "issue": 1102,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-MTG-02.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MTG-03",
+      "title": "[ROX Suite][Meetings] Планирование: форма события, availability, recurrence и Calendar sync",
+      "program": "suite",
+      "dependencies": [
+        "RS-MTG-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-MTG-03.md",
+      "issue": 1103,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-MTG-03.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MTG-04",
+      "title": "[ROX Suite][Meetings] История: detail drawer, участие, lifecycle и verified readback",
+      "program": "suite",
+      "dependencies": [
+        "RS-MTG-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-MTG-04.md",
+      "issue": 1104,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-MTG-04.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MTG-05",
+      "title": "[ROX Suite][Meetings] Записи и протоколы: consent, transcript, summary и связанные действия",
+      "program": "suite",
+      "dependencies": [
+        "RS-MTG-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-MTG-05.md",
+      "issue": 1105,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-MTG-05.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MSG-01",
+      "title": "Messenger: трёхпанельная human collaboration surface в ROX",
+      "program": "suite",
+      "dependencies": [],
+      "spec": "docs/rox-suite/published/RS-MSG-01.md",
+      "issue": 1106,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-MSG-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MSG-02",
+      "title": "Human channels, DM, group threads: composer и durable read state",
+      "program": "suite",
+      "dependencies": [
+        "RS-MSG-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-MSG-02.md",
+      "issue": 1107,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-MSG-02.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-MSG-03",
+      "title": "Contacts: каталог, профиль и общая CRM identity",
+      "program": "suite",
+      "dependencies": [
+        "RS-MSG-01",
+        "RS-MSG-02"
+      ],
+      "spec": "docs/rox-suite/published/RS-MSG-03.md",
+      "issue": 1108,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-DRV-01",
+      "title": "Docs / Drive: единая библиотека Recent, Owned, Shared, Favorites и table/grid",
+      "program": "suite",
+      "dependencies": [],
+      "spec": "docs/rox-suite/published/RS-DRV-01.md",
+      "issue": 1109,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-DRV-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-DOC-01",
+      "title": "Rox Docs: collaborative editor, comments, entity mentions и export",
+      "program": "suite",
+      "dependencies": [
+        "RS-DRV-01",
+        "RS-MSG-02"
+      ],
+      "spec": "docs/rox-suite/published/RS-DOC-01.md",
+      "issue": 1110,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-WIKI-01",
+      "title": "Rox Wiki: spaces, hierarchy, access и history над общими Docs",
+      "program": "suite",
+      "dependencies": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-WIKI-01.md",
+      "issue": 1111,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-NOTE-01",
+      "title": "Notes ↔ Drive: personal Markdown и явная миграция в shared Docs",
+      "program": "suite",
+      "dependencies": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-NOTE-01.md",
+      "issue": 1112,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-MCP-01",
+      "title": "Каталог MCP capabilities, scopes и доступ инструментов агентам",
+      "program": "suite",
+      "dependencies": [
+        "RS-ADM-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-MCP-01.md",
+      "issue": 1113,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-ADM-01",
+      "title": "Organization и capability Admin Hub в существующих Settings",
+      "program": "suite",
+      "dependencies": [],
+      "spec": "docs/rox-suite/published/RS-ADM-01.md",
+      "issue": 1114,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "preflightReport": "plans/compound-implementation/worker-reviews/RS-ADM-01.json",
+      "preflightRunId": "rox-compound-20260930T083916Z"
+    },
+    {
+      "id": "RS-HD-01",
+      "title": "Help Desk: tickets, очереди и idempotent intake",
+      "program": "suite",
+      "dependencies": [
+        "RS-ADM-01",
+        "RS-FORM-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-HD-01.md",
+      "issue": 1115,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-HD-02",
+      "title": "Help Desk: triage, SLA calendar, knowledge и agent-assisted ответ",
+      "program": "suite",
+      "dependencies": [
+        "RS-HD-01",
+        "RS-MCP-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-HD-02.md",
+      "issue": 1116,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-APR-01",
+      "title": "Approval designer: versioned forms, routes и decision policy",
+      "program": "suite",
+      "dependencies": [
+        "RS-ADM-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-APR-01.md",
+      "issue": 1117,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-APR-02",
+      "title": "Approval Inbox: решения, execution receipts и неизменяемый audit",
+      "program": "suite",
+      "dependencies": [
+        "RS-APR-01",
+        "RS-MCP-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-APR-02.md",
+      "issue": 1118,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-SIG-01",
+      "title": "Secure Document Viewer: file versions, sharing и revocation",
+      "program": "suite",
+      "dependencies": [
+        "RS-ADM-01",
+        "RS-MCP-01"
+      ],
+      "spec": "docs/rox-suite/published/RS-SIG-01.md",
+      "issue": 1119,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "RS-SIG-02",
+      "title": "Document signing: immutable sessions, signer intent и evidence lifecycle",
+      "program": "suite",
+      "dependencies": [
+        "RS-SIG-01",
+        "RS-APR-02"
+      ],
+      "spec": "docs/rox-suite/published/RS-SIG-02.md",
+      "issue": 1120,
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-001",
+      "title": "Page content descriptor и совместимое открытие Notes",
+      "program": "lark-extension",
+      "dependencies": [],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "ROOT_INTEGRATION",
+      "runtimeEvidence": [
+        {
+          "scope": "WAVE0_SCOPED_INTEGRATION",
+          "log": "/tmp/rox-wave0-checkpoint-tests.log",
+          "sha256": "8f86d85b26d699ebf40ddbf0c904e12277a8d4a9dff447ee1facc6f68e3814c6",
+          "passed": 133,
+          "failed": 0,
+          "assertions": 1780,
+          "files": 13,
+          "fullFeatureDoD": false
+        }
+      ],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "remainingAcceptance": [
+        "Current editor/watcher fixes: fresh builds and native rerun",
+        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Delivered revision and final full-program acceptance"
+      ]
+    },
+    {
+      "id": "LSX-WP-002",
+      "title": "Личные Task source bindings и изолированный picker",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-001"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-003",
+      "title": "Атомарная запись Markdown с CAS/epoch/receipt",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-001"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "ROOT_INTEGRATION",
+      "runtimeEvidence": [
+        {
+          "scope": "WAVE0_SCOPED_INTEGRATION",
+          "log": "/tmp/rox-wave0-checkpoint-tests.log",
+          "sha256": "8f86d85b26d699ebf40ddbf0c904e12277a8d4a9dff447ee1facc6f68e3814c6",
+          "passed": 133,
+          "failed": 0,
+          "assertions": 1780,
+          "files": 13,
+          "fullFeatureDoD": false
+        }
+      ],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "remainingAcceptance": [
+        "Current editor/watcher fixes: fresh builds and native rerun",
+        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Delivered revision and final full-program acceptance"
+      ]
+    },
+    {
+      "id": "LSX-WP-004",
+      "title": "Canonical Task field command с revision и partial receipts",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-002"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-005",
+      "title": "Lossless Markdown/YAML raw-span patch и field readback",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-003"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "ROOT_INTEGRATION",
+      "runtimeEvidence": [
+        {
+          "scope": "WAVE0_SCOPED_INTEGRATION",
+          "log": "/tmp/rox-wave0-checkpoint-tests.log",
+          "sha256": "8f86d85b26d699ebf40ddbf0c904e12277a8d4a9dff447ee1facc6f68e3814c6",
+          "passed": 133,
+          "failed": 0,
+          "assertions": 1780,
+          "files": 13,
+          "fullFeatureDoD": false
+        }
+      ],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "remainingAcceptance": [
+        "Current editor/watcher fixes: fresh builds and native rerun",
+        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Delivered revision and final full-program acceptance"
+      ]
+    },
+    {
+      "id": "LSX-WP-006",
+      "title": "Stable block/node anchors без переписывания prose",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-005"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "ROOT_INTEGRATION",
+      "runtimeEvidence": [
+        {
+          "scope": "WAVE0_SCOPED_INTEGRATION",
+          "log": "/tmp/rox-wave0-checkpoint-tests.log",
+          "sha256": "8f86d85b26d699ebf40ddbf0c904e12277a8d4a9dff447ee1facc6f68e3814c6",
+          "passed": 133,
+          "failed": 0,
+          "assertions": 1780,
+          "files": 13,
+          "fullFeatureDoD": false
+        }
+      ],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "remainingAcceptance": [
+        "Current editor/watcher fixes: fresh builds and native rerun",
+        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Delivered revision and final full-program acceptance"
+      ]
+    },
+    {
+      "id": "LSX-WP-007",
+      "title": "Сохраняемая BaseDefinition и private/shared views",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-001"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-008",
+      "title": "Миграция NoteBaseView v1 с неизменными legacy formulas",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-006",
+        "LSX-WP-007"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-009",
+      "title": "Source adapters Notes/Tasks/Projects/Meetings/Calendar",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-002",
+        "LSX-WP-003",
+        "LSX-WP-004",
+        "LSX-WP-007"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-010",
+      "title": "Permission-aware query snapshot, cursor и totals",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-009"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-011",
+      "title": "Реестр 18 typed fields и schema inspector",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-007"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-012",
+      "title": "Typed scalar cell editors с native write preview",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-004",
+        "LSX-WP-005",
+        "LSX-WP-010",
+        "LSX-WP-011"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-013",
+      "title": "Bounded formula engine и legacy built-ins",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-008",
+        "LSX-WP-010",
+        "LSX-WP-011"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-014",
+      "title": "Relations picker, cardinality и inverse recovery",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-002",
+        "LSX-WP-010",
+        "LSX-WP-011"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-015",
+      "title": "ACL-filtered Lookup/Rollup и actor-scoped cache",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-013",
+        "LSX-WP-014"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-016",
+      "title": "Schema migration preview/type rename/soft delete",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-012",
+        "LSX-WP-013",
+        "LSX-WP-014"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-017",
+      "title": "Table grid: typed edits, rectangle paste и readback",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-012",
+        "LSX-WP-015",
+        "LSX-WP-016"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-018",
+      "title": "Board: native status transition и keyboard move",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-012",
+        "LSX-WP-010"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-019",
+      "title": "List: native checkbox и eligible bulk actions",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-012",
+        "LSX-WP-010"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-020",
+      "title": "Gallery и typed Image/Audio/Video cells с asset ACL",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-011",
+        "LSX-WP-012",
+        "LSX-WP-010"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-021",
+      "title": "Calendar Base date precision и native/provider capabilities",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-012",
+        "LSX-WP-009",
+        "LSX-WP-010"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-022",
+      "title": "Timeline interval move/resize с native atomic bounds",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-021"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-023",
+      "title": "Chart агрегаты и authorized drill-down",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-015",
+        "LSX-WP-017"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-024",
+      "title": "Doc Base embed и actor-scoped range context",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-010",
+        "LSX-WP-013",
+        "LSX-WP-017"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-025",
+      "title": "Docs library capability filter и same-ref navigation",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-001",
+        "LSX-WP-010"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-026",
+      "title": "Existing Tiptap binding, durable draft и history restore",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-003",
+        "LSX-WP-005",
+        "LSX-WP-006"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-027",
+      "title": "Discussion anchors, orphan state и private-comment migration",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-006",
+        "LSX-WP-026"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-028",
+      "title": "Editable Outline structural commands с aggregate CAS",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-003",
+        "LSX-WP-006",
+        "LSX-WP-026"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-029",
+      "title": "Mind map layout/viewport по тому же tree",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-028"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-030",
+      "title": "Conversion preview copy/inPlace с CAS и rollback",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-005",
+        "LSX-WP-006",
+        "LSX-WP-028"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-031",
+      "title": "Semantic tabs/columns и safe basic Markdown fallback",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-006",
+        "LSX-WP-026"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-032",
+      "title": "Code/highlight presentation без исполнения или false redaction",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-026"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-033",
+      "title": "Action Buttons typed registry и inert imports",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-003",
+        "LSX-WP-004",
+        "LSX-WP-026"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-034",
+      "title": "Portable vault import staged identities/attachments",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-002",
+        "LSX-WP-005",
+        "LSX-WP-006",
+        "LSX-WP-016"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-035",
+      "title": "Base export/import .base/CSV/JSON с loss reports",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-013",
+        "LSX-WP-015",
+        "LSX-WP-016",
+        "LSX-WP-034"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-036",
+      "title": "Map/Outline exports MD/OPML/Canvas/PNG/SVG",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-029",
+        "LSX-WP-030",
+        "LSX-WP-034"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-037",
+      "title": "Checkbox→native Task и TaskNotes origin mapping",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-004",
+        "LSX-WP-006",
+        "LSX-WP-034"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-038",
+      "title": "Docs day-planner binding без нового timer/notification loop",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-021",
+        "LSX-WP-037"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-039",
+      "title": "Offline structural intents, recovery и revoke fence",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-028",
+        "LSX-WP-026"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-040",
+      "title": "Docs/Bases domain-outbox→existing automation aliases",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-003",
+        "LSX-WP-004",
+        "LSX-WP-007"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-041",
+      "title": "Existing constructor typed Docs/Base nodes и field-ID mappings",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-010",
+        "LSX-WP-013",
+        "LSX-WP-033",
+        "LSX-WP-040"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-042",
+      "title": "Revision-pinned artifact/approval nodes и safe retry receipts",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-033",
+        "LSX-WP-036",
+        "LSX-WP-040",
+        "LSX-WP-041"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-043",
+      "title": "Weekly Report workflow recipe с scoped draft/owner review",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-024",
+        "LSX-WP-037",
+        "LSX-WP-041",
+        "LSX-WP-042"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-044",
+      "title": "Form submission→native Task/Base recipe без второй task DB",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-004",
+        "LSX-WP-037",
+        "LSX-WP-040",
+        "LSX-WP-041"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-045",
+      "title": "Explicit CustomRecord page payload для нового типа данных",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-001",
+        "LSX-WP-007",
+        "LSX-WP-010",
+        "LSX-WP-011",
+        "LSX-WP-016"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "LSX-WP-046",
+      "title": "Versioned template gallery с inert actions и bounded creation",
+      "program": "lark-extension",
+      "dependencies": [
+        "LSX-WP-001",
+        "LSX-WP-026",
+        "LSX-WP-031",
+        "LSX-WP-033",
+        "LSX-WP-034",
+        "LSX-WP-045"
+      ],
+      "spec": "plans/lark-suite-reference/work-packages.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-001",
+      "title": "Repository binding, snapshot and provider-neutral contracts",
+      "program": "lark-extension",
+      "dependencies": [],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "ROOT_INTEGRATION",
+      "runtimeEvidence": [
+        {
+          "scope": "WAVE0_SCOPED_INTEGRATION",
+          "log": "/tmp/rox-wave0-checkpoint-tests.log",
+          "sha256": "8f86d85b26d699ebf40ddbf0c904e12277a8d4a9dff447ee1facc6f68e3814c6",
+          "passed": 133,
+          "failed": 0,
+          "assertions": 1780,
+          "files": 13,
+          "fullFeatureDoD": false
+        }
+      ],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      },
+      "remainingAcceptance": [
+        "Current editor/watcher fixes: fresh builds and native rerun",
+        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Delivered revision and final full-program acceptance"
+      ]
+    },
+    {
+      "id": "CI-002",
+      "title": "Repository scope, exclusion and egress policy",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-001"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-003",
+      "title": "Local code-search adapter and index status",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-001",
+        "CI-002"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-004",
+      "title": "Typed RPC, events and durable intelligence jobs",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-001",
+        "CI-002"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-005",
+      "title": "Groma read-only importer and scanner capability spike",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-001",
+        "CI-002"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-006",
+      "title": "OpenWiki RepoWiki adapter and page-claims import",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-001",
+        "CI-002",
+        "CI-004"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-007",
+      "title": "GitDiagram structured graph adapter and source integrity",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-001",
+        "CI-002",
+        "CI-004"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-008",
+      "title": "Freshness resolver, watcher and staged artifact ownership",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-003",
+        "CI-004",
+        "CI-005",
+        "CI-006",
+        "CI-007",
+        "LSX-WP-001",
+        "LSX-WP-003"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-009",
+      "title": "Project/Source navigation and Code Intelligence route shell",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-001",
+        "CI-003",
+        "CI-004"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-010",
+      "title": "Search/evidence and accessible graph UI",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-007",
+        "CI-008",
+        "CI-009"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-011",
+      "title": "RepoWiki knowledge navigation and review UI",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-006",
+        "CI-008",
+        "CI-009",
+        "LSX-WP-025"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-012",
+      "title": "Agent read/stage tools and transport wiring",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-003",
+        "CI-004",
+        "CI-005",
+        "CI-006",
+        "CI-008"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-013",
+      "title": "Instruction reconciliation and license/provider notices",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-002",
+        "CI-005",
+        "CI-006",
+        "CI-008"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-014",
+      "title": "Search alternatives capacity and provider contract gate",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-003",
+        "CI-008"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    },
+    {
+      "id": "CI-015",
+      "title": "End-to-end verification and recovery gates",
+      "program": "lark-extension",
+      "dependencies": [
+        "CI-010",
+        "CI-011",
+        "CI-012",
+        "CI-013"
+      ],
+      "spec": "plans/lark-suite-reference/code-intelligence.json",
+      "status": "NOT_STARTED",
+      "runtimeEvidence": [],
+      "fullFeatureDoD": "NOT_VERIFIED",
+      "readiness": {
+        "mechanism": "NOT_VERIFIED",
+        "interface": "NOT_VERIFIED",
+        "fullDoD": "NOT_VERIFIED"
+      }
+    }
+  ],
+  "execution": {
+    "nativeWorkers": [
+      "implement_content_descriptor",
+      "implement_repo_binding",
+      "implementation_runtime_scout"
+    ],
+    "durableRunner": "LOCAL_OMP_EXTERNAL_70_PREFLIGHT",
+    "cloudCodingRunner": "UNPROVISIONED",
+    "noFeatureClosed": true,
+    "externalWorkersReceipt": "plans/compound-implementation/external-workers.json",
+    "externalNativeSessions": 70,
+    "checkpoint": {
+      "purpose": "Recover all current work before independent wave1 implementation; this is not feature closure",
+      "readyExplicitDependencyPackages": [
+        "WP-01",
+        "WP-48",
+        "RS-ADM-01",
+        "RS-AUT-01",
+        "RS-DRV-01",
+        "RS-MSG-01",
+        "RS-MTG-01"
+      ],
+      "nativeDefectBeingFixed": "Tiptap authority/content echo marked unchanged Markdown dirty; duplicate own-write watch events reopened the note",
+      "lastNativeFailure": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790761388388/result.json",
+      "lastNativeFailureSha256": "6fbbfccd44b1d682bde8f9844b728f2bbcd2eb68d0badb6039de5308f35dd8bc"
+    }
+  }
+}

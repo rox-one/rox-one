@@ -1,0 +1,506 @@
+{
+  "task_id": "WP-50-preflight",
+  "attempt_id": "d330aa963b6ac791ae19b866ddf65788",
+  "packet_hash": "081178955a9cb1e34a78e69592afe6770257dc7905bd86680f465ce7dc99d70e",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-50",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not feature implementation",
+  "workTier": "bounded-workflow: source inspection, acceptance mapping, one report",
+  "dependencies": ["WP-36", "WP-03"],
+  "dependencyReceiptsRequired": {
+    "WP-36": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "WP-03": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceBoundary": {
+    "specification": "plans/macro-integration/work-packages.json:45059-45950",
+    "manifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "manifestMatchesPacket": true,
+    "sourceState": "Inspected current working-tree bytes, not an assertion that these files equal input HEAD. Root-owned uncommitted wave0 work is preserved. Hashes bind whole files at inspection; concurrent integration can invalidate them. Re-read changed ranges and renew hashes after the lead's wave0 commit and accepted dependencies before implementation.",
+    "observedMissingPaths": ["packages/shared/src/workspace-domain/agents/", "apps/workspace-service/src/modules/agents/", "apps/workspace-service/migrations/", "tests/macro-integration/wp-50.test.ts"],
+    "missingPathMethod": "Scoped glob of normative artifact paths; no conclusion about unrelated service files.",
+    "inspectionLimits": "Only normative WP-50 paths, dependency/spec records, cited documentation, directly connected import contracts, and the supplied preflight verifier. No broad repository audit. Concrete SessionManager, renderer, viewer receiver, HTTP composition root and projection implementations are not inspected; requests for those owners are prerequisites, not invented source evidence.",
+    "toolAvailability": "Codegraph reports no project index; do not initialize. Descriptive find attempted on three package files but its judge returned HTTP 402, so literal grep and range read supplied evidence instead.",
+    "runtimeVerification": "No builds, product tests, native UI or network operations performed. All behavioral verification below is proposed acceptance work, not a PASS. Preflight JSON/lineage/source-hash checking is separate from feature verification.",
+    "inspectionRecovery": {
+      "firstVerification": "FAILED: supplied preflight verifier reported Source changed after inspection: packages/shared/src/protocol/dto.ts",
+      "previousSha256": "9715263692a742a23936b0068ddc1e56d09a2be27c682371df67ec5de9d7a6ce",
+      "renewedSha256": "30fa78f688e035c3ad38b0c1280418c81108b7c7a0ed12939472b32ecc0ade8a",
+      "reinspection": "Re-read dto.ts:198-205,421-449,516-546,1017-1027 at snapshot 5ADB. Relevant summary/share/event contracts and cited line ranges remain unchanged; no root source modified. Renewed whole-file hash binds this reinspection, not original HEAD.",
+      "verificationMeaning": "A valid preflight confirms JSON lineage and source hashes only, not feature behavior. Any later source drift still requires reinspection."
+    }
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and source-freshness gate",
+      "classification": "dispatch prerequisite, not explicit package DAG edge",
+      "evidence": "Worker authorization requires implementations to start after lead wave0 commit and accepted dependency receipts; working tree has root-owned uncommitted work.",
+      "requiredReceipt": "Committed wave0 revision plus accepted WP-36/WP-03 interfaces/migrations/scenario receipts; compare recorded source hashes and rebase patch requests without altering root work.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "One owner for overlapping agents modules",
+      "classification": "published integration ownership gate",
+      "evidence": "WP-36 newFiles at work-packages.json:33204-33209 repeats WP-50 contracts.ts, commands.ts and repository.ts. Implementation plan:7 explicitly requires one owner per shared domain file area.",
+      "requiredReceipt": "WP-36 domain owner accepts WP-50 additions to existing agents contracts/commands/repository; do not create a second agents store or parallel command registry.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "Canonical identity, authenticated actor, durable commands, event inbox/outbox and writer fence",
+      "classification": "transitive foundation interfaces; not additional direct dependencies",
+      "evidence": "WP-03 depends on WP-01/WP-02; WP-36 depends on WP-04/WP-06/WP-09/WP-51. WP-50 migration needs entity composite FK, shared command_receipt uniqueness and event_delivery fences. Existing executeApprovedProposal uses jobs: OutboxJob[] and fixture results, not a durable authority.",
+      "requiredReceipt": "Through accepted dependencies obtain canonical entity/alias binding, transport-derived principal, RoxCommand v2 request hash/CAS, transaction receipt/event writer, consumer dedup and current policy/revoke-fence ports. Reuse these interfaces instead of independent persistence.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "Offline replay and server policy fence",
+      "classification": "transitive operational prerequisite through WP-51/WP-05",
+      "evidence": "WP-51 plan:1022-1036 depends on WP-03/WP-04/WP-05 and requires successful revoke to wait for fenced durable append/broadcast. WP-50 requires offline_queued and revisioned invalidation+replay cursor.",
+      "requiredReceipt": "Accepted durable queue/replay and policy epoch fencing; queued share cannot be labeled applied_verified or blindly replayed after revoke.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "Actual shared runtime and selected migrator",
+      "classification": "hidden execution foundation, absent from WP-50 explicit DAG",
+      "evidence": "WP-50 proposes PostgreSQL-style uuid/timestamptz domain tables and live native/HTTP verification. Scoped glob found no normative migrations directory. Implementation plan:1040-1044 names WP-52 cold isolated deployment and foundation migrations.",
+      "requiredReceipt": "Lead provides running authenticated workspace service, DB/transaction adapter, composition registration and selected migrator with applied migration/readback receipts. WP-52 readiness may supply this; it must not be silently assumed from WP-36 or a fixture.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "Private email canonical provenance boundary",
+      "classification": "hidden source-contract prerequisite, absent from WP-50 explicit DAG",
+      "evidence": "WP-50 acceptance specifically starts with a private email read. Published plan:316-334 describes WP-17 canonical mail/account ACL and states links never grant email-body access. Message/StoredMessage currently contain raw tool content but no source ref/revision/ACL taint.",
+      "requiredReceipt": "Actual existing mail/source owner supplies canonical workspace/account/source revision and policy epoch for every email read reaching WP-36 tools; synthetic opaque text alone is insufficient. WP-17 interface may supply it, but no new explicit DAG edge is asserted.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "Audience-aware receiver and revocable derived-artifact retrieval",
+      "classification": "hidden sharing integration foundation, not an explicit DAG edge",
+      "evidence": "shareToViewer:159-164 POSTs a StoredSession to viewer /s/api; updateShare:223-230 uses an owner mutation bearer only. No audiencePrincipalIds/redactionMode/current source policy is supplied by either path. Receiver behavior is not inspected.",
+      "requiredReceipt": "Existing viewer owner accepts authenticated audience-scoped reads and policy-fenced revocation of hosted summaries/shares, or shared-mode publish is denied until that capability exists. Mutation ownership does not prove recipient authorization. Do not introduce a second viewer surface.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "Published schema/DTO/result compatibility gate",
+      "classification": "hidden contract foundation",
+      "evidence": "Plan:3 requires compile/schema contract gate. WP-50 names GetSessionShareDecision/RevalidateContext/RedactDerivedArtifact but inspected package record has no detailed DTO definition for them beyond apiChanges. Current Rox2CanonicalResult is executionMode/lifecycle/verification, while operation responseSchema uses status/receiptId.",
+      "requiredReceipt": "Agents and command-foundation owners accept strict typed decision/context/redaction DTOs and explicit v2 wire-to-existing-triad mapping; no fixture/live promotion or arbitrary data object serialization.",
+      "state": "NOT_OBSERVED"
+    },
+    {
+      "gate": "Mention, notification, search and activity policy integration",
+      "classification": "cross-surface DoD gate beyond the listed source files",
+      "evidence": "WP-50 featureCompleteness lists search/mentions/notifications/activity. Test plan:199-222 forbids treating unimplemented dimensions as N/A. WP-36 brings WP-06/WP-09 transitively; WP-09 brings attention/messaging foundation.",
+      "requiredReceipt": "Root obtains accepted projection and audience-delivery hooks for artifact_policy_changed; every copied excerpt, link preview and count must apply current ACL. Exact consumer patches require those owners' scoped source mapping.",
+      "state": "NOT_OBSERVED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/agents/contracts.ts",
+    "apps/workspace-service/src/modules/agents/commands.ts",
+    "apps/workspace-service/src/modules/agents/repository.ts",
+    "tests/macro-integration/wp-50.test.ts",
+    "apps/workspace-service/migrations/50-domain-contract.sql"
+  ],
+  "newFileContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/agents/contracts.ts",
+      "ownership": "Normative new-file inventory only; WP-36 shared domain owner must integrate additions after its receipt.",
+      "change": "Add strict session.shareAuthorized payload schema (session Rox2EntityRef; audiencePrincipalIds <=1000 strings length 1..10000; redactionMode deny|redact; reject unknown/body actor fields). Define typed GetSessionShareDecision/RevalidateContext/RedactDerivedArtifact ports, ArtifactProvenance DTO and policy-aware artifact projection. Provenance carries artifact identity/type, source refs with workspace/account/revision, source policy epochs and derived-from artifact edges. Unknown/missing provenance is an explicit quarantined decision, never evidence of public content. No service I/O in core."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/agents/commands.ts",
+      "ownership": "Extend accepted WP-36 command/query module through its owner.",
+      "change": "Register session.shareAuthorized with common authenticated principal/workspace/CAS/idempotency gateway. Resolve every source/derived artifact under current resource policy; compute safe intersection across requested audience and all contributing sources. In deny mode return a safe rejection without upload; in redact mode omit whole tainted derived artifacts and unsafe metadata/attachments, not keyword substitutions. Revalidate policy epochs immediately before publication and on subsequent reads. Commit decision/share receipt and artifact_policy_changed through shared transaction/outbox; preserve queued/reconciling/pending_fence/ambiguous states."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/agents/repository.ts",
+      "ownership": "Extend accepted WP-36 repository; no second session transcript store.",
+      "change": "Persist artifact provenance/source lineage, artifact audience and session share receipt with canonical entity FKs and bounded authorized queries. Use existing command_receipt/outbox/inbox tables. Index source-to-derived invalidation so revoke increments policy fence and invalidates stored served/export projections and decisions, without deleting the authorized private owner transcript. Persist command state before reply and reconcile external publication by receipt, not blind retry. Only composition root constructs provider/viewer adapters."
+    },
+    {
+      "path": "tests/macro-integration/wp-50.test.ts",
+      "ownership": "Independent normative WP-50 scenario test file; not created by this preflight.",
+      "change": "Seed W1 A-owner/B-member/C-outsider, PRIVATE_WP-50 and seed 20260980. Exercise native agent private-mail read then native/HTTP authorized share in deny/redact modes, negative controls and restart recovery. Assert actual content absence, current-policy future retrieval/export, owner retention and stable IDs/receipts/revisions/events, including paraphrased summary and legacy missing provenance. UI evidence remains separate live harness output."
+    },
+    {
+      "path": "apps/workspace-service/migrations/50-domain-contract.sql",
+      "ownership": "Normative proposed migration identifier; actual filename comes from selected migrator.",
+      "change": "Add artifact_provenance, artifact_audience and session_share_receipt; workspace/entity composite FK, schema_version >0, revision >=0, typed principal/receipt keys, source revision/account/policy epoch and derived-lineage indexes. Reuse foundation command receipt uniqueness (workspace,actor,idempotencyKey) with request-hash conflict check and consumer/event dedup. Backfill known aliases/provenance; quarantine ambiguous IDs/missing source evidence. Additive rollout; before cutover restore writer route/snapshot, after shared writes forward repair or verified reverse replay without deleting recent writes."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/types/message.ts",
+      "symbol": "Message; StoredMessage; AgentEvent tool_start/tool_result/text_complete/thinking_complete",
+      "change": "Extend both runtime and stored message contracts with typed artifact/provenance references and policy epoch, covering prompt, tool input, tool result, assistant/thinking and summary lineage. Add optional provenance carrier to relevant event variants for migration-compatible transport, while shared publication treats absent provenance as unknown/quarantined. Use core Rox2EntityRef-based types, not a core import of service I/O. Preserve parentToolUseId/turnId lineage and source refs through nested tools and derived outputs.",
+      "reason": "Message:252-339 and StoredMessage:345-420 have raw content/toolInput/toolResult but no source-policy taint; role='tool' or hidden UI flags cannot enforce mixed-audience sharing. AgentEvent:580-593 carries text/results with no provenance."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Context; Rox2CanonicalResult; Rox2EntityRef; Rox2Event",
+      "change": "With foundation owner, extend existing context binding with typed source-policy evidence/epoch and revocation-fence state; use existing canonical session identity and derived-from relation, not new identity namespaces. Specify gateway wire-result mapping from operation status/receiptId to existing triad without treating queued/fixture as verified. Carry policy epoch and revisioned event lineage needed by artifact invalidation.",
+      "reason": "Rox2Context:143-156 binds refs/revisions only. Current result:158-167 differs from WP-50 wire envelope; importing body-supplied actor or trusting entity capability catalog would not establish server authority."
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "bindSurfaceContext; visibleContextEntityRefs; rebaseLiveContext; sameContextSnapshot",
+      "change": "Propagate typed provenance and source epochs into existing context binding; revalidation must use accepted server policy port at consumption, not permissionMode or caller-provided readable IDs as authority. Ensure snapshot comparison/live rebase preserves or invalidates policy evidence independently of content revisions; revoke must invalidate a snapshot even when revisionByEntityId does not change.",
+      "reason": "bindSurfaceContext:31-48 copies caller values; visibleContextEntityRefs:51-56 filters a caller set; sameContextSnapshot:58-72 compares content refs/revisions only, and rebaseLiveContext:76-90 cannot currently reflect policy change. No I/O belongs in these pure helpers."
+    },
+    {
+      "path": "packages/shared/src/agent/session-tool-defs.ts",
+      "symbol": "buildSessionToolDefs",
+      "change": "Use accepted WP-36 common tool registry extension for session.shareAuthorized and policy-aware context/read ports so buildSessionToolDefs continues composing one canonical definition list with name dedup and Pi/OMP parity. Preserve browser gate, mini model hint, host bash alias and MCP lens; do not add an alternate dispatcher here. Shared read results need source provenance before reaching backend text/results.",
+      "reason": "Builder:61-106 aggregates getSessionToolProxyDefs and pool proxy definitions, but does not execute or authorize them. Adding a definition alone cannot satisfy provenance, ACL or execution-grant acceptance. Canonical tool-def/dispatcher owner is a WP-36 prerequisite."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/pi/session-tool-defs.ts",
+      "symbol": "getSessionToolProxyDefs",
+      "change": "Preserve thin prefix wrapper over getToolDefsAsJsonSchema; ensure the accepted common registry schema appears under mcp__session__ without duplicating session.shareAuthorized definitions or allowing caller actor fields.",
+      "reason": "Lines 19-24 demonstrate the existing single-registry convention. Any registry extension must be integrated by the WP-36/session-tools owner, not a second ad-hoc list."
+    },
+    {
+      "path": "packages/shared/src/sessions/types.ts",
+      "symbol": "SESSION_PERSISTENT_FIELDS; SessionConfig; StoredSession; SessionHeader",
+      "change": "Add accepted canonical session/provenance version and share-policy receipt/fence references to existing persisted metadata, including every header whitelist/interface that carries these fields. Bind transferredSessionSummary to a provenance artifact/source revision rather than storing an unqualified reusable string. Keep sharedOwnerKey server-only and authorized owner bytes in the existing JSONL store; shared service stores lineage/policy, not another raw transcript authority.",
+      "reason": "Persistent whitelist:29-75 drives serialization; StoredSession:258-261 holds raw messages and SessionConfig:225-228 persists transferredSessionSummary without provenance. An interface-only change loses metadata across reload."
+    },
+    {
+      "path": "packages/shared/src/sessions/storage.ts",
+      "symbol": "getSessionFilePath; saveSession; loadSession; updateSessionMetadata",
+      "change": "Keep existing session.jsonl path, persistence queue/flush and journal recovery. Extend metadata update whitelist/assignment for accepted provenance/share-policy fields and preserve message-level metadata in existing persistence. Make raw loadSession explicitly private/standalone storage access; shared handlers must invoke authorized query projections instead of publishing its result. No second store and no redaction overwrite of owner session.jsonl.",
+      "reason": "getSessionFilePath:80-82 is only path resolution, not an authorization seam. saveSession:318-321 flushes the existing queue; loadSession:334-348 recovers and returns full session; updateSessionMetadata:542-586 must persist new reference fields through the established mechanism."
+    },
+    {
+      "path": "packages/shared/src/sessions/jsonl.ts",
+      "symbol": "readSessionJsonl; writeSessionJsonl; createSessionHeader; extractPreview; parseMessagesResilient",
+      "change": "Preserve atomic JSONL write and resilient read semantics, round-trip new message provenance without treating a malformed/missing provenance record as safe to share. Build shared previews/message counts only from authorized projections; local owner preview remains private. Replace parse failure debug's line.substring(0,100) with content-free diagnostic metadata to meet raw transcript logging prohibition.",
+      "reason": "writeSessionJsonl:159-171 stringifies whole messages; createSessionHeader:179-194 derives count/preview from all messages; extractPreview:232-247 removes markup but not ACL-tainted content. parseMessagesResilient:357-365 logs the first 100 raw characters of a corrupted message line."
+    },
+    {
+      "path": "packages/server-core/src/sessions/share-capability.ts",
+      "symbol": "ShareCapabilityHost; ShareCapabilityDeps; shareToViewer; updateShare; revokeShare; stripSharedOwnerKey; applyShareGranted; applyShareRevoked",
+      "change": "Inject accepted authenticated domain gateway/decision/projection port from composition root. For shared sessions route create/update/revoke through common authority, validate audience+redaction mode and fence sources before uploading. Replace JSON.stringify(storedSession) with a safe allowlisted audience artifact DTO (including no sharedOwnerKey, SDK paths, unsafe titles, previews, attachments or errors). Persist canonical share receipt/revision/policy epoch; retain unknown external-effect reconciliation. Revoke invalidates hosted artifact reads under a fence before verified response, while applyShareRevoked continues clearing only local share metadata, not the private transcript. Preserve owner bearer secret protection and explicit standalone path.",
+      "reason": "shareToViewer:154-164 and updateShare:217-230 upload full raw store. ownerCapabilityHeaders only protects mutation, not audience access. applyShareRevoked:59-67 clears share metadata; revokeShare:270-289 only calls viewer DELETE and clears local fields. No source-policy invalidation/replay is shown."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "symbol": "registerSessionsHandlers: GET/GET_MESSAGES/GET_PROVENANCE/SEARCH_CONTENT/GET_FILES/GET_NOTES/WATCH_FILES/EXPORT/EXPORT_REMOTE_TRANSFER/IMPORT/IMPORT_REMOTE_TRANSFER/COMMAND",
+      "change": "Use authenticated ctx through accepted authority route for shared session commands and every shared read, including list metadata/counts, lessons provenance, notes/files/watch and exported summaries. Register domain.session.shareAuthorized via common registration and strict v2 envelope; legacy shared share/update paths must funnel through it or reject, with standalone preserved. For shared SEARCH_CONTENT query authorized projection/cursor, not raw directory ripgrep; remove raw query logging. Fence outgoing file events and terminate/revalidate watches on revoke. Imports/remote transfer must preserve lineage and reject forged workspace refs or quarantine missing provenance rather than laundering summary text.",
+      "reason": "GET_MESSAGES:200-206 ignores _ctx; COMMAND:326-394 forwards legacy shares without audience/CAS. GET_PROVENANCE:522-526 is existing lesson/skill prompt provenance, not complete artifact ACL lineage. SEARCH_CONTENT:534-565 scans a workspace directory and only removes hidden sessions. EXPORT:665-697 delegates after workspace resolution but does not itself revalidate sources. Files/notes/watch:573-640 are further exposed paths. Manager internals are not inspected; absence of checks here is not a claim that its implementation has none."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "SessionCommand; ShareResult; RemoteSessionTransferPayload; SessionEvent",
+      "change": "Bind existing session share commands/results to accepted audience/redaction request and canonical queued/rejected/pending_fence/applied receipt state through the shared gateway; do not expose actor fields or owner capability. Extend summary transfer DTO with canonical provenance artifact/source refs/revisions/policy epoch and revalidate on import/use. Add typed revisioned artifact-policy invalidation event, preserving existing session_shared/session_unshared and async_operation semantics for standalone consumers.",
+      "reason": "SessionCommand:539-541 contains no audience payload; ShareResult:1017-1026 is success/url/error only; RemoteSessionTransferPayload:198-205 is a raw summary string. Existing SessionEvent:448-449 lacks policy lineage/replay cursor. Schema/consumer migration needs protocol owner integration."
+    },
+    {
+      "path": "packages/server-core/src/meetings/executor.ts",
+      "symbol": "ExecutorHooks; executeApprovedProposal; nativeLocalResult",
+      "change": "At the accepted proposal gateway/approved-payload boundary, require policy revalidation of source/derived summary refs before shared send/publication, and propagate provenance to the common command receipt. Preserve explicit MeetingGrant send approval, actor/workspace/device/hash checks and standalone fixture labeling. Do not relabel this in-memory jobs array as durable outbox or implement another shared writer; shared execution must delegate through accepted common gateway and reconcile unknown effect.",
+      "reason": "Current auth:75-82 grants send for approvedPayloadHash but has no source audience policy evidence. hooks.apply:99 precedes crash/receipt processing; jobs:117-124 is memory-only; nativeLocalResult:23-26 deliberately labels fixture. This seam protects derived meeting summaries without conflating send approval with ACL."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Have the root composition owner add the accepted agents-domain authority/query port to the handler dependency bag, with explicit standalone/shared mode resolution. SessionManager adapters must expose safe projections/provenance flow through their actual interface; map concrete implementations before requesting those patches.",
+      "reason": "HandlerDeps:62-71 exposes sessionManager/platform and an optional PendingCommandsStore, not a typed WP-50 authorization/query service. A pending store alone is not source ACL, durable shared authority or publication receipt."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-50 section",
+      "change": "After real integration, document accepted DTOs, one agents-module owner, policy taint propagation, audience decision, unknown-provenance quarantine, owner retention and exact runtime evidence/foundation dependencies. Leave planned status until live verification receipts exist.",
+      "reason": "Lines 1002-1018 specify goal but not the implementation state, revocation boundary or new operational contracts."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Feature completeness checklist; Evidence/receipt record; WP-50 scenario coverage",
+      "change": "Record exact integration tests/live UI-agent-HTTP acceptance and privacy/recovery limits, seed 20260980, provenance-strip mutation plus independent holdout, owner private retention, served/exported summary fence checks, and current implementation/image/schema evidence. Explain that downloaded historical bytes cannot be unread while all controlled future reads/exports are fenced.",
+      "reason": "Lines 197-247 require all completeness dimensions, caught negative controls and revision-bound evidence; preflight cannot replace these results."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Agent reads private email then session share to teammate denied/redacted",
+      "currentEvidence": "Message/StoredMessage store raw content/tool results without taint (message.ts:252-420); shareToViewer:154-164 uploads the full StoredSession and COMMAND:389-394 has no audience input.",
+      "requiredChange": "Capture trusted private-mail source refs/account/revision/epoch at the WP-36 tool boundary, propagate taint transitively to prompt/result/assistant/summary artifacts, and use GetSessionShareDecision plus audience intersection. Deny before upload or redact whole tainted outputs and unsafe metadata in a projection; do not use keyword replacement.",
+      "verification": "With W1 A/B/C and PRIVATE_WP-50, Agent-A reads private A mail; B lacks source access. Deny mode returns safe denial and no publication. Redact mode permits only authorized artifacts and no marker, paraphrase, title, preview, count-derived source metadata or attachment in B response. A can still inspect private original; C raw-ID and forged-workspace requests fail. Exercise native tools, RPC/HTTP and existing sharing UI.",
+      "missingPrerequisite": "Accepted WP-36/WP-03 receipts; real mail provenance producer; audience-aware existing viewer; live service and renderer owner hook.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "revoke invalidates retrieval and exported summary",
+      "currentEvidence": "revokeShare:270-289 deletes viewer object/metadata only. GET_MESSAGES:200-206, SEARCH_CONTENT:534-565 and EXPORT_REMOTE_TRANSFER:690-697 do not themselves revalidate source lineage. RemoteSessionTransferPayload:198-205 has summary without provenance.",
+      "requiredChange": "Index source-to-derived artifacts, process permission.changed under policy fence, persist artifact_policy_changed and invalidate decision/retrieval/search/export/remote summary projections. Recheck at serialization, context reuse and hosted artifact read, including old tokens/cursors and imports; return pending_fence until required boundary is confirmed.",
+      "verification": "Grant B source access, create retrievable hosted/export summary, then revoke source B grant with lagging projection and stale socket/cursor. After revoke fence, GET/messages/search/context/share refresh/new exports and previously issued hosted summary handles reveal no private content. Replay duplicated/reordered events and restart consumer; no resurrection. Test owner source-loss cannot re-use stale context. Record epoch/revision/watermark. Downloaded bytes cannot be retroactively erased; require controlled retrieval invalidation, not an un-read claim.",
+      "missingPrerequisite": "WP-03 epoch/revoke interface; WP-51 fence and WP-06 projection contracts via WP-36; revocable existing receiver and summary lineage producer.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "existing authorized owner transcript retained privately",
+      "currentEvidence": "loadSession:334-348 returns existing JSONL; applyShareRevoked:59-67 and updateSessionMetadata clear share fields without deleting messages. Atomic JSONL serialization exists at jsonl.ts:159-171, but no scenario was run.",
+      "requiredChange": "Keep one private owner transcript in existing store; redaction creates authorized outgoing DTO, never overwrites private raw text. Preserve lawful private history on revoke while rejecting new context/export use when current source authority no longer permits it. Legacy missing provenance blocks shared publication, not authorized private restoration.",
+      "verification": "Hash private stored messages before deny/redacted share/revoke; after reload/restart authorized A reads unchanged messages and attachments while B/C cannot access raw store, owner key or private previews. Verify new shared service does not create a second raw transcript store. Separate retention access from permission to reuse source in future model context.",
+      "missingPrerequisite": "Accepted private retention/current-read semantics and shared-vs-standalone writer adapter from foundation owners.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "share-capability.ts:125-132 emits async_operation, :185 emits session_shared and :293 session_unshared; SessionCommand shares are the existing surface entry. Renderer not inspected within scope.",
+      "requiredChange": "Root maps existing Sessions/Sources share UI to accepted audience/redaction decision and six domain states, with safe denial/redaction explanation and no raw taint details. Reuse existing surface; strings use t() and all 10 locales.",
+      "verification": "Live Electron/browser interactions for deny/redact/revoke, audience change, focus/hover and reload; capture actual loading/error/verified screenshots and ARIA. A fixture screenshot is not live acceptance.",
+      "missingPrerequisite": "Existing renderer owner supplies exact component/hook patch and live runtime; no guessed renderer path included.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Rox2EntityRef:233-239 is scoped; shareToViewer returns URL; RPC export derives workspace context at sessions.ts:665-697.",
+      "requiredChange": "Resolve canonical session/artifact deep links through current policy with revision/account namespace; deny stale/public unauthorized links without title leakage. Existing share routes remain the surface.",
+      "verification": "Open authorized and revoked URLs/raw IDs across existing tabs/panels and reload/history; cross-workspace ref rejected; no unauthorized title or metadata.",
+      "missingPrerequisite": "WP-02 canonical resolver via WP-03; root viewer/navigation adapter mapping.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Core already has session and mail-thread kinds, derived-from relation and Rox2EntityRef. WP-50 migration:45624-45656 specifies provenance/audience/share receipt tables.",
+      "requiredChange": "Extend accepted agent_session aggregate with versioned artifact_provenance and lineage keyed to existing canonical session/source refs, policy epochs and audience; validate unknown fields and preserve namespace/revision. No alternative identity store.",
+      "verification": "Schema boundary cases, wrong workspace/account and ambiguous alias fail; source revisions/IDs persist and reference existing entities; same source retry creates no duplicate canonical identity.",
+      "missingPrerequisite": "WP-36 shared agents contracts and WP-02 canonical entity/FK interface accepted.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "saveSession flushes existing queue; JSONL reads recover journal; proposed service repository/migration paths were absent at scoped inspection.",
+      "requiredChange": "Persist policy/lineage/audience/share receipts atomically with command event; round-trip metadata using existing persistent whitelist and messages using existing JSONL. Preserve one authority.",
+      "verification": "Crash after transaction commit before reply and reload native store; same command returns same receipt/entity/revision, provenance survives and no extra publication/event. Check DB FKs/unique row counts and private owner bytes.",
+      "missingPrerequisite": "Selected migrator and shared transaction/reconciliation interfaces from accepted dependency/runtime receipts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Legacy COMMAND handler:326-394 forwards shares; normative operation:45217-45252 requires v2 envelope and strict session/audience/redaction schema.",
+      "requiredChange": "Implement session.shareAuthorized through common authenticated CAS/idempotency gateway, body actor rejection, workspace/ref match and execution grant for outbound effects. Preserve explicit standalone route.",
+      "verification": "Duplicate key/same payload returns one command; altered payload gives IDEMPOTENCY_CONFLICT; wrong expectedRevision gives REVISION_CONFLICT; unauthorized actor and forged workspace denied before publication; pending/unknown never advertised as applied.",
+      "missingPrerequisite": "WP-04 gateway and WP-36 execution/delegation ports, plus composition registration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "GET_MESSAGES and GET_PROVENANCE ignore _ctx; current provenance comment explicitly describes lessons/skills, not complete source ACL.",
+      "requiredChange": "Implement typed GetSessionShareDecision/RevalidateContext/RedactDerivedArtifact ports and authorized query projection with bounded pagination/cursor epoch. Guard session metadata, files/notes, existing memory provenance and summaries.",
+      "verification": "Read after revoke with stale cursor, cross-workspace ID, missing provenance and unsupported schema returns safe typed state, never hidden totals/titles/tool text. Authorized A sees canonical readback.",
+      "missingPrerequisite": "Agents DTO design accepted by domain owner and current policy query port; manager internals mapping.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Current shared/unshared/async events and WATCH_FILES push are unrevisioned; WP-50 requires agent.artifact_policy_changed and replay cursor.",
+      "requiredChange": "Emit policy invalidation from common transaction outbox; dedup consumer inbox, enforce revision/policy/tombstone fences and recheck recipients before delivery. Revoke existing file watches/subscriptions without leaking titles.",
+      "verification": "Drop/reorder/duplicate invalidation, restart consumer and reconnect stale client; cursor replay restores correct policy with one effect, no resurrected content or unauthorized payload.",
+      "missingPrerequisite": "Shared event/outbox/inbox/replay and WP-51 fence implementations accepted.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Rox2Context contains permissionMode; requiresContextGrant returns false for read/write. Core authorizeRox2Action checks actor/permission grants but not resource/workspace/epoch. Sharing bearer only protects mutation.",
+      "requiredChange": "All source/resource reads and share/send actions go through authenticated WP-03 resource policy plus WP-36 acting-user/execution grants. Never treat allow-all, context snapshot, capability list or linked source as audience authorization.",
+      "verification": "Owner/member/viewer/outsider/revoked actor matrix; Agent-V allow-all still denied, forged actor/workspace/body data rejected; linked private mail remains private.",
+      "missingPrerequisite": "Accepted authenticated ctx, resource policy/action vocabulary and epoch/fence interface.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "shareToViewer/updateShare publish raw store; owner key protects PUT/DELETE, not individual audience reads. stripSharedOwnerKey protects renderer object fields only.",
+      "requiredChange": "Audience intersection and deny/redact decision must precede shared publication, with explicit viewer-read policy and public-link expiry; allowlist entire outbound DTO and exclude capability keys. Recheck update and revoke under current fence.",
+      "verification": "B denied/redacted, C raw share URL denied, audience change/revoke prevents future fetch; key absent in viewer/renderer/logs; update cannot expose previously private derived content.",
+      "missingPrerequisite": "Audience-aware receiver contract and accepted shared command implementation; existing standalone bearer handling retained.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "SEARCH_CONTENT:534-565 searches raw directory and removes only hidden sessions; createSessionHeader derives preview from raw first user text.",
+      "requiredChange": "Shared queries use accepted WP-06 authorized projection with provenance, extractor/upsert/delete and watermark; recheck current ACL independent of index lag and filter previews/counts before serialization. Standalone owner directory search remains explicit.",
+      "verification": "Revoke before index consumer updates; B private marker/title/snippet/count absent immediately at read boundary; tombstone/replay cannot resurrect summary; A authorized search works after watermark/restart.",
+      "missingPrerequisite": "WP-06 ports through WP-36 and root search consumer patch mapping.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Core has derived-from/mentions relations; jsonl.extractPreview strips bracket markup, not target policy. WP-36 depends on WP-09; mention implementation not inspected.",
+      "requiredChange": "Feed existing mention/occurrence engine only authorized artifact projection; preserve source revision and target policy without granting source read by text mention; invalidate derived previews/backlinks on policy change.",
+      "verification": "Mention private email or teammate in shared/redacted summary: B cannot resolve private target/title, mention grants no access; edit/revoke/replay adjusts occurrence/backlink once with source revision.",
+      "missingPrerequisite": "Accepted WP-09 contracts and owner-provided existing mention consumer seam.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Session events provide UI signals but are not durable recipient notifications; DoD explicitly includes notifications and test plan:212 requires recipient policy/dedup/state.",
+      "requiredChange": "Use existing accepted notification subsystem for share/policy-change attention, checking audience/current source policy at delivery; no raw excerpt in payload. Preserve dedup and seen/done/mute/snooze semantics, not a new notification store.",
+      "verification": "Enqueue notification then revoke B before send; no private excerpt/title. Duplicate/replayed policy events deliver at most one authorized notification; existing attention controls persist across restart.",
+      "missingPrerequisite": "WP-07/09 transitive interfaces and owner-provided consumer integration; not N/A because implementation is outside this file set.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event has optional cause/correlation/revision; current sharing logs URL and session ID, not domain activity receipt.",
+      "requiredChange": "Write policy/share/revoke decision activity using authenticated actor, command/cause/correlation/revision and safe audit metadata; authorized activity projections hide private source identity/title and body.",
+      "verification": "One auditable activity entry per canonical command across replay; denied audience cannot infer private source; logs/activity contain no PRIVATE_WP-50 or token.",
+      "missingPrerequisite": "Accepted common event/activity projection owner seam and typed event schema.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "buildSessionToolDefs only advertises canonical registry/pool proxies; surface context binds refs/revisions without trusted source policies; AgentEvent raw text/results lacks provenance.",
+      "requiredChange": "WP-36 dispatcher captures source taint before text reaches model, propagates to nested/assistant/thinking/summary artifacts and revalidates on next prompt/context reuse. Register authorized share/read ports through same registry; no prompt-only safety policy.",
+      "verification": "Real native Agent-A reads private source and derives paraphrase; sharing denied/redacted; tool read after revoke denied despite allow-all; subagent/call_llm result cannot strip lineage. Context consumption uses current epoch, not merely content revision.",
+      "missingPrerequisite": "WP-36 dispatcher/producer receipt, concrete backend-to-SessionManager message persistence seam supplied by its owner.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Specification requires POST /v1/workspaces/{workspaceId}/commands/session.shareAuthorized and nativeRpc domain.session.shareAuthorized; existing Pi proxy wraps common schemas with mcp__session__ prefix.",
+      "requiredChange": "Register HTTP/native/MCP operation against same typed schema, actor derivation, gateway and result mapping; no alternate permission/CAS path. Strict authorized DTO serialization, no arbitrary hidden data.",
+      "verification": "Equivalent native agent/MCP and HTTP requests yield same policy decision/canonical command readback; invalid/forged actor, stale revision and unknown schema rejected consistently.",
+      "missingPrerequisite": "Common gateway registration, service HTTP composition and WP-36 canonical registry owner patches.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "WP-50 requires commandId/cause/correlation/revision/policyEpoch/watermark/retry-DLQ counters. sessions.ts:536 logs raw query; jsonl.ts:365 logs corrupted message prefix.",
+      "requiredChange": "Attach structured non-content correlation/fence/lag/counter metadata to common receipt/events; remove raw query/message-prefix diagnostics for sensitive paths and avoid logging full errors/payloads that can contain transcript or tokens.",
+      "verification": "Run private marker/token fixture through success, denial, parse failure and retry/DLQ; inspect log captures for absence of content and presence of required correlation fields/counters.",
+      "missingPrerequisite": "Shared event/receipt telemetry contract and content-free logging sink/fixtures.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative wp-50.test.ts is absent; test-plan:239 requires passing baseline, meaningful seeded mutation and independent holdout.",
+      "requiredChange": "Implement scenario/negative-control/persistence suite at normative path. Mutation strips source provenance before viewer upload; unknown provenance must not be treated as public. Keep a holdout unauthorized actor or dropped/duplicated policy event independently injected.",
+      "verification": "Future bun test tests/macro-integration/wp-50.test.ts and relevant existing suites, plus live native/UI/HTTP proof. Record seed 20260980 and smallest failing input. Baseline passes before mutation; specific content/fence assertion catches it, not an infrastructure timeout.",
+      "missingPrerequisite": "Runtime, accepted dependency receipts, implemented product path and independent evaluator; none exercised in preflight.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "Published plan WP-50:1002-1018 and test plan:197-247 are prospective, not implementation receipts.",
+      "requiredChange": "Update normative plan/test documentation after implementation with accepted contracts, shared/standalone authority, safe audience policy, unknown provenance/backfill, retention versus future reuse, irreversible downloaded-byte limit, rollout/recovery and observed receipts.",
+      "verification": "Check docs match actual statuses/errors/DTOs and evidence revision; no fixture success labeled feature complete, no impossible retroactive un-read claim.",
+      "missingPrerequisite": "Integrated implementation and live evidence; no shared documentation edits authorized to this worker.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "mapShareApiError maps HTTP owner-key/size/rate failures; ShareResult exposes success/error only. WP-50 additionally lists UNAUTHENTICATED, FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED, REVOKE_FENCE_PENDING.",
+      "requiredChange": "Use typed domain failures and safe UI mapping; keep retryable/terminal/conflict/reauth/quarantine distinct. Unknown external effect reconciles instead of reupload; permission denial does not silently fall back to standalone.",
+      "verification": "Exercise each specified error by schema/auth/CAS/key/provider/fence fault, with private source metadata absent; verify retry/reauth/conflict UI actions do not bypass authority.",
+      "missingPrerequisite": "Accepted error/receipt mapping and live fault-injection seam from gateway/receiver/UI owners.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "begin/endAsyncOperation toggles boolean; it does not distinguish policy decision loading, stale projection, pending fence or publication reconciliation.",
+      "requiredChange": "Existing Sessions UI must represent decision loading/stale refresh separately from queued/reconciling/pending_fence and only show applied_verified after canonical receipt/readback.",
+      "verification": "Pause decision query and receipt/readback, observe actual UI with old data marked stale and no false success/empty; then observe transition from canonical state.",
+      "missingPrerequisite": "Accepted state DTO and renderer owner integration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "GET_FILES returns [] on error and GET_NOTES returns '' for missing files; no typed permission/unavailable/empty projection distinction is shown.",
+      "requiredChange": "Keep genuinely empty session/safe projection separate from permission_denied, unavailable/missing provenance and unconfigured receiver, with content-free explanation in existing surface.",
+      "verification": "Compare true empty session, fully redacted session, unauthorized session, unavailable service and unknown provenance; distinct visible domain states and no leaked counts or source titles.",
+      "missingPrerequisite": "Typed safe query result and existing UI state adapter.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Specification includes offline_queued; current share functions execute fetch immediately and generic catch returns failure. No durable domain share replay is shown in these files.",
+      "requiredChange": "Integrate accepted common durable offline queue; preserve idempotency/request hash/CAS and provenance through restart. Reconnect revalidates current source policy; revoked pending share quarantines/denies rather than uploads stale raw text.",
+      "verification": "Queue offline share, restart client, revoke B/source before reconnect, then replay; no disclosure, one stable rejection/receipt and private owner transcript intact. Healthy replay yields one canonical share, not duplicate uploads.",
+      "missingPrerequisite": "WP-05/WP-51 transitive queue/fence contracts and publication reconciliation port.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Integration test: complete private-read/share/revoke/owner-retention scenario",
+      "currentEvidence": "Normative tests:45131-45143 and verification:45893-45923 demand live scenario and receipts; no run performed.",
+      "requiredChange": "Join all three top-level acceptance criteria into actual native agent and existing sharing surface flow with API readback and service DB/event/projection evidence.",
+      "verification": "Store UI screenshot/ARIA, typed API readback, canonical ID/revision, DB row/unique count, command/provider receipts, event/watermark and failure seed against tested implementation/image/schema revision. Fixture-only result is not acceptance.",
+      "missingPrerequisite": "Implemented package, live runtime and root-owned scenario runner.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative-control: unauthorized actor or dropped/duplicated event; strip provenance before viewer upload; independent holdout",
+      "currentEvidence": "Normative negative assertion:45136-45138 and mutation/holdout:45911-45914 specify sensitivity, not merely successful baseline.",
+      "requiredChange": "Inject one broken boundary at a time and ensure behavioral disclosure/fence/dedup assertions fail. Provenance stripping should produce quarantine/denial; if a safe projection is still published, assert it contains no tainted data. Independent evaluator selects another boundary variant.",
+      "verification": "Baseline passes; provenance-strip, auth bypass or missing invalidation causes the exact relevant assertion to fail. Duplicated event must not duplicate receipt/state. Record expected failure independently from infrastructure errors and preserve holdout trace.",
+      "missingPrerequisite": "Actual producer/publish path and policy replay runner, plus evaluator not supplied in preflight.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Persistence/recovery: restart between persisted command and reply preserves state/receipt/canonical ID",
+      "currentEvidence": "executeApprovedProposal crashAfterApply:100-107 is fixture/unknown with memory jobs; it is not shared command crash recovery. Existing JSONL writer is atomic but separate from service receipt.",
+      "requiredChange": "Common gateway transaction commits policy decision/share intent/receipt/event; publication effect reconciles from durable state. Recovery must reuse canonical command and source policy, not replay raw upload unchecked.",
+      "verification": "Kill after DB commit before RPC reply and after external upload before reconciliation; retry same command yields same identity/receipt and no duplicate event/publication. Changed payload key fails; revoked source during recovery blocks further publication.",
+      "missingPrerequisite": "Durable WP-04 gateway and accepted publisher reconciliation/readback port.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Migration constraints, backfill, rollback and one writer",
+      "currentEvidence": "WP-50 migration:45620-45664 specifies source taint tables, entity FK, command/event uniqueness, quarantine and safe rollback; actual proposed directory absent.",
+      "requiredChange": "Use selected migrator identifier and existing foundation tables, create provenance/audience/share receipts with checks/indexes; backfill canonical source aliases or quarantine; writer mode guards all shared paths. Do not drop retained owner transcripts or recent shared writes on rollback.",
+      "verification": "Apply on existing schema, inspect FK/check/unique constraints, migrate legacy no-provenance sessions, restart/replay, and exercise safe pre-cutover restore or post-cutover forward repair without data loss.",
+      "missingPrerequisite": "Selected migrator, accepted WP-36/WP-03 applied migration receipts and actual foundation schema.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "License policy: BEHAVIOR_REIMPLEMENTATION; upstream DEPENDENCY_ONLY after exact license audit",
+      "currentEvidence": "work-packages.json:45195 states license policy; no upstream source inspected or copied by this worker.",
+      "requiredChange": "Implement behavior in existing ROX mechanisms; any new upstream dependency requires exact artifact/license decision, not copied Macro source or presumed repository-wide permission.",
+      "verification": "Review delivered patch/dependency manifest against accepted exact component/license decision and release compliance receipts; no copied code admitted without scoped authorization.",
+      "missingPrerequisite": "Implementation origin/dependency audit at integration; no new dependency proposed in this report.",
+      "state": "MISSING_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-50 normative record; WP-36 shared artifacts; WP-03 policy foundation","lineStart":45059,"lineEnd":45950,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-50; shared module ownership and foundation gates","lineStart":1002,"lineEnd":1018,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness checklist and evidence/receipt decision","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"packages/shared/src/agent/session-tool-defs.ts","symbol":"buildSessionToolDefs","lineStart":61,"lineEnd":106,"sha256":"67ead826b61bdfc6e979b26fc22d6d4e07ab3c6d3c1704a2eb241678a69c9de6"},
+    {"path":"packages/shared/src/agent/backend/pi/session-tool-defs.ts","symbol":"getSessionToolProxyDefs","lineStart":19,"lineEnd":24,"sha256":"561b97ce3105daec438f1c0a45c69b562add767d9bb9fb7f7cb3ffeef2c86a69"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"bindSurfaceContext; visibleContextEntityRefs; sameContextSnapshot; rebaseLiveContext","lineStart":31,"lineEnd":95,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Context; Rox2CanonicalResult; Rox2EntityRef; authorizeRox2Action","lineStart":143,"lineEnd":167,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/server-core/src/meetings/executor.ts","symbol":"nativeLocalResult; executeApprovedProposal","lineStart":19,"lineEnd":131,"sha256":"53962c26c8ac14da95fdb2daf978b2067259027e098bccbca34ad08c9f111f10"},
+    {"path":"packages/shared/src/sessions/storage.ts","symbol":"saveSession; loadSession; getSessionFilePath; updateSessionMetadata","lineStart":309,"lineEnd":348,"sha256":"998804c8ede3edbfd67b4180e20214b851f4c25b850450f6486fbcfa26876229"},
+    {"path":"packages/shared/src/sessions/types.ts","symbol":"SESSION_PERSISTENT_FIELDS; SessionConfig.transferredSessionSummary; StoredSession","lineStart":29,"lineEnd":75,"sha256":"63e6fcf4764dcb5e9a0133853494eefe522cd9831d0a8fd55352c5f603d2796d"},
+    {"path":"packages/shared/src/sessions/jsonl.ts","symbol":"readSessionJsonl; writeSessionJsonl; createSessionHeader","lineStart":111,"lineEnd":195,"sha256":"ce41830cf806da8493a3a89b67e9c0ee2b0d21d976246ee4b0a87b9a3b47d846"},
+    {"path":"packages/server-core/src/handlers/rpc/sessions.ts","symbol":"registerSessionsHandlers; sessions.COMMAND share dispatch","lineStart":325,"lineEnd":394,"sha256":"9f66941bdbe45d8ea91e2a736f11ab959476806c3eb7a92c501751ed097f0d54"},
+    {"path":"packages/server-core/src/sessions/share-capability.ts","symbol":"shareToViewer; updateShare; revokeShare","lineStart":139,"lineEnd":293,"sha256":"3d421b81e67540ffbe68f168ab03a2c74dc496dae2409c10ec46eb18b3e9eb53"},
+    {"path":"packages/core/src/types/message.ts","symbol":"Message; StoredMessage","lineStart":252,"lineEnd":420,"sha256":"f37d78960e6e3309b86902133419d89fb841d6564598c23234ec80b7a0ee51ca"},
+    {"path":"packages/shared/src/protocol/dto.ts","symbol":"RemoteSessionTransferPayload","lineStart":198,"lineEnd":205,"sha256":"30fa78f688e035c3ad38b0c1280418c81108b7c7a0ed12939472b32ecc0ade8a"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":56,"lineEnd":71,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"}
+  ],
+  "nextExecutableAction": {
+    "now": "Deliver this owned source-backed preflight to the lead. Do not start product implementation or mutate shared files.",
+    "afterPrerequisites": "After wave0 commit and accepted WP-36/WP-03 receipts, revalidate source hashes and accepted DTOs; agents domain owner integrates WP-50 contract/provenance repository additions first, then selected migration/command-query transaction and revocation lineage, then root integrates capture/persistence/read/share/export/UI consumers. Only after all affected paths are cut over exercise live scenario, failures/reload and caught negative controls. Missing viewer/source/runtime gates remain blocking acceptance, not N/A.",
+    "firstImplementationContribution": "Extend the accepted WP-36 agents contracts/repository with artifact provenance and typed GetSessionShareDecision/RevalidateContext/RedactDerivedArtifact, maintaining one domain owner and common gateway. The independent wp-50.test.ts contribution and migrator-owned WP-50 SQL may then proceed once implementation is authorized.",
+    "preflightVerificationArgv": ["/Library/Developer/CommandLineTools/usr/bin/python3", "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-50.json", "/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/WP-50/packet.json"]
+  },
+  "risks": [
+    "Raw persisted session/tool/SDK text and previously downloaded exports cannot be made unread. Do not promise retroactive erasure; retain private authorized owner history while fencing every controlled future retrieval/export/context use. Exact historical download versus hosted summary boundary must be explicit in accepted API/docs.",
+    "Partial taint tagging is unsafe: prompt, tool input/result, thinking, nested subagent/call_llm, assistant paraphrase, attachments, notes, summary transfer, previews and error details can all carry derived private information. Removing literal PRIVATE_WP-50 is not adequate redaction.",
+    "Unknown or stripped provenance must not default to public. Conservative whole-artifact quarantine/deny is necessary; tainted assistant summaries cannot be safely sanitized by regex or another unaudited model.",
+    "Owner bearer capability permits share mutation but proves neither reader identity nor safe audience. Existing viewer receiver needs a source-backed accepted ACL/fence contract; receiver internals were not inspected.",
+    "updateShare uploads StoredSession after owner key persistence, and that type contains sharedOwnerKey. Full JSON serialization may disclose secret/path metadata; outgoing projection must allowlist fields and exclude server-only capabilities regardless of renderer stripping.",
+    "Existing memory provenance GET_PROVENANCE records lessons/skills, not complete email/tool/summary ACL lineage; reusing the UI does not mean this record already supplies required security semantics.",
+    "Filtering search after raw ripgrep cannot guarantee authorized snippets/totals/cursors. Raw preview/header counts, notes/files/watch, transfer import and raw store tools are possible policy bypasses unless shared routes consistently use projections/fences.",
+    "Policy can change without content revision; sameContextSnapshot/rebaseLiveContext currently have no policy epoch. Revalidation must occur before publication and future consumption, not just at capture or index update.",
+    "Current executor jobs array is in memory and explicitly fixture. Its approvedPayloadHash/send grant must not be treated as artifact read permission, durable outbox or verified live publication receipt.",
+    "Current JSONL corruption debug emits raw line prefix; search RPC logs query. Required privacy applies to error/recovery paths too, not only happy-path telemetry.",
+    "Three normative agents new paths overlap WP-36. Concurrent creation would overwrite accepted foundations or establish a second convention; domain owner must merge in dependency order.",
+    "Body actor spoofing, workspace/account alias collisions, stale CAS, idempotency conflict, provider timeout/ambiguous effect and dropped/reordered invalidation require meaningful negative assertions. A transport wiring test or fixture PASS cannot satisfy feature verification.",
+    "Service/migrator/UI/HTTP/viewer/consumer seams outside permitted inspection remain exact root integration prerequisites; this report does not invent implementations or reduce search/mention/notification/activity completeness.",
+    "Whole-file hashes bind observed working-tree snapshots only. Root integration can change bytes after inspection; verifier rejection is stale evidence, not grounds to change user source or silently refresh hashes without re-reading affected code."
+  ]
+}

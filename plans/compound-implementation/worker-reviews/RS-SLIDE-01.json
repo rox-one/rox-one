@@ -1,0 +1,341 @@
+{
+  "task_id": "RS-SLIDE-01-preflight",
+  "attempt_id": "91082bb94376f240d2b12d1ff52eadfa",
+  "packet_hash": "18f402c212f294d9f6843ee43a07ee9c60f2f73d57f6d8c704bfbed142f5763c",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-SLIDE-01",
+  "featureComplete": false,
+  "mode": "inspect-only; one owned report; no feature implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-DRV-01", "RS-DOC-01"],
+  "evidenceBinding": {
+    "inputRevisionProvenance": "Dispatch-supplied input HEAD; no Git command was run to assert current HEAD or clean-tree correspondence.",
+    "sourceScope": "Inspected working-tree package seams, direct imports, and explicit dependency specifications. Root-owned wave0 changes may be present; these hashes are not an assertion about committed input_revision bytes.",
+    "manifestStatus": "Actual SHA256 for the published specification and issues.json matches both dispatch input-manifest hashes.",
+    "hashMethod": "Read-only shasum -a 256 over each concrete inspected whole file.",
+    "staleEvidence": "Reads and hash collection are not an atomic snapshot. Evidence freshness after collection is unverified. Root must compare whole-file digests and re-read changed symbols after the wave0 commit and accepted dependency receipts; do not apply proposed line-local changes blindly.",
+    "explorationLimitations": [
+      "codegraph reported no .codegraph index; no indexing or upgrade was attempted.",
+      "Scoped find calls failed because their judgment provider returned 402 Insufficient credits; these failures are not absence evidence. Concrete paths published by the specification and grep/glob/read supplied the source evidence.",
+      "apps/workspace-service/src was reported Path not found. Exact four normative new file paths were also reported Path not found.",
+      "No builds, product tests, native UI, network operations, Git operations, or source mutations were performed. Report-only JSON validation is distinct from feature verification."
+    ]
+  },
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0-AUTHORITY",
+      "classification": "Hidden foundation gate, not a new direct DAG edge",
+      "evidence": "RS-SLIDE-01.md:46-56; RS-DRV-01.md:38,62; platform-contract.ts:115-156,232-239,592-619. authorizeRox2Action is a pure grant predicate, not a durable authenticated command server.",
+      "requiredReceipt": "Lead's committed wave0 plus accepted common registry/authority receipt exposing server-derived principal/workspace, typed command registration, operationId deduplication, expectedRevision, durable commit, policy fence and auditable common outbox.",
+      "missingPrerequisite": "No accepted foundation receipt is included in this packet; absence of workspace-service/src prevents naming an implemented command registrar. Request its exact import path and registration symbol from the lead rather than creating a second authority."
+    },
+    {
+      "id": "FG-DOCUMENT-REPRESENTATION",
+      "classification": "Acceptance gate within explicit RS-DOC-01 dependency",
+      "evidence": "RS-SLIDE-01.md:46; RS-DOC-01.md:37,41-42; PageConfig at page.ts:294-320 and CreatePageInput at shared/pages/types.ts:71-81 currently contain no contentKind.",
+      "requiredReceipt": "Accepted RS-DOC-01 canonical Page payload interface, representation discriminator, preserved ID/slug aliases, schema/migration and existing PageFrame regression evidence. Add slides to that shared discriminator, not a new entity kind or Document ref.",
+      "missingPrerequisite": "Published DOC contentKind is html_app|collaborative_document; the extension to slides must be an integrated shared patch after DOC lands."
+    },
+    {
+      "id": "FG-COLLABORATION",
+      "classification": "Hidden cross-cutting mechanism, supplied by RS-DOC-01 rather than a new Slides engine",
+      "evidence": "RS-SLIDE-01.md:29,39,50,79; RS-DOC-01.md:26-37,52-54; NotesCanvasView:319-339 only writes localStorage and savePageContent:445-463 overwrites HTML without revision comparison.",
+      "requiredReceipt": "Common CRDT schema/operation frontier, stable child-ID binding, local WAL, durable server ACK, reconnect anti-entropy, own-edit undo, current-ACL revoke fencing and metadata/layout CAS facilities.",
+      "missingPrerequisite": "Accepted collaboration contract and its actual imports are not supplied. Slides must bind text/entities/notes to that mechanism and use CAS for layout/order."
+    },
+    {
+      "id": "FG-DISCUSSIONS",
+      "classification": "Transitive dependency and hidden product gate; NOT a direct dependency addition",
+      "evidence": "Slides title includes comments; RS-SLIDE-01.md:46,56,86; RS-DOC-01.md:30,43,62,82 explicitly requires RS-MSG-02 EntityDiscussion and common message.create.",
+      "requiredReceipt": "Accepted RS-DOC-01 receipt incorporating RS-MSG-02 EntityDiscussion, PageRef/child anchor/source revision, common MessageRef, current ACL, anchor-drift fallback, resolve semantics and deduplicated mention notifications.",
+      "missingPrerequisite": "No discussion implementation path or accepted receipt was provided; do not create SlidesComments or a separate notification engine."
+    },
+    {
+      "id": "FG-FILES-EXPORT",
+      "classification": "Hidden security/artifact gate reached through RS-DRV-01 and RS-DOC-01",
+      "evidence": "RS-SLIDE-01.md:29,33,50,104; RS-DRV-01.md:29,38,55; RS-DOC-01.md:32,57; PageThumbnailInfo:273-281 is only a poster descriptor, not a queued artifact-job receipt.",
+      "requiredReceipt": "Common AttachmentRef/FileRef policy and storage, isolated noninteractive PDF/thumbnail worker, bounded jobs with status/error/checksum/revision, authenticated download and revoke checks, and lawful font embedding.",
+      "missingPrerequisite": "No worker, artifact-job registrar or embedding-license evidence is present in inspected imports. An HTML iframe capture or publication pointer is insufficient proof."
+    },
+    {
+      "id": "FG-PROJECTIONS-POLICY",
+      "classification": "Hidden shared integration gate, not standalone Slides stores",
+      "evidence": "RS-SLIDE-01.md:34,46,50,56,86; RS-DRV-01.md:38; Rox2Event:131-141 and isAuditableRox2Event:617-619 define event shape but not an outbox/search service.",
+      "requiredReceipt": "Canonical page/File refs, effective grants and links, ACL-scoped visible-text/notes extraction, search/mention index watermarks, common activity/outbox and notification dedupe, subscription/cache invalidation.",
+      "missingPrerequisite": "Exact common index, event subscription and outbox adapters must come from accepted foundation/dependency receipts; this preflight cannot certify their runtime behavior."
+    },
+    {
+      "id": "FG-AGENT-COMMAND-FACADE",
+      "classification": "Hidden channel-parity gate",
+      "evidence": "RS-SLIDE-01.md:46,50-56,80; PageView.handleDesignWithAgent:174-179 only opens a prompted session; authorizeRox2Action:601-609 requires an actor grant but is not a transport resolver.",
+      "requiredReceipt": "Shared typed command/query facade wired identically to UI/RPC/IPC/MCP/provider and agent tools; read-only preview deck diff with no effects; explicit allowed apply under current policy; denied read-only layout edit and fenced legacy writers.",
+      "missingPrerequisite": "Lead must provide exact transport/tool registration symbols and accepted policy parity receipt before Slides registers commands."
+    },
+    {
+      "id": "FG-SCHEDULING-AND-EVIDENCE",
+      "classification": "Hidden execution/acceptance gate",
+      "evidence": "RS-SLIDE-01.md:71-74,87-93; supplied progress is NOT_STARTED / fullFeatureDoD NOT_VERIFIED.",
+      "requiredReceipt": "Wave0 commit, accepted RS-DRV-01 then RS-DOC-01 receipts, agreed one-writer shared patches and current RS scheduler packet; separate Linux domain/renderer and actual Electron evidence, independent review, migration/rollback proof.",
+      "missingPrerequisite": "A preflight dispatch has depends_on=[] but is NOT authorization to start feature implementation before the two normative dependencies. Existing 52-WP manifest must not be assumed to include Slides."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/documents/slides/contracts.ts",
+    "apps/workspace-service/src/modules/documents/slides.ts",
+    "apps/electron/src/renderer/components/documents/slides/SlidesEditor.tsx",
+    "tests/rox-suite/slides/deck.spec.ts"
+  ],
+  "proposedOwnedContributions": [
+    {
+      "path": "packages/shared/src/documents/slides/contracts.ts",
+      "change": "Define versioned slides payload on the accepted Document/Page payload interface: title metadata, ordered stable slide IDs, stable object IDs, text/entity content, image AttachmentRef+alt, shape/link objects, normalized x/y/w/h with documented coordinate units, zIndex/style tokens, notes, themeId. Define createDeck/applyContentOps/patchLayout/export typed inputs/results using common envelopes, canonical PageRef, operationId and expectedRevision; reorder carries baseRevision. CRDT body/frontier and CAS layout/order revisions must remain distinct. Do not introduce an entity per slide/object.",
+      "prerequisite": "Accepted Document, AttachmentRef, collaboration and command-envelope imports; coordinate-unit convention agreed with DOC/renderer/export owners. Names here are proposed, not claims of existing exported symbols."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/documents/slides.ts",
+      "change": "Implement and register proposed slides.createDeck/applyContentOps/patchLayout/export against the accepted shared authority. Resolve principal/workspace from session; validate grants and attachment/links; append CRDT content with durable ACK and dedup; CAS layout/order without concurrent overwrite; make preview pure and return deck diff; queue isolated revision-bound PDF/thumbnail File jobs and publish common document.changed/export.ready outbox events. Recheck policy for subscriptions and artifact reads, including expiry/revoke.",
+      "prerequisite": "The containing service src path is absent at inspection; wait for lead wave0 and dependency module/registrar receipts. Do not bootstrap a second server or storage model."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/documents/slides/SlidesEditor.tsx",
+      "change": "Build a React representation of the same Page ref with common collaboration identity, command client, Share/EntityDiscussion and attachment picker. Implement three-pane 16:9 editor, title/save/presence, all five templates, ROX light/dark theme presets, collapsible notes, contextual object editing, accessible ordering and object keyboard operations, fullscreen presenter/next/prev/speaker view/Escape, viewport drawers and state-specific retry/denial UI. Revoke clears stage/selection/notes, cancels subscriptions/writes and invalidates cached thumbnails through shared policy.",
+      "prerequisite": "Accepted route/Document payload dispatch, common UI clients and shared patches. No Notes Canvas rename or independent localStorage master."
+    },
+    {
+      "path": "tests/rox-suite/slides/deck.spec.ts",
+      "change": "Implement observable deck lifecycle, stable-ID reload, allowed/denied text/image/notes, presentation, actual PDF/File/checksum, two-peer convergence, own-undo, CAS conflict/reconnect, expired-share thumbnail/notes, agent pure-preview/allowed-apply/read-only denial, revoke cache clearing and seeded broken controls using accepted domain/renderer harness conventions.",
+      "prerequisite": "Real committed domain/client fixtures and authority contracts. No source-string, mock-echo, wiring-only or merely nonempty assertions. Native Electron proof remains a separate lane."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig / PageKind / PageThumbnailInfo",
+      "change": "After RS-DOC-01 lands, extend its contentKind representation union with slides and bind the accepted revisioned Document payload descriptor. Keep PageKind exactly the separate runtime/CSP discriminator; preserve page ID, slug, schema migration compatibility, Project binding and HTML grants/share fields. Use common File job/artifact descriptors for Slides, not HTML thumbnail metadata as a substitute.",
+      "reason": "Current PageConfig has kind but no contentKind; canonical entity must remain kind=page. Adding slides to PageKind would change sandbox behavior rather than select a Document representation."
+    },
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput / LoadedPage",
+      "change": "Extend the accepted DOC creation/query payload union for contentKind=slides and canonical Document descriptor using shared typed contracts. Preserve existing HTML CreatePageInput.content semantics and LoadedPage identity/path aliases. Renderer must not supply authoritative actor/workspace/policy in the new command envelope.",
+      "reason": "Current creation accepts optional PageKind and initial index.html content only; Slides creation/reload needs a typed representation without a second ref."
+    },
+    {
+      "path": "packages/shared/src/pages/validation.ts",
+      "symbol": "PageConfigSchema / PageKindSchema / validatePageConfig",
+      "change": "Extend the accepted DOC contentKind/schema migration with slides and validate its payload descriptor/revision. Preserve PageKindSchema and all current slug, grant, digest, share and thumbnail validation. Use accepted common schema contracts, not an unvalidated arbitrary JSON field.",
+      "reason": "savePageConfig validates every write; current Zod PageConfigSchema has no representation field, so type-only changes cannot persist the proposed discriminator."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "createPage / UpdatePagePatch / updatePage / savePageContent / recordPageThumbnail",
+      "change": "Integrate through DOC's accepted canonical adapter/migration, preserving page ID/slug and project metadata. Initialize slides only via the typed shared command facade. Treat contentKind/payload/revision as managed fields: exclude them from UpdatePagePatch and prevent spread-based mutation from bypassing authority. Fence legacy savePageContent/raw HTML overwrites for Slides through the accepted authority adapter rather than storing a deck in index.html or snapshot.kv. Keep existing HTML branch unchanged.",
+      "reason": "Current createPage writes metadata then optional HTML; updatePage spreads patch values; savePageContent overwrites without expectedRevision/operationId/actor context. Atomic file replacement is not CRDT, CAS or policy fencing."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "handleCreatePage / openPage / PagesHome",
+      "change": "Through RS-DRV-01's accepted creation menu/template dispatch, add Создать → Rox Slides and Presentation template entry targeting slides.createDeck with selected project binding and canonical receipt; navigate the existing pages/page/{slug} alias. Retain current HTML creation and project filter behavior; agent draft creation must use the same facade/ref.",
+      "reason": "Existing handleCreatePage hardcodes kind='interactive'; there is no Slides/template creation flow in this component. Avoid creating another library surface."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "symbol": "PageView / render-lease effect / body dispatch / handleDesignWithAgent",
+      "change": "Extend DOC's accepted payload dispatch with SlidesEditor for contentKind=slides on the same slug/ref. Gate HTML lease/getPageData effects to the HTML representation so Slides does not require an index.html digest to mount. Preserve PageFrame branch and its retry/cleanup. Bind shared authorization/subscription invalidation to fallback page and editor lifecycle; use common pure deck preview/allowed apply instead of only a generic design prompt.",
+      "reason": "Current body branch requires hasContent/contentDigest and creates an HTML lease before rendering PageFrame; mounting Slides behind that gate would leave new decks at noContent or trigger the wrong renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageTile.tsx",
+      "symbol": "PageTile / posterDigest / posterUrl effect",
+      "change": "Consume the accepted Drive/Document content-type label and revision-bound shared thumbnail job artifact for Slides. On denial/expiry/revoke cancel outstanding fetch and immediately clear posterUrl, cached thumbnail and private row metadata through the shared policy cache. Do not infer permission from contentDigest freshness. Preserve current HTML poster branch.",
+      "reason": "Current poster request is guarded by digest and inView only; a dataUrl is kept in component state and expiry/revoke without a digest change has no explicit invalidation dependency."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+      "symbol": "SharePageDialog / usePageShareCapabilities / runPublish",
+      "change": "Use DOC/Drive's common ACL share flow for Slides, preserving legacy HTML publish/password/unpublish behavior exclusively for html_app. Never route Slides sharing/export through publishPage as an implicit public copy. Enforce current grants/expiry and share policy at the authoritative transport and downloaded-thumbnail/notes endpoints.",
+      "reason": "Current dialog is a public publication flow, not effective read/write/share ACL; existing remote-copy retention warnings are important regressions to preserve."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / Rox2Event / authorizeRox2Action",
+      "change": "Reuse existing page and file kinds and workspace-scoped revisioned refs in Slides command/results/events. Only add an accepted shared payload typing extension if the DOC owner requires it; do not add slides/document kinds or child registry entries. Preserve auditable causationId/correlationId/aggregateRevision and server-resolved grant checks; the pure predicate is not a replacement for authority.",
+      "reason": "The entity/ref/event contract already supplies canonical identity and grant vocabulary; Slides is a Page payload, not a new registry."
+    },
+    {"path":"packages/shared/src/i18n/locales/ru.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add Russian default Slides labels, help, keyboard instructions, errors, status definitions and appropriate plural forms in ASCII key order using t().","reason":"RS-SLIDE-01:42 and repository i18n rule; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/en.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order, aligned with Russian contract and existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/de.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/es.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/fr.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/hu.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/ja.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/pl.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing Polish plural conventions.","reason":"Required locale parity and Russian plural alignment; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/zh-Hans.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/zh-Hant.json","symbol":"slides.* and relevant shared creation/template keys","change":"Add matching translated keys in ASCII order with existing plural conventions.","reason":"Required locale parity; locale file exists."},
+    {"path":"packages/shared/src/i18n/locales/ar.json","symbol":"slides.* and relevant shared creation/template keys","change":"Coordinate with the i18n owner to add matching keys/translations if this additional locale is active; retain it unchanged until its actual registration/parity contract is known.","reason":"Actual glob returned ar.json beyond the ten locales documented in AGENTS; no registry inspection or active-locale claim was made."},
+    {"path":"packages/shared/src/i18n/locales/ko.json","symbol":"slides.* and relevant shared creation/template keys","change":"Coordinate with the i18n owner to add matching keys/translations if this additional locale is active; retain it unchanged until its actual registration/parity contract is known.","reason":"Actual glob returned ko.json beyond the ten locales documented in AGENTS; no registry inspection or active-locale claim was made."}
+  ],
+  "integrationRequests": [
+    {"targetOwner":"Lead/wave0 authority owner","request":"Return accepted receipt with committed revision and exact command/schema registry, authenticated transport resolver, common outbox/index/cache invalidation symbols. Those paths are not visible through inspected package imports; this report deliberately does not invent shared file names."},
+    {"targetOwner":"RS-DRV-01 owner","request":"Return exact existing Drive creation/menu and Docs Presentation template-gallery insertion symbols, canonical File/AttachmentRef exports and job/artifact client contracts. Coordinate the shared PagesHome/PageTile/SharePageDialog patches above; no second library."},
+    {"targetOwner":"RS-DOC-01 owner","request":"Return contentKind/payload interface, collaboration/WAL/CRDT/CAS/undo/revoke client imports, PageView dispatch hook, EntityDiscussion/anchor APIs from accepted RS-MSG-02, export isolation and typed agent preview/apply registration symbols. Integrate slides discriminator as a shared patch after receipt acceptance."},
+    {"targetOwner":"Authority/tool transport owners","request":"Register proposed slides.createDeck/applyContentOps/patchLayout/export schemas and typed results once at the accepted common registrar; expose identical principal/ACL/revision behavior across UI/RPC/IPC/MCP/provider and agent read/write. Provide exact shared patch paths in the updated implementation packet."},
+    {"targetOwner":"Export/native verification owners","request":"Provide isolated PDF/thumbnail worker registration, licensed font embedding, canonical artifact download policy and native Electron/Linux proof lanes. Do not count an interactive HTML screenshot as PDF export or runtime product evidence."}
+  ],
+  "acceptanceMatrix": [
+    {
+      "id":"AC-1",
+      "criterion":"Создать 3slide deck → text/image/notes → reload → показать → экспорт PDF; каждый слайд имеет стабильный ID.",
+      "specLines":[78,78],
+      "currentEvidence":"PagesHome.handleCreatePage:86-101 creates interactive HTML; PageConfig:294-320 has no deck discriminator; PageView:387-438 only dispatches PageFrame. All four normative new paths are absent.",
+      "actualSeam":"PagesHome.handleCreatePage → accepted canonical Page command adapter; PageView representation dispatch; proposed contracts.ts/slides.ts/SlidesEditor.tsx.",
+      "requiredChange":"Create a canonical Page deck through Drive or Presentation template or agent draft; persist three stable slide IDs, text/entity content, image AttachmentRef+alt, notes and normalized layout; reload same ref/revision; implement presenter controls and isolated PDF/File artifact export with checksum and failure status.",
+      "verification":"After dependencies: exercise actual Drive creation, add text/image/notes to three slides, capture IDs/ref/revision, restart/reload and compare content and IDs, present/next/prev/speaker/Esc, export/read downloaded PDF for exactly those slides and compare job revision/FileRef/checksum. Repeat creation through template and agent and check canonical representation, not duplicate refs.",
+      "state":"NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite":"Accepted RS-DRV-01/RS-DOC-01 receipts, common AttachmentRef/artifact worker and authoritative commands."
+    },
+    {
+      "id":"AC-2",
+      "criterion":"Concurrent text converges, reorder conflict обрабатывается; expired share не раскрывает thumbnail/notes.",
+      "specLines":[79,79],
+      "currentEvidence":"NotesCanvasView:319-339 uses localStorage; savePageContent:445-463 overwrites HTML without CAS; PageTile:44-68 protects digest freshness, not current share expiry; PageShareInfo:240-258 describes publication bookkeeping, not expiring ACL grants.",
+      "actualSeam":"Accepted DOC collaboration.append/WAL/frontier and layout CAS; PageTile poster state; shared grant/share/download/subscription authority.",
+      "requiredChange":"Bind text/notes to shared CRDT and reconnect/dedup; enforce baseRevision/expectedRevision CAS for slide order/layout with typed conflict and compare/reapply; check expiry/current ACL on deck, notes, thumbnails, downloads and subscriptions and invalidate private cache.",
+      "verification":"Two real peers edit the same text concurrently and reconnect in opposite orders: compare canonical content/hash/frontier and stable IDs. Concurrent reorder from same base yields explicit conflict without lost accepted order. At expiry/revoke, query notes and thumbnail through all available transports and reopened/active UI; assert denial, no bytes/title leakage, cleared stage/poster and rejected late writes.",
+      "state":"BLOCKED_FOUNDATION_NOT_VERIFIED",
+      "missingPrerequisite":"Shared collaboration/CAS and authority fence receipts with testable session clocks/share-expiry policy."
+    },
+    {
+      "id":"AC-3",
+      "criterion":"Agent preview → explicit allowed command → deck diff; read-only agent не меняет layout.",
+      "specLines":[80,80],
+      "currentEvidence":"PageView.handleDesignWithAgent:174-179 opens a session with a prompt. platform-contract.authorizeRox2Action:601-609 is a grant predicate; no Slides facade is present in inspected seams.",
+      "actualSeam":"Proposed Slides command contracts/service registration through accepted agent command/query facade; existing PageView agent entry.",
+      "requiredChange":"Implement preview on current deck revision with stable-ID content/layout diff and zero persistence/outbox/artifact effects; require explicit allowed command before applying with operationId/expectedRevision and server-session-derived actor/workspace. Deny read-only layout requests consistently across tools and transports.",
+      "verification":"Snapshot ref/revision/body/layout/outbox/artifacts before and after preview and prove unchanged; allowed explicit apply returns expected stable-ID diff/new revision; repeated operationId dedups. Read-only agent preview works for permitted content but patchLayout fails and all state remains byte/revision-equivalent. Stale revision and forged renderer actor/workspace cannot bypass policy.",
+      "state":"BLOCKED_FOUNDATION_NOT_VERIFIED",
+      "missingPrerequisite":"Exact common agent registration and authoritative preview/apply APIs from wave0/DOC receipts."
+    },
+    {
+      "id":"DOD-1",
+      "criterion":"UI/routing/input/output/help/keyboard/state contracts реализованы; loading/empty/error/denied/retry доступны и проверены.",
+      "specLines":[84,84],
+      "currentEvidence":"PagesHome/PageView use t(), pagesAtom and pages/page/{slug}; PageView:411-426 has HTML lease retry/loading. JsonCanvasNode:44-55 has file/text/group but no slides/notes/theme/presentation domain. Existing HTML UI does not satisfy Slides states.",
+      "actualSeam":"SlidesEditor new representation; PageView/PageHome shared dispatch; existing shared UI and i18n.",
+      "requiredChange":"Implement 200–240px thumbnails with number/add and 280–320px contextual properties, 16:9 stage zoom/fit, title/save/presence/share/present toolbar, text/image/shape/link insertion, five layouts (title, heading+text, two columns, image, conclusions), ROX light/dark themes, collapsible notes and fullscreen speaker presentation. Hover duplicate/delete/more must have keyboard menu; drag reorder has keyboard alternative; arrows move 1 unit/Shift 10, selected-object Delete only, own-edit Cmd/Ctrl+Z, Esc clears selection. Resize handles 6–8px with sufficient hit target and no content-size change on selection. Under 1100px inspector drawer, under 800px one active pane/back navigation. Russian t()-based copy/help on hover/focus/click, inherited theme/font, 120–160ms opacity/transform motion and reduced-motion disabling, non-color-only statuses. Implement loading/empty/error/denied/retry plus save/offline/conflict/queued/export failure distinctions using real typed results.",
+      "verification":"In actual Electron exercise all controls with mouse and keyboard, editing focus/IME and object-selection boundaries; prove own undo preserves remote content and selected Delete never deletes another object/slide. Capture normal, drawer and single-pane screenshots/ARIA/tab order at thresholds, light/dark and reduced motion; inspect computed font, hit targets, animation duration/properties and status text. Inject transport loading/failure/denial and retry, including export job failure, without replacing them by success placeholders.",
+      "state":"NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite":"Accepted renderer command/collaboration clients, common Share/EntityDiscussion/attachments, shared route/discriminator patches and real native evidence lane."
+    },
+    {
+      "id":"DOD-2",
+      "criterion":"Persistence и reload; meaningful negative case; concurrency/reconnect где применимо; N/A обоснован в receipt.",
+      "specLines":[85,85],
+      "currentEvidence":"savePageConfig:176-194 writes validated metadata atomically; createPage:281-308 writes an HTML Page. Neither is evidence of durable CRDT ACK, idempotent deck writes or reconnect. NotesCanvasView localStorage is not permitted deck authority.",
+      "actualSeam":"Canonical DOC durable Page/CRDT adapter plus proposed Slides CAS and commands.",
+      "requiredChange":"Persist child IDs/content/notes/layout/theme/project and committed revisions through shared authority; preserve WAL and pending ops across crash/reconnect and dedup at ACK. Handle reordered/stale writes and denied attachment/share inputs without effect. No concurrency/reconnect N/A is justified for this feature.",
+      "verification":"Reload and process restart retain exact IDs/state; crash between local checkpoint and server ACK then reconnect replays once without losing acknowledged content. Two-peer network partition/offline/reconnect converges. Negative cases include stale reorder, unauthorized write, invalid/cross-policy attachment, expired share and denied export. Compare exact revisions/state and durable readback, not just a success toast.",
+      "state":"BLOCKED_FOUNDATION_NOT_VERIFIED",
+      "missingPrerequisite":"DOC durable WAL/ACK/CAS/migration and authority fence accepted receipts."
+    },
+    {
+      "id":"DOD-3",
+      "criterion":"Общие grants, links, search, mentions, activity, notification и agent policy интегрированы для новой domain entity.",
+      "specLines":[86,86],
+      "currentEvidence":"ROX2_ENTITY_KINDS already contains page/file; Rox2EntityRef:232-239 supplies workspace identity; Rox2Event:131-141 and isAuditableRox2Event:617-619 require auditable fields. Current Page source-action grants/public publication are not a Document ACL service. DOC:43 requires common EntityDiscussion.",
+      "actualSeam":"Existing Rox2EntityRef/Event/grant vocabulary; accepted common registry, links, search extractors, outbox, EntityDiscussion and agent policy.",
+      "requiredChange":"Reuse canonical kind=page/contentKind=slides with stable child anchors, common Project link, identity/presence/grants/share. Index only permitted visible text/notes; support entity mentions and shared anchored comments via EntityDiscussion/message.create, anchor revision/drift fallback and resolve. Emit document.changed/export.ready and common activity/notification dedupe; a mention must not grant access. Stop subscriptions/writes and purge forbidden cache on revoke. UI/RPC/IPC/MCP/provider and agent policy must agree.",
+      "verification":"Allowed principal sees slide text/notes/search and links; denied principal receives no private titles/snippets/thumbnail/notes through search facets, link previews, tools or direct downloads. Comment anchored to child ID/revision survives reorder or exposes honest drift fallback; duplicate message/mention produces one notice, resolve does not delete source or grant rights. Revoke active session and observe fence/subscription/cache effects. Assert causation/correlation/revision in common outbox and exact once projection handling.",
+      "state":"BLOCKED_FOUNDATION_NOT_VERIFIED",
+      "missingPrerequisite":"Common registry/ACL/outbox/search/agent receipts and accepted DOC/RS-MSG-02 discussion integration. UI-only N/A sentence in specification does not exempt this full-domain package."
+    },
+    {
+      "id":"DOD-4",
+      "criterion":"Targeted tests + seeded broken control действительно отклоняется; regression existing route/authority пройдена.",
+      "specLines":[87,87],
+      "currentEvidence":"Normative tests/rox-suite/slides/deck.spec.ts is absent. PageFrame:34-57 has strict sandbox/lease/grant invariants; existing pages/page/{slug} is preserved by routes.ts:219-223. No tests were run in this preflight.",
+      "actualSeam":"Proposed deck.spec.ts with accepted domain/renderer harness; current HTML PageFrame and Notes routes as regression controls.",
+      "requiredChange":"Add behavioral tests for AC-1/2/3 and DOD-1/2/3 boundaries after real contracts land; run existing Page/Notes/authority regressions. Seed changes that break ACK durability, CAS conflict rejection, expired thumbnail/notes ACL or pure agent preview and prove each is caught by assertions, not infrastructure failure.",
+      "verification":"Record exact committed candidate, command/seed/logs expected versus observed. Run targeted tests and existing relevant regressions once integrated. Show a deliberately unsafe thumbnail response or dropped expectedRevision produces a specific assertion failure, then restore real candidate and pass. Keep proof that legacy HTML sandbox/grants/refresh/public-copy behavior and Notes editor routing remain intact.",
+      "state":"NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite":"Real committed implementation/test harness and lead authorization for post-dependency verification; product tests prohibited during this preflight."
+    },
+    {
+      "id":"DOD-5",
+      "criterion":"Linux domain/renderer evidence; реальные Electron screenshots/ARIA/theme/font после UI changes; provider lane только для реальных external effects.",
+      "specLines":[88,88],
+      "currentEvidence":"No runtime/native/browser/provider operations were authorized or executed. Existing source uses theme tokens/t(), which does not prove computed font or actual Slides UI.",
+      "actualSeam":"SlidesEditor integrated renderer, shared command service and isolated artifact worker; designated Linux and native Electron lanes.",
+      "requiredChange":"Collect independent Linux domain/renderer proof and real Electron interactions/screenshots/ARIA/computed font/theme/motion after integration. Verify artifact storage/readback locally; if actual external provider effects are used, attach their genuine readback receipts without treating fixtures as live providers.",
+      "verification":"Linux exercises persisted lifecycle, concurrency, failure/ACL and renderer flows; native Electron exercises actual surface, focus/hover/click/keyboard/presentation, breakpoints/reduced-motion/font. Bind screenshots and logs to same tested revision/environment. External export/storage effect, if present, requires actual remote artifact/checksum/audience readback; document provider-not-used scope separately without exempting export functionality.",
+      "state":"NOT_VERIFIED",
+      "missingPrerequisite":"Committed integrated service/renderer/worker plus scheduled Linux/native lanes and any genuinely used provider capability."
+    },
+    {
+      "id":"DOD-6",
+      "criterion":"Source commit, exact diff, logs/hashes, expected/observed, миграция/rollback и независимое review приложены. Нельзя принимать экран без механизма.",
+      "specLines":[89,89],
+      "currentEvidence":"This report supplies concrete working-tree whole-file hashes and source/spec ranges only. Input revision is dispatch-supplied; normative progress states NOT_STARTED and fullFeatureDoD NOT_VERIFIED. No feature diff, execution logs, migration or independent implementation review exists in this report.",
+      "actualSeam":"Canonical Page/schema adapter migration, shared authority receipts and lead integration/review delivery.",
+      "requiredChange":"Deliver committed source and exact integrated diff, stable-ID/alias migration with rollback policy preserving revisions/acknowledged data, runtime logs/artifact hashes and expected/observed per criterion, plus independent review of domain, policy, concurrency, export and UI. Rebase this preflight against changed wave0/dependency bytes.",
+      "verification":"Bind all domain/renderer/native/provider evidence to exact final source revision and relevant artifact hashes; rehearse upgrade with existing HTML Pages and new Slides, rollback without remapping canonical IDs/slug aliases or losing acknowledged ops; have independent reviewer reject surviving seeded bypasses and incomplete criteria. Lead runs packet/report verifier separately.",
+      "state":"NOT_VERIFIED",
+      "missingPrerequisite":"Lead wave0/dependency commits, completed implementation and integrated evidence, migration rehearsal and independent reviewer."
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-SLIDE-01.md","symbol":"UI/domain/commands/AC/Definition of Done/dependencies","lineStart":20,"lineEnd":110,"sha256":"a372f7762429f840e64e4ce677ecebec9aec2a70fdd61d77e1508b4dc6a7f4cf"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-SLIDE-01 normative record","lineStart":103,"lineEnd":133,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"Document contentKind/CRDT/WAL/EntityDiscussion and dependency gates","lineStart":20,"lineEnd":85,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"docs/rox-suite/published/RS-DRV-01.md","symbol":"canonical library/File authority/foundation gate","lineStart":21,"lineEnd":82,"sha256":"ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"},
+    {"path":"apps/electron/src/renderer/components/pages/PagesHome.tsx","symbol":"PagesHome / handleCreatePage / openPage","lineStart":25,"lineEnd":105,"sha256":"3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView HTML render lease and getPageData effects","lineStart":50,"lineEnd":132,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView body dispatch / PageFrame / lease retry","lineStart":387,"lineEnd":438,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageFrame.tsx","symbol":"PageFrame security posture / sandboxForKind","lineStart":34,"lineEnd":91,"sha256":"7cb551294c720b87443d645041c0514c3b48a6ea04cad668b8c083629c1e3ba1"},
+    {"path":"apps/electron/src/renderer/components/pages/PageTile.tsx","symbol":"PageTile / posterDigest / posterUrl effect","lineStart":37,"lineEnd":68,"sha256":"c61e8cf7573bfde76a2d18b8eb4440b448c8a6183d45b230a9e2d97134452497"},
+    {"path":"apps/electron/src/renderer/components/pages/SharePageDialog.tsx","symbol":"usePageShareCapabilities","lineStart":22,"lineEnd":71,"sha256":"a06d7bf806cdac1c044c01ba2a75fb7103d04e7cbd82ee4136c69577f38bb5e0"},
+    {"path":"apps/electron/src/renderer/components/pages/SharePageDialog.tsx","symbol":"runPublish / runUnpublish","lineStart":147,"lineEnd":199,"sha256":"a06d7bf806cdac1c044c01ba2a75fb7103d04e7cbd82ee4136c69577f38bb5e0"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"JsonCanvasNode / JsonCanvas / notesCanvasStorageKey","lineStart":44,"lineEnd":106,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesCanvasView localStorage persistence","lineStart":299,"lineEnd":339,"sha256":"2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358"},
+    {"path":"apps/electron/src/renderer/atoms/pages.ts","symbol":"pagesAtom / pagesProjectFilterAtom","lineStart":1,"lineEnd":23,"sha256":"d429fb649961031ab860ce7c107c69f121aee46cf61648f26962de9d6ff18ff2"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Entity / Rox2Context / Rox2Event","lineStart":115,"lineEnd":156,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":232,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2ActorGrant / authorizeRox2Action / isAuditableRox2Event","lineStart":592,"lineEnd":619,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageKind","lineStart":29,"lineEnd":35,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageShareInfo / PageThumbnailInfo / PageConfig","lineStart":240,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/shared/src/pages/types.ts","symbol":"isPageGrantUsable / CreatePageInput / LoadedPage","lineStart":40,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"savePageConfig","lineStart":176,"lineEnd":194,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"createPage / UpdatePagePatch / updatePage","lineStart":281,"lineEnd":379,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"savePageContent","lineStart":439,"lineEnd":463,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/validation.ts","symbol":"PageKindSchema / PageShareInfoSchema / PageConfigSchema","lineStart":178,"lineEnd":213,"sha256":"dc9579b3f129baae3d81943a6fc2f5a87212af3aa72ecef1facbd9667deaf3f3"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.pages","lineStart":219,"lineEnd":223,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads this owned preflight report and assigns the exact shared patches/import contracts in its integration plan; no product implementation by this worker.",
+    "implementationStartCondition": "Lead wave0 is committed and accepted RS-DRV-01 and RS-DOC-01 dependency receipts (including DOC discussions/collaboration and shared foundation gates) are supplied. Recheck this report's source digests against that revision, re-read changed seams, then issue a revision-bound implementation packet with one writer per shared path.",
+    "firstImplementationStep": "Bind contracts.ts to the accepted Document/Page, AttachmentRef, collaboration and command envelope exports; integrate shared slides contentKind/schema/authority registrations through the owning lead, then implement the first persisted 3-slide command→UI→reload→ACL→PDF vertical path.",
+    "leadReportVerificationArgv": [
+      "/Library/Developer/CommandLineTools/usr/bin/python3",
+      "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/launch-worker-pool.py",
+      "--verify",
+      "plans/compound-implementation/worker-reviews/RS-SLIDE-01.json",
+      "/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/RS-SLIDE-01/packet.json"
+    ],
+    "verificationBoundary": "Root packet verifier and feature/runtime lanes are not claimed executed by this report; only owned-artifact JSON parsing/readback is permitted here."
+  },
+  "risks": [
+    "Concurrent root wave0/dependency edits can invalidate inspected code/ranges/hashes; supplied HEAD is not proof that the working tree matches it.",
+    "No workspace-service/src yet: creating the normative module before the foundation lands risks inventing a second authority/store or integrating against nonexistent exports.",
+    "Adding slides to PageKind or ROX2_ENTITY_KINDS would break the specified separation of canonical page identity, payload representation and HTML CSP.",
+    "Legacy raw Page content/update writers can bypass CRDT/revisions/policy unless DOC authority fencing and managed-field protections are applied to every caller.",
+    "Metadata/order CAS and CRDT body revisions/frontiers must be distinct; normalized coordinate units, object move increments and export rendering must use one accepted convention.",
+    "Digest freshness is not authorization. Cached thumbnail dataUrl, notes, fallback deep-link page and search facets can leak after revoke/expiry without an explicit shared policy epoch/invalidation.",
+    "Public HTML publication/password sharing is not the shared Document ACL; retain honest remote-copy warnings and do not auto-publish a deck or exported artifact.",
+    "Comments are in the package title and common-domain DoD despite no dedicated Slides comment acceptance bullet. They require transitive RS-MSG-02 through DOC, not a local comments engine.",
+    "PDF and thumbnails require isolated noninteractive rendering, attachment URL/script restrictions, checksum/readback and licensed font embedding. PPTX import and slide animations are separate scopes, not substitutes for required functionality.",
+    "Agent preview must produce zero effects, not just an unchanged visible editor; mutation, outbox and artifact jobs all require negative checks.",
+    "Published spec's UI-only N/A sentence cannot waive domain integration/concurrency requirements for this full feature package.",
+    "Actual locale directory contains ar.json and ko.json in addition to the ten documented locales; active registration/parity must be reconciled by the i18n owner before shared key patches.",
+    "No product execution evidence was collected or permitted. Feature remains unimplemented/unverified until integrated Linux/native and applicable real provider receipts exist."
+  ]
+}

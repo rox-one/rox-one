@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-30T09:13:45.225632+00:00",
+  "scope": {
+    "cwd": "/Users/t/Projects/rox-one-compound-implementation",
+    "branch": "feat/rox-compound-workspace-20260930",
+    "head": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+    "readOnlyScout": false,
+    "workersLaunched": true,
+    "cloudProvisioned": false
+  },
+  "localHarness": {
+    "cli": "/Users/t/.agents/runtime/harnessctl.py",
+    "service": {
+      "pid": 15796,
+      "status": "running",
+      "started_at": "2026-09-30T04:53:55.612+00:00",
+      "heartbeat": "2026-09-30T04:54:25.789+00:00",
+      "scheduler_heartbeat": "2026-09-30T04:54:28.561+00:00",
+      "scheduler_error_class": null,
+      "stale": false,
+      "runtime_identity": {
+        "basis": "process-start source fingerprint; restart required to adopt changed runtime",
+        "source_drift": false,
+        "source_version": "2.0.0+d182caa91372b2db",
+        "version": "2.0.0+d182caa91372b2db"
+      },
+      "url": "http://127.0.0.1:8765"
+    },
+    "schedulerMaxParallel": 4,
+    "resourceMaxUnits": 4,
+    "roleRunners": {
+      "implementer": {
+        "adapter": "omp",
+        "executable": "/Users/t/.local/bin/omp",
+        "thinking": "low"
+      },
+      "research": {
+        "adapter": "opencode",
+        "executable": "/Users/t/.opencode/bin/opencode",
+        "model": "openai/gpt-6.1-sol",
+        "server_mode": "private"
+      }
+    },
+    "scopedTasksObserved": [],
+    "durableSubmission": "request creates envelope, dispatch_packet, plan and scheduler task IDs; exact submit accepts caller-created graph and does not create these contracts automatically",
+    "schemaProbe": {
+      "contractHash": "fafc8e7e03a71eddbd2150066af1bd4b72f37f11f3d6f569eed95cd1fd97a9f1",
+      "packetHash": "7c14827e8175cd55378550ed39250837a28123234379054c4872a692869f2a23",
+      "accepted": "generated only; no worker execution"
+    },
+    "statusCommands": [
+      "/Users/t/.agents/runtime/harnessctl.py status --summary",
+      "/Users/t/.agents/runtime/harnessctl.py resources",
+      "/Users/t/.agents/runtime/harnessctl.py tasks --id TASK_ID"
+    ],
+    "submissionCommands": [
+      "/Users/t/.agents/runtime/harnessctl.py request \"OBJECTIVE AND OBSERVABLE ACCEPTANCE\" --cwd /Users/t/Projects/rox-one-compound-implementation --id rox-compound-20260930 --mode execute --allowed-operations read,write-artifact,execute-command --delivery local",
+      "/Users/t/.agents/runtime/harnessctl.py submit --file plans/compound-implementation/harness-dag.json"
+    ],
+    "resumption": "Daemon resumes unfinished planning and reconciles fenced attempts. control TEXT --request REQUEST_ID supports control/amendment/resume semantics. Installed native adapters can build resume argv, but currently observed adapter bindings mark native resume/cancel false, so current checkpoint continuation is a new bounded native call; no same-session continuation claim.",
+    "receipts": [
+      "Scheduler task current.directory and history[].directory",
+      "producer/receipt.json and execution-receipt.json",
+      "verifier/report.json and evidence logs",
+      "native-agent/attempts/ATTEMPT/adapter-receipt.json",
+      "native-agent/attempts/ATTEMPT/receipt.json",
+      "task.result.integration.manifest",
+      "scheduler_operations receipt in canonical journal"
+    ],
+    "capabilityRegistry": "Installed native CLI entries currently have no fresh operation probes, ready operations or version-bound command schemas; generated packets must not claim these as freshly ready."
+  },
+  "cloud": {
+    "github": {
+      "repository": "rox-one/rox-one",
+      "private": false,
+      "viewerPermission": "ADMIN",
+      "actionsEnabled": true,
+      "harnessWorkflowRegistered": false
+    },
+    "harnessAdapter": {
+      "class": "harness.cloud_runner.GitHubActionsRunner",
+      "operations": [
+        "canary",
+        "delegation-tests"
+      ],
+      "generalCodingExecutor": false,
+      "priorCloudJobsObserved": 0
+    },
+    "roxConfigured": {
+      "provider": "daytona",
+      "enabled": true,
+      "gatewayConfigured": false,
+      "explicitDaytonaSecretRefConfigured": false,
+      "projectConfigured": false,
+      "snapshotConfigured": false,
+      "imageConfigured": false,
+      "scoutDaytonaApiKeyEnvironmentPresent": false,
+      "accountAuthenticated": "unverified; credential store not queried"
+    },
+    "gates": [
+      "ROX coding RunSpec executor adapter is not implemented",
+      "No active authenticated lease/credential broker or distributed fencing",
+      "No deployed coding workers and exact images/provider tenant selected",
+      "No coding result receipt and import/integration implementation",
+      "GitHub canary workflow absent and fixed Harness cloud operations cannot run arbitrary product implementation",
+      "Local private inputs/native browser sessions require supported authorized host; a local checkpoint is not cloud continuation"
+    ]
+  },
+  "verification": {
+    "bun": "1.4.2",
+    "node": "26.8.2",
+    "electronPackage": "39.2.7",
+    "electronInstall": "Native macOS Electron installed and executed; prior missing-binary observation is historical",
+    "electronDistBuilt": true,
+    "playwrightPackage": "1.49.1",
+    "checks": [
+      {
+        "argv": [
+          "bun",
+          "test",
+          "tests/e2e/meeting-agents/harness.test.ts"
+        ],
+        "exitCode": 1,
+        "passed": 7,
+        "failed": 3,
+        "failure": "electron-binary-missing"
+      },
+      {
+        "argv": [
+          "ROX_MEETING_E2E_FIXTURE=1",
+          "bunx",
+          "--no-install",
+          "playwright",
+          "test",
+          "--config",
+          "tests/e2e/meeting-agents/playwright.config.ts",
+          "--list"
+        ],
+        "exitCode": 1,
+        "failure": "TypeScript parameter property is not supported in strip-only mode under Node26"
+      },
+      {
+        "argv": [
+          "ROX_MEETING_E2E_FIXTURE=1",
+          "node",
+          "--no-experimental-strip-types",
+          "node_modules/@playwright/test/cli.js",
+          "test",
+          "--config",
+          "tests/e2e/meeting-agents/playwright.config.ts",
+          "--list"
+        ],
+        "exitCode": 143,
+        "failure": "listing remained running for over 60 seconds; owned probe terminated"
+      },
+      {
+        "argv": [
+          "bun",
+          "node_modules/@playwright/test/cli.js",
+          "test",
+          "--config",
+          "tests/e2e/meeting-agents/playwright.config.ts",
+          "--list"
+        ],
+        "exitCode": 0,
+        "accepted": false,
+        "reason": "empty output; does not demonstrate discovered tests"
+      }
+    ],
+    "meetingE2ERisks": [
+      "ELECTRON_BIN hardcodes Linux electron/dist/electron path",
+      "Default script selects U1 fixture, not product E3",
+      "Product main.cjs is absent",
+      "Harness product readiness path is not established by fixture readiness; product UI→RPC→storage must have dedicated assertions"
+    ],
+    "sensibleCommands": [
+      "bun test OWNED_CHANGED_TEST_PATHS",
+      "bun test packages/shared/src/i18n",
+      "bun run typecheck:shared",
+      "bun run typecheck:electron",
+      "bun run electron:build"
+    ],
+    "codegraph": {
+      "cli": "/Users/t/.local/bin/codegraph",
+      "available": true,
+      "checkoutInitialized": false,
+      "verifiedCommand": "codegraph status /Users/t/Projects/rox-one-compound-implementation",
+      "nextAuthorizedCommand": "codegraph init /Users/t/Projects/rox-one-compound-implementation"
+    },
+    "currentBuilds": "Fresh wave0 builds in progress; previous native runs reproduced Projects context crash, product fix awaits fresh readback"
+  },
+  "runtimeSourceSha256": {
+    "/Users/t/.agents/runtime/harness/contracts.py": "1d7e30d1047d5f1cd3eb84a2c6df29de45158deaea694eb7b28baa437f518f16",
+    "/Users/t/.agents/runtime/harness/cli.py": "7ea271d08c1a0ff6a5733169a7aec01bf63573c87d9d612ab39ce4073e96a6c7",
+    "/Users/t/.agents/runtime/harness/planning.py": "8f5df9ddc87b971152a1dc230aefdfdeac07ed2abfcbb681348e96c58690966f",
+    "/Users/t/.agents/runtime/harness/scheduler.py": "fcba7024e804c3ff73efa28d4e0aeae39d7e964570b54b9a4d286b245a93f0ed",
+    "/Users/t/.agents/runtime/harness/agent_adapters.py": "1454440b1c592676ba3f02baa07d9fcbdda21a42ddbc265a0565cc104ff5459d",
+    "/Users/t/.agents/runtime/harness/cloud_runner.py": "23ea2623d754e6852e0a86b3691bc36e3cdfe06aabcb03afa754619293eeb47e"
+  },
+  "historicalObservationAt": "2026-09-30T04:54:28.659273+00:00",
+  "externalWorkers": {
+    "schemaVersion": 1,
+    "observedAt": "2026-09-30T09:13:45.225632+00:00",
+    "phase": "SOURCE_PREFLIGHT_ONLY",
+    "runId": "rox-compound-20260930T083916Z",
+    "model": "openai-codex/gpt-6.1-sol",
+    "reasoning": "high",
+    "workersStarted": 70,
+    "nativeSessions": 70,
+    "launchReceipt": "/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/launch.json",
+    "launchReceiptSha256": "cfe13dc6c0f87932e0f09c6f267c00f25f70402c14587912b8884ca6c1eb7e15",
+    "workers": {
+      "receipt": "plans/compound-implementation/external-workers.json"
+    },
+    "acceptanceMeaning": "Actual worker sessions and source reports; no feature implementation or DoD acceptance."
+  }
+}

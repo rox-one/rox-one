@@ -1,4 +1,22 @@
-# Macro → ROX: спецификация архитектурного исследования
+# ROX compound workspace — реализация
+
+## Активная задача: IMPLEMENT IT ALL, 2026-09-30
+
+Пользователь разрешил реализацию всего доставленного scope. Исследования ниже — архив исходных решений, а не текущий запрет реализации. Рабочая ветка: `feat/rox-compound-workspace-20260930`; отдельный checkout сохраняет чужие незакоммиченные изменения. Immutable исходный spec: `242492868a11b4d9af1c1011f20b31a346875f0a`.
+
+Scope: 143 пакета из `plans/compound-implementation/progress.json`: 52 Macro, 30 Suite и 61 Lark/Docs/Bases/Code Intelligence extension. Реализация расширяет существующие Pages/Notes, Tasks, Projects, Meetings, Sources, Sessions и Automations. Полный feature DoD включает UI, persistence, команды/queries, актуальные permissions, events/search/agents, failure/recovery, functional tests и реальную проверку UI. Библиотека, экран с fixture или опубликованный issue не закрывают feature.
+
+Текущий первый вертикальный сценарий: открыть существующую Note без смены ID/байтов; получить canonical Page alias и source/format status; сохранить через SHA256 CAS и durable receipt; сохранить новый ввод, сделанный во время запроса; отклонить устаревший write; восстановить interrupted WAL. Native RPC принимает только подтверждённый Electron-main local binding + текущий workspace/window. Это device principal; remote/team identity требует отдельного authenticated owner и не считается реализованной.
+
+Параллельные сценарии: существующий Project привязывает реальный Git workingDirectory, получает immutable snapshot, видит commit/dirty version отдельно и открывает ограниченный source excerpt; Главная создаёт task без толстой рамки, с keyboard focus, IME и failure states; lossless Markdown/YAML patches готовят editable Map/Outline без второй canonical tree.
+
+Native save и lifecycle writers используют единый WAL/CAS и vault/file leases. Durable invalidation intent имеет стабильный event ID; accepted означает локальный callback, не client ACK. Dead-owner claim recovery проверяется реальными SIGKILL/SIGSTOP сценариями; TTL не даёт право перехвата живого writer. Произвольный внешний процесс не участвует в OS-level CAS; Windows directory fsync пока не проверен. Rich-block cutover, CRDT, remote users, Base/record owners и cloud coding executor остаются отдельными slices.
+
+Результаты и живые runtime receipts: `plans/compound-implementation/`. Эта активная спецификация заменяет прежнее ограничение «только planning».
+
+Detailed current native behavior and remaining gates: [compound implementation](compound-implementation.md).
+
+# Архив: Macro → ROX, спецификация архитектурного исследования
 
 ## Новое уточнение: Lark Suite + переносимые Docs/Bases
 

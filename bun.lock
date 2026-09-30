@@ -247,6 +247,9 @@
     "packages/core": {
       "name": "@craft-agent/core",
       "version": "0.11.5",
+      "dependencies": {
+        "yaml": "^2.8.2",
+      },
       "devDependencies": {
         "@types/uuid": "^11.0.0",
       },

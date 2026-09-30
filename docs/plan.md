@@ -1,4 +1,23 @@
-# План исследования и владельцы
+# План реализации и владельцы
+
+## Активный implementation graph
+
+| Slice | Owner | Inputs/deps | Output | Acceptance | State |
+|---|---|---|---|---|---|
+| LSX-WP-001 | implement_content_descriptor + lead integration | frozen spec, existing Notes owner | descriptor decoder/store + native RPC + source status in Notes | alias identity, disk restart, denied source, unknown readonly, actual UI | integration in progress |
+| LSX-WP-003 | lead | native owner + revision contract | journal/CAS/receipt + Notes save queue | same-base concurrency, actual process kill/recovery, stale write, typing during save | runtime tests pass; UI pending |
+| LSX-WP-005 → 006 | retained_markdown + lead | 001/003 APIs | retained byte spans, YAML patches, stable tree IDs | unrelated byte identity, conflict/rebase, unsupported readonly | core mechanisms verified; native view integration pending |
+| CI-001 | implement_repo_binding + lead mount | actual Git + existing Project directory | bindings/snapshots/source spans + RPC/Project UI | real commit/blob/hash, dirty separation, scope/exclusions, restart, actual UI | integration in progress |
+| RS-FOCUS-01, #1091 | implementation_runtime_scout | actual Home TaskTrackerWidget | focused quick-add component/local styles | keyboard/pointer/IME/error/theme/zoom, actual browser | verification in progress |
+| durable continuation | lead + runtime scout | accepted revision + frozen execution DAG | bound Harness tasks, isolated ownership, receipts | supported worker IDs, real tests, gated full DoD, integrated readback | preparing; cloud unavailable |
+
+Lead owns shared exports, RPC channel map/routing, locale files, existing screen mounts, integration/verification, commit/push and progress ledger. Workers own distinct new paths. No issue closes until full consumer DoD. Existing runtime typecheck failures are recorded and compared to baseline; new failures must be repaired.
+
+Sequencing: native slices → shared owner/event/identity integration → collaborative Docs + human messaging → universal projection/view engine → Base/Task/Calendar interactions → provider Mail/CRM/Calls → Suite workflows and Code Intelligence derived tools. Full normative dependency graphs remain in the delivered machine manifests; this table reports active execution only.
+
+The local Harness is supported; a generic cloud coding worker is not provisioned. Use a revision-bound task receipt to claim a launch. A checkpoint or plan does not prove continued execution. Preserve the original scope in the pending package ledger.
+
+# Архив: план исследования и владельцы
 
 Latest Code Intelligence extension: `/root/lark_core_research` owns13/code-intelligence.json; root owns14 and integration/validation; `/root/rox_knowledge_design` owns independent12 review including new source/UX contracts. Snapshot authority and source-private boundaries extend the existing Lark acceptance; previous completed issues and Macro artifacts remain delivered.
 

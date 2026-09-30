@@ -1,0 +1,505 @@
+{
+  "task_id": "WP-01-preflight",
+  "attempt_id": "48488c453c61f6e3108dd0c751153861",
+  "packet_hash": "95b22773639c15e07d0ac456fd43b382dc7d9c9db0ee96196384a0ec3c3606f1",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-01",
+  "featureComplete": false,
+  "mode": "read-only preflight; owned report only",
+  "workTier": "bounded-workflow",
+  "dependencies": [],
+  "evidenceStatus": {
+    "kind": "working-tree source inspection, not runtime verification",
+    "inputRevisionProvenance": "Dispatch packet; no Git command executed to establish current HEAD",
+    "specManifestHashMatchesPacket": true,
+    "specSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "sourceFreshness": "Whole-file digests taken after inspection. Root wave0 work is uncommitted and may change these files; these hashes identify inspected working-tree bytes, not proof that all bytes belong to input_revision. Lead must invalidate references whose hashes change before implementation.",
+    "runtimeEvidence": [],
+    "notExecuted": ["builds", "product tests", "native UI", "network operations", "Git commands", "dispatch verification_argv"],
+    "discoveryLimits": [
+      "Codegraph reported no .codegraph index; built-in read/grep/glob used instead, without initializing an index.",
+      "Scoped find for project persistence failed with a judge-provider 402; known storage symbols located using grep and read. This is not evidence of missing storage.",
+      "Inspection restricted to WP-01 paths, direct imports, and its referenced normative specifications. Cross-surface consumers and host composition roots not broadly inspected. Their exact downstream symbols remain lead-owned discovery prerequisites.",
+      "glob found no apps/workspace-service or packages/shared/src/workspace-domain directory, and no normative identity/contracts.ts or wp-01.test.ts at inspection time. Absence is working-tree evidence only."
+    ]
+  },
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0",
+      "gate": "Lead wave0 commit and accepted dependency receipts",
+      "evidence": "Worker dispatch explicitly prohibits feature implementation before the lead wave0 commit and accepted dependency receipts. WP-01 explicit dependencies are empty.",
+      "missingPrerequisite": "Lead must supply the integrated wave0 revision and acceptance receipt; explicit dependency receipt set is empty, not fabricated WP-02/03/04 edges.",
+      "classification": "execution prerequisite, not explicit DAG edge"
+    },
+    {
+      "id": "FG-AUTHORITY-RUNTIME",
+      "gate": "Actual shared-service composition, Postgres transaction port, migrator and verified auth-subject resolver",
+      "evidence": "19-target-architecture.md:50-54,63-103,109 specifies server single writer, transport Actor, Postgres and transaction receipts. WsRpcServerOptions.validateToken/validateSessionCookie return boolean (server.ts:111-120). HandlerDeps has no shared project authority (handler-deps.ts:56-72). apps/workspace-service is absent in the inspected tree.",
+      "missingPrerequisite": "Wave0 owner supplies real host/service entry point, auth issuer/subject-to-principal resolver, DB transaction/migration lifecycle, native client composition and explicit standalone/shared selection. WP-01 implements its domain ports without inventing another server/store or creating out-of-contract bootstrap files.",
+      "classification": "hidden runtime foundation; provider/deployment readiness is not inferred from WP-52 or a mocked service"
+    },
+    {
+      "id": "FG-REGISTRATION-COMPLETENESS",
+      "gate": "Published Project kind registration and cross-surface completeness exceeds minimal bootstrap",
+      "evidence": "19-target-architecture.md:156 requires CRUD, aliases, search extractor, mention resolver, notification policy, event schema, agent actions, observability and migration before a kind is enabled. 22-test-plan.md:197-222 requires every capability item, with no N/A merely because permissions/search/agent are unwritten. WP-01 bootstrapContract:998-1012 owns minimal private Project and delegates registry/grants/general commands to WP-02/03/04. Architecture:118 says topological acceptance runs only declared prerequisites.",
+      "missingPrerequisite": "Lead must publish how minimal private bootstrap satisfies the registration gate versus full parity. Keep all broad DoD rows missing until implemented and verified; do not silently waive them or make later WP-02/03/04/06/07/36/50/51 work a circular prerequisite to starting WP-01.",
+      "classification": "surprising specification gate / bootstrap-versus-full-completeness conflict"
+    },
+    {
+      "id": "FG-TRANSACTION-EVENTS",
+      "gate": "Minimal durable outbox/replay without depending on future generic WP-04 tables",
+      "evidence": "WP-01 realtime:85-87 and repository newArtifact:614-616 require transaction outbox/inbox, replay and revisions. Migration tables:563-569 name only project/workspace/workspace_member/principal/auth_subject_alias/project_create_receipt; event pending indexes appear at 598. Bootstrap delegates generic framework to WP-04. server.ts:60-65 uses an in-memory ring buffer.",
+      "missingPrerequisite": "Lead provides accepted bootstrap event storage and cursor design within wave0/WP-01 transaction authority, including duplicate consumer receipts and watermark. No FK to future generic registry/outbox tables and no assumption that existing WS replay survives process restart.",
+      "classification": "hidden durable foundation and migration inventory gap"
+    },
+    {
+      "id": "FG-RECEIPT-SCHEMA",
+      "gate": "Wire status schema and canonical triad must agree",
+      "evidence": "WP-01 operation response:342-346 names Rox2CanonicalResult; responseSchema:365-375 instead enumerates applied/queued/reconciling/ambiguous/pending_fence/rejected/unavailable and only status/receiptId are required. platform-contract.ts:107-111,158-167 is executionMode/lifecycle/verification. Architecture:97 mandates retaining that triad.",
+      "missingPrerequisite": "Lead-approved deterministic wire-status-to-triad codec and applied receipt invariants; compile/schema conformance gate from implementation-plan.md:3. Preserve canonical status rather than replace it with a second success convention.",
+      "classification": "hidden shared contract integration gate"
+    },
+    {
+      "id": "FG-FIXTURE-POLICY",
+      "gate": "Outsider identity and visibility policy must be unambiguous",
+      "evidence": "Acceptance says B without membership denied; fixtures:945-948 call B member and C outsider. Request allows visibility private/members, while bootstrapContract:1003 says owner-only policy. OrgMember includes local userId and email display hints (orgs/types.ts:20-28); AcceptInviteInput allows userId override (65-68).",
+      "missingPrerequisite": "Use a distinct B-without-membership scenario and B-member/C-outsider fixtures without weakening either. Lead must define members visibility behavior consistently with the owner-only bootstrap and forbid importing email/local profile IDs as authenticated principal evidence.",
+      "classification": "acceptance-fixture and policy-contract ambiguity, not missing explicit dependency"
+    },
+    {
+      "id": "FG-SINGLE-WRITER-PROVENANCE",
+      "gate": "Legacy writers, subscriptions and derived agent context cannot bypass shared policy",
+      "evidence": "Architecture:103 prohibits unsafe legacy shared writes; amendments:115-117 name WP-51 authority routing and WP-50 derived provenance. Project handlers use local storage for all reads/writes/assets and broadcast the complete list (projects.ts:30-169). ProjectPromptContext contains private name/details/memory (projects/types.ts:102-112).",
+      "missingPrerequisite": "WP-01 must fence its own shared Projects paths now. Lead owns downstream tool/storage/IPC migration inventory and later provenance integration; their unresolved status must remain visible rather than granting shared access under agent allow-all.",
+      "classification": "hidden safety gate for full feature claim; no automatic WP-50/51 start dependency"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/identity/contracts.ts",
+    "apps/workspace-service/src/modules/identity/commands.ts",
+    "apps/workspace-service/src/modules/identity/repository.ts",
+    "tests/macro-integration/wp-01.test.ts",
+    "apps/workspace-service/migrations/01-domain-contract.sql"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "change": "Define strict CreateSharedProject payload (name/workspaceName length 1..10000, visibility private|members, no additional properties), typed authorized Project query/list DTO, domain errors, and create/get/list ports accepting server Actor separately from RoxCommand v2. Reuse Rox2EntityRef and canonical triad. Exclude local filesystem paths and client-supplied owner/principal/policy from shared DTOs. Bind bounded query cursor to workspace, actor and policy."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/commands.ts",
+      "change": "Implement CreateSharedProject/GetProject/list using injected transaction repository and policy ports. Validate authenticated actor, URL/envelope workspace equality and current membership before querying or serializing private title. Derive owner from Actor. Atomically create minimal Project identity, receipt and required bootstrap events; enforce scoped idempotency key and payload hash. Return the same canonical ID/revision/receipt on exact replay after crash. No provider adapter construction here."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "change": "Implement principal/verified auth-subject alias, workspace/member, project and receipt persistence through the selected real Postgres transaction port. Require owner membership via workspace/principal composite constraints. Authorized read/list queries constrain workspace and owner policy before fields/count/cursor selection. Minimal event persistence/replay remains in the same transaction, with accepted bootstrap schema, not a second writable master."
+    },
+    {
+      "path": "apps/workspace-service/migrations/01-domain-contract.sql",
+      "change": "Proposed identifier only; selected migrator determines actual filename. Add principal/auth_subject_alias/workspace/workspace_member/project/project_create_receipt with UUID project identity, schema_version>0, revision>=0, timestamps/tombstone where retained, UNIQUE(workspace_id,principal_id), UNIQUE(workspace_id,project_id), owner composite membership FK and UNIQUE(workspace_id,actor_principal_id,idempotency_key) plus request_hash. No FK to future entity registry; WP-02 backfills project:<UUID>. Lead must reconcile global workspace/auth table columns and minimal outbox inventory before SQL is written."
+    },
+    {
+      "path": "tests/macro-integration/wp-01.test.ts",
+      "change": "Use real service/transport and persisted DB fixture: A owner, B with no W1 membership, separate B-member and C-outsider case, private marker PRIVATE_WP-01 and seed 20260931. Assert both RPC/HTTP denial codes and no title/path/count/event leakage, actor/workspace forgery rejection, concurrent receipt uniqueness, post-commit/pre-reply process restart consistency and durable event gap/replay. Baseline must pass before seeded boundary or event mutation; independent holdout must fail a behavioral oracle, not merely infrastructure. UI requires separate native surface receipt, not fixture success."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2CanonicalResult / Rox2Receipt / Rox2EntityRef / Rox2Event",
+      "change": "Add pure RoxCommand<T> v2, AuthenticatedActor, RoxDomainEvent<T> and policy-decision shapes from architecture:63-94 in this existing contract module. Extend receipt for commandId/requestHash/receiptId and event metadata for workspace/policyEpoch without replacing triad, formatRox2EntityId or existing binding mechanisms. Specify wire status codec and receipt invariants jointly with identity contracts.",
+      "reason": "No RoxCommand/AuthenticatedActor/policyEpoch/idempotencyKey declarations were found in this inspected file. Existing canonical status and project kind already exist and must remain the single convention."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext / RpcHandlerOptions",
+      "change": "Extend request context with transport-derived Actor and explicit shared versus standalone authority information. Add authenticated-domain access requirement while preserving localElectron restriction and existing standalone handlers; shared domain handlers fail closed without Actor. Do not derive principal from clientId/webContentsId/workspace string.",
+      "reason": "RequestContext currently contains only clientId/workspaceId/webContentsId. Product execution permissionMode is not a resource authorization credential."
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "symbol": "WsRpcServerOptions / ClientConnection / handshake auth block / onRequest / matchesTarget / updateClientWorkspace",
+      "change": "Introduce or replace the boolean-only auth callbacks with typed credential-to-Actor resolution in the composition contract; carry verified Actor on the connection and inject it in onRequest. Authenticate HTTP through the same resolver at httpHandler boundary. Treat handshake workspaceId as a requested scope, check server membership, and include principal/session identity in reconnect matching before replay. Recheck current resource policy for delivery/replay, not workspace-string-only target matching; authorize workspace changes. Retain Electron-main localBinding proof mechanism unchanged for explicit local mode.",
+      "reason": "Boolean auth proves no principal; remote workspace is client-supplied, reconnect matching excludes principal, and workspace-only broadcast filtering can disclose private titles."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Add a typed injected shared identity/project domain authority port, using the existing generic dependency composition pattern; absence must yield unavailable in shared mode, not fallback to file writes. Keep commandGateway owner approvals separate from domain ACL.",
+      "reason": "Existing dependency bag has only pending commandGateway and managed runtime services, no project authority or authenticated domain service port. Host composition stays lead-owned."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/projects.ts",
+      "symbol": "HANDLED_CHANNELS / registerProjectsHandlers / broadcastChanged",
+      "change": "Register domain.project.createShared and typed GetProject/list adapters using injected shared authority and ctx.actor. Branch legacy Projects read/create/update/delete/assets by explicit workspace authority: preserve local implementation only in standalone; shared requests use authorized service ports or typed unavailable for unsupported operations. Enforce workspace arguments and related refs against authorized scope. Replace full-list shared broadcast with revisioned invalidation or per-recipient authorized projection. Sanitize denial errors and shared logs so no private title/path appears.",
+      "reason": "All current handlers ignore _ctx; workspace arguments select local paths and CREATE/UPDATE/DELETE/assets bypass a shared writer. broadcastChanged sends all titles to everyone with matching workspace string."
+    },
+    {
+      "path": "packages/shared/src/projects/storage.ts",
+      "symbol": "createProject / saveProjectConfig / updateProject / loadWorkspaceProjects / loadProjectById",
+      "change": "Keep these filesystem operations as explicit standalone/import/projection adapter only; shared authority routing must reject direct mutable shared IDs before entry. Do not write service Project records back as authoritative local configs or mint another proj_* ID on replay. Preserve existing standalone slug/assets/memory behavior; define legacy-to-canonical mapping through existing refs rather than replacing every legacy ID.",
+      "reason": "createProject mints truncated proj_* ID and writes files without Actor/receipt/transaction; LoadedProject.workspaceId derives from filesystem basename, not authenticated server workspace UUID."
+    },
+    {
+      "path": "packages/shared/src/projects/types.ts",
+      "symbol": "ProjectConfig / LoadedProject / ProjectPromptContext",
+      "change": "Separate authorized shared Project projection/reference from path-bearing standalone LoadedProject through typed discriminated data, coordinated with existing Projects callers. Do not populate fake folderPath/assetsPath/workspaceRootPath for remote projects. Treat prompt fields as authorized private-derived data, not automatically shareable session content.",
+      "reason": "LoadedProject requires local absolute paths and has no revision/visibility/owner/policy metadata; blind reuse for shared DTO would expose server paths or encourage a second store."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+      "symbol": "UseProjectsResult / useProjects.refresh / onProjectsChanged effect",
+      "change": "Consume typed authorized local/shared project projections and expose loading/empty/permission_denied/offline_queued/retryable_error/applied_verified state and canonical receipt/revision. Clear prior workspace data immediately on scope/auth change; prevent old refresh completions overwriting a newer workspace and handle invalidation via authorized read-back with revision/cursor checks. Do not collapse permission/unavailable failures into an empty list.",
+      "reason": "Current catch clears to [] and only logs; prior workspace state remains until refresh resolves, and full-list events bypass a fresh query. Existing native Projects surface must be reused."
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/projects.ts",
+      "symbol": "projectsAtom",
+      "change": "Coordinate the projection type with useProjects and existing atom consumers, retaining this single existing project cache rather than adding a sharedProjects store. Clear denied/stale scoped data; do not cache unauthorized titles as empty-success fallback.",
+      "reason": "Existing atom is the established renderer project cache and currently typed only as LoadedProject[]. Consumer discovery outside this direct import remains lead-owned."
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "symbol": "ErrorCode / KNOWN_ERROR_CODES / CodedError",
+      "change": "Add the WP-01 domain codes UNAUTHENTICATED, FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED, REVOKE_FENCE_PENDING to both union and whitelist; map safe domain messages with HTTP 401/403 and conflict statuses in the shared HTTP adapter. RPC FORBIDDEN must survive serialization; it is not literally an HTTP status in the WS envelope.",
+      "reason": "server.onRequest currently converts any code absent from isErrorCode whitelist to HANDLER_ERROR, hiding intended denial semantics."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.projects / RPC_CHANNELS.identity",
+      "change": "Register the normative domain.project.createShared channel and agreed typed domain query channels beside existing protocol declarations; migrate native bridge/call signatures through its integration owner, without string-only untyped parallel APIs. Existing standalone channels remain explicitly local-mode product behavior.",
+      "reason": "Existing protocol declares only projects:get/getOne/create/update/delete/assets and no domain.project.createShared in inspected declarations. Native bridge consumers were not inspected beyond package scope."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/identity.ts",
+      "symbol": "buildAggregatedState / registerIdentityHandlers / broadcastChanged",
+      "change": "Keep IdentityStore profile and provider connection aggregation separate from authenticated shared principal. Shared identity/settings reads derive scope from Actor and project policy, not editable profile email or args.workspaceId. Scope metadata change broadcasts to authorized clients; keep secrets in CredentialManager and preserve current local provider flows.",
+      "reason": "Identity handlers ignore _ctx, return local profile, permit profile updates and broadcast to all; this local identity registry must not be treated as verified multi-user authentication."
+    },
+    {
+      "path": "packages/shared/src/orgs/types.ts",
+      "symbol": "OrgMember / AcceptInviteInput",
+      "change": "Distinguish standalone local bookkeeping userId/display hints from verified principal/workspace references in shared DTO adapters. Reject userId override for shared authenticated invite/membership authority; do not merge identities by email/username. Preserve local invite behavior behind explicit standalone mode.",
+      "reason": "OrgMember email is documented as a display hint; AcceptInviteInput explicitly accepts userId override defaulting to local profile identity. Neither is authentication evidence."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-01 / Revision 2 bootstrap paragraph",
+      "change": "Lead records approved service composition/migrator, Actor proof, bootstrap-versus-registration boundary, minimal event storage, members visibility policy and wire receipt codec; distinguish implementation, verification and remaining cross-surface gaps. This worker does not modify the plan.",
+      "reason": "Current published plan asserts dependency-free minimum bootstrap while broader normative gates remain unresolved."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Feature completeness checklist / evidence receipt record",
+      "change": "Document WP-01 actor fixture distinction and exact RPC FORBIDDEN-to-HTTP-403 mapping, no-title assertions, restart cut point, duplicate/event controls and native Projects evidence. Preserve all mandatory completeness items rather than waive missing search/permissions/agent coverage.",
+      "reason": "Fixture B member conflicts with B without membership wording; durable evidence must distinguish baseline failure, caught mutation and live receipt."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "A opens private Project in native ROX",
+      "currentEvidence": "registerProjectsHandlers GET/GET_ONE/CREATE exists (projects.ts:37-90); useProjects.refresh calls getProjects (useProjects.ts:22-38). They operate on local files, not authenticated shared Project.",
+      "symbolOrSeam": "registerProjectsHandlers; useProjects; existing Projects bridge/surface integration owner",
+      "requiredChange": "Create private Project through shared authority, render canonical authorized projection in existing native Projects list/detail, and read back stable project:<UUID>/revision/receipt without duplicating surface or store.",
+      "verification": "Later native A session creates and opens PRIVATE_WP-01, reloads app and reopens same canonical Project; capture screenshot/ARIA, typed read-back and DB/receipt evidence on exact integrated revision.",
+      "missingPrerequisite": "FG-WAVE0, FG-AUTHORITY-RUNTIME; lead-owned native bridge/detail composition",
+      "state": "missing"
+    },
+    {
+      "criterion": "B without membership gets 403 and no title through RPC/HTTP",
+      "currentEvidence": "Projects GET/GET_ONE ignore _ctx and serialize local records. broadcastChanged sends full list to workspace (30-34); matchesTarget tests only workspace string (server.ts:932-938). ErrorCode lacks FORBIDDEN.",
+      "symbolOrSeam": "registerProjectsHandlers GET/GET_ONE/broadcastChanged; WsRpcServer.matchesTarget/onRequest; ErrorCode",
+      "requiredChange": "Enforce Actor/workspace/owner policy before DTO/count/cursor serialization and push/replay; HTTP 403 with safe body, RPC FORBIDDEN with equivalent forbidden semantics. No private marker in denied body, events, paths or logs.",
+      "verification": "Later exercise HTTP and actual RPC with B without W1 membership plus W1-member non-owner; assert exact denial and marker/title absence across list/detail/subscription/reconnect. Distinguish fixtures B-member and B-without-membership.",
+      "missingPrerequisite": "FG-AUTHORITY-RUNTIME, FG-FIXTURE-POLICY; error whitelist and authenticated HTTP query adapter",
+      "state": "missing"
+    },
+    {
+      "criterion": "client cannot forge principal/workspace",
+      "currentEvidence": "RequestContext lacks Actor (types.ts:7-11); remote handshake workspace comes from envelope (server.ts:530-532); validateToken is boolean. Identity UPDATE_PROFILE and org invite userId override are editable local state.",
+      "symbolOrSeam": "WsRpcServer handshake/onRequest/updateClientWorkspace; RequestContext; CreateSharedProject strict validator",
+      "requiredChange": "Actor is server-issued from verified credential subject; reject actor/principal/owner extra payload fields, URL/envelope/target scope mismatch and unauthorized workspace change. Reconnect must authenticate same principal/session before replay.",
+      "verification": "Later send forged actor at payload/envelope positions, alternative workspace path, target/cursor workspace, editable email/userId and stolen reconnect client ID under different authenticated principal; expect typed denial and unchanged DB/receipt/event counts.",
+      "missingPrerequisite": "FG-AUTHORITY-RUNTIME; strict envelope schema and subject resolver",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "useProjects exposes only projects/refresh (13-16,57), no six-state shared UI model. Atom is existing native cache.",
+      "symbolOrSeam": "UseProjectsResult/useProjects; projectsAtom",
+      "requiredChange": "Reuse existing Projects/Settings/Connections; expose all six normative states and authorized shared read-back without duplicate UI/store. New visible strings must use existing t() and all ten locales through lead-owned locale integration.",
+      "verification": "Later native interaction and visual review of create/open/loading/denied/offline/retry/applied; focus/keyboard and reduced-motion checks where surface changes.",
+      "missingPrerequisite": "FG-WAVE0; actual surface/bridge consumers and locale patch owner",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "GET_ONE supports local ID or slug; Rox2EntityRef and formatRox2EntityId already exist (platform-contract.ts:218-239). Router consumers outside allowed direct-import scope were not inspected.",
+      "symbolOrSeam": "registerProjectsHandlers GET_ONE; formatRox2EntityId/parseRox2EntityId/Rox2EntityRef",
+      "requiredChange": "Resolve canonical workspace-scoped shared project refs through authorized detail query in existing route; retain standalone slug mapping, distinguish missing/denied/offline.",
+      "verification": "Later open canonical deep link, reload, back/history/panel navigation; outsider deep link leaks no title.",
+      "missingPrerequisite": "Lead-owned existing route symbol discovery; shared Project DTO and canonical mapping",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "project already in ROX2_ENTITY_KINDS; ProjectConfig has local id/slug/name, no owner/visibility/revision. createProject generates proj_ plus 8 UUID characters.",
+      "symbolOrSeam": "ProjectConfig/createProject; Rox2EntityRef; normative identity/contracts.ts",
+      "requiredChange": "Create UUID minimal Project row scoped to workspace with verified owner, visibility, schema and revision. Use project:<UUID> ref without future registry FK; preserve legacy alias provenance and quarantine ambiguity.",
+      "verification": "Later stable identity across rename/retry/restart; same local slug in different workspaces does not collide; ambiguous imports quarantine; invalid refs rejected.",
+      "missingPrerequisite": "FG-AUTHORITY-RUNTIME; agreed bootstrap mapping and migrator",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "storage.ts:277-299 writes config/assets files with no transaction/receipt; normative service directories absent at inspection.",
+      "symbolOrSeam": "createProject/saveProjectConfig; normative identity/repository.ts",
+      "requiredChange": "Single shared Postgres writer; atomically persist project/membership/receipt/events with revision, no dual master in local JSON. Preserve standalone writes explicitly.",
+      "verification": "Later crash after commit before reply, restart service and native app; retry returns same entity/revision/receipt with one project and one scoped receipt; rollback policy preserves accepted writes.",
+      "missingPrerequisite": "FG-AUTHORITY-RUNTIME, FG-TRANSACTION-EVENTS",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "projects CREATE receives workspace/input but no idempotency/expectedRevision (61-90); UPDATE patch bypasses gateway (94-105). core has no RoxCommand v2 declaration.",
+      "symbolOrSeam": "registerProjectsHandlers CREATE/UPDATE; normative commands.ts; RoxCommand v2",
+      "requiredChange": "Strict createShared envelope/payload; transport Actor, scoped idempotency and canonical payload hash; mismatched hash conflict. Existing aggregate mutations require expectedRevision and current ACL; unsupported shared action is explicit failure, not local fallback.",
+      "verification": "Later concurrent identical replay creates once; same key changed payload produces IDEMPOTENCY_CONFLICT; missing key/unknown schema invalid; stale existing revision rejects without write.",
+      "missingPrerequisite": "FG-RECEIPT-SCHEMA; minimal gateway supplied inline, not future WP-04 dependency",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "loadWorkspaceProjects scans every local project and GET returns entire list; LoadedProject includes absolute filesystem paths.",
+      "symbolOrSeam": "registerProjectsHandlers GET/GET_ONE; loadWorkspaceProjects; normative repository authorized list/get",
+      "requiredChange": "Typed bounded shared queries apply current ACL in source selection, expose no paths/hidden totals/title and use actor/workspace/policy-bound stable cursor.",
+      "verification": "Later two principals see only authorized rows; cursor reuse across actor/workspace or revoke denied; page boundaries deterministic without hidden count leakage.",
+      "missingPrerequisite": "Typed query schema/cursor contract and shared repository",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "broadcastChanged pushes full list; server ClientConnection uses in-memory eventBuffer and per-client sequence. No restart-durable domain outbox was established in scope.",
+      "symbolOrSeam": "broadcastChanged; WsRpcServer handshake replay/matchesTarget; repository transaction event seam",
+      "requiredChange": "Emit workspace.member_joined/project.created transactionally; authorized revisioned invalidation and durable cursor replay with dedup/gap recovery. Recheck current policy before buffered delivery.",
+      "verification": "Later disconnect, create, restart server, reconnect and observe one effective Project/event; reordered/duplicate events cannot regress revision and dropped event triggers replay/read-back; outsider sees no private title.",
+      "missingPrerequisite": "FG-TRANSACTION-EVENTS and authenticated subscription authority",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Projects handlers ignore ctx; DELETE/DELETE_ASSET pass granted:true to contract gate, not resource ACL. Rox2Context.permissionMode exists independently.",
+      "symbolOrSeam": "registerProjectsHandlers all actions; RequestContext; normative commands policy port",
+      "requiredChange": "Minimum private owner-only server policy plus workspace membership and related-ref checks. No allow-all override; deny read/write/share/assets to unauthorized actor. Full roles/inheritance/revoke remain required for full completeness, not presumed implemented bootstrap.",
+      "verification": "Later owner allowed, outsider and member non-owner denied; agent allow-all still denied; revoked reads/subscriptions/cursors fail before private DTO delivery.",
+      "missingPrerequisite": "FG-FIXTURE-POLICY; FG-REGISTRATION-COMPLETENESS for general roles/revoke",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "OrgMember is local-first userId metadata and AcceptInviteInput permits userId override; no authority-backed Project visibility fields in inspected ProjectConfig.",
+      "symbolOrSeam": "OrgMember/AcceptInviteInput; strict createShared visibility; repository workspace_member/project",
+      "requiredChange": "Bind shared workspace membership to verified principal and owner membership; private grants do not widen through links. Define members visibility deliberately. Full grants/inheritance/public-link expiry cannot be claimed from local invite bookkeeping.",
+      "verification": "Later separate member versus outsider visibility; forged invite userId denied; private linked Project has no accidental inherited access; authorized grant/expiry/revoke scenarios when implemented.",
+      "missingPrerequisite": "FG-FIXTURE-POLICY; later grant integration under preserved full DoD",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Authorized Project list/descriptor seam exists but is local and unfiltered; architecture:55,156 explicitly requires extractor/current ACL/watermark. Search subsystem intentionally not broad-inspected.",
+      "symbolOrSeam": "Rox2Entity project descriptor; normative repository authorized query/event port; downstream search owner",
+      "requiredChange": "Supply Project extractor/upsert/delete and revision/policy watermark integration into existing search mechanism; enforce current ACL before title/snippet/count output, including revoke/tombstone. Do not declare N/A because search is later work.",
+      "verification": "Later private marker searchable by A, absent from B results/counts/snippets; delete/revoke removes access even with stale projection; watermark matches committed revision.",
+      "missingPrerequisite": "FG-REGISTRATION-COMPLETENESS; actual existing search adapter symbols and accepted integration receipt",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "ROX2_RELATION_KINDS includes mentions (platform-contract.ts declaration search); workspace-scoped refs exist, but no Project mention resolver established in inspected package.",
+      "symbolOrSeam": "Rox2EntityRef; ROX2_RELATION_KINDS; authorized GetProject port",
+      "requiredChange": "Existing mention mechanism resolves canonical Project refs with source revision and target ACL; no hidden Project title through mention picker/preview/backlink. Lead integrates resolver rather than inventing another store.",
+      "verification": "Later authorized source occurrence resolves for A; B cannot enumerate or preview private target; source edit/delete does not leave stale mention exposure.",
+      "missingPrerequisite": "FG-REGISTRATION-COMPLETENESS; mention integration owner's actual symbols/receipt",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Spec declares workspace.member_joined/project.created; durable repository event port is proposed. No Project notification policy verified in scoped files.",
+      "symbolOrSeam": "Rox2Event; normative repository event transaction; downstream attention policy",
+      "requiredChange": "Define authorized Project/member recipients and dedup policy in existing attention pipeline, carrying refs/reason not copied private body; retain per-recipient seen/done/mute/snooze semantics.",
+      "verification": "Later duplicate/replayed events produce at most one notification per recipient/dedup key; unauthorized actor receives none; recipient state isolated and current policy enforced on open.",
+      "missingPrerequisite": "FG-TRANSACTION-EVENTS; FG-REGISTRATION-COMPLETENESS; attention integration receipt",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event has actor and optional causationId/correlationId/aggregateRevision (131-141); CREATE logs project.slug (projects.ts:89) and identity broadcasts globally.",
+      "symbolOrSeam": "Rox2Event; commands/repository transaction; registerProjectsHandlers logger",
+      "requiredChange": "Record server actor, command cause/correlation/revision and policy context in same transaction; existing activity projection reads authorized refs and avoids private title/email/token log labels.",
+      "verification": "Later one auditable Project creation with correct Actor/cause/revision; outsider activity read contains no marker/title; inspect redacted failure trace and duplicate replay behavior.",
+      "missingPrerequisite": "Minimal durable event schema and existing activity adapter integration",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "ProjectPromptContext includes name/details/assets/memory (projects/types.ts:102-112); Rox2Context.permissionMode is separate from grants; handlers can reach storage without Actor.",
+      "symbolOrSeam": "ProjectPromptContext; authorized Project domain ports; Rox2Context",
+      "requiredChange": "Existing agent tools and project-context builders call same current-policy ports as native/API, propagate acting user/provenance, and cannot use local store for shared IDs. Derived output must not expose private Project through shared transcript/context.",
+      "verification": "Later agent under unauthorized Actor with allow-all denied for reads/actions; A allowed; unauthorized shared session/export contains no PRIVATE_WP-01-derived content.",
+      "missingPrerequisite": "FG-SINGLE-WRITER-PROVENANCE; lead-owned actual agent consumer symbols and provenance integration",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "WsRpcServerOptions.httpHandler is existing HTTP seam (146-152); HANDLED_CHANNELS has only local Projects channels; normative native operation is domain.project.createShared.",
+      "symbolOrSeam": "WsRpcServerOptions.httpHandler; registerProjectsHandlers; RPC_CHANNELS/ErrorCode; shared domain ports",
+      "requiredChange": "Serve exact POST /v1/workspaces/{workspaceId}/commands/project.createShared and typed authorized GetProject/list via same ports as native RPC. Existing MCP/tool facade, if exposing Projects, must use same Actor/policy/result contract; its applicability must be evidenced, not silently skipped.",
+      "verification": "Later compare actual RPC/HTTP create/read/denial/replay semantics and canonical receipts; verify any existing exposed MCP Project operation under owner/outsider with no bypass.",
+      "missingPrerequisite": "FG-AUTHORITY-RUNTIME; domain bridge/HTTP registration and actual MCP exposure inventory",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event optional cause/correlation/revision and projects logger exist; core lacks policyEpoch/requestHash declarations and no durable Project counters/watermark observed.",
+      "symbolOrSeam": "Rox2Receipt/Rox2Event; commands/repository; registerProjectsHandlers logger",
+      "requiredChange": "Emit commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark, retry/DLQ counters with pseudonymized scope/actor/resource IDs. No raw email/body/transcript/tokens/private name in logs.",
+      "verification": "Later trace committed creation, replay, denial, conflict and recovery end-to-end; inspect exact required fields, watermark and redaction, not just nonempty logs.",
+      "missingPrerequisite": "Shared receipt/event metadata and minimal outbox instrumentation",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative tests/macro-integration/wp-01.test.ts absent at inspection; no tests run by this worker as requested.",
+      "symbolOrSeam": "normative wp-01.test.ts; actual native Projects scenario harness",
+      "requiredChange": "Add positive owner, outsider/forgery, transport parity, transaction/idempotency, policy/event and process restart scenarios. Seed boundary failure and independent event/replay holdout, separate infrastructure failures from caught mutants.",
+      "verification": "Implementation owner later runs bun test tests/macro-integration/wp-01.test.ts, relevant existing packages and native UI; preserve failing-before/passing-after seeded controls and revision-bound receipts.",
+      "missingPrerequisite": "FG-WAVE0; real auth/service/DB fixture and native harness. Proposed checks are not executed evidence.",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:3 says all planned; WP-01 section lists acceptance and artifacts. 22-test-plan.md defines full completeness/evidence but no feature runtime success.",
+      "symbolOrSeam": "21-implementation-plan.md#wp-01; 22-test-plan.md completeness/evidence sections",
+      "requiredChange": "Record actual auth/authority mode, private/members semantics, canonical receipt/HTTP errors, recovery/migration/rollback, privacy limitations and exact verified versus missing coverage after implementation.",
+      "verification": "Later document review against delivered schemas/commands and exercised receipts; no claim that a fixture/live status proves unobserved full feature.",
+      "missingPrerequisite": "Lead decisions on foundation conflicts and actual implementation verification",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "useProjects catches all errors and empties list; server.onRequest falls back unknown domain codes to HANDLER_ERROR. No structured failure state returned by hook.",
+      "symbolOrSeam": "useProjects.refresh; ErrorCode/isErrorCode; commands validation and wire receipt codec",
+      "requiredChange": "Typed unauthenticated/forbidden/scope/payload/revision/idempotency/unavailable/schema/fence failures, retryable versus terminal UI, conflict/reauth/quarantine handling with no fake applied success or private title in error.",
+      "verification": "Later inject each applicable domain error through real boundary and assert exact code/UI/actionability and no persisted side effect on rejection; unknown external outcomes cannot be presented as verified.",
+      "missingPrerequisite": "FG-RECEIPT-SCHEMA and domain error transport/renderer integration",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "useProjects:19 initializes [] and refresh has no loading indicator; async old workspace refresh can update the current atom.",
+      "symbolOrSeam": "UseProjectsResult/useProjects.refresh",
+      "requiredChange": "Represent initial loading versus stale refresh; scope-fence async completion and clear previously authorized data on actor/workspace switch. Avoid false empty and stale private title during navigation.",
+      "verification": "Later delay W1 load, switch to W2 or unauthenticated principal, complete W1 response and assert no old title/overwrite; loading ends on typed result without false success.",
+      "missingPrerequisite": "Typed projection/state model and existing native state consumers",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "useProjects treats nonarray/error/no workspace as []; GET returns [] for missing workspace or nonlive gate. These are indistinguishable to renderer.",
+      "symbolOrSeam": "useProjects.refresh; registerProjectsHandlers GET",
+      "requiredChange": "Separate genuinely empty authorized result from permission denied, missing scope, unconfigured and service unavailable with established native state surface and translations.",
+      "verification": "Later exercise zero authorized Projects, unauthorized workspace, absent configuration and stopped service; UI state differs and no hidden total/title is revealed.",
+      "missingPrerequisite": "Typed query error/status model and native UI integration",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Server has per-client in-memory replay and reconnect matching without principal (server.ts:534-573); useProjects has no offline/reconciliation state. Spec explicitly includes offline_queued.",
+      "symbolOrSeam": "WsRpcServer handshake replay; useProjects; existing pending-command composition port",
+      "requiredChange": "Use accepted existing durable draft/pending-command mechanism, never another store. Offline create keeps stable idempotency identity and queued/unverified state; reconnect reauthenticates Actor and current policy, reconciles receipt, rejects/quarantines denied draft and detects event gaps.",
+      "verification": "Later queue creation offline, restart, reconnect and confirm one canonical Project; revoke before reconnect rejects draft and no stale/private replay; different principal cannot resume old client's buffer.",
+      "missingPrerequisite": "FG-TRANSACTION-EVENTS; accepted minimal durable offline port and status codec, not assumed WP-05 implementation",
+      "state": "missing"
+    },
+    {
+      "criterion": "Normative migration and recovery constraints",
+      "currentEvidence": "work-packages.json:559-602 specifies six tables, unique membership/project/receipt constraints, scoped UUIDs and non-destructive forward/rollback. Local createProject has none of these DB constraints.",
+      "symbolOrSeam": "normative 01-domain-contract.sql; identity/repository.ts transaction",
+      "requiredChange": "Enforce verified principal alias uniqueness, workspace/member ownership, schema/revision checks, scoped receipt key+hash and retained tombstones; bootstrap schema has no future registry FK. Resolve workspace table/global principal scope and omitted outbox table with selected migrator.",
+      "verification": "Later apply actual migration to fresh DB; duplicate membership rejected, wrong-workspace owner rejected, concurrent replay unique, crash atomicity, ambiguous backfill quarantine and accepted-write-preserving repair proven.",
+      "missingPrerequisite": "FG-AUTHORITY-RUNTIME, FG-TRANSACTION-EVENTS; selected migration naming/lifecycle",
+      "state": "missing"
+    },
+    {
+      "criterion": "Negative control: unauthorized actor or dropped/duplicated event must fail acceptance",
+      "currentEvidence": "Spec:95-96 and 959-962 requires seeded forgery plus independent holdout; architecture:160 and test-plan:239 prohibit counting infrastructure failure as caught mutation.",
+      "symbolOrSeam": "wp-01.test.ts owner/outsider oracle; transaction/replay event oracle",
+      "requiredChange": "Boundary-bypass mutation must cause unauthorized success/title exposure oracle to fail. Independent duplicate/drop/replay mutation must fail revision/dedup/recovery observation, not just an event-count echo assertion.",
+      "verification": "Later retain passing baseline, controlled failing mutation, repaired passing behavior and independent holdout trace with seed 20260931 and exact revision/patch hash.",
+      "missingPrerequisite": "Actual runnable persisted service and independent evaluator; no mutation or tests authorized in this preflight",
+      "state": "missing"
+    },
+    {
+      "criterion": "Restart between persisted command and reply preserves state/receipt/canonical ID",
+      "currentEvidence": "Spec:99-100 requires this exact cut point; filesystem createProject returns after separate writes and no persisted create receipt exists in inspected package.",
+      "symbolOrSeam": "identity/repository create transaction; commands response boundary; project_create_receipt",
+      "requiredChange": "Commit Project+receipt+bootstrap events atomically before ACK; restore and retry exact Actor/workspace/key/hash returns original UUID/ref/revision/receipt, with no repeated creation or inferred success from pending draft.",
+      "verification": "Later terminate real process after durable commit before reply, restart and resend same command; compare DB unique key counts, event/projection watermark and receipt/ID read-back, then changed-payload conflict.",
+      "missingPrerequisite": "FG-AUTHORITY-RUNTIME, FG-TRANSACTION-EVENTS; deterministic crash checkpoint support",
+      "state": "missing"
+    },
+    {
+      "criterion": "License policy and verification gate",
+      "currentEvidence": "Spec:153-154 requires behavior reimplementation, audited upstream dependencies and real changed-surface plus failure/reload observation; no runtime or upstream license audit done by worker.",
+      "symbolOrSeam": "WP-01 specification licensePolicy/verificationGate; normative scenario artifact",
+      "requiredChange": "Implement behavior using existing ROX contracts; do not copy unlicensed upstream code. Exact external dependency license audit precedes any new dependency; full claim requires live native and relevant HTTP/RPC/recovery receipts on integrated revision.",
+      "verification": "Later review dependency provenance/SBOM if dependencies change and bind all runtime artifacts to delivered bytes/environment. This report remains featureComplete=false.",
+      "missingPrerequisite": "Authorized implementation and exercised verification; any selected dependency license audit",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-01 normative record / bootstrapContract","lineStart":17,"lineEnd":1014,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / RpcHandlerOptions","lineStart":7,"lineEnd":25,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"WsRpcServerOptions credential callbacks / httpHandler","lineStart":106,"lineEnd":152,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"handshake authentication / workspace / reconnect identity","lineStart":508,"lineEnd":573,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"onRequest context and domain error mapping","lineStart":787,"lineEnd":813,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"matchesTarget / updateClientWorkspace","lineStart":932,"lineEnd":955,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/server-core/src/handlers/rpc/projects.ts","symbol":"registerProjectsHandlers / broadcastChanged / GET / GET_ONE / CREATE","lineStart":27,"lineEnd":91,"sha256":"baa907c847103a2fb1a9f39be6170f5a89ad9bebb899a11ba769fc48d6736df4"},
+    {"path":"packages/server-core/src/handlers/rpc/projects.ts","symbol":"UPDATE / DELETE / asset handlers","lineStart":93,"lineEnd":171,"sha256":"baa907c847103a2fb1a9f39be6170f5a89ad9bebb899a11ba769fc48d6736df4"},
+    {"path":"packages/server-core/src/handlers/rpc/identity.ts","symbol":"buildAggregatedState / registerIdentityHandlers","lineStart":81,"lineEnd":171,"sha256":"afe2436779880494cf9cf68bff76d6e140c41a67d9a47765f03b2538f7eeb8b3"},
+    {"path":"packages/shared/src/orgs/types.ts","symbol":"OrgMember / AcceptInviteInput","lineStart":20,"lineEnd":69,"sha256":"87613c82032323bb03ea31e11cc71b05bcc55d4e22c7bdbc125f4ab29cd42ae2"},
+    {"path":"packages/shared/src/projects/storage.ts","symbol":"loadProject / loadProjectById / loadWorkspaceProjects / createProject","lineStart":202,"lineEnd":299,"sha256":"19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path":"packages/shared/src/projects/types.ts","symbol":"ProjectConfig / LoadedProject / ProjectPromptContext","lineStart":35,"lineEnd":113,"sha256":"a40c43fc73a8918b91b9608c67c303be48432f3d2f84d8bdf15b8ac8e1e8d6fc"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Receipt / Rox2Status / Rox2Entity / Rox2Event / Rox2Context / Rox2CanonicalResult","lineStart":99,"lineEnd":167,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"formatRox2EntityId / parseRox2EntityId / Rox2EntityRef","lineStart":218,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"apps/electron/src/renderer/hooks/useProjects.ts","symbol":"UseProjectsResult / useProjects","lineStart":13,"lineEnd":58,"sha256":"13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31"},
+    {"path":"apps/electron/src/renderer/atoms/projects.ts","symbol":"projectsAtom","lineStart":7,"lineEnd":10,"sha256":"b3ba7e579ea30cbf2d9da437b828e7e12401671efb2c7e303030654be2cd9d2e"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/shared/src/protocol/types.ts","symbol":"ErrorCode / KNOWN_ERROR_CODES / isErrorCode / CodedError","lineStart":81,"lineEnd":178,"sha256":"ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.projects","lineStart":829,"lineEnd":839,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"docs/macro-integration/19-target-architecture.md","symbol":"shared authority / proposed command and Actor / conformance gate","lineStart":49,"lineEnd":160,"sha256":"951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"Revision 2 bootstrap / WP-01","lineStart":3,"lineEnd":25,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"full feature completeness / sensitivity / evidence","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "owner": "lead integration owner",
+    "action": "Accept this preflight report, finish and supply the wave0 commit/receipt, then refresh changed source hashes and freeze shared Actor/authority/receipt/migration contracts. Resolve the explicit bootstrap-versus-registration conflict without reducing full DoD. After those prerequisites, WP-01 implementation starts with normative identity/contracts.ts and the real migration/repository transaction, followed by commands, shared RPC/HTTP and existing native Projects bridge. No WP-02/03/04 prerequisite is added to the empty explicit dependency array.",
+    "workerActionNow": "Only owned report creation and JSON read-back; no feature implementation or product checks authorized.",
+    "acceptanceReceiptNeeded": "Lead-owned artifact validation and implementation dispatch bound to integrated wave0 revision; later live native/API/DB/recovery evidence, not this report."
+  },
+  "risks": [
+    "Boolean token auth cannot distinguish principals; reconnect of a different principal into an old buffer is not prevented by current identityMatch checks.",
+    "Client-selected workspace routing and full-list broadcasts can leak private Project title/path even if future GetProject is protected.",
+    "Error whitelist silently degrades intended FORBIDDEN/WORKSPACE_MISMATCH to HANDLER_ERROR until both declarations and whitelist are migrated.",
+    "Local profile email, OrgMember.userId and invite userId override are not verified principal identity; importing them as authority would violate WP-01.",
+    "Local Project IDs, path-bearing LoadedProject and basename workspace scopes cannot be treated as service UUIDs or safe remote DTOs.",
+    "A private member/non-owner case is distinct from a no-membership case; fixture naming and visibility members versus owner-only bootstrap need explicit resolution.",
+    "Published full registration/completeness gates exceed bootstrap contract and can recreate a circular DAG if later generalized packages are silently required to start WP-01. Keep explicit dependencies empty and preserve missing full DoD honestly.",
+    "Migration table inventory omits transaction outbox/inbox despite normative durable event requirements; no future-table FK or fabricated migrator filename is acceptable.",
+    "Wire status enum and Rox2 canonical triad differ; unchecked adapters could label queued/unverified outcome applied/verified.",
+    "Shared Project tool/context consumers may retain private derived text in session/export; no source evidence here proves broad downstream cutover or WP-50 provenance complete.",
+    "useProjects can display previous scope data while fetching and stale asynchronous completions can overwrite newer scope; catch-to-empty hides denied/offline states.",
+    "All source hashes bind to inspected working-tree snapshots; wave0 edits invalidate affected findings and must be re-read, not assumed current. No product runtime behavior was verified in this preflight."
+  ]
+}

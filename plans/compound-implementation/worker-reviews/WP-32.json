@@ -1,0 +1,474 @@
+{
+  "task_id": "WP-32-preflight",
+  "attempt_id": "2fc9ee070c0900ea38d0a53a027e53b1",
+  "packet_hash": "fa87c50bc728904c5df2954ca520dd74648248f2a86c8970dae8f2db03d0ff62",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-32",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report artifact only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-31"],
+  "dependencyReceiptsRequired": {
+    "WP-31": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "implementationStart": "Only after lead wave0 commit and accepted dependency receipts; preflight is not implementation."
+  },
+  "evidenceStatus": {
+    "basis": "Actual working-tree reads and whole-file shasum -a 256; input_revision is dispatch provenance, not a claim that uncommitted files equal HEAD.",
+    "specManifestMatchesPacket": true,
+    "codegraph": "Unavailable: no .codegraph index; no index initialized.",
+    "find": "Behavior search failed with judge provider 402; inspected known normative paths using grep/read instead.",
+    "runtime": "NOT_RUN by authorization: no builds, tests, native UI, network operations or Git operations.",
+    "freshness": "Hashes bind this inspection snapshot only. Root integration can change sources at any time. Re-read and rehash differing files after wave0/WP-31 integration before applying any patch; no accepted implementation receipt or live evidence was inspected.",
+    "absentArtifacts": "Scoped glob found no calls contracts directory, workspace-service directory, macro-integration test directory, CallParticipants or WP-32 migrations in this snapshot. Absence is not permission to bootstrap a parallel service."
+  },
+  "foundationGates": [
+    {
+      "gate": "Accepted shared authority and deployment foundations, not just a nominal WP-31 completion flag",
+      "explicitDagEdge": false,
+      "source": "work-packages.json:27302-27307; 28318-28321; 28830-28869; 21-implementation-plan.md:3-7; 22-test-plan.md:7-9",
+      "finding": "WP-31 explicitly depends on WP-08, WP-03, WP-04, WP-12 and WP-52. WP-32 further requires canonical entity FKs, authenticated principals, resource actions, receipts/outbox and consumer leases. The inspected local handlers use caller arguments and local journals, not evidence of these shared foundations.",
+      "requiredBeforeImplementation": "Lead supplies accepted WP-31 interfaces covering canonical call/room mapping, principal identity, policy epoch/revoke fencing, command transaction/outbox, provider receipts and selected database/migrator. These are transitive/interface prerequisites; do not add them to WP-32's explicit dependencies array. WP-02 registry and WP-01 identity are published foundational mechanisms, not newly invented WP-32 edges."
+    },
+    {
+      "gate": "Real SFU readiness, exact license audit, provider room control and TURN/capture capabilities",
+      "explicitDagEdge": false,
+      "source": "rooms.ts:12-43; work-packages.json:27398-27403, 28407-28408; 22-test-plan.md:142-157",
+      "finding": "ROOM_PROVIDER_DECISION has null provider/license and decided=false; joinRoom always returns failure. Room minting alone cannot eject an already connected guest. Local capture is not screen sharing.",
+      "requiredBeforeImplementation": "Accepted WP-31 LiveKit adapter/token API, server-side removal and reconciliation operations, isolated provider sandbox/credentials via secret adapter, verified TURN/network and actual remote media/capture surface. Do not flip capability to true or infer live readiness from installed SDKs."
+    },
+    {
+      "gate": "Named channel guest product-policy decision",
+      "explicitDagEdge": false,
+      "source": "work-packages.json:28358; 22-test-plan.md:140-144",
+      "finding": "Package forbids Macro channel guests and requires a named ROX decision, whereas CALL-01 describes G joining a channel call. These cannot be satisfied by accidental reuse of existing meeting links.",
+      "requiredBeforeImplementation": "Lead records scope/action/inheritance decision for ROX channel guests and reconciles CALL-01 fixtures. Until accepted, channel guest invite/join fails guests_disallowed; positive guest-room acceptance must still be exercised in an explicitly permitted call scope."
+    },
+    {
+      "gate": "Invite contract reconciliation and secure retry semantics",
+      "explicitDagEdge": false,
+      "source": "work-packages.json:28423-28454, 28605-28623, 29248-29279",
+      "finding": "Wire command uses call/expiresAt/allowedActions in RoxCommand v2; domain API uses callRef/expiresAt/allowedMedia/idempotencyKey and returns inviteId/bearerUrl. allowedActions has only arbitrary string schema, not a validated MediaPermission vocabulary. Hashed-token-only persistence conflicts with naive raw bearer URL storage in an idempotent command receipt.",
+      "requiredBeforeImplementation": "Accepted single typed mapping of wire and domain DTOs, bounded valid future expiry, action vocabulary with microphone/camera/screen publication separately authorized, revision policy, typed result/error mapping and secure one-time/recovery delivery semantics. Keep raw bearer material out of database rows, receipts, outbox and logs; do not weaken restart/idempotency acceptance."
+    },
+    {
+      "gate": "Webhook authentication and ordering contract",
+      "explicitDagEdge": false,
+      "source": "work-packages.json:28359-28360, 28853-28860, 29255-29259; rooms.ts:36; native-shells.ts:159-174",
+      "finding": "Existing callbackReplay boolean is caller input, not signed webhook validation. Published HandleLivekitEvent input names signedBody/deliveryId but does not specify transport authorization signature metadata, provider ordering or reconnect session correlation.",
+      "requiredBeforeImplementation": "Accepted provider signature verifier on exact raw bytes and authorization metadata, key source and replay policy, canonical room lookup, delivery dedup and joinSession/provider-session mapping with bounded delayed-exit semantics. Signature failure must happen before any participant, receipt or outbox mutation."
+    },
+    {
+      "gate": "Single owner for repeated normative files and migration numbering",
+      "explicitDagEdge": false,
+      "source": "work-packages.json:27333-27345, 28295-28306, 28824-28825; 21-implementation-plan.md:7",
+      "finding": "WP-31 and WP-32 both propose calls/contracts.ts, commands.ts and repository.ts. WP-32 lists both 032_call_guest_tokens_media_receipts.sql and 32-domain-contract.sql; the latter is explicitly a proposed identifier, not an independently required duplicate schema installation.",
+      "requiredBeforeImplementation": "Call area owner integrates WP-32 extensions into accepted WP-31 files. Selected migrator resolves actual filename and disjoint migration responsibilities before writes; do not create duplicate call_participant tables or apply the same guest/event schema twice."
+    },
+    {
+      "gate": "Published completeness integrations absent from the narrow explicit DAG",
+      "explicitDagEdge": false,
+      "source": "work-packages.json:28383-28405, 29200-29222; 22-test-plan.md:197-222",
+      "finding": "Search, mentions, notifications, activity, agent/API access, routing and authorized replay remain mandatory, although WP-32 has only WP-31 as an explicit dependency. None is implemented by the inspected guestless room stub or in-memory share record.",
+      "requiredBeforeImplementation": "Lead supplies accepted integration contracts/owners for these existing common surfaces. If unavailable, retain missing status and integration request; never declare them N/A merely because WP-32's newFiles list lacks those modules. Do not infer extra DAG edges or build second stores/surfaces."
+    },
+    {
+      "gate": "Recording consent separated from media join and screen publication",
+      "explicitDagEdge": false,
+      "source": "rooms.ts:18-38; meetings RPC:388-390; work-packages.json:28320, 29279; 22-test-plan.md:145",
+      "finding": "Current stub rejects absent recordingConsent, while ROOM_JOIN handler fabricates recordingConsent:true. A shared caller must not silently consent to recording, and a call without recording must remain possible according to accepted policy.",
+      "requiredBeforeImplementation": "WP-31 authority and UI expose real consent revision/state without interpreting media join or screen-share action as consent. Preserve local standalone behavior separately; WP-33 recording implementation itself is not an invented prerequisite for WP-32."
+    }
+  ],
+  "ownedNewFiles": [
+    "tests/macro-integration/wp-32.test.ts",
+    "apps/workspace-service/src/modules/calls/guests.ts",
+    "apps/workspace-service/src/modules/calls/participants.ts",
+    "apps/workspace-service/src/modules/calls/webhooks.ts",
+    "apps/workspace-service/migrations/032_call_guest_tokens_media_receipts.sql",
+    "apps/electron/src/renderer/pages/meetings/CallParticipants.tsx",
+    "tests/macro-integration/call-guest-revoke-webhook.test.ts",
+    "apps/workspace-service/migrations/32-domain-contract.sql"
+  ],
+  "ownedNewFilesStatus": "Normative implementation candidates only, not created by this preflight. Migration paths need selected-migrator reconciliation; the generic domain-contract identifier must not cause a duplicate applied migration. Actual current write ownership is only this report.",
+  "sharedNormativeNewFiles": [
+    "packages/shared/src/workspace-domain/calls/contracts.ts",
+    "apps/workspace-service/src/modules/calls/commands.ts",
+    "apps/workspace-service/src/modules/calls/repository.ts"
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/meetings/model.ts",
+      "symbol": "MEETING_KIND, MeetingEntityRef, Meeting, emptyMeeting",
+      "change": "Preserve call kind and canonical workspace/entity/revision fields. Reference accepted call-scoped guest and participant DTO/history from the existing Call-compatible meeting projection; do not create a second Meeting/Call identity or login-user namespace. Coordinate additive projection fields/schema compatibility with WP-31 owner.",
+      "reason": "Meeting already specializes call; guest and participant state must resolve the same canonical call after reload."
+    },
+    {
+      "path": "packages/server-core/src/meetings/rooms.ts",
+      "symbol": "RoomJoinRequest, joinRoom, ROOM_PROVIDER_DECISION, roomCapabilityEnabled",
+      "change": "After accepted WP-31 cutover, add discriminated authenticated-member versus scoped-guest join authorization using server-derived context/canonical call ref; guest token verification resolves hash, expiry/revocation version and allowed media before room token issuance. Keep provider-unavailable fail-closed path; remove caller-supplied authorizedGuests/actor authority for shared mode. Do not treat recordingConsent boolean as universal join permission.",
+      "reason": "Current array membership and raw roomId cannot enforce hashed grant, workspace/call scope, expiry or active-session ejection."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/meetings.ts",
+      "symbol": "registerMeetingHandlers, MEETING_HANDLED_CHANNELS; ROOM_JOIN handler lines 388-390",
+      "change": "Route domain.call.inviteGuest and accepted RevokeGuest/Join/Leave/UpdateMedia/read contracts to the single workspace authority using transport principal and RoxCommand v2. Reject body actor/grant authority in shared mode. Replace shared ROOM_JOIN call that ignores context/workspace and fabricates consent; retain explicitly separate standalone adapter. Bind shared LIST/GET/SEARCH to current ACL-filtered service projections rather than reusing caller-readableWorkspaceId/local journals as shared authority.",
+      "reason": "Existing ROOM_JOIN takes actorId from arguments, ignores _ctx/_workspaceId and passes recordingConsent:true; local query handlers are not guest-scoped shared authorization."
+    },
+    {
+      "path": "packages/server-core/src/meetings/conation/native-shells.ts",
+      "symbol": "joinNativeRoom",
+      "change": "Integrate WP-31 accepted room adapter once for all callers; separate standalone unavailable result from shared authorized guest/member route, and remove unconditional ok:false/decided:false assumptions from the provider-backed route. Do not pass an empty guest array to the real guest authority.",
+      "reason": "Direct import at RPC seam currently always returns failure; changing rooms.ts alone leaves this wrapper incompatible."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.meetings / accepted domain-call routing registry",
+      "change": "Common protocol owner exposes canonical domain.call.inviteGuest and accepted typed guest lifecycle/query/event route descriptors through the existing domain transport registry; update native availability/DTO consumers through owner patches, not a second meetings-only guest API. Current meetings:roomJoin remains standalone or migrates cleanly under accepted WP-31 routing.",
+      "reason": "Inspected meeting channels have roomJoin and local capture only, no invite/revoke/media lifecycle route. Exact new registry symbol depends on wave0 interface."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/calls/contracts.ts",
+      "symbol": "WP-31 accepted call contracts; proposed InviteCallGuest, HandleLivekitEvent and guest/participant DTOs",
+      "change": "Owner extends accepted contracts with InviteGuest/RevokeGuest/Join/Leave/UpdateMedia, guest grant and participant interval DTOs, media permission vocabulary, canonical call refs, expiry/revocation versions, command status/errors and signed webhook transport input. Reconcile call versus callRef and allowedActions versus allowedMedia explicitly; strict extra-field rejection and actor exclusion.",
+      "reason": "Repeated normative new file is shared with WP-31; one typed contract is needed across HTTP/RPC/UI/agent and schema validation."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calls/commands.ts",
+      "symbol": "WP-31 accepted command registration/dispatcher; proposed call.inviteGuest and lifecycle command handlers",
+      "change": "Owner registers guest operations using common authorization, expectedRevision/idempotency request hash and transactional receipt/outbox. Commit revocation/expiry fencing before durable provider ejection intent, reconcile external result before applied_verified, and deny renew/rejoin immediately. Call guest/participant modules without creating per-handler maps.",
+      "reason": "commands.ts is shared with WP-31; ejection is an external effect that cannot be falsely reported completed from only a database update."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/calls/repository.ts",
+      "symbol": "WP-31 accepted calls repository/transaction; proposed guest grant and participant event persistence",
+      "change": "Extend the same database transaction with hashed guest grant lookup, expiry/revocation version, workspace/call composite references, call+principal+joinSession uniqueness, event/delivery dedup and fenced interval projection. Persist command receipt and outbox atomically; queries filter current ACL and use bounded authorized cursors. Integrate additive selected-migrator guest/event schema without duplicating WP-31 participants.",
+      "reason": "Shared database authority and recovery cannot be supplied by local MeetingShareRecord, authorizedGuests arrays or runtime maps."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
+      "symbol": "MeetingsWorkspace, MeetingsElectronApi, load, onStart, rendered selected call detail",
+      "change": "Mount normative CallParticipants within WP-31's existing call detail/LiveCallPanel, expose invite/revoke and allowed media controls via accepted typed domain API, retain local recording onStart separately, and render all six specified states. Use one WP-31 media controller: stop/unpublish owned screen tracks on stop, track ended, disconnect/end and unmount; include screen audio track if captured. Recheck grants on reconnect; show applied_verified only after canonical/provider read-back. New user-visible labels/help through t() and all ten locales.",
+      "reason": "Current UI has a local recording start button and no participants/guest/media room controller; load conflates missing transport with empty."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/meeting-page-model.ts",
+      "symbol": "MeetingPageState, MeetingPageItem, MeetingListResult, listStateFromResult",
+      "change": "Owner extends existing projection DTO/state mapping for canonical call ref, accepted participants/media capability and loading/permission_denied/offline_queued/retryable_error/applied_verified distinctions without breaking local ready/empty/denied/offline states. Do not use item count to interpret unavailable/denied transport as genuine emptiness.",
+      "reason": "Direct UI import currently lacks loading/receipt/policy fields and only maps denied or row-count emptiness."
+    },
+    {
+      "path": "packages/server-core/src/meetings/sharing.ts",
+      "symbol": "MeetingShareRecord, audienceRecap, searchVisible, revokeMember",
+      "change": "Keep private-note/recap exclusion and local unsupported export contract. Guest media grants must not add guests to members or grant recap/search/transcript/recording access; shared invite/revoke delegates to existing common entity authorization and call guest authority. Coordinate current-policy read checks and revocation effects without storing bearer tokens in links.",
+      "reason": "Existing members/links structure has no workspace, token hash, expiry, call scope or connected guest state. A meeting share link is not a call guest grant."
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+      "symbol": "private-note exclusion and revoked members/links scenarios",
+      "change": "Preserve consumer-visible private-note/retention tests; add explicit scoped guest regression proving media invite does not grant recap/search/export/private notes and common revoke denies subsequent reads. Replace only obsolete incidental implementation/default pins during actual cutover; do not pin new source text or mock forwarding.",
+      "reason": "Current tests cover local array/link revocation, not guest token or active room ejection."
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/rooms.test.ts",
+      "symbol": "rooms fail-closed tests",
+      "change": "WP-31 test owner retains unavailable-provider behavior test, removes incidental undecided-default/boolean assertions made obsolete by provider cutover, and exercises unauthorized guest/replay outcomes through real enabled sandbox authority with no mutation. Add genuine room scope/expiry failure assertions under WP-32 guest suite.",
+      "reason": "Current unauthorized/replay test is short-circuited by undecided provider and therefore does not verify either rejection mechanism."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-32 section and shared ownership notes",
+      "change": "Lead updates accepted DTO mapping, channel guest policy decision, dependency receipt references, actual migration identity and operator ejection/reconciliation/recovery behavior after implementation. Keep unverified state explicit until real evidence exists.",
+      "reason": "Published plan requires compile/schema gate and one shared owner; current WP-32 is proposed."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CALL-01 steps 3-4 and completeness checklist",
+      "change": "Resolve G-in-channel scenario against named ROX guest policy; add expire/revoke-connected/rejoin, forged webhook no-write, duplicate/reordered interval, screen-track stop/end and reconnect readback scenarios. Specify isolated room prefix, seed, remote received media and sanitized receipts.",
+      "reason": "CALL-01 must not silently override explicit channel prohibition; fixture-only/local-preview evidence is not live acceptance."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Guest link joins permitted room only",
+      "currentEvidence": "rooms.ts joinRoom:26-38 always rejects; request has raw roomId/actorId and authorizedGuests array. sharing.ts links:13 is unscoped local data; RPC ROOM_JOIN:388-390 ignores context/workspace.",
+      "requiredChange": "guests.ts validates bearer hash against canonical workspace/call grant, expiry/revocation and named scope policy; WP-31 token adapter mints only mapped room grants and separate allowed media sources. Reject cross-call/workspace/ref forgery and unauthorized actions; no universal guest login account.",
+      "verification": "Owner A invites G to permitted W1 call; G receives remote media only there. Known token submitted for second room/W2 or mutated ref is denied before provider effect. Read back canonical call/grant/receipt and verify no workspace/search/recap access to PRIVATE_WP-32.",
+      "missingPrerequisite": "Accepted WP-31 room binding/token/authority contracts and channel guest policy decision.",
+      "state": "missing"
+    },
+    {
+      "criterion": "expiry/revoke disconnect",
+      "currentEvidence": "rooms.ts has no expiry/revocation state; sharing.ts revokeMember:62-63 only filters members and clears links.",
+      "requiredChange": "Persist epoch/version change and durable expiry/revoke ejection intent atomically; deny further joins/renewals immediately and reconcile actual provider removal of every active guest session. Timer/recovery worker uses same database authority; pending external effect remains pending_fence/reconciling, never falsely verified.",
+      "verification": "Connected G is ejected at expiry and explicit revoke; observe provider participant absence and remote media cessation, then deny token renewal/rejoin. Restart after revoke transaction before ejection and confirm eventual removal with one persisted result.",
+      "missingPrerequisite": "WP-31 remove-participant adapter, common durable jobs/outbox, accepted revoke fencing and clock/expiry policy.",
+      "state": "missing"
+    },
+    {
+      "criterion": "screen-share stop cleans tracks",
+      "currentEvidence": "MeetingsWorkspace onStart:92-122 starts local mic capture; it has no screen-share publication or track lifecycle.",
+      "requiredChange": "CallParticipants controls WP-31's single media controller. Distinct screen grant before capture/publication; stop/unpublish screen video and optional screen audio on stop/end/browser track-ended/disconnect/unmount, release capture resources and listeners without stopping unrelated mic/camera tracks.",
+      "verification": "Remote client B receives known screen pattern; stop and browser/OS stop/end-call each lead to ended local tracks, removed provider publication and no further remote screen frames. Capture-permission denial leaves no publication; microphone/camera remain correct.",
+      "missingPrerequisite": "Accepted WP-31 media controller, real supported browser/Electron capture surface and isolated two-client media sandbox.",
+      "state": "missing"
+    },
+    {
+      "criterion": "device reconnect single participant identity",
+      "currentEvidence": "Meeting:102-120 has no participant history; rooms.ts accepts caller actorId, no device/joinSession identity.",
+      "requiredChange": "participants.ts derives stable principal (guest scoped call session or authenticated canonical principal), maps device/provider connection to joinSession, and preserves one participant identity across transport reconnect. Session history may record distinct real intervals; stale device leave must not evict a newer active session.",
+      "verification": "Disconnect/reconnect B1 and G; compare canonical IDs/UI roster and database unique keys before/after. Reorder old-session leave behind reconnect; correct participant stays active, with no new universal user or duplicate active interval.",
+      "missingPrerequisite": "WP-31 canonical participant schema and accepted provider-session/device mapping semantics.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Macro channel guests explicitly forbidden; ROX channel guest support requires named product-policy decision, not accidental reuse meeting link.",
+      "currentEvidence": "Spec:28358 requires explicit decision; CALL-01:140-144 nevertheless describes G in a channel call. Existing share links are only strings.",
+      "requiredChange": "Enforce guests_disallowed for Macro channel policy and undecided ROX channel policy. Lead records named ROX scope/actions/inheritance decision before enabling any channel guest route; update scenario accordingly without borrowing recap links.",
+      "verification": "Assert forbidden Macro channel and undecided ROX channel invite/join failures; if policy approved, exercise only that allowed scope and denied neighboring scopes with recorded decision ID/revision.",
+      "missingPrerequisite": "Named ROX channel guest policy decision and corrected CALL-01 acceptance fixtures.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Revoked invite cannot rejoin; active guest ejected; forged LiveKit webhook rejected without state mutation.",
+      "currentEvidence": "No guest revocation persistence in inspected paths; callbackReplay:rooms.ts:36 is merely caller input; joinNativeRoom passes empty guest list.",
+      "requiredChange": "guests.ts checks revocation fence on every join/renew and reconciles provider ejection. webhooks.ts authenticates exact raw body with real provider signature before room lookup or writes; reject tampered body, forged signature and unknown room, then dedup accepted deliveries transactionally.",
+      "verification": "Revoke connected G, observe removal and deny old invite rejoin. Submit forged/tampered webhook and compare participant/events/receipts/outbox/revisions before and after: unchanged. Valid signed event succeeds once; duplicate does not create another interval/event.",
+      "missingPrerequisite": "LiveKit signature/raw-body/header/key transport contract plus accepted removal/delivery receipt mechanisms.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Duplicate join/leave/out-of-order events preserve correct participant interval; screen-share track stops on end.",
+      "currentEvidence": "No event sequence/interval state in rooms.ts or Meeting; replay boolean does not model ordering. UI contains no media end cleanup.",
+      "requiredChange": "participants.ts persists canonical provider events once, correlates joinSession and uses accepted ordering/fence plus bounded delayed-exit semantics; stale leave cannot close later session. call.participant_joined/left emitted through common outbox. Shared call end invokes same owned screen cleanup even with duplicate end event.",
+      "verification": "Seed 20260962: duplicate join, leave-before-join, delayed old-session leave, duplicate/end/reconnect schedules preserve exact intervals and one active identity, no reversed timestamps or duplicate durable events. End call stops actual local/remote screen publication; replay after restart preserves same projection watermark.",
+      "missingPrerequisite": "Provider ordering/session contract, transaction outbox/consumer dedup and accepted WP-31 end-call event/media controller.",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "MeetingsWorkspace:145-199 renders list/search/local start; no invite/participants controls.",
+      "requiredChange": "Mount CallParticipants in existing call detail; translated Russian default labels, accessible invite/revoke/media controls and policy help through current components/i18n, no second calls destination.",
+      "verification": "Actual owner/guest interactions and current screenshots/ARIA, keyboard, hover/focus/help, motion/reduced-motion and loaded Rox Mono checks on changed surface.",
+      "missingPrerequisite": "Accepted WP-31 LiveCallPanel/detail seam and owner patches for all ten existing locale files (exact new keys selected during implementation).",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "MeetingsWorkspace selected item set from first listed row:80; current component does not expose a guest canonical deep-link flow.",
+      "requiredChange": "Integrate existing call-detail routing to canonical scoped call link and guest entry, resolving token without exposing it to logs/history or other rooms; preserve existing history/tabs and shared versus standalone route selection.",
+      "verification": "Open permitted invitation into correct call, navigate back/forward, reload and try wrong workspace/call/expired/revoked link; never open unrelated metadata.",
+      "missingPrerequisite": "Lead/WP-31 accepted canonical routing and secure guest URL transport contract; broader router not inspected under this package-only scope.",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "MEETING_KIND:11 is call; MeetingEntityRef:68 and Meeting:102-120 carry scoped revision identity; emptyMeeting:198-216 derives canonical entityId.",
+      "requiredChange": "Typed guest_grant and participant DTOs reference existing canonical Call; preserve principal/contact distinction, use call-scoped guest session and accepted aliases; no duplicate Calls user store.",
+      "verification": "Typed API read-back and DB composite references remain same workspace/call before/after reconnect/import/reload; colliding room or display-name does not merge identities.",
+      "missingPrerequisite": "WP-31 accepted DTOs and common entity registry/FK contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "RPC meetingPersistRoot:67-70 and catalog.ts:71-81 use standalone MeetingJournal; no workspace-service in scoped glob.",
+      "requiredChange": "Use accepted WP-31 repository and selected migrator for hashed grants and participant events; required composite keys/schema version/revision/timestamps and dedup constraints. Local files are explicit standalone authority or shared projections/outbox, not another guest database.",
+      "verification": "Apply actual migration in isolated DB; restart between command commit/reply and event/ACK. Same receipt/request hash/canonical ID, one grant and correct interval count; additive migration preserves prior call records and writes.",
+      "missingPrerequisite": "Wave0/WP-31 database service bootstrap and selected migration identity, not permission for independent bootstrap.",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "MEETING_HANDLED_CHANNELS:128-151 lacks guest operations; ROOM_JOIN ignores transport context.",
+      "requiredChange": "Extend accepted commands.ts with InviteGuest/RevokeGuest/Join/Leave/UpdateMedia, strict schema/actor rejection, workspace equality, expectedRevision and idempotency hash checks, correlated receipt and external-effect status. Map canonical call/expiresAt/allowedActions to accepted domain DTO explicitly.",
+      "verification": "Exercise HTTP/native requests, body actor/unknown field/expired date/unauthorized media/workspace mismatch/revision conflict. Retry same key same payload returns canonical result; changed payload conflicts; interrupted provider effect remains reconciling/ambiguous until read-back.",
+      "missingPrerequisite": "Common authenticated command envelope/dispatcher and resolved invite DTO/error contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "queryMeetings:5-31 checks workspace equality and numeric cursor only; RPC LIST supplies readableWorkspaceId itself and GET:163-165 finds local meeting directly.",
+      "requiredChange": "Use accepted repository queries with current resource ACL, bounded policy-bound cursor and permitted participant/grant/media projection only; no guest hidden titles/totals/assets.",
+      "verification": "Authorized A/B and scoped G query/readback; outsider and revoked guest get denied without private metadata, including cursor reuse after revoke and forged workspace cursor.",
+      "missingPrerequisite": "Common policy-bound query pagination/projection contract and call ACL vocabulary.",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Spec:28335-28337 separates transactional domain events from lossy presence; inspected room code has neither durable lifecycle consumer nor media events.",
+      "requiredChange": "Emit call.participant_joined/left in shared command/event transaction; lease/dedup consumer receipt separately from claim. Authorized call subscription replay/gap handling uses aggregate revision/policy fences; media presence remains lossy, not durable authority.",
+      "verification": "Duplicate/drop/reorder events and restart consumer around ACK; event counts/intervals converge to canonical read-back and watermark, revoked audience receives no subsequent call/private events.",
+      "missingPrerequisite": "Common outbox, authorized subscription and dedup/replay interfaces accepted via WP-31 foundations.",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "RoomJoinRequest uses actorId/guest booleans; RPC ROOM_JOIN fabricates consent. Spec:28318-28321 says allow-all cannot override ACL.",
+      "requiredChange": "Transport principal plus call/channel grant, guest expiry/version and distinct mic/camera/screen grants; explicit recording consent state; outbound effects separately authorized. Recheck on every mint/update/reconnect and active revoke.",
+      "verification": "Owner/member/viewer/outsider/guest/allow-all agent matrix, forged actor rejection, screen publish denied when mic is allowed and active ejection on revoke. Declined recording does not silently become consent.",
+      "missingPrerequisite": "Accepted common resource action/epoch vocabulary and named media/consent policy.",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "audienceRecap:44-47 and searchVisible:49-52 gate by record.members; revokeMember:62-63 clears local links only.",
+      "requiredChange": "Guest grant scoped only to approved room/actions; hashed bearer expiry/revoke, no implicit member/link inheritance or recap/transcript/recording grant. Secure invite delivery/retry does not persist raw URL in receipt/log.",
+      "verification": "G joins permitted media but cannot read PRIVATE_WP-32/recap/export/search/recording without distinct accepted asset grant; member revoke/private notes existing regressions hold; expired/revoked invitation cannot reopen room.",
+      "missingPrerequisite": "Accepted common sharing authority and safe bearer URL/idempotent receipt delivery design.",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "MeetingsWorkspace onSearch:124-136 and catalog search:24-40 use existing title query; sharing.searchVisible excludes local private notes. No inspected participant/call shared search projection.",
+      "requiredChange": "Request common search owner integrate authorized canonical call participant metadata upsert/delete/revoke and extractor/projection watermark. Media guest status must not grant workspace search or private note/transcript access; use existing search surface/store.",
+      "verification": "Permitted A/B find canonical call by allowed metadata after join/leave, reload and revoke; G/X cannot discover private title/snippet/count. Query waits on recorded watermark; delete/revoke removes stale visibility.",
+      "missingPrerequisite": "Accepted common search extractor/current-ACL/watermark integration; exact common owner symbol outside inspected direct imports is unresolved, not N/A.",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "No mention extraction/occurrence fields in inspected Meeting, RoomJoinRequest or MeetingPageItem; spec completeness:28394 requires mentions.",
+      "requiredChange": "Integrate participant/call references with existing common mention occurrence and source revision contract where rendered/serialized; enforce target policy and avoid making scoped guests universal mention targets. No second mention store.",
+      "verification": "Allowed participant mention resolves canonical principal/call target; unauthorized/expired guest reference does not reveal target or extend permissions; source edit/revoke updates occurrence and display safely.",
+      "missingPrerequisite": "Lead supplies accepted mention integration contract/owner and precise existing symbol; not inspected beyond package scope and cannot be waived as unimplemented.",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Inspected share/room/UI seams do not emit guest lifecycle notifications; spec completeness:28395 includes notifications.",
+      "requiredChange": "Integrate invitation/revocation/call participation notifications through common recipient policy/dedup and seen/done/mute/snooze mechanisms, without leaking raw bearer links/private call metadata to unauthorized recipients.",
+      "verification": "Duplicate invite/lifecycle deliveries yield one authorized notification per common key; revoked/muted/denied audience sees no private notification; existing seen/done/snooze transitions persist across reload.",
+      "missingPrerequisite": "Common notification recipient/state/dedup interface and approved secure invite delivery channel; exact external owner symbol unresolved under scoped inspection.",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "RPC imports appendProposalJournalEvent/appendOperationResultEvent for existing local meeting operations; spec:28314-28316 requires participant events but no inspected guest activity producer exists.",
+      "requiredChange": "Common activity projection consumes fenced call participant/guest command events with actor/cause/revision/policy provenance, sanitized data and current audience ACL, preserving one shared authority.",
+      "verification": "Invite/revoke/join/leave produce correct actor/canonical call/revision and no duplicates across replay; G/X cannot read private activity; no raw token/body/email/transcript in stored audit output.",
+      "missingPrerequisite": "Accepted activity event/audience projection contract supplied by lead/common owner.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Meeting grant type is imported into existing local RPC, but no inspected call.inviteGuest shared domain tool binding. Spec:28321 says allow-all does not override ACL.",
+      "requiredChange": "Expose same accepted call contracts to existing domain agent tool/context registry with transport acting-user authority/provenance; execution grant distinct from resource ACL and guest bearer never included in broad context.",
+      "verification": "Actual authorized agent invite/revoke yields same canonical receipt as UI/API; allow-all viewer/outsider denied; context after revoke excludes private call/guest material.",
+      "missingPrerequisite": "Accepted common agent domain dispatcher/context/provenance interface and tool registration owner; no extra agent store or tool path guessed.",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Spec:28423-28427 explicitly requires HTTP POST and domain.call.inviteGuest native RPC; existing protocol meetings block:998-1020 contains roomJoin only.",
+      "requiredChange": "Register HTTP/native RPC and existing common MCP domain dispatch through one command contract/authority, same validation/error/status/receipt handling; supply authenticated raw webhook ingress separately, not as user actor command.",
+      "verification": "Real HTTP/native/agent-MCP scenarios demonstrate identical permitted/denied outcomes and canonical idempotent result; forged actor/extra fields denied and signature failures leave state unchanged.",
+      "missingPrerequisite": "Accepted common transport registration/MCP owner API and reconciled webhook signature metadata contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Spec:28367-28377 requires commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters; none of the room/share DTOs contains this evidence.",
+      "requiredChange": "Use existing command/outbox/consumer observability mechanisms for guest commands, provider ejection/webhooks, participant projection and queue retry/DLQ. Carry permitted IDs/revisions only; redact bearer URLs/tokens/emails/raw bodies/transcript.",
+      "verification": "Trace invite to projection and revoke to provider-confirmed ejection with all required IDs/watermark and counters; force provider failure/retry and inspect sanitized logs/evidence for forbidden material.",
+      "missingPrerequisite": "Accepted common tracing/receipts/retry-DLQ interfaces and media provider reconciliation status contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "sharing-retention.test.ts:18-38 tests local privacy/link removal; rooms.test.ts:11-21 short-circuits at sfu-undecided. No normative WP-32 tests present in scoped glob.",
+      "requiredChange": "Normative wp-32 and call-guest-revoke-webhook suites cover all seven criteria, negative unauthorized/drop/duplicate controls and persistence recovery; use selected real sandbox for feature acceptance. Remove obsolete incidental default pins rather than repin after cutover.",
+      "verification": "After integration run bun test tests/macro-integration/wp-32.test.ts and call-guest-revoke-webhook.test.ts plus relevant existing behavioral tests; independently demonstrate expired-token mutant fails a specific acceptance assertion with passing baseline and second holdout variant. No tests run by preflight.",
+      "missingPrerequisite": "Accepted live provider/database/runner fixtures; seed 20260962, W1 A/B/C and scoped G; isolated media sandbox, no production data.",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:645-665 is proposed WP-32; 22-test-plan.md CALL-01 and checklist define acceptance, not runtime receipts.",
+      "requiredChange": "Update these existing documents with actual policy, typed mapping, migration ID, supported media/capture behavior, operator revoke/ejection/pending-fence recovery and integrated revision-bound evidence; resolve CALL-01 guest policy discrepancy.",
+      "verification": "Documentation matches actual exercised command errors/states and tested recovery procedure, references accepted dependency/scenario receipts, and retains limits/unverified items honestly.",
+      "missingPrerequisite": "Real implementation/verification results and named product-policy/migrator decisions.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Current room result is only ok:false/reason; MeetingsWorkspace catches list failure as offline. Canonical spec statuses:28628-28637 include queued/reconciling/ambiguous/pending_fence/rejected/unavailable.",
+      "requiredChange": "Map accepted command/provider failure, conflicts, denied/reauth/schema unsupported, pending ejection and quarantined/reordered webhook states to typed UI recovery. No applied_verified on queued/unknown provider effect.",
+      "verification": "Provider unavailable/TURN failure/capture denial/revoke-fence pending/idempotency or revision conflict each show truthful state and approved retry; subsequent readback transitions only on verified outcome.",
+      "missingPrerequisite": "Accepted common errors/result and reconciliation/UI state contracts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "MeetingsWorkspace initial state:65 is empty and load:69-86 has no loading transition; MeetingPageState lacks loading.",
+      "requiredChange": "Explicit initial/refresh loading for selected call/participants and pending invite/media command, preserve stale authorized data appropriately, disable duplicate effects while awaiting canonical receipt.",
+      "verification": "Delay queries/command reply on actual surface: loading is not empty or verified; refresh/reconnect does not flash private stale data after policy revoke.",
+      "missingPrerequisite": "Accepted shared query/command receipt UI state mapping and WP-31 call detail mount.",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "MeetingsWorkspace load:71-74 maps absent workspace/API/channel to empty; listStateFromResult:78-81 infers empty from row count.",
+      "requiredChange": "Separate genuine zero participant/invite list from denied, unconfigured provider, absent service, offline and stale/loading projections, with translated existing surface messages.",
+      "verification": "Actual zero authorized participants/invites shows empty; unavailable/denied transport/provider and expired guest show distinct state, never a false no-calls list.",
+      "missingPrerequisite": "Accepted capability and query result discriminants; all ten locale owner patches.",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Current UI only shows offline after list throw; no durable guest command queue or participant reconnect mapping. Spec:28330 includes offline_queued.",
+      "requiredChange": "Use accepted durable draft/command queue for allowed lifecycle intents, maintain idempotency/canonical ref and reauthorize after reconnect. Do not simulate offline room join/media or queue an expired bearer for successful replay; revoked intent rejected without side effect. Reconcile server commit before retrying unknown effect.",
+      "verification": "Network loss after commit before reply, client/service reload and reconnect preserve one receipt/grant/participant identity; stale policy/expired invite replay denied; offline screen capture never implies connected/published media.",
+      "missingPrerequisite": "Accepted command queue/recovery protocol and WP-31 connection/session controller.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Persistence-recovery and exact migration/domain constraints",
+      "currentEvidence": "Spec:28824-28869 requires call_guest_grant/call_participant_event, hashed bearer, expiry/version, participant uniqueness, composite FKs, event dedup/lease, revision/policy fence and rollback rules; inspected guest schema is absent.",
+      "requiredChange": "Selected additive migration enforces workspace/entity identity and participant/delivery invariants in same repository; quarantines ambiguous aliases and preserves accepted shared writes on forward repair. Hash-only bearer persistence must extend through receipt storage, not only grant table.",
+      "verification": "Kill between persisted command and reply and between event claim/persist/ACK; reload canonical call/grant/receipt/interval state, exact unique-key counts and outbox watermark. Migration/recovery rehearsed against snapshot without deleting recent writes.",
+      "missingPrerequisite": "Selected migrator/database/alias import policy and accepted dependency applied-migration receipt.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Live changed-surface verification gate and license policy",
+      "currentEvidence": "Spec:28407-28408 forbids complete status before actual surface/failure/reload observation and mandates behavior reimplementation plus exact audit for dependencies; CALL-01:143 rejects local-preview-only evidence.",
+      "requiredChange": "Use exact audited dependency via existing provider adapter, no unaudited upstream source copying. Collect revision-bound actual UI/API/provider evidence for guest room and media lifecycle, not fabricated fixture live receipts.",
+      "verification": "Observed two-client remote media/screen frames, provider room/participant evidence, UI screenshot/ARIA, typed readback, canonical ID/revision, DB unique counts, sanitized command/provider/event/watermark receipts and seeded failure trace. Preflight makes no live or implementation claim.",
+      "missingPrerequisite": "Lead's integrated revision, isolated real provider/capture surface and exact license/dependency acceptance.",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/meetings/model.ts","symbol":"MEETING_KIND / MeetingEntityRef / Meeting","lineStart":9,"lineEnd":120,"sha256":"67b9b6f0f90315eb3cf537a1a3a73762d47427d74989aa8b82e2ca45ad7781d5"},
+    {"path":"packages/server-core/src/meetings/rooms.ts","symbol":"ROOM_PROVIDER_DECISION / RoomJoinRequest / joinRoom / roomCapabilityEnabled","lineStart":6,"lineEnd":43,"sha256":"5bab2a582a2f87ebc2e88bbb769d55fdfbc97e2fddb7e9acb0d6fe517e7cda88"},
+    {"path":"packages/server-core/src/meetings/sharing.ts","symbol":"MeetingShareRecord / audienceRecap / searchVisible / revokeMember","lineStart":9,"lineEnd":64,"sha256":"1d9ecf62a485e1b5b708e9fe849051245d33d08c38d7ef27ea179229dbb2b203"},
+    {"path":"packages/server-core/src/handlers/rpc/meetings.ts","symbol":"registerMeetingHandlers / MEETING_HANDLED_CHANNELS","lineStart":128,"lineEnd":219,"sha256":"f229c26fa5b194570454af9d9c230243681dac258ea5935974e4cd982e83f263"},
+    {"path":"packages/server-core/src/handlers/rpc/meetings.ts","symbol":"registerMeetingHandlers ROOM_JOIN","lineStart":388,"lineEnd":392,"sha256":"f229c26fa5b194570454af9d9c230243681dac258ea5935974e4cd982e83f263"},
+    {"path":"packages/server-core/src/meetings/conation/native-shells.ts","symbol":"joinNativeRoom","lineStart":159,"lineEnd":174,"sha256":"a54b740633d806054c08921773d4fdc0b88ba042442cd91c14009451842d5a01"},
+    {"path":"packages/server-core/src/meetings/__tests__/rooms.test.ts","symbol":"rooms fail-closed / unauthorized and replay scenario","lineStart":4,"lineEnd":23,"sha256":"2036986b12f25a0152440079287e3125f31cf5261ddfcf936deae7c0033b8fe8"},
+    {"path":"packages/server-core/src/meetings/__tests__/sharing-retention.test.ts","symbol":"private notes and revoked members/link behavior","lineStart":17,"lineEnd":39,"sha256":"078aab351437cc3303daefb598739cf789ae4ab6e63bbb5b4622a72a30a9b30f"},
+    {"path":"apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx","symbol":"MeetingsElectronApi / MeetingsWorkspace / load / onStart / render","lineStart":22,"lineEnd":199,"sha256":"c88204d2edabea775190a103cfa698fe28554dbd97895388d4e201066a4f69dd"},
+    {"path":"apps/electron/src/renderer/pages/meetings/meeting-page-model.ts","symbol":"MeetingPageState / MeetingPageItem / listStateFromResult","lineStart":1,"lineEnd":82,"sha256":"ba4fe011afdb8aadc23c9600b461379b7b42a374aa20f81a1376efb021d4b3f9"},
+    {"path":"packages/server-core/src/meetings/catalog.ts","symbol":"listNativeMeetings / searchNativeMeetings / startNativeMeeting","lineStart":15,"lineEnd":81,"sha256":"e41a291018a7883179b4a6f05d49c354bdcd293b749e689157642c1fa08535d2"},
+    {"path":"packages/server-core/src/meetings/queries.ts","symbol":"queryMeetings / queryVisibleMeetings / searchMatches / listMeetings","lineStart":5,"lineEnd":145,"sha256":"103973e225ded18d9bc925ab4ca36367de95337ac0f2f409645694d380f1408f"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.meetings","lineStart":998,"lineEnd":1020,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-32 normative record / explicit dependency / acceptance / completeness","lineStart":28262,"lineEnd":28418,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-32 migration and domain API contracts","lineStart":28822,"lineEnd":29279,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-32","lineStart":645,"lineEnd":665,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CALL-01 / feature completeness checklist","lineStart":138,"lineEnd":222,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead accepts the preflight artifact, commits wave0 and supplies WP-31 typed interface/applied-migration/scenario receipts. Then re-read/re-hash the listed overlapping files against that integration, settle channel guest policy plus invite/webhook DTO and migration naming, and implement normative guests.ts/participants.ts/webhooks.ts against the accepted single call service; send shared patch requests to call/protocol/UI/common-surface owners. Do not implement before these dependencies are accepted.",
+  "risks": [
+    "Active ejection cannot be replaced by a short token TTL; provider failure after revocation needs durable reconciliation and truthful pending fence.",
+    "Array-based MeetingShareRecord members/links could accidentally grant guest archive/search/private-note access if reused as guest identity or ACL.",
+    "Current ROOM_JOIN ignores transport actor/workspace and forces recording consent; copying it to the shared path would breach authority and consent.",
+    "Guest raw URL replay/idempotency recovery must not persist bearer material in command receipts; token hash alone is not a complete safe response-delivery design.",
+    "Delayed leave or duplicated provider event can terminate a reconnected participant unless tied to exact joinSession and fenced ordering.",
+    "Screen video plus optional screen audio must both stop/unpublish on every lifecycle exit; unmount/OS stop/reconnect paths can leak active capture or duplicate tracks.",
+    "Current room tests cannot verify unauthorized/replayed callbacks because provider undecided short-circuits; passing these existing tests would not prove WP-32.",
+    "CALL-01 generic channel guest fixture and explicit channel prohibition need a named policy resolution, not a silent acceptance reduction.",
+    "Shared calls files overlap WP-31; migration identifiers overlap semantic schema work. One owner/selected migrator is required to avoid duplicate stores/tables and lost integration changes.",
+    "Whole-file hashes are inspection-snapshot evidence only; root-owned integration can stale them. This report does not assert clean Git state or feature completion.",
+    "Search/mentions/notifications/activity/agent common owner symbols remain integration prerequisites outside the narrow inspected path set, not implemented or N/A.",
+    "Browser/Electron capture permissions, TURN reachability and real remote media verification remain external runtime gates; no native/UI/network checks were authorized for preflight."
+  ]
+}

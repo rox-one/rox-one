@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "status": "RUNNING_AUTHENTICATED_TCP_VERIFIED",
+  "version": "postgres (PostgreSQL) 17.11 (Homebrew)",
+  "host": "127.0.0.1",
+  "port": 54379,
+  "cluster": "/Users/t/.agents/state/rox-compound-workspace/postgres",
+  "database": "rox_compound_wp01",
+  "user": "rox_operator",
+  "readback": "rox_compound_wp01|rox_operator|1",
+  "environmentFile": "/Users/t/.agents/state/rox-compound-workspace/postgres-environment.json",
+  "globalServiceInstalled": false,
+  "featureImplemented": false,
+  "observedAt": "2026-09-30T09:41:38Z",
+  "adapterProbe": {
+    "adapter": "Bun.SQL",
+    "transactionCommitted": true,
+    "temporaryValueReadback": 20260930,
+    "persistentSchemaChanged": false
+  }
+}

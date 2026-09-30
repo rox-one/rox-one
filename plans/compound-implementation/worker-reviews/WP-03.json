@@ -1,0 +1,405 @@
+{
+  "task_id": "WP-03-preflight",
+  "attempt_id": "ae06a10f450b03a1a3364acfbad99eba",
+  "packet_hash": "893bec65676aeb7c7fe9135df3776244eed7e53b9f4fa42a9097ce6139f54500",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-03",
+  "featureComplete": false,
+  "mode": "inspect-only; artifact-only delivery",
+  "workTier": "bounded-workflow within an already dispatched independent preflight package",
+  "dependencies": ["WP-01", "WP-02"],
+  "dependencyReceipts": [
+    {"producer": "WP-01", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "state": "NOT_OBSERVED", "requiredSeam": "Transport-authenticated Actor, workspace membership, minimal Project identity, owner-only server policy, Project transaction/idempotent receipt and native Project RPC/list/detail. Published bootstrapContract owns only this minimum, not generic grants/outbox."},
+    {"producer": "WP-02", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"], "state": "NOT_OBSERVED", "requiredSeam": "Accepted persistent canonical entity registry with composite workspace/entity identity, aliases and authorized typed backlinks. Reuse Rox2EntityRef; permission rows reference that authority, not another registry."}
+  ],
+  "inspectionBoundary": {
+    "productWrites": "NONE",
+    "gitOperations": "NONE",
+    "runtimeTestsBuildsNativeUiNetwork": "NOT_RUN; forbidden for this preflight",
+    "sourceScope": "Four WP-03 affected source files and their directly imported identity store/types, handler dependency bag, rox2 export/native-action implementation and protocol definitions; exact published package/test-plan records.",
+    "codegraph": "Requested once for this project; tool reported no index. No indexing or upgrade performed.",
+    "fallback": "find lookups failed because their judge returned HTTP 402; literal grep and range reads supplied evidence instead. Failed find output is not absence evidence.",
+    "artifactPresence": "Individual glob lookups reported apps/workspace-service, packages/shared/src/workspace-domain and tests/macro-integration absent at inspection. These are observations of the live tree, not guarantees after root integration.",
+    "revisionBinding": "input_revision is the supplied dispatch revision, not an independently asserted HEAD. Whole-file hashes below bind inspected live bytes; concurrent root-owned wave0 work is not attributed to this worker. Re-read and rehash affected files after wave0/dependency integration before implementation; references can become stale. No accepted dependency runtime receipt was supplied or observed in this bounded inspection."
+  },
+  "foundationGates": [
+    {
+      "id": "F-03-WAVE0-AUTHORITY",
+      "explicitDagEdge": false,
+      "evidence": "Dispatch requires lead wave0 commit before implementation; RequestContext currently contains only clientId/workspaceId/webContentsId (transport/types.ts:7-11), RpcHandlerOptions only access=localElectron (19-21). identity handlers ignore _ctx (identity.ts:159-175,232,279).",
+      "requiredCapability": "Committed, accepted transport-derived principal/acting-user and explicit standalone-versus-shared authority route; a supplied workspaceId or local profile id='local' must not authenticate a shared actor.",
+      "integrationRequest": "Lead/WP-01 must deliver this seam and verify principal derivation for RPC and HTTP before WP-03 uses it. Do not add a body actor field or silently treat missing service as local authority.",
+      "state": "PREREQUISITE_NOT_OBSERVED"
+    },
+    {
+      "id": "F-03-TRANSACTION-OUTBOX",
+      "explicitDagEdge": false,
+      "evidence": "WP-03 requires mutation+monotonic epoch, transaction outbox, replay cursor, command receipt uniqueness and inbox dedup (work-packages.json:1803-1805,1899-1900,2312-2338). Generic receipt/outbox framework is later WP-04, which explicitly depends on WP-03 (2595-2598); WP-01 bootstrap only owns create receipt (998-1010). HandlerDeps.commandGateway is a PendingCommandsStore, not demonstrated shared SQL authority (handler-deps.ts:70-71).",
+      "requiredCapability": "One shared transaction kernel for resource grant change + policy_epoch increment + aggregate revision + immutable request-hash receipt + permission.changed outbox event, with durable consumer lease/inbox/replay primitives.",
+      "integrationRequest": "Expose the minimum shared transaction/receipt/outbox ports as a lead-owned foundation or accepted dependency contribution; WP-03 repository implements the identity transaction through those ports. WP-04 later generalizes them, not a second receipt/event store. Do not insert WP-04 as an incoming DAG edge, which would create a cycle.",
+      "state": "HIDDEN_FOUNDATION_CONTRACT_UNRESOLVED"
+    },
+    {
+      "id": "F-03-REVOKE-FENCE",
+      "explicitDagEdge": false,
+      "evidence": "WP-03 response includes pending_fence and error REVOKE_FENCE_PENDING (work-packages.json:2084-2110). Published WP-51 says successful revoke waits fenced durable append/broadcast boundary and guards direct legacy writes/partitioned shards, yet WP-51 depends on WP-03/WP-04/WP-05 (21-implementation-plan.md:1022-1036).",
+      "requiredCapability": "Epoch-aware subscription/read/delivery fence and acknowledgement boundary; shared consumers must fail closed on stale policy. A database commit alone cannot certify distributed revoke completion.",
+      "integrationRequest": "Specify a fence port/result and make permission.revoke remain pending_fence until all relevant delivery/append consumers acknowledge or their bounded leases expire. Lead must resolve the later WP-51 foundation boundary without claiming full WP-03 completion early or adding a cyclic dependency. Scoped Project delivery can be fenced now; broader sync/writer routes still need accepted evidence before a full-surface claim.",
+      "state": "HIDDEN_COMPLETION_GATE"
+    },
+    {
+      "id": "F-03-CURRENT-ACL-PROJECTIONS",
+      "explicitDagEdge": false,
+      "evidence": "WP-03 explicitly requires preview/link/search hide revoked target (1825), rechecking linked refs (1788), authorized DTO with no hidden total/title (2082) and all completeness dimensions (1848-1870). WP-06 search projection is downstream of WP-04 (21-implementation-plan.md:106-119); test-plan:199,247 forbids deferring permissions/search/agent assertions from slices.",
+      "requiredCapability": "A reusable current-ACL query/context/serialization gate and policy-epoch invalidation port for existing linked refs, previews, search results, mention targets, notification audiences, activity and agent context, independent of eventual index catch-up.",
+      "integrationRequest": "Root owners must map actual existing consumer symbols outside this worker's scope and attach the common authorizer before response serialization; remove unauthorized titles/snippets/counts and do not wait for eventual index purge. Expose consumer acknowledgements/watermarks. Later WP-06/WP-36 implementations are not substitutes for WP-03 acceptance.",
+      "state": "CONSUMER_INTEGRATION_NOT_OBSERVED"
+    },
+    {
+      "id": "F-03-ROLE-INHERITANCE",
+      "explicitDagEdge": false,
+      "evidence": "OrgRole is owner/admin/member (orgs/types.ts:10); separate WorkspaceRole includes viewer (platform/identity/types.ts:69-104), but neither is a resource editor grant. WP-03 calls for resource/action/expiry and explicit channels/mail inheritance (1781-1789,1828). Test-plan:209 requires public-link expiry.",
+      "requiredCapability": "Typed resource role-to-action mapping with explicit inheritance and grant provenance, expiry and revocation precedence, separate from organization membership and agent execution approval.",
+      "integrationRequest": "Accept viewer/editor/admin/guest mapping and resource-specific channel/mail/public-link rules in the new identity contracts. Preserve OrgRole meaning and existing credential/connection ownership. Email/displayLabel/contact identity must not supply Principal identity.",
+      "state": "POLICY_CONTRACT_REQUIRED"
+    },
+    {
+      "id": "F-03-LIVE-VERIFICATION-ENVIRONMENT",
+      "explicitDagEdge": false,
+      "evidence": "WP-03 requires real changed surface/failure/reload evidence (1873,2529-2560). Normative service/domain/test directories are absent in individual glob observations. WP-52 deployment is later and depends on WP-03/WP-04/WP-51 (21-implementation-plan.md:1040-1053).",
+      "requiredCapability": "Isolated authenticated workspace service, selected migrator/applied schema and two authorized native clients plus outsider, with permission-revoke event delivery and exact revision-bound evidence. No media/provider network is needed for the local grant operation itself.",
+      "integrationRequest": "Lead must provide a usable identity/Project service runtime and migrator from the foundation without waiting for all later media/provider WP-52 work. Generate actual migration filename using that migrator; record a real applied receipt and UI/API readback. Fixtures alone remain unverified.",
+      "state": "LIVE_RUNTIME_NOT_OBSERVED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/identity/contracts.ts",
+    "apps/workspace-service/src/modules/identity/commands.ts",
+    "apps/workspace-service/src/modules/identity/repository.ts",
+    "tests/macro-integration/wp-03.test.ts",
+    "apps/workspace-service/migrations/03-domain-contract.sql"
+  ],
+  "newFileContributions": [
+    {"path": "packages/shared/src/workspace-domain/identity/contracts.ts", "proposedSymbols": ["PermissionAction", "PermissionGrant", "PermissionPolicyEpoch", "AuthorizeResourceInput", "AuthorizeResourceResult", "GrantResourceInput", "PermissionRevokeRequest", "PermissionRevokeResult", "PermissionChangedEvent", "ResourcePolicyPort", "ResourceSubscriptionFencePort"], "change": "Use accepted Actor/RoxCommand v2 and existing Rox2EntityRef imports. Define resource/workspace/subject/action/expiry/epoch-scoped grants and Authorize/Grant/Revoke/Subscribe ports; strictly validate revoke request with no extra actor fields and published bounds. Keep result status/receipt schema distinct from, but explicitly mapped to, Rox2CanonicalResult triad. Service I/O stays outside core. Symbols are proposals, not existing declarations."},
+    {"path": "apps/workspace-service/src/modules/identity/commands.ts", "proposedSymbols": ["authorizeResource", "grantResource", "revokeResource", "subscribeResource"], "change": "Accept principal only from authenticated composition; compare route/envelope/resource workspace, authorize grant/revoke management and target actions, check expectedRevision and idempotency hash through common gateway, recheck ACL for query/subscription delivery, and return pending_fence until fence verified. Never authorize from permissionMode or rpcIdentityActResult. These proposed operations need root-approved additional transport contracts beyond the single published revoke route."},
+    {"path": "apps/workspace-service/src/modules/identity/repository.ts", "proposedSymbols": ["IdentityRepository", "revokeInTransaction", "readCurrentPolicy", "listAuthorizedGrants"], "change": "Implement permission_grant and policy_epoch against accepted entity/principal/schema/transaction ports. Revoke and monotonic epoch/aggregate revision bump, immutable receipt and permission.changed outbox insert are one transaction; retries reuse receipt/event/epoch and altered payload conflicts. Query expiry/current epoch, bound cursor to actor/workspace, and deduplicate consumer delivery using shared inbox/leases; no identity.json/orgs.json or separate entity store."},
+    {"path": "tests/macro-integration/wp-03.test.ts", "change": "Exercise real authenticated transport/service scenarios with seed 20260933, W1, A owner, B collaborator, C outsider, plus normative V viewer and Agent-V allow-all. Include viewer edit/share denials, open B revoke with future read/delivery/rejoin denial, linked preview/search suppression before projection catch-up, forged actor/workspace/schema/CAS/idempotency failures, commit-before-reply restart and event drop/duplicate/reorder recovery. Keep seeded cached-grant mutation and independent second variant evidence; infrastructure failure is not a caught mutation."},
+    {"path": "apps/workspace-service/migrations/03-domain-contract.sql", "change": "Proposed identifier only; selected migrator supplies actual filename. Add scoped permission_grant keys/FK to accepted entity and subject principal, action/expiry/provenance fields, policy_epoch with monotonic update discipline, schema/revision constraints and indexes for current resource/subject/action reads. Reuse shared receipt/outbox/inbox constraints rather than recreate them. Additive forward migration with quarantine for ambiguous identity; rollback obeys published writer-route/snapshot or verified forward-repair policy."}
+  ],
+  "sharedPatchRequests": [
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2ActorGrant / authorizeRox2Action / ROX2_PERMISSIONS / Rox2Event / Rox2Receipt / Rox2CanonicalResult", "change": "Replace actor+permission-only grant authorization with the accepted workspace/resource/action/expiry/current-policy-epoch contract; callers must supply canonical ref and trusted policy snapshot, missing scope denies. Coordinate migration of every caller with root rather than retaining an unsafe actor-global overload. Add subscription action vocabulary consistently with new identity contracts; keep sensitive execution grants independent of resource ACL. Extend event/receipt projection with policyEpoch/commandId and explicit fence/receipt evidence; map new operation status to the existing triad without treating pending_fence as succeeded/verified. Preserve format/parseRox2EntityId, Rox2EntityRef and capability-catalog semantics of Entity.permissions. Do not add service I/O.", "reason": "Current grants have no resource/workspace/expiry/epoch (592-609); events have no policyEpoch (131-141), and permissionMode is separate context data (143-156)."},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext / RpcHandlerOptions / RpcServer", "change": "Adopt WP-01 transport-derived authenticated Actor plus acting-user/delegation and explicit authority mode in RequestContext. Shared domain handlers require that context, validate workspace against authenticated membership and deny on absent authority. Add typed subscription/policy-fence dependency contract via existing composition, not a client-provided actor. Preserve localElectron restriction for local-only handlers.", "reason": "Existing ctx only exposes client/workspace/webContents and options only localElectron; it cannot prove resource authorization or revoke fence."},
+    {"path": "packages/server-core/src/handlers/rpc/identity.ts", "symbol": "HANDLED_CHANNELS / registerIdentityHandlers / buildAggregatedState / broadcastChanged", "change": "Register domain.permission.revoke and accepted Authorize/Grant/Subscribe RPC adapters through the common authority port; reject extra payload fields and actor/workspace spoofing before dispatch. Preserve profile/connect/disconnect/refresh behavior in explicit standalone ownership and CredentialManager secrets. Do not put grants in IdentityStore or interpret disconnect as resource revoke. For shared requests use current-policy DTO projection, not unguarded buildAggregatedState. Send revisioned permission.changed only to authorized client audience, with targeted revoke-control invalidation to the affected client; never include resource content in that control message. Keep existing identity.CHANGED metadata event separate rather than pretending its empty payload is durable revoke evidence.", "reason": "All current handlers ignore ctx and act via local config. broadcastChanged is to all and contains no revision/cursor; disconnect hardcodes granted=true for a different operation (148-175,232-275)."},
+    {"path": "packages/shared/src/orgs/types.ts", "symbol": "OrgRole / OrgMember / AcceptInviteInput", "change": "Keep organization owner/admin/member bookkeeping intact. Import or reference accepted principal/resource-policy types where integration DTOs need them; distinguish organization membership from viewer/editor resource grants and server-bound actor identity. Ensure shared invite/member inputs do not promote AcceptInviteInput.userId or displayLabel/email to authentication; resource grant fields belong to new domain contracts, not OrgsStoreFile.", "reason": "OrgRole has no resource scope and OrgsStoreFile is local bookkeeping; invite userId is documented local-profile override (10,20-29,47-69)."},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "change": "Expose an injected typed workspace-domain identity/policy/fence port from root composition, using accepted WP-01 service plumbing if it already exists after wave0. Shared absence returns unavailable/denied, not standalone fallback. Reuse the common command transaction port; existing commandGateway PendingCommandsStore is not asserted to be SQL grant authority.", "reason": "The inspected dependency bag has no identity policy service and only optional local pending-command store (56-72). It is directly imported by identity.ts."},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS", "change": "Add exact nativeRpc value domain.permission.revoke and a separate revisioned permission.changed delivery channel in the root-owned domain group. Add Authorize/Grant/Subscribe channel names only after their additional typed API contracts are accepted; do not rename local identity connection channels into permission routes.", "reason": "identity group currently enumerates profile/connect/disconnect/refresh only (376-383); the published revoke transport is absent from that inspected group."},
+    {"path": "packages/shared/src/protocol/routing.ts", "symbol": "LOCAL_ONLY_CHANNELS / REMOTE_ELIGIBLE_CHANNELS", "change": "Classify accepted shared domain routes and events as workspace-owner routed through the authority boundary. Leave current local profile/credential identity channels LOCAL_ONLY and preserve explicit standalone adapter routing. Migrate domain consumers through root-owned routing, not an accidental remote connection-settings surface.", "reason": "Existing identity and orgs channels are LOCAL_ONLY (474-490); routing requires an exhaustive classification (1-8)."},
+    {"path": "packages/shared/src/protocol/events.ts", "symbol": "BroadcastEventMap entry for RPC_CHANNELS.identity.CHANGED", "change": "Add a distinct typed PermissionChangedEvent tuple containing canonical scoped ref, policyEpoch, aggregateRevision, event/cause/correlation IDs and replay cursor, with sanitized audience-specific projection. Preserve the existing no-argument connection metadata event; downstream acknowledgement/watermark must use the new event contract.", "reason": "Current identity.CHANGED tuple is [] (90) and cannot carry a replayable ACL invalidation."},
+    {"path": "packages/core/src/rox2/rpc-native-actions.ts", "symbol": "rpcNativeActResult / rpcIdentityActResult", "change": "Do not use source='native' or granted=true from this local result adapter as resource authority. Root-owned shared-route cutover must require the common authorizer and a real receipt before result mapping; preserve standalone local capability result semantics. If a shared-domain result adapter is needed, map accepted receipt evidence instead of passing a fabricated local grant.", "reason": "rpcNativeActResult returns nativeLive for ordinary write without actor/resource ACL (463-494), and identity disconnect supplies granted=true itself. This is a capability/status adapter, not authenticated permission enforcement."},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-03 section", "change": "After implementation and observed verification, document explicit resource actions/roles/inheritance/expiry, standalone route, pending_fence semantics, cached-plaintext limit, dependencies versus hidden foundation gates, actual migrator artifact and acceptance receipts. Keep current planned status until verified; this worker requests rather than edits the shared document.", "reason": "Section 46-63 specifies goal/artifacts but not implemented authority/fence semantics or observed evidence."},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Feature completeness checklist / evidence receipt record / COLLAB-01 revoke steps", "change": "Bind WP-03 scenario/evaluator receipts to actual source/schema/runtime and record viewer, open-editor, Agent-V, preview/link/search, restart/rejoin and mutation results. Distinguish future larger Page/sync scenarios from exercised Project identity surface without dropping their applicable ACL gates.", "reason": "Current test-plan explicitly says future plan, not PASS; 197-247 requires all completeness dimensions, seeded sensitivity and revision-bound evidence."}
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Viewer cannot edit/share",
+      "currentEvidence": "platform-contract.ts:55-66 has read/write/share vocabulary; authorizeRox2Action:592-609 has actor/action only. registerIdentityHandlers:165-175 performs local write after status adapter; OrgRole:10 cannot represent resource viewer/editor.",
+      "seam": "authorizeRox2Action; new ResourcePolicyPort plus authorizeResource/grantResource; root-owned Project mutation/share route through accepted WP-01 authority",
+      "requiredChange": "Persist viewer read-only resource actions and independently authorize write/share/manage at the server boundary for every shared mutation, not just disable controls. Resource role mapping must not grant share implicitly through editor or member.",
+      "verification": "Future wp-03 integration: V reads scoped Project successfully, edit/share denied through native RPC and HTTP with zero revision/grant/event changes. A's authorized control succeeds. Actual existing Project UI controls and forced direct requests prove both presentation and server denial.",
+      "missingPrerequisite": "Wave0 commit; accepted WP-01 Actor/Project writer and WP-02 resource identity receipts; root mapping of concrete rendered/share handler symbols outside allowed inspection scope.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "editor loses subscription and future reads after revoke",
+      "currentEvidence": "identity.ts:broadcastChanged:148-153 pushes empty metadata event to all. protocol/events.ts:90 has []. Rox2Event:131-141 has aggregateRevision but no policyEpoch; no normative service files observed.",
+      "seam": "broadcastChanged/RpcServer.push; new revokeResource/revokeInTransaction/ResourceSubscriptionFencePort",
+      "requiredChange": "In one shared transaction revoke B's actions, increment epoch/revision, persist receipt+permission.changed outbox; invalidate B's current subscription and recheck current ACL for each read/delivery/rejoin. Applied/verified reply must wait for required fence; pending fence is explicit, and stale cursors/sockets cannot deliver new content.",
+      "verification": "Keep A/B open on one canonical ref; revoke during an in-flight read and queued event. After verified reply B gets denied for future reads/subscription/rejoin, no subsequent content/event; A still reads. Drop/duplicate/reorder invalidation and restart/reconnect must not reopen access. Observe epoch, fence acknowledgement and durable replay watermark.",
+      "missingPrerequisite": "Common transaction/outbox/replay foundation and accepted fence port; current authenticated audience; selected SQL migration and real two-client runtime. Full sync-shard/legacy-writer boundary in later WP-51 remains a separately identified completion gate.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "agent allow-all still denied",
+      "currentEvidence": "Rox2Context.permissionMode:148 is allow-all/ask/safe; authorizeRox2Action does not consult it but also lacks resource scope. rpcNativeActResult:477-494 declares native writes live without ACL. No agent dispatcher inspected outside this package/import scope.",
+      "seam": "Rox2Context; authorizeRox2Action/ResourcePolicyPort; accepted acting-user context in RequestContext",
+      "requiredChange": "Use the same current resource authorizer for agent reads/writes/tools/context as for humans, with authenticated acting user and delegated service principal. allow-all controls execution approval only; sensitive share/send/destroy/device/cloud actions additionally need explicit execution grants.",
+      "verification": "Future real native agent/MCP dispatcher: Agent-V with allow-all cannot write/share the viewer resource or read C's resource; revoked Agent-B cannot read through context/tool routes. Authorized Agent-A succeeds with canonical receipt/provenance, and lacking execution grant still blocks outbound sensitive action.",
+      "missingPrerequisite": "Root-owned actual agent/MCP route and acting-user contract; identity policy port integrated there. Later WP-36 must not be used to mark this WP-03 criterion N/A.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "preview/link/search hide revoked target",
+      "currentEvidence": "Rox2EntityRef:232-239 gives scoped identity; Rox2Entity.permissions:121 is explicitly a capability catalog (598). WP-03 spec:1788/1825/2082 requires linked ref recheck and no hidden title/total. Consumer source is outside the permitted paths.",
+      "seam": "Rox2EntityRef + ResourcePolicyPort authorized projection gate; protocol PermissionChangedEvent integration",
+      "requiredChange": "Reauthorize source and target at current epoch before every preview/link/backlink/search serialization; exclude denied titles/snippets/totals and don't expand ACL by linking. Invalidate existing rendered target metadata and agent context while preserving source links only in privacy-safe denied form where product policy permits.",
+      "verification": "Use PRIVATE_WP-03 target linked from authorized source. Before index consumer catches up, revoke then request preview/link/backlink/search through UI/RPC/HTTP and context: private marker/title/snippet and unauthorized counts absent; A remains authorized. Reload/stale pagination cursor must not leak. Seed target-ACL bypass and require specific assertion failure.",
+      "missingPrerequisite": "WP-02 accepted link/query contracts; root owners supply concrete preview/search/mention/agent consumer symbol map and attach current-policy port. Later WP-06 indexing is not a reason to defer WP-03 leak tests.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Normative existing surface is Projects / Settings / Connections (spec:1791-1801). Inspected registerIdentityHandlers/buildAggregatedState serve existing connection metadata; no renderer files are imported directly or inspected.",
+      "seam": "registerIdentityHandlers, RPC_CHANNELS.identity and accepted domain identity route",
+      "requiredChange": "Root UI owner binds grant/revoke control and epoch invalidation into the existing surfaces, no new destination or identity store. Show read-only viewer and revoke/pending-fence/verified states; user-facing additions use existing t() and all ten locale files.",
+      "verification": "Future actual Electron/web interaction plus screenshots/ARIA: viewer controls and forced action denial; B loses open target on revoke; A gets correct pending/applied state. Verify hover/focus/keyboard and rendered font where changed.",
+      "missingPrerequisite": "Actual root-supplied renderer symbol/route map, accepted UI binding and running native clients; report deliberately makes no guessed renderer-path claim.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "protocol/routing.ts:474-490 classifies existing orgs/identity as LOCAL_ONLY; channels.ts:376-383 has no revoke entry in the identity group.",
+      "seam": "RPC_CHANNELS / LOCAL_ONLY_CHANNELS / REMOTE_ELIGIBLE_CHANNELS / HANDLED_CHANNELS / Rox2EntityRef",
+      "requiredChange": "Register exact domain.permission.revoke and published HTTP route, route shared identities to authenticated owner service, preserve standalone settings routes; root navigation resolves scoped canonical ref and honors denied history/tab/panel targets.",
+      "verification": "Future same revoke through HTTP/native RPC has identical policy/result; canonical deep link/history/tab reload after revoke cannot fetch title/content; standalone connection routing remains local.",
+      "missingPrerequisite": "WP-01 routing and transport authority; root composition and concrete navigation symbols.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "formatRox2EntityId/parseRox2EntityId:218-229 and Rox2EntityRef:232-239 already exist. Actor grant:592-595 has no resource/expiry/epoch; WorkspaceMembership:99-104 is types-only.",
+      "seam": "Rox2EntityRef / Rox2ActorGrant / new PermissionGrant and PermissionPolicyEpoch",
+      "requiredChange": "Use accepted entity registry and principal identity; add composite workspace/resource/subject/action/expiry/provenance and monotonic policy epoch. Validate resource kind/ref via accepted registry, not email/display name; aliases remain WP-02 authority.",
+      "verification": "Future schema/DB readback proves same canonical ref across grants/retry; cross-workspace resource/principal and ambiguous identity denied/quarantined with no second entity row.",
+      "missingPrerequisite": "Accepted WP-02 entity keys and WP-01 principal schema/interface.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "IdentityStore:172-192 holds Profile/ServiceConnection/Entitlement copies in identity.json; identity types:128-139 have no grant tables. Spec:2295-2338 requires shared grant/epoch migration and existing receipts/outbox constraints.",
+      "seam": "new IdentityRepository/revokeInTransaction; existing IdentityStore remains metadata-only",
+      "requiredChange": "SQL service is sole grant writer; migration adds scoped FK/schema/revision constraints and expiry indexes. Receipt/epoch/event atomically durable. Preserve local identity metadata and migration/rollback/backfill/quarantine rules.",
+      "verification": "Future actual migrator apply plus DB readback/restart: grant revoked, epoch/revision/receipt/event consistent; unique row counts, duplicate retry and rollback/forward repair prove no lost shared writes.",
+      "missingPrerequisite": "Selected migrator, accepted base schema/transaction port, applied WP-01/WP-02 migration receipts and service runtime.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "identity.ts handlers use local state and status adapters, not RoxCommand v2; spec:1894-1900,2096 mandates expectedRevision/idempotency and transport-derived actor.",
+      "seam": "registerIdentityHandlers / new PermissionRevokeRequest and revokeResource",
+      "requiredChange": "Strict published request schema, trusted actor/workspace, management authorization, immutable request hash and CAS through common gateway. Matching retry reuses commandId/receipt/revision/event; changed payload key yields IDEMPOTENCY_CONFLICT, stale revision yields REVISION_CONFLICT; no fake successful receipt.",
+      "verification": "Future RPC/HTTP integration covers permitted revoke, denied viewer/outsider, extra actor field, workspace mismatch, invalid/bounded schema, stale revision and same/different payload retries with unchanged duplicate counts.",
+      "missingPrerequisite": "Accepted Actor/RoxCommand v2 and transaction/receipt kernel; strict schema implementation.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "buildAggregatedState:81-145 filters caller workspace metadata, not resource ACL; spec:2082 requires authorized typed DTO without hidden total/title.",
+      "seam": "buildAggregatedState / new authorizeResource/listAuthorizedGrants/readCurrentPolicy",
+      "requiredChange": "Query current canonical policy at authenticated actor/workspace, check target refs before serialization, and bound stable cursor to authorized scope. Do not reveal private grants, resource title or hidden totals through a preauthorization DTO.",
+      "verification": "Future direct query/readback for A/V/B/C, after revoke and before projection purge, with forged/old cursors and bounded pagination: denied rows/title/totals absent; authorized pagination stable.",
+      "missingPrerequisite": "Accepted query envelope/pagination port, canonical registry and current-policy repository.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "broadcastChanged:148-153 uses all-target ephemeral push; events.ts:90 is empty; PushTarget:185-188 supports client targeting but not policy replay.",
+      "seam": "RpcServer.push / PermissionChangedEvent / subscribeResource / ResourceSubscriptionFencePort",
+      "requiredChange": "Persist permission.changed in outbox, dedup with shared inbox and enforce epoch/revision order; replay cursor and gap recovery. Current-authorized per-client audience, targeted content-free revoke notice, policy fence prevents late content delivery; presence remains lossy and separate.",
+      "verification": "Future open A/B clients with drop/duplicate/reordered invalidations, consumer crash/replay and stale socket rejoin: epoch never regresses, no unauthorized new delivery, one processed event receipt and watermark converges.",
+      "missingPrerequisite": "Shared outbox/inbox/lease/cursor contract and transport subscription/fence composition.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "authorizeRox2Action:601-609 denies missing actor but checks actor/action only; OrgRole:10 and WorkspaceRole:69 differ. Entity.permissions is not ACL.",
+      "seam": "ResourcePolicyPort / authorizeRox2Action / new role-action mapping",
+      "requiredChange": "Resource ACL applies to viewer/editor/admin/guest and revoked actors; deny forged actor/workspace, expired grant/token and unknown scope/actions. Agent approval mode cannot bypass it; inheritance explicit with revoke precedence.",
+      "verification": "Future deterministic role/action matrix at boundaries, grant expiry/epoch transition and outsider/forged refs via all exercised transports; no state/event side effect on deny and authorized controls succeed.",
+      "missingPrerequisite": "Accepted role/inheritance/action vocabulary and transport Actor.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "ROX2_PERMISSIONS includes share; requiresExplicitGrant:579-590 tags it sensitive. Existing OrgInvite role/token types are membership bookkeeping, not resource grants.",
+      "seam": "requiresExplicitGrant / new grantResource/revokeResource / OrgInvite boundary",
+      "requiredChange": "Resource sharing requires ACL management plus explicit execution grant; viewer cannot share, editor sharing follows explicit mapping, public links/guest grants expire and revoke. Links/invites/channel/mail inheritance cannot silently restore access or expose denied content.",
+      "verification": "Future public-link expiry/revoke, editor/viewer deny, authorized owner grant and revoke, inherited channel/mail versus private target cases; counts/titles/content remain protected on open and reload.",
+      "missingPrerequisite": "Root-owned actual share/public-link consumer mapping and approved inheritance policy.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Spec:1825 includes search, 1838-1839 epoch/watermark; platform-contract Rox2EntityRef and ResourcePolicyPort are the scoped integration seam. Search consumer source is not in allowed imports.",
+      "seam": "ResourcePolicyPort + PermissionChangedEvent policyEpoch + canonical entity refs",
+      "requiredChange": "At query time reauthorize every hit/snippet/count and cursor against current epoch; consumer upsert/delete follows revision/tombstone/ACL fences with watermark. Do not depend solely on asynchronous index removal.",
+      "verification": "Future pause search index consumer, revoke, search PRIVATE_WP-03 immediately: no denied title/snippet/count; resume/replay verifies purge/upsert/watermark and no stale revision overwrite.",
+      "missingPrerequisite": "Root-owned search extractor/query consumer symbol map and accepted event projection integration; future WP-06 is not an N/A waiver.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "ROX2_RELATION_KINDS:42-51 includes mentions; spec:1788 requires linked ref recheck; test-plan:211 requires occurrence/source revision/target policy.",
+      "seam": "Rox2Relation / Rox2EntityRef / ResourcePolicyPort",
+      "requiredChange": "Use WP-02 typed relation identity and root mention extraction/occurrence source revision; reauthorize target before resolution/preview/count/event and invalidate denied open mentions without broadening target rights.",
+      "verification": "Future authorized source mentioning PRIVATE_WP-03: B sees permitted target initially, after revoke no target title/snippet through mention hover/click/list/context or reload; A still resolves it; source revision/occurrence stable.",
+      "missingPrerequisite": "Accepted WP-02 links plus concrete root-owned mention extractor/resolver consumers and current-policy port attachment.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "PermissionChangedEvent is specified but current identity.CHANGED event is payload-free; test-plan:212/232 requires recipient policy and dedup. No notification consumer is a permitted inspected direct import.",
+      "seam": "Rox2Event / ResourcePolicyPort / shared outbox-inbox event port",
+      "requiredChange": "Authorize recipients and resource projection at emit/read/delivery time, dedup reasons/event IDs, and hide revoked content/counts; preserve existing seen/done/mute/snooze states under common policy, without creating a notification store in identity.",
+      "verification": "Future revoke between enqueue and delivery plus event duplicate/replay: B gets no private notification body/title/count and cannot reopen stored notification target; A retains authorized state and at most one notification.",
+      "missingPrerequisite": "Root-owned notification recipient/projection/state symbols and accepted event delivery port.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event:131-141 supports actor/cause/correlation/revision; isAuditableRox2Event:617-619 checks three optional fields. identity logger:227/274 is connection logging, not permission audit.",
+      "seam": "Rox2Event / isAuditableRox2Event / permission.changed outbox",
+      "requiredChange": "Emit authenticated actor/acting-user, command cause/correlation, aggregate revision and policy epoch for grant/revoke; activity projection filters by current audience and logs only privacy-safe IDs/metadata, not raw email/body/transcript/token.",
+      "verification": "Future command-event-activity trace joins identical IDs/revision/epoch and dedups retry; revoked viewer cannot see target activity title/payload; scan captured log artifacts for private marker/secrets with authorized control readback.",
+      "missingPrerequisite": "Accepted event/activity consumer and privacy-safe logger composition.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Rox2Context:143-156 has permissionMode and entityRefs but no authenticated acting-user authorization; pure authorizeRox2Action does not use it.",
+      "seam": "Rox2Context / ResourcePolicyPort / transport-derived Actor",
+      "requiredChange": "Common domain tool/context path validates current ref policies and source revision/provenance. Revoked cached context cannot be returned by new reads; generated persistent artifacts require provenance policy rather than an impossible promise to un-read historical plaintext.",
+      "verification": "Future native agent tools/context positive A and deny Agent-V/Agent-B cases, including stale cached source before projection catches up and attempted share of derived private content. Assert refs/authorization deterministically, not textual LLM judgment.",
+      "missingPrerequisite": "Root agent context/dispatcher integration and provenance contracts; later WP-50 broader transcript control remains explicitly separate but cannot justify a cache-read bypass.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Spec:1897-1900 publishes exact HTTP/native revoke endpoints; identity HANDLED_CHANNELS:31-37 only local connection/profile actions; RequestContext has no principal.",
+      "seam": "HANDLED_CHANNELS / RPC_CHANNELS / ResourcePolicyPort + accepted common RoxCommand v2 gateway",
+      "requiredChange": "HTTP/native RPC/domain tools/MCP operations use identical schema, authentication, ACL, expectedRevision/idempotency, receipt and fence result mapping; endpoint selection must not allow fallback direct store writes.",
+      "verification": "Future same authorized/denied/stale/conflicting command through HTTP/RPC and actual MCP dispatcher yields equivalent canonical resource/revision/receipt/error semantics; no extra actor field accepted.",
+      "missingPrerequisite": "Root HTTP composition and actual MCP dispatch seams; accepted identity command/query port.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event lacks policyEpoch and commandId; existing identity logs connection/provider IDs only. Spec:1832-1842 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters with privacy protection.",
+      "seam": "Rox2Event / Rox2Receipt / IdentityRepository outbox / deps.platform.logger",
+      "requiredChange": "Carry all required identifiers and measured projection/fence watermark through command/event/consumer receipts. Expose queue lag/retry/DLQ and permission denials as sanitized metrics; no fabricated healthy/completed receipt.",
+      "verification": "Future revoke trace binds command, DB epoch, event and consumer watermark; induced consumer failure changes retry/backlog/DLQ evidence without duplicate applied event; captured logs exclude secrets and private marker/body.",
+      "missingPrerequisite": "Shared observability envelope/counter and consumer/fence receipt ports.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "wp-03.test.ts not present in individual normative-directory glob observation. Spec:1807-1819 and2529-2560 mandates integration, negative control and recovery; no test run authorized now.",
+      "seam": "tests/macro-integration/wp-03.test.ts proposed scenario runner against authenticated service/transport",
+      "requiredChange": "Add consumer-visible role/revoke/agent/linked-target assertions, strict schema/CAS/idempotency failures and restart/replay. Inject cached-grant mutation and independent second failure variant only after baseline passes; distinguish dropped/duplicated event detection from infrastructure errors. Record seed20260933, fixture IDs, failure history and artifacts.",
+      "verification": "Future bun test tests/macro-integration/wp-03.test.ts plus relevant existing tests once integrated; actual Electron/HTTP/agent changed-surface smoke and full specified failure/reload scenarios, caught mutants and evaluator evidence. This report makes no PASS claim.",
+      "missingPrerequisite": "Implementation, accepted runtime/migrations/fixtures and root/evaluator verification authorization after dependency integration.",
+      "state": "MISSING_NOT_RUN"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:46-63 is planned WP-03; 22-test-plan.md:3 says future plan and PASS not claimed.",
+      "seam": "Shared WP-03 implementation-plan section and test-plan evidence record",
+      "requiredChange": "Root updates existing docs after behavioral evidence with actual authority/roles/expiry/inheritance, fence statuses, endpoint/schema/migration details, failure/reconnect recovery and cached-plaintext limit; distinguish implemented/verified/delivered states.",
+      "verification": "Future documentation review against exact observed runtime/API/schema receipts and all matrix dimensions; no assertion of missing dimensions as N/A.",
+      "missingPrerequisite": "Verified implementation and shared document owner integration; this worker may write only the report.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Spec:2084-2110 enumerates errors and pending_fence; current identity.ts uses plain Error and connection status mapping, not resource command errors.",
+      "seam": "registerIdentityHandlers / PermissionRevokeResult / existing Rox2Status triad",
+      "requiredChange": "Propagate unauthenticated/forbidden/workspace mismatch/invalid payload/revision/idempotency/schema errors and unavailable/ambiguous/fence-pending correctly. Existing surfaces distinguish retryable versus terminal/conflict/reauth/quarantine and never show applied_verified before fence/readback.",
+      "verification": "Future each relevant negative transport result and UI state with service stop, stale revision, malformed payload and fence timeout; repeat reconciles same receipt rather than silently retrying new command. No privacy leak in error title/body.",
+      "missingPrerequisite": "Typed error/result mapping, live service/fence failure injection and root UI consumer symbols.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Spec UI lists loading (1795); inspected buildAggregatedState is synchronous local aggregation and has no shared-loading result.",
+      "seam": "Identity domain query/command results delivered through registerIdentityHandlers and existing surface binding",
+      "requiredChange": "Render explicit initial loading, stale/refresh and revoke-in-progress/pending-fence without flashing false empty or prematurely verified state; no unauthorized stale preview remains readable through new requests.",
+      "verification": "Future delayed query/fence replay in actual surface: stale/refresh/loading visible, no false empty/applied indicator; keyboard/focus remains meaningful during revoke and denied transition.",
+      "missingPrerequisite": "Accepted async query/fence DTOs and root renderer binding; rendered symbol outside permitted scope not yet supplied.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Spec:1796 lists empty; IdentityState connections list is metadata-only, and optional knowledge/LLM failures are swallowed by buildAggregatedState:108-130.",
+      "seam": "new authorized identity query result; buildAggregatedState stays standalone metadata",
+      "requiredChange": "Use explicit domain result state for genuine no grants/resources versus denied/unconfigured/unavailable, without hidden totals/title. Do not infer shared resource emptiness from local metadata aggregation or swallowed registry failures.",
+      "verification": "Future separate true-empty, revoked/denied, service unavailable and unconfigured cases through actual UI/API: distinct labels/actions and no hidden target metadata/counts.",
+      "missingPrerequisite": "Accepted query state DTO and root existing surface bindings.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Spec:1798 offline_queued and1805 replay cursor; HandlerDeps.commandGateway:70-71 points to pending store but no shared grant replay implementation is demonstrated. Test-plan:222 requires durable draft/replay/rejection.",
+      "seam": "Accepted domain command receipt/replay port, PermissionChangedEvent cursor and ResourceSubscriptionFencePort",
+      "requiredChange": "Queued command is not live success; reconnect reauthenticates current policy and rejects/quarantines revoked pending mutation rather than reusing cached grants. Durable cursor/gap recovery and explicit standalone authority prevent shared service outage from becoming local writer fallback.",
+      "verification": "Future B goes offline with draft/queued edit, A revokes, B reloads/reconnects with stale cursor/token: draft remains private quarantined, shared mutation/read/subscribe denied, no event/title leakage; authorized A queue retries once. Verify standalone personal/connection behavior separately.",
+      "missingPrerequisite": "Root accepted projection/outbox/replay/draft interface and runtime; broader WP-05 implementation is downstream but the cached-grant rejection contract is required now.",
+      "state": "MISSING_NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Negative-control acceptance: unauthorized actor or dropped/duplicated event must fail; cached client grants after revoke",
+      "currentEvidence": "Spec:1812-1814,2548-2551 defines required broken-boundary oracle and independent holdout; test-plan:239 separates baseline/infrastructure failure from caught mutation.",
+      "seam": "New wp-03 scenario runner plus policy/fence and shared outbox consumer ports",
+      "requiredChange": "Preserve passing baseline then intentionally bypass current-policy lookup with cached grants; separately evaluator injects unauthorized-actor or event-loss/duplicate/revision-fence variant. Assert actual forbidden read/delivery/state effects, not source text or mere exception.",
+      "verification": "Future specific revoke/authorization/event assertion fails under the mutation and passes on original artifact; artifact hashes, seed, expected/observed traces and independent evaluator receipt preserved. Infrastructure timeout does not count.",
+      "missingPrerequisite": "Working baseline, deterministic injection seam and independent evaluator run.",
+      "state": "MISSING_NOT_RUN"
+    },
+    {
+      "criterion": "Persistence-recovery acceptance: restart between persisted command and reply",
+      "currentEvidence": "Spec:1816-1818 requires state/receipt/canonical-ID consistency; no shared identity transaction implementation observed.",
+      "seam": "revokeInTransaction / common receipt-outbox kernel / revokeResource",
+      "requiredChange": "Committed revoke survives lost reply. Same authenticated workspace/actor/idempotencyKey/hash retry finds the existing command/receipt/resource/revision/epoch/event; altered request conflicts. Crash before commit leaves no partially revoked grants/epoch/outbox; fence resumes durably.",
+      "verification": "Future kill service after commit before RPC/HTTP reply, restart, retry and read back canonical ID, revision/epoch, receiptId/requestHash and one outbox event; replay once. Repeat precommit crash and pending-fence recovery with unchanged unauthorized boundary.",
+      "missingPrerequisite": "Real service process lifecycle, SQL transaction/receipt implementation and durable fence resume port.",
+      "state": "MISSING_NOT_RUN"
+    },
+    {
+      "criterion": "License policy and completion evidence gate",
+      "currentEvidence": "Spec:1872-1873 requires behavior reimplementation, exact upstream license audit before dependency use, actual changed surface and failure/reload observation; fixture not live receipt. Existing core triad is preserved (107-111,158-167).",
+      "seam": "Rox2Status/Rox2CanonicalResult mapping and root WP-03 execution receipt",
+      "requiredChange": "Reimplement behavior using existing ROX mechanisms; no copied upstream code/new dependency without exact audit. Completion requires all criteria and completeness dimensions with source/schema/runtime-bound receipt, real UI/API/agent verification and sensitive mutation evidence.",
+      "verification": "Future source/dependency license review and final evidence review of real surface/readback/failure/reload/evaluator artifacts; queued/fixture/pending_fence cannot be certified applied_verified.",
+      "missingPrerequisite": "Integrated implementation revision and observed runtime acceptance artifacts; none are produced by preflight.",
+      "state": "NOT_VERIFIED_PREFLIGHT_ONLY"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_PERMISSIONS / Rox2Entity / Rox2Event / Rox2Context", "lineStart": 55, "lineEnd": 167, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "formatRox2EntityId / parseRox2EntityId / Rox2EntityRef", "lineStart": 218, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "requiresExplicitGrant / Rox2ActorGrant / authorizeRox2Action / isAuditableRox2Event", "lineStart": 579, "lineEnd": 620, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext / RpcHandlerOptions / RpcServer", "lineStart": 7, "lineEnd": 34, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/server-core/src/handlers/rpc/identity.ts", "symbol": "HANDLED_CHANNELS / buildAggregatedState / broadcastChanged / registerIdentityHandlers", "lineStart": 31, "lineEnd": 175, "sha256": "afe2436779880494cf9cf68bff76d6e140c41a67d9a47765f03b2538f7eeb8b3"},
+    {"path": "packages/server-core/src/handlers/rpc/identity.ts", "symbol": "registerIdentityHandlers DISCONNECT / REFRESH_STATUS", "lineStart": 232, "lineEnd": 327, "sha256": "afe2436779880494cf9cf68bff76d6e140c41a67d9a47765f03b2538f7eeb8b3"},
+    {"path": "packages/shared/src/orgs/types.ts", "symbol": "OrgRole / OrgMember / OrgsStoreFile / AcceptInviteInput", "lineStart": 10, "lineEnd": 75, "sha256": "87613c82032323bb03ea31e11cc71b05bcc55d4e22c7bdbc125f4ab29cd42ae2"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/core/src/platform/identity/store.ts", "symbol": "IdentityStore / getState / updateProfile / listConnections", "lineStart": 172, "lineEnd": 238, "sha256": "bce92e024f7dab0dfaec0ac4eda54656a6f116afdf06ca97f896d441bb226df5"},
+    {"path": "packages/core/src/platform/identity/types.ts", "symbol": "WorkspaceRole / WorkspaceMembership / IdentityState / IdentityFile", "lineStart": 69, "lineEnd": 139, "sha256": "a8f1bc8a9a39ee97028b3fb8c42714a3e105b432269a86ae379b39e204db52c6"},
+    {"path": "packages/core/src/rox2/rpc-native-actions.ts", "symbol": "rpcNativeActResult", "lineStart": 463, "lineEnd": 495, "sha256": "692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path": "packages/core/src/rox2/rpc-native-actions.ts", "symbol": "rpcIdentityListResult / rpcIdentityReadResult / rpcIdentityActResult", "lineStart": 755, "lineEnd": 770, "sha256": "692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path": "packages/core/src/rox2/index.ts", "symbol": "rpcIdentityActResult / rpcIdentityListResult / rpcIdentityReadResult exports", "lineStart": 166, "lineEnd": 168, "sha256": "a1b3f8d450da8439aca7813bfcb5b7ccccee2092e3e6586dc1f9644cbe6efdd6"},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.identity", "lineStart": 376, "lineEnd": 383, "sha256": "c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path": "packages/shared/src/protocol/routing.ts", "symbol": "LOCAL_ONLY_CHANNELS identity/orgs entries", "lineStart": 474, "lineEnd": 490, "sha256": "f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"},
+    {"path": "packages/shared/src/protocol/events.ts", "symbol": "BroadcastEventMap identity.CHANGED entry", "lineStart": 86, "lineEnd": 92, "sha256": "2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path": "packages/shared/src/protocol/types.ts", "symbol": "PushTarget", "lineStart": 185, "lineEnd": 188, "sha256": "ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-03 package / dependencies / permissions / DoD / operation / migration / verification", "lineStart": 1737, "lineEnd": 2587, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-01.bootstrapContract", "lineStart": 998, "lineEnd": 1013, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-03", "lineStart": 46, "lineEnd": 63, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-51 / WP-52 foundation boundary", "lineStart": 1020, "lineEnd": 1053, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Acceptance boundary / fixtures / real surface requirement", "lineStart": 3, "lineEnd": 34, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Feature completeness checklist / invariant suites / evidence receipt / completion decision", "lineStart": 197, "lineEnd": 247, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead accepts this preflight and commits wave0; then accepts WP-01 typed Actor/authority/Project + migration/scenario receipts, then WP-02 canonical registry/link + migration/scenario receipts. At that new revision re-read/rehash this package and its imports, accept the minimum transaction/outbox/fence and consumer integration contracts, and allocate the five normative new artifacts to one identity owner while root alone applies sharedPatchRequests. Implement strict contracts/migration/repository/command adapters in that dependency order and verify the full matrix on the real changed surface; do not start product implementation or claim featureComplete from this preflight. The current worker's immediately executable action is report artifact verification only.",
+  "risks": [
+    "Actor+permission-only grants can authorize the wrong resource/workspace; Entity.permissions is a capability catalog and must never become an ACL.",
+    "Status adapters mark native writes live without authenticated resource authority; identity disconnect's granted=true concerns connection deletion, not permission.revoke. Reusing it would manufacture authorization/evidence.",
+    "IdentityStore and OrgsStoreFile are established local metadata/membership stores, not shared grants or authenticated principals. Adding a second grant/entity store there would violate one-authority cutover.",
+    "Published WP-03 transaction/outbox requirements rely on primitives generalized later in WP-04, and revoke fence is fully closed later in WP-51. Treat these as separate foundation/capability gates, not silently cyclic new DAG edges or permission to weaken DoD.",
+    "An epoch update without fencing in-flight responses/subscriptions allows post-revoke plaintext/event delivery. A partitioned sync consumer needs bounded lease fail-closed semantics before an applied revoke claim.",
+    "Eventual search/cache purge alone leaks titles/snippets/totals; current ACL must guard every target projection before serialization, including mentions/notifications/agent context and stale cursor queries.",
+    "Cached plaintext cannot be made unread retroactively. Requirements address future service reads/delivery and fresh rendered/context exposure; persistent derived artifacts need provenance controls, not a false un-read guarantee.",
+    "Channels/mail inheritance, public-link expiry, editor share powers and guest mapping are not encoded by current OrgRole/WorkspaceRole; identity contracts must make them explicit without changing existing organization semantics.",
+    "Exact renderer, preview/search, agent/MCP, HTTP composition and notification consumer source symbols are outside this assigned inspection scope. The report requests their root-owner mapping and common policy attachment rather than inventing inspected evidence.",
+    "No tests/builds/UI/network operations were run. All behavioral verification entries are future required scenarios, never results; featureComplete is false and every applicable DoD remains missing/not verified.",
+    "Live root-owned integration may change inspected files or create currently absent directories after hashing. Revalidate whole-file digests and line/symbol references at the accepted implementation revision; supplied input HEAD is not asserted to be the current working tree's exact source state.",
+    "Migration 03-domain-contract.sql is a normative proposed identifier, not an already generated/applied filename. Shared receipt/outbox/inbox tables must be reused from the accepted foundation and retain uniqueness/lease/fence constraints."
+  ]
+}

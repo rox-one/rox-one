@@ -930,7 +930,22 @@ export interface ElectronAPI {
   // Notes
   listNotes(workspaceId: string): Promise<NoteSummary[]>
   readNote(workspaceId: string, noteId: string): Promise<NoteDocument>
-  saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string): Promise<NoteDocument>
+  resolveContent(ref: import('@craft-agent/core/rox2').Rox2EntityRef): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').ContentResolution | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
+  describeContent(ref: import('@craft-agent/core/rox2').Rox2EntityRef): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').ContentResolution | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
+  adoptContentDescriptor(command: import('@craft-agent/server-core/docs/descriptor-resolver').AdoptDescriptorCommand): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').DescriptorReceipt | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
+  getBlockTree(request: import('@craft-agent/server-core/docs/block-tree-service').GetBlockTreeRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').BlockTreeResult>
+  previewMarkerMapping(request: import('@craft-agent/server-core/docs/block-tree-service').PreviewMarkerMappingRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').NativeMarkerMappingPreview>
+  applyMarkerMapping(request: import('@craft-agent/server-core/docs/block-tree-service').ApplyMarkerMappingRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').MarkerMappingCommitResult>
+  commitMarkdown(command: import('@craft-agent/core/docs').MarkdownCommitCommand): Promise<{ note: NoteDocument; receipt: import('@craft-agent/server-core/docs/markdown-commit').MarkdownCommitReceipt }>
+  getMarkdownCommitReceipt(workspaceId: string, noteId: string, operationId: string, sourceStoreId: string): Promise<import('@craft-agent/server-core/docs/markdown-commit').MarkdownCommitReceipt | null>
+  previewProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryPreviewInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryPreview>
+  bindProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryBindInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryBinding>
+  captureProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<import('@craft-agent/shared/code-intelligence').RepositorySnapshotSummary>
+  listProjectRepositorySnapshots(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryConnectionInspection>
+  readProjectRepositorySpan(input: import('@craft-agent/shared/code-intelligence').RepositoryReadSpanInput): Promise<import('@craft-agent/shared/code-intelligence').FileSpan>
+  checkProjectRepositoryFreshness(input: import('@craft-agent/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryFreshness>
+  cancelProjectRepositoryRequest(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
+  saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, sourceStoreId?: string): Promise<NoteDocument>
   createNote(workspaceId: string, title: string, folder?: string): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameResult>
   deleteNote(workspaceId: string, noteId: string): Promise<boolean>
@@ -947,7 +962,7 @@ export interface ElectronAPI {
   listNoteAssets(workspaceId: string): Promise<NoteAsset[]>
   deleteNoteAsset(workspaceId: string, relativePath: string): Promise<boolean>
   renameNoteAsset(workspaceId: string, relativePath: string, nextName: string): Promise<NoteAssetRenameResult>
-  updateNoteProperties(workspaceId: string, noteId: string, properties: Record<string, unknown>): Promise<NoteDocument>
+  updateNoteProperties(workspaceId: string, noteId: string, properties: Record<string, unknown>, expectedRevision?: string, reviewedDigest?: string, sourceStoreId?: string): Promise<NoteDocument>
   watchNotes(workspaceId: string): Promise<void>
   unwatchNotes(workspaceId: string): Promise<void>
   onNotesChanged(callback: (payload: NoteChangedPayload | string) => void): () => void

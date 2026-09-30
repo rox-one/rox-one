@@ -1,0 +1,25 @@
+{
+  "baselineRevision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "electron": {
+    "baselineUnique": 46,
+    "currentUnique": 44,
+    "new": [],
+    "resolved": [
+      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[] | undefined' is not assignable to type '{ id: string; slug: string; name: string; color?: string | undefined; }[]'.",
+      "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[]' is not assignable to type 'LoadedProject[]'."
+    ],
+    "baselineLog": "/tmp/rox-compound-baseline-typecheck.txt",
+    "currentLog": "/tmp/rox-wave0-bridge-electron-ts.log"
+  },
+  "server": {
+    "baselineUnique": 25,
+    "currentUnique": 25,
+    "new": [],
+    "resolved": [],
+    "baselineLog": "/tmp/rox-baseline-server-ts.log",
+    "currentLog": "/tmp/rox-wave0-frozen-server-ts.log"
+  },
+  "status": "NO_NEW_DIAGNOSTICS",
+  "normalization": "Remove diagnostic coordinates and shared-workspace-package path prefix; ignore union-member order only, preserve all member text.",
+  "baselineEnvironmentNote": "Baseline detached checkout shares installed node_modules; workspace package links can display the implementation checkout prefix. Source for reported diagnostics is unchanged from baseline."
+}

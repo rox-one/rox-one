@@ -1,0 +1,317 @@
+{
+  "task_id": "RS-MSG-02-preflight",
+  "attempt_id": "1a7b6d7acaef42968643c0caed5f6731",
+  "packet_hash": "e55515f87951e69d099d47b1c9e4a8847885e111ef69d1f9a93703372de30175",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-MSG-02",
+  "featureComplete": false,
+  "mode": "SOURCE_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-MSG-01"],
+  "dependencyEvidence": {
+    "path": "plans/rox-suite/issues.json",
+    "lineStart": 543,
+    "lineEnd": 568,
+    "note": "dependsOn is exactly RS-MSG-01 (#1106). Dispatch depends_on=[] schedules this independent inspection, not implementation. Related #562 and #380 are regression/capability obligations, not additional explicit DAG edges."
+  },
+  "evidenceStatus": {
+    "basis": "Actual working-tree source reads and whole-file SHA-256 digests; input_revision is supplied dispatch lineage, not a claim that all inspected bytes equal that Git revision.",
+    "specificationHashesMatchPacket": true,
+    "productExecution": "NOT_RUN: builds, tests, native UI and network operations are prohibited for this preflight.",
+    "scope": "Published package record, explicit predecessor specification, allocated messaging paths, cited ChatPage/platform-contract and their direct import seams; report verifier inspected only to select its read-only --verify branch.",
+    "searchLimitations": [
+      "Codegraph reports no .codegraph index for this checkout; no index was created.",
+      "Descriptive find failed because its judgment backend returned 402; its no-hits output is not absence evidence. Subsequent conclusions use literal grep, glob and actual reads.",
+      "Glob found neither allocated MessageTimeline/MessageComposer nor workspace-domain paths nor the two proposed messaging tests. Absence is scoped to those inspected allocations; no claim that the entire repository lacks every related primitive."
+    ],
+    "freshness": "Concurrent lead integration can invalidate any source reference. Artifact verifier compares every reference digest to current bytes; after wave0/dependency receipts the implementation owner must re-read changed files and bind evidence to the new committed revision."
+  },
+  "foundationGates": [
+    {
+      "id": "lead-wave0-and-revision-binding",
+      "explicitDagEdge": false,
+      "source": "Dispatch instructions: implementation starts after the lead's wave0 commit and accepted dependency receipts.",
+      "currentEvidence": "Root-owned uncommitted work is explicitly reported by the dispatch. This worker did not modify or inspect Git state and has no accepted implementation receipt.",
+      "requiredPrerequisite": "Lead supplies committed wave0 revision and accepted RS-MSG-01 receipt with allocated contract/module paths; revalidate changed source hashes before implementation."
+    },
+    {
+      "id": "common-authenticated-identity-acl-command-authority",
+      "explicitDagEdge": false,
+      "source": "RS-MSG-02 lines 3,34,70; RS-MSG-01 lines 36,60.",
+      "currentEvidence": "Rox2EntityRef supplies workspaceId/entityId/revisionId/accountNamespace. authorizeRox2Action checks actor+permission grants but has no resource, membership, author, moderator or revision input. Soup contracts expressly omit mutations. These are reusable identity/read seams, not a completed messaging authority.",
+      "requiredPrerequisite": "One common SQL authority and authenticated gateway owner must publish exact module/registration paths, transaction/receipt API, current resource ACL checks, transport actor derivation, dedup(actor,operation,commandId), and transactional durable outbox. Do not implement another SessionStore, renderer master or invented remote mutation endpoint."
+    },
+    {
+      "id": "canonical-parent-policy-and-principal-membership",
+      "explicitDagEdge": false,
+      "source": "RS-MSG-02 lines 23,34; RS-MSG-01 lines 31,36.",
+      "currentEvidence": "ROX2_ENTITY_KINDS already includes channel, channel-message, page, note, task, project, crm-company and person. The inspected identity helpers only format/parse IDs; they do not resolve MessageParent or determine its current audience.",
+      "requiredPrerequisite": "Common entity/ACL port resolves Channel/Page/Note/Task/Project/Company/Contact to canonical refs, policy and current principals, including the exact Contact-to-person mapping. Thread ACL inherits parent; following a thread and mentions never grant access. Actor identities must not be reconstructed from agent session IDs."
+    },
+    {
+      "id": "common-file-mention-attention-and-event-projections",
+      "explicitDagEdge": false,
+      "source": "RS-MSG-02 lines 26,34,39,45,70.",
+      "currentEvidence": "Existing FreeFormInput imports agent FileAttachment/LoadedSource/LoadedSkill, AttachmentPreview and agent mention menus. Those imports are presentation patterns, not proof of workspace FileRef scanning, human PrincipalRef mentions or authorized durable attention.",
+      "requiredPrerequisite": "Reuse lead-owned File upload/scanning/ready, mention resolution, attention/activity/search/memory/automation ports and accepted receipt contracts. Root must identify their actual shared paths before patching. Ready versus queued and replay-dedup notification semantics must be explicit."
+    },
+    {
+      "id": "realtime-replay-and-revoke-delivery-policy",
+      "explicitDagEdge": false,
+      "source": "RS-MSG-02 lines 28,34,53,70.",
+      "currentEvidence": "The supplied Message aggregate/commands are not present in the inspected allocations. Imported SoupPatch is a read-bridge type, not a verified authorized human messaging websocket/replay service.",
+      "requiredPrerequisite": "Shared durable event cursor/replay and ACL-at-delivery websocket/API/tool/search/push hooks, with membership invalidation and policy-driven connected cache eviction. Presence/typing must have separate lossy expiry. Do not promise physical erasure of disconnected devices."
+    },
+    {
+      "id": "signed-export-and-task-source-transfer",
+      "explicitDagEdge": false,
+      "source": "RS-MSG-02 lines 17,29,30,45,54.",
+      "currentEvidence": "The published spec requires a current signed export decision and explicitly disables Forward until that service exists. Existing ref/revision helpers are not export approval or task transfer validation.",
+      "requiredPrerequisite": "Accepted signed export service binds source revision/digest, attachments and exact recipients/current audience, invalidates changed recipients or policy, and validates at execution. Common Task command supports sourceTransfer.kind=backlink_only|approved_export and same-commandId retries. Manual task text plus neutral backlink must work without exporting the private message. Keeping Forward disabled before the service is ready is an intermediate dependency state, not satisfying the final reviewed-forward criterion."
+    },
+    {
+      "id": "provider-approval-reconcile-capability",
+      "explicitDagEdge": false,
+      "source": "RS-MSG-02 lines 61,62,70,72; related issue #380.",
+      "currentEvidence": "MessagingSessionMenuItem.useMessagingConnect pairs an Agent Session with Telegram/WhatsApp/Lark/Discord/WeChat using getMessagingConfig and generateMessagingPairingCode. It is not a human channel post API.",
+      "requiredPrerequisite": "Where provider-backed posting/forwarding is exposed, use an accepted adapter with actual capabilities, approval, reconciliation and provider read-back. No fabricated endpoint or provider-confirmed label based on local commit. Native agent regression under #562 remains a distinct gate."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+    "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+    "workspace-domain/messaging/contracts.ts",
+    "tests/rox-suite/messaging-domain.test.ts",
+    "tests/rox-suite/messaging-realtime.spec.ts"
+  ],
+  "allocationNotes": [
+    "ownedNewFiles lists only the files normatively allocated/proposed in RS-MSG-02 lines 38-41. This preflight owns none of those writes; it owns only this report.",
+    "workspace-domain/messaging/contracts.ts is the literal normative allocation suffix. No matching physical workspace-domain directory was found; its repository prefix and integration owner must be resolved by the lead, not guessed.",
+    "The required single workspace Messages module is normative, but its filename/registration seam is unspecified and not found in the inspected paths. Do not add a guessed module filename to ownedNewFiles. Lead must allocate it in the existing shared authority after wave0.",
+    "MessengerSurface/ConversationList/ConversationTools belong to RS-MSG-01, not this package. No extra navigation destination or human thread store is proposed."
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "workspace-domain/messaging/contracts.ts",
+      "symbol": "ChannelRef/MessageRef/MessageParent and canonical messaging command/receipt contracts (new shared definitions)",
+      "change": "After root resolves the normative path, compose typed refs from Rox2EntityRef; discriminate human channel/message from AgentSessionRef. Define Channel aggregate, Message parentRef/rootRef/authorPrincipalId/bodyRevision/mentions/FileRefs/tombstone/reactions, commands message.create/update/delete, reaction.toggle, channel.ensureDm/create/createGroup/markRead and thread.follow.update. Include stable commandId, expectedRevision for edits/deletes, durable cursor, and explicit saved/queued/committed/provider-confirmed receipt states. Resolve composer policy from the parent. Share this contract with RS-MSG-01 before implementing consumers; actor comes from transport context, not a trusted client-supplied author.",
+      "reason": "RS-MSG-02 lines 3,23,34,38-40 require canonical commands and one shared human domain; MSG-01 consumes the same ChannelRefs and contract. This request is not evidence that the module exists.",
+      "prerequisite": "Wave0 authority allocation and accepted RS-MSG-01 contract receipt."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/messenger/MessengerSurface.tsx",
+      "symbol": "MessengerSurface conversation body/composer host (RS-MSG-01 allocated, not present source evidence)",
+      "change": "In the predecessor-owned human host, render allocated MessageTimeline and MessageComposer with the selected canonical ChannelRef/MessageParent, shared gateway ports, thread root, receipt and current policy. Route Project Channel and Messenger to this same ref. Forward visible-permitted transcript observations to markRead; neither list-row hover nor cached selection triggers it. Do not change ChatPage/useSessionData or invoke onCreateSession.",
+      "reason": "RS-MSG-02 line 39 assigns host ownership to RS-MSG-01; predecessor lines 3,36,41 require one shared Channel service and reusable components.",
+      "prerequisite": "Accepted RS-MSG-01 implementation identifies its actual host symbol and props; rebase this request against that receipt."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/ui/rich-text-input.tsx",
+      "symbol": "RichTextInputHandle / RichTextInput React.useImperativeHandle",
+      "change": "Expose a read-only isComposing boolean getter on RichTextInputHandle backed by the existing isComposing.current ref in the imperative handle. MessageComposer guards submission with this getter OR nativeEvent.isComposing, as well as defaultPrevented and active autocomplete/menu ownership. Do not change FreeFormInput's send shortcuts, agent submission API or the existing Escape composition handling.",
+      "reason": "The existing handle has no composition getter (lines 68-87,567-572); local composition state exists at 536 and 637-646, but handleKeyDownInternal only gates Escape before forwarding (665-672). Reusing that single editor state avoids relying solely on runtime-sensitive native flags while preserving the #562 agent surface.",
+      "prerequisite": "Serialized shared-editor owner approval/integration and later IME/agent regressions; this is a proposed patch, not an observed existing Enter failure."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "New messaging.* translation keys",
+      "change": "Add ASCII-sorted keys for Сообщение, Ответить в треде, Реакция, Прикрепить файл, Изменить, Удалить, Непрочитанные, Переслать, В избранное, Создать задачу, receipt/save states, configured policy/help, conflict comparison, upload/scanning/malware/retry, denied/revoked and accessible emoji/count labels. Use t() in both new components and _one/_few/_many/_other for Russian count keys.",
+      "reason": "RS-MSG-02 lines 21-30,68 require RU user-facing controls/help and accessible status semantics; do not hardcode strings.",
+      "prerequisite": "Shared locale owner integrates one key set across every registered locale."
+    },
+    {"path":"packages/shared/src/i18n/locales/en.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"t() fallback and locale key parity; registry imports this locale.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/de.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/es.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/fr.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/hu.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/ja.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/pl.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/zh-Hans.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/zh-Hant.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Registered locale parity.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/ar.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms and RTL verification.","reason":"Actual LOCALE_REGISTRY includes Arabic despite the context file describing ten locales.","prerequisite":"Shared locale owner."},
+    {"path":"packages/shared/src/i18n/locales/ko.json","symbol":"New messaging.* translation keys","change":"Add the identical semantic key set requested for ru.json, ASCII-sorted and with locale-appropriate plural forms.","reason":"Actual LOCALE_REGISTRY includes Korean despite the context file describing ten locales.","prerequisite":"Shared locale owner."}
+  ],
+  "unresolvedIntegrationRequests": [
+    {
+      "owner": "Lead/common workspace authority owner",
+      "path": null,
+      "symbol": "One workspace Messages module and authenticated command/query registration",
+      "change": "Allocate actual shared paths, then implement SQL Channel/Message/membership/revision/reaction/read-cursor tables in that authority; unique normalized DM pair within workspace/account scope; command dedup keyed by authenticated actor+operation+commandId with payload-conflict rejection; transactionally store the mutation, receipt and outbox. All human channel/DM/group/entity-discussion wrappers dispatch message.create. Route API, websocket and agent tools through the same checks.",
+      "reason": "No concrete common authority path was supplied or found within the inspected package allocations. Inventing another server/store would violate lines 3,34,38-40. This path resolution is a real implementation prerequisite, not acceptance marked N/A."
+    },
+    {
+      "owner": "Lead/common File, mention, attention and delivery owners",
+      "path": null,
+      "symbol": "FileRef ready gate; PrincipalRef resolver; outbox projection/revoke delivery hooks",
+      "change": "Provide exact shared ports and locations for file lifecycle, current-audience mentions, attention/search/activity/memory/automation replay dedup, push authorization and connected cache invalidation. Wire them to canonical Message receipts/events, not Session attachments or source/skill mentions.",
+      "reason": "Required common ports are named normatively but physical files/contracts are not established by the inspected direct imports."
+    },
+    {
+      "owner": "Lead/signed-export and Task authority owners",
+      "path": null,
+      "symbol": "Signed sourceTransfer decision verification / Task creation command",
+      "change": "Provide exact shared paths and enforce source revision/digest/attachment audience/recipients/current authorization on reviewed export at commit. Default wider-audience Task creation to manual title/body plus neutral backlink_only; reject forged/stale approved_export and retry using the original commandId.",
+      "reason": "Required by PRIVATE-MSG-73 and the published private-source task flow; do not guess an export or Task API."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: Concurrent posts/edits/reactions/replies/replay retain exact IDs; tombstones preserve replies.",
+      "currentEvidence": "platform-contract.ts formatRox2EntityId/parseRox2EntityId (218-230) and Rox2EntityRef (232-239) supply identity, not writes. ChatPage/useSessionData (93-172) is agent-session data. The allocated MessageTimeline, MessageComposer, contracts and messaging tests were not found.",
+      "actualSeam": "Rox2EntityRef identity reused by the new normative messaging contracts; pending single workspace Messages authority; MessageTimeline projection.",
+      "requiredChange": "Compile commands first. message.create returns one canonical ref per successful commandId; store parentRef/rootRef and validate that replies belong to the same canonical parent. CAS update/delete against expectedRevision; return a conflict with current revision rather than overwrite. Persist body revisions and tombstone state without cascading replies. reaction.toggle must dedup the operation before toggling so retries do not invert state twice. Mutation, receipt and outbox share one SQL transaction; projections apply at-least-once events without duplicate rows/IDs.",
+      "verification": "Later run messaging-domain tests with concurrent posts, two edits at the same revision, repeated reaction toggle command, reply plus root deletion, process reload and duplicate/reordered replay. Assert exact refs/revisions, one winning edit and a conflict, exact reaction actors/count, one message per command and preserved reply root/tombstone. Repeat against the committed live service with recorded receipt/ref/hash; fixture UI is separate.",
+      "missingPrerequisite": "Accepted wave0 SQL/command/outbox contracts and actual Messages module allocation; RS-MSG-01 host receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: Repeated ensureDm two windows returns one pair; addC reviewed group does not auto-share DM history.",
+      "currentEvidence": "ROX2_ENTITY_KINDS includes channel (32); MessagingSessionMenuItem.useMessagingConnect (53-115) accepts sessionId and creates provider pairing, not a DM pair. No ensureDm implementation was returned in the inspected messaging allocations.",
+      "actualSeam": "Normative channel.ensureDm/create/createGroup shared command contract; existing Rox2EntityRef channel kind, not provider session pairing.",
+      "requiredChange": "Ensure DM with a SQL unique normalized pair of authenticated PrincipalRefs in the same workspace/account scope, resolving simultaneous insert attempts to the same canonical ChannelRef. Adding C creates a separately reviewed group with its own membership and history; never convert/reparent/copy the private DM history. Return auditable membership and creation receipt using stable commandId.",
+      "verification": "From two authenticated windows issue ensureDm concurrently and again after reload, asserting exactly one stored pair and equal refs. Create reviewed A/B/C group and assert C cannot query/read/search/replay any DM body/attachment, while the original DM IDs and membership remain unchanged.",
+      "missingPrerequisite": "Common PrincipalRef/membership authority, reviewed-group contract and SQL transaction seam.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 3: IME/menu Enter never accidental send; parent composer policy explicit.",
+      "currentEvidence": "FreeFormInput.handleKeyDown (1551-1595,1650-1672) already honors agent mention/slash/label menus and native isComposing and enter/cmd-enter preferences. RichTextInput owns local composition state (636-672) and only suppresses Escape in its keydown wrapper. These are agent/editor mechanisms, not an implemented human composer.",
+      "actualSeam": "Allocated MessageComposer consuming existing RichTextInput; proposed composition getter request; existing FreeFormInput is preserved.",
+      "requiredChange": "Use an explicit parent-policy discriminant: Channel/DM/group Enter-send and ShiftEnter-newline with configured CmdEnter mode; entityDiscussion plain Enter-newline and CmdEnter-send. Prevent submit while editor composition is active or the event is composing/defaultPrevented; autocomplete/menu consumes Enter first. Canonical create only after valid body/ready FileRefs; retain draft on denial/conflict/upload failure. Do not import the entire agent FreeFormInput/session send engine.",
+      "verification": "Later exercise compositionstart→Enter→compositionend, including local-active/native-flag-false event; menu selection Enter; ShiftEnter; configured CmdEnter; entity discussion Enter/CmdEnter. Assert zero create receipts during composition/menu choice and exactly one receipt only on intentional send. Run native Electron IME and existing #562 agent composer/attachment/approval regression separately.",
+      "missingPrerequisite": "Parent-policy contract, shared editor integration and accepted gateway create receipt; native IME execution is not authorized in preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Two-device read cursor monotonic; hover row no read state mutation.",
+      "currentEvidence": "ChatPage context exposes onMarkSessionRead/onMarkSessionUnread (122-124), which is agent Session read state, not a principal/channel durable cursor. RS-MSG-02 line 28 specifies actual visible permitted view; MSG-01 line 36 makes membership/read state server-authoritative.",
+      "actualSeam": "New channel.markRead contract and SQL authority; MessageTimeline visible-permitted view observer passed through MSG-01 host, not onMarkSessionRead.",
+      "requiredChange": "Store per-principal/channel cursor in shared SQL and update atomically to max(current, permitted observed cursor), including replay and stale device submissions. Authenticate actor and validate target/cursor authorization. Only visible permitted messages in the active transcript produce advancement; row hover, preload, list selection or hidden tab must not. Display watermark/count freshness from authoritative projections.",
+      "verification": "Submit device A cursor 12, B cursor 8, concurrently with replay, then reload both and assert persisted cursor 12 and exact unread projection. Hover/focus list rows and render hidden/denied transcript; assert no markRead command or SQL state change. Then expose a permitted message and assert a monotonic advance. Seed replacement-with-stale-cursor mutation and require the exact monotonic assertion to fail.",
+      "missingPrerequisite": "Durable event cursor ordering, principal identity, current ACL and authoritative read/attention port.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Revoke open websocket/API/tool blocks writes and cached body/search/push leakage.",
+      "currentEvidence": "authorizeRox2Action (601-609) is actor/permission grant matching only; it does not accept parent/membership/revision. ChatPage caches Session metadata/messages (164-176); these are not proof of human-channel cache invalidation. Spec line 70 limits offline erasure claims.",
+      "actualSeam": "Shared authority current-parent ACL and delivery-time hooks for API/ws/tools/projections; MessageTimeline/composer revoke state.",
+      "requiredChange": "Check current membership/author/moderator/revision under every command/query/tool and websocket replay delivery, not only at initial connection. On revoke, deny pending/new writes, stop unauthorized subscription delivery, clear connected cached body/snippet/attachment preview and search/attention/push projections according to policy. Mentions/follows are not grants. Never silently convert a failed human send into an agent operation.",
+      "verification": "Live authenticated A/B websocket and API/tool clients: grant then load a private body, revoke while open, race a queued write/replay/search/push, and assert denied receipts, no mutation/outbox disclosure, absent cached text/snippet/facet/push content and denied direct reads. Reconnect/reload remains denied. Document that a disconnected device cannot be guaranteed physically erased. A generic global permission result alone cannot pass this gate.",
+      "missingPrerequisite": "Resource-scoped ACL authority plus live websocket/tool/search/push invalidation contracts.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 6: PRIVATE-MSG-73 absent wider task/forward unless current signed decision valid.",
+      "currentEvidence": "RS-MSG-02 lines 17,29,30,45,54 explicitly require disabled Forward before signed export, exact audience review and manual task text plus neutral backlink. Existing revision refs are identity only; no signed export implementation was inspected.",
+      "actualSeam": "MessageTimeline action menu, canonical source MessageRef/revision, common signed export and Task sourceTransfer validation ports.",
+      "requiredChange": "For a wider-audience task default to manually entered title/body and neutral backlink_only with no source title/body/preview/file auto-copy. approved_export/forward require a signed decision bound to exact source revision/digest, FileRefs and current recipients/audience, rechecked at commit. Changed recipients, source revision or revoked membership invalidate review. Retry Task/create and forwarded message.create with the same commandId. Forward remains explicitly unavailable until the real service is ready; final acceptance still requires the reviewed path.",
+      "verification": "Seed PRIVATE-MSG-73 in private message and attachment metadata. Create manual task for outside assignee; assert marker absent from Task title/body/preview, wider search/activity/push and denied backlink resolution. Attempt forward with absent/forged/stale decision, changed recipients, edited source and revoke; assert rejected and no leakage. Then use a valid current signed decision and assert exact reviewed payload/digest/audience plus one receipt on retry.",
+      "missingPrerequisite": "Signed export decision service and common Task creation/sourceTransfer command; not an explicit DAG edge but mandatory for completion.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 7: Seed ACL/idempotency/read-cursor bypass caught by specific assertions; live server proof separate fixture UI.",
+      "currentEvidence": "Neither proposed messaging test file exists in the inspected allocations. Spec lines 55,72 demand actual caught assertion failures and separate live/fixture evidence; no tests were run by this worker.",
+      "actualSeam": "Normative tests/rox-suite/messaging-domain.test.ts and messaging-realtime.spec.ts, plus the allocated real Messages authority/gateway.",
+      "requiredChange": "Implement consumer-visible domain/concurrency/security assertions, then seed each distinct bypass: current-ACL skipped, command dedup skipped and cursor max replaced with assignment. Preserve mutation seed, exact assertion and failure transcript. Keep live server receipts and actual UI acceptance artifacts in separate evidence records bound to the tested commit; timeout, infrastructure failure or a screenshot cannot pass sensitivity.",
+      "verification": "Later baseline must pass; each seeded bypass must fail its intended concrete unauthorized-write/leak, duplicate-canonical-ID or cursor-regression assertion; remove mutations and pass again. Record real live service concurrency/revoke/replay receipts separately from fixture screenshots/ARIA. No test/build execution occurs in this preflight.",
+      "missingPrerequisite": "Integrated implementation, real service runner/authenticated clients and an agreed evidence harness after dependency acceptance.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Control gates: reply/thread, edit/delete, reaction and bookmark actions.",
+      "currentEvidence": "RS-MSG-02 lines 17,24,25,27,34 allocate actions; existing ChatDisplay imports groupMessagesByTurn/TurnCard (53-69) and side-thread agent prompt (80-81), not human Message threads.",
+      "actualSeam": "Allocated MessageTimeline with same-parent canonical rootRef and common message/reaction/thread.follow commands; reuse existing menu primitives, not agent side-thread prompts.",
+      "requiredChange": "Render inherited-ACL replies with tombstoned root, no orphan deletion; toolbar hover/focus must not shift layout. Support ShiftF10 menu and Escape focus/root return. Reaction picker Space/arrows with emoji name/count help and receipt-based rollback on denial. Edit enforces own-author/window/moderator policy and revision comparison; delete needs explicit confirmation. Bookmark/follow uses the common personal attention port without granting membership. Agent participation is explicit provenance; raw tool outputs never silently enter the human timeline.",
+      "verification": "Exercise keyboard-only reply/reaction/edit/delete/bookmark flow, denied reaction rollback, concurrent edit conflict and root tombstone with intact replies; assert ACL, exact root/parent refs and focus restoration. Agent side-thread/session IDs remain unchanged.",
+      "missingPrerequisite": "Canonical commands, parent ACL/window policy, personal attention and MSG-01 thread inspector integration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Control gate: attachments progress, ready-not-queued, retry/malware draft retention.",
+      "currentEvidence": "FreeFormInput uses FileAttachment and AttachmentPreview (59,76); RS-MSG-02 lines 23,26,39 mandate common FileRefs and upload/scanning/ready ports, not agent attachment persistence.",
+      "actualSeam": "MessageComposer Plus/file picker and common FileRef authority; existing editor paste behavior delegates files to parent (rich-text-input.tsx 674-681).",
+      "requiredChange": "Use common bytes/digest/parent upload lifecycle and show size/type/progress/help; retry parts with the same uploadId. Only authorized scanned-ready FileRefs may be committed into a human message; queued/scanning are distinct. Malware/error leaves body and draft refs available under policy without sending or granting wider file access.",
+      "verification": "Upload→scanning→ready→message receipt; interrupted part retry keeps uploadId and digest; queued file cannot masquerade as ready. Malware rejection retains draft and produces no message or unauthorized attachment access. Exercise paste and picker through actual UI later.",
+      "missingPrerequisite": "Common File port with actual scan/ready receipt, upload recovery and inherited audience checks.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Domain gate: one MessageParent resolver and one Messages module for channel/DM/group/entity discussions.",
+      "currentEvidence": "Existing platform kinds include the relevant canonical identities (17-38). SoupEntity is a generic read envelope (types.ts 40-52), with writes omitted (1-5). Specification line 34 requires seven parent categories and inherited thread policy.",
+      "actualSeam": "Rox2EntityRef and normative workspace-domain/messaging/contracts.ts backed by the common entity resolver/authority.",
+      "requiredChange": "Resolve Channel/Page/Note/Task/Project/Company/Contact once into canonical parent ref, current ACL, audience, retention and composer policy. All human wrappers dispatch canonical message.create with the same outbox/dedup authority. Use existing person/crm-company identity mapping; do not invent an independent Contact, BOT or thread-user store. Keep typing/presence lossy with expiry separate from durable messages/read state.",
+      "verification": "For each parent category create/reply/read under its current policy and assert preserved workspace/entity/revision/account identity and identical canonical command pipeline. Assert mention/follow cannot open access, revoked parent blocks thread, and presence expiry never alters unread cursor. Test explicit agent provenance with no raw tool-output copy.",
+      "missingPrerequisite": "Lead allocation of one common Messages module and entity/parent/principal policy adapters.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "User flow/event gates: A writes, B replies, mention notification dedup, private-source manual Task, offline reply/reconnect yields one Message.",
+      "currentEvidence": "RS-MSG-02 lines 34,45,70 require search/attention/activity/memory/automation and agent tools. Existing FreeFormInput mention imports are agent source/skill mechanisms, not permission-scoped human notifications.",
+      "actualSeam": "Canonical receipt/outbox consumed by common search/attention/activity/memory/automation and agent tool gateway; MessageComposer draft/queued reconciliation.",
+      "requiredChange": "Persist stable draftId/commandId for offline queued reply under the shared policy; reconcile on reconnect with one canonical receipt/ref. Project authorized mentions once per logical event, without ACL grants, and replay search/activity/memory/automation through common consumers. Expose agent read/search/write tools via the same authenticated gateway with explicit agent participation provenance. Distinguish local-saved, queued, committed and provider-confirmed; preserve actionable errors rather than reporting empty/success.",
+      "verification": "Later run the full two-principal flow including disconnect after ambiguous commit and duplicate reconnect replay. Assert one message and one permitted mention notification, exact receipt state transitions, private-safe outside Task, authorized search/activity/tool results, and no provider-confirmed state without provider read-back.",
+      "missingPrerequisite": "Shared draft/queue policy, authority/outbox and accepted common projection/tool/provider ports.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Layout/accessibility/help/i18n quality gates.",
+      "currentEvidence": "Spec lines 17,68 require 48px header, 70ch message, 28-32px avatar, 320-420px inspector, narrow overlay/drilldown, semantic fonts/theme and light+dark regressions. RichTextInput already exposes textbox/aria-multiline (849-850). Actual LOCALE_REGISTRY registers 12 locales (16-27,51-75), unlike the context's ten-locale description.",
+      "actualSeam": "New MessageTimeline/MessageComposer inside MSG-01 host; existing t(), RichTextInput, Tooltip/menu and motion/react patterns; shared locale resources.",
+      "requiredChange": "Use current semantic fonts/theme/accent, RU labels via t() across all actual locales, independent transcript scroll, 24px toolbar controls with >=32px desktop/>=44px touch hitboxes. Thread inspector collapses to overlay/drilldown narrowly. Preserve focus visibility, contrast, Escape return and reduced-motion. Provide hover/focus/click tooltips and help explaining definition/source/freshness/example for counts/cursors, emoji names, attachment size/type and configured retention; do not hardcode screenshot-derived 18-month retention. Hover never sends/shares/marks read.",
+      "verification": "Later collect actual light/dark screenshots, computed semantic font, viewport/locale and ARIA proof; keyboard hover/focus/click help and Escape restoration; reduced-motion and touch hitboxes; narrow/zoom behavior inherited from MSG-01. Assert hover emits no mutating receipt and configured retention matches authority. Run shared i18n parity against every registered locale after integration.",
+      "missingPrerequisite": "Accepted MSG-01 host/layout contract and shared locale owner; fixture and native UI gates not authorized in preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Preservation and delivery evidence gates: agent ChatPage unchanged; fixture/live/Electron/provider proof separate and revision-bound.",
+      "currentEvidence": "ChatPage sessionId/useSessionData (89-172), ChatDisplay Session/Message tool-turn imports (48-81) and provider session pairing (MessagingSessionMenuItem 53-115) are existing separate surfaces. RS-MSG-02 lines 40,61,62,72 explicitly require preservation and distinct runtime evidence.",
+      "actualSeam": "Existing agent ChatPage/ChatDisplay/FreeFormInput retained, new human host/components mounted only through MSG-01; common receipt verification and accepted provider adapter.",
+      "requiredChange": "No agent transcript migration, onCreateSession path or replacement of provider pairing by human Message storage. Preserve agent stream/tool/approval/IME/attachments semantics. Bind implemented acceptance to exact committed inputSha and domain ref/revision/hash, reload/concurrency/negative assertions and actual screenshot/ARIA/font/viewport/locale. Keep Linux fixture, live server, Electron native and provider read-back as separately required observed gates. Do not copy private screenshot identities/assets or literal external product code.",
+      "verification": "After dependency integration, run real human post/thread/read/reaction/files/forward flows plus separate #562 agent regressions and #380 approved provider reconciliation/read-back when exposed. Attach each distinct gate's observed result to the tested revision. This preflight can only validate the owned JSON lineage/hashes, never claim feature completion.",
+      "missingPrerequisite": "Accepted dependency receipts, committed implementation and all authorized runtime surfaces; no completion proof exists in this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-MSG-02.md","symbol":"Canonical domain, allocations, controls, seven DoD items and common quality gates","lineStart":17,"lineEnd":72,"sha256":"ea870216b6513e3724fcdc5b96428fd969b2609df6d633b4c8f6822619530063"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues[id=RS-MSG-02].dependsOn/publishedSpec/implementationStatus","lineStart":543,"lineEnd":568,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"docs/rox-suite/published/RS-MSG-01.md","symbol":"Messenger shared ChannelRef host allocation and hidden foundation gate","lineStart":34,"lineEnd":60,"sha256":"7666cd3ddd561238ba77e6970f86b0f84bbb85a93c15d849cdd95a2667d1c21c"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"formatRox2EntityId/parseRox2EntityId/Rox2EntityRef","lineStart":218,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2ActorGrant/authorizeRox2Action","lineStart":592,"lineEnd":609,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"apps/electron/src/renderer/pages/ChatPage.tsx","symbol":"ChatPage/useSessionData/sessionId","lineStart":89,"lineEnd":172,"sha256":"aaf488f025e7d1ef60b8a7792fdcf8f6d4287d8b9918da58ab81dde13af36788"},
+    {"path":"apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx","symbol":"Agent Session/Message, groupMessagesByTurn, ChatInputZone and side-thread imports","lineStart":48,"lineEnd":81,"sha256":"90d4190f5a2214b9b1af0301b5566de31d033e1a0cb7936afd861fc1325cb99b"},
+    {"path":"apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx","symbol":"handleKeyDown inline-menu precedence and IME/sendMessageKey handling","lineStart":1551,"lineEnd":1672,"sha256":"079e7d20e5b16707cfe9a61b7778aa52ab26b4062c8531d21bafee207e891298"},
+    {"path":"apps/electron/src/renderer/components/ui/rich-text-input.tsx","symbol":"RichTextInput.handleCompositionStart/handleCompositionEnd/handleKeyDownInternal","lineStart":636,"lineEnd":672,"sha256":"8e926bb434836c10a6685e69316559b60ec256812c4e0ccd701eab531ca11035"},
+    {"path":"apps/electron/src/renderer/components/ui/rich-text-input.tsx","symbol":"RichTextInputHandle/React.useImperativeHandle","lineStart":567,"lineEnd":572,"sha256":"8e926bb434836c10a6685e69316559b60ec256812c4e0ccd701eab531ca11035"},
+    {"path":"apps/electron/src/renderer/components/messaging/MessagingSessionMenuItem.tsx","symbol":"useMessagingConnect","lineStart":53,"lineEnd":115,"sha256":"0fd1813aa716a2c24412e7eb337c955be794e6a191eee4a7224111535806f917"},
+    {"path":"packages/core/src/conation/soup/types.ts","symbol":"Read-only SoupEntityConcreteType/SoupEntity; mutations omitted","lineStart":1,"lineEnd":52,"sha256":"bb030fb5bfa8bebd40fb317bbca05a684720fc8cee1c57f090df43ecce6a6cd9"},
+    {"path":"packages/shared/src/i18n/registry.ts","symbol":"LOCALE_REGISTRY and imported translation resources","lineStart":16,"lineEnd":75,"sha256":"9f294bcf986a0fe36e6df0aa625b3866231f38ef58686ee1a4e8ce7ba511b4b2"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead may independently validate this source preflight with the supplied --verify command; no product implementation is authorized for this worker.",
+    "implementationEntry": "After the lead's wave0 commit and accepted RS-MSG-01 receipt, revalidate hashes and obtain the exact workspace-domain prefix, single Messages authority/registration path and common port contracts. Compile the shared ChannelRef/MessageParent/command/receipt contract first, then implement canonical SQL/outbox mutations before MessageTimeline/MessageComposer integration in the predecessor-owned host.",
+    "order": [
+      "Accept committed wave0 and RS-MSG-01 receipts; resolve foundation/module allocations and invalidate changed source evidence.",
+      "Compile canonical shared contracts; integrate current-parent ACL, SQL dedup/unique DM/read cursor and durable outbox in one workspace authority.",
+      "Implement post/reply/edit/tombstone/reaction, ensureDM/reviewed group and authorized replay/revoke; add visible-permitted monotonic read advancement.",
+      "Integrate human composer keyboard policy, drafts, common FileRef/mention ports and receipt/reconnect reconciliation in the MSG-01 host without changing agent ChatPage.",
+      "Integrate manual Task/backlink and valid signed reviewed forward through common services; verify event/search/attention/tool/provider behavior.",
+      "Execute all DoD sensitivity and separately observed live service, fixture UI, Electron native and applicable provider read-back gates at the delivered revision."
+    ]
+  },
+  "risks": [
+    "The only explicit dependency is RS-MSG-01, but common authenticated SQL/ACL/outbox, File/mention/attention, replay/revoke and signed-export/Task services are mandatory hidden gates. An accepted layout receipt alone cannot satisfy RS-MSG-02.",
+    "The single workspace Messages module and physical workspace-domain prefix are unspecified in the inspected allocation; inventing filenames or a second authority would violate the contract.",
+    "GraphqlSoupChannel/GraphqlSoupChannelMessage enum entries and Rox2EntityRef formatting can be mistaken for implemented human writes. The imported Soup contract explicitly omits mutations.",
+    "Existing messaging UI is provider-to-agent-session pairing, and ChatDisplay Message is an agent transcript. Reusing those stores or session read flags would create identity/read-state violations.",
+    "At-least-once reaction.toggle without command dedup can undo a successful reaction on retry; CAS revisions, idempotency digest conflicts and transactionally durable outbox must be specified together.",
+    "Adding a third DM member by reusing the original channel/history leaks private messages. Reviewed group creation must leave the DM and its history/audience intact.",
+    "Cached query/search/push delivery and queued reconnect writes can outlive membership. Revoke must affect all active transports and projections, not just a toolbar or initial websocket handshake.",
+    "PRIVATE-MSG-73 may leak through copied Task title, attachment metadata, backlink previews or stale signed decisions even if the visible body is scrubbed. Manual text plus neutral backlink is the default; export authorization is validated at commit.",
+    "The shared editor tracks composition locally but forwards Enter based on consumer logic. A proposed composition getter needs shared-owner integration and real native IME regression; no existing failure was reproduced or claimed here.",
+    "Actual locale registry has ar and ko in addition to the ten locales named in context. Limiting new keys to ten would leave registered-language parity incomplete.",
+    "Concurrent root integration can stale hashes/line ranges after inspection. This report does not assert that inspected working-tree bytes are input HEAD; artifact validation and post-wave0 reinspection are required.",
+    "No product tests, builds, UI or provider/server runs were performed. Every implementation/runtime criterion remains unimplemented or foundation-blocked and NOT_VERIFIED; report validity is not feature completion."
+  ]
+}

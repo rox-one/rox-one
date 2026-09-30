@@ -1,0 +1,452 @@
+{
+  "task_id": "WP-15-preflight",
+  "attempt_id": "9d3e338e4e9533546b3ffccfed056cf1",
+  "packet_hash": "7a50b0f5ad70730315ddbefb04388b5e806f47d0d0dc6fdd46ca51bae43870c5",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-15",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; no feature implementation",
+  "workTier": "bounded-workflow within dispatched independent worker scope",
+  "dependencies": ["WP-10", "WP-08"],
+  "evidenceStatus": {
+    "basis": "Actual working-tree source reads, not an assertion that all inspected bytes equal input HEAD. Root-owned uncommitted wave0 work is preserved.",
+    "specManifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "specManifestMatchesPacket": true,
+    "hashes": "Whole-file shasum -a 256 captured after source inspection; rehash and reread changed sections after root integration before implementation.",
+    "runtimeVerification": "Not performed: builds, tests, native UI and network operations prohibited by preflight scope.",
+    "dependencyReceipts": "Accepted dependency interfaces/migrations/scenario receipts were not supplied or verified in this inspection.",
+    "artifactExistence": "Direct read returned path not found for the three normative pages contracts/commands/repository paths. A multi-path glob returned path-not-found for the normative WP-15 artifacts; absence of the test/migration is not independently established by a direct read.",
+    "researchLimit": "Only normative WP-15 source/spec paths and direct imports inspected. Codegraph has no project index; descriptive find failed with judgment-provider 402, then known-symbol grep resolved the directly imported PageConfig. Neither failure prevented source inspection. No indexing or network remediation attempted."
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and accepted dependency receipts",
+      "classification": "dispatch execution prerequisite, not a new WP-15 DAG edge",
+      "evidence": "User dispatch explicitly forbids implementation before root wave0 commit and accepted dependencies; work-packages.json:12542-12558 requires accepted typed interface, applied migration or N/A receipt, and scenario verification receipt for WP-10 and WP-08.",
+      "requiredArtifact": "Lead's committed integration revision plus all three receipts from each explicit dependency. No N/A migration receipt may substitute for required document/anchor persistence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-49 accepted editor/CRDT binding and selective undo/anchor decision",
+      "classification": "published Page foundation; transitive through WP-10, not direct WP-15 dependency",
+      "evidence": "21-implementation-plan.md:5 and 984-1000 require both Tiptap/Loro and React Lexical/Loro candidates to exercise rich-text/list/entity-node, concurrent/offline/undo/anchor fixtures and choose a passing binding. WP-10 explicitly depends on WP-49 at lines 182-199.",
+      "requiredArtifact": "Accepted plans/macro-integration/editor-binding-decision.json and passing stable-position, selective-undo, schema round-trip receipts; exact selected library/version/license. Do not assume DOM offset mapping or introduce a second CRDT authority.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-51 single writer and bounded revocation fence",
+      "classification": "published Page foundation; transitive through WP-10, not direct WP-15 dependency",
+      "evidence": "21-implementation-plan.md:5,1020-1036. Current registerPagesHandlers GET_CONTENT/SET_CONTENT at pages.ts:262-281 ignores _ctx and directly accesses local files; savePageContent at storage.ts:445-463 overwrites index.html.",
+      "requiredArtifact": "ResolveWriterMode/FenceDocument/ConfirmRevokeApplied accepted ports and proof legacy shared-ID writes cannot bypass the authoritative service; bounded append/broadcast policy fence. Local standalone path remains explicit.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Canonical entity, policy, durable receipt/outbox and offline projection foundations",
+      "classification": "transitive platform requirements, not invented direct DAG edges",
+      "evidence": "WP-15 operation/migration requires canonical refs, transport principal, idempotency request hash, causal frontier, policy fence, composite entity FK and inbox dedup: work-packages.json:12564-12568,12602-12619,12746-12764,12972-13007. WP-10 depends on WP-05/03/06/09; WP-08 depends on WP-04/03 in 21-implementation-plan.md:144,182.",
+      "requiredArtifact": "Dependency receipts exposing WP-02 registry identity, WP-03 policy epoch and grants, WP-04 atomic receipt/outbox/inbox transactions, WP-05 durable client queue; reuse their ports rather than new stores.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Shared common files and common Message schema ownership",
+      "classification": "hidden integration/ownership gate",
+      "evidence": "WP-10 and WP-15 propose the same three pages contracts/commands/repository files (21-implementation-plan.md:188,284); WP-08 owns the common Message store (lines 144-159), while WP-15's proposed migration also names message (work-packages.json:12967-12970).",
+      "requiredArtifact": "Accepted WP-10 Pages ports and WP-08 Message creation/transaction ports; lead assigns one owner to extend the three common files. Migration 15 references/extends accepted message schema, never creates a competing Message table/store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Live shared-service migration and dual-client acceptance environment",
+      "classification": "verification prerequisite, not a direct WP-15 DAG edge",
+      "evidence": "22-test-plan.md:3,7-9,30-58 requires exact implementation SHA, image/schema revision, real Electron/RPC or supported web HTTP/WS, independent A/B devices and actual failure/reload evidence. WP-15 verificationGate at work-packages.json:12541 rejects fixture-only completion.",
+      "requiredArtifact": "Runnable shared deployment with selected migrator and independent authenticated clients. Provider sandbox is not required unless outbound effects are introduced; no external provider implementation is inferred.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/pages/contracts.ts",
+    "apps/workspace-service/src/modules/pages/commands.ts",
+    "apps/workspace-service/src/modules/pages/repository.ts",
+    "tests/macro-integration/wp-15.test.ts",
+    "apps/workspace-service/migrations/15-domain-contract.sql"
+  ],
+  "ownershipNotes": [
+    "The only current worker-write authorization is plans/compound-implementation/worker-reviews/WP-15.json. ownedNewFiles lists normative implementation artifacts, not authorization to create them during preflight.",
+    "The first three normative new files are also WP-10 artifacts and must become coordinated shared extensions after its accepted receipt, not independent WP-15 replacement files.",
+    "15-domain-contract.sql is the proposed normative migration identifier; the lead-selected migrator supplies the actual filename. Do not fabricate a timestamp."
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput, LoadedPage; re-exported PageConfig",
+      "change": "Extend the accepted WP-10 document variant with typed canonical document ref, revision/history and anchor/comment query projections imported from workspace-domain/pages/contracts.ts. Keep path-carrying LoadedPage for standalone artifacts; shared document DTO must not leak absolute filesystem paths. Leave isPageGrantUsable and hasPathTraversal unchanged.",
+      "reason": "Existing definitions only describe local HTML creation and paths; neither grant expiry nor path traversal is a CRDT/history seam. Avoid abusing the speculative symbols named in the audit as document logic."
+    },
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageKind, PageConfig",
+      "change": "Have the WP-10 owner establish/retain explicit contentKind document versus artifact discrimination and schema versioning; expose accepted revision identity needed by WP-15 without overloading static/interactive/live. Do not add a second document model or mutate the existing HTML digest security meaning.",
+      "reason": "PageKind is a sandbox capability class at lines 29-35; PageConfig currently contains index.html digest, grants, share and thumbnail at lines 294-320. The shared types file re-exports this actual model."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "createPage, loadPageContent, savePageContent",
+      "change": "Integrate the accepted WP-51 writer-mode guard with WP-10 document routing: authoritative shared documents cannot persist comment/history/undo by savePageContent or page.json. Keep atomic index.html writes and digest-bound grant invalidation unchanged for standalone artifacts; materialized shared files are projections only.",
+      "reason": "savePageContent replaces the entire file and bumps only digest/updatedAt, so using it for restore or undo would erase concurrent content and bypass resource policy."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/pages/contracts.ts",
+      "symbol": "Accepted WP-10 domain ports; proposed CreateAnchoredComment, ReadRevision, UndoLocal, RestoreAsNewRevision",
+      "change": "Add strict document.comment input/result validators and typed ports on the accepted Page contract: document canonical ref, DocumentAnchor schemaVersion/anchorKind/sourceRevision/start/end/optional quote, body 1..10000, sourceRevision 1..10000; reject extra actor/workspace fields and mismatched anchor/source/document revisions. Define resolved versus orphan anchor projection and immutable revision evidence. Preserve all four declared anchor kinds; select validated content-kind adapters or explicit schema/content-kind rejection, never silently reinterpret unsupported kinds as DOM offsets. Specify accepted binding's encoded stable positions, causal frontier and local undo origin instead of inventing API method names now.",
+      "reason": "This is also WP-10's normative new file; actual binding and frontier formats are unavailable until its receipt. Core contract must remain service-I/O-free."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/pages/commands.ts",
+      "symbol": "Accepted WP-10 command/query gateway; proposed CreateAnchoredComment, ReadRevision, UndoLocal, RestoreAsNewRevision",
+      "change": "Add handlers through the existing transport-principal/policy/idempotency/fence gateway. CreateAnchoredComment atomically creates a WP-08 Message, stable anchor and receipt/outbox; ReadRevision rechecks current document and linked-ref policy before filtering/paginating; UndoLocal submits only selected binding's actor/device-origin compensating operations; RestoreAsNewRevision appends a new head revision under causal/policy checks without rewriting old revisions or silently dropping concurrent edits.",
+      "reason": "Avoid a Pages-specific identity gateway, Message store or snapshot-replacement undo. Exact exports are pending accepted dependency ports, not claimed existing symbols."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/pages/repository.ts",
+      "symbol": "Accepted WP-10 WAL/snapshot repository; proposed document_revision and comment_anchor operations",
+      "change": "Extend its transaction interface for immutable revision snapshot metadata, frontier/schema/content hash, canonical refs, anchor endpoints/status and same-transaction common Message/receipt/outbox writes. Resolve anchors against authoritative causal content, retain orphan anchors and their Message, dedup inbox replay, enforce policy/tombstone epoch and revision constraints. Share WP-08 transaction participation; do not create message ownership here.",
+      "reason": "The three pages files are not yet present in inspected working tree; their WP-10 introduction is prerequisite. File snapshots/store.sqlite are not authoritative collaborative history."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pages.ts",
+      "symbol": "HANDLED_CHANNELS, registerPagesHandlers, GET_CONTENT/SET_CONTENT, broadcastChanged",
+      "change": "Register native domain.document.comment and accepted history/undo/restore contract routes; derive actor from _ctx via accepted gateway, validate canonical workspace refs and return filtered canonical receipt/DTO. Route shared-ID legacy writes through writer-mode guard; preserve standalone artifact handlers. Domain event delivery must use accepted outbox/subscription path; pages:changed is only existing local list invalidation, not a durable anchor/history event.",
+      "reason": "Current handlers resolve client workspace ID and local files with unused _ctx; source/action grants are not resource/history ACLs. Exact additional route names must come from accepted contracts, since only document.comment native route is specified."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps",
+      "change": "Ask composition/gateway owner to expose the accepted Pages authority command/query port through the existing dependency convention, then consume it from registerPagesHandlers. Do not substitute commandGateway PendingCommandsStore for an authenticated domain service or instantiate repositories in handlers.",
+      "reason": "HandlerDeps at lines 56-72 contains runtime/session services and optional pending-command store, but no accepted document authority port in inspected source. This is a direct import and a concrete integration seam."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.pages and domain command routing contract",
+      "change": "Protocol owner adds the accepted document.comment native route literal domain.document.comment and typed routes for ReadRevision/UndoLocal/RestoreAsNewRevision, synchronizing native client adapters/routing under the lead. Preserve existing pages:* artifact channels; no private string-only IPC route.",
+      "reason": "Current pages channel block lines 840-864 has only artifact/content/grant/share operations. Remaining adapter files are outside inspected direct import scope and their exact symbols are not asserted."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "symbol": "PageView, contentDigest/lease effect, body render at lines 386-439",
+      "change": "Extend the WP-10 document branch of the existing Pages destination with stable selection comment creation, common discussion rendering, orphan-anchor affordance, authorized revision list/read view and explicit restore-as-new-revision. Bind undo/redo to selected CRDT origin with remote updates excluded. The document branch must not be remounted by artifact contentDigest/lease churn. Show loading/empty/permission_denied/offline_queued/retryable_error/applied_verified based on real query/sync/receipt evidence. Retain PageFrame and artifact share/grant behavior.",
+      "reason": "Current body only renders lease-bound iframe or artifact load/error/empty states. New document surface must remain within Pages and not weaken iframe isolation to capture selection. All new user-facing strings must use t() with ten-locale parity coordinated by the lead."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-15 section",
+      "change": "After actual implementation and proof, document selected binding/anchor encoding, orphan semantics, undo ownership, immutable history/restore semantics, shared Message reuse and exact dependency/migration receipts; retain planned status until verified.",
+      "reason": "Current lines 276-293 are future work, not a runtime receipt. Documentation is required by normative WP-15."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "COLLAB-01 and WP-15 acceptance evidence",
+      "change": "Extend COLLAB-01 with intended-content anchor assertions before/after concurrent insertion, deletion-to-orphan, actor-local undo/redo and denied revision/history/restore queries. Record exact implementation/schema/image revision, replay/crash controls and real surface receipts without publishing private content.",
+      "reason": "Current COLLAB-01 already requires two-user selective undo and reload/reconnect, but does not spell out orphan/history scenarios. No preflight runtime PASS may be added."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Comment remains on intended content after concurrent insert",
+      "currentEvidence": "PageView:430-437 renders PageFrame; PageFrame:319-326 uses isolated HTML srcDoc. storage.savePageContent:445-463 replaces whole HTML. No stable collaborative anchor is represented in inspected PageConfig:294-320.",
+      "actualSeam": "PageView document branch supplied by WP-10; selected editor/CRDT adapter; proposed CreateAnchoredComment and comment_anchor transaction",
+      "requiredChange": "Capture selection as selected CRDT binding's durable positions at source causal revision, validate same document/revision, persist anchor with common Message and render range resolved against merged content, never DOM index offsets.",
+      "verification": "Seed 20260945: A selects a unique intended phrase and comments; B concurrently inserts before/within adjacent content; synchronize both clients, API and authoritative frontier. Assert comment highlights that exact original phrase on both clients after reload, same canonical Message/anchor ID and no duplicate event. Mutate anchor mapping to fixed DOM offsets and require this assertion to fail.",
+      "missingPrerequisite": "WP-10 accepted CRDT position/selection/materialization API; WP-49 passing anchor binding; WP-08 Message transaction port and both dependencies' receipts.",
+      "state": "BLOCKED_DEPENDENCY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "deleted selection becomes orphan anchor",
+      "currentEvidence": "LoadedPage:86-100 only carries artifact paths; PageConfig has no anchor status; current body at PageView:386-439 has no comment/orphan rendering.",
+      "actualSeam": "Selected CRDT anchor resolver; proposed repository comment_anchor status; PageView common discussion projection",
+      "requiredChange": "When all intended content is deleted, retain stable anchor ID/source revision and Message, mark orphan explicitly and stop highlighting arbitrary neighboring text. Preserve partial-range behavior according to the accepted binding, rather than quote-search retargeting.",
+      "verification": "A comments on a unique selection; B deletes all selected nodes/spans. Assert orphan status, preserved Message/body/canonical ref, absent false highlight in both clients and authorized API; restart/replay retains orphan. Include repeated identical quote elsewhere so accidental quote retargeting fails.",
+      "missingPrerequisite": "Selected binding's deleted-position/tombstone semantics and retention behavior; WP-10/08 accepted persistence ports.",
+      "state": "BLOCKED_DEPENDENCY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "A undo does not erase B edit",
+      "currentEvidence": "savePageContent:455 is complete index.html replacement, not actor-selective operation undo; current PageView provides no document undo binding. Published COLLAB-01:45-46 requires selective undo and duplicate-free redo.",
+      "actualSeam": "WP-49 selected binding undo manager/origin; WP-10 PushUpdate/WAL/policy-fence path; proposed UndoLocal",
+      "requiredChange": "Use binding-supported actor/device-local undo scopes excluding remote/system operations; send compensating CRDT updates through existing durable sync authority. Do not implement undo as restore of an old full snapshot; redo must preserve stable nodes without duplication.",
+      "verification": "A and B edit same starting position; A undoes its insertion after receiving B's insertion, then redoes. Assert B's text/nodes remain, only A's targeted action changes, canonical content converges across both clients/server, redo creates no duplicate nodes. Include rich text/list/entity-node cases from accepted WP-49 fixtures and persistence/reconnect boundaries.",
+      "missingPrerequisite": "WP-49 accepted selective-undo decision and defined actor/device grouping; WP-10 WAL/ACK/offline and WP-51 policy fence receipts.",
+      "state": "BLOCKED_DEPENDENCY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "history permissions checked",
+      "currentEvidence": "registerPagesHandlers GET_ONE:190-197 and GET_CONTENT:262-269 use _ctx unused and resolve local workspace files. isPageGrantUsable:40-45 is digest/expiry for source actions, not document history ACL.",
+      "actualSeam": "registerPagesHandlers + accepted authority query/command gateway; proposed ReadRevision/RestoreAsNewRevision; revision projection serialization",
+      "requiredChange": "Derive principal from transport and recheck current document/resource/linked-ref permissions on list/read/restore and subscription, including historical snapshots. Filter before serializing titles/body/counts/cursors. Require restore action/write grant; agent allow-all never overrides ACL. Reject forged workspace/actor and enforce revoke fence.",
+      "verification": "Owner/editor/viewer/outsider and Agent-V allow-all: permitted readers see only authorized history; viewer cannot restore/comment/undo writes; outsider and forged cross-workspace ref reveal no PRIVATE_WP-15 title/body/count. Revoke while history is open or cursor pending, then query/rejoin stale token: no content/event. Capture denied native RPC and HTTP responses, not only disabled UI.",
+      "missingPrerequisite": "WP-03 current policy and epoch; WP-51 bounded revoke fence; WP-10 accepted query identity; authorized cursor/history DTO contracts.",
+      "state": "BLOCKED_DEPENDENCY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "PageView:50,386-439 is existing Pages destination with artifact load/empty/error/frame branches.",
+      "actualSeam": "PageView WP-10 document representation",
+      "requiredChange": "Add comment selection/thread/orphan/history/restore and actor-local undo within the document branch, using t() and accessible controls; retain HTML branch.",
+      "verification": "Real Electron/RPC or supported web client A/B interaction, screenshot/ARIA and motion/focus checks, reload persisted discussion/history. No separate Page destination.",
+      "missingPrerequisite": "Accepted WP-10 document UI/binding and lead-managed locale/client patches.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "RPC_CHANNELS.pages:840-864 and HANDLED_CHANNELS:15-38 have existing artifact routes, no document.comment.",
+      "actualSeam": "Protocol channel contract and registerPagesHandlers",
+      "requiredChange": "Expose POST /v1/workspaces/{workspaceId}/commands/document.comment and native domain.document.comment through same accepted authority, plus accepted history/undo/restore routes. Keep Pages deep links to canonical document/comment/revision.",
+      "verification": "Equivalent authorized HTTP/native commands yield same canonical Message/receipt; forged actor rejected; deep link opens permitted content and denies outsiders.",
+      "missingPrerequisite": "Lead-composed shared transport/gateway and WP-10/08 contract receipt; precise additional route names not published.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "createPage:290 assigns page_<8 chars>; PageConfig:294-320 lacks canonical revision/anchor entities. Normative entities are document_revision/comment_anchor/message.",
+      "actualSeam": "Accepted canonical entity registry and proposed Pages contracts/repository",
+      "requiredChange": "Preserve aliases for existing page IDs; use workspace-scoped canonical document and Message refs, explicit stable anchor identity and immutable revision/frontier/schema metadata; reuse common Message store.",
+      "verification": "Read back canonical document/message/revision IDs across clients/retry/restart; composite refs never cross workspace; ambiguous legacy aliases quarantined.",
+      "missingPrerequisite": "WP-02 identity/alias receipt via accepted dependencies and WP-10 document variant.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "storage:39-46 declares page.json/index.html/snapshot.json/script-private store.sqlite. savePageContent:455-463 persists HTML and config, not one transactional domain history.",
+      "actualSeam": "WP-10 repository/WAL and migration 15-domain-contract.sql",
+      "requiredChange": "Add document_revision/comment_anchor constraints and immutable snapshot evidence, reference WP-08 Message table; atomic message/anchor/receipt/outbox under authoritative transaction, composite entity FK, schema>0/revision>=0, stable lookup/cursor indexes. No second SQLite store.",
+      "verification": "Apply migrator-generated artifact; check actual schema/FKs/unique key row counts; crash after transaction before reply and retry same request yields exactly one anchor, Message, receipt and semantic event.",
+      "missingPrerequisite": "Selected migrator, accepted dependency schemas and cross-module transaction interface.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Current CREATE/SET_CONTENT call direct local storage; normative work-packages.json:12448,12562-12595,12752-12764 defines the four required APIs and errors.",
+      "actualSeam": "Proposed Pages commands extension of accepted gateway",
+      "requiredChange": "Implement CreateAnchoredComment, UndoLocal and RestoreAsNewRevision with transport principal, strict input, common receipt/idempotency hash, required aggregate revision or document causal frontier plus policy fence. Preserve all specified statuses/errors and do not claim applied without durable evidence.",
+      "verification": "Retry same key same payload returns same canonical result; altered payload fails IDEMPOTENCY_CONFLICT; missing/invalid schema/refs/body/source revision fail exact errors; concurrent operations remain causally valid.",
+      "missingPrerequisite": "WP-04/WP-10 accepted command/frontier/receipt ports and schema version support policy.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "GET_ONE/GET_CONTENT return local page/content without revision query; work-packages.json:12746-12750 requires authorized typed DTO with no hidden title/total.",
+      "actualSeam": "Proposed ReadRevision and document anchor/discussion history projections",
+      "requiredChange": "Add currently authorized revision list/read, immutable revision evidence, anchor/orphan and common Message query DTOs with stable pagination and authorized cursor; filter before serialization.",
+      "verification": "Read exact prior/current revision under permitted user, page deterministic cursors, reject cross-document/cross-workspace/stale-policy cursor; assert PRIVATE_WP-15 absent from denied payloads.",
+      "missingPrerequisite": "Accepted projection/cursor port and policy APIs from dependencies.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "broadcastChanged:55-59 pushes local full pages list; broker state at pages.ts:46-48 is in-memory. Normative events document.revision_created/message.created require durable outbox.",
+      "actualSeam": "WP-10 durable CRDT sync and WP-04 event outbox/inbox",
+      "requiredChange": "Publish revision/Message changes after transaction commit with causation/revision/policy epoch, subscribe authorized audiences, dedup replay and resolve stable anchors after causal merge. Keep lossy presence separate.",
+      "verification": "A/B see same anchor/history after reconnect; duplicate delivery does not duplicate Message/notification; dropped delivery recovered by replay/watermark; fence denies revoked bytes/events.",
+      "missingPrerequisite": "Accepted domain event and WAL subscriptions with policy/tombstone fence receipts.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Source-action grants/leases in PageFrame:102-111 do not authenticate history principal; handler read/write _ctx is unused in inspected flows.",
+      "actualSeam": "Transport _ctx, accepted policy gateway and writer-mode guard",
+      "requiredChange": "Check authenticated workspace/resource read/comment/write/restore actions, linked refs and current policy epoch; explicit standalone mode only; allow-all does not bypass grants.",
+      "verification": "Owner/editor/viewer/outsider/agent action matrix through UI and APIs, forged actor/workspace denial, revoke race at durable append and read boundaries.",
+      "missingPrerequisite": "WP-03/WP-51 accepted policy/action semantics and fence.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "PageView:449-457 uses existing SharePageDialog; PageConfig.share:317 is artifact publication pointer, not document discussion authorization.",
+      "actualSeam": "Existing Pages sharing surface with accepted WP-10 resource share policy",
+      "requiredChange": "Keep artifact publishing intact; shared document/comment/revision deep links use same canonical resource grants and never implicitly expose historical or orphan content to broader audiences.",
+      "verification": "Share authorized document then open comment/revision as B; viewer/outsider cannot gain write or read forbidden refs; revoke invalidates historical link and live subscription.",
+      "missingPrerequisite": "Accepted WP-10 document sharing/current grant contract; no new publication mechanism is inferred.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "WP-10 depends on WP-06; inspected Pages files contain no search projection integration. Normative WP-15 explicitly includes search.",
+      "actualSeam": "Proposed revision/Message transaction outbox consumed by accepted WP-06 projection ports",
+      "requiredChange": "Route authorized comment/document revision projection updates through existing search pipeline, retaining source ref/revision/policy watermark and tombstone filtering; do not index private history without query authorization.",
+      "verification": "Find new permitted comment/current document after watermark, exclude revoked/private historical content and deleted content across replay; no PRIVATE_WP-15 snippet leakage.",
+      "missingPrerequisite": "WP-06 accepted projection contract via WP-10; implementation symbols outside this preflight's scope must be supplied by its owner.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "WP-10 depends on WP-09; WP-15 body is string and shares Message creation requirement. No anchor-aware mention behavior in inspected Pages files.",
+      "actualSeam": "CreateAnchoredComment common WP-08 Message path and accepted WP-09 occurrence extraction",
+      "requiredChange": "Reuse common Message mention extraction keyed by source Message/revision/occurrence; recheck linked targets and do not grant access or move occurrences using DOM offsets.",
+      "verification": "Comment mentions B and canonical entity; authorized target deep link works, denied target is filtered, replay yields one occurrence, editing/removing mention removes backlink without implicit grant.",
+      "missingPrerequisite": "Accepted WP-09/08 mention and Message revision ports via dependencies.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-08 plan lines 146-159 requires authorized subscriber notifications; WP-15 emits message.created. No document-specific notification store should be introduced.",
+      "actualSeam": "Common Message event and accepted attention consumer",
+      "requiredChange": "Pass document/thread/anchor canonical ref and policy context through common notification policy, coalesce semantic overlap and filter recipients; orphan status remains readable without creating duplicate pings.",
+      "verification": "B receives one permitted mention/reply notification with document/comment deep link after replay/restart; unauthorized C receives no title/body; duplicate event produces no second notification.",
+      "missingPrerequisite": "WP-08 notification participation and WP-07 consumer receipt through WP-09 dependency chain.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Normative events document.revision_created/message.created at work-packages.json:12450-12452; current pages:changed is list invalidation.",
+      "actualSeam": "Proposed authoritative revision/Message outbox and existing authorized activity projection",
+      "requiredChange": "Project comment creation, restore-as-new-revision and relevant document revisions as canonical authorized activity with actor/causation/revision, not body-rich logs or a separate local feed.",
+      "verification": "One logical activity per accepted command across restart/replay with correct document revision; denied actor receives no private activity payload.",
+      "missingPrerequisite": "Lead-provided accepted activity consumer/DTO port; no activity implementation location was inspected outside authorized scope.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "PageView:174-179 starts an agent design session, but this is not document comment/history tool authorization. Specification requires agent ACL parity.",
+      "actualSeam": "Same accepted document command/query ports exposed by lead's existing agent dispatcher",
+      "requiredChange": "Make agent document read/comment/history/restore use canonical refs and authenticated acting-user policy; carry source revision/provenance for authorized readback; agent allow-all cannot upgrade viewer writes.",
+      "verification": "Agent-A reads/posts permitted anchored comment; Agent-V allow-all denied writes/restore; outsider agent gets no PRIVATE_WP-15 content through history or mentions.",
+      "missingPrerequisite": "Lead-owned agent dispatch bindings and accepted policy/provenance contract. No new agent store or dispatcher is proposed.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative document.comment specifies HTTP/native RPC; existing Pages RPC provides artifact actions. MCP route names for these new APIs are not specified or inspected.",
+      "actualSeam": "registerPagesHandlers and shared Pages contracts, exposed through existing lead-owned API/MCP composition",
+      "requiredChange": "Implement published HTTP/native API exactly and extend existing applicable agent/MCP bindings to same typed authority; document accepted route mapping instead of claiming applicability N/A.",
+      "verification": "Transport parity and actual authorized API/tool call readback with canonical ref/receipt; malformed actor/body/schema rejected before side effects.",
+      "missingPrerequisite": "Accepted service composition and MCP applicability/mapping from its owner; exact new route names beyond document.comment remain unaccepted.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Current Pages handlers log slug/workspace and local list changes; WP-15:12500-12510 mandates commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters with privacy.",
+      "actualSeam": "Accepted gateway receipt, repository transaction and outbox/projection telemetry",
+      "requiredChange": "Carry required IDs/epochs/watermarks into structured safe evidence for comment/undo/restore/read events and retries; exclude raw body/quote/transcript/tokens from logs.",
+      "verification": "Trace one command through persisted receipt, emitted event and projection; crash/retry increments correct safe counters; scan captured logs for PRIVATE_WP-15 and private comment/quote values.",
+      "missingPrerequisite": "Accepted gateway/outbox telemetry schema and privacy logger port.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative test artifact tests/macro-integration/wp-15.test.ts and controls at work-packages.json:12475-12487,13165-13196; no tests executed in preflight.",
+      "actualSeam": "Normative WP-15 integration test plus existing package tests and live COLLAB-01 runner",
+      "requiredChange": "Cover four criteria, common store/idempotency, restore/history authorization, crash/reply/replay and exact fixed-offset mutant; independent evaluator supplies second failure variant. Baseline infrastructure failure is not caught mutation.",
+      "verification": "After integration: bun test tests/macro-integration/wp-15.test.ts and relevant existing package/i18n suites, then real two-client UI/API failure/reload runner. Retain reproduction seed 20260945 and exact revision-bound receipts.",
+      "missingPrerequisite": "Dependency receipts, real service/migrator, runner and lead permission to leave inspect-only phase.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:276-293 and 22-test-plan.md:36-58 are proposed, not PASS evidence.",
+      "actualSeam": "Two normative documentation files in sharedPatchRequests",
+      "requiredChange": "Document actual selected anchor schema, orphan behavior, selective undo, immutable read/restore, auth/errors, migration/recovery/rollback and honest implemented/verified/delivered status after proof.",
+      "verification": "Cross-check documentation against accepted DTOs, migration and observed live scenarios; no fixture converted to live receipt.",
+      "missingPrerequisite": "Implementation and observed verification evidence; preflight intentionally does not change shared docs.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "PageView:411-422 has artifact lease error/retry; current fallback/snapshot catches at 72,130 conflate failure with missing data. Normative document states/errors require explicit outcomes.",
+      "actualSeam": "WP-10 document branch state machine and canonical command/query result",
+      "requiredChange": "Separate permission_denied/retryable_error/schema unsupported/revision conflict/fence pending and orphan from empty/missing; retain private drafts after refused writes; no saved badge before durable proof.",
+      "verification": "Inject service outage, unsupported schema, missing causal update, WAL quota/storage failure, revoked pending command and altered idempotency payload; assert precise status, retry eligibility and no false applied_verified.",
+      "missingPrerequisite": "Accepted typed error/status and durable draft contracts.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "PageView:221-238 and 424-426 display existing artifact LoadingIndicator; these are not document history/comment query readiness.",
+      "actualSeam": "Document branch authorized revision/anchor query state",
+      "requiredChange": "Show document/history/discussion loading until accepted DTO and required frontier/watermark arrive; cancel stale document/revision queries on switch or revoke.",
+      "verification": "Delay query/sync replies and switch document/revision; no wrong prior selection/history flashes, accessibility status reports loading then exact result.",
+      "missingPrerequisite": "WP-10 client query/subscription readiness port.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "PageView:388-410 shows no HTML content and agent/folder actions; not empty comments/history.",
+      "actualSeam": "PageView document discussion/history projections",
+      "requiredChange": "Distinguish no comments/no prior revision/no selected range from denied/loading/error; retain orphan discussion rather than reporting empty when selection vanishes.",
+      "verification": "Fresh authorized document shows accurate empty comment/history affordances; denied history does not reveal hidden count, orphan thread remains present after deletion.",
+      "missingPrerequisite": "Accepted authorized DTO/status and locale contracts.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Current lease state lives only in React at PageView:82-111; norm requires queued versus verified and WAL/reconnect. COLLAB-01:47-54 requires offline restart recovery.",
+      "actualSeam": "WP-05 durable queue and WP-10 document WAL/ACK path",
+      "requiredChange": "Queue comment/undo operations with original idempotency and causal/source revision, retain stable positions/private draft across reload, reconcile after reconnect under current policy; denied queue is quarantined, never silently published.",
+      "verification": "A offline comments/edits/undo then reloads; B changes document/deletes range. Reconnect converges once or retains orphan, same canonical receipt/IDs; revoked A gets denied/quarantined draft and no unauthorized publish/read.",
+      "missingPrerequisite": "Accepted offline comment eligibility/queue contract and anchor retention policy through WP-05/10/51.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "RestoreAsNewRevision preserves immutable history and concurrent data",
+      "currentEvidence": "Normative apiChanges:12448 explicitly names RestoreAsNewRevision; current savePageContent whole-file replacement would overwrite B edits; risk:12496 identifies concurrent overwrite.",
+      "actualSeam": "Proposed RestoreAsNewRevision command and WP-10 causal append/materialization",
+      "requiredChange": "Restore as explicit new revision with provenance to selected old revision and observed current frontier/policy. Reject stale conflicting request or perform accepted explicit merge semantics; never replace current snapshot behind concurrent edits or mutate old revision rows.",
+      "verification": "A previews R1 while B adds content to R2; stale A restore cannot silently erase B. Accepted restore produces distinct R3/receipt, immutable R1/R2 remain readable under policy; retry/restart creates no duplicate revision.",
+      "missingPrerequisite": "Accepted restore conflict/merge contract from Pages owner and selected binding, not defined by current symbol declarations.",
+      "state": "BLOCKED_DEPENDENCY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Meaningful seeded failure control and persistence recovery",
+      "currentEvidence": "WP-15:12480-12486 requires unauthorized/dropped-duplicated event negative controls and restart between persisted command and reply; :13184-13187 specifies fixed DOM-offset mutation and independent holdout.",
+      "actualSeam": "Normative wp-15.test.ts and live runner controlling command commit/reply and anchor mapping",
+      "requiredChange": "Provide exact broken anchor mapper control plus unauthorized actor and event replay/delivery failure controls; persist anchor/Message/receipt/outbox before reply and rehydrate canonical state after restart.",
+      "verification": "Establish passing baseline first; each one-mechanism mutant must fail named user-visible invariant. Kill after commit before reply, restart/retry same key, inspect DB counts, receipt, IDs/revision and watermark. Independent second mutation must also be caught.",
+      "missingPrerequisite": "Accepted authority transaction hooks, isolated runner and integrated revision; not run during preflight.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Preserved standalone/artifact capability and exact license/schema gate",
+      "currentEvidence": "PageFrame:37-57 binds exact HTML to opaque sandbox/lease; storage.savePageContent retains digest invalidation; work-packages.json:12540 requires behavior reimplementation and dependency-only license audit.",
+      "actualSeam": "Existing artifact PageView/PageFrame/storage path and accepted editor-binding decision",
+      "requiredChange": "Keep HTML refresh/source grants/share/thumb semantics and sandbox unchanged in artifact branch; no forced document conversion. Audit selected editor/CRDT dependency licenses and versioned anchor schema; reject unsupported schema explicitly, do not copy Macro implementation.",
+      "verification": "Run existing artifact create/render/refresh/grant/publish flows after cutover alongside document behavior; schema round-trip and unsupported-schema failure; attach exact dependency/license decision receipt.",
+      "missingPrerequisite": "WP-49 audited selected binding and WP-10/51 preservation receipts, followed by WP-15 regression proof.",
+      "state": "NOT_IMPLEMENTED_OR_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/shared/src/pages/types.ts", "symbol": "isPageGrantUsable / CreatePageInput / LoadedPage", "lineStart": 40, "lineEnd": 100, "sha256": "89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path": "packages/shared/src/pages/storage.ts", "symbol": "createPage", "lineStart": 281, "lineEnd": 309, "sha256": "b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path": "packages/shared/src/pages/storage.ts", "symbol": "loadPageContent / savePageContent", "lineStart": 425, "lineEnd": 464, "sha256": "b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path": "packages/server-core/src/handlers/rpc/pages.ts", "symbol": "registerPagesHandlers GET_ONE / CREATE", "lineStart": 189, "lineEnd": 223, "sha256": "c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path": "packages/server-core/src/handlers/rpc/pages.ts", "symbol": "registerPagesHandlers GET_CONTENT / SET_CONTENT", "lineStart": 261, "lineEnd": 282, "sha256": "c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path": "apps/electron/src/renderer/components/pages/PageView.tsx", "symbol": "PageView render-lease lifecycle", "lineStart": 79, "lineEnd": 111, "sha256": "890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path": "apps/electron/src/renderer/components/pages/PageView.tsx", "symbol": "PageView artifact body and PageFrame", "lineStart": 386, "lineEnd": 439, "sha256": "890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path": "apps/electron/src/renderer/components/pages/PageFrame.tsx", "symbol": "PageFrame opaque sandbox and exact srcDoc", "lineStart": 317, "lineEnd": 337, "sha256": "7cb551294c720b87443d645041c0514c3b48a6ea04cad668b8c083629c1e3ba1"},
+    {"path": "packages/core/src/types/page.ts", "symbol": "PageConfig", "lineStart": 294, "lineEnd": 320, "sha256": "9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/shared/src/protocol/channels.ts", "symbol": "RPC_CHANNELS.pages", "lineStart": 840, "lineEnd": 864, "sha256": "c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-15 dependencies/DoD/operation", "lineStart": 12404, "lineEnd": 12568, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-15 DocumentAnchor / errors / revision policy", "lineStart": 12703, "lineEnd": 12764, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "WP-15 migrations and artifact contracts", "lineStart": 12963, "lineEnd": 13026, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-15", "lineStart": 276, "lineEnd": 293, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-49 editor binding foundation", "lineStart": 984, "lineEnd": 1000, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-51 single-writer/revoke fence foundation", "lineStart": 1020, "lineEnd": 1036, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "COLLAB-01", "lineStart": 36, "lineEnd": 58, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": "Lead accepts this preflight artifact. Implementation remains gated: after lead wave0 commit and accepted WP-10/WP-08 typed interface, migration and scenario receipts, rehash inspected shared files and reread changed sections, obtain selected WP-49 anchor/undo binding and WP-51 writer/fence receipts, then extend the existing accepted Pages contracts/repository/commands with CreateAnchoredComment and common Message transaction before UI/history/restore integration. Do not create competing copies of WP-10 files or Message store.",
+  "risks": [
+    "Root integration may change any inspected shared file; hashes are working-tree inspection evidence, not guaranteed future or HEAD proof. Rebase semantic patch requests onto accepted lead revision without Git operations in this worker.",
+    "The three normative Pages new files are also WP-10 files; independent replacement would clobber dependency implementation.",
+    "WP-15 migration lists message even though WP-08 owns the common Message schema; creating it again violates no-second-store requirement.",
+    "Stable start/end strings must use selected CRDT position encoding, not decimal indexes or HTML digest offsets. Quoted-text fallback cannot safely retarget repeated text or deleted selections.",
+    "Anchor schema allows minimum 0 while row schema requires >0. Accepted contract must explicitly distinguish envelope versions from persisted domain versions and reject unsupported versions, not silently coerce.",
+    "DocumentAnchor supports crdt_position/text_quote/pdf_region/media_span but WP-15 existing surface is Pages/document. Accepted adapters/content-kind validation are prerequisite; the inspection does not claim non-document adapters exist or waive those contract kinds.",
+    "Local undo origin semantics across actor/device and restart must come from accepted WP-49 binding; snapshot restore is not selective undo.",
+    "Restore conflict/merge policy is named but not fully specified; silently overwriting concurrent edits violates the published risk and acceptance intent. Require accepted precise policy rather than inventing an implementation API.",
+    "Existing digest-bound grants/render leases are source-action safety, not shared-resource ACL/history permissions. Shared document lease churn must not remount editor and destroy undo/selection state.",
+    "GET_CONTENT/SET_CONTENT and standalone storage can remain a legacy shared-ID authority bypass unless WP-51 guard actually covers them; adding only a new command route is insufficient.",
+    "Historical snapshots and orphan quotes can retain revoked/deleted sensitive content. Query, notification, search, activity and linked-ref policy must be rechecked at read/serialization, not trusted from creation time.",
+    "Durable CRDT WAL and relational Message/anchor/receipt writes need an accepted consistency boundary and causal revision evidence; early applied/ACK cannot prove durability across crash.",
+    "Offline anchors require retained causal positions/tombstone semantics. Pruning snapshots/WAL before replay can turn valid queued selections into unresolvable or wrong anchors.",
+    "UI locale additions require all ten locales and Russian plurals according to loaded repository rules; shared localization changes are lead-owned, not preflight writes.",
+    "No product, test, manifest, progress, shared-file or Git changes are authorized in this task; no runtime feature verification or completion is claimed."
+  ]
+}

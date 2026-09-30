@@ -33,6 +33,10 @@ export interface KanbanColumnDef {
  * Main project configuration (stored in config.json)
  */
 export interface ProjectConfig {
+  /** Active bounded local repository authorization; absent on legacy projects. */
+  repositoryConnection?: import('../code-intelligence/repository-connection.ts').RepositoryConnection;
+  /** Repository identities preserve historical policy receipts. */
+  repositoryBindings?: import('../code-intelligence/refs.ts').RepositoryBinding[];
   id: string;
   slug: string;
   name: string;

@@ -1,0 +1,902 @@
+{
+  "task_id": "WP-16-preflight",
+  "attempt_id": "c509859ed5ea1bb079517ffec9b7ff52",
+  "packet_hash": "99be06dd98581c4cd8d96a93a9be563551e0b5169430887e26cbda14ab9cd7f2",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-16",
+  "featureComplete": false,
+  "mode": "inspect",
+  "workTier": "bounded-workflow",
+  "scope": "Preflight only. The only owned writable artifact is this report. No product source, test, manifest, progress, shared file or Git mutation; no build, test, UI or network operation.",
+  "evidenceStatus": {
+    "basis": "Actual working-tree source, not a claim that inspected bytes equal input HEAD. Root-owned uncommitted wave0 work is present according to the dispatch. Whole-file digests below bind each inspected source version; rerun the read-only packet verifier and re-inspect changed sources before implementation.",
+    "specManifestSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "runtimeVerification": "NOT_RUN: prohibited in this preflight; source inspection is not a live feature receipt.",
+    "discovery": "Codegraph explicitly reported no index for this checkout. Descriptive find failed its judging backend with HTTP 402; continued through concrete package paths and direct imports using read/grep/glob. No indexing or network probe was performed.",
+    "newFileObservation": "The five exact normative new-file paths were absent in the scoped glob result. This does not establish absence of every shared service foundation or acceptance receipt; those remain uninspected prerequisites.",
+    "specDrift": [
+      "The published risk 'Existing frontend not passing expectedRevision' is not true of the inspected saveCurrentNote: it sends expectedRevision, sourceStoreId, authorityEpoch and a stable operationId for replay. Duplicate/move/task save callers also pass revisions. Preserve this work rather than replacing it.",
+      "The published entry point 'saveNote' is not a current standalone function in notes.ts. The actual server seam is registerNotesHandlers notes.SAVE -> registerContentHandlers.commit -> MarkdownCommitStore.commit; the renderer also calls commitMarkdown directly.",
+      "The native engine has in-memory CAS and validated vault bundle import, but it is not the filesystem authority used by the current Notes editor. A successful native-engine unit scenario alone cannot prove the changed surface."
+    ],
+    "concurrentIntegration": {
+      "firstArtifactVerification": "FAILED: Source changed after inspection: packages/server-core/src/handlers/rpc/notes.ts",
+      "changedPaths": [
+        "packages/server-core/src/handlers/rpc/notes.ts",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "packages/server-core/src/handlers/rpc/content.ts",
+        "packages/server-core/src/docs/markdown-commit.ts",
+        "packages/shared/src/protocol/dto.ts",
+        "packages/shared/src/protocol/routing.ts"
+      ],
+      "recovery": "Root source kept changing during preflight. Seven original inspected source versions and original digests are retained under staleSourceReferences. Nine stable inspected source/specification references remain under sourceReferences. Never attach a fresh whole-file digest to historical source evidence. Re-inspect all changing files after committed wave0 before applying patches.",
+      "citationPolicy": "All source-line citations to staleSourceReferences in currentEvidence, foundationGates and sharedPatchRequests refer to the original inspected hash, not to current line numbers or input HEAD. Those entries require post-wave0 reinspection and cannot be used as accepted implementation/runtime receipts.",
+      "implementationReady": false,
+      "artifactVerificationHistory": [
+        "FAILED: Source changed after inspection: packages/server-core/src/handlers/rpc/notes.ts",
+        "FAILED second attempt: Source changed after inspection: packages/shared/src/protocol/routing.ts"
+      ]
+    },
+    "reinspectionFindings": [
+      {
+        "path": "packages/server-core/src/handlers/rpc/notes.ts",
+        "symbol": "registerNotesHandlers nativeContent.changed",
+        "observedLines": [
+          969,
+          974
+        ],
+        "finding": "The callback now forwards the supplied reason instead of hard-coding save. Original path identity/rename/search/SAVE findings were unchanged in the re-read ranges. Later root edits remain possible."
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/content.ts",
+        "symbol": "registerContentHandlers.recoverDescriptorWriter / services / commit",
+        "observedLines": [
+          35,
+          57,
+          144,
+          173
+        ],
+        "finding": "Observed descriptor-writer lock recovery with cached per-root promise and a shifted commit function. Preserve this added native recovery, local source/window checks and uncertain-readback error. This is not a shared policy/outbox receipt."
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "symbol": "visibleBlockTree / onNotesChanged / saveCurrentNote / moveNoteToFolder / moveSilently",
+        "observedLines": [
+          677,
+          694,
+          960,
+          994,
+          1022,
+          1098,
+          1319,
+          1365
+        ],
+        "finding": "Observed source/revision-bound committed block-tree projection and descriptor invalidation re-resolving editing authority while retaining drafts. Other non-external invalidations still returned without body refresh. Revision/idempotent replay plumbing and move-as-create/save/delete remained in re-read code. Preserve block anchors and the descriptor branch; do not request removal of all non-external handling."
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "symbol": "NotesViewHost blockTree / onOpenBlock",
+        "observedLines": [
+          58,
+          117
+        ],
+        "finding": "Observed added optional blockTree/onOpenBlock passed into existing outline view; preserve this representation and stable block navigation during canonical note adaptation."
+      },
+      {
+        "path": "packages/shared/src/protocol/dto.ts",
+        "symbol": "NoteChangedPayload",
+        "observedLines": [
+          724,
+          728
+        ],
+        "finding": "Observed descriptor added to reason union; revision/cursor/policy fields were still absent. Preserve descriptor invalidation rather than replacing its semantics."
+      },
+      {
+        "path": "packages/server-core/src/docs/markdown-commit.ts",
+        "symbol": "Journal.changed / MarkdownChangedEvent / drainChangedEvents / writeNative / withVaultLease",
+        "observedLines": [
+          24,
+          89,
+          100,
+          225
+        ],
+        "finding": "Observed prepared persisted pending/accepted invalidation intent, replay drain, vault transition lease and native lifecycle command types. Owner.changed documentation explicitly distinguishes callback acceptance from remote/client delivery ACK. The implementation kept changing during recovery; its final wiring/recovery/current symbol line numbers must be re-inspected after wave0. Do not claim native invalidation durability is wholly absent or equate it with common shared SQL outbox/consumer policy fence."
+      },
+      {
+        "path": "packages/shared/src/protocol/routing.ts",
+        "symbol": "Local vault/kernel import route entries",
+        "observedLines": [
+          408,
+          411
+        ],
+        "finding": "Local-only filesystem import comment and notesImport PREVIEW/EXECUTE entries still present in grep readback, shifted by one line. Preserve local-only boundary. Initial line citations refer to retained stale original digest."
+      }
+    ]
+  },
+  "dependencies": [
+    "WP-02",
+    "WP-06",
+    "WP-10"
+  ],
+  "dependencyInputs": [
+    {
+      "producer": "WP-02",
+      "requiredArtifacts": [
+        "accepted typed interface",
+        "applied migration or N/A receipt",
+        "scenario verification receipt"
+      ],
+      "requiredSeam": "Canonical entity allocation, scoped alias binding/quarantine, typed forward/backlink queries and authorized entity resolution. Rename changes location/title, not canonical note UUID.",
+      "receiptState": "NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER"
+    },
+    {
+      "producer": "WP-06",
+      "requiredArtifacts": [
+        "accepted typed interface",
+        "applied migration or N/A receipt",
+        "scenario verification receipt"
+      ],
+      "requiredSeam": "Note/document extractor registration, revision/policy/tombstone-aware projection consumer, current-ACL search and agent retrieval, replay cursor and projection watermark.",
+      "receiptState": "NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER"
+    },
+    {
+      "producer": "WP-10",
+      "requiredArtifacts": [
+        "accepted typed interface",
+        "applied migration or N/A receipt",
+        "scenario verification receipt"
+      ],
+      "requiredSeam": "Accepted Page/document content-kind adapter and document authority, materialization event contract and causal frontier. Notes must be one representation of that graph, not a second document store or editor surface.",
+      "receiptState": "NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER"
+    }
+  ],
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and accepted dependency receipts",
+      "classification": "Dispatch implementation-start boundary, not an additional explicit DAG edge",
+      "evidence": "Dispatch instruction: implementation starts only after lead wave0 commit and accepted dependency receipts; WP-16 inputs at work-packages.json:13364-13389.",
+      "requiredPrerequisite": "Lead supplies delivered wave0 revision and accepted WP-02/WP-06/WP-10 interfaces, migration applicability receipts and scenario receipts. No implementation starts in this preflight.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-01/WP-03/WP-04 secured service, policy and transactional command/outbox foundation",
+      "classification": "Transitive foundations through WP-02, WP-06 and WP-10, not new WP-16 edges",
+      "evidence": "21-implementation-plan.md:5,29,48,67,106,182; WP-16 operations authentication/envelope at work-packages.json:13394-13398 and migration constraints at 13809-13825.",
+      "requiredPrerequisite": "Transport-derived principal/workspace, resource policy API with policyEpoch, common RoxCommand v2 gateway, canonical receipt/idempotency transaction and durable outbox/inbox. Existing local filesystem journals are standalone authority, not the shared workspace service.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-05 durable shared client queue",
+      "classification": "Transitive WP-10 prerequisite and full offline/reconnect completeness gate",
+      "evidence": "21-implementation-plan.md:84-88,182; 22-test-plan.md:204-207,222; NotesPage.tsx:681-682,928-942 retains operations only in component memory.",
+      "requiredPrerequisite": "Use accepted durable queue/draft/replay policy; after client restart restore exact idempotency inputs, revalidate policy and quarantine rejected drafts. Do not introduce a Notes-only queue.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-07/WP-08/WP-09 common mentions and attention",
+      "classification": "Transitive WP-10 prerequisites, additionally exposed by Markdown mention-ref round-trip and notifications completeness",
+      "evidence": "21-implementation-plan.md:161-178,182; 22-test-plan.md:211-212; notes-engine.ts:102-115 extracts textual wikilinks only.",
+      "requiredPrerequisite": "Accepted mention occurrence/source revision/target policy contracts and common notification recipient/dedup service. Preserve canonical mention refs during Markdown serialization and avoid implicit grants or historical-import notification storms.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-49 editor binding decision",
+      "classification": "Published mandatory Page foundation; explicit edge belongs to WP-10, not WP-16",
+      "evidence": "21-implementation-plan.md:5,182,984-1000.",
+      "requiredPrerequisite": "Accepted editor-binding decision and rich-text/list/entity-node/import/undo round-trip receipt. Do not select a second CRDT or assume existing Tiptap Markdown serialization preserves typed entity mentions.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-51 single-writer and revoke fence",
+      "classification": "Published mandatory Page foundation and direct legacy Notes cutover guard; explicit edge belongs to WP-10",
+      "evidence": "21-implementation-plan.md:5,182,1020-1036; notes.ts:1020-1059 and NotesPage.tsx:1204-1248 expose legacy creation/rename/delete/move writer routes.",
+      "requiredPrerequisite": "Accepted ResolveWriterMode/FenceDocument contract, server-issued authority epoch and enforced shared-ID guard across native commitMarkdown plus every legacy writer. Successful revocation must fence durable append/broadcast, not only hide UI.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "Shared runtime readiness (published WP-52 deployment foundation)",
+      "classification": "Live verification environment gate, not an invented WP-16 dependency or demand for Notes media features",
+      "evidence": "21-implementation-plan.md:5,1038-1055; 22-test-plan.md:7-9,243-247.",
+      "requiredPrerequisite": "Lead supplies actual isolated workspace service, PostgreSQL/schema and authenticated A/B/outsider clients with revision-bound readiness. Notes do not require an outbound provider sandbox unless an actual outbound operation is included.",
+      "state": "REQUIRED_FOR_LIVE_ACCEPTANCE_NOT_VERIFIED"
+    },
+    {
+      "gate": "WP-50 provenance before shared agent transcript/context",
+      "classification": "Conditional published foundation for mixed-audience transcript/context sharing, not a new unconditional WP-16 edge",
+      "evidence": "21-implementation-plan.md:5,1002-1018; 22-test-plan.md:214-215; NotesPage.tsx imports RightSessionShell and bindNativeNote.",
+      "requiredPrerequisite": "For any shared agent context/derived summary delivery, retain source refs/revisions/ACL taint and enforce audience revalidation. Authorized per-user agent retrieval remains mandatory and cannot be marked N/A while waiting.",
+      "state": "CONDITIONAL_BOUNDARY_NOT_VERIFIED"
+    },
+    {
+      "gate": "Migration/table and additional API shape integration decisions",
+      "classification": "Hidden ownership/contract gate inside the normative WP-16 record",
+      "evidence": "work-packages.json:13271-13272,13390-13424,13791-13854; 21-implementation-plan.md:7,301. Only note.import has a concrete request schema in the inspected WP-16 record; SaveNote and ExportMarkdown are named additional contracts.",
+      "requiredPrerequisite": "Root confirms ownership of entity_alias and document_revision shared with registry/Page foundations, selected migrator's actual migration ID, accepted canonical note/Page relation and SaveNote/ExportMarkdown payload/result/error DTOs. Do not create duplicate tables, fabricate timestamps or silently treat unnamed save/export routes as implemented.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/notes/contracts.ts",
+    "apps/workspace-service/src/modules/notes/commands.ts",
+    "apps/workspace-service/src/modules/notes/repository.ts",
+    "tests/macro-integration/wp-16.test.ts",
+    "apps/workspace-service/migrations/16-domain-contract.sql"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/notes/contracts.ts",
+      "change": "Define strict note.import payload with only legacyPath/content/sourceHash, nonempty strings <=10000 characters and no actor in body; compose accepted RoxCommand v2, canonical result/error and entity refs. Define ImportNote, SaveNote(expectedRevision) and ExportMarkdown DTOs plus repository/materialization/graph/policy ports against accepted dependency contracts. Select and document a portable encoding for canonical mention occurrence refs/source revision that round-trips Markdown without granting access; no service I/O in core.",
+      "prerequisite": "Accepted common command/entity/Page/mention contracts; additional save/export API shape integration decision."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/notes/commands.ts",
+      "change": "Implement import/save/export and authorized read/list/backlink query handlers through the existing shared policy/idempotency gateway. Verify sourceHash against exact submitted content using the accepted source digest convention; safely normalize legacy location for alias resolution. Create or resolve stable canonical UUID once; quarantine ambiguous bindings. Existing note writes use expectedRevision and linked-reference authorization; collaborative Page updates retain causal frontier/policy fence rather than treating a full Markdown save as CRDT CAS. Export authorized materialized Markdown and portable mention metadata; no raw host-path read from shared request.",
+      "prerequisite": "WP-02/WP-06/WP-10 receipts; common transaction and current policy API; chosen import/export schema."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/notes/repository.ts",
+      "change": "Use common entity_alias and document revision authority; add note_location binding with stable UUID, source provenance/hash, schema/revision and workspace FK. Transactionally persist note metadata/content-kind binding, revision precondition, command receipt and document.content_materialized outbox item. Reuse common consumer inbox/watermark and durable file materialization reconciliation. Local Markdown is retained as standalone content or a projection/import asset in shared mode, never a second shared writer.",
+      "prerequisite": "Accepted registry/Page tables and selected SQL migrator; composition-root-created ports; single-writer authority guard."
+    },
+    {
+      "path": "tests/macro-integration/wp-16.test.ts",
+      "change": "Implement consumer-visible W1 A/B/C scenarios with seed 20260946 and PRIVATE_WP-16: rename/move stable identity and symmetric backlinks; stale save rejection; authorized search/agent reads after watermark and revoke without metadata leakage; Markdown content and canonical mention refs round-trip. Inject rename-as-new-entity, authorization bypass and dropped/duplicated/reordered event controls, and restart after persistence before reply; distinguish fixture/infrastructure errors from caught mutation. Capture UI/API/DB/revision/receipt/watermark evidence, not source-text or mock-forwarding assertions.",
+      "prerequisite": "Dependency scenario fixtures, real service/UI runner and independent holdout evaluator. No test was created or run by preflight."
+    },
+    {
+      "path": "apps/workspace-service/migrations/16-domain-contract.sql",
+      "change": "Normative proposed migration only: selected migrator generates the actual filename. Add note_location and only WP-16-owned extensions to shared entity_alias/document_revision; enforce workspace/entity composite FK, schema>0/revision>=0, accepted scoped alias uniqueness, receipt idempotency and consumer event dedup through the foundation tables. Backfill aliases/provenance, quarantine collisions and retain local files; snapshot/writer-route rollback before shared cutover, forward repair or verified reverse replay after accepted shared writes.",
+      "prerequisite": "Lead resolves table ownership and selected migration sequence; do not recreate registry, receipt, inbox or Page revision tables."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/notes-engine.ts",
+      "symbol": "NativeNotesEngine / createNativeNotesEngine / toNativeNote",
+      "change": "Preserve the standalone engine's revision CAS, block markers, rewriteWikilinks and validated exportVault/importVault rollback. Introduce an accepted authority/identity adapter at the engine boundary for shared note.import rather than allocating shared identity with formatRox2EntityId('note', legacyPath) or using its Map as shared persistence. Retain canonical refs/mention metadata when materializing a Page document; do not replace the RPC filesystem writer with this engine.",
+      "reason": "Existing Map engine and filesystem RPC are different paths; a second shared authority would bypass WP-10/WP-51 and lose stable alias identity."
+    },
+    {
+      "path": "packages/core/src/rox2/notes-repository.ts",
+      "symbol": "NotesRepository / createNotesRepository / nativeNoteRecord",
+      "change": "Keep the native/Conation origin and cached/stale semantics for standalone reads. Add or consume accepted policy-backed domain read ports for shared refs, including canonical workspace-scoped ID/revision/content-kind and explicit denied/unavailable results; never authorize a shared read from caller-supplied readable=true or persist shared authoritative records in the Map.",
+      "reason": "Current get(entityId, opts.readable) is a local adapter, not server resource ACL; nativeNoteRecord derives identity directly from input.id."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "noteIdFromRelativePath / assertSafeNoteId / readNote / getRenameImpact / renameNote",
+      "change": "Resolve shared canonical UUID through WP-02 aliases/note_location; keep relative path as mutable location DTO, not shared ID. Rename/move update the existing alias/location and title/revision through shared command authority with stable entity identity and existing typed backlinks. Preserve path traversal, symlink, UTF-8, LOCAL_ONLY and retained-source protections for local files. Do not blanket rewrite unauthorized referring documents during rename; retain canonical backlinks and update authorized materialization as needed.",
+      "reason": "renameNote currently computes newId from new filesystem path and rewrites all matching Markdown files without canonical graph transaction or per-target policy. This request is based on the original inspected version; preserve additions described in evidenceStatus.reinspectionFindings and resolve final symbol lines after wave0.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers notes.SAVE / CREATE / RENAME / DELETE / RENAME_FOLDER / DELETE_FOLDER / SEARCH / GET_BACKLINKS / LIST",
+      "change": "At the authority dispatch boundary, use transport principal/workspace and accepted domain ports for shared operations; keep explicit localElectron standalone mode. Route shared save through common expectedRevision gateway, not local files; close all legacy shared writer paths including folder and daily/property operations. Preserve local SAVE -> nativeContent.commit and source binding. Provide the specified domain.note.import adapter through the lead-owned common route registry and current-ACL paginated queries; emit revisioned materialization only from durable outbox.",
+      "reason": "READ/SAVE are localElectron content-authority handlers, whereas several legacy handlers use _ctx and direct filesystem mutations; extending only notes.SAVE leaves shared bypasses. This request is based on the original inspected version; preserve additions described in evidenceStatus.reinspectionFindings and resolve final symbol lines after wave0.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/content.ts",
+      "symbol": "registerContentHandlers.services / commit / localContentPrincipal",
+      "change": "Integrate accepted writer-mode guard before deriving a local file owner or committing a shared ID. Resolve server-issued canonical content binding/authorityEpoch, not hard-coded epoch 1 for shared mode. Retain local window/workspace/source-store checks, post-commit readback and DOCUMENT_RESULT_UNAVAILABLE semantics; shared content routes delegate to the accepted Page authority rather than composing a local MarkdownCommitStore.",
+      "reason": "NotesPage calls content.COMMIT_MARKDOWN directly, so guarding only legacy notes.SAVE cannot enforce one shared writer. This request is based on the original inspected version; preserve additions described in evidenceStatus.reinspectionFindings and resolve final symbol lines after wave0.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "openNote / saveCurrentNote / revisionsRef / pendingCommitsRef / onNotesChanged",
+      "change": "Consume canonical ref/revision/authority binding and shared transport via accepted dependency client; keep save serialization, pending-operation reconciliation, dirty-draft protection and current-document guards. In shared mode replace in-memory-only pending operations with WP-05 durable queue and revision/policy/cursor replay; preserve the newly observed descriptor authority-revalidation branch and source/revision-bound block-tree projection; additionally process shared revisioned body invalidations currently excluded by the remaining non-external return. Show queued/reconciling separately from applied_verified, and require verified readback before saved status.",
+      "reason": "Current revision plumbing already exists; shared/offline/realtime integration remains missing, and the callback now handles descriptor revalidation separately but still excludes other non-external body changes. This request is based on the original inspected version; preserve additions described in evidenceStatus.reinspectionFindings and resolve final symbol lines after wave0.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "moveNoteToFolder / moveSilently / duplicateNote / openRenameDialog / NotesViewHost props",
+      "change": "Use stable-ID shared location/rename commands for moves, replacing shared create+save+delete sequences; genuine duplicate still gets a new entity with explicit provenance. Keep canonical ref through navigation, view state, task cache, side context and backlink props; supply authoritative authorized graph targets rather than title matching. Extend existing Notes/Pages representation with import/export actions and all mandated loading/empty/denied/offline/error/verified states; preserve standalone actions and route history.",
+      "reason": "Both current move paths allocate a replacement note and delete the old one, breaking canonical identity and inbound links even if title rename were fixed. This request is based on the original inspected version; preserve additions described in evidenceStatus.reinspectionFindings and resolve final symbol lines after wave0.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote / NotesViewHost / NotesGraphView",
+      "change": "Accept authorized canonical note/Page refs and resolved typed links/backlinks from the common graph projection while retaining table/canvas/outline/graph surfaces and existing saved layout storage. Open by canonical ID; distinguish denied/loading/unavailable from empty and update visible rows after revisioned invalidation. Preserve the newly observed blockTree/onOpenBlock outline plumbing and stable block navigation.",
+      "reason": "Current NotesViewNote exposes only string target/backlink IDs; it cannot prove one Page/Document graph or policy freshness. This request is based on the original inspected version; preserve additions described in evidenceStatus.reinspectionFindings and resolve final symbol lines after wave0.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "graphFromLinks / NoteGraphNode / NoteGraphEdge",
+      "change": "Consume resolved canonical target refs for shared graph edges; do not infer shared target identity from byTitle. Keep legacy title resolution confined to standalone alias/import adaptation with ambiguity handling before graph construction. Retain note-only presentation filters without deleting common Page/document relationships from the underlying graph.",
+      "reason": "byTitle Map chooses one note for duplicate lowercase titles and graph nodes only model note/entity rather than accepted typed shared refs."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes-rox2-surface.ts",
+      "symbol": "bindNativeNote",
+      "change": "Preserve explicit native standalone binding; for shared notes consume server canonical ref and granted capabilities rather than formatRox2EntityId('note', pathId) plus unconditional ['read','write']. Bind side-agent source revision to the verified domain revision and accepted context provenance.",
+      "reason": "Current native helper cannot authorize shared actor access; allow-all side sessions must not convert presentation capabilities into resource grants."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/notes/NotesImportButton.tsx",
+      "symbol": "NotesImportButton.runPreview / execute",
+      "change": "Retain owner consent, bounded preview and LOCAL_ONLY provenance-copy flow. Add explicit shared domain import dispatch only after authorized user selection, sending verified content/sourceHash/legacy alias through note.import, not letting remote callers request arbitrary host sourcePath. Show shared command receipt/queued/verified result separately from copiedCount; do not auto-index or share local imports.",
+      "reason": "Existing folder materialization explicitly excludes indexing/agent context and is not the normative domain import operation."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "NoteLink / NoteSummary / NoteDocument / NoteRenameImpact / NoteChangedPayload",
+      "change": "Lead protocol owner adds accepted discriminated standalone/shared note DTOs or uses common domain DTOs: shared canonical scoped entity ref, required authoritative revision/content-kind, canonical target refs/mention occurrence metadata, stable rename ID plus changed location, and revision/event/cursor/policy watermark invalidation. Migrate consumers rather than claiming path-shaped NoteSummary.id is a UUID; preserve explicit standalone source binding.",
+      "reason": "Current revision/sourceStoreId are optional, link.target is text, rename has nextNoteId and NoteChangedPayload has no replay cursor or aggregate revision. This request is based on the original inspected version; preserve additions described in evidenceStatus.reinspectionFindings and resolve final symbol lines after wave0.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "Local vault/kernel import route entries notesImport.PREVIEW / notesImport.EXECUTE",
+      "change": "Keep these filesystem import channels local-only. Register domain.note.import via the accepted shared command route and lead-owned HTTP/native registry, not by removing existing local-only routing restrictions. Root must supply the actual registry/preload/client files from the dependency integration; this preflight does not invent their paths or inspect unrelated transports.",
+      "reason": "Local sourcePath consent/import and authenticated shared content import are distinct trust boundaries.",
+      "evidenceFreshness": "STALE_ORIGINAL_PATCH_SEAM_REQUIRES_POST_WAVE0_REINSPECTION"
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-16 section, lines 295-312",
+      "change": "After implementation replace stale frontend-revision risk with actual shared-authority/alias/round-trip boundaries, document accepted ImportNote/SaveNote/ExportMarkdown shapes, standalone/shared routing and migration/recovery receipts. Do not mark acceptance complete from this preflight.",
+      "reason": "Published saveNote seam and revision risk lag inspected wave0 source; documentation must match delivered authority and APIs."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Notes/Files regression row and mandatory completeness/evidence sections",
+      "change": "Add the exact WP-16 UI/API scenario and shared/standalone regressions, stable path alias identity, mention portability, policy-filtered queries, cursor replay, crash-before-reply and seeded controls, binding proof to integrated SHA/schema. Coordinate Files-owned attachment gates instead of claiming signed URL/upload work was implemented by Notes.",
+      "reason": "The combined Notes/Files row spans WP-16/39/44; ownership boundaries must not weaken WP-16's own ACL, graph, persistence or actual-surface checks."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Rename Note preserves backlinks",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. notes-engine.ts:447-460 retains noteId on title rename and rewrites text links. Filesystem renameNote in notes.ts:559-595 instead computes newId from path and rewrites title/path wiki targets. NotesPage.tsx:1204-1248 move uses create/save/delete. graphFromLinks resolves targets by title (note-views.ts:380-398).",
+      "requiredChange": "Use WP-02 stable UUID and typed relation/backlink graph; update title/location aliases without new identity, preserve mention occurrences and historical link resolution, use authorized atomic command plus reconciled materialization for affected files. Eliminate shared move-as-recreate.",
+      "verification": "Through existing Notes UI/API import target and referring notes, record canonical ID and inbound/outbound refs, rename and move, reload two clients, follow old alias and canonical link. Assert exactly one target entity, symmetric backlinks and no denied referring title/body. Seed rename-as-new-entity must fail specific identity/backlink assertion.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted WP-02 alias/backlink contract, WP-10 content binding, WP-51 writer fence and actual UI/service scenario. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "stale save rejected",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. notes-engine.ts:432-445 rejects missing/stale expectedRevision. NotesPage.saveCurrentNote:926-942 sends revision and retains operation for replay. notes.ts:993-1018 delegates to nativeContent.commit. MarkdownCommitStore.commit:51-95 performs lease-protected SHA256 CAS and durable receipt; publishContent:201-214 rechecks before file rename.",
+      "requiredChange": "Preserve this standalone mechanism. Add server shared revision/CAS policy via common command gateway with server-issued authority fence; map REVISION_CONFLICT to draft-preserving UI without automatic overwrite. For collaborative Page content use causal frontier/policy fence as required rather than scalar whole-document overwrite.",
+      "verification": "A/B read same revision; A saves and receives verified receipt; B submits old revision. Assert rejection/no content or event change, B draft retained, re-read exact A revision. Retry A exact key returns original receipt, changed payload conflicts. Revoke between validation and append rejects. Exercise standalone file CAS separately.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted WP-04/WP-10/WP-51 gateway/fence contract, dual-client live run. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "authorized Note searchable/linkable",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. notes.ts:320-340,1065-1091 uses native vault search/backlinks and _ctx on search/backlinks; core repository:41-48 checks caller opts.readable only. Native engine.search:462-467 is a plain in-memory filter. No shared ACL receipt or projection watermark is established by these paths.",
+      "requiredChange": "Register note/document extractor and typed aliases/relations with WP-06/WP-02; emit durable materialization events and enforce current actor/linked-target policy before snippets, totals, titles and DTO serialization. Implement bounded authorized cursors and tombstone/revoke fences; no client-side filtering as authority.",
+      "verification": "A imports note with PRIVATE_WP-16, B granted read finds and links it after watermark, C/forged-workspace and revoked B cannot see title/body/snippet/count/backlinks. Revoke before index catches up, replay after worker crash and deletion all stay denied. Agent context follows same ACL.",
+      "state": "MISSING_SHARED_BEHAVIOR_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted WP-02/WP-03/WP-06 policy/graph/projection receipts and real index worker. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "Markdown export/import round-trip content and mention refs",
+      "currentEvidence": "notes-engine.ts:301-348,475-500 validates/restores a vault bundle with block IDs, attachments, wikilinks and extra metadata; this is not ExportMarkdown. extractWikilinks:102-115 retains textual targets, not canonical occurrence refs. NotesImportButton.tsx:1-9,49-88 copies consented local files and explicitly does not index or create agent context.",
+      "requiredChange": "Implement authorized ExportMarkdown and ImportNote content-kind adapter using accepted WP-10/WP-09 serialization. Preserve Markdown content, frontmatter/blocks/attachments and canonical mention target/occurrence/source revision metadata with documented portable encoding. Validate sourceHash/limits, reject ambiguous alias mapping and denied target refs; retain original local files/provenance and do not republish imports implicitly.",
+      "verification": "Export note with rich content, duplicate-title target, Unicode, heading/alias wikilink and typed teammate/entity mentions; import via product API into controlled workspace; compare declared content equivalence and canonical mention/graph refs, not only count/hash. Reload and follow authorized refs; denied refs grant nothing/leak nothing. Test hash mismatch/invalid payload and external edit alias stability.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted additional export/save schemas, WP-49 editor round-trip, WP-09 mention serialization, WP-10 content adapter and real import/export action."
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. NotesPage.tsx:577-706,790-829,908-984 and NotesViewHost.tsx:58-113 provide existing editor/view surfaces; all observed new-service requirements are preflight only.",
+      "requiredChange": "Extend these existing Notes/Pages representations with domain import/export and shared status/capabilities; reuse current components, t() and ten-locale convention, no second Notes surface.",
+      "verification": "Actual Electron/supported shared-client interaction and screenshots/ARIA for import, save conflict, rename, graph link and export; inspect keyboard/focus/hover/motion and existing light compact font surface after integration.",
+      "state": "MISSING_SHARED_INTEGRATION_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Lead-integrated shared client/editor interfaces and locale owner patches; UI execution prohibited in preflight. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. NotesPage.tsx:1117,1194,1223,1244 navigates notes(saved.id); note ID can change after move. notes-rox2-surface.bindNativeNote:18-33 formats path-like input ID as note ref.",
+      "requiredChange": "Navigate/open canonical scoped ref and resolve historical path aliases through registry, retaining Notes/Pages destination, view state, history and side panel context across rename/move.",
+      "verification": "Open canonical and old alias deep links before/after rename/move and reload; back/forward preserves focus and entity; denied/missing aliases disclose no private metadata.",
+      "state": "MISSING_SHARED_INTEGRATION_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "WP-02 canonical resolver and lead-owned shared routing client contract. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. notes.ts:148-170 derives IDs from relative paths; toNativeNote:351-363 formats noteId; NoteSummary.id and NoteLink.target are unscoped strings (dto.ts:655-698).",
+      "requiredChange": "One canonical workspace-scoped note UUID, file_alias/note_location mutable path and accepted Page/document representation binding with typed validated refs. Alias collision quarantines rather than merging same titles; schema/version rules applied.",
+      "verification": "Inspect typed API readback and DB FK/unique counts for repeated import, rename, duplicate titles, cross-workspace aliases and collision quarantine; canonical note/Page relation remains stable.",
+      "state": "MISSING_SHARED_MODEL_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "WP-02/WP-10 model and common tables. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. Native engine/repository use Maps. Actual MarkdownCommitStore uses fsync journal/lease/recovery (markdown-commit.ts:42-95,180-223). This is local authority, not shared SQL/outbox.",
+      "requiredChange": "Persist shared metadata/revision/location through one service transaction and common receipt/outbox; recover materialized local projection without permitting dual writers; preserve original local files and journal recovery.",
+      "verification": "Restart service/client after commit before response, retry exact key, compare canonical ID/revision/receipt/event and unique row counts; re-read content; replay file materialization failure; separate standalone journal regression.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted database transaction/migration, WP-10 authority and projection reconciler. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Local MarkdownCommitCommand and decoder require SHA256 revision, epoch and operationId (command-envelope.ts:1-45); commit fingerprint rejects altered inputs under reused operationId. WP-16 specifies RoxCommand v2 and strict note.import schema.",
+      "requiredChange": "Implement ImportNote/SaveNote/ExportMarkdown against accepted shared gateway; reject body actor/extra fields, derive workspace/principal, require idempotency on create and revision on mutable aggregate, keep canonical result/receipt statuses and all specified errors.",
+      "verification": "Product HTTP/native calls with valid/invalid payload, missing/stale revision, same-key altered payload, forged actor/workspace and replay; inspect same result/entity/revision and unchanged rows on rejection.",
+      "state": "MISSING_SHARED_COMMANDS_NOT_VERIFIED",
+      "missingPrerequisite": "WP-04 gateway and accepted save/export DTOs/routes."
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. notes.ts:309-340,978-985,1065-1091 returns local list/search/backlinks arrays; no authorized cursor or shared total visibility is evidenced.",
+      "requiredChange": "Implement canonical policy-backed note read/list/search/backlink/export query ports with bounded pagination and authorized cursor scoped to actor/workspace/policy; revalidate before serialization.",
+      "verification": "Page through authorized results, revoke/change policy between pages, forge/reuse another actor cursor, query denied refs; no hidden title/body/total leaks and no lost/duplicated allowed rows.",
+      "state": "MISSING_SHARED_QUERIES_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Common policy/cursor/query contracts and WP-06 index. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. notes.ts:956-975 pushes CHANGED after local commit; NoteChangedPayload:724-727 has workspace/reason/noteId only; NotesPage:861-879 ignores non-external events.",
+      "requiredChange": "Use durable document.content_materialized outbox and accepted authorized subscription/cursor replay with aggregateRevision, policy/tombstone fence and common dedup inbox. Reconcile gaps and update rows/editor without overwriting dirty drafts.",
+      "verification": "Disconnect B, save/rename as A, reconnect from cursor, inject duplicate/drop/reorder, restart consumer, revoke mid-stream; state converges once without denied delivery or old revision overwrite.",
+      "state": "MISSING_DURABLE_REALTIME_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "WP-04/WP-05/WP-06/WP-10 subscription/outbox/consumer contracts. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. content.ts:27-31,47-100 derives local uid/window workspace and OS file capabilities; it is not shared membership. notes repository readable flag and bindNativeNote permissions are local presentation mechanisms.",
+      "requiredChange": "Enforce transport principal, current workspace/resource read/write/action policy, both relation endpoints and revoke fence at shared gateway/read/export/subscription/agent boundaries; allow-all never overrides ACL. Retain explicit standalone local authority.",
+      "verification": "Owner/member/viewer/outsider, forged body actor/workspace, linked denied target, revoked subscription/save, agent allow-all and source path/symlink probes; no mutation or title/body/preview/event leakage.",
+      "state": "MISSING_SHARED_POLICY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "WP-01/WP-03/WP-51 accepted policy and fence receipts. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. bindNativeNote:31 hard-codes read/write and native import explicitly stays local-only; no shared grant behavior is proven by inspected Notes seams.",
+      "requiredChange": "Use common explicit resource grants/inheritance and accepted expiry policy; linking/import/mentions never widen ACL. Export only authorized content and recheck linked refs, with mixed-audience provenance when used.",
+      "verification": "Grant B read/edit separately; viewer cannot change/share; expiry/revoke after open and linked private note prevent reads/export/agent retrieval; reimport does not grant C access.",
+      "state": "MISSING_SHARED_INTEGRATION_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "WP-03 sharing contract and conditional WP-50 context-sharing foundation. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. Native search exists in notes.ts:1065-1087 and engine:462-467 without shared revisioned projection/current ACL receipts.",
+      "requiredChange": "Use common authorized search extractor/upsert/delete and watermark; index canonical ID and materialized content revision with policy/tombstone fence and no raw-content logs.",
+      "verification": "Wait for note projection watermark <= published healthy-environment 10s budget, read authorized snippet, revoke before index catches up, delete, crash/replay; no stale or private marker leakage.",
+      "state": "MISSING_SHARED_SEARCH_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted WP-06 extractor/event schema and runtime worker. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "extractWikilinks/rewriteWikilinks handle text targets/heading/alias; graphFromLinks infers byTitle. No canonical mention occurrence/source revision contract is present in observed Notes DTOs.",
+      "requiredChange": "Consume WP-09 typed mention extraction/occurrence/source revision and target authorization; serialize canonical refs portably, remove changed occurrences, retain stable refs through title/path rename; no implicit share.",
+      "verification": "Round-trip teammate/entity mentions, edit/remove occurrence, rename duplicate-title target, deny target resolution and compare canonical occurrence/ref/source revision after reload.",
+      "state": "MISSING_TYPED_MENTIONS_NOT_VERIFIED",
+      "missingPrerequisite": "WP-09 and WP-49/WP-10 compatible entity-node serialization."
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "No shared notification producer/recipient/dedup is evidenced in inspected Notes engine/RPC/view paths; local toast and awardXpSafe are not durable attention.",
+      "requiredChange": "Connect note mention/materialization actions to common attention policy with recipient authorization and semantic dedup; retain seen/done/mute/snooze through the accepted service. Historical import/export must follow accepted notification policy, not ping per materialized byte or backlink rewrite.",
+      "verification": "Mention B once, replay/rename/reimport/edit many times and restart; recipient gets only policy-eligible deduped notifications; denied recipient sees no title/body and durable attention state survives device reload.",
+      "state": "MISSING_SHARED_INTEGRATION_NOT_VERIFIED",
+      "missingPrerequisite": "WP-07/WP-09 common notification contract/policy receipts through WP-10."
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Local Markdown receipt has actorPrincipalId/eventId/revision; local CHANGED payload lacks causal/revision fields; no shared activity receipt is established.",
+      "requiredChange": "Publish common activity/audit metadata from committed domain events with actor/cause/revision and policy-filtered visible feed; no body/email/token content in logs or unrelated second activity store.",
+      "verification": "Import/save/rename replay yields one causal activity record per accepted command; inspect actor/revision/correlation and redacted logs, denied reader and restart behavior.",
+      "state": "MISSING_SHARED_INTEGRATION_NOT_VERIFIED",
+      "missingPrerequisite": "Common WP-04 event/activity consumer registration and ACL filtering contract."
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. NotesPage uses RightSessionShell and bindNativeNote (notes-rox2-surface.ts:18-33); its native hard-coded capabilities do not establish current shared ACL or provenance.",
+      "requiredChange": "Use authorized canonical note/Page query and common acting-user domain tools/context, source revision and projection watermark; preserve origin/freshness and deny allow-all viewer writes. Mixed-audience derived contexts require accepted provenance gate.",
+      "verification": "Real native agent/context dispatcher reads canonical ref/revision after watermark; viewer allow-all write and outsider retrieval fail; revoke invalidates cached context; no PRIVATE_WP-16 in unauthorized output.",
+      "state": "MISSING_SHARED_AGENT_ACCESS_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "WP-06 context interface, lead-owned common tool dispatcher and conditional WP-50 provenance receipt. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: routing line citations below refer to staleSourceReferences original digest; later local-only entries re-observed at 408-411. Normative note.import specifies HTTP POST /v1/workspaces/{workspaceId}/commands/note.import and nativeRpc domain.note.import. Existing filesystem import channels are explicitly local-only (routing.ts:407-410). No accepted shared API/MCP implementation was inspected.",
+      "requiredChange": "Lead registers typed note domain handlers in actual HTTP/native/common-agent dispatcher using identical policy/idempotency/result checks; keep local filesystem preview/execute separate. Determine existing MCP route ownership from accepted foundation, without a second Notes-specific service.",
+      "verification": "Actual HTTP/native/available common agent-MCP entry points return same canonical ref/revision/receipt and equivalent forbidden/conflict/invalid schema outcomes; no host path proxy through shared API.",
+      "state": "MISSING_SHARED_TRANSPORT_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Lead supplies concrete shared composition/route/preload/MCP files and accepted domain registrations; unimplemented capability is not N/A.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. Local MarkdownCommitReceipt includes operationId, actor, previousRevision, revision and eventId (markdown-commit.ts:10-22), but not the complete shared command/cause/correlation/policy/watermark/queue metrics contract.",
+      "requiredChange": "Add common commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark and retry/DLQ counters through shared gateway/consumer; redacted metadata only. Distinguish queued/unknown from reconciled verified result.",
+      "verification": "Trace one import-save-rename replay across receipt/outbox/projection/activity; inspect queue lag and intentional failure counters and logs for absence of private body/token/email markers.",
+      "state": "MISSING_SHARED_OBSERVABILITY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted common event/receipt/metrics ports and runtime trace collector. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative wp-16.test.ts path was absent in scoped glob. No tests run, as required. work-packages.json:13297-13309,14029-14060 requires scenario, seeded control, recovery and real evidence.",
+      "requiredChange": "Create only normative scenario test with meaningful behavior/boundary oracles, seeded mutation sensitivity and persistence-recovery; coordinate relevant existing package regressions after integration.",
+      "verification": "Lead later runs bun test tests/macro-integration/wp-16.test.ts plus relevant existing tests, then actual UI/API changed path. Catch rename identity mutant and unauthorized/dropped/duplicated-event control; independent second failure holdout; distinguish infrastructure failures.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN",
+      "missingPrerequisite": "Accepted dependencies, fixture/run harness and integrated artifact revision."
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:295-312 lists proposed package; 22-test-plan.md explicitly states no PASS and requires full checklist. Current revision plumbing differs from the published risk.",
+      "requiredChange": "Root updates these existing normative docs for actual command schemas, one-authority note/Page graph, standalone/shared boundaries, portable format/hash semantics, ACL, offline/recovery and migration ownership/rollback. No extra docs created by preflight.",
+      "verification": "Review docs against delivered DTOs/routes/accepted receipts; reproduce documented export/import/conflict/recovery procedure in later live run; do not turn fixture/source evidence into verified state.",
+      "state": "UPDATE_REQUIRED_AFTER_IMPLEMENTATION",
+      "missingPrerequisite": "Integrated implementation and observed behavior receipts."
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. NotesPage.saveCurrentNote:957-974 maps native HASH_CONFLICT/AUTH_FAILED/NOT_FOUND/authority/busy/result-unavailable and preserves draft; content.commit:150-152 explicitly treats failed readback as uncertain despite durable receipt.",
+      "requiredChange": "Preserve native uncertainty handling; add shared forbidden/unauthenticated/workspace mismatch/schema/revision/idempotency/revoke-fence and unavailable statuses with retryable/terminal/quarantine distinction. Unknown result retries exact command rather than new identity or blind overwrite.",
+      "verification": "Inject service disconnect after commit, forbidden, conflict, hash mismatch, unsupported schema, revoke fence pending and projection readback failure; no false saved state, no lost draft, exact receipt recovery and no extra aggregate.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Common result/error DTOs, durable queue and real failure/recovery harness. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. NotesPage:614,790-829 has loading and current request/workspace guards; NotesViewHost assumes supplied rows. Shared watermark/policy freshness is not represented by inspected DTOs.",
+      "requiredChange": "Show initial loading, refresh/stale projection and command reconciliation without blanking into false empty; keep request/workspace guards and disable edits until authoritative content binding/capabilities are known.",
+      "verification": "Delay query/materialization, switch workspace/document while response is pending and reload; no stale body injection, empty flash or false applied status; UI/ARIA proof.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Shared projection/status DTO and actual UI harness. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. NotesPage starts notes=[] and activeNote=null; local list can return [] when isClaimableLive is false (notes.ts:978-980). That is not a shared denied/unavailable distinction.",
+      "requiredChange": "Use typed empty versus denied/unconfigured/offline/unavailable states from canonical queries; never display an empty collection as proof of authorization or healthy service.",
+      "verification": "Empty allowed W1, all-denied query, disconnected service and unconfigured shared mode display distinct state without hidden total/title leakage.",
+      "state": "MISSING_SHARED_STATE_DISTINCTION_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted typed query/result state contracts and actual UI run. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. NotesPage.pendingCommitsRef is an in-memory Map; saveQueueRef serializes live operations; unknown response is retained only for the mounted component. It does not prove reload-safe shared offline queue.",
+      "requiredChange": "Use WP-05 durable queue/draft and cursor replay, retain original key/payload/ref/revision/policy fence, reconcile unknown receipt before subsequent mutation and quarantine denied edits. Do not add a second Notes-only queue or mark local memory as durable.",
+      "verification": "Queue edit offline, restart client, concurrent B edit and revoke variants, reconnect; same command applies at most once or rejects with preserved private draft; missing events replay and render converges.",
+      "state": "MISSING_DURABLE_SHARED_QUEUE_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Accepted WP-05/WP-10 offline and causal/policy contracts. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "Negative-control boundary and independent holdout",
+      "currentEvidence": "Normative tests require unauthorized actor or dropped/duplicated event to fail; verification.negativeControl specifies rename changes canonical identity and independent second variant (work-packages.json:13302-13305,14048-14051). No mutation was executed.",
+      "requiredChange": "Retain all these controls, not only easiest native CAS case. Assert exact canonical identity, graph, authorization and projection delivery outcomes; baseline failure is not a caught mutant.",
+      "verification": "Later passing baseline, injected rename-as-new-entity must fail identity/backlink assertion; forged actor, dropped/duplicated event variants must trigger designated privacy/convergence/dedup assertions; independent holdout evaluated with seed and smallest failing input.",
+      "state": "REQUIRED_NOT_RUN",
+      "missingPrerequisite": "Runnable integrated scenario and independent evaluator; preflight prohibits tests."
+    },
+    {
+      "criterion": "Persistence-recovery between persisted command and reply",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. Local MarkdownCommitStore.recover:180-198 handles prepared journals. Normative shared recovery criterion requires consistent state/receipt/canonical ID, not just restored Map snapshot.",
+      "requiredChange": "Make command/receipt/alias/revision/outbox atomic in accepted shared transaction and reconcile materialization/readback; replay same key after restart. Separate native file journal and shared receipt semantics without fabricating success.",
+      "verification": "Kill service after transaction before response, restart, replay exact import/save/rename inputs; independent API/DB readback observes one entity/receipt/revision event, correct backlink and later watermark; differing payload same key fails.",
+      "state": "REQUIRED_SHARED_RECOVERY_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Common transaction/outbox fault points and accepted live recovery runner. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    },
+    {
+      "criterion": "Migration, backfill, retained local files and rollback",
+      "currentEvidence": "WP-16 proposes entity_alias/note_location/document_revision, composite workspace FK and alias/idempotency/delivery uniqueness (work-packages.json:13791-13835). Existing local source guards and provenance imports must remain intact.",
+      "requiredChange": "Additive selected-migrator migration only to owned tables/extensions; backfill stable identity with aliases/provenance, quarantine ambiguous IDs and retain local original files. Snapshot/restore writer route before cutover; after shared writes use forward repair or verified reverse replay, never delete recent writes.",
+      "verification": "Apply migration/backfill on isolated fixture with collision and external edit; compare identity/alias row counts, constraints and source bytes; rollback before cutover then forward-repair after accepted writes, preserving latest content and policy.",
+      "state": "REQUIRED_NOT_APPLIED",
+      "missingPrerequisite": "Selected migrator, accepted shared table ownership, snapshot and lead-authorized migration environment."
+    },
+    {
+      "criterion": "Full verification gate and preserved standalone behaviors",
+      "currentEvidence": "STALE SOURCE SNAPSHOT: citations to changing Notes/content/protocol files below are bound to original hashes in staleSourceReferences, not current line numbers. See evidenceStatus.reinspectionFindings for observed changes; post-wave0 reinspection is required. 22-test-plan.md:7-9 requires actual changed Electron/RPC or shared-client HTTP/WS and separates standalone from shared; WP-16:13363 forbids fixture as live receipt. Existing engine export/import and local MarkdownCommitStore cannot substitute for end-to-end graph acceptance.",
+      "requiredChange": "Integrate after dependency receipts, then prove shared UI/API and relevant failure/reload paths on exact delivered revision/schema while preserving local Notes/files and existing Pages HTML representation through WP-10. Keep implemented/verified/delivered statuses separate.",
+      "verification": "Capture initial/final/error UI screenshots and ARIA, typed API readback, canonical ID/revision, DB uniqueness, command receipt, event/watermark and reproduction trace/seed. Record source/dirty-patch/image/schema hashes; combined Notes/Files attachment gates remain with WP-39/44 owners, not N/A for Notes ACL.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED_STALE_EVIDENCE",
+      "missingPrerequisite": "Lead wave0/dependency acceptance, real environment and integrated UI/service. No behavioral check authorized here. Re-inspect referenced mutable source after lead wave0 commit.",
+      "evidenceFreshness": "STALE_ROOT_INTEGRATION_REQUIRES_REINSPECTION"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "packages/core/src/rox2/notes-engine.ts",
+      "symbol": "createNativeNotesEngine / NativeNotesEngine / validateImportBundle",
+      "lineStart": 301,
+      "lineEnd": 503,
+      "sha256": "77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"
+    },
+    {
+      "path": "packages/core/src/rox2/notes-repository.ts",
+      "symbol": "createNotesRepository / nativeNoteRecord",
+      "lineStart": 27,
+      "lineEnd": 68,
+      "sha256": "74384b88dbb255bbc5bad0f87898f6aebc804cd5f6fdaf49131761f49102992c"
+    },
+    {
+      "path": "packages/core/src/docs/command-envelope.ts",
+      "symbol": "MarkdownCommitCommand / decodeMarkdownCommitCommand",
+      "lineStart": 1,
+      "lineEnd": 45,
+      "sha256": "39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes-rox2-surface.ts",
+      "symbol": "bindNativeNote",
+      "lineStart": 18,
+      "lineEnd": 33,
+      "sha256": "cfdbb9e20fe50ac5b1fe3aac7c4216493d014f5451cb40ab02f5427905b9b216"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "graphFromLinks / notesOnlyGraph",
+      "lineStart": 380,
+      "lineEnd": 413,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/notes/NotesImportButton.tsx",
+      "symbol": "NotesImportButton.runPreview / execute",
+      "lineStart": 39,
+      "lineEnd": 88,
+      "sha256": "166259e48d80fa0006b00f21681a08bce1378ad51488f95c0eaaa67260d1bd5d"
+    },
+    {
+      "path": "plans/macro-integration/work-packages.json",
+      "symbol": "workPackages[WP-16] / inputs / migrations / verification",
+      "lineStart": 13225,
+      "lineEnd": 14087,
+      "inspectedRanges": [
+        [
+          13225,
+          13433
+        ],
+        [
+          13791,
+          13905
+        ],
+        [
+          14029,
+          14087
+        ]
+      ],
+      "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-16 / mandatory Page foundation / WP-49 / WP-50 / WP-51 / WP-52",
+      "lineStart": 295,
+      "lineEnd": 1055,
+      "inspectedRanges": [
+        [
+          1,
+          7
+        ],
+        [
+          161,
+          199
+        ],
+        [
+          295,
+          312
+        ],
+        [
+          984,
+          1055
+        ]
+      ],
+      "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "acceptance boundary / Notes-Files regression / feature completeness / evidence record",
+      "lineStart": 179,
+      "lineEnd": 247,
+      "inspectedRanges": [
+        [
+          1,
+          60
+        ],
+        [
+          179,
+          247
+        ]
+      ],
+      "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"
+    }
+  ],
+  "nextExecutableAction": {
+    "preflight": "Run only the dispatch read-only --verify with bytecode writes disabled. It validates packet lineage and nine stable inspected references. Seven changing initial source snapshots remain explicitly stale, with verification failure history and reinspection observations; no live feature receipt is implied.",
+    "implementation": "After lead wave0 commit and accepted WP-02/WP-06/WP-10 receipts, first re-read and rehash all seven staleSourceReferences, rebase source-line citations/patch requests and preserve new descriptor/block-tree/native invalidation work. Then obtain additional SaveNote/ExportMarkdown/portable mention DTOs, selected migrator/table ownership and actual shared route/composition interfaces; implement normative notes contracts -> repository/commands/migration, owner-integrated shared patches and real scenarios in dependency order.",
+    "startGate": "No implementation authority exercised by this preflight; no feature completion or live acceptance claimed."
+  },
+  "risks": [
+    {
+      "risk": "Root integration may change inspected bytes concurrently",
+      "mitigation": "Artifact verifier detected actual drift. Seven changing original source snapshots are retained under staleSourceReferences with original digests and later observations; nine stable references remain independently verifier-checkable. Reinspection after wave0 is mandatory; do not mechanically rehash old evidence or present this as implementation-ready."
+    },
+    {
+      "risk": "Fixing notes.SAVE alone misses the actual editor's content.COMMIT_MARKDOWN writer and create/rename/folder/daily/property/move paths",
+      "mitigation": "Coordinate WP-51 guard at accepted authority boundary and keep local standalone composition intact."
+    },
+    {
+      "risk": "Path rename and move-as-create/delete replace canonical identity; title lookup silently merges duplicate titles",
+      "mitigation": "Stable UUID plus WP-02 aliases and typed authorized backlinks; mutation explicitly exercises rename and move, duplicate titles and old aliases."
+    },
+    {
+      "risk": "Map engine can pass CAS/export tests while product filesystem path remains unrelated",
+      "mitigation": "Verify real Notes UI -> RPC/domain -> authority -> persisted revision -> readback; preserve engine as standalone adapter, not new shared store."
+    },
+    {
+      "risk": "Raw Markdown full saves or a new CRDT conflict with WP-10 document authority",
+      "mitigation": "Use accepted content-kind/materialization/editor adapter and causal frontier/policy fence; no second document authority or surface."
+    },
+    {
+      "risk": "Portable Markdown loses typed mention refs or imports broaden access/trigger spam",
+      "mitigation": "Accepted mention metadata serialization and source occurrence contract; recheck target/recipient policy, retain local consent/provenance and test import/export/replay notifications."
+    },
+    {
+      "risk": "entity_alias and document_revision overlap foundation migrations; proposed migration ID may not be executable filename",
+      "mitigation": "Root assigns single table owner and selected migrator sequence; WP-16 adds only owned fields/tables, no fabricated timestamp or duplicate registry/receipt store."
+    },
+    {
+      "risk": "In-memory pending commits disappear on restart and client ignores accepted remote non-external changes",
+      "mitigation": "WP-05 durable shared queue plus revision/policy/cursor replay; draft quarantine and unknown-result reconciliation remain mandatory."
+    },
+    {
+      "risk": "Different revision conventions: engine contentHash, filesystem sha256 revision, shared aggregateRevision and CRDT frontier",
+      "mitigation": "Explicit typed adapter/accepted authority contract; do not equate them or accept weak contentHash as shared mutation authority."
+    },
+    {
+      "risk": "Normative note.import bounds of 10000 characters differ from native Markdown decoder's 16 MiB content limit",
+      "mitigation": "Honor operation-specific strict schema and document distinction; do not silently weaken import bounds or globally reduce standalone editor capability."
+    },
+    {
+      "risk": "Local folder import is LOCAL_ONLY and deliberately excluded from indexing/agent context",
+      "mitigation": "Keep existing route restriction and user consent; explicit authorized domain import is a separate operation, not implicit publication of copied files."
+    },
+    {
+      "risk": "No tests/UI/runtime proof is permitted during this assignment",
+      "mitigation": "Report source-only partial/missing states; featureComplete=false and all live verification prerequisites retained. Artifact verifier checks lineage/digests only, never feature behavior."
+    }
+  ],
+  "staleSourceReferences": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "noteIdFromRelativePath / assertSafeNoteId / renameNote / registerNotesHandlers",
+      "lineStart": 148,
+      "lineEnd": 1108,
+      "inspectedRanges": [
+        [
+          148,
+          171
+        ],
+        [
+          283,
+          340
+        ],
+        [
+          416,
+          596
+        ],
+        [
+          956,
+          1108
+        ]
+      ],
+      "sha256": "01bc67a676bbbd286097054da73494dde89171b71f0126fc67a85e8efc5bb5bc",
+      "freshness": "STALE_INITIAL_INSPECTION",
+      "laterObservedWholeFileSha256": "4cc3e67ef5f7027a892e10c294dd6c1f93e6840dbcf3ed2486222b4df9588ee3",
+      "laterDigestStatus": "Observed during rehash; not promoted to inspected snapshot because root continued changing source during readback."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "NotesPage.saveCurrentNote / openNote / moveNoteToFolder / moveSilently",
+      "lineStart": 790,
+      "lineEnd": 1249,
+      "inspectedRanges": [
+        [
+          790,
+          899
+        ],
+        [
+          908,
+          1000
+        ],
+        [
+          1109,
+          1249
+        ]
+      ],
+      "sha256": "7f7785d836d3336e9f3fa3835231f96d5c5965c3a6704cba54276f20c55c907b",
+      "freshness": "STALE_INITIAL_INSPECTION",
+      "laterObservedWholeFileSha256": "ac127ef6789ba21ef516bbe79a03c1e02ec20fcce66b87a09cf6ef0668a34c87",
+      "laterDigestStatus": "Observed during rehash; not promoted to inspected snapshot because root continued changing source during readback."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote / NotesViewHost / NotesTableView",
+      "lineStart": 48,
+      "lineEnd": 160,
+      "sha256": "2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358",
+      "freshness": "STALE_INITIAL_INSPECTION",
+      "laterObservedWholeFileSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "laterDigestStatus": "Observed during rehash; not promoted to inspected snapshot because root continued changing source during readback."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/content.ts",
+      "symbol": "localContentPrincipal / registerContentHandlers.services / commit",
+      "lineStart": 27,
+      "lineEnd": 154,
+      "inspectedRanges": [
+        [
+          27,
+          101
+        ],
+        [
+          125,
+          154
+        ]
+      ],
+      "sha256": "fea0284cc2d8a36785bd33c905e2a6894c591151a59ae830fd76209d0f04c627",
+      "freshness": "STALE_INITIAL_INSPECTION",
+      "laterObservedWholeFileSha256": "adeaa0c8da8f46ab386110c65a26fbe70706d97f4becf4aa9ec33451ecc64083",
+      "laterDigestStatus": "Observed during rehash; not promoted to inspected snapshot because root continued changing source during readback."
+    },
+    {
+      "path": "packages/server-core/src/docs/markdown-commit.ts",
+      "symbol": "MarkdownCommitStore.commit / getReceipt / recover / publishContent",
+      "lineStart": 51,
+      "lineEnd": 223,
+      "inspectedRanges": [
+        [
+          51,
+          120
+        ],
+        [
+          180,
+          223
+        ]
+      ],
+      "sha256": "9819cff391050923a5bc2dd895f611514faff21345e7703d8726dc4f3d92786c",
+      "freshness": "STALE_INITIAL_INSPECTION",
+      "laterObservedWholeFileSha256": "a1367fe25b83367a83d0c6b6ca0df76c45b77dab51903a2f00f710e7aa584d57",
+      "laterDigestStatus": "Observed during rehash; not promoted to inspected snapshot because root continued changing source during readback."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "NoteLink / NoteSummary / NoteDocument / NoteRenameImpact / NoteChangedPayload",
+      "lineStart": 655,
+      "lineEnd": 728,
+      "sha256": "9715263692a742a23936b0068ddc1e56d09a2be27c682371df67ec5de9d7a6ce",
+      "freshness": "STALE_INITIAL_INSPECTION",
+      "laterObservedWholeFileSha256": "30fa78f688e035c3ad38b0c1280418c81108b7c7a0ed12939472b32ecc0ade8a",
+      "laterDigestStatus": "Observed during rehash; not promoted to inspected snapshot because root continued changing source during readback."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "Local vault/kernel import route entries",
+      "lineStart": 407,
+      "lineEnd": 410,
+      "sha256": "f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e",
+      "freshness": "STALE_INITIAL_INSPECTION",
+      "laterObservedWholeFileSha256": "c8fb48dde141d0ebcc20eec69e8386797d31a8b2b84dfbbd93afcad883b670c2",
+      "laterDigestStatus": "Local import entries re-observed at lines 408-411; preserve initial version as stale because root integration remains active."
+    }
+  ]
+}

@@ -1,0 +1,479 @@
+{
+  "task_id": "WP-09-preflight",
+  "attempt_id": "11c8e67e451d40607001b1d865a0d850",
+  "packet_hash": "98bca073b1c6fb94a5afab0dc2c46658ad3f4d6200414a0ea86d08ee9a32babc",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-09",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; one owned report, no implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-08", "WP-07", "WP-06"],
+  "evidenceBoundary": {
+    "revision": "input_revision is the dispatch-supplied HEAD, not a claim that inspected working-tree bytes equal that commit",
+    "sourceState": "Read live working-tree files while root wave0 work may be uncommitted. Whole-file hashes below identify inspected evidence. Re-read changed files after the lead's wave0 commit before making source patches; this report is not an accepted dependency or runtime receipt.",
+    "manifest": "Inspected work-packages.json whole-file SHA-256 matches dispatch manifest 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0.",
+    "inspectionScope": "WP-09's three existing core files, platform-contract's direct Soup type import, normative package record and referenced macro architecture/implementation/test specifications. No product UI, unrelated source, progress, manifests or Git state changed.",
+    "availability": "Directory read of apps did not contain workspace-service; directory read of packages/shared/src did not contain workspace-domain; scoped glob found none of WP-09's proposed artifacts. These are observations of this working tree, not proof of absence of another checkout or future root integration.",
+    "toolLimits": "Codegraph reported no index and was not retried. Descriptive find failed with its judging provider's 402; fallback used exact known-symbol grep and ranged reads. No build, test, native UI or network operation was run. Artifact JSON structure checking is not feature verification."
+  },
+  "dependencyInputs": [
+    {
+      "producer": "WP-08",
+      "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+      "requiredSeam": "Common Message store's PostMessage/EditMessage/DeleteMessage, canonical source ref and revision, and authoritative structured mention occurrence extraction/diff hook. Human messages remain separate from agent transcripts.",
+      "evidence": "work-packages.json:6219-6272 and 7337-7345; 22-test-plan.md:103-109",
+      "receiptState": "not inspected or accepted by this preflight"
+    },
+    {
+      "producer": "WP-07",
+      "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+      "requiredSeam": "Durable notification/activity consumer with recipient/reason dedup, semantic overlap precedence, current source-read recheck at delivery, and documented effects when an edited mention removes or changes a recipient.",
+      "evidence": "work-packages.json:5251-5302 and 7346-7353; 22-test-plan.md:67,104,108-109",
+      "receiptState": "not inspected or accepted by this preflight"
+    },
+    {
+      "producer": "WP-06",
+      "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+      "requiredSeam": "Actor-scoped Search/GetProjectionWatermark and authorized entity-context projection; revision/ACL-epoch/tombstone fences and durable inbox replay for mention candidates and backlink/context changes.",
+      "evidence": "work-packages.json:4383-4431 and 7354-7361; 19-target-architecture.md:55,107,156",
+      "receiptState": "not inspected or accepted by this preflight"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "wave0-and-snapshot",
+      "classification": "dispatch prerequisite, not an added explicit DAG edge",
+      "gate": "Lead must commit wave0 and accept WP-08/WP-07/WP-06 receipts before implementation begins. Refresh source hashes/interfaces against that revision.",
+      "evidence": "Authorized worker prompt and packet; report source hashes",
+      "missingPrerequisite": "Lead's wave0 commit and accepted dependency receipts"
+    },
+    {
+      "id": "shared-graph-owner",
+      "classification": "transitive WP-02 foundation plus shared-file ownership gate",
+      "gate": "WP-02 already proposes the same graph contracts/commands/repository and owns entity/alias/link identity and GetBacklinks. WP-09 must extend that module and reuse entity_link, not recreate it or independently overwrite shared files. WP-40 also extends those paths later.",
+      "evidence": "21-implementation-plan.md:27-44,7,810-818; work-packages.json:1046-1051,7766-7809",
+      "missingPrerequisite": "Accepted WP-02 graph API, migration/schema version, transaction handle and designated graph-area integration owner"
+    },
+    {
+      "id": "authenticated-principal-and-policy",
+      "classification": "WP-01/WP-03 transitive foundation; hidden teammate binding prerequisite",
+      "gate": "person refs must resolve through verified principal binding, not display name/email/CRM Contact. Source write and target read are independently checked against authenticated workspace/resource/action policy. Existing authorizeRox2Action has only actor/permission grants and is not shared resource ACL.",
+      "evidence": "platform-contract.ts:17-38,592-610; 19-target-architecture.md:51,72-94,126; 21-implementation-plan.md:9-63",
+      "missingPrerequisite": "Typed authenticated actor, resource-scoped policy API/epoch and registered workspace-visible person projection"
+    },
+    {
+      "id": "command-outbox-transaction",
+      "classification": "WP-04 transitive foundation, not a new explicit DAG edge",
+      "gate": "Use one command gateway and DB transaction for occurrence/link changes, receipt/request hash and mention.created/deleted outbox events; inbox effect plus processed state plus watermark must be atomic. Legacy Rox2Relation has no occurrence metadata and Rox2Event lacks required workspace/policy fields.",
+      "evidence": "platform-contract.ts:125-141; 19-target-architecture.md:54,63-97,130-152; 21-implementation-plan.md:65-82",
+      "missingPrerequisite": "Accepted RoxCommand v2, typed event/result mapping, transaction port, idempotency receipt and durable outbox/inbox contracts"
+    },
+    {
+      "id": "writer-mode-and-revoke-fence",
+      "classification": "published cross-cutting authority requirement involving WP-51/WP-05, absent from WP-09 explicit dependencies",
+      "gate": "Shared IDs cannot be locally mutated through legacy adapters; standalone remains explicit. Revoke denies future reads/writes/subscriptions and pending work must reauthorize; REVOKE_FENCE_PENDING must not look applied. Offline/reconnect acceptance requires the durable shared projection/outbox path. Do not invent a second fence implementation inside graph.",
+      "evidence": "19-target-architecture.md:50-56,103,107,128; 21-implementation-plan.md:84-103,1020-1036; work-packages.json:7555-7567",
+      "missingPrerequisite": "Lead-supplied writer-mode routing and revoke-fence contract/receipt, plus offline replay receipt; track separately from exact explicit array"
+    },
+    {
+      "id": "target-surface-registration",
+      "classification": "hidden target conformance and routing gate, not blanket dependency on later WP-24/WP-40",
+      "gate": "Company and teammate must be real registered authorized targets with existing destination adapters, typed search/mention descriptors, event/notification policy and migrations before kind enablement. crm-company and person enum entries alone are insufficient. WP-40's future ResolveDeepLink and WP-25's Company discussions cannot be assumed already implemented or used to create a cycle.",
+      "evidence": "platform-contract.ts:17-38,218-239; 19-target-architecture.md:52,126,154-156; 21-implementation-plan.md:492-511,810-826",
+      "missingPrerequisite": "Root-owned actual existing detail-panel/navigation symbols and minimum registered Company/person read/resolution adapters. This worker's allowed three core paths do not identify renderer destinations."
+    },
+    {
+      "id": "mention-api-and-anchor-contract",
+      "classification": "published specification gap requiring accepted contract, not permission to weaken DoD",
+      "gate": "WP-09 names CreateMention/ResolveMention/RemoveOccurrence, but its operations record specifies only mention.create. sourceRevision and occurrenceKey are strings, not an anchor format or authority proof. Agree strict ResolveMention/RemoveOccurrence DTOs, expected revision/frontier semantics, stable occurrence identity and edit/deletion lifecycle with graph and Message owners before coding.",
+      "evidence": "work-packages.json:7243,7363-7399,7567; 21-implementation-plan.md:167-178; 22-test-plan.md:108",
+      "missingPrerequisite": "Accepted resolver/removal interfaces and source content occurrence adapter; don't trust caller-supplied offsets or revision as proof"
+    },
+    {
+      "id": "isolated-runtime-and-license",
+      "classification": "verification/registration gate, not an added requirement to run all WP-52 media probes for mentions",
+      "gate": "Need reachable authenticated workspace service, selected DB/migrator, two client actors and existing target UI for live read-back/restart acceptance. Native source revision checks must not require remote accountNamespace. Behavior is reimplemented; upstream code cannot be copied without exact license audit.",
+      "evidence": "19-target-architecture.md:101,109,126,156,160; 22-test-plan.md:7-9,28,34; work-packages.json:7335-7336,7768-7769",
+      "missingPrerequisite": "Lead-owned service/DB/migrator and isolated UI/API runner; license receipt only if adding an upstream dependency"
+    }
+  ],
+  "ownedNewFiles": [
+    "tests/macro-integration/wp-09.test.ts",
+    "apps/workspace-service/migrations/09-domain-contract.sql"
+  ],
+  "newFileOwnershipNote": "These are implementation-stage candidates from the normative newFiles list, not authorization to write them in this preflight. Migration path is a proposed identifier; selected migrator determines actual filename, without fabricated timestamp. The other three normative newFiles are shared with WP-02 and must be integrated as patch requests, not independently owned files. Only this JSON report is owned now.",
+  "normativeNewFiles": [
+    "packages/shared/src/workspace-domain/graph/contracts.ts",
+    "apps/workspace-service/src/modules/graph/commands.ts",
+    "apps/workspace-service/src/modules/graph/repository.ts",
+    "tests/macro-integration/wp-09.test.ts",
+    "apps/workspace-service/migrations/09-domain-contract.sql"
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / formatRox2EntityId / parseRox2EntityId / Rox2Relation / ROX2_RELATION_RULES / Rox2Event",
+      "change": "Use the existing crm-company/person canonical refs and existing mentions relation rule (cyclic allowed, clear-edge on delete). Accept the foundation's additive RoxCommand v2/RoxDomainEvent shapes and typed mention event payloads referencing source, target, sourceRevision and occurrenceKey. Keep occurrence identity in graph domain persistence, not by changing every Rox2Relation into a new entity store. Keep standalone triad semantics and map shared receipt status through the accepted gateway adapter. Preserve registerExternalBinding's namespace/collision behavior; do not invent title-based mention IDs or use isRevisionedEntityRef as native content CAS.",
+      "reason": "Current relation has only fromId/toId/kind; event has optional audit fields and no policyEpoch. WP-09 needs per-occurrence durable events without duplicating identity or rewriting already-valid relation rules.",
+      "evidence": "platform-contract.ts:17-53,99-167,218-250,336-428,613-620",
+      "prerequisite": "WP-02/WP-04 accepted contract and root approval of exact additive event extension; no source edits by this worker"
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "SurfaceContextInput / bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext / requiresContextGrant",
+      "change": "After server ResolveMention authorizes the target, bind only authorized canonical target/source refs and revisions in the existing context. Make the shared-mode binding boundary filter entityRefs and revisionByEntityId together using a caller-supplied current authorized set/decision from the accepted policy port; do not add I/O to core. Preserve standalone binding and explicit snapshot/live semantics. Invalidation/revoke clears denied selection/context metadata through the surface adapter. requiresContextGrant remains an execution-consent helper and must never substitute for resource ACL.",
+      "reason": "bindSurfaceContext currently deduplicates unchecked strings and copies every revision; visibleContextEntityRefs filters only the returned ref list, not the context revision map. read/write return false from requiresContextGrant, so treating it as authorization would grant access accidentally.",
+      "evidence": "surface-context.ts:18-55,75-96; 19-target-architecture.md:51,55,107",
+      "prerequisite": "Accepted WP-06 context API and current policy epoch; root identifies actual target navigation adapter"
+    },
+    {
+      "path": "packages/core/src/rox2/project-membership.ts",
+      "symbol": "ProjectMembershipStore / linkEntityToProject / entityIdsForProject / visibleProjectsForEntity",
+      "change": "Preserve membership store shape and edge-only unlink semantics. If shared mention context traverses project membership, extend its query inputs with an already-authorized entity set and intersect returned entity IDs as well as existing readable-project filters; do not mutate memberships, primaryProjectId or grants during CreateMention/ResolveMention/RemoveOccurrence. Do not broaden member-of relation kinds merely to make mentions work. No new mention storage belongs in this module.",
+      "reason": "ProjectVisibility filters projects, while entityIdsForProject currently returns every linked entity once that project is readable. Linked private targets require their own ACL; mentioning a target is not project membership or a share operation.",
+      "evidence": "project-membership.ts:19-30,86-118,121-167,170-187; platform-contract.ts:388; 19-target-architecture.md:51",
+      "prerequisite": "Graph/context integration owner must identify which existing membership query is used; if no mention traversal uses it, preserve source unchanged and prove no-share invariant rather than adding an unused abstraction"
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/graph/contracts.ts",
+      "symbol": "WP-02 graph ports; proposed CreateMention / ResolveMention / RemoveOccurrence",
+      "change": "Extend the accepted shared graph contract with strict mention.create payload {source,target,sourceRevision,occurrenceKey}; additionalProperties=false, canonical workspace refs and normative 1..10000 string bounds. Actor is never accepted in the payload. Define accepted typed ResolveMention and RemoveOccurrence request/results plus authorized backlink DTO/cursor, versioned mention.created/deleted payloads and source extraction port. Source spans/anchors come from the authoritative content adapter; any new public fields require a coordinated normative contract change, not silent schema expansion.",
+      "reason": "Same path is WP-02's normative artifact. Only mention.create has a concrete wire operation in the WP-09 record, while resolution/removal are mandatory DoD behavior.",
+      "evidence": "21-implementation-plan.md:33-35,167-169; work-packages.json:7363-7399,7549-7567,7812-7816",
+      "prerequisite": "File/symbols are proposed, not present in inspected tree; accepted WP-02 API and Message extraction/removal lifecycle"
+    },
+    {
+      "path": "apps/workspace-service/src/modules/graph/commands.ts",
+      "symbol": "WP-02 LinkEntity / GetBacklinks implementation; proposed CreateMention / ResolveMention / RemoveOccurrence handlers",
+      "change": "Register mention.create in the same authenticated HTTP/RPC command gateway. Validate source/target workspace, source write/action, target read and actual current source revision/occurrence. ResolveMention rechecks target policy before returning route/title and permits no hidden totals. Reconcile authoritative source revision changes by occurrence diff through the accepted Message transaction hook, emitting additions/removals once. RemoveOccurrence must reject stale mutation and remove only the matching occurrence; target replacement removes the old link and creates a new occurrence atomically. Gate shared vs standalone via foundation routing, never call grant or membership writers.",
+      "reason": "Need real extraction, resolution and edited-backlink removal, not only a stored text token. Same gateway protects human UI and agent calls.",
+      "evidence": "work-packages.json:7243-7268,7367-7371,7567,7817-7820; 19-target-architecture.md:50-55,101-103; 22-test-plan.md:108",
+      "prerequisite": "Proposed module absent; accepted graph owner, WP-08 revision/diff hook, command/policy ports, HTTP/RPC registration owned by root"
+    },
+    {
+      "path": "apps/workspace-service/src/modules/graph/repository.ts",
+      "symbol": "WP-02 entity_link repository/transaction port; proposed mention occurrence repository",
+      "change": "Persist mention occurrences with canonical source/target composite FKs, sourceRevision, occurrenceKey, schema/revision/timestamps/tombstone. Enforce UNIQUE(workspace_id, source_entity_id, source_revision, occurrence_key), using final accepted identity names. Maintain an occurrence-to-existing entity_link association so removing one of two mentions to the same target cannot erase the other's backlink. In one transaction persist occurrence/link diff, request-hash receipt and outbox. Reuse existing entity_link table/indexes and command_receipt/inbox tables. Authorized stable-cursor backlink query excludes denied targets/counts and honors tombstones; consumer effect/processed/watermark commits atomically.",
+      "reason": "Occurrence uniqueness differs from plain edge uniqueness. WP-02 already creates entity_link; a second table/store would break symmetric backlinks and recovery.",
+      "evidence": "platform-contract.ts:125-129,380-428; work-packages.json:7766-7824; 19-target-architecture.md:54-55,109,130-149",
+      "prerequisite": "Proposed module absent; accepted WP-02 schema/association shape, selected migrator and transaction/inbox foundation"
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-09 section",
+      "change": "After implementation, document exact accepted resolver/removal/extraction seams, graph owner, delivered migrations, recipient edit/overlap policy, authority/fence prerequisites and revision-bound verification evidence. Keep planned/unverified status until full acceptance.",
+      "reason": "Normative docs must describe real implementation rather than treat a fixture or preflight as feature completion.",
+      "evidence": "21-implementation-plan.md:161-178; work-packages.json:7307-7310,7336",
+      "prerequisite": "Root-owned source integration and actual scenario receipts"
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "CHAT-TASK-01 / CRM-DISCUSS-01 / acceptance boundary",
+      "change": "Record WP-09 observed Company/person navigation, mention edit/delete deltas, recipient overlap/revoke checks, negative-control failures, restart receipt consistency and actual UI/API artifacts. Keep infrastructure failures separate from caught mutants and record the exact implementation SHA/schema.",
+      "reason": "Required documentation plus full integration/recovery proof without deferring per-slice tests to final release.",
+      "evidence": "22-test-plan.md:3-9,60-74,99-111,247; work-packages.json:7878-7934",
+      "prerequisite": "Lead-authorized runtime/test execution after implementation; prohibited in this preflight"
+    }
+  ],
+  "integrationRequests": [
+    {
+      "owner": "WP-08 Message owner",
+      "pathFromSpecification": "apps/workspace-service/src/modules/messaging/commands.ts",
+      "symbolFromSpecification": "PostMessage / EditMessage / DeleteMessage",
+      "request": "Supply canonical structured mention occurrences from persisted source revision and a graph transaction reconciliation hook; raw text/display name does not prove identity. Preserve occurrence identity when text is inserted before a token; removal/retarget/delete computes deltas and retains original event/cause.",
+      "sourceStatus": "Normative proposed path/API, not read as existing implementation; exact implementation symbol must be returned in accepted receipt"
+    },
+    {
+      "owner": "WP-07 attention owner",
+      "pathFromSpecification": "apps/workspace-service/src/modules/attention/repository.ts",
+      "symbolFromSpecification": "notification recipient/event/reason unique; activity consumer",
+      "request": "Consume mention.created/deleted through durable inbox; verified person binding yields one authorized recipient, crm-company yields no team fanout. Apply documented mention/reply/assignment/owner reason precedence and stable semantic dedup across unchanged edits; recheck source read at delivery after revoke. Define historical notification behavior on recipient removal without repeat pings.",
+      "sourceStatus": "Normative proposed path/API; no consumer symbol or behavior assumed implemented"
+    },
+    {
+      "owner": "WP-06 search/context owner",
+      "pathFromSpecification": "packages/shared/src/workspace-domain/search/contracts.ts",
+      "symbolFromSpecification": "Search scoped by actor / GetProjectionWatermark",
+      "request": "Expose authorized typed mention candidate refs and context/backlink freshness; include person/Company descriptor registration and deletion/revoke invalidation. Do not expose private candidates, snippets, denied totals or stale cached metadata.",
+      "sourceStatus": "Normative proposed port; exact accepted DTO and watermark contract are prerequisites"
+    },
+    {
+      "owner": "Root surface/transport integration owner",
+      "pathFromSpecification": "packages/core/src/rox2/surface-context.ts",
+      "symbolFromSpecification": "bindSurfaceContext",
+      "request": "Identify actual existing entity detail-panel/composer/navigation symbols, HTTP/RPC dispatcher and native agent/MCP adapter, then route resolved mention clicks and command/query calls through the accepted graph port. Add loading/empty/denied/offline/retry/applied verified states inside those existing surfaces with t() strings in all ten locales; do not create a standalone mentions screen.",
+      "sourceStatus": "Core binder inspected; renderer/dispatcher concrete symbols unavailable inside this worker's allowed source slice. Discovery and patch ownership must be supplied by root, not guessed."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Company and teammate mention opens authorized target",
+      "currentEvidence": "platform-contract.ts:17-38 already declares crm-company/person; :218-239 provides canonical parse/ref. surface-context.ts:31-55 binds and filters refs but has no resolver or navigation. WP-09 target UI is only specified, not observed.",
+      "requiredChange": "Implement authoritative source occurrence extraction, CreateMention and current-policy ResolveMention via graph ports; resolve Company/person refs to existing destinations and bind authorized revisions only.",
+      "verification": "Through real existing composer/detail panel A mentions Company and B, clicks each token and opens the matching canonical target; reload/rename preserves identity. C/forged-workspace and revoked target get denied without title/body/count; HTTP and native RPC read-back agree. Capture screenshot/ARIA, canonical ID/revision and policy decision.",
+      "missingPrerequisite": "WP-08/WP-06 accepted ports, registered Company/person target/read adapters, root-owned existing navigation symbol and live UI runner",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "teammate receives one notification",
+      "currentEvidence": "person enum is not a principal binding; Rox2Event is not a durable attention consumer. WP-07 spec defines recipient/event/reason unique; test plan requires overlap precedence and source-read delivery recheck.",
+      "requiredChange": "Emit durable mention.created once per semantic addition; reuse WP-07 inbox/recipient policy, verified person principal binding and overlap dedup. Company targets do not ping a whole team; unauthorized recipients get no content.",
+      "verification": "B receives exactly one durable notification with authorized target/thread link after duplicate event delivery, retry, source edits with unchanged mention and restart; mention/reply/assignment overlap remains one. Assert notification DB key/count and same canonical receipt; Company mention produces no team fanout; revoke before delivery prevents snippet/push.",
+      "missingPrerequisite": "Accepted WP-07 consumer/precedence/edit policy and authenticated person binding",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "edited occurrence removes backlink",
+      "currentEvidence": "Rox2Relation only has fromId/toId/kind (:125-129); mentions allows cycles and clear-edge deletion (:382), without revision/occurrence storage. Project unlink removes membership edge only and is not mention removal.",
+      "requiredChange": "Persist versioned source occurrence identities and reconcile edits/deletes using WP-08 authoritative revision. Tombstone removed occurrence and emit mention.deleted atomically; remove aggregate source-target backlink only after last active supporting occurrence, preserving unrelated links.",
+      "verification": "Two occurrences to B yield correct backlink; remove one and backlink remains, remove last and both forward/backlink queries lose it after watermark/reload. Change B to V applies recipient/link delta once; insertion before token does not drift identity; stale source edit rejected; crash/replay cannot resurrect removed edge.",
+      "missingPrerequisite": "Accepted graph association schema, WP-08 occurrence diff/revision hook and RemoveOccurrence contract",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "text mention grants no implicit access",
+      "currentEvidence": "authorizeRox2Action (:601-610) is actor/permission-only; membership helper filters project visibility; requiresContextGrant returns false for read/write. None is authoritative resource ACL. Architecture forbids implicit link inheritance.",
+      "requiredChange": "Source write and target read checked separately by server; never call grant/share/membership mutation from mention handlers. Resolver, backlinks, search, agent context and event/delivery projection recheck current target/source policy.",
+      "verification": "Compare grants and membership before/after mention commands; B mentioned on A-private source cannot fetch body, source backlink, notification excerpt, agent context or subscription. C knows IDs but cannot forge actor/workspace. Agent allow-all still denied. Seed grant-on-mention mutation and require this precise privacy assertion to fail.",
+      "missingPrerequisite": "Accepted resource policy/epoch, writer-mode/fence, WP-06/WP-07 filtering",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Normative UI is existing entity detail panels and SurfaceContext; binder is core-only, no UI renderer evidence in allowed slice.",
+      "requiredChange": "Extend existing composer/token/detail/backlink components through root-provided actual seams; localized accessible labels and every required state, no second surface.",
+      "verification": "Actual click/keyboard focus and visual screenshot/ARIA proof for Company/person token, backlink list, denied and queued states; reload same target.",
+      "missingPrerequisite": "Root renderer seam discovery and existing UI runner",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Canonical parser/binder exist; no destination resolution in these three files.",
+      "requiredChange": "ResolveMention returns only authorized typed canonical destination through existing entity descriptor/navigation adapters; preserve workspace/account identity.",
+      "verification": "Company/person routes open same IDs after rename/reload; malformed/cross-workspace/stale/denied targets cannot navigate or reveal titles.",
+      "missingPrerequisite": "Target descriptor and root-provided route adapters, not assumed future WP-40 implementation",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Rox2EntityRef and mentions relation exist, no mention occurrence domain entity in inspected paths.",
+      "requiredChange": "Reuse registry refs and typed source/target links; occurrence model references verified person or Company without display-name/principal/contact merging.",
+      "verification": "Distinct same-name targets stay distinct; canonical ID/revision/namespace read-back and registered person binding proven; malformed/unknown kind rejected or handled by accepted schema policy.",
+      "missingPrerequisite": "WP-02 registry and authenticated person projection",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "Core stores are pure in-memory shapes; proposed workspace-service/migration absent in scoped listing.",
+      "requiredChange": "Add normative migration for mention rows and existing entity_link association/indices with workspace composite FKs, occurrence uniqueness, versions and tombstones; reuse shared receipt/outbox/inbox.",
+      "verification": "Apply actual migrator; duplicate/cross-workspace/FK attempts fail correctly; durable rows survive service restart; forward repair/replay retains accepted writes.",
+      "missingPrerequisite": "Selected migrator, accepted WP-02 schema and command transaction; actual migration receipt",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "WP-09 specifies strict mention.create schema and RoxCommand v2 but no implementation in allowed paths.",
+      "requiredChange": "Implement CreateMention and RemoveOccurrence through same authenticated gateway with immutable request hash, expected revision/source frontier validation and strict unknown-field rejection.",
+      "verification": "HTTP/RPC same payload/key yields same receipt/entity; changed payload same key conflicts; forged actor, workspace, invalid payload and stale revision rejected; injected commit-before-reply crash replays consistently.",
+      "missingPrerequisite": "WP-04 gateway, accepted removal contract and transport registration",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "Existing refs and visibility helpers are not authorized ResolveMention/GetBacklinks APIs.",
+      "requiredChange": "Add typed authorized resolution/backlink DTO and stable actor-bound cursor; enforce current ACL before serialization, no hidden title/total leakage.",
+      "verification": "Forward/backlink symmetric authorized read-back; pagination stable and cursor cannot cross actors/workspaces; denied target indistinguishable by totals/order/snippets.",
+      "missingPrerequisite": "WP-02 query/cursor and WP-03 policy ports",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Rox2Event only generic type/payload and optional causation/revision fields; no replay transport in allowed slice.",
+      "requiredChange": "Publish mention.created/deleted via shared transaction outbox and revision/policy fenced cursor invalidation; reuse authenticated subscriptions and inbox.",
+      "verification": "Two clients converge after edit/delete, reconnect gap replay, duplicate/out-of-order events and tombstone; revoke removes subscriptions and no private event metadata arrives.",
+      "missingPrerequisite": "Accepted outbox/inbox, realtime cursor and revoke boundary",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Entity.permissions is explicitly capability catalog, not actor authorization; authorizeRox2Action lacks workspace/resource scope.",
+      "requiredChange": "Inject principal from transport; check authenticated workspace, source write/action, target read and recipient source-read with current policy epoch, separate execution consent.",
+      "verification": "Owner/member/viewer/outsider matrix including known forged refs, allow-all agent and revoke races denies every unauthorized API/query/subscription/delivery without private fields.",
+      "missingPrerequisite": "WP-01/WP-03 policy and fence receipts",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Project membership link mutation exists but is not access grant; architecture requires no inherited private access from links.",
+      "requiredChange": "Mention creation/resolution/removal has no implicit share or membership mutation; shared context honors explicit current source and target grants.",
+      "verification": "Grant/membership snapshots unchanged; linked private source stays denied to mentioned user; explicit separate share is required and revoke survives replay.",
+      "missingPrerequisite": "Typed policy and graph transaction boundaries",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "WP-06 search/ACL-epoch/watermark is specified dependency; current binder has no search resolver.",
+      "requiredChange": "Use WP-06 actor-scoped candidate search and registered Company/person extractor; update source/link projection through mention events with watermark, deletion/revoke fences.",
+      "verification": "Authorized autocomplete yields correct typed refs; hidden Company/person/source never yields title/snippet/count; edit/delete visible after watermark and stale index still denies revoked access.",
+      "missingPrerequisite": "Accepted WP-06 candidate DTO and descriptor coverage for these targets",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "mentions relation is present but no occurrence extraction/anchor lifecycle in existing core paths.",
+      "requiredChange": "Derive verified occurrences from source content adapter, not loose display-name text; stable occurrence keys across offset shifts and revisioned add/remove/retarget diff.",
+      "verification": "Repeated same-name users resolve distinctly; inserted text before token, two same-target occurrences, retarget, no-op edit and delete produce exact durable deltas with no drift.",
+      "missingPrerequisite": "WP-08 structured source adapter and graph occurrence contract; CRDT document adapter when later Page kind is enabled",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-07 durable attention spec, not implemented consumer evidence.",
+      "requiredChange": "Send one semantic authorized notification per new person mention using existing attention store; no Company team fanout or body copies; edit/removal policy explicit.",
+      "verification": "Replay/restart and overlapping reasons yield count one; unchanged edits do not reping; unauthorized or revoked recipient sees no source excerpt.",
+      "missingPrerequisite": "WP-07 attention consumer and reason/edit precedence receipt",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "WP-07 activity.recorded and architecture consumer flow are specified; generic Rox2Event alone is insufficient.",
+      "requiredChange": "Project mention add/remove activity from the same event IDs/causation using accepted attention consumer and current ACL without private body logging.",
+      "verification": "Authorized timeline receives exact add/remove actions once after replay; denied actors receive no private target/source metadata; observed revision/watermark agrees with graph.",
+      "missingPrerequisite": "WP-07 activity DTO/projection consumer",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "SurfaceContext has permissionMode and ref snapshots, not authenticated resource decisions; allow-all does not implement ACL.",
+      "requiredChange": "Agent mention/read/context calls use same graph/policy gateway and authorized ref/revision snapshots; no legacy local writer for shared IDs.",
+      "verification": "Agent-A retrieves permitted mention context and mutates permitted source with receipt; viewer/outsider allow-all denied for private source/target or write; revoke removes cached context metadata.",
+      "missingPrerequisite": "Root-provided existing agent dispatcher/delegation seam and writer guard; do not defer graph ACL acceptance to future WP-36",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative POST /v1/workspaces/{workspaceId}/commands/mention.create and domain.mention.create; no dispatcher code inspected in allowed source slice.",
+      "requiredChange": "Register typed command/query ports in existing HTTP/native RPC and applicable agent/MCP dispatcher; all inject actor, reject payload actor and serialize authorized result/errors.",
+      "verification": "Exercise real HTTP/native RPC and applicable native agent/MCP calls for same outcome/receipt and denial matrix; schema contract checks enforce strict request and result DTO.",
+      "missingPrerequisite": "Root transport/tool registration symbols and accepted ResolveMention/RemoveOccurrence endpoints",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event optional causation/correlation/aggregateRevision, isAuditableRox2Event only boolean check; normative policyEpoch/watermark/retry/DLQ absent here.",
+      "requiredChange": "Emit commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters through foundation telemetry; no raw body/email/transcript/token labels.",
+      "verification": "Trace create/edit/remove/replay and injected failure to receipt/event/projection; inspect captured logs for PRIVATE_WP-09 and credential/body leakage while required safe identifiers/counters remain.",
+      "missingPrerequisite": "Accepted foundation event/telemetry and consumer counter interfaces",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative wp-09.test.ts scenario, negative-control and recovery file not found in scoped artifact glob; no tests run by instruction.",
+      "requiredChange": "Add meaningful package integration regressions for four criteria, occurrences/offsets, ACL, semantic dedup and crash recovery, plus live UI/API scenarios using existing harness.",
+      "verification": "After integration run bun test tests/macro-integration/wp-09.test.ts and relevant existing package tests, then real changed-surface/reload paths; preserve seed 20260939, exact revision/schema and evidence. Tests alone cannot close feature.",
+      "missingPrerequisite": "Dependency receipts and lead-authorized implementation/runtime runner",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md WP-09 and 22-test-plan.md are planned scenarios, not runtime receipts.",
+      "requiredChange": "Root updates these existing documents with accepted schemas, occurrence/recipient/revoke policy, migration/ownership and actual observed artifacts while preserving unverified states honestly.",
+      "verification": "All four criteria and full completeness dimensions link to exact implemented revision and exercised failure/reload evidence; no fixture promoted to live receipt.",
+      "missingPrerequisite": "Integrated code and observed verification receipts",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Spec lists FORBIDDEN/WORKSPACE_MISMATCH/INVALID_PAYLOAD/REVISION_CONFLICT/IDEMPOTENCY_CONFLICT/SCHEMA_VERSION_UNSUPPORTED/REVOKE_FENCE_PENDING and unavailable/ambiguous statuses; no handler/UI implementation evidence.",
+      "requiredChange": "Use canonical typed errors/results and map denied/retryable/unknown/pending fence states in existing UI; no toast or local success substituting for applied receipt.",
+      "verification": "Inject stale revision, malformed payload, revoked target, DB/service failure and response loss; observe distinct state and safe retry, no ghost link/notification, unchanged canonical receipt after recovery.",
+      "missingPrerequisite": "Gateway result adapter, service runner and actual UI state seam",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Normative UI loading; binder has no async state.",
+      "requiredChange": "Render bounded candidate/resolver/backlink loading in existing surfaces; do not display unverified private target metadata from stale cache.",
+      "verification": "Delay real resolver/projection response and inspect loading ARIA/visual state; transition to authorized data or typed denial without false applied status.",
+      "missingPrerequisite": "Root UI adapter and delay-capable runtime harness",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Normative UI empty; visibleContextEntityRefs can return [] but no view state.",
+      "requiredChange": "Distinct safe empty candidate/backlink/context states; denied/private records do not expose hidden totals or alter ordering.",
+      "verification": "No mentions and actor with no authorized candidates show localized accessible empty state; adding hidden targets cannot change visible counts/content.",
+      "missingPrerequisite": "Authorized query DTO and existing UI component seam",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "WP-09 requires offline_queued and replay cursor; core binder is not durable outbox. WP-05 replay is published foundation.",
+      "requiredChange": "Use existing shared projection/outbox authority routing for queued source/mention edits, durable cursor replay and reconnect reauthorization; never show remote applied before receipt or submit revoked drafts.",
+      "verification": "Offline edit reload preserves queued draft, reconnect produces one accepted occurrence/link/notification; source conflict/revoke while offline rejects/quarantines safely; gap replay restores exact state after service/client restart.",
+      "missingPrerequisite": "WP-05 durable outbox/cursor and WP-51 writer/fence interfaces plus accepted Message offline behavior",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "negative-control: unauthorized actor or dropped/duplicated event fails acceptance",
+      "currentEvidence": "WP-09 normative test and seed mutation grant access when mention created; report contains no execution.",
+      "requiredChange": "Seed grant-on-mention boundary mutation and event drop/duplicate controls with assertions tied to privacy, backlink freshness and exactly-one recipient; independent holdout variant.",
+      "verification": "Passing baseline first; grant mutation fails no-access assertion, dropped event fails expected watermark/link/recipient transition, duplicate handling failure fails exact count. Infrastructure timeout is not caught mutation. Preserve failure trace/seed and holdout receipt.",
+      "missingPrerequisite": "Implemented slice, mutation-capable integration runner and independent evaluator",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "persistence-recovery: restart between persisted command and reply",
+      "currentEvidence": "Spec mandates stable state/receipt/canonical ID; pure core helpers cannot prove durability.",
+      "requiredChange": "Atomic occurrence/link/outbox/receipt commit and idempotent replay; consumer lease recovery with transactionally committed effect/inbox/watermark.",
+      "verification": "Kill service after commit before reply, retry same command, assert identical command/request hash/receipt/canonical ref/revision and one occurrence/link/notification. Kill consumer before effect commit and after committed effect; replay preserves exactly-once materialized state.",
+      "missingPrerequisite": "DB/service restart harness, transaction/outbox/inbox and accepted attention consumer",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "migration and rollback constraints",
+      "currentEvidence": "Normative migration identifier 09-domain-contract.sql is proposed; entity_link is already WP-02 schema responsibility.",
+      "requiredChange": "Add mention schema/indices/FKs and required association without duplicating entity_link; aliases/provenance backfill quarantines ambiguous IDs; selected migrator supplies actual filename. Before cutover snapshot/restore writer route; after shared writes forward repair or verified reverse replay, never drop new writes.",
+      "verification": "Applied migration receipt plus source/target workspace FK, occurrence unique key and backlink lookup checks; replay/restore on isolated data retains recently accepted mentions and tombstones.",
+      "missingPrerequisite": "Accepted WP-02 migration, selected migrator and root-owned cutover/repair procedure",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "licensePolicy and real-surface verificationGate",
+      "currentEvidence": "BEHAVIOR_REIMPLEMENTATION and no complete until changed surface plus failure/reload observed are explicit normative conditions.",
+      "requiredChange": "Implement behavior using existing ROX contracts; upstream only dependency after exact license audit. Keep featureComplete=false until integrated actual UI/API/recovery/privacy evidence exists.",
+      "verification": "Review dependency provenance/license if any; actual existing surface, canonical API read-back, DB key counts, command/event receipts, watermark, screenshots/ARIA and seeded failure evidence bound to exact delivered revision.",
+      "missingPrerequisite": "Integrated artifact/runtime evidence; upstream license receipt only when upstream dependency selected",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS / ROX2_RELATION_KINDS / Rox2Relation / Rox2Event / Rox2Context","lineStart":17,"lineEnd":156,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"formatRox2EntityId / parseRox2EntityId / Rox2EntityRef","lineStart":218,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"registerExternalBinding / ROX2_RELATION_RULES / wouldCreateRelationCycle","lineStart":336,"lineEnd":428,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event","lineStart":592,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"ProjectMembershipStore / linkEntityToProject / unlinkEntityFromProject / entityIdsForProject / visibleProjectsForEntity","lineStart":25,"lineEnd":187,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"SurfaceContextInput / bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext / requiresContextGrant","lineStart":18,"lineEnd":96,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/core/src/conation/soup/types.ts","symbol":"SoupEntityConcreteType (direct type import; read-only external contract)","lineStart":1,"lineEnd":25,"sha256":"bb030fb5bfa8bebd40fb317bbca05a684720fc8cee1c57f090df43ecce6a6cd9"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-09 normative package record","lineStart":7200,"lineEnd":7935,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-09","lineStart":161,"lineEnd":178,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"CRM-DISCUSS-01 / authorization and recipient edit controls","lineStart":99,"lineEnd":111,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"docs/macro-integration/19-target-architecture.md","symbol":"RoxCommand / AuthenticatedActor / RoxDomainEvent / API and realtime reliability","lineStart":59,"lineEnd":109,"sha256":"951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"},
+    {"path":"docs/macro-integration/19-target-architecture.md","symbol":"PrincipalRef person binding / event flow / kind conformance gate","lineStart":126,"lineEnd":160,"sha256":"951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"}
+  ],
+  "nextExecutableAction": "Root can now reconcile this preflight with wave0 and dependency receipts. Implementation starts only after the lead's wave0 commit and acceptance of WP-08, WP-07 and WP-06 interfaces/migrations/scenario receipts: re-read/hash the three core seams, obtain graph owner/WP-02 schema plus command-policy transaction, principal binding, writer/fence and source occurrence contracts; identify real existing surface/dispatcher symbols. Then integrate strict CreateMention/ResolveMention/RemoveOccurrence additions into the one graph module and actual migration, wire Message diff to graph and attention/search consumers, and run all listed acceptance/recovery/negative controls on the integrated revision. No product work is authorized by this preflight report alone.",
+  "risks": [
+    "Shared graph paths are normative new files in multiple packages (WP-02/WP-09/WP-40); independent file creation overwrites or duplicates the registry/link store.",
+    "Rox2Relation edge identity is not occurrence identity: deleting one of multiple mentions must not delete the remaining backlink; revision reuse must not resurrect tombstoned occurrences.",
+    "Raw offsets drift after edits. Client occurrenceKey/sourceRevision strings must be checked against authoritative content, not accepted as identity proof.",
+    "person projections are not automatically login principals; CRM Contact/email/display-name identity must not trigger teammate notifications or auto-sharing.",
+    "bindSurfaceContext can retain denied refs/revision metadata unless authorization filters both; requiresContextGrant and project readable flags are not server ACL.",
+    "Notification event-id dedup alone may still reping unchanged mentions across source revisions, or duplicate overlapping mention/reply/assignment reasons; accepted semantic policy is required.",
+    "Company mention must never fan out to its entire team; delivery must recheck source read after revoke, not rely on enqueue-time visibility.",
+    "Native expectedRevision must not be rejected for missing remote accountNamespace; isRevisionedEntityRef is a remote-evidence helper, not native command validation.",
+    "ResolveMention/RemoveOccurrence schemas and actual UI/RPC/MCP entry points are not implemented evidence in this slice. Do not invent symbols or defer required behavior to future packages with reverse dependencies.",
+    "WP-51/WP-05 authority/offline contracts and real workspace runtime are cross-cutting readiness gates despite not appearing in WP-09's explicit three-element dependency array.",
+    "Whole-file hashes are working-tree snapshots during root integration; a later source change makes affected evidence stale, even when input_revision string is unchanged.",
+    "No runtime tests, UI or recovery scenarios were executed; this report proves only source-backed planning, not implementation, accepted dependencies or fullFeatureDoD."
+  ]
+}

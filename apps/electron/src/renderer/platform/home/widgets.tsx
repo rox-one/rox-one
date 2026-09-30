@@ -46,7 +46,7 @@ import { useInboxItems } from '@/hooks/useInboxItems'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
-import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
+import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
 import { useFeedItems, usePersonalTasks } from '@/lib/extra-screens/use-rox-sources'
 import { focusMinutesOn, isFocusRunning, loadFocusState, localDay, subscribeFocusState, type FocusState } from '@/lib/focus-session'
 import { startRecording, useRecorder } from '@/lib/meetings/recorder'
@@ -80,6 +80,7 @@ import {
   usageByModel,
 } from './home-data'
 import { Dot, SectionLabel, Toggle, WidgetButton, WidgetEmpty, WidgetFrame, WidgetList, WidgetRow, WidgetStat, type WidgetEditProps } from './widget-kit'
+import { QuickTaskInput } from './QuickTaskInput'
 
 export interface WidgetProps {
   edit: WidgetEditProps | null
@@ -1116,27 +1117,6 @@ function TaskTrackerWidget({ edit, span }: WidgetProps) {
   const now = useNow(60_000)
   const tasks = usePersonalTasks()
   const stats = useMemo(() => taskTrackerStats(tasks, now), [tasks, now])
-  const [draft, setDraft] = useState('')
-  const [added, setAdded] = useState<string | null>(null)
-  const [failed, setFailed] = useState(false)
-  useEffect(() => {
-    if (!added) return
-    const timer = window.setTimeout(() => setAdded(null), 2500)
-    return () => window.clearTimeout(timer)
-  }, [added])
-  const add = () => {
-    const title = draft.trim()
-    if (!title) return
-    try {
-      createPersonalTask({ title, list: 'inbox' })
-      setDraft('')
-      setFailed(false)
-      setAdded(title)
-    } catch (e) {
-      console.warn('[home] quick add task failed', e)
-      setFailed(true)
-    }
-  }
   const open = () => navigate(routes.view.tasks())
   const listTone: Record<string, string> = { inbox: 'bg-foreground/45', today: 'bg-accent', upcoming: 'bg-foreground/70', anytime: 'bg-foreground/30', someday: 'bg-foreground/15' }
   const total = Math.max(1, stats.open)
@@ -1170,24 +1150,7 @@ function TaskTrackerWidget({ edit, span }: WidgetProps) {
           <p className="mt-1 px-1.5 text-[12px] leading-4 text-muted-foreground">{t('workbench.home.tasks.emptyHint')}</p>
         )}
         <span className="flex-1" />
-        <form
-          className="flex items-center gap-1 rounded-[6px] bg-foreground/[0.06] px-1.5"
-          onSubmit={(event) => { event.preventDefault(); add() }}
-          data-home-quick-add=""
-        >
-          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={t('workbench.home.taskTracker.quickAdd')}
-            aria-label={t('workbench.home.taskTracker.quickAdd')}
-            className="h-7 min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
-          />
-          {draft.trim() ? <WidgetButton onClick={add}>{t('workbench.home.taskTracker.add')}</WidgetButton> : null}
-        </form>
-        <p className={cn('h-4 truncate text-[11px] leading-4', failed ? 'text-destructive' : 'text-muted-foreground')} aria-live="polite">
-          {failed ? t('workbench.home.taskTracker.addFailed') : added ? t('workbench.home.taskTracker.added', { title: added }) : ''}
-        </p>
+        <QuickTaskInput disabled={Boolean(edit)} onCreate={(title, previousAttempt) => createPersonalTaskConfirmed({ title, list: 'inbox' }, previousAttempt)} />
       </div>
     </WidgetFrame>
   )
@@ -1378,4 +1341,3 @@ export const HOME_WIDGETS: Record<HomeWidgetId, HomeWidgetDef> = {
   calls: { id: 'calls', titleKey: 'workbench.home.w.calls', descriptionKey: 'workbench.home.d.calls', icon: Phone, Component: CallsWidget },
   calendar: { id: 'calendar', titleKey: 'workbench.home.w.calendar', descriptionKey: 'workbench.home.d.calendar', icon: CalendarDays, Component: CalendarWidget },
 }
-

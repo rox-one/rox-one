@@ -1,0 +1,564 @@
+{
+  "task_id": "WP-47-preflight",
+  "attempt_id": "e331e5635ff13b7d319199ed3707747e",
+  "packet_hash": "faeae9524527b45c50521780ca51f1309133e6126007db77c5624a9ab09fe8f4",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-47",
+  "featureComplete": false,
+  "mode": "inspect; owned report only; no feature implementation",
+  "tier": "bounded-workflow",
+  "dependencies": ["WP-31", "WP-33", "WP-39", "WP-04", "WP-10", "WP-18", "WP-34", "WP-17", "WP-35", "WP-52"],
+  "dependencyReceiptGate": {
+    "requiredForEachDependency": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "state": "NOT_VERIFIED",
+    "reason": "This preflight inspected source/specification, not accepted integration receipts. Implement only after lead wave0 commit and accepted predecessors, in dependency order. N/A migration receipts do not make feature criteria N/A.",
+    "evidence": "plans/macro-integration/work-packages.json:42568-42648"
+  },
+  "inspection": {
+    "specificationManifestHash": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+    "specificationManifestMatchesPacket": true,
+    "sourceVersion": "Whole-file hashes below bind inspected working-tree bytes, not a claim that those bytes equal input HEAD. Git was not queried or changed; root-owned wave0 work may be present or arrive later.",
+    "freshness": "No source drift observed during the reads/hash acquisition, but no final atomic source snapshot was taken. Rehash referenced files after lead commit; a changed digest invalidates corresponding evidence and requires reread before patching.",
+    "unavailableTools": ["Codegraph returned no index for this checkout; no indexing attempted.", "find failed with backend 402 insufficient credits; no-hits output was not used as absence evidence. Known-symbol grep/read used instead."],
+    "absenceEvidence": ["glob apps/workspace-service: Path not found", "glob packages/shared/src/workspace-domain/commands: Path not found", "glob ops/macro-integration: Path not found", "glob services/rox-media-worker: Path not found", "glob tests/macro-integration: Path not found"],
+    "absenceScope": "Scoped observations at inspection time only; not a claim that equivalent capabilities cannot exist elsewhere. Do not create replacements before reading accepted foundation implementations.",
+    "operationsNotPerformed": ["product edits", "test edits", "manifest/progress/shared-file edits", "Git mutations", "builds", "tests", "native UI", "network operations"],
+    "verificationScope": "Artifact JSON/readback only; no runtime acceptance claimed. All acceptance verification entries below are future execution instructions, not observed passes."
+  },
+  "foundationGates": [
+    {
+      "gate": "Authenticated principal, grants and canonical identity",
+      "packages": ["WP-01", "WP-02", "WP-03"],
+      "classification": "transitive foundation, not additional explicit WP-47 edges",
+      "evidence": ["docs/macro-integration/21-implementation-plan.md:3-7", "plans/macro-integration/work-packages.json:35621-35625,46891-46895", "packages/server-core/src/transport/types.ts:7-11", "packages/server-core/src/handlers/rpc/command-gateway.ts:38-55,89-94"],
+      "requiredArtifact": "Accepted transport-derived principal + workspace/resource policy and canonical registry. Current RequestContext has no principal; current gateway compares workspace/window scope and writes literal owner decisions, which is not two-user operator authority.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Single-writer authority and policy/reconciliation fences",
+      "packages": ["WP-51", "WP-05"],
+      "classification": "published transitive foundation through WP-52 and WP-10",
+      "evidence": ["docs/macro-integration/21-implementation-plan.md:5,1020-1053", "plans/macro-integration/work-packages.json:7944-7950,46891-46895"],
+      "requiredArtifact": "Accepted writer-mode adapter, durable authority/policy epoch and leased append/broadcast fence; restore creates a new reconciliation generation and does not reactivate stale leases, revoked grants or legacy local writers.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Real collaborative editor binding",
+      "packages": ["WP-49"],
+      "classification": "published transitive foundation through WP-10",
+      "evidence": ["docs/macro-integration/21-implementation-plan.md:5,984-1000", "plans/macro-integration/work-packages.json:7944-7950"],
+      "requiredArtifact": "Accepted editor-binding decision and same-schema Page roundtrip/concurrency/reconnect receipts; process health alone cannot satisfy the Page part of WP-47.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Authorized search and Memory deletion/watermarks",
+      "packages": ["WP-06"],
+      "classification": "transitive foundation through WP-10/WP-34/WP-39; required by restore and retention DoD",
+      "evidence": ["plans/macro-integration/work-packages.json:4383-4428,7944-7950,30459-30463,35621-35625,42517-42518", "packages/server-core/src/meetings/sharing.ts:49-52"],
+      "requiredArtifact": "Accepted durable authorized projection consumer, tombstone/policy fence, delete receipt and GetProjectionWatermark. Local searchVisible membership filtering is not a persistent index deletion receipt.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Durable Notification recipient dedup on restore replay",
+      "packages": ["WP-07"],
+      "classification": "behavior-required foundation not listed as direct WP-47 dependency; obtain receipt or lead dependency clarification before implementation",
+      "evidence": ["plans/macro-integration/work-packages.json:5251-5295,42517", "docs/macro-integration/22-test-plan.md:64-74"],
+      "requiredArtifact": "Accepted attention consumer and recipient/reason dedup contract. WP-04 outbox alone cannot prove exactly one notification. Do not replace with a private WP-47 notification store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Transcript/summary provenance and revocation",
+      "packages": ["WP-50"],
+      "classification": "published transitive foundation through WP-34",
+      "evidence": ["docs/macro-integration/21-implementation-plan.md:5,1002-1018", "plans/macro-integration/work-packages.json:30459-30463,43084-43087"],
+      "requiredArtifact": "Accepted source-ref/revision/ACL provenance manifest, retrieval invalidation and derived-artifact deletion/redaction receipts; deleting media alone leaves transcript/summary copies.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Existing Channel and participant policy",
+      "packages": ["WP-08", "WP-12"],
+      "classification": "transitive foundations of WP-31, not direct WP-47 edges",
+      "evidence": ["plans/macro-integration/work-packages.json:27296-27307"],
+      "requiredArtifact": "WP-31 acceptance must carry authenticated channel/participant grants rather than an operator-created bypass room.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Exact dependency licensing and deploy provenance",
+      "packages": ["WP-48"],
+      "classification": "published release/license prerequisite, not explicit WP-47 DAG edge",
+      "evidence": ["plans/macro-integration/work-packages.json:42566", "docs/macro-integration/21-implementation-plan.md:965-982", "docs/macro-integration/22-test-plan.md:243"],
+      "requiredArtifact": "Exact lock/image/SBOM/schema receipts for media/codecs/provider dependencies. Behavior reimplementation does not authorize upstream source copying or an unaudited codec/model dependency.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "gate": "Restore/retention schema, SLA and operational capabilities",
+      "packages": [],
+      "classification": "non-DAG contract prerequisites",
+      "evidence": ["plans/macro-integration/work-packages.json:43049-43096,43537-43568", "docs/macro-integration/22-test-plan.md:193,245", "docs/macro-integration/21-implementation-plan.md:1048-1055"],
+      "requiredArtifact": "Selected migrator and non-conflicting migration IDs; typed legal-hold/delete manifests; explicit retention/revocation SLA and retry/DLQ budgets; independently proven PostgreSQL/object/SFU/egress/STT/JMAP/TURN/TLS endpoints and injected secret references. The published 10s search/notification budget is not an invented universal retention SLA.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/commands/contracts.ts",
+    "apps/workspace-service/src/modules/commands/commands.ts",
+    "apps/workspace-service/src/modules/commands/repository.ts",
+    "tests/macro-integration/wp-47.test.ts",
+    "ops/macro-integration/compose.yaml",
+    "ops/macro-integration/env.example",
+    "ops/macro-integration/livekit.yaml",
+    "ops/macro-integration/prometheus-rules.yaml",
+    "ops/macro-integration/backup-restore.sh",
+    "apps/workspace-service/src/jobs/retention-sweep.ts",
+    "apps/workspace-service/src/health.ts",
+    "services/rox-media-worker/Dockerfile",
+    "apps/workspace-service/migrations/047_retention_job_leases_delete_receipts.sql",
+    "tests/macro-integration/selfhost-restore-retention.test.ts",
+    "apps/workspace-service/migrations/47-domain-contract.sql"
+  ],
+  "ownedNewFilesMeaning": "Exact normative WP-47 newFiles inventory, not current preflight write authority or exclusive future ownership. Only worker-reviews/WP-47.json is writable now. The three command-domain paths overlap WP-51 and other commands packages; compose/env/livekit overlap WP-52. Submit patches to their lead-assigned owners after acceptance, never create competing versions. Both migration names are proposals; lead migrator must reconcile identifiers and avoid duplicate tables/DDL. 47-domain-contract.sql appears in newFiles/migrations but not newArtifacts.",
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2CanonicalResult / Rox2Receipt / Rox2Event / Rox2EntityRef / registerExternalBinding / ROX2_RELATION_RULES",
+      "change": "Reuse canonical refs, existing status triad, binding collision quarantine and relation deletion rules. Request the foundation owner's typed mapping from operations.restore wire statuses (applied/queued/reconciling/ambiguous/pending_fence/rejected/unavailable) to Rox2CanonicalResult; carry commandId/requestHash/receiptId and policyEpoch/projectionWatermark through the accepted command/event contract. Mark live+succeeded+verified only after restore/deletion readback. Keep receipt/job typed keys out of a second entity registry; do not add service_config/retention_job as user entity kinds without an accepted identity contract.",
+      "reason": "Current canonical result is a triad, whereas WP-47 responseSchema uses a string status; current Rox2Receipt lacks commandId/requestHash/receiptId, and Rox2Event lacks policyEpoch/projectionWatermark. Resolve shared contract mismatch once in WP-04/51, not with a WP-47 status alias/store."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext / RpcHandlerOptions",
+      "change": "Consume the accepted WP-01/03/51 authenticated principal and writer-mode context for operator restore, retention and diagnostics. Reject absent/forged principals, workspace mismatch, denied resource/operator grants and stale fence. Do not trust a body actor field or equate a clientId/window workspace with a principal. Leave explicit standalone adapter behavior separate.",
+      "reason": "RequestContext currently has only clientId/workspaceId/webContentsId; access option only localElectron. It cannot itself establish two-user resource authority."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "symbol": "registerCommandGatewayHandlers / HANDLED_CHANNELS / authorizeWorkspace / requireStore",
+      "change": "Add domain.operations.restore dispatch to the accepted shared command service via foundation dependency injection; validate strict payload/envelope, derive actor from transport, authorize source backup and isolated destination, use WP-04 durable receipt/outbox and idempotency/revision checks. Preserve existing standalone list/approve/deny semantics; do not execute restore in PendingCommandsStore or treat its hardcoded owner decision as ACL. Await/read back restore receipts and fences instead of returning ok on queued work.",
+      "reason": "Current RPC exposes only local pending-command list/approve/deny and compares caller workspace; it has no operations.restore handler or shared transactional command authority."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps.commandGateway",
+      "change": "Request the WP-01/04/51 owner's typed workspace-domain command adapter dependency for restore/readiness/retention. Keep commandGateway typed as the existing PendingCommandsStore rather than silently assigning shared-service semantics to it.",
+      "reason": "Directly imported HandlerDeps only exposes the local pending-command store for this gateway; accepted shared dispatch injection is a hidden integration seam."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.commandGateway and domain command channel registration",
+      "change": "Request central protocol owner registration of exact normative native channel domain.operations.restore and accepted readiness/retention routes, without repurposing command:approve or inventing inconsistent endpoint names.",
+      "reason": "Current commandGateway block declares only command:list, command:approve and command:deny."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "workspace-routed command gateway channel entries at lines 818-821",
+      "change": "Route the accepted restore/readiness/retention native channels through authenticated workspace authority and safe server DTO serialization, aligned with HTTP POST /v1/workspaces/{workspaceId}/commands/operations.restore. Keep host-only controls distinct and deny wrong-workspace or unauthorized diagnostics.",
+      "reason": "Adding a handler without routed channel registration would not deliver the existing native surface end to end."
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "symbol": "ErrorCode / KNOWN_ERROR_CODES / CodedError / isErrorCode",
+      "change": "Request shared error-contract owner preservation of UNAUTHENTICATED, FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED and REVOKE_FENCE_PENDING across native transport, or an accepted lossless domain-error DTO mapping. Update code union and recognizer together if these become transport codes; sanitize messages.",
+      "reason": "Inspected KNOWN_ERROR_CODES does not contain the normative WP-47 domain errors. Collapsing them into HANDLER_ERROR/INVALID_REF would lose failure semantics."
+    },
+    {
+      "path": "packages/server-core/src/meetings/retention.ts",
+      "symbol": "nativeDeleteAvailable / deleteOwnedCopies / retentionNativeEvidence / NativeDeletePayload",
+      "change": "Integrate a typed capability-selected deletion adapter backed by WP-39 owned-object inventory and WP-06/WP-50 projection/derived-copy receipts. Plan copies in dry-run; check workspace grant, policy revision and hold; persist manifest/leases/retries and aggregate only independently verified object/index/asset/local receipts. Keep externalRetained explicit. Preserve unsupported return when no real adapter exists, and never globally flip nativeDeleteAvailable or N5 evidence to success because hosted deletion passed.",
+      "reason": "Existing implementation is deliberately non-deleting and payload ownedCopiesDeleted is literally false; it supplies no durable legal-hold, manifest or provider deletion evidence."
+    },
+    {
+      "path": "packages/server-core/src/meetings/observability.ts",
+      "symbol": "MeetingBudgetLedger.reserve / settle / markUnknown / reconcile",
+      "change": "Reuse existing reservation/unknown-settlement semantics in the accepted durable media job/budget repository; emit allowlisted opaque command/causation/correlation IDs, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters from authoritative job transitions. Expose backlog, bounded attempts, deadletter and alerts via WP-47 health/Prometheus adapters, not a second in-memory queue. No raw text/token/URL labels or exception payloads.",
+      "reason": "MeetingBudgetLedger currently stores rows in a process-local Map and has no durable job, readiness or metric path; restart/restore needs the accepted persistent job authority."
+    },
+    {
+      "path": "Dockerfile.server",
+      "symbol": "manifest COPY block / runtime ENV / ENTRYPOINT",
+      "change": "After WP-52 chooses runnable workspace-service build, request compatible manifest/build/copy changes and health integration needed by the isolated Compose topology. Preserve non-root headless server and local runtime entrypoint; do not relabel this existing server image as the shared authority/media worker. Point the separate normative media-worker Dockerfile at the accepted WP-33/34 executable and audited codec dependencies. Record image digests/SBOM and secret references, never bake tokens.",
+      "reason": "Current entrypoint runs packages/server/src/index.ts on port 9100; manifest copy list lacks apps/workspace-service and services/rox-media-worker. A media Dockerfile without an accepted executable would be a scaffold."
+    },
+    {
+      "path": "ops/fleet-infra/inventory/group_vars/all/versions.yml",
+      "symbol": "docker_ce / restic_version / node_major and pin provenance comments",
+      "change": "Reuse pin/source-comment convention for selected selfhost image/runtime versions through lead-owned deployment configuration; request inventory updates only if accepted fleet integration actually requires them. Reconcile selected server Node major 20 versus fleet node_major 22, record compatibility rather than silently bumping either. Do not enable or operate live fleet inventory for an isolated WP-47 scenario.",
+      "reason": "Pins are dated and current fleet conventions are not proof of the proposed workspace/media stack; WP-47 audit must not mutate production inventory."
+    },
+    {
+      "path": "ops/fleet-infra/control-plane.test.ts",
+      "symbol": "tree does not embed live secrets / helpers fail closed / site enablement",
+      "change": "Keep fleet fail-closed enablement and secret checks. Put WP-47 backup/restore/retention runtime assertions in normative integration tests; if shared helpers are extended, add consumer-visible missing-secret/destructive-target rejection coverage to their owner. Do not use YAML roundtrip/role list tests as feature evidence or expand the test into a production deploy runner.",
+      "reason": "Current checks inspect fleet config and invoke Ansible/helper checks; they neither deploy the selfhost stack nor prove restore/deletion."
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+      "symbol": "native delete is fail-closed; external-retained is not claimed deleted / revoked members and links lose access",
+      "change": "Keep unsupported standalone deletion behavior and external-retained honesty while no real local adapter exists. With an accepted adapter, cover partial delete/hold/policy conflict and only verified owned copies. Preserve private-note and revoked-member denial scenarios; hosted tests must independently read back object/index/asset deletion rather than replacing this test with a boolean success assertion. Retire unsupported-default assertions only when their consumer behavior genuinely changes, not by re-pinning incidental text.",
+      "reason": "Existing test explicitly asserts no recap/export/tombstone mutation for unavailable delete. It cannot be credited as live retention, but the behavior must not regress during cutover."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/commands/contracts.ts",
+      "symbol": "accepted WP-04/51 command contracts; proposed operations.restore/GetSystemReadiness/SweepRetention",
+      "change": "Request shared command owner additions for strict restore input, typed readiness capabilities, SweepRetention errors/DeletionReceipt and wire-to-canonical status mapping. Reuse RoxCommand v2 and common authority; validate additionalProperties:false, required backupId/isolatedWorkspaceId/verifyChecksums and authorized DTO/cursor. Never implement a second shared contract file when wave0/51 creates it.",
+      "reason": "Normative new path is shared with WP-51/other command slices; not found at inspection and accepted symbol names/interfaces remain prerequisites."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/commands.ts",
+      "symbol": "accepted shared command dispatcher; proposed operations.restore handler",
+      "change": "Request command-owner registration of restore as an authenticated operator command: claim durable receipt, authorize source/destination, fence writers/reconciliation, invoke isolated backup restore, replay durable consumers and reconcile external effects before verified receipt. Expose readback and refuse blind resend after unknown provider effects.",
+      "reason": "Path is normative but absent; WP-47 must extend WP-04/51 command dispatch rather than privately own a competing service."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/repository.ts",
+      "symbol": "accepted receipt/outbox/job repository; proposed backup_receipt and retention_job persistence",
+      "change": "Request shared repository owner transaction boundaries for backup manifests, checksum-linked object inventory, lease/processed separation, consumer event dedup and restore generation. Reuse common command receipt unique(workspace,actor,idempotencyKey), request hash conflicts and revision/policy fences. Add retention delete receipts/hold checks in WP-47 migrations without duplicating entity/outbox/receipt tables.",
+      "reason": "Published constraints require durable restore/job state; existing pending-command store is not this authority."
+    },
+    {
+      "path": "ops/macro-integration/compose.yaml",
+      "symbol": "WP-52 isolated topology services/volumes/health checks",
+      "change": "Extend accepted WP-52 topology with retention sweep, media worker, Prometheus alerts and isolated backup/restore orchestration; persist DB, objects and job linkage consistently. Reuse authenticated workspace/provider components and fail-closed capability probes. No second Compose stack or production volume adoption.",
+      "reason": "Same normative new path belongs to WP-52 bootstrap prerequisite; missing here does not grant a parallel author."
+    },
+    {
+      "path": "ops/macro-integration/env.example",
+      "symbol": "WP-52 environment/secret-reference contract",
+      "change": "Request backup target/object endpoint, retention policy/SLA/retry budgets and metrics configuration additions with placeholders/references only; document encrypted provider credential references, rotation and signed-host settings. No live bearer URLs or tokens.",
+      "reason": "Overlaps WP-52; restore must restore references consistently without exporting plaintext secrets."
+    },
+    {
+      "path": "ops/macro-integration/livekit.yaml",
+      "symbol": "WP-52 SFU/TURN/egress configuration",
+      "change": "Consume accepted real SFU/TURN/TLS/object/egress endpoints; add isolated worker/readiness/recording linkage configuration only through topology owner, with recording and transcription independently unavailable on missing probes.",
+      "reason": "Overlaps WP-52 and real media acceptance requires network reachability, not successful YAML parsing."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-47 section and foundation gate notes",
+      "change": "Lead owner records dependency receipt binding, duplicate path ownership, selected migrator, retention SLA/legal-hold semantics, fresh isolated restore command/readback and distinct implemented/verified/delivered states. Preserve all eight acceptance criteria and do not claim cold-stack success from fixtures.",
+      "reason": "Normative documentation must reflect accepted implementation/runbook without source worker editing shared plans."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "deployment/retention regression row / evidence record / seeded controls",
+      "change": "Lead owner links exact image/schema/source receipts, provider secret rotation, expired/revoked signed URL checks, retained audit policy, DLQ replay, legal hold, crash-before-reply and duplicate-provider-effect control. Record measured budgets and unavailable real prerequisites distinctly from caught mutations.",
+      "reason": "Published test-plan adds operational criteria beyond the eight summary acceptance lines."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Isolated self-host stack runs one full Page+call+mail scenario",
+      "currentEvidence": "Dockerfile.server:26-119 builds headless native server; no ops/macro-integration or apps/workspace-service observed. Spec:42512 and plan:954 require integrated live scenario, not a container boot.",
+      "requiredChange": "Extend WP-52 Compose; run accepted WP-10 Page, WP-31/33/34 call archive and WP-17/18 JMAP routes against one isolated authenticated workspace and canonical registry.",
+      "verification": "Future tests/macro-integration/selfhost-restore-retention.test.ts plus actual native/browser actions: two principals edit Page, exchange A/V, consent recording, play archive, deliver JMAP message and independently read it back; retain command/provider receipts and refs.",
+      "missingPrerequisite": "Lead wave0 commit; accepted ten dependency receipts, WP-49/51/50 foundations, real isolated endpoints/credentials.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "outages show backlog",
+      "currentEvidence": "MeetingBudgetLedger:69-147 is a process-local reservation Map, not a durable backlog; normative health/job paths absent.",
+      "requiredChange": "Use accepted media/provider job leases for pending/age/attempt counters and DLQ; expose authenticated health/readiness and Prometheus backlog alerts, with unavailable capabilities separated.",
+      "verification": "Kill worker and disconnect provider; observe persisted pending IDs/age, increasing bounded attempts, one DLQ transition and alert; restart and replay same job without duplicate object/provider effects.",
+      "missingPrerequisite": "WP-33/34/18 durable jobs, WP-04 outbox, WP-52 capability probes; configured retry/backlog thresholds.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "restore and retention revoke index/assets",
+      "currentEvidence": "retention.ts:21-41 returns unsupported and ownedCopiesDeleted:false; sharing.ts:49-52 only filters local recap. Spec:43084-43087 requires deletion manifest and restore fences.",
+      "requiredChange": "backup-restore.sh and operations.restore restore DB+objects into authorized isolated target; retention-sweep uses durable manifest to delete owned objects and revoke index/asset/derived references with receipts and policy fences.",
+      "verification": "After fresh restore and retention execution, object HEAD/read fails, authorized search yields no deleted snippet, expired/revoked asset URL fails, and transcript/summary source is removed/redacted; external copies remain reported retained.",
+      "missingPrerequisite": "WP-39 object/asset authority, WP-06 index deletion/read watermark, WP-50 provenance, WP-51 fences and selected SLA.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "private text absent logs",
+      "currentEvidence": "Spec:42526-42536,43087 permits opaque IDs and forbids raw email/body/transcript/tokens/snippets/bearer URLs. Existing observability.ts has no job telemetry sink; this is not proof that all system logs are safe.",
+      "requiredChange": "Allowlist typed operational context across command/job/provider/health/backup logs and metric labels; classify errors without raw provider payloads; inject secrets by reference/env and keep backup traces private.",
+      "verification": "Seed PRIVATE_WP-47 in Page/email/transcript and unique token/URL canaries; exercise success, denial, timeout, unknown effect, retry, DLQ and restore; inspect captured application/worker/provider/backup logs and metrics for zero canary occurrences while required opaque correlation fields remain.",
+      "missingPrerequisite": "Accepted dependency logging paths, credential adapter and complete isolated sink capture; no live log inspection performed.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Cold selfhost setup authenticates two users, real page edit and call audio/video+recording archive, JMAP delivery/readback; dependencies explicitly unavailable rather than fake success.",
+      "currentEvidence": "RequestContext:7-11 lacks actor principal; gateway:38-55 checks workspace only; Dockerfile.server entrypoint is native server. Plan:1048-1055 requires independently probed SFU/egress/STT, no fake ready receipt.",
+      "requiredChange": "Reuse WP-52 cold setup with WP-01/03 auth, grant two principals accepted Page/call/mail access, run real UI/provider paths; health.ts GetSystemReadiness returns ready/degraded/unavailable per requested capability and denies unauthorized diagnostics.",
+      "verification": "Fresh volumes, two independent clients and outsider; real saved Page digest, observed A/V, archived playable recording, independent JMAP delivery/readback; remove each capability configuration and assert unavailable without verified success.",
+      "missingPrerequisite": "Accepted auth/operator roles, real test JMAP accounts, consent/egress/object finalization, TURN/TLS and Page editor; Dockerfile for shared-service executable from WP-52.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Restore PostgreSQL+objects then replay outbox -> one notification/job/object linkage and no stale private search snippets.",
+      "currentEvidence": "Spec:42517,43066-43096 requires consumer uniqueness, restored leases/inventory and reconciliation generation. WP-07:5251-5295 owns Notification; WP-06:4383-4428 owns authorized search.",
+      "requiredChange": "Persist backup_receipt with schema/inventory/checksums and generation; restore consistent DB/object snapshot to isolated workspace, fence old writers/workers, replay through existing dedup consumers and provenance/tombstone policies. Restore receipt only verified after independent readback.",
+      "verification": "Replay same outbox repeatedly across restart; count exactly one eligible notification, job and object linkage under existing unique keys; compare canonical IDs/revisions/checksums; request stale private snippets as revoked actor and confirm denied/absent. Provider effect duplication control must fail.",
+      "missingPrerequisite": "WP-04 transactional receipts/outbox, accepted WP-07 attention consumer, WP-06 authorized projection, WP-39 inventory, WP-51 generation fence; selected migrator and backup consistency contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Retention dry-run reports planned copies; execute proves object deleted and authorized search/assets revoked within SLA; legal hold blocks.",
+      "currentEvidence": "deleteOwnedCopies:29-41 cannot delete; NativeDeletePayload:16-19 has no per-copy receipts/hold/policy. SweepRetention spec:43544-43548 mandates planned/receipts and legal_hold|denied|policy_conflict.",
+      "requiredChange": "retention-sweep.ts snapshots canonical owned copies with policyRevision and hold; dry-run does no destructive work. Execute claims durable lease, rechecks hold/policy/grants, persists per-copy deletion/retry receipts and emits retention.completed only when required fences/readbacks satisfy SLA.",
+      "verification": "Compare dry-run manifest with inventory and unchanged objects; execute then object read/search/asset denial within chosen SLA; held entity has no deletion; policy revision race returns policy_conflict; interrupted partial deletion resumes without duplicate effects, externalRetained stays explicit.",
+      "missingPrerequisite": "Legal-hold authority and chosen SLA, WP-39/06/50 deletion interfaces and local WP-35 adapter receipts where actually supported; no fabricated native delete readiness.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Kill media worker/provider and observe backlog, bounded retry, deadletter and alert; readiness reflects unavailable recording/transcription separately.",
+      "currentEvidence": "MeetingBudgetLedger.markUnknown/reconcile:124-139 preserves unknown budget semantics but not restart durability; WP-52 plan:1051-1053 separates SFU/egress/STT health.",
+      "requiredChange": "Wire actual WP-33/34 worker executable into media Dockerfile/topology; share persistent lease/retry/DLQ state and health capability checks, update prometheus-rules.yaml on real transitions, reconcile ambiguous provider success before retry.",
+      "verification": "Kill before/after provider effect and at lease ACK boundaries; assert bounded retries, eventual DLQ+alert, unavailable recording independent of transcription/SFU, restored worker resumes safely and deadletter replay creates no second recording/object.",
+      "missingPrerequisite": "Accepted media/provider job runner, actual STT/egress probes, retry limits/DLQ replay operator grant and alert thresholds.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Negative control: unauthorized actor or dropped/duplicated event must fail WP-47 acceptance",
+      "currentEvidence": "Spec:42502-42504 and test-plan:230-239 require caught seeded controls, not infrastructure errors. gateway:89-94 uses literal owner; current behavior is not accepted operator authorization.",
+      "requiredChange": "wp-47.test.ts asserts real transport-derived actor/resource denial and replay cardinality/watermark. Isolate mutations that bypass ACL, drop delivery or duplicate provider effects; independent evaluator supplies second variant.",
+      "verification": "Passing real baseline first, then each mutant fails its specific unauthorized-read/write or exact count/digest assertion; provider unavailable/timeout cannot count as mutation detection. Preserve seed 20260977 and reduced failing trace.",
+      "missingPrerequisite": "Accepted auth/outbox consumers and independent evaluator; runtime execution is outside this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply; state/receipt/canonical ID remain consistent",
+      "currentEvidence": "Spec:42506-42508 and migration constraints:43071-43081 require idempotency request-hash and event-consumer uniqueness. Current gateway local approve/deny is not restore command receipt persistence.",
+      "requiredChange": "Use WP-04/51 transactional command receipt/outbox with strict request hash; persist restore generation and backup/deletion/job receipts before replies; reconcile external effects after restart.",
+      "verification": "Kill after commit before RPC/HTTP reply, resend same envelope and observe same receiptId/commandId/entity revision plus one outbox/job effect; altered payload same key returns IDEMPOTENCY_CONFLICT; stale expectedRevision and stale policy fail.",
+      "missingPrerequisite": "Accepted command repository and applied additive migrations; source/destination restore authorization and generation contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Spec:42481-42490 selects existing Native Project/entity actions. No new WP-47 surface is authorized by the artifact inventory.",
+      "requiredChange": "Integrate operation/readiness/retention receipts into accepted existing entity action surface; request its owning package's adapter after foundation integration, not a new dashboard.",
+      "verification": "Future actual native/browser interaction with operation, pending/denied/error/verified receipts; screenshot and ARIA/focus readback bound to delivered revision.",
+      "missingPrerequisite": "Accepted native entity-action adapter/owner; its source not a direct import of inspected seams and intentionally not broad-inspected here.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "channels.ts:679-683 and routing.ts:818-821 register only local command:list/approve/deny.",
+      "requiredChange": "Shared owner registers domain.operations.restore and aligned HTTP endpoint through common authenticated dispatch, plus accepted readiness/retention contract routes.",
+      "verification": "Invoke native and HTTP paths as owner/outsider/wrong workspace; same canonical receipt and denial, not channel-not-found or local store effect.",
+      "missingPrerequisite": "WP-01/04/51 central routing and adapter receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Rox2EntityRef:233-239 is workspace-scoped; registerExternalBinding:336-370 quarantines mismatches/collisions; spec:42466-42468 names service_config/retention_job and migration names backup_receipt/retention_job.",
+      "requiredChange": "Use canonical entity refs for deletion manifests and typed keys for jobs/receipts; reconcile service_config placement with WP-52 config authority instead of adding duplicate entity kinds/store.",
+      "verification": "Restore retains existing canonical IDs and alias cardinality; cross-workspace manifest references rejected/quarantined; job receipt keys remain distinct from user entities.",
+      "missingPrerequisite": "WP-02 registry and accepted config/job identity schema.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "Spec:43049-43096 defines additive backup_receipt/retention_job migration and lease/processed separation; proposed service/migration paths not found.",
+      "requiredChange": "Apply selected-migrator additive WP-47 DDL with workspace/schema/revision/hold/delete manifest indexes and restore generation; reuse foundation receipt/outbox constraints, no duplicate tables.",
+      "verification": "Cold migration then backup/fresh restore/restart; verify checksums, unique rows, lease recovery and no loss of recent shared writes; ambiguous aliases quarantined.",
+      "missingPrerequisite": "Migrator choice, actual foundation schema and accepted migration receipts; duplicate proposed 047/47 identifiers reconciled.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "gateway.ts:69-114 exposes only local decision commands; spec:42650-42850 requires operations.restore strict envelope/error semantics.",
+      "requiredChange": "Extend common dispatcher with operator restore, strict required input and resource checks, idempotency/CAS/fence and durable receipts. Provider queued/unknown never serialized as applied_verified.",
+      "verification": "Invalid extra actor/payload, wrong workspace, stale revision, duplicate request/hash conflict and unknown effect scenarios through native and HTTP paths.",
+      "missingPrerequisite": "WP-04/51 accepted envelope and status/error mapping; source backup and isolated target authority.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "Spec:43537-43548 proposes GetSystemReadiness and SweepRetention with typed capability checks/deletion receipts; no health.ts observed.",
+      "requiredChange": "Implement readiness against WP-52 actual probe receipts, grant-filtered job/manifest/result readback and stable authorized cursor where paginated; reject unauthorized_diagnostics and hidden totals/titles.",
+      "verification": "Request differing requiredCapabilities, failed probe and denied diagnostics; actor-scoped receipt/manifest readback leaks no other-workspace counts or copy metadata.",
+      "missingPrerequisite": "RuntimeCapability/CapabilityReadiness/DeletionReceipt accepted types and operator policy; names currently specification contracts only.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Spec:42493-42495 requires transactional outbox, revisioned invalidation and replay cursor; Rox2Event:131-141 already carries causation/correlation/revision.",
+      "requiredChange": "Emit retention.completed/provider.sync_failed through common transaction outbox and replay-safe consumers; use policy/tombstone generation fence and authorized revision invalidation, not lossy presence.",
+      "verification": "Duplicate/out-of-order/reconnect delivery and crash at ACK; consumer dedup counts and monotonic watermark; revoked subscribers receive no private result.",
+      "missingPrerequisite": "WP-04/05/51 accepted event, subscription and cursor contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "RequestContext lacks principal and gateway authorizeWorkspace only compares workspace/window; spec:42476-42479 says authenticated authority and agent allow-all cannot override ACL.",
+      "requiredChange": "Consume common actor/operator/resource grants, check linked refs/source and isolated destination, reject body actor and unavailable fence. Separate explicit local standalone mode.",
+      "verification": "Owner/member/outsider and agent allow-all cross-workspace/forged actor tests; denied restore/sweep/diagnostics without any effect or title/copy leak.",
+      "missingPrerequisite": "WP-01/03/51 accepted common policy and revocation fence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "sharing.ts:44-63 filters member recap/search and clears links on revoke; not durable hosted signed asset revocation.",
+      "requiredChange": "Retention/restore respect accepted per-copy sharing policy, revoke signed assets and derived summaries on policy change; preserve private notes and owner-authorized standalone transcript behavior.",
+      "verification": "Revoked member/expired signed URL denied before stale projection refresh; restore does not resurrect shared link; authorized owner retained audit remains readable as policy allows.",
+      "missingPrerequisite": "WP-03/39/50/51 accepted asset/provenance/fence contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "sharing.ts searchVisible:49-52 is local recap filtering; WP-06 spec:4427-4428 owns durable authorized FTS/provenance/watermarks.",
+      "requiredChange": "Call accepted search deletion/invalidation contract for every retained/deleted source and enforce authorization before snippet serialization even while index lags.",
+      "verification": "Fresh restore plus stale-event replay and retained private marker query returns no revoked/deleted snippet; eligible content searchable after accepted watermark.",
+      "missingPrerequisite": "WP-06 projection, ACL epoch and tombstone consumer receipt.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "ROX2_RELATION_RULES:380-388 uses clear-edge for mentions and attached-to; WP-10 explicit foundations include WP-09 (spec:7948).",
+      "requiredChange": "Deletion manifest/replay reconciles existing mention/backlink projections and policy; keep links from granting access to deleted or revoked sources, no WP-47 mention store.",
+      "verification": "Mention/deep-link to deleted or denied retained source yields unavailable/denied without title/snippet; restore replay keeps eligible relation cardinality stable.",
+      "missingPrerequisite": "Accepted WP-09/02 relation consumer reached through Page foundation; delete/link policy receipt.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-47 criterion spec:42517 requires exactly one notification; WP-07:5251-5295 owns durable attention state.",
+      "requiredChange": "Replay restored outbox through accepted WP-07 dedup/recipient authorization and source policy fence, rather than creating a restore-only notification path.",
+      "verification": "Repeated replay/restart yields one eligible recipient notification and preserved recipient seen/done state; revoked source payload is hidden.",
+      "missingPrerequisite": "Accepted WP-07 receipt/interface; not a direct WP-47 DAG edge and must be surfaced to lead.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event:131-141 has actor/causation/correlation/revision; test-plan:193 requires retained policy audit during deletion.",
+      "requiredChange": "Use common event/activity projections for restore/retention audit with opaque IDs, policy-allowed retained receipts and no private content; do not duplicate activity store.",
+      "verification": "Restore replay has one activity/receipt per event under common dedup, audit survives retention where required while deleted private text is absent.",
+      "missingPrerequisite": "Accepted event/activity consumer and retention audit policy from foundations.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Spec:42479 expressly says allow-all cannot override resource ACL; test-plan:20-21,177 requires deterministic context authorization assertions.",
+      "requiredChange": "Route any agent restore/sweep/diagnostics access through common command authority with acting user/service policy; use same source refs/fences and sanitized typed DTOs.",
+      "verification": "Authorized agent readback and viewer agent allow-all denial; revoked source absent from retrieval/export after restore; no successful effect inferred from model prose.",
+      "missingPrerequisite": "Accepted agent dispatcher/policy interface and WP-50 provenance; agent source is not broad-inspected in this scoped preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Spec:42654-42658 explicitly names HTTP and native RPC; tests plan:7 requires native agent/MCP where agent scenario uses it. No WP-47 MCP entry point is named in newFiles.",
+      "requiredChange": "Expose strict HTTP/native operation/readiness/retention contracts via accepted common dispatcher; if agent/MCP adapter exposes operation it must reuse same grants/receipts, not an unauthenticated operator shortcut.",
+      "verification": "HTTP/native canonical receipt equivalence and forged actor denial; actual accepted agent/MCP route verifies its policy when available, rather than declaring requirement N/A.",
+      "missingPrerequisite": "Accepted transport/agent API contract decision and typed adapter owner.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "observability.ts:69-147 models budget, while spec:42527-42536 requires commandId/causationId/correlationId/aggregateRevision/policyEpoch/projectionWatermark/retry-DLQ counters and privacy.",
+      "requiredChange": "Durable job transitions feed allowlisted metrics/log context and capability readiness; prometheus-rules uses real backlog/attempt/failure values; retain unknown settlement until reconciled.",
+      "verification": "Crash/retry/DLQ timeline contains required opaque linkage fields and actual counters; no private/token/URL marker; health never ready on failed recording/transcription probe.",
+      "missingPrerequisite": "Accepted persistent budgets/jobs, telemetry sink and alert threshold configuration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "tests/macro-integration absent; existing sharing-retention.test.ts:17-74 verifies local privacy/revoke/unsupported behavior, not full WP-47.",
+      "requiredChange": "Implement normative wp-47.test.ts and selfhost-restore-retention.test.ts for consumer-visible authorization, restore exact-once linkage, legal hold, partial deletion/recovery, capability outages and privacy. Reuse accepted dependency tests, no wiring/source-string tautologies.",
+      "verification": "Future bun test tests/macro-integration/wp-47.test.ts tests/macro-integration/selfhost-restore-retention.test.ts; relevant local sharing/retention regression suite and actual E2E/failure/reload scenario; caught seeded controls with exact SHA/image/schema.",
+      "missingPrerequisite": "Accepted interfaces/migrations and real isolated stack; no tests run under preflight restrictions.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "Plan:942-963 describes planned WP-47; test-plan:193 adds secret rotation, expired URLs, audit retention and DLQ replay, while :243-247 specifies evidence/status boundaries.",
+      "requiredChange": "Lead patches existing normative docs with cold setup, backup consistency, restore isolation/fencing, retention dry-run/hold/SLA, bounded retry/DLQ, token rotation, unavailable capabilities and verified receipts; backup-restore.sh help is concrete, not a fake runbook.",
+      "verification": "Future operator follows documented fresh isolated backup/restore/retention/rotation workflow and records expected actual state/readback; instructions match delivered commands/image/schema.",
+      "missingPrerequisite": "Selected migrator/topology/credentials and implementation receipts; only report authored now.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Spec:42838-42848 mandates ten domain errors; protocol/types.ts:121-159 recognizer lacks those names. types.ts meeting result:10-58 distinguishes unknown/unsupported from verified.",
+      "requiredChange": "Preserve strict failure mapping for auth, revision/hash, provider ambiguity, unsupported schema and pending revoke fence. Retention errors legal_hold/denied/policy_conflict and unauthorized diagnostics remain distinguishable without raw payload leaks.",
+      "verification": "Exercise each applicable error through transport, unknown remote effect after timeout, partial delete and missing service; assert no verified success and no destructive retry until reconciliation.",
+      "missingPrerequisite": "Accepted shared status/error DTO mapping and reconciler contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Spec:42484-42490 requires loading and applied_verified separately; canonical contract:8-11 says queued is not verified success.",
+      "requiredChange": "Existing action adapter shows pending restore/probe/deletion receipt and progress without applied badge until authoritative readback; tolerate long-running job pagination/poll or event updates.",
+      "verification": "Pause worker/provider during action, observe loading/pending receipt and no success badge; resume and verified state only after matching receipt/readback.",
+      "missingPrerequisite": "Accepted existing UI action adapter and durable status/progress query.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Spec:42485-42486 includes empty and permission_denied distinctly; SweepRetention planned count spec:43547.",
+      "requiredChange": "Show zero planned eligible copies and empty backlog distinctly from denied/unavailable diagnostics; typed query must not expose hidden counts or fake healthy zero backlog on failed DB/probe.",
+      "verification": "Authorized empty dry-run/backlog, denied actor and unavailable DB/capability produce distinct visible/typed states; zero-plan execution emits no object deletion.",
+      "missingPrerequisite": "Accepted query authority and existing action UI states.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Spec:42488 requires offline_queued and :42495 replay cursor; test-plan:9,47-54 preserves standalone/local drafts and durability distinction.",
+      "requiredChange": "Reuse WP-05 projection/outbox for command status and reconnect receipts; revoked/stale restore or retention intent is rejected/quarantined rather than silently resent with fresh authority. Standalone recordings stay local per WP-35.",
+      "verification": "Disconnect/restart after persist and before reply, reconnect with same key and observe one effect/receipt; revoke while offline then reconnect denied; Page/local recording regression remains intact.",
+      "missingPrerequisite": "WP-05/51 mode/fence replay and accepted WP-35 local recovery adapters.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Deployment test-plan: expired signed URLs; policy-required audit retained; provider secret rotations; DLQ replay",
+      "currentEvidence": "docs/macro-integration/22-test-plan.md:193 explicitly extends WP-47 operational regression gate.",
+      "requiredChange": "Include signed URL expiry/revocation, audit-safe retention, credential reference rotation and authorized DLQ replay in the existing deployment runbook and normative integration scenario.",
+      "verification": "Expire/revoke URL and read denied; rotate isolated provider credential without exposing old/new values and observe reauth/readback; replay DLQ exactly once; policy audit remains while private deleted bodies/snippets do not.",
+      "missingPrerequisite": "WP-39 signed assets, WP-17/18/52 credential lifecycle and durable job replay contract; no real secret values needed in evidence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "License policy and live verification/evidence gate",
+      "currentEvidence": "Spec:42566-42567 requires behavior reimplementation and real changed surface; test-plan:243-247 binds evidence to source/image/schema and separates implementation/verification/delivery/journal.",
+      "requiredChange": "Audit exact dependencies/build flags and record actual runId/session/source dirty patch/image digest/schema/SBOM/seed, actor refs, receipts, watermarks, provider readback and relevant UI traces. No fixture or worker report becomes live acceptance.",
+      "verification": "Independent lead/evaluator reads bound evidence and catches duplicate-effect mutation plus holdout; cold E2E/failure/reload succeeds on exact integrated artifact; all statuses remain incomplete until those observations exist.",
+      "missingPrerequisite": "WP-48 accepted component audit and lead's exact integrated revision/deployment; this report deliberately sets featureComplete:false.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-47 dependencies/acceptance/restore/migrations/domainApiContracts","lineStart":42403,"lineEnd":43573,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","readRanges":["42403-42685","42831-42873","43049-43190","43420-43573"],"note":"Normative WP-47 record also supplied verbatim by packet; generic schema definition tails were not needed for code inspection."},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-47 / foundation order / WP-49/50/51/52","lineStart":942,"lineEnd":1055,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9","readRanges":["1-9","939-980","983-1055"]},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Deployment/retention row / receipt record / invariant controls","lineStart":179,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d","readRanges":["1-90","177-195","230-250"]},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Status / Rox2CanonicalResult / Rox2EntityRef / registerExternalBinding / ROX2_RELATION_RULES","lineStart":99,"lineEnd":389,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5","readRanges":["1-70","100-170","226-251","315-394"]},
+    {"path":"packages/server-core/src/handlers/rpc/command-gateway.ts","symbol":"registerCommandGatewayHandlers / authorizeWorkspace / HANDLED_CHANNELS","lineStart":20,"lineEnd":131,"sha256":"2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / RpcHandlerOptions / RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps.commandGateway","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/meetings/retention.ts","symbol":"NativeDeletePayload / nativeDeleteAvailable / retentionNativeEvidence / deleteOwnedCopies","lineStart":11,"lineEnd":42,"sha256":"d4ff0adc0435b97e3839060e943b3e3824b0181c65927a4d8bafec4b3d64f154"},
+    {"path":"packages/server-core/src/meetings/observability.ts","symbol":"MeetingBudgetLedger reserve/settle/markUnknown/reconcile","lineStart":69,"lineEnd":147,"sha256":"920c74cc6a10b9cda777d27e97844b4c995ccf01e5186bfd5f567ac277a03ea8"},
+    {"path":"packages/server-core/src/meetings/sharing.ts","symbol":"MeetingShareRecord / searchVisible / audienceRecap / revokeMember","lineStart":9,"lineEnd":64,"sha256":"1d9ecf62a485e1b5b708e9fe849051245d33d08c38d7ef27ea179229dbb2b203"},
+    {"path":"packages/server-core/src/meetings/types.ts","symbol":"MeetingOpResult / isLiveVerified / unknownEffect","lineStart":10,"lineEnd":59,"sha256":"aaaa4f8a81d270aa29889023e4e01d1c8fbdec109d622b00867024b667a61715"},
+    {"path":"packages/server-core/src/meetings/__tests__/sharing-retention.test.ts","symbol":"sharing-retention (#388) privacy/revoke/unsupported delete scenarios","lineStart":17,"lineEnd":74,"sha256":"078aab351437cc3303daefb598739cf789ae4ab6e63bbb5b4622a72a30a9b30f"},
+    {"path":"Dockerfile.server","symbol":"manifest COPY / ENV / ENTRYPOINT / non-root user","lineStart":26,"lineEnd":119,"sha256":"26133b3ab010e8b26851e9031f1d2050f8f412451cc7823b12ec8cc6de9c820c"},
+    {"path":"ops/fleet-infra/inventory/group_vars/all/versions.yml","symbol":"docker_ce / restic_version / node_major","lineStart":1,"lineEnd":28,"sha256":"fa9c5ab521e4f0f5e5055bacd7386a7f905ce0156467d471b858069562e2a21c"},
+    {"path":"ops/fleet-infra/control-plane.test.ts","symbol":"fail-closed enablement / secret scan / syntax and helper checks","lineStart":31,"lineEnd":161,"sha256":"c84c8aee1b9a016c6c400c050b2e2ad75e165aa353bcdf7844b310c987bb58f2"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.commandGateway","lineStart":679,"lineEnd":683,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"workspace-routed command gateway channel entries","lineStart":818,"lineEnd":821,"sha256":"f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"},
+    {"path":"packages/shared/src/protocol/types.ts","symbol":"KNOWN_ERROR_CODES / isErrorCode / CodedError","lineStart":121,"lineEnd":178,"sha256":"ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"}
+  ],
+  "nextExecutableAction": {
+    "now": "Deliver this report to lead for dependency/path-ownership resolution; source edits remain unauthorized for this preflight worker.",
+    "implementationStartGate": "Lead wave0 committed and accepted typed-interface/migration/scenario receipts for exact dependency array; foundation gates verified through those receipts or explicit lead resolution.",
+    "then": "Rehash and reread changed source seams; read accepted command/authority/topology/object/search/job interfaces and selected migrator; obtain shared-owner acceptance for patch requests; implement normative WP-47 retention leases/delete receipts, isolated backup-restore, capability health and telemetry additions in that existing authority. Extend WP-52 Compose rather than creating another stack.",
+    "verificationAfterIntegration": "Execute cold Page+call+JMAP scenario, backup/fresh DB+object restore/replay, hold/dry-run/execute deletion, token rotation/URL expiry and worker/provider failures on exact image/schema revision. Capture typed readbacks and caught controls; no completion from preflight or fixture tests."
+  },
+  "risks": [
+    "Published new-file ownership overlaps WP-51 command modules and WP-52 compose/env/livekit; root wave0 integration may create/change these during preflight. Hash-bound evidence must be refreshed before patches.",
+    "RequestContext and current gateway owner/workspace logic are not shared authenticated operator ACL; adding a restore handler alone leaves authority and legacy-writer gaps.",
+    "String restore responseSchema status versus existing Rox2CanonicalResult triad and absent normative transport error codes need accepted shared mapping, not silent type casts or success aliases.",
+    "Receipt/job keys versus service_config entity names and two proposed migration identifiers require selected schema/migrator clarification; never recreate common command/entity/outbox tables.",
+    "Native deletion is intentionally unavailable. Hosted retention does not prove local WP-35 deletion; local adapters must return real receipts or explicit unavailable state, with external copies retained honestly.",
+    "Exactly-one notification acceptance introduces a behavior dependency on WP-07 absent from explicit WP-47 array; WP-04 outbox cannot substitute for that consumer.",
+    "Restore of stale leases/policy snapshots or object inventory without generation fencing can resurrect access, private snippets or duplicate external effects. Unknown remote effects must reconcile, never blind resend.",
+    "Deleting object alone is insufficient: preview/transcript/summary/search/mentions/asset links and authorized audit retention need complete canonical-copy manifest and legal-hold policy.",
+    "Retention SLA, hold authority, retry limits, alert thresholds and backup consistency model are not concretely resolved by inspected code/spec. Do not invent measured values or reuse search budget as all-purpose deletion SLA.",
+    "TURN/TLS/SFU/egress/STT/object and JMAP provider operations require genuine isolated connectivity and secret-reference injection; packet generic providerSandbox wording cannot waive explicit real JMAP/audio/video DoD.",
+    "Native server Dockerfile is not shared-service or media-worker deployment. A new Dockerfile without accepted worker executable would be incomplete scaffolding.",
+    "Logs/metrics, provider exceptions, backup shell tracing and signed URLs can leak PRIVATE_WP-47 or secrets; capture negative paths as well as successful requests.",
+    "Current fleet/runtime Node versions differ (fleet 22 versus server Dockerfile ARG 20); pins are dated, production inventory stays untouched and exact dependency licenses/image/SBOM require release evidence.",
+    "No builds/tests/UI/network were run by authorization; runtime, dependency acceptance, source-to-HEAD equality and deployment completeness are not verified by this artifact."
+  ]
+}

@@ -113,6 +113,10 @@ export type ErrorCode =
   | 'PROVIDER_ERROR'
   | 'LOCAL_ONLY_DENIED'
   | 'SECRET_ENVVAR_DENIED'
+  | 'DOCUMENT_VALIDATION_FAILED'
+  | 'DOCUMENT_AUTHORITY_CHANGED'
+  | 'DOCUMENT_BUSY'
+  | 'DOCUMENT_RESULT_UNAVAILABLE'
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'HANDLER_ERROR',
@@ -148,6 +152,10 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'PROVIDER_ERROR',
   'LOCAL_ONLY_DENIED',
   'SECRET_ENVVAR_DENIED',
+  'DOCUMENT_VALIDATION_FAILED',
+  'DOCUMENT_AUTHORITY_CHANGED',
+  'DOCUMENT_BUSY',
+  'DOCUMENT_RESULT_UNAVAILABLE',
 ])
 
 export function isErrorCode(value: unknown): value is ErrorCode {

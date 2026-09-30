@@ -40,6 +40,7 @@ import {
 import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
 import type { LoadedProject, ProjectAsset } from '@craft-agent/shared/projects/types'
+import { RepositorySnapshotPanel } from '@/components/code-intelligence/RepositorySnapshotPanel'
 
 interface ProjectInfoPageProps {
   projectSlug: string
@@ -421,6 +422,7 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
           {/* Assets tab */}
           {tab === 'assets' && (
+            <>
             <Info_Section
               title={t('projectInfo.tabAssets')}
               actions={
@@ -469,6 +471,13 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                 </ul>
               )}
             </Info_Section>
+            <RepositorySnapshotPanel
+              key={`${workspaceId}:${project.config.id}:${project.config.workingDirectory ?? ''}`}
+              workspaceId={workspaceId!}
+              projectId={project.config.id}
+              workingDirectory={project.config.workingDirectory}
+            />
+            </>
           )}
 
           {/* Settings tab */}

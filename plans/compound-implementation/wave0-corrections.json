@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-30T09:58:36.144187+00:00",
+  "fullDoD": false,
+  "historicalReview": "plans/compound-implementation/wave0-acceptance-review.json",
+  "corrections": [
+    {
+      "package": "LSX-WP-003",
+      "issue": "publication owner callbacks after final hash could overwrite an external edit",
+      "fix": "owner/source/epoch checks before final byte revision read",
+      "negativeControl": {
+        "originalPass": 0,
+        "originalFail": 3
+      },
+      "targetedTests": {
+        "pass": 34,
+        "fail": 0,
+        "assertions": 189
+      },
+      "sourceSha256": "0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"
+    },
+    {
+      "packages": [
+        "LSX-WP-003",
+        "LSX-WP-005",
+        "LSX-WP-006"
+      ],
+      "issue": "native checkbox never committed checked bytes; unchanged Tiptap updates generated repeated saves/reopens",
+      "evidence": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790761388388/result.json",
+      "fix": "silent authority/content sync; ignore exact body echo; retain own-write watcher version for duplicate events",
+      "nativeRerun": "CHECKBOX_AND_UNCHANGED_BLUR_NATIVE_PASSED; CAS_RECOVERY_CODE_BOUNDARY_FIXED_NEXT_RUN_PENDING"
+    },
+    {
+      "packages": [
+        "LSX-WP-003",
+        "LSX-WP-005",
+        "LSX-WP-006"
+      ],
+      "issue": "Electron contextBridge drops custom Error.code; native HASH_CONFLICT rendered as unconfirmed save",
+      "fix": "existing buildClientApi rejects validated coded errors as plain cloneable data; no new channel or transport",
+      "primaryDocumentation": "https://www.electronjs.org/docs/latest/api/context-bridge",
+      "nativeDiagnostic": "plain rejection preserves HASH_CONFLICT; Error custom code lost",
+      "tests": {
+        "pass": 15,
+        "fail": 0,
+        "assertions": 3068
+      },
+      "nativeRerun": "PENDING"
+    }
+  ]
+}

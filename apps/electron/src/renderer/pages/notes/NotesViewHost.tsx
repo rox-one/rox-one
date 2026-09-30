@@ -25,7 +25,6 @@ import {
   notesOnlyGraph,
   notesOutlineFoldsStorageKey,
   notesViewsStorageKey,
-  outlineFromHeadings,
   parseJsonCanvas,
   parseOutlineFolds,
   progressiveGraph,
@@ -44,6 +43,7 @@ import {
   type NoteProjectionRow,
 } from './note-views'
 import { parseNoteDocument } from './document-ia'
+import type { ListTreeProjection, ListNode } from '@craft-agent/core/docs'
 
 export type NotesViewNote = {
   id: string
@@ -63,7 +63,11 @@ export function NotesViewHost({
   onOpenNote,
   onCreateNote,
   onConvert,
+  blockTree,
+  onOpenBlock,
 }: {
+  blockTree?: ListTreeProjection
+  onOpenBlock?: (nodeId: string) => void
   view: 'table' | 'canvas' | 'graph' | 'outline'
   notes: NotesViewNote[]
   activeNoteId: string | null
@@ -106,7 +110,7 @@ export function NotesViewHost({
     )
   }
   if (view === 'outline') {
-    return <NotesOutlineView notes={notes} activeNoteId={activeNoteId} workspaceId={workspaceId} />
+    return <NotesOutlineView notes={notes} activeNoteId={activeNoteId} workspaceId={workspaceId} blockTree={blockTree} onOpenBlock={onOpenBlock} />
   }
 
   return <NotesGraphView notes={notes} activeNoteId={activeNoteId} onOpenNote={onOpenNote} />
@@ -473,10 +477,14 @@ function NotesOutlineView({
   notes,
   activeNoteId,
   workspaceId,
+  blockTree,
+  onOpenBlock,
 }: {
   notes: NotesViewNote[]
   activeNoteId: string | null
   workspaceId: string
+  blockTree?: ListTreeProjection
+  onOpenBlock?: (nodeId: string) => void
 }) {
   const { t } = useTranslation()
   const active = notes.find((note) => note.id === activeNoteId) ?? notes[0]
@@ -503,14 +511,25 @@ function NotesOutlineView({
     })
   }
 
-  const headings = active ? parseNoteDocument(active.markdown).headings : []
-  const tree = active ? outlineFromHeadings(active.id, headings, collapsedIds, active.tags?.[0]) : null
+  const projection = blockTree
+  const projectNode = (node: ListNode): NoteOutlineNode => {
+    const id = node.nodeId ? 'block:' + node.nodeId : 'projection:' + (projection?.sourceHash ?? 'unavailable') + ':' + node.blockIndex
+    return { id, title: node.text, collapsed: Boolean(node.nodeId && collapsedIds.has(id)), children: node.children.map(projectNode) }
+  }
+  const tree: NoteOutlineNode | null = active && blockTree ? {
+    id: blockTree.root?.nodeId ? 'block:' + blockTree.root.nodeId : 'note:' + active.id,
+    title: blockTree.root?.text || active.title, collapsed: Boolean(blockTree.root?.nodeId && collapsedIds.has('block:' + blockTree.root.nodeId)),
+    children: blockTree.roots.map(projectNode),
+  } : null
+  const openSource = (id: string) => {
+    if (id.startsWith('block:')) onOpenBlock?.(id.slice('block:'.length))
+  }
   return (
     <div className="h-full overflow-y-auto p-6" data-testid="notes-outline-view">
       {tree ? (
-        <OutlineTree node={tree} onToggle={toggleCollapsed} />
+        <OutlineTree node={tree} onToggle={(id) => { if (id.startsWith('block:')) toggleCollapsed(id) }} onOpenBlock={openSource} />
       ) : (
-        <p className="text-sm text-muted-foreground">{t('notes.views.outlineEmpty')}</p>
+        <p className="text-sm text-muted-foreground">{t('notes.blocks.unavailable')}</p>
       )}
     </div>
   )
@@ -618,7 +637,7 @@ function NotesGraphView({
   )
 }
 
-function OutlineTree({ node, onToggle }: { node: NoteOutlineNode; onToggle: (id: string) => void }) {
+function OutlineTree({ node, onToggle, onOpenBlock }: { node: NoteOutlineNode; onToggle: (id: string) => void; onOpenBlock: (id: string) => void }) {
   return (
     <div className="pl-3">
       <div className="flex items-center gap-2 py-0.5 text-sm">
@@ -633,10 +652,12 @@ function OutlineTree({ node, onToggle }: { node: NoteOutlineNode; onToggle: (id:
           </button>
         ) : null}
         {node.supertag ? <span className="rounded bg-foreground/10 px-1.5 text-[10px]">#{node.supertag}</span> : null}
-        <span>{node.title}</span>
+        {node.id.startsWith('block:') ? (
+          <button type="button" className="text-left hover:underline" data-block-id={node.id.slice('block:'.length)} onClick={() => onOpenBlock(node.id)}>{node.title}</button>
+        ) : <span>{node.title}</span>}
       </div>
       {!node.collapsed
-        ? node.children.map((child) => <OutlineTree key={child.id} node={child} onToggle={onToggle} />)
+        ? node.children.map((child) => <OutlineTree key={child.id} node={child} onToggle={onToggle} onOpenBlock={onOpenBlock} />)
         : null}
     </div>
   )

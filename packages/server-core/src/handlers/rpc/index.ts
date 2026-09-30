@@ -39,6 +39,7 @@ import { registerPrivacyHandlers } from './privacy'
 import { registerVoiceHandlers } from './voice'
 import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
+import { registerCodeIntelligenceHandlers } from './code-intelligence'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerPersonalTasksHandlers } from './personal-tasks'
@@ -113,6 +114,7 @@ export function registerCoreRpcHandlers(
   registerVoiceHandlers(server, deps)
   registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
+  registerCodeIntelligenceHandlers(server, deps)
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerPersonalTasksHandlers(server, deps)

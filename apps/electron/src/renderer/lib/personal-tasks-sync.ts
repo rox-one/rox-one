@@ -108,10 +108,36 @@ export async function hydratePersonalTasksFrom(api: PersonalTasksApi, kv: Person
   return { bundle: bundleFromSnapshot(migrated), migrated, cacheStatus: loaded.status }
 }
 
+/** A failed/unknown native receipt retains the exact attempted task for retry. */
+export class PersonalTaskCreationError extends Error {
+  readonly task: PersonalTask
+
+  constructor(task: PersonalTask, cause: unknown) {
+    super('Personal task was not confirmed by native storage', { cause })
+    this.name = 'PersonalTaskCreationError'
+    this.task = structuredClone(task)
+  }
+}
+
+/** A resolved RPC is insufficient: native storage can reject individual IDs. */
+export async function putPersonalTaskConfirmed(api: PersonalTasksApi, task: PersonalTask): Promise<void> {
+  try {
+    const receipt = await api.personalTasksPut([task])
+    if (receipt.rejected.length > 0 || receipt.written !== 1) {
+      throw new Error('Native personal task write was rejected or incomplete')
+    }
+  } catch (cause) {
+    throw new PersonalTaskCreationError(task, cause)
+  }
+}
+
 /** Push a diff to the server. Returns false when the RPC failed (the cache still has the change). */
 export async function pushPersonalTaskDiff(api: PersonalTasksApi, diff: PersonalTaskDiff): Promise<boolean> {
   try {
-    if (diff.put.length > 0 || diff.meta) await api.personalTasksPut(diff.put, diff.meta)
+    if (diff.put.length > 0 || diff.meta) {
+      const receipt = await api.personalTasksPut(diff.put, diff.meta)
+      if (receipt.rejected.length > 0 || receipt.written !== diff.put.length) return false
+    }
     if (diff.remove.length > 0) await api.personalTasksDelete(diff.remove)
     return true
   } catch {

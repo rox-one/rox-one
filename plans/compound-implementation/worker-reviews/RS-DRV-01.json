@@ -1,0 +1,382 @@
+{
+  "task_id": "RS-DRV-01-preflight",
+  "attempt_id": "c88ad2081df6a6e12b46289748d2a617",
+  "packet_hash": "7018192a9254c0090b1cb00087abc0f5cbe9e42430e2f2b4d508f32b9d7d014a",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-DRV-01",
+  "featureComplete": false,
+  "mode": "read-only preflight; report-only delivery",
+  "dependencies": [],
+  "relatedIssues": [570, 563],
+  "evidenceBoundary": {
+    "specManifestHashesMatchPacket": true,
+    "sourceBasis": "Actual working-tree reads and whole-file shasum -a 256, not a checkout proven identical to input_revision. Root-owned uncommitted wave0 work was preserved.",
+    "freshness": "Hashes bind this inspection only. Source may change during lead integration; every affected reference must be re-read and rehashed after the wave0 commit. No post-integration validity or feature verification is claimed.",
+    "scope": "Published package specification, its exact issues.json record, named package paths and their direct imports. No repository-wide absence claim.",
+    "discovery": "Codegraph reported no project index. Built-in find failed because its judge provider returned 402; scoped grep/read/glob supplied the actual evidence instead.",
+    "execution": "No source/test/manifest/progress/shared-file/Git mutation. No build, test, native UI or network operation. Verification scenarios below are proposals, not executed results.",
+    "dispatchVerifier": "Packet verification_argv was not executed; this report is read back and JSON-parsed only. Runtime and feature evidence remain NOT_RUN."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-AUTHORITY",
+      "explicitDagEdge": false,
+      "requirement": "Common identity/ACL/command authority; actor from authenticated transport; effective grants for SharedWithMe.",
+      "specEvidence": "RS-DRV-01.md:38,62,73,80",
+      "codeEvidence": "platform-contract.ts:Rox2EntityRef:232-239 and authorizeRox2Action:592-610 are typed/pure seams. pages.ts:177-197 ignores _ctx and returns loadWorkspacePages/loadPage; DELETE:245-258 supplies granted:true itself. These inspected handlers are not evidence of per-actor library authorization.",
+      "missingPrerequisite": "Lead-accepted registry resolver plus entity-scoped effective ACL query/command authority connected to the authenticated RPC context. Do not substitute Page action grants, entity.permissions or rpcNativeActResult's boolean for membership authorization.",
+      "integrationRequest": "Root foundation owner supplies the actual committed paths, signatures and receipts for list/read/write/share/destroy authorization before library query and commands are dispatched. No invented RS dependency edge."
+    },
+    {
+      "id": "FG-CONTAINERS",
+      "explicitDagEdge": false,
+      "requirement": "DriveFolder/collection ordered membership refs; registry/schema/migration before dispatch.",
+      "specEvidence": "RS-DRV-01.md:21,38",
+      "codeEvidence": "platform-contract.ts:17-38 has page/note/file/project but no drive-folder kind; member-of relation exists at 42-51. ProjectConfig:35-57 is not a DriveFolder. Protocol events.ts:83-84 collection events describe CollectionDisplay/CollectionFilters, not entity membership.",
+      "missingPrerequisite": "Accepted canonical container identity choice, schema/migration and reference-only ordered membership persistence in the common registry, including revision/audience-impact commands.",
+      "integrationRequest": "Root chooses registered container representation, migrates it, exposes move preview/commit with revision checks, and maps mutable folder/path aliases explicitly; do not repurpose session collection display preferences as folder authority."
+    },
+    {
+      "id": "FG-FILES",
+      "explicitDagEdge": false,
+      "requirement": "Common file.beginUpload/finalize/download, SQL File/object metadata and S3-compatible storage, resumable chunks/checksum/scanning/errors.",
+      "specEvidence": "RS-DRV-01.md:29,38,55",
+      "codeEvidence": "ElectronAPI.uploadProjectAsset:2095 accepts filename/base64/text/sourcePath and returns ProjectAsset. ProjectAsset:62-69 is resolved filename/size/mime/uploadedAt/absolutePath, not a stable FileRef or upload session. SessionFilesSection:458-517 reads/watches a native tree.",
+      "missingPrerequisite": "Lead-accepted durable FileRef/uploadId/object metadata API, authorized download, chunk retry/resume protocol, checksum verification and real scan/quarantine policy/provider with limits.",
+      "integrationRequest": "Root supplies committed file lifecycle/storage contracts and provider readback evidence; this package integrates progress/import review and native alias projections, not a parallel blob store."
+    },
+    {
+      "id": "FG-PREFERENCES",
+      "explicitDagEdge": false,
+      "requirement": "Per-actor lastOpenedAt/favorites/view preferences separate from entity clocks and team pins.",
+      "specEvidence": "RS-DRV-01.md:27,32-33,38",
+      "codeEvidence": "PagesHome.visiblePages:66-77 sorts updatedAt; PageConfig:294-320 has createdAt/updatedAt but no per-actor opened/favorite fields. savePageConfig:176-194 always bumps updatedAt; pagesProjectFilterAtom:22-23 is transient renderer state.",
+      "missingPrerequisite": "Canonical actor/workspace/ref-keyed preference persistence and preference command receipts/revisions, plus authorized team pin container command.",
+      "integrationRequest": "Root exposes opened/favorite/view preference reads and idempotent writes. Opening/favoriting must not call savePageConfig and alter content updatedAt or grants."
+    },
+    {
+      "id": "FG-DOC-RENDERER-TEMPLATES",
+      "explicitDagEdge": false,
+      "requirement": "Create editable Doc distinct from HTML artifact; approved template preview/apply with version/origin/license provenance.",
+      "specEvidence": "RS-DRV-01.md:28,30,49,54,67",
+      "codeEvidence": "PageKind:35 only static/interactive/live; CreatePageInput:71-81 creates HTML Pages. MainContentPanel:322-335 only dispatches pageSlug to PageView. routes.view.notes:183-184 remains the canonical local Markdown Notes route.",
+      "missingPrerequisite": "Accepted canonical editable-document create/detail adapter and approved template catalog/apply contract. Do not label interactive HTML as Doc, expose personal Notes as shared, or claim a child editor implementation already exists.",
+      "integrationRequest": "Lead resolves the readiness of the New Doc/detail contract without creating a reverse DAG edge or removing DoD #2. First Page/File delivery does not complete RS-DRV-01's Doc criterion."
+    },
+    {
+      "id": "FG-OUTBOX-DISCOVERY",
+      "explicitDagEdge": false,
+      "requirement": "Common outbox entity/link/collection/preference events; ACL-scoped extractors/search/mentions/agents and explicit share/mention notification only.",
+      "specEvidence": "RS-DRV-01.md:38,73",
+      "codeEvidence": "pages.ts:broadcastChanged:55-59 pushes the entire loaded Pages list to a workspace; events.ts:79 transports LoadedPage[]. Rox2Event:131-141 and isAuditableRox2Event:617-620 describe audit fields, not durable outbox delivery.",
+      "missingPrerequisite": "Lead-accepted transactional outbox and actor-authorized subscriber/search/facet/mention/tool projections with revoke invalidation and resync semantics.",
+      "integrationRequest": "Root provides integration signatures and receipts; library consumes common events and ACL service. Do not broadcast private row titles by retaining unconditional workspace snapshots."
+    },
+    {
+      "id": "FG-LIFECYCLE",
+      "explicitDagEdge": false,
+      "requirement": "Distinct archive/trash/physical delete/publication retention, partial results and revoked preview cleanup.",
+      "specEvidence": "RS-DRV-01.md:34,38,57,73",
+      "codeEvidence": "storage.deletePage:387-392 physically removes a folder. publisher.deletePageWithUnpublish:436-472 preserves remote-copy uncertainty and can report remote success/local failure. Neither inspected seam is a revisioned batch trash/tombstone contract.",
+      "missingPrerequisite": "Canonical tombstone/retention command receipts and explicit audience/impact confirmation with per-ref partial outcome and revision conflict handling.",
+      "integrationRequest": "Root exposes common lifecycle commands while preserving #570 publication warnings; do not implement 'trash' by invoking physical deletePage."
+    },
+    {
+      "id": "FG-DELIVERY-EVIDENCE",
+      "explicitDagEdge": false,
+      "requirement": "Lead wave0 commit and accepted foundation receipts; separate Linux fixture/live service/Electron/provider gates bound to exact revision.",
+      "specEvidence": "RS-DRV-01.md:71-75 plus dispatch implementation-order instruction",
+      "codeEvidence": "No runtime operations were authorized or performed in this preflight; current published record is PLANNED_NOT_IMPLEMENTED.",
+      "missingPrerequisite": "Committed wave0 revision and accepted common foundation evidence. Empty dependencies does not waive these gates.",
+      "integrationRequest": "Lead schedules source implementation only after these prerequisites, refreshes this report's hashes, and collects the full acceptance evidence without promoting preflight into feature completion."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/drive/DriveLibrary.tsx",
+    "apps/electron/src/renderer/components/drive/DriveRail.tsx",
+    "apps/electron/src/renderer/components/drive/DriveTable.tsx",
+    "apps/electron/src/renderer/components/drive/LibraryViewSettings.tsx",
+    "apps/electron/src/renderer/components/drive/LibraryImportReview.tsx",
+    "tests/rox-suite/library-index.test.ts",
+    "tests/rox-suite/drive-library.spec.ts"
+  ],
+  "newFileScopeNote": "Only the published proposed components/tests are listed; none is authorized for creation by this preflight worker. Renderer prefix is resolved from the existing components/pages location. The spec states drive-library.spec.ts without repeating its directory; tests/rox-suite is the proposed sibling placement, requiring lead runner/path acceptance before implementation. No extra store, backend module, template catalog or documentation file is proposed as a worker-owned new file.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "PagesHome / visiblePages / openPage / handleCreatePage / handleConfirmDelete",
+      "change": "Make the existing Pages destination host DriveLibrary, keeping Project filter/unassigned semantics and canonical Page navigation. Replace client-only updatedAt grid selection with the authorized cursor library query projected once into table/grid. Replace implicit translated-title interactive creation with the explicit type/title/project/folder New menu using canonical command receipts. Use batch lifecycle outcomes for trash, never rename deletePage to trash.",
+      "reason": "One Pages/library surface; keep existing artifacts and project binding while adding the required ACL tabs, clocks, upload and display controls."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "symbol": "MainContentPanel isPagesNavigation branch:322-335",
+      "change": "Retain existing page details to PageView and PagesHome library dispatch. Integrate typed canonical representation/detail dispatch only for accepted Doc/File adapters; do not replace PageView or add a second library route/store. The specification's PagesView name is not the actual dispatch symbol found here.",
+      "reason": "New Doc/artifact/upload must resolve to the correct renderer and preserve pages/page/{slug}."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.pages / routes.view.notes",
+      "change": "Keep pages and pages/page/{slug} URLs unchanged. If suite owner adds a Docs typed/display alias, use the same Pages destination and explicit folder/path/ref resolution; Doc/File routes must use accepted canonical adapters. Preserve the local Notes route and default-private semantics.",
+      "reason": "Compatibility and canonical identity; a mutable alias or copied document must not become a second global identity."
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/pages.ts",
+      "symbol": "pagesAtom / pagesProjectFilterAtom",
+      "change": "Keep pagesAtom as the existing loaded-Page source consumed by PageView. Drive query state must reference canonical rows rather than mirror Page bodies/configs. Keep project filtering workspace-scoped; persist new personal view/favorite/opened state through the common actor preference API, not a new module-global or localStorage authority.",
+      "reason": "Preserve one Page store and correct reload/workspace isolation."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pages.ts",
+      "symbol": "registerPagesHandlers / broadcastChanged / GET / GET_ONE / CREATE / DELETE / CREATE_LEASE / GET_CONTENT / EXECUTE_ACTION",
+      "change": "Integrate root-owned common library.list and commands using authenticated context actor, effective entity ACL, registry refs and revision/idempotency checks. Recheck read authority for detail/content/lease, not merely list. Replace unsafe private workspace snapshot delivery with common authorized outbox projection/invalidation. CREATE must validate a required title and return actual canonical command receipt; preserve existing page create/storage/thumbnail mechanisms. DELETE/publication adapters retain publicCopyMayRemain and actual remote/local outcomes.",
+      "reason": "Current _ctx-independent Page handlers and generated live-result helpers cannot prove SharedWithMe, private moves or per-actor commands. Root owns the shared backend integration."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / ROX2_ENTITY_KINDS / Rox2ActorGrant / Rox2Event / Rox2CanonicalResult",
+      "change": "Reuse workspaceId/entityId/revisionId/accountNamespace references and audit/status fields. Foundation owner registers the chosen Drive container schema/kind and migration if needed before dispatch. Resolve grants entity-by-entity through common authority rather than treating the current actor+permission pure helper or entity capability list as effective folder/entity ACL.",
+      "reason": "Reference-only membership, scope-safe identity, revisioned commands and honest committed/provider-confirmed outcomes."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.pages / projects / collection",
+      "change": "Root wires the accepted common library.list query and file.beginUpload/finalize/download, preference and container/lifecycle commands into the existing protocol. Query accepts scope/type/folder/owner/sort/cursor and returns authorized canonical refs, clock fields, authorized facets/asOf and cursor; payload actor is not authority. Do not reuse projects:uploadAsset or session collection display channels as a purported complete Drive API.",
+      "reason": "Renderer integration needs real common contracts rather than client-only tab filtering or whole-file uploads."
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "symbol": "pages.CHANGED / collection.CHANGED payloads",
+      "change": "Add or consume accepted common entity/link/collection/preference event payloads with revision/causation/correlation and authorized delivery. Preserve Pages refresh completion semantics, but no private LoadedPage[] broadcast to unauthorized subscribers; revoked refs invalidate preview/title/facet caches.",
+      "reason": "Common outbox, realtime refresh and privacy after grants change."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "workspace Page/project channel routing:855-893",
+      "change": "Route the accepted library/container/preference/File metadata commands to their authoritative service and keep native device-read/import actions on the verified native host. Preserve workspace Page sharing server ownership; update channel routing atomically with the root's protocol/bridge changes.",
+      "reason": "No silent cloud/native boundary crossing or arbitrary mutation of session folders."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI Page/project file methods:2089-2126 / getSessionFiles",
+      "change": "Expose the root-accepted typed common library/upload/preference/container receipts and subscription methods through the existing Electron API binding. Keep Page grants/leases/share methods intact. Stable FileRef and resumable upload session states must not be typed as ProjectAsset or SessionFile paths.",
+      "reason": "Typed canonical dispatch and reliable progress/error/reload semantics; root must integrate its actual preload/transport implementation, not just this interface."
+    },
+    {
+      "path": "packages/shared/src/projects/types.ts",
+      "symbol": "ProjectAsset:62-69",
+      "change": "Project Asset projection adapter associates an existing canonical FileRef with a mutable native alias and verified device permissions through the common registry. Preserve filename/mime/size/uploadedAt/absolutePath meanings and existing project asset persistence; do not derive stable IDs from path or checksum and do not copy blobs into a Drive-specific store.",
+      "reason": "Published stable aliases/native permission requirement; current asset type alone has no global stable FileRef."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/right-sidebar/SessionFilesSection.tsx",
+      "symbol": "SessionFilesSection / loadFiles / file watcher / FileTreeItem",
+      "change": "Keep native tree, expanded-folder preferences and reconnect watcher. Only explicit permission-checked import/projection associates a session file alias to the common FileRef. Open canonical imported refs via accepted representation adapter; moving Drive membership must not move/delete arbitrary native session files.",
+      "reason": "Reuse the native surface without treating it as workspace Drive storage or shared ACL."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "savePageConfig / createPage / savePageContent / deletePage / revokePageGrant",
+      "change": "Keep Page bodies/runtime/digest-bound source grants canonical. Root projects stable Page id into registry, without duplicating index.html/data or storing lastOpenedAt/favorites in page.json. Keep physical delete separate from common trash/tombstones. Registry/command integration must preserve contentDigest and refresh completion marker semantics.",
+      "reason": "savePageConfig bumps updatedAt; personal opened clock must not masquerade as entity edit or grant mutation."
+    },
+    {
+      "path": "packages/shared/src/pages/publisher.ts",
+      "symbol": "deletePageWithUnpublish / UnpublishResult",
+      "change": "Reuse the existing publication adapter and map publicCopyMayRemain, missing-token warnings and remote-success/local-failure into per-ref lifecycle receipts. Do not duplicate publication storage or suppress uncertain public-copy retention.",
+      "reason": "Retain #570 behavior while implementing honest partial trash/revoke/retention outputs."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+      "symbol": "SharePageDialog / runPublish / runUnpublish",
+      "change": "Preserve public publication, usable-action acknowledgment, script-grant restriction and remote-copy warning behavior. Integrate actor sharing through the accepted common ACL command without equating config.share (public copy) with SharedWithMe, personal favorite or team pin.",
+      "reason": "Public publishing, artifact source-action grants and collaborative entity access are different mechanisms."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "t() keys for Drive controls/help/errors/status",
+      "change": "Root shared-file owner adds all new Russian-first labels and definition/source/freshness/example help plus permission/progress/partial-error text to all ten locales (de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant), ASCII-sorted with existing plural convention. Exact key namespace is finalized alongside Drive components, not guessed from uninspected locale contents.",
+      "reason": "Repository i18n rule and published quality gate; this worker does not write locales."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: Recent/Owned/Shared/Favorites correct ACL sets; clocks separate, table/grid same IDs.",
+      "currentEvidence": "PagesHome:66-77 only filters projectId and sorts updatedAt; grid keys use PageConfig.id at 179-186. PageConfig:306-307 has two entity clocks. pages.GET:177-187 loads all workspace Pages without using _ctx.",
+      "seam": "PagesHome.visiblePages; pagesAtom; registerPagesHandlers GET; canonical library.list + actor preferences foundation",
+      "requiredChange": "Implement authorized canonical registry projection with recent=per-actor lastOpenedAt, owned=authenticated ownership, shared=effective grants, favorite=actor preference intersected with current read ACL. Deduplicate by workspace/account/entity ref, apply deterministic cursor sort/tie-break and project/type/folder/owner filters server-side; table/grid consume exactly the same result set and authorized facets/counts.",
+      "verification": "Future library-index test seeds A/B/private/shared/revoked refs, duplicate aliases and different created/updated/opened clocks; assert exact ref sets/order across cursor pages and table/grid. Open without editing then reload; createdAt/updatedAt unchanged and only A's lastOpenedAt changed. B cannot forge actor A or observe hidden rows/counts.",
+      "missingPrerequisite": "FG-AUTHORITY, FG-PREFERENCES, FG-CONTAINERS; accepted wave0 revision",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: New Doc/artifact/upload each routes correct renderer; #570 grants/refresh/public-copy behavior retained.",
+      "currentEvidence": "handleCreatePage:86-101 creates interactive HTML with a default title; PageKind:35 is static/interactive/live only. MainContentPanel:322-335 opens PageView, whose lease/snapshot/error runtime remains at 86-111 and 386-466. SharePageDialog:97-105,182-200 and publisher:436-472 preserve distinct grant/public-copy policies.",
+      "seam": "PagesHome.handleCreatePage; routes.view.pages; MainContentPanel; PageView; SharePageDialog; common Doc/File representation adapters",
+      "requiredChange": "Explicit required-title New menu selects canonical editable Doc vs HTML artifact with project/folder and idempotency key; navigate only after receipt ref resolution. Approved template apply creates new canonical Doc with provenance. Upload opens File detail only after readiness. Preserve Page runtime capabilities, lease digest/content atomicity, source grants, refresh, project binding and public-copy retention warnings.",
+      "verification": "Future drive-library flow creates each representation, opens its actual renderer by receipt ref, retries same creation without duplicate ref, reloads deep links and retains pages/page/{slug}. Verify changed artifact digest invalidates old source grants, scheduled/live snapshot refresh still works, and unpublish/delete remote failure produces retention warning. Doc is editable, not merely an HTML iframe.",
+      "missingPrerequisite": "FG-DOC-RENDERER-TEMPLATES, FG-FILES, FG-AUTHORITY; accepted #570 preservation coverage",
+      "state": "EXISTING_ARTIFACT_SEAM_ONLY_FULL_CRITERION_UNVERIFIED"
+    },
+    {
+      "criterion": "DoD 3: File checksum/scanning/malware/error/reload-resume with stable FileRef.",
+      "currentEvidence": "ProjectAsset:62-69 provides native filename/path metadata; ElectronAPI.uploadProjectAsset:2095 is a whole-payload/sourcePath method. SessionFilesSection:458-517 loads/watches native entries. Inspected seams do not implement this common File lifecycle.",
+      "seam": "LibraryImportReview proposed component; ElectronAPI project/session file adapters; common file.beginUpload/finalize/download foundation",
+      "requiredChange": "Integrate durable uploadId/FileRef, limits/type/audience/source preview, chunk progress/failed-part retry, checksum finalization and scan states. Pending/scanning/quarantined/error cannot be represented as ready or downloadable. Persist resume and partial errors through common metadata; native imports require verified device authorization.",
+      "verification": "Future service/provider tests upload known bytes, independently verify checksum/object readback, reject checksum mismatch and limits/type failures, quarantine real scanner test signature, interrupt after a part then reload/resume same uploadId and FileRef, and preserve failed-part errors. Unauthorized actor and revoked ready-file download deny; scan/provider outage cannot promote ready.",
+      "missingPrerequisite": "FG-FILES, FG-AUTHORITY and real scan/object-provider environment",
+      "state": "FOUNDATION_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Private folder move cannot leak title/body through facets/shared list.",
+      "currentEvidence": "PageConfig.projectId:304-305 is project binding, not folder ACL. ROX2_ENTITY_KINDS:17-38 lacks a Drive container identity. pages.broadcastChanged:55-59 sends LoadedPage[] to workspace; pure authorizeRox2Action:601-610 is not a query/facet pipeline.",
+      "seam": "Common container preview/commit and library.list; registerPagesHandlers.broadcastChanged; DriveRail and LibraryViewSettings projections",
+      "requiredChange": "Reference-only ordered container membership; authoritative source/target ACL and revision checks. Moving private into shared requires reviewed audience impact, never implicit share. All query rows, facet totals, shared lists, search/mentions/agents and push payloads filter by effective read access; invalidate revoked previews/titles.",
+      "verification": "Future two-actor service/UI flow attempts private-to-shared move without approval, asserts denial/no membership or grant change and no title/body/facet count/event leak to B. Concurrent grant/revision change between preview and commit must conflict or require new review. Approved move's audience and receipt are read back; revoke removes B's cached row/pin preview.",
+      "missingPrerequisite": "FG-CONTAINERS, FG-AUTHORITY, FG-OUTBOX-DISCOVERY",
+      "state": "FOUNDATION_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Partial trash/revoke/retention outputs honest; preference rollback/reload consistent.",
+      "currentEvidence": "PagesHome.handleConfirmDelete:107-125 displays publicCopyMayRemain for one Page. deletePage:387-392 physically removes content. deletePageWithUnpublish:436-472 handles warning and remote/local partial failure. No favorite/pin command appears in the inspected home.",
+      "seam": "PagesHome.handleConfirmDelete; publisher.deletePageWithUnpublish; SharePageDialog.runUnpublish; common batch lifecycle/preference commands",
+      "requiredChange": "Explicit scope/retention/audience confirmation; per-ref receipts with denied/conflict/trash/remote-copy-may-remain outcomes. Separate trash from purge, local from provider confirmation and Page source grant revoke from entity ACL revoke. Optimistic personal favorites/team pins roll back on denial, using revision-aware common preference persistence and authorized reload.",
+      "verification": "Future mixed-permission batch includes success, denial, stale revision and failed remote unpublish; assert exact individual outcomes and tombstones after reload, not a blanket success. Preference failure rolls back, concurrent preference writes resolve via receipt/revision, workspace/actor switch isolates state, revoked private pin title disappears. Disconnected device physical erasure is not claimed.",
+      "missingPrerequisite": "FG-LIFECYCLE, FG-PREFERENCES, FG-AUTHORITY, FG-OUTBOX-DISCOVERY",
+      "state": "EXISTING_RETENTION_WARNING_ONLY_FULL_CRITERION_UNVERIFIED"
+    },
+    {
+      "criterion": "DoD 6: Seed duplicate view entities, wrong timestamp and hidden facet totals caught.",
+      "currentEvidence": "PagesHome:76 sorts updatedAt instead of a recent opened clock; header:132-133 displays pages.length independently of visiblePages. Published tests at 45 and sensitivity gate at 75 are proposed, not executed.",
+      "seam": "tests/rox-suite/library-index.test.ts and drive-library.spec.ts; authorized query/set/clock/facet boundary",
+      "requiredChange": "Behavioral fixtures and negative controls fail specifically for duplicate canonical view refs, updatedAt substituted for lastOpenedAt and hidden entities included in facet/count totals. Preserve exact acceptance rather than test source text or mere nonempty rendering.",
+      "verification": "Future baseline exact ref/order/count assertions pass, then each separately seeded semantic defect must produce its intended assertion failure. Restore defects and rerun against delivered revision. Timeout, infrastructure error or unrelated compilation failure is not sensitivity evidence.",
+      "missingPrerequisite": "Working library query/UI and approved test runner/path; all relevant foundation receipts",
+      "state": "TEST_DESIGN_ONLY_NOT_RUN"
+    },
+    {
+      "criterion": "Navigation/geometry: one Docs rail Home/Drive/Wiki/pinned/my library, retained Pages routes and explicit folder/path alias mapping; responsive table/grid.",
+      "currentEvidence": "PagesHome:127-199 is a single full-width grid; MainContentPanel:322-335 owns actual dispatch (not a symbol named PagesView). routes.view.pages:219-223 preserves Pages URLs. Semantic font variables exist at index.css:121-129.",
+      "seam": "PagesHome; MainContentPanel; routes.view.pages; proposed DriveLibrary/DriveRail/DriveTable",
+      "requiredChange": "Implement specified rail220/main min560/header56/tiles min140x64/filter40/table row44/header36, columns Name flex min240/Location180/Owner140/Created140/Recent160/overflow32, grid min220x160 gap12-16. Collapse rail below960; keyboard-usable rows/cards below720. No parallel Pages/Notes body store and no automatic personal Notes sharing; Wiki/Notes remain canonical child integrations, not fake copies.",
+      "verification": "Future actual-surface viewport checks at desktop, below960 and below720 verify geometry, no clipped critical actions and retained deep links, with screenshots/ARIA/computed styles. Light fixture/dark regression retain selected semantic fonts/theme/accent. Future Wiki/Notes child readiness remains explicit and cannot hide an unimplemented required control.",
+      "missingPrerequisite": "Accepted common library/detail/ref dispatch and suite-owner alias decisions; child Wiki/Notes integration receipts where required",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Tabs/row/display controls: arrows/Enter, Enter-open/ShiftF10 menu, paged sort announcement, Escape and personal filter/columns/table-grid view persistence.",
+      "currentEvidence": "PagesHome:134-150 has only ProjectMultiSelectFilter and create button; visiblePages:66-77 has no tab/cursor/view state. Existing openPage:79-82 provides Page route seam.",
+      "seam": "DriveLibrary/DriveTable/LibraryViewSettings; PagesHome.openPage; common library query/preference API",
+      "requiredChange": "Use canonical authorized rows with type/owner/location/created/updated/opened clock help, focusable overflow, keyboard menus, aria sort announcements and Escape focus return. Save view preference per actor/workspace; table/grid never run different projections. Explain counts, asOf and authorization.",
+      "verification": "Future keyboard-only interaction exercises tabs/arrows/Enter, row detail, ShiftF10 overflow, sort announcement and Escape focus return; reload keeps personal filters/sort/columns/view while actor/workspace switch isolates them. Assert exact same refs before/after view switch.",
+      "missingPrerequisite": "FG-PREFERENCES, FG-AUTHORITY and real UI acceptance surface",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Templates: approved template/version/origin preview, explicit apply creates a new Doc retaining license/source/version provenance.",
+      "currentEvidence": "PagesHome:86-101 only creates a blank interactive Page. CreatePageInput:71-81 contains name/description/kind/project/content/refresh, not approved template provenance.",
+      "seam": "DriveLibrary New/Templates action; root-accepted document/template create adapter",
+      "requiredChange": "Consume approved immutable/versioned template metadata, preview with license/source/version and no implied personal content; explicit apply through canonical idempotent document create stores provenance in the accepted domain model.",
+      "verification": "Future flow previews without mutation, applies an approved version, checks returned Doc ref and persisted provenance on reload; rejects revoked/unapproved version and never imports private content by default.",
+      "missingPrerequisite": "FG-DOC-RENDERER-TEMPLATES, FG-AUTHORITY",
+      "state": "FOUNDATION_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Pin/star: team-role pin vs personal favorite, no grant change; optimistic rollback; revoked private pin title disappears.",
+      "currentEvidence": "pagesAtom and pagesProjectFilterAtom:17-23 are only list/filter state; PageConfig.share is publication and PageConfig.grants are source-action grants, not favorites or team pins.",
+      "seam": "DriveRail pinned projection and DriveTable overflow; common preference and collection pin commands",
+      "requiredChange": "Distinct actorfavorite and authorized pincontainer commands with receipts/revision checks; favoriting/pinning cannot grant read/share. Project every pinned ref through current read ACL and clear unauthorized title/preview on revoke.",
+      "verification": "Future actor A favorites without granting B access; non-team-role B pin denial rolls back; reload confirms personal favorite and authorized team pin separately. Revoke hides title in rail, table, search and cached previews without silent preference success.",
+      "missingPrerequisite": "FG-PREFERENCES, FG-CONTAINERS, FG-AUTHORITY, FG-OUTBOX-DISCOVERY",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Domain/API/storage/realtime: registry reference-only library.list, SQL metadata/collections/preferences + S3 abstraction; ACL-scoped discovery/tools and explicit share/mention notifications.",
+      "currentEvidence": "Page storage:204-250 resolves the existing filesystem body/config store. Rox2EntityRef:232-239 is a typed identity seam. pages.ts:55-59 pushes a whole workspace Page list; Rox2Event/isAuditableRox2Event describe event fields without an outbox implementation in this inspected seam.",
+      "seam": "Common registry/query/command/outbox foundations; existing Page storage/adapters; protocol channels/events/routing",
+      "requiredChange": "Library indexes refs/metadata only; Page/Note/File bodies remain their canonical mechanisms. Use common SQL registry/File metadata/ordered membership/preferences and S3-compatible object abstraction, transactionally emit common events and ACL-filter extraction/search/mentions/agent tool outputs. Notify only explicit share/mention, never hover/open/favorite/move by implication.",
+      "verification": "Future service readback verifies canonical identity and no duplicated body/blob; cursor/query authorization, event replay/resync, committed receipt/revision/hash and concurrent command conflict are exercised. Search/mention/tool negative queries and unauthorized push subscriptions reveal no private metadata/counts. Provider readback proves stored bytes and explicit share notification delivery independently.",
+      "missingPrerequisite": "FG-AUTHORITY, FG-CONTAINERS, FG-FILES, FG-PREFERENCES, FG-OUTBOX-DISCOVERY and actual provider environment",
+      "state": "FOUNDATION_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "User flow: Create Doc -> Owned/Recent -> share B -> B Shared -> favorite -> same row opens Docs -> folder move audience review -> reload same IDs/filter in table/grid.",
+      "currentEvidence": "Existing Page create and PageView navigation seams exist; inspected SharePageDialog publishes a public copy and is not actor B collaborative sharing. No current whole-flow proof was performed.",
+      "seam": "DriveLibrary + canonical Doc create/detail, entity ACL share, preferences, container move and query",
+      "requiredChange": "Integrate all steps through common canonical refs and receipts with authenticated actors; do not substitute publication for B's effective grant or HTML Page for editable Doc. Keep exact same entity identity through share/favorite/folder move/reload/view changes.",
+      "verification": "Future two-actor end-to-end live-service/native flow records ref/revision/hash receipts at every transition, exact A/B sets and reload/view equality, plus denied share/move and revoke cache cleanup. Distinguish local queued/saved/committed/provider-confirmed states.",
+      "missingPrerequisite": "All domain foundations and FG-DOC-RENDERER-TEMPLATES; accepted wave0 integration",
+      "state": "NOT_RUN_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Quality: RU i18n, current semantic fonts/theme/accent, light fixture + dark regression, focus/contrast/hitboxes/reduced motion and hover/focus/click help without hover mutation.",
+      "currentEvidence": "PagesHome uses t() and bg-background; index.css:121-129 defines selected UI narrow/sans and Rox mono semantics. SessionFilesSection:20,39-68 uses existing motion/react conventions. No new controls or UI verification exists in this preflight.",
+      "seam": "Proposed Drive components; shared ten-locale i18n owner; existing UI semantic styles/motion primitives",
+      "requiredChange": "Translate all user-facing new keys in ten locales using current convention. Inherit semantic fonts, not a second global font override. Desktop hitboxes >=32px/touch>=44px, visible focus/readable contrast, reduced-motion support and Escape focus return. Every metric/help explains definition/source/freshness/example; hover/focus/click expose help without sending/sharing/reading mutation.",
+      "verification": "Future real UI capture/ARIA/computed-font checks in RU and locale regression, light/dark, reduced motion and desktop/touch viewports; hover/focus/click help and focus return exercised. Observe command receipts to assert hover performs no read-state/share/send mutation. Locale parity check runs only in implementation verification, not this worker.",
+      "missingPrerequisite": "Implemented controls plus accepted fixture/Electron runtime and root locale integration",
+      "state": "NOT_RUN_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Evidence gates: exact commit/inputSha and domain receipts/ref/revision/hash; reload/concurrency/negative assertions; screenshots/ARIA/font/viewport/locale; Linux fixture, live service, Electron native and provider read-back separately.",
+      "currentEvidence": "Specification:71-75 explicitly separates these gates; inspection is bound to sourceReferences hashes only. No runtime evidence or completion claim is produced.",
+      "seam": "Lead acceptance pipeline and normative library-index/drive-library verification scenarios",
+      "requiredChange": "After wave0 and foundation receipts, integrate in dependency order and capture each gate independently against the delivered revision. Run semantic negative controls and persistence/recovery/concurrency scenarios. Preserve failure history; infrastructure timeout is not a caught seeded defect. Do not copy private reference assets/names or literal Macro/Lark assets.",
+      "verification": "Future acceptance receipt lists revision/environment per gate and exact observed assertions/artifact hashes. Missing provider/native/live evidence remains explicitly not verified even if fixtures pass. Reverify only materially changed surfaces after integration.",
+      "missingPrerequisite": "FG-DELIVERY-EVIDENCE and fully implemented feature with authorized runtime environments",
+      "state": "PREFLIGHT_ONLY_RUNTIME_NOT_RUN"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-DRV-01.md","symbol":"Domain / Tests / Dependencies / quality gates","lineStart":36,"lineEnd":84,"sha256":"ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-DRV-01 normative record","lineStart":600,"lineEnd":623,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/components/pages/PagesHome.tsx","symbol":"PagesHome / visiblePages / openPage / handleCreatePage / handleConfirmDelete","lineStart":25,"lineEnd":125,"sha256":"3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageKind","lineStart":29,"lineEnd":35,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageConfig","lineStart":294,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView lease lifecycle","lineStart":50,"lineEnd":105,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView / PageFrame / SharePageDialog / PageGrantsDialog","lineStart":386,"lineEnd":466,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/SharePageDialog.tsx","symbol":"SharePageDialog / runPublish / runUnpublish","lineStart":85,"lineEnd":200,"sha256":"a06d7bf806cdac1c044c01ba2a75fb7103d04e7cbd82ee4136c69577f38bb5e0"},
+    {"path":"apps/electron/src/renderer/components/right-sidebar/SessionFilesSection.tsx","symbol":"SessionFilesSection / loadFiles / watcher reconnect","lineStart":423,"lineEnd":517,"sha256":"ce696b877ac56385b008bfddfa615239c9bcbfaf61e4c3576e1a43343a12c77c"},
+    {"path":"apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx","symbol":"MainContentPanel isPagesNavigation dispatch","lineStart":322,"lineEnd":335,"sha256":"22fc3c593f73a9bfce5327ca5c536fef89b42e4d1a270428ee31221bd9ed670a"},
+    {"path":"apps/electron/src/renderer/atoms/pages.ts","symbol":"pagesAtom / pagesProjectFilterAtom","lineStart":1,"lineEnd":23,"sha256":"d429fb649961031ab860ce7c107c69f121aee46cf61648f26962de9d6ff18ff2"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":232,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event","lineStart":592,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/rpc-native-actions.ts","symbol":"nativeLive / rpcNativeListResult / rpcNativeActResult","lineStart":390,"lineEnd":495,"sha256":"692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"savePageConfig / loadWorkspacePages","lineStart":176,"lineEnd":250,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"deletePage","lineStart":382,"lineEnd":392,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"savePageContent","lineStart":439,"lineEnd":464,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/types.ts","symbol":"isPageGrantUsable / CreatePageInput / LoadedPage","lineStart":40,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/shared/src/pages/publisher.ts","symbol":"deletePageWithUnpublish","lineStart":436,"lineEnd":472,"sha256":"362aa905a7dfd59eb9e93bb450ec7824b71d3e01117d0cb25a0325b9f085efe0"},
+    {"path":"packages/shared/src/projects/types.ts","symbol":"ProjectConfig / ProjectAsset","lineStart":35,"lineEnd":69,"sha256":"a40c43fc73a8918b91b9608c67c303be48432f3d2f84d8bdf15b8ac8e1e8d6fc"},
+    {"path":"packages/server-core/src/handlers/rpc/pages.ts","symbol":"registerPagesHandlers / broadcastChanged / Page list/read/create","lineStart":43,"lineEnd":223,"sha256":"c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path":"packages/server-core/src/handlers/rpc/pages.ts","symbol":"DELETE / GET_CONTENT / CREATE_LEASE / EXECUTE_ACTION","lineStart":241,"lineEnd":368,"sha256":"c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.projects / pages","lineStart":829,"lineEnd":864,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/events.ts","symbol":"pages.CHANGED / collection.CHANGED","lineStart":78,"lineEnd":84,"sha256":"2c488ef99e2bf5e9600c20b9795dd70360901e8a378e478df2410728b44fee62"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"workspace Page/project routes","lineStart":855,"lineEnd":893,"sha256":"f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI project asset and Page methods","lineStart":2089,"lineEnd":2126,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.pages","lineStart":219,"lineEnd":223,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"packages/ui/src/styles/index.css","symbol":"semantic font variables","lineStart":121,"lineEnd":129,"sha256":"88b88774da970aad4e1ad4ea1bc91477bf81896c2527fbc3762b755fb0adca5b"}
+  ],
+  "nextExecutableAction": {
+    "owner": "root integration lead",
+    "action": "Accept this preflight, commit wave0, then compare inspected file hashes against the committed work and refresh changed seams. Keep explicit dependencies [] but obtain FG-AUTHORITY/CONTAINERS/FILES/PREFERENCES/OUTBOX/LIFECYCLE and Doc/template adapter readiness receipts before their dependent library commands/UI. Assign normative component/test files and approve exact shared patch interfaces/runner placement. Implement canonical query/projection first, then preserved Pages/Doc/File detail and creation/import, preferences/moves/lifecycle, and collect all acceptance gates.",
+    "workerReadyContribution": "Normative Drive components and behavioral library tests after foundation contracts and root shared patches are accepted; this preflight itself does not start implementation.",
+    "missingPrerequisite": "Wave0 committed revision plus accepted common-foundation contracts/receipts, including actual paths/signatures for runtime primitives not established by scoped inspection."
+  },
+  "risks": [
+    "No explicit DAG prerequisites is not proof of implementation readiness: published identity/ACL/command and container migration gates are mandatory.",
+    "Working-tree evidence may become stale during root integration; sourceReferences hashes are not a claim that uncommitted files match input HEAD.",
+    "SharedWithMe cannot be derived from PageConfig.share (public publication), Page action grants (source capability authorization), entity.permissions, or caller-supplied granted:true.",
+    "Current generated native live receipts describe native availability, not actual entity-scoped authorization or a completed domain transaction; retain honest saved/queued/committed/provider-confirmed distinctions.",
+    "Updating page.json for opened/favorite would corrupt Recent semantics by bumping updatedAt; contentDigest is a checksum/security binding, not a global File or document ID.",
+    "Workspace-wide LoadedPage snapshots, stale private pin titles and unfiltered facet totals can leak metadata even when row UI is filtered.",
+    "ProjectAsset filename/absolutePath and SessionFile path are mutable native aliases; using them as global IDs or moving arbitrary session-folder files violates the specification.",
+    "Current deletePage is physical deletion, not trash. Reusing it under a trash label silently loses retention and tombstone semantics.",
+    "Editable Doc/New/Templates readiness is a real acceptance gate; Page/File-first delivery or child Notes/Wiki scheduling cannot turn the Doc DoD into N/A or featureComplete=true.",
+    "The exact browser spec runner/location is not established by published basename; lead must accept tests/rox-suite/drive-library.spec.ts placement and supported runner before execution.",
+    "Malformed/checksum-failed/scanning/quarantined uploads must never open as ready. Fixture scan states are not evidence of a real scanner or provider read-back.",
+    "Specification mentions PagesView, but the inspected actual library/detail dispatch is MainContentPanel's isPagesNavigation branch. Integrate the real seam rather than creating a duplicate surface.",
+    "Current semantic UI font is Arial Narrow with Rox monospace tokens; package must inherit selected semantic styles and not impose another global font.",
+    "No runtime, seeded-failure sensitivity, reload, concurrency, UI or provider result was verified in this report. The product remains incomplete/unverified."
+  ]
+}

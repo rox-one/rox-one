@@ -16,6 +16,25 @@ import { resolveConfigDir } from "../config/paths.ts"
 // ---------------------------------------------------------------------------
 
 export const LOCAL_ONLY_CHANNELS = new Set<string>([
+  RPC_CHANNELS.notes.UPDATE_PROPERTIES,
+  RPC_CHANNELS.notes.SAVE,
+  RPC_CHANNELS.notes.READ,
+  // These initial native owners require a verified local Electron principal.
+  RPC_CHANNELS.content.RESOLVE,
+  RPC_CHANNELS.content.DESCRIBE,
+  RPC_CHANNELS.content.ADOPT_DESCRIPTOR,
+  RPC_CHANNELS.content.COMMIT_MARKDOWN,
+  RPC_CHANNELS.content.GET_COMMIT_RECEIPT,
+  RPC_CHANNELS.content.GET_BLOCK_TREE,
+  RPC_CHANNELS.content.PREVIEW_MARKER_MAPPING,
+  RPC_CHANNELS.content.APPLY_MARKER_MAPPING,
+  RPC_CHANNELS.codeIntelligence.PREVIEW,
+  RPC_CHANNELS.codeIntelligence.BIND,
+  RPC_CHANNELS.codeIntelligence.CAPTURE,
+  RPC_CHANNELS.codeIntelligence.LIST,
+  RPC_CHANNELS.codeIntelligence.READ_SPAN,
+  RPC_CHANNELS.codeIntelligence.FRESHNESS,
+  RPC_CHANNELS.codeIntelligence.CANCEL,
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 
@@ -575,8 +594,6 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
 
   // notes — workspace note vault
   RPC_CHANNELS.notes.LIST,
-  RPC_CHANNELS.notes.READ,
-  RPC_CHANNELS.notes.SAVE,
   RPC_CHANNELS.notes.CREATE,
   RPC_CHANNELS.notes.RENAME,
   RPC_CHANNELS.notes.DELETE,
@@ -590,7 +607,6 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.notes.LIST_ASSETS,
   RPC_CHANNELS.notes.DELETE_ASSET,
   RPC_CHANNELS.notes.RENAME_ASSET,
-  RPC_CHANNELS.notes.UPDATE_PROPERTIES,
   RPC_CHANNELS.notes.REBUILD_INDEX,
   RPC_CHANNELS.notes.WATCH,
   RPC_CHANNELS.notes.UNWATCH,

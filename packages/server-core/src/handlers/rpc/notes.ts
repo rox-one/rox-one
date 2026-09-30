@@ -1,5 +1,5 @@
-import { mkdir, readdir, readFile, rename, rm, stat, unlink, writeFile } from 'fs/promises'
-import { existsSync } from 'fs'
+import { open, realpath, mkdir, readdir, readFile, rename, rm, stat, unlink, writeFile } from 'fs/promises'
+import { existsSync, constants } from 'fs'
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path'
 import { getWorkspaceByNameOrId, isImportProvenancedRelativePath } from '@craft-agent/shared/config'
 import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
@@ -10,6 +10,13 @@ import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRename
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
+import { registerContentHandlers, CONTENT_HANDLED_CHANNELS } from './content.ts'
+import { markdownRevision, type MarkdownChangedEvent, type NativeMarkdownChange, type NativeFolderSnapshot } from '../../docs/markdown-commit.ts'
+
+type NativeNoteWriter = (reason: MarkdownChangedEvent['reason'], changes: NativeMarkdownChange[]) => Promise<unknown>
+type NativeFolderReader = (folder: string) => Promise<NativeFolderSnapshot | null>
+import { CodedError } from '@craft-agent/shared/protocol'
+import { previewPropertyDictionary } from '@craft-agent/core/docs'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
 import {
   contentHash,
@@ -48,6 +55,7 @@ import {
 } from '../../knowledge/daily-notes.ts'
 
 export const HANDLED_CHANNELS = [
+  ...CONTENT_HANDLED_CHANNELS,
   RPC_CHANNELS.notes.LIST,
   RPC_CHANNELS.notes.READ,
   RPC_CHANNELS.notes.SAVE,
@@ -446,12 +454,19 @@ async function getBacklinks(notesRoot: string, noteId: string): Promise<NoteBack
 async function readNote(notesRoot: string, noteId: string): Promise<NoteDocument> {
   await ensureNotesDirs(notesRoot)
   const filePath = notePathFromId(notesRoot, noteId)
+  const canonicalRoot = await realpath(notesRoot)
+  if (await realpath(filePath) !== resolve(canonicalRoot, `${assertSafeNoteId(noteId)}.md`)) throw new CodedError('AUTH_FAILED', 'Document symlink access denied')
+  const handle = await open(filePath, constants.O_RDONLY | constants.O_NOFOLLOW)
+  const bytes = await handle.readFile().finally(() => handle.close())
+  let body: string
+  try { body = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
+  catch { throw new CodedError('DOCUMENT_AUTHORITY_CHANGED', 'Invalid UTF-8 source; preserve the original bytes') }
   const [summary, content, backlinks] = await Promise.all([
     summarizeNote(notesRoot, filePath),
-    readFile(filePath, 'utf-8'),
+    Promise.resolve(body),
     getBacklinks(notesRoot, assertSafeNoteId(noteId)),
   ])
-  return { ...summary, content, backlinks }
+  return { ...summary, content, backlinks, revision: markdownRevision(content) }
 }
 
 function buildInitialNoteContent(title: string): string {
@@ -478,12 +493,7 @@ function updateFrontmatterTitle(content: string, title: string): string {
   return stringifyNoteContent(body, { ...properties, title })
 }
 
-function updateFrontmatterProperties(content: string, nextProperties: Record<string, unknown>): string {
-  const { body } = parseFrontmatter(content)
-  return stringifyNoteContent(body, nextProperties)
-}
-
-async function createNote(notesRoot: string, title: string, folder?: string): Promise<NoteDocument> {
+async function createNote(notesRoot: string, title: string, writeNative: NativeNoteWriter, folder?: string): Promise<NoteDocument> {
   await ensureNotesDirs(notesRoot)
   const safeFolder = folder ? assertSafeNoteId(folder) : ''
   const dir = safeFolder ? resolve(notesRoot, safeFolder) : notesRoot
@@ -495,25 +505,8 @@ async function createNote(notesRoot: string, title: string, folder?: string): Pr
   while (existsSync(filePath)) {
     filePath = join(dir, `${sanitizeFilename(title || 'Untitled')}-${suffix++}.md`)
   }
-  await writeFile(filePath, buildInitialNoteContent(title || 'Untitled'), 'utf-8')
+  await writeNative('create', [{ kind: 'write', noteId: noteIdFromRelativePath(relative(notesRoot, filePath)), expectedRevision: null, content: buildInitialNoteContent(title || 'Untitled') }])
   return readNote(notesRoot, noteIdFromRelativePath(relative(notesRoot, filePath)))
-}
-
-async function saveNote(notesRoot: string, noteId: string, content: string, expectedRevision?: string): Promise<NoteDocument> {
-  await ensureNotesDirs(notesRoot)
-  const filePath = notePathFromId(notesRoot, noteId)
-  if (expectedRevision && existsSync(filePath)) {
-    const existing = await readFile(filePath, 'utf-8')
-    if (contentHash(existing) !== expectedRevision) {
-      throw new Error('note revision conflict')
-    }
-  }
-  await mkdir(dirname(filePath), { recursive: true })
-  await writeFile(filePath, content, 'utf-8')
-  // Record the exact mtime of our write so the watcher can recognize it as internal
-  const { mtimeMs } = await stat(filePath)
-  lastInternalMtime.set(filePath, mtimeMs)
-  return readNote(notesRoot, noteId)
 }
 
 function replaceWikiTargets(content: string, oldTargets: Set<string>, newTarget: string): { content: string; replacements: number } {
@@ -566,51 +559,28 @@ async function getRenameImpact(notesRoot: string, noteId: string, nextTitle: str
   }
 }
 
-async function renameNote(notesRoot: string, noteId: string, nextTitle: string): Promise<{ note: NoteDocument; updatedNotes: Array<{ noteId: string; path: string; replacements: number }> }> {
+async function renameNote(notesRoot: string, noteId: string, nextTitle: string, writeNative: NativeNoteWriter): Promise<{ note: NoteDocument; updatedNotes: Array<{ noteId: string; path: string; replacements: number }> }> {
   await ensureNotesDirs(notesRoot)
   const oldPath = notePathFromId(notesRoot, noteId)
   const oldSummary = await summarizeNote(notesRoot, oldPath)
   const newPath = join(dirname(oldPath), safeNoteFilename(nextTitle))
-  if (oldPath !== newPath && existsSync(newPath)) throw new Error(`A note named "${nextTitle}" already exists`)
-
-  if (oldPath !== newPath) {
-    await rename(oldPath, newPath)
-  }
-
+  if (oldPath !== newPath && existsSync(newPath)) throw new Error('A note with the requested title already exists')
   const newId = noteIdFromRelativePath(relative(notesRoot, newPath))
-  const newTarget = titleFromId(newId)
-  const renamedContent = await readFile(newPath, 'utf-8')
-  await writeFile(newPath, updateFrontmatterTitle(renamedContent, nextTitle), 'utf-8')
-  const oldTargets = new Set([
-    oldSummary.id,
-    oldSummary.title,
-    titleFromId(oldSummary.id),
-  ].map(value => stripMdExtension(value).toLowerCase()))
-
+  const originalContent = await readFile(oldPath, 'utf-8')
+  const oldTargets = new Set([oldSummary.id, oldSummary.title, titleFromId(oldSummary.id)].map(value => stripMdExtension(value).toLowerCase()))
+  const changes: NativeMarkdownChange[] = []
+  if (oldPath !== newPath) changes.push({ kind: 'move', noteId, targetNoteId: newId, expectedRevision: markdownRevision(originalContent) })
   const updatedNotes: Array<{ noteId: string; path: string; replacements: number }> = []
-  const files = await listMarkdownFiles(notesRoot)
-  for (const file of files) {
-    const content = await readFile(file, 'utf-8')
-    const result = replaceWikiTargets(content, oldTargets, newTarget)
-    if (result.replacements > 0) {
-      await writeFile(file, result.content, 'utf-8')
-      updatedNotes.push({
-        noteId: noteIdFromRelativePath(relative(notesRoot, file)),
-        path: file,
-        replacements: result.replacements,
-      })
-    }
+  for (const file of await listMarkdownFiles(notesRoot)) {
+    const content = file === oldPath ? originalContent : await readFile(file, 'utf-8')
+    const titled = file === oldPath ? updateFrontmatterTitle(content, nextTitle) : content
+    const result = replaceWikiTargets(titled, oldTargets, titleFromId(newId))
+    const targetId = file === oldPath ? newId : noteIdFromRelativePath(relative(notesRoot, file))
+    if (result.content !== content) changes.push({ kind: 'write', noteId: targetId, expectedRevision: markdownRevision(content), content: result.content })
+    if (result.replacements > 0) updatedNotes.push({ noteId: targetId, path: file === oldPath ? newPath : file, replacements: result.replacements })
   }
-
+  if (changes.length > 0) await writeNative('rename', changes)
   return { note: await readNote(notesRoot, newId), updatedNotes }
-}
-
-async function updateNoteProperties(notesRoot: string, noteId: string, properties: Record<string, unknown>): Promise<NoteDocument> {
-  await ensureNotesDirs(notesRoot)
-  const filePath = notePathFromId(notesRoot, noteId)
-  const content = await readFile(filePath, 'utf-8')
-  await writeFile(filePath, updateFrontmatterProperties(content, properties), 'utf-8')
-  return readNote(notesRoot, noteId)
 }
 
 async function readInstallDay(notesRoot: string, now = new Date()): Promise<string> {
@@ -628,6 +598,7 @@ async function upsertDailyNote(
   notesRoot: string,
   date: string,
   sessions: readonly DailySessionRef[],
+  writeNative: NativeNoteWriter,
 ): Promise<string> {
   const dailyDate = assertDailyDate(date)
   const id = dailyNoteId(dailyDate)
@@ -637,21 +608,21 @@ async function upsertDailyNote(
   if (!existsSync(filePath)) {
     const templatePath = join(notesRoot, TEMPLATES_DIR, DAILY_TEMPLATE_FILE)
     const template = await readFile(templatePath, 'utf-8').catch(() => '')
-    await writeFile(filePath, buildDailyNoteMarkdown({ date: dailyDate, sessions: daySessions, template }), 'utf-8')
+    await writeNative('create', [{ kind: 'write', noteId: id, expectedRevision: null, content: buildDailyNoteMarkdown({ date: dailyDate, sessions: daySessions, template }) }])
     return id
   }
   const existing = await readFile(filePath, 'utf-8')
   const next = mergeSessionsBlock(existing, daySessions)
-  if (next !== existing) await writeFile(filePath, next, 'utf-8')
+  if (next !== existing) await writeNative('save', [{ kind: 'write', noteId: id, expectedRevision: markdownRevision(existing), content: next }])
   return id
 }
 
-async function ensureDailyNotes(notesRoot: string, sessions: readonly DailySessionRef[], now = new Date()): Promise<void> {
+async function ensureDailyNotes(notesRoot: string, sessions: readonly DailySessionRef[], writeNative: NativeNoteWriter, now = new Date()): Promise<void> {
   await ensureNotesDirs(notesRoot)
   const today = formatDateId(now)
   const install = await readInstallDay(notesRoot, now)
   for (const date of datesToEnsure(install, today)) {
-    await upsertDailyNote(notesRoot, date, sessions)
+    await upsertDailyNote(notesRoot, date, sessions, writeNative)
   }
 }
 
@@ -693,10 +664,11 @@ async function isOwnWrite(filePath: string): Promise<boolean> {
   try {
     const { mtimeMs } = await stat(filePath)
     if (mtimeMs === recorded) {
-      // Consume the record — a second watcher event for the same mtime is external
-      lastInternalMtime.delete(filePath)
+      // fs.watch may report the same native publication several times. Keep
+      // its version until the file changes so duplicate events cannot reopen it.
       return true
     }
+    lastInternalMtime.delete(filePath)
   } catch {
     // File deleted or inaccessible — treat as external
   }
@@ -850,7 +822,7 @@ async function deleteAsset(notesRoot: string, relativePath: string): Promise<boo
   return true
 }
 
-async function renameAsset(notesRoot: string, relativePath: string, nextName: string): Promise<NoteAssetRenameResult> {
+async function renameAsset(notesRoot: string, relativePath: string, nextName: string, writeNative: NativeNoteWriter): Promise<NoteAssetRenameResult> {
   await ensureNotesDirs(notesRoot)
   const oldPath = assetPathFromRelative(notesRoot, relativePath)
   const safeName = sanitizeFilename(nextName.trim() || basename(oldPath))
@@ -866,12 +838,13 @@ async function renameAsset(notesRoot: string, relativePath: string, nextName: st
   const oldRelativePath = normalizeAssetRef(relativePath)
   const newRelativePath = toSlashPath(relative(notesRoot, newPath))
   const updatedNotes: NoteAssetRenameResult['updatedNotes'] = []
+  const changes: NativeMarkdownChange[] = []
   const files = await listMarkdownFiles(notesRoot)
   for (const file of files) {
     const content = await readFile(file, 'utf-8')
     const result = replaceAssetTargets(content, oldRelativePath, newRelativePath)
     if (result.replacements > 0) {
-      await writeFile(file, result.content, 'utf-8')
+      changes.push({ kind: 'write', noteId: noteIdFromRelativePath(relative(notesRoot, file)), expectedRevision: markdownRevision(content), content: result.content })
       updatedNotes.push({
         noteId: noteIdFromRelativePath(relative(notesRoot, file)),
         path: file,
@@ -880,6 +853,7 @@ async function renameAsset(notesRoot: string, relativePath: string, nextName: st
     }
   }
 
+  if (changes.length > 0) await writeNative('asset', changes)
   const info = await stat(newPath)
   return {
     asset: {
@@ -894,81 +868,42 @@ async function renameAsset(notesRoot: string, relativePath: string, nextName: st
   }
 }
 
-async function renameFolder(notesRoot: string, folder: string, nextName: string): Promise<{ movedNotes: string[] }> {
+async function renameFolder(notesRoot: string, folder: string, nextName: string, writeNative: NativeNoteWriter, readFolder: NativeFolderReader): Promise<{ movedNotes: string[] }> {
   await ensureNotesDirs(notesRoot)
-  const safeFolder = assertSafeNoteId(folder)
-  const oldDir = resolve(notesRoot, safeFolder)
-  if (!isInsidePath(notesRoot, oldDir)) throw new Error('Invalid folder path')
-  if (!existsSync(oldDir)) throw new Error(`Folder not found: ${folder}`)
-
-  const parentDir = dirname(oldDir)
-  const safeName = sanitizeFilename(nextName.trim() || basename(oldDir))
-  const newDir = join(parentDir, safeName)
+  const oldPrefix = assertSafeNoteId(folder)
+  const oldDir = resolve(notesRoot, oldPrefix)
+  const newDir = join(dirname(oldDir), sanitizeFilename(nextName.trim() || basename(oldDir)))
   if (!isInsidePath(notesRoot, newDir)) throw new Error('Invalid target folder path')
-  if (newDir !== oldDir && existsSync(newDir)) throw new Error(`A folder named "${safeName}" already exists`)
-
-  const oldPrefix = toSlashPath(relative(notesRoot, oldDir))
+  if (newDir === oldDir) return { movedNotes: (await listMarkdownFiles(oldDir, notesRoot)).map(file => noteIdFromRelativePath(relative(notesRoot, file))) }
+  if (existsSync(newDir)) throw new Error('A folder with the requested name already exists')
   const newPrefix = toSlashPath(relative(notesRoot, newDir))
-
-  const oldTargetsByNote = new Map<string, Set<string>>()
-  const allFiles = await listMarkdownFiles(notesRoot)
-  for (const file of allFiles) {
-    const rel = toSlashPath(relative(notesRoot, file))
-    if (rel.startsWith(`${oldPrefix}/`) || rel === `${oldPrefix}.md`) {
-      const content = await readFile(file, 'utf-8')
-      const parsed = parseNoteContent(content)
-      const targets = new Set([
-        noteIdFromRelativePath(rel),
-        ...parsed.links.map(l => l.target),
-      ])
-      oldTargetsByNote.set(file, targets)
+  const snapshot = await readFolder(oldPrefix)
+  if (!snapshot) throw new Error('Folder not found')
+  const movedNotes = snapshot.noteIds.map(id => newPrefix + '/' + id.slice(oldPrefix.length + 1))
+  const changes: NativeMarkdownChange[] = [{ kind: 'moveFolder', noteId: oldPrefix, targetNoteId: newPrefix, expectedRevision: snapshot.revision, noteIds: snapshot.noteIds }]
+  for (const file of await listMarkdownFiles(notesRoot)) {
+    const id = noteIdFromRelativePath(relative(notesRoot, file))
+    const content = await readFile(file, 'utf-8')
+    let next = content
+    for (let index = 0; index < snapshot.noteIds.length; index++) {
+      const oldId = snapshot.noteIds[index], newId = movedNotes[index]
+      if (!oldId || !newId) throw new Error('Folder note mapping changed')
+      const targets = new Set([oldId, titleFromId(oldId), basename(oldId)].map(value => stripMdExtension(value).toLowerCase()))
+      next = replaceWikiTargets(next, targets, titleFromId(newId)).content
     }
+    if (next !== content) changes.push({ kind: 'write', noteId: id.startsWith(oldPrefix + '/') ? newPrefix + '/' + id.slice(oldPrefix.length + 1) : id, expectedRevision: markdownRevision(content), content: next })
   }
-
-  if (newDir !== oldDir) {
-    await rename(oldDir, newDir)
-  }
-
-  const newFiles = await listMarkdownFiles(newDir, notesRoot)
-  const movedNotes: string[] = []
-  for (const file of newFiles) {
-    const newRel = toSlashPath(relative(notesRoot, file))
-    const oldRel = newRel.replace(newPrefix, oldPrefix)
-    const oldId = noteIdFromRelativePath(oldRel)
-    const newId = noteIdFromRelativePath(newRel)
-    movedNotes.push(newId)
-
-    const oldTargets = new Set([
-      oldId,
-      titleFromId(oldId),
-      basename(oldId),
-    ].map(v => stripMdExtension(v).toLowerCase()))
-
-    for (const otherFile of allFiles) {
-      if (newFiles.includes(otherFile)) continue
-      const content = await readFile(otherFile, 'utf-8').catch(() => '')
-      const result = replaceWikiTargets(content, oldTargets, titleFromId(newId))
-      if (result.replacements > 0) {
-        await writeFile(otherFile, result.content, 'utf-8')
-      }
-    }
-  }
-
+  await writeNative('rename', changes)
   return { movedNotes }
 }
 
-async function deleteFolder(notesRoot: string, folder: string): Promise<{ deletedNotes: string[] }> {
+async function deleteFolder(notesRoot: string, folder: string, writeNative: NativeNoteWriter, readFolder: NativeFolderReader): Promise<{ deletedNotes: string[] }> {
   await ensureNotesDirs(notesRoot)
   const safeFolder = assertSafeNoteId(folder)
-  const dir = resolve(notesRoot, safeFolder)
-  if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid folder path')
-  if (!existsSync(dir)) throw new Error(`Folder not found: ${folder}`)
-
-  const files = await listMarkdownFiles(dir, notesRoot)
-  const deletedNotes = files.map(f => noteIdFromRelativePath(relative(notesRoot, f)))
-
-  await rm(dir, { recursive: true, force: true })
-  return { deletedNotes }
+  const snapshot = await readFolder(safeFolder)
+  if (!snapshot) throw new Error('Folder not found')
+  await writeNative('delete', [{ kind: 'deleteFolder', noteId: safeFolder, expectedRevision: snapshot.revision, entries: snapshot.entries, noteIds: snapshot.noteIds }])
+  return { deletedNotes: snapshot.noteIds }
 }
 
 export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -976,22 +911,42 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     pushTyped(server, RPC_CHANNELS.notes.CHANGED, target, payload)
   }
 
-  server.handle(RPC_CHANNELS.notes.LIST, async (_ctx, workspaceId: string) => {
+  const nativeContent = registerContentHandlers(server, {
+    notesRoot: workspaceId => {
+      try { return getWorkspaceNotesRoot(workspaceId) } catch { return null }
+    },
+    readNote: (_workspaceId, noteId, capturedRoot) => readNote(capturedRoot, noteId),
+    ownsWindow: context => context.webContentsId !== null
+      && !!deps.windowManager?.getWindowByWebContentsId(context.webContentsId)
+      && deps.windowManager?.getWorkspaceForWindow(context.webContentsId) === context.workspaceId,
+    async changed(workspaceId, noteId, reason, eventId) {
+      const notesRoot = getWorkspaceNotesRoot(workspaceId)
+      const filePath = notePathFromId(notesRoot, noteId)
+      try { lastInternalMtime.set(filePath, (await stat(filePath)).mtimeMs) }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error }
+      refreshVaultIndex(notesRoot)
+      changed({ workspaceId, reason, noteId, ...(eventId ? { eventId } : {}) })
+    },
+  })
+
+  server.handle(RPC_CHANNELS.notes.LIST, async (ctx, workspaceId: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     const listed = rpcNotesListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
-    await ensureDailyNotes(notesRoot, sessionsFromDeps(deps, workspaceId))
+    await ensureDailyNotes(notesRoot, sessionsFromDeps(deps, workspaceId), (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     refreshVaultIndex(notesRoot)
     return listNotes(notesRoot)
   })
 
-  server.handle(RPC_CHANNELS.notes.READ, async (_ctx, workspaceId: string, noteId: string) => {
+  server.handle(RPC_CHANNELS.notes.READ, async (ctx, workspaceId: string, noteId: string) => {
     const read = rpcNotesReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) throw new Error('note read is not live')
-    return readNote(getWorkspaceNotesRoot(workspaceId), noteId)
-  })
+    return nativeContent.readNote(ctx, workspaceId, noteId)
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.notes.SAVE, async (_ctx, workspaceId: string, noteId: string, content: string, expectedRevision?: string) => {
+  server.handle(RPC_CHANNELS.notes.SAVE, async (ctx, workspaceId: string, noteId: string, content: string, expectedRevision?: string, sourceStoreId?: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: noteId })
     if (!isClaimableLive(act)) throw new Error('note save is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
@@ -1002,60 +957,66 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     } catch {
       // new / unreadable note — treat as zero prior links
     }
-    const note = await saveNote(notesRoot, noteId, content, expectedRevision)
+    if (!expectedRevision) throw new Error('note expected revision is required')
+    const existing = await readNote(notesRoot, noteId)
+    if (expectedRevision !== existing.revision && expectedRevision !== contentHash(existing.content)) throw new Error('note revision conflict')
+    const { note } = await nativeContent.commit(ctx, {
+      workspaceId, noteId, content, expectedRevision: markdownRevision(existing.content), sourceStoreId,
+      authorityEpoch: 1, operationId: crypto.randomUUID(),
+    })
     refreshVaultIndex(notesRoot)
     const nextLinkCount = note.links?.length ?? 0
     if (nextLinkCount > previousLinkCount) {
       awardXpSafe('note_linked')
     }
-    changed({ workspaceId, reason: 'save', noteId: note.id })
     return note
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.notes.CREATE, async (_ctx, workspaceId: string, title: string, folder?: string) => {
+  server.handle(RPC_CHANNELS.notes.CREATE, async (ctx, workspaceId: string, title: string, folder?: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: title || 'untitled' })
     if (!isClaimableLive(act)) throw new Error('note create is not live')
-    const note = await createNote(getWorkspaceNotesRoot(workspaceId), title, folder)
+    const note = await createNote(getWorkspaceNotesRoot(workspaceId), title, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), folder)
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
-    changed({ workspaceId, reason: 'create', noteId: note.id })
     return note
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.notes.RENAME, async (_ctx, workspaceId: string, noteId: string, nextTitle: string) => {
-    const result = await renameNote(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle)
+  server.handle(RPC_CHANNELS.notes.RENAME, async (ctx, workspaceId: string, noteId: string, nextTitle: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
+    const result = await renameNote(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
-    changed({ workspaceId, reason: 'rename', noteId: result.note.id })
     return result
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.notes.DELETE, async (_ctx, workspaceId: string, noteId: string) => {
+  server.handle(RPC_CHANNELS.notes.DELETE, async (ctx, workspaceId: string, noteId: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     if (!noteId) throw new Error('notes.delete: noteId is required')
     const act = rpcNotesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: noteId })
     if (!isClaimableLive(act)) throw new Error('note delete is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureNotesDirs(notesRoot)
-    await unlink(notePathFromId(notesRoot, noteId))
+    const existing = await nativeContent.readNote(ctx, workspaceId, noteId)
+    await nativeContent.writeNative(ctx, workspaceId, 'delete', [{ kind: 'delete', noteId, expectedRevision: markdownRevision(existing.content) }])
     refreshVaultIndex(notesRoot)
-    changed({ workspaceId, reason: 'delete', noteId })
     return true
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.notes.RENAME_FOLDER, async (_ctx, workspaceId: string, folder: string, nextName: string) => {
-    const result = await renameFolder(getWorkspaceNotesRoot(workspaceId), folder, nextName)
+  server.handle(RPC_CHANNELS.notes.RENAME_FOLDER, async (ctx, workspaceId: string, folder: string, nextName: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
+    const result = await renameFolder(getWorkspaceNotesRoot(workspaceId), folder, nextName, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), target => nativeContent.folderSnapshot(ctx, workspaceId, target))
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
-    changed({ workspaceId, reason: 'rename' })
     return result
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.notes.DELETE_FOLDER, async (_ctx, workspaceId: string, folder: string) => {
+  server.handle(RPC_CHANNELS.notes.DELETE_FOLDER, async (ctx, workspaceId: string, folder: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     if (!folder) throw new Error('notes.deleteFolder: folder is required')
     const act = rpcNotesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: folder })
     if (!isClaimableLive(act)) throw new Error('note folder delete is not live')
-    const result = await deleteFolder(getWorkspaceNotesRoot(workspaceId), folder)
+    const result = await deleteFolder(getWorkspaceNotesRoot(workspaceId), folder, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes), target => nativeContent.folderSnapshot(ctx, workspaceId, target))
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
-    changed({ workspaceId, reason: 'delete' })
     return result
-  })
+  }, { access: 'localElectron' })
 
   server.handle(RPC_CHANNELS.notes.SEARCH, async (_ctx, workspaceId: string, query: string) => {
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
@@ -1126,17 +1087,17 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return getRenameImpact(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle)
   })
 
-  server.handle(RPC_CHANNELS.notes.GET_DAILY_NOTE, async (_ctx, workspaceId: string, date?: string) => {
+  server.handle(RPC_CHANNELS.notes.GET_DAILY_NOTE, async (ctx, workspaceId: string, date?: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: date || 'daily' })
     if (!isClaimableLive(act)) throw new Error('daily note upsert is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     const sessions = sessionsFromDeps(deps, workspaceId)
-    await ensureDailyNotes(notesRoot, sessions)
-    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), sessions)
+    await ensureDailyNotes(notesRoot, sessions, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
+    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), sessions, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     refreshVaultIndex(notesRoot)
-    changed({ workspaceId, reason: 'create', noteId: id })
     return readNote(notesRoot, id)
-  })
+  }, { access: 'localElectron' })
 
   server.handle(RPC_CHANNELS.notes.IMPORT_ASSET, async (_ctx, workspaceId: string, attachment: FileAttachment) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -1160,19 +1121,27 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return result
   })
 
-  server.handle(RPC_CHANNELS.notes.RENAME_ASSET, async (_ctx, workspaceId: string, relativePath: string, nextName: string) => {
-    const result = await renameAsset(getWorkspaceNotesRoot(workspaceId), relativePath, nextName)
+  server.handle(RPC_CHANNELS.notes.RENAME_ASSET, async (ctx, workspaceId: string, relativePath: string, nextName: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
+    const result = await renameAsset(getWorkspaceNotesRoot(workspaceId), relativePath, nextName, (reason, changes) => nativeContent.writeNative(ctx, workspaceId, reason, changes))
     changed({ workspaceId, reason: 'asset' })
     return result
-  })
+  }, { access: 'localElectron' })
 
-  server.handle(RPC_CHANNELS.notes.UPDATE_PROPERTIES, async (_ctx, workspaceId: string, noteId: string, properties: Record<string, unknown>) => {
+  server.handle(RPC_CHANNELS.notes.UPDATE_PROPERTIES, async (ctx, workspaceId: string, noteId: string, properties: Record<string, unknown>, expectedRevision?: string, reviewedDigest?: string, sourceStoreId?: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
-    const note = await updateNoteProperties(notesRoot, noteId, properties)
+    const existing = await readNote(notesRoot, noteId)
+    if (!expectedRevision) throw new CodedError('DOCUMENT_VALIDATION_FAILED', 'Document revision is required')
+    if (expectedRevision !== existing.revision) throw new CodedError('HASH_CONFLICT', 'Document revision conflict')
+    const preview = previewPropertyDictionary(existing.content, existing.properties, properties)
+    if (preview.requiresReview && preview.digest !== reviewedDigest) throw new CodedError('UNSUPPORTED_OPERATION', 'Property conversion requires a reviewed preview')
+    const { note } = await nativeContent.commit(ctx, { workspaceId, noteId, content: preview.content, expectedRevision, sourceStoreId,
+      authorityEpoch: 1, operationId: crypto.randomUUID() })
     refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'properties', noteId: note.id })
     return note
-  })
+  }, { access: 'localElectron' })
 
   server.handle(RPC_CHANNELS.notes.WATCH, async (ctx, workspaceId: string) => {
     const clientId = ctx.clientId

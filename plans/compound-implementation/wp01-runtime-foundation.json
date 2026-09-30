@@ -1,0 +1,774 @@
+{
+  "schemaVersion": 1,
+  "taskId": "WP01-runtime-foundation",
+  "mode": "inspect-and-write-owned-plan",
+  "observedAt": "2026-09-30T09:27:49.071232+00:00",
+  "root": "/Users/t/Projects/rox-one-compound-implementation",
+  "ownedArtifact": "plans/compound-implementation/wp01-runtime-foundation.json",
+  "featureImplemented": false,
+  "featureVerified": false,
+  "scope": {
+    "allowed": [
+      "read scoped sources",
+      "read local executable/service/file inventory",
+      "write this plan only"
+    ],
+    "notExecuted": [
+      "product source/test/migration edits",
+      "services launched",
+      "database/network connection",
+      "build/test/UI verification",
+      "Git mutation"
+    ],
+    "frozenSources": "Parent reports native wave0 frozen. This plan binds current file bytes; it does not substitute a wave0 commit/receipt."
+  },
+  "decision": {
+    "selected": "One Bun-process modular workspace authority, existing WsRpcServer HTTP/WS adapters, jose verified auth, Bun.SQL Postgres transaction authority, existing native Projects surface/router. Only migrated Project operations enabled.",
+    "why": [
+      "No extra web framework/ORM/broker is required for this slice.",
+      "Single database transaction can commit Project + principal/workspace membership when bootstrapped + idempotent receipt + minimal durable events.",
+      "Existing native channel map and RoutedClient provide the integration seam; replacing the entire workspace remote backend with Project-only host breaks unrelated surface channels.",
+      "WP-01 has no explicit dependencies; generalized registry/roles/command framework remain WP-02/03/04, not hidden prerequisite DAG edges."
+    ],
+    "alternatives": [
+      {
+        "option": "Reuse current password/server token as principal",
+        "accepted": false,
+        "reason": "Fixed webui subject and boolean token validator cannot distinguish two users; device/local renderer ID is not user identity."
+      },
+      {
+        "option": "Deploy independent auth/ORM/API stack or Macro service composition",
+        "accepted": false,
+        "reason": "Duplicates mechanism/authority and increases unprovisioned dependencies."
+      },
+      {
+        "option": "Real existing issuer + jose JWKS; isolated local issuer fallback using same jose/Bun.password primitives",
+        "accepted": true,
+        "reason": "Strict transport identity works with actual issuer; genuinely separate persisted local accounts can support local acceptance when no provider is configured. Local bootstrap scope is labelled explicitly."
+      }
+    ]
+  },
+  "normative": {
+    "id": "WP-01",
+    "explicitDependencies": [],
+    "workerNewFiles": [
+      "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "apps/workspace-service/src/modules/identity/commands.ts",
+      "apps/workspace-service/src/modules/identity/repository.ts",
+      "tests/macro-integration/wp-01.test.ts",
+      "apps/workspace-service/migrations/01-domain-contract.sql"
+    ],
+    "bootstrapContract": {
+      "owns": [
+        "transport-authenticated Actor",
+        "workspace membership",
+        "minimal Project identity row",
+        "owner-only policy enforced server-side",
+        "Project create transaction+idempotent receipt",
+        "native Project RPC/list/detail"
+      ],
+      "laterGeneralization": [
+        "WP-02 registry kinds/aliases/relations",
+        "WP-03 full grant roles/inheritance/revoke",
+        "WP-04 generic outbox/inbox/revision command framework"
+      ],
+      "acceptanceScope": "minimal private Project feature; not complete Project cross-surface parity"
+    },
+    "events": [
+      "workspace.member_joined",
+      "project.created"
+    ],
+    "operation": "project.createShared",
+    "http": "POST /v1/workspaces/{workspaceId}/commands/project.createShared",
+    "nativeRpc": "domain.project.createShared",
+    "seed": 20260931
+  },
+  "readiness": {
+    "serviceDirectoryPresent": false,
+    "codegraphPresent": false,
+    "bun": {
+      "path": "/opt/homebrew/bin/bun",
+      "version": "1.4.2",
+      "sqlCapability": "Not exercised by scout; root verifies SQL adapter against real Postgres before feature acceptance."
+    },
+    "jose": {
+      "declared": "packages/server-core/package.json ^6.0.0",
+      "locked": "6.1.3",
+      "currentAuth": "webui/auth.ts uses HS256 and fixed sub webui; repository search found no JWKS/createRemoteJWKSet implementation."
+    },
+    "postgres": {
+      "psql": false,
+      "postgres": false,
+      "pg_ctl": false,
+      "initdb": false,
+      "homebrewOptVarCellarEntry": false,
+      "postgresProcessObserved": false,
+      "postgresLaunchAgentNameObserved": false
+    },
+    "container": {
+      "dockerCli": "/usr/local/bin/docker",
+      "dockerAppPresent": false,
+      "dockerConfigPresent": true,
+      "dockerContextCount": 1,
+      "colimaExecutableObserved": false,
+      "colimaConfigPresent": false,
+      "daemonReadiness": "not probed; configured context does not establish a running daemon"
+    },
+    "configuredEnvironmentPresence": {
+      "DATABASE_URL": false,
+      "ROX_WORKSPACE_DATABASE_URL": false,
+      "ROX_AUTH_ISSUER": false,
+      "ROX_AUTH_AUDIENCE": false,
+      "ROX_AUTH_JWKS_URI": false,
+      "POSTGRES_URL": false
+    },
+    "existingInfra": "Windmill compose template declares a separate windmill database; no shared workspace authority database/config observed. No credentials read and no remote service availability inferred."
+  },
+  "auth": {
+    "actorSource": "Verify configured issuer/audience/algorithm/signature/exp/nbf using jose, then resolve stable (issuer, subject) in auth_subject_alias to principal UUID inside repository. Actor derives solely from server-side validated session and current DB membership.",
+    "requiredChecks": [
+      "Require nonempty verified sub and exact allowed issuer/audience; pin allowed asymmetric algorithms/key source. JWKS lookup/cache rotation errors fail closed; no arbitrary token jku/x5u endpoints.",
+      "authenticatedWorkspaceIds is refreshed from DB, never accepted from JWT custom scope, payload, handshake workspaceId or local profile. Handshake scope is requested scope requiring membership checks.",
+      "sessionId is verified issuer sid/jti or server session binding, not raw untrusted envelope; deviceId is validated registered device or server-issued session-device identifier, never user principal authority.",
+      "Reject actor/principalId/userId/roles/authenticatedWorkspaceIds fields at envelope and payload validation; reject workspace route/envelope/ref mismatch before repository lookup.",
+      "Store Actor on client; before command enforce expiry/session state, current membership/policy. Reconnect compares principal+issuer+session+scope and reauthorizes replay. Token renewal uses same issuer mechanism.",
+      "Shared requests cannot accept local Boolean token or fixed webui cookie alternative. Standalone authentication compatibility is explicitly isolated by mode."
+    ],
+    "localIssuerRemedy": {
+      "status": "Root-owned proposed real local configuration, not existing or tested",
+      "when": "No usable configured issuer can be discovered; authorized local work should continue without asking for an external account.",
+      "design": "Same Bun composition may expose loopback local token/JWKS endpoints using existing jose and Bun.password. Persist per-account Argon2id credential hashes and issuer signing key; provision two separate account subjects server-side with root admin command; sign asymmetric audience-bound short-lived JWT. Store credentials with private permissions and secret handling, never print passwords/tokens or use hardcoded fixtures as auth.",
+      "schema": "Root-owned 01-local-auth-bootstrap.sql applies after 01-domain-contract.sql, creates bootstrap_auth_credential (principal FK + actual account login identifier + Argon2id hash). Credential validation only authenticates issuer account; auth_subject_alias remains sole subject-to-principal resolver. Migration record identifiers use full filename/checksum.",
+      "limits": "Authentic local multiuser acceptance may be claimed after exercising it. It proves neither external IdP federation nor cloud/public deployment. Private keys and provisioning outputs remain outside checkout."
+    }
+  },
+  "policy": {
+    "private": "Membership plus ownerPrincipalId equality for read/list/create receipt access/write; outsider and non-owner member cannot see title, counts, slugs or paths. Agent allow-all is not ACL.",
+    "members": "Bootstrap owns owner-only private feature. Validate normative enum but return explicit CAPABILITY_UNAVAILABLE for members capability until accepted role policy exists. Do not silently reinterpret members as private or claim full API/parity coverage.",
+    "workspaceBootstrap": "An authenticated Actor may atomically create a previously nonexistent UUID workspace and membership with first Project; unique lock/insert handles race. For existing workspace require live DB membership; workspaceName is display data, never authority. Root admin may instead provision W1 + A membership, then command requires it. Existing identity never binds by workspaceName/email.",
+    "queries": "GET /v1/workspaces/{workspaceId}/projects and /projects/{projectId}, same ports in RPC. Return 403 generic denied for inaccessible workspace/resource; authorized empty list is distinguishable from errors, but unauthorized totals/cursors/titles never serialize. Cursor binds actor/workspace/policy epoch and stable (created_at,project_id)."
+  },
+  "transaction": {
+    "database": "PostgreSQL; Bun.SQL pool constructed only in composition root; transaction handle injected to repository. Parameterized queries; bigint revision serializes decimal string.",
+    "tables": [
+      "project",
+      "workspace",
+      "workspace_member",
+      "principal",
+      "auth_subject_alias",
+      "project_create_receipt"
+    ],
+    "requiredConstraints": [
+      "principal UUID primary; auth_subject_alias UNIQUE(issuer,subject) and principal FK; principal is global, not derived from local userId.",
+      "workspace UUID primary; workspace_member UNIQUE(workspace_id,principal_id), retained revocation/role state; project UNIQUE(workspace_id,project_id); FOREIGN KEY (workspace_id,owner_principal_id) REFERENCES workspace_member(workspace_id,principal_id). Live membership is rechecked under same workspace/member lock; revocation retains row and does not delete accepted Project writes.",
+      "schema_version > 0, revision >= 0, timestamps/tombstones retained; project canonical ID project:<UUID>; no FK to future registry.",
+      "project_create_receipt UNIQUE(workspace_id,actor_principal_id,idempotency_key), canonical normalized request hash, commandId/canonical Project UUID/revision/status/receipt bytes; key/hash conflict fails atomically.",
+      "Add minimal workspace_domain_outbox owned by bootstrap migration, immutable event_id unique, per-workspace monotone sequence assigned under workspace lock, aggregate_revision/policy_epoch/cause/correlation; no future framework dependencies."
+    ],
+    "algorithm": [
+      "Strictly validate full envelope/payload before any write, compute canonical request hash including operation/workspace/target/schema/payload/expectedRevision but excluding random commandId/correlation and idempotency key.",
+      "BEGIN; resolve Actor, acquire workspace row/bootstrap lock and recheck membership/owner policy.",
+      "Reserve scoped receipt via unique insert/on conflict with transactional winner wait; compare stored hash. Same hash returns original canonical result after fresh access check; changed hash returns IDEMPOTENCY_CONFLICT.",
+      "Insert workspace/member only for explicit new-workspace bootstrap; insert Project revision 1, owner Actor, visibility private.",
+      "Insert project.created and workspace.member_joined only when membership was actually added, with eventId and cursor. Persist receipt/result in same transaction.",
+      "COMMIT before reply; verified response requires committed canonical read-back. Rollback any error leaves no partial rows/receipt/events."
+    ],
+    "migrationLifecycle": "Root --migrate explicitly applies actual versioned 01-domain-contract.sql under Postgres advisory lock; schema_migrations records checksum/version. Fresh and repeated apply checked; checksum mismatch/readiness failure blocks write. Root-auth bootstrap additions use separate recorded migration or accepted additive extension. No fabricated generated timestamp.",
+    "recovery": "Controlled process stop after COMMIT before reply; restart same persistent cluster/service; exact Actor/workspace/key/hash returns original ID/receipt/event rows. Changed payload under same key conflicts. DB crash after BEGIN rolls back all rows. Concurrent retries create exactly one Project and event sequence."
+  },
+  "events": {
+    "bootstrap": "Transactional compact outbox row plus SQL replay/read cursor. Authorize current Actor/resource on replay and delivery. Existing ws ring buffer remains optimization only, never durability proof.",
+    "delivery": "Per-workspace sequence order; read cursor and policy epoch; send references/revision invalidation only after commit, not title/list. UI refetch current authorized DTO; gaps trigger replay/refetch. Root may directly poll committed outbox for this vertical slice.",
+    "consumer": "If client/server projection materialization is added now, effect+processed receipt+watermark must commit together with unique (consumer,event_id), implemented in this bootstrap repository. If no materialized projection exists, do not invent inbox success evidence.",
+    "laterWP04": "Generic outbox leases/SKIP LOCKED dispatcher/inbox/retry-DLQ framework generalizes these accepted rows preserving event IDs, sequence, receipts; no duplicate publisher/store and no WP-04 prerequisite to private bootstrap.",
+    "control": "Seeded dropped/duplicate/reordered event must fail observable replay/reload/revision convergence oracle. An event count alone cannot establish UI delivery."
+  },
+  "transportAndSerialization": {
+    "oneCommandGateway": "Both HTTP and native domain RPC call the same commands.ts methods and repository ports with server Actor; old projects:create bridges to that one command. No global body Actor merging.",
+    "safeProjectDto": {
+      "schemaVersion": 1,
+      "ref": "{workspaceId:UUID, entityId:project:<UUID>, revisionId:decimalString}",
+      "fields": [
+        "projectId",
+        "name",
+        "visibility",
+        "ownerPrincipalId when authorized",
+        "createdAt",
+        "updatedAt",
+        "revision",
+        "capabilities"
+      ],
+      "forbiddenFields": [
+        "workspaceRootPath",
+        "folderPath",
+        "assetsPath",
+        "workingDirectory",
+        "rawAuthSubject",
+        "token",
+        "databaseCredentials",
+        "privateOtherActorProjectTotals"
+      ]
+    },
+    "nativeViewModel": "Discriminated standalone LoadedProject or shared safe DTO; canonical ID can be route key/slug adapter with explicit origin, never spoof missing local folder paths. Shared detail disables unsupported tasks/assets/session injection/settings capabilities with typed errors; no file-authority escape.",
+    "receipt": "WP01 wire status + receiptId/commandId/requestHash/entity/observedRevision/verifiedAt plus canonical executionMode/lifecycle/verification. Persist serialized receipt then validate emitted HTTP/RPC result using same codec. applied requires live/succeeded/readback_verified and committed canonical entity/ref/revision/receipt.",
+    "statusMapping": {
+      "applied": [
+        "live",
+        "succeeded",
+        "readback_verified"
+      ],
+      "queued": [
+        "live",
+        "queued",
+        "unverified"
+      ],
+      "reconciling": [
+        "live",
+        "running",
+        "unverified"
+      ],
+      "ambiguous": [
+        "live",
+        "unknown",
+        "unverified"
+      ],
+      "pending_fence": [
+        "live",
+        "running",
+        "unverified"
+      ],
+      "rejected": [
+        "live",
+        "failed",
+        "unverified"
+      ],
+      "unavailable": [
+        "live",
+        "failed",
+        "unverified"
+      ]
+    },
+    "errorHttpMap": {
+      "UNAUTHENTICATED": 401,
+      "FORBIDDEN": 403,
+      "WORKSPACE_MISMATCH": 400,
+      "INVALID_PAYLOAD": 400,
+      "REVISION_CONFLICT": 409,
+      "IDEMPOTENCY_CONFLICT": 409,
+      "PROVIDER_UNAVAILABLE": 503,
+      "UNKNOWN_EXTERNAL_EFFECT": 202,
+      "SCHEMA_VERSION_UNSUPPORTED": 400,
+      "REVOKE_FENCE_PENDING": 202,
+      "CAPABILITY_UNAVAILABLE": 409
+    },
+    "errorSemantics": "202 is a non-final canonical ambiguous/pending_fence command response when a receipt exists; never throw HTTP success without status triad. Terminal error body is code/safe message/retryable/correlationId, no title/subject/payload. RPC retains same code rather than HANDLER_ERROR downgrade; unknown internal errors sanitize to unavailable/generic.",
+    "createRevision": "Idempotency mandatory. expectedRevision required only for mutable existing aggregate; initial creation does not require invented revision. Envelope version and domain schema version separately validated."
+  },
+  "nativeIntegration": {
+    "selectedRoute": "Extend existing RoutedClient Project authority routing in normal native mode; Project channels/subscriptions use configured authenticated workspace authority while existing local/remote route owns unmigrated kinds. Domain authority descriptor is explicit and root-owned. No second dispatcher or backend writer.",
+    "guard": "Direct shared legacy write/asset/context lookup returns typed capability/authority denial; no fallback local file create after network failure. Configure shared objects separately from standalone; all title-bearing cache/push path rechecks current policy.",
+    "state": "Scope key actor+workspace+authority epoch; cancel/generation fence stale refresh; purge previous list/detail/project atom before new fetch on actor/workspace change. loading, authorized empty, denied, offline unavailable, retryable error, unknown/reconciling, verified success distinct.",
+    "offline": "Current PendingCommandsStore is owner approval decisions only and lacks typed domain envelope/idempotency/replay. Reuse/extend its canonical mechanism only through root-accepted typed namespace with durable command data and policy recheck; never reuse approval status as network status. Until root delivers that explicit extension, show unavailable/retained form draft and mark offline_queued acceptance missing. Persist service-committed unknown-reply reconciliation via receipt endpoint; no claim that an in-memory retry survives client restart.",
+    "scopeClaim": "After live acceptance, label minimal private shared Project bootstrap verified; cross-surface registration/search/mentions/notifications/agent/sharing and members mode remain explicit uncovered package rows, not completed by bootstrap."
+  },
+  "ownership": {
+    "workerNormativeFiveFiles": [
+      "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "apps/workspace-service/src/modules/identity/commands.ts",
+      "apps/workspace-service/src/modules/identity/repository.ts",
+      "tests/macro-integration/wp-01.test.ts",
+      "apps/workspace-service/migrations/01-domain-contract.sql"
+    ],
+    "workerResponsibilities": {
+      "packages/shared/src/workspace-domain/identity/contracts.ts": "Pure typed Actor/Project/command/query/repository port/DTO/schema/codec contracts; no new service/DB client.",
+      "apps/workspace-service/src/modules/identity/commands.ts": "Shared business validation/policy/idempotency/revision gateway, injected Actor and repository; HTTP/RPC reuse same methods.",
+      "apps/workspace-service/src/modules/identity/repository.ts": "Actual Postgres transaction operations/query/event replay/receipt lookup; receives root-owned SQL port; no new server/pool/store creation.",
+      "tests/macro-integration/wp-01.test.ts": "Actual isolated process + PostgreSQL + independently authenticated A/B; HTTP/RPC/privacy/recovery/concurrency/mutation oracles; missing env causes precise nonpassing prerequisite, not mock success.",
+      "apps/workspace-service/migrations/01-domain-contract.sql": "Six normative tables plus accepted minimal durable outbox and migration constraints; no future registry/grants/framework FK."
+    },
+    "rootOwnedNewBootstrapFiles": [
+      {
+        "path": "apps/workspace-service/package.json",
+        "change": "Root-owned Bun app manifest: @craft-agent/core/shared/server-core workspace ports; jose direct dependency using currently locked 6.1.3. Scripts start and migrate. No new ORM/HTTP framework."
+      },
+      {
+        "path": "apps/workspace-service/tsconfig.json",
+        "change": "Root-owned package typecheck configuration consistent with existing workspace settings."
+      },
+      {
+        "path": "apps/workspace-service/src/index.ts",
+        "change": "Single composition root under Bun: real SQL pool, migration lifecycle, configured jose resolver, existing WsRpcServer plus its HTTP handler, commands/repository imports; graceful shutdown/readiness. --migrate and --provision-local-auth modes are explicit root administration, not payload APIs."
+      },
+      {
+        "path": "apps/workspace-service/.env.example",
+        "change": "Names/defaults only: ROX_WORKSPACE_DATABASE_URL, ROX_AUTH_ISSUER, ROX_AUTH_AUDIENCE, ROX_AUTH_JWKS_URI or pinned public JWK path, ROX_WORKSPACE_HOST/PORT; all private key/token/password material stays out of Git."
+      },
+      {
+        "path": "apps/workspace-service/migrations/01-local-auth-bootstrap.sql",
+        "conditional": "Only for selected genuinely persisted isolated local issuer; optional existing external issuer uses no local credential table.",
+        "change": "Record separate versioned auth credential table after 01-domain-contract.sql. full filename identifiers avoid duplicate numeric-version conflicts; principal/alias authority remains normative identity repository."
+      }
+    ],
+    "rootOwnedExistingIntegrationFiles": [
+      {
+        "path": "packages/core/src/rox2/platform-contract.ts",
+        "change": "Add Actor/RoxCommand/project receipt invariants and deterministic compatibility status codec; preserve executionMode/lifecycle/verification and project:<UUID> namespace."
+      },
+      {
+        "path": "packages/server-core/src/transport/types.ts",
+        "change": "Add trusted readonly actor/authentication context, discriminated standalone/shared authority mode and optional principal-based target/query ports; absent actor never grants shared access."
+      },
+      {
+        "path": "packages/server-core/src/transport/server.ts",
+        "change": "Add typed authenticated-session resolver returning issuer+subject+expiry/session binding, construct Actor server-side; principal/issuer/session fence reconnect/replay; expiry recheck before shared calls; sanitize domain error data and add authorized compact invalidation."
+      },
+      {
+        "path": "packages/server-core/src/handlers/handler-deps.ts",
+        "change": "Compose optional typed ProjectAuthority/WorkspaceAuthority ports; absence means explicit standalone, never shared local fallback."
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/projects.ts",
+        "change": "Shared-mode create/list/detail delegate same command/policy ports as HTTP; deny every unmigrated update/delete/asset channel in shared mode; standalone remains bound to trusted local owner mode. Replace shared full-list workspace push with authorization-filtered compact invalidation."
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/identity.ts",
+        "change": "Expose authenticated service identity/mode/capabilities as safe state. Local user profile/email/OrgMember/userId remain display/import metadata and cannot mint remote membership."
+      },
+      {
+        "path": "packages/shared/src/orgs/types.ts",
+        "change": "Mark local display membership separate from verified workspace principal; never auto-promote local invite override or email into auth alias."
+      },
+      {
+        "path": "packages/shared/src/projects/storage.ts",
+        "change": "Guard direct access for migrated shared project/workspace IDs; existing local authority remains explicit standalone. No file dual-write for shared rows."
+      },
+      {
+        "path": "packages/shared/src/projects/types.ts",
+        "change": "Introduce discriminated safe shared Project DTO/view model; no fake LoadedProject filesystem paths. UI consumers narrow by mode."
+      },
+      {
+        "path": "packages/shared/src/protocol/types.ts",
+        "change": "Extend ErrorCode AND whitelist together for ten normative domain errors; structured safe code/retryability; preserve code across Error reconstruction."
+      },
+      {
+        "path": "packages/shared/src/protocol/channels.ts",
+        "change": "Add canonical domain.project.createShared and typed query/receipt/replay channel IDs into existing channel registry; maintain old native Projects bridge as adapter."
+      },
+      {
+        "path": "packages/shared/package.json",
+        "change": "Export normative workspace-domain/identity/contracts path using existing package pattern."
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "change": "Typed shared result and DTO variants plus domain adapter surface; existing callers receive an explicit discriminated type."
+      },
+      {
+        "path": "apps/electron/src/transport/channel-map.ts",
+        "change": "Bind shared Project command/query/receipt adapters through same built API/transport; no direct fetch from renderer."
+      },
+      {
+        "path": "apps/electron/src/transport/routed-client.ts",
+        "change": "Extend this existing router with an explicit migrated-domain authority selection for Project channels/subscriptions and canonical UUID mapping; preserve local/remote ownership for other kinds, no second channel dispatcher. Shared service loss cannot fall back to local Project files."
+      },
+      {
+        "path": "apps/electron/src/preload/bootstrap.ts",
+        "change": "Compose authority client with real per-user service token through existing WsRpcClient and selected existing router; actor IDs are never caller-supplied grants. Scope/identity changes destroy old shared client and subscriptions."
+      },
+      {
+        "path": "packages/core/src/types/workspace.ts",
+        "change": "Add explicit shared authority binding to existing workspace/RemoteServerConfig model rather than replacing all remote-eligible channels with Project-only service. Credentials handled with established secret references when supported."
+      },
+      {
+        "path": "apps/electron/src/main/index.ts",
+        "change": "Compose root-selected shared authority binding and obtain configured real authenticated session; retain trusted local-window proof solely as native transport binding."
+      },
+      {
+        "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+        "change": "Use typed result states and scope generation fence; clear prior actor/workspace list and atom immediately; loading/empty/denied/unavailable/retry/reconciled distinct; invalidate then refetch through current policy."
+      },
+      {
+        "path": "apps/electron/src/renderer/atoms/projects.ts",
+        "change": "Discriminated native/shared safe view model and actor+workspace-scoped cached state; purge on scope change."
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+        "change": "Existing create action supplies workspaceName/private/idempotency command; navigate only after verified canonical receipt, retain key on unknown outcome."
+      },
+      {
+        "path": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+        "change": "Same create/list behavior and clear state affordances in existing library."
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "change": "Safe shared detail, policy result handling, no direct local tasks/assets/settings writes on shared object; paths supported only standalone."
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/*.json",
+        "change": "Ten locale files for actual user-visible added state labels; parity/sorted checks required."
+      },
+      {
+        "path": "package.json",
+        "change": "Only add accepted service/test scripts; workspace apps/* already includes service."
+      },
+      {
+        "path": "bun.lock",
+        "change": "Root-owned deterministic lock update only if workspace manifest addition requires it."
+      }
+    ],
+    "additionalRootAuthSchema": "If genuine local issuer fallback is selected, root owns apps/workspace-service/migrations/01-local-auth-bootstrap.sql. Apply after normative 01-domain-contract.sql (ordered by full filename); schema_migrations uses full migration identifier/checksum, not integer 01 alone. This conditional migration creates bootstrap_auth_credential (principal FK, account login identifier, Argon2id credential hash). No WP02 dependency or second subject resolver. Root owns the file and worker still owns exactly the normative five files.",
+    "existingFileEdits": "All existing-file changes proposed here belong to root integration owner, even eight normative affectedFiles; WP01 worker owns only its five new files after dispatch."
+  },
+  "acceptance": {
+    "actualAccounts": "A and B are separately provisioned issuer accounts with distinct verified subject/principal. B has no W1 membership in primary scenario. Optional phase adds B membership to test private owner-only denial; this does not redefine primary B as member. C outsider is optional holdout.",
+    "scenarios": [
+      {
+        "id": "auth-real",
+        "action": "Acquire A/B sessions via actual issuer; expired/wrong-audience/wrong-issuer/forged signature denied.",
+        "proof": "Different server principal IDs; 401 on rejected tokens; no writes."
+      },
+      {
+        "id": "native-private",
+        "action": "A creates private Project through existing native dialog/list/detail. B opens same W1/project via independent profile or authenticated session.",
+        "proof": "A authorized title/canonical ID; B HTTP403 and RPC FORBIDDEN; private marker absent in list/detail/error/push/replay/cache."
+      },
+      {
+        "id": "forged-scope",
+        "action": "A/B inject body Actor/userId/workspace mismatch and reconnect B using A clientId.",
+        "proof": "Strict rejection with no effect and no A replay/title; local webContentsId/profile email never grants access."
+      },
+      {
+        "id": "single-writer",
+        "action": "Call old create/update/delete/assets/direct shared store path and stop service before native create.",
+        "proof": "Shared mode cannot write files or infer success; unsupported operations typed; standalone local regression still works."
+      },
+      {
+        "id": "atomic-recovery",
+        "action": "Commit then stop before response, restart service and native view; retry same key/hash; concurrently submit duplicates.",
+        "proof": "One Project, original UUID/receipt/revision, correct committed events; changed hash conflict; rollback schedule leaves zero partial state."
+      },
+      {
+        "id": "event-convergence",
+        "action": "Disconnect/replay after restart; duplicate/drop/reorder invalidations; delay old scope query then change actor/workspace.",
+        "proof": "Readback/revision converges or explicit gap recovery; no stale unauthorized title/cache; mutant must fail this oracle."
+      },
+      {
+        "id": "independent-negative-control",
+        "action": "Temporarily bypass auth/owner check under evaluator mutation; independent holdout breaks duplicate/replay behavior.",
+        "proof": "Passing real baseline, expected failing mutation assertion, repaired pass, seed 20260931, patch/source hashes; infrastructure outage is not mutation caught."
+      }
+    ],
+    "requiredEvidence": [
+      "Native actual screenshot/accessibility/interaction assertions plus persisted reload",
+      "HTTP/RPC exact DTO/error readback",
+      "Actual Postgres scoped row/receipt/event counts and migration receipt",
+      "Canonical ID/revision/watermark/receipt with actual revision/environment binding",
+      "Crash cut point/process restart and preserved idempotency key",
+      "Independent mutation traces; no raw email/body/token/password logs"
+    ],
+    "notProvenByScout": [
+      "Service runs",
+      "DB connection or transaction",
+      "multiuser login",
+      "native behavior",
+      "cloud deployment",
+      "offline queued behavior",
+      "full Project registration/parity"
+    ]
+  },
+  "executionGraph": [
+    {
+      "id": "root-foundation",
+      "owner": "root",
+      "dependsOn": [],
+      "actions": "Accept contracts/mode/codec, provision isolated Postgres and genuine issuer, create root host/manifest/migrator; refresh frozen sources and issue concrete integration receipt."
+    },
+    {
+      "id": "wp01-contract-migration",
+      "owner": "WP01 implementation worker",
+      "dependsOn": [
+        "root-foundation"
+      ],
+      "actions": "Create only normative contracts/repository/migration; exercise fresh real DB and atomic invariants."
+    },
+    {
+      "id": "wp01-command-api",
+      "owner": "WP01 worker + root adapters",
+      "dependsOn": [
+        "wp01-contract-migration"
+      ],
+      "actions": "Command/query/receipt ports; same authenticated HTTP/RPC; scope/schema/error serialization."
+    },
+    {
+      "id": "root-native-route",
+      "owner": "root",
+      "dependsOn": [
+        "wp01-command-api"
+      ],
+      "actions": "Existing native Project route/typed DTO/status/cache/push and legacy writer fences."
+    },
+    {
+      "id": "wp01-real-acceptance",
+      "owner": "root + independent evaluator",
+      "dependsOn": [
+        "root-native-route"
+      ],
+      "actions": "Actual two-user native/API/DB/concurrency/crash/replay/mutation acceptance; broad unimplemented rows stay missing."
+    }
+  ],
+  "prerequisitesAndRemedies": [
+    {
+      "id": "database",
+      "observed": "No installed PostgreSQL or configured workspace URL.",
+      "preferred": "Root installs Homebrew PostgreSQL, initializes private task-owned cluster and app role/database, binds loopback isolated port. Reuse discovered authorized DB only with separate workspace database/role and no Windmill DB pollution.",
+      "alternatives": [
+        "Existing external authorized workspace Postgres, once role/database/health readback is real.",
+        "Pinned container Postgres after daemon capability verified; Docker CLI/context alone insufficient."
+      ],
+      "isExternalUserFactRequired": false
+    },
+    {
+      "id": "issuer",
+      "observed": "No configured provider environment; current cookie/server token are single-owner transport.",
+      "preferred": "Root discovers actual configured secret reference/provider without echoing secrets; verify issuer/audience/JWKS.",
+      "alternative": "Root provisions genuine isolated loopback local accounts/issuer using same jose/Bun.password for local acceptance; explicitly label provider federation untested.",
+      "isExternalUserFactRequired": false
+    },
+    {
+      "id": "native-route",
+      "observed": "Existing RoutedClient remote config redirects all non-local channels; Project-only service cannot safely impersonate entire backend.",
+      "remedy": "Root adds explicit migrated-Project authority selection into existing router; current UI/auth/mode handling validates real account binding."
+    },
+    {
+      "id": "offline",
+      "observed": "Approval store is not network outbox.",
+      "remedy": "Root accepts one typed extension of existing pending-command mechanism, or leaves offline queue capability explicitly missing while completing online+server-crash private bootstrap."
+    }
+  ],
+  "actionableCommands": {
+    "status": "Proposed root actions only; scout did not run provisioning/service/DB/test commands. New service CLI flags below are implementation contracts, not existing callable commands.",
+    "provisionLocalDatabase": [
+      "brew install postgresql@17",
+      "mkdir -p \"$HOME/.local/share/rox-workspace-wp01/pgdata\"",
+      "rox_pg_bin=\"$(brew --prefix postgresql@17)/bin\"\n\"$rox_pg_bin/initdb\" -D \"$HOME/.local/share/rox-workspace-wp01/pgdata\" -A scram-sha-256 --pwfile \"$ROX_BOOTSTRAP_PASSWORD_FILE\"",
+      "\"$rox_pg_bin/pg_ctl\" -D \"$HOME/.local/share/rox-workspace-wp01/pgdata\" -l \"$HOME/.local/share/rox-workspace-wp01/postgres.log\" -o \"-h 127.0.0.1 -p 55432\" -w start",
+      "\"$rox_pg_bin/createdb\" -h 127.0.0.1 -p 55432 rox_workspace_wp01",
+      "Root first checks port 55432 and initializes only a new private cluster. ROX_BOOTSTRAP_PASSWORD_FILE is an actual root-created 0600 secret file, not a literal password or user prompt. Use PGPASSFILE/secure environment for client auth. Create restricted application role and grant this isolated database/schema only; the app must not use cluster superuser."
+    ],
+    "futureRuntime": [
+      "bun install",
+      "bun run apps/workspace-service/src/index.ts --migrate",
+      "bun run apps/workspace-service/src/index.ts --provision-local-auth (only selected local issuer mode; secure two-account credentials stored with no stdout secrets)",
+      "bun run apps/workspace-service/src/index.ts",
+      "bun test tests/macro-integration/wp-01.test.ts",
+      "bun test packages/server-core/src/transport/__tests__/error-codes.test.ts packages/server-core/src/transport/__tests__/peer-trust.test.ts",
+      "bun test packages/shared/src/i18n",
+      "Native actual existing Projects create/list/detail two-principal scenario, then reload/crash/retry/replay as above."
+    ],
+    "environment": "Inject ROX_WORKSPACE_DATABASE_URL and auth/key secret references via existing secure runtime environment. Never put connection passwords/token bytes in command arguments/artifacts/logs."
+  },
+  "sourceReferences": [
+    {
+      "path": "plans/macro-integration/work-packages.json",
+      "symbol": "WP-01 bootstrap/operations/migrations",
+      "lineStart": 17,
+      "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"
+    },
+    {
+      "path": "docs/macro-integration/19-target-architecture.md",
+      "symbol": "Actor / single writer / transaction outbox / bootstrap amendment",
+      "lineStart": 72,
+      "sha256": "951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"
+    },
+    {
+      "path": "plans/compound-implementation/worker-reviews/WP-01.json",
+      "symbol": "Historical preflight; inspected for gaps, source assertions refreshed",
+      "lineStart": 26,
+      "sha256": "7b9936d9357be519df42a73bdbfc31d2990342bcccd4ed6a16c2ca68c59fa05e"
+    },
+    {
+      "path": "AGENTS.md",
+      "symbol": "Bun, i18n, standalone runtime preservation",
+      "lineStart": 1,
+      "sha256": "100d2f025f9c2a0d1a24c7761866887dad8c0860e168454c3aca11b0527ab4f6"
+    },
+    {
+      "path": "packages/server-core/src/webui/auth.ts",
+      "symbol": "jose jwtVerify, Bun.password, fixed single-user subject",
+      "lineStart": 47,
+      "sha256": "b3fe84a9d5a4c994541266169cf426f73d56ef42567d110176bdb0738c09cc87"
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext, RpcHandlerOptions",
+      "lineStart": 7,
+      "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "symbol": "WsRpcServerOptions, boolean authentication, reconnect, context serialization",
+      "lineStart": 106,
+      "sha256": "16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/projects.ts",
+      "symbol": "registerProjectsHandlers, unsafe full list and local writers",
+      "lineStart": 27,
+      "sha256": "baa907c847103a2fb1a9f39be6170f5a89ad9bebb899a11ba769fc48d6736df4"
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps composition port",
+      "lineStart": 56,
+      "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"
+    },
+    {
+      "path": "packages/server-core/src/bootstrap/headless-start.ts",
+      "symbol": "shared server-token validator; host bootstrap",
+      "lineStart": 438,
+      "sha256": "041adb3d134f8e5b1bf8b6eabaf866ed0e4eaa545d035ccd5b4db2a7fc57e525"
+    },
+    {
+      "path": "packages/server/src/index.ts",
+      "symbol": "headless composition",
+      "lineStart": 177,
+      "sha256": "90ebca5f761e3e10fd01650163a03c03b62fbafdeb7ebca16816d282d7137b80"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "canonical triad and receipt",
+      "lineStart": 158,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "symbol": "ErrorCode whitelist, CodedError",
+      "lineStart": 81,
+      "sha256": "ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "existing Projects RPC namespace",
+      "lineStart": 830,
+      "sha256": "89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"
+    },
+    {
+      "path": "packages/shared/src/projects/types.ts",
+      "symbol": "path-bearing LoadedProject",
+      "lineStart": 90,
+      "sha256": "fe25f9b57600eecb40d7ff2a8fc8bef8a6eae1c104a4a5ad64595f2cc4036ccb"
+    },
+    {
+      "path": "packages/shared/src/projects/storage.ts",
+      "symbol": "existing local file authority",
+      "lineStart": 277,
+      "sha256": "19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"
+    },
+    {
+      "path": "packages/shared/src/orgs/types.ts",
+      "symbol": "OrgMember/userId is local metadata",
+      "lineStart": 20,
+      "sha256": "87613c82032323bb03ea31e11cc71b05bcc55d4e22c7bdbc125f4ab29cd42ae2"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/identity.ts",
+      "symbol": "existing identity display/services; not authentication",
+      "lineStart": 81,
+      "sha256": "afe2436779880494cf9cf68bff76d6e140c41a67d9a47765f03b2538f7eeb8b3"
+    },
+    {
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "symbol": "existing RoutedClient/remote configuration composition",
+      "lineStart": 137,
+      "sha256": "a5f07c5a1924e6595e791170ffa1b8827e32eaad45eb725e4fdd232faf0ff9d2"
+    },
+    {
+      "path": "apps/electron/src/transport/routed-client.ts",
+      "symbol": "existing channel router/workspace mapping",
+      "lineStart": 95,
+      "sha256": "4e76031f1cea042cd21f32bf5c9029543df6aaed7f32fffbe3b401a7f0d1d68c"
+    },
+    {
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "symbol": "native Projects bridge",
+      "lineStart": 792,
+      "sha256": "724a50a7090c8041de50add0768269340116de88d29c8ac82d965f62f72c2214"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI Projects methods",
+      "lineStart": 2090,
+      "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+      "symbol": "catch-to-empty, stale async scope, list broadcast",
+      "lineStart": 18,
+      "sha256": "13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31"
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/projects.ts",
+      "symbol": "global native Projects cache",
+      "lineStart": 10,
+      "sha256": "b3ba7e579ea30cbf2d9da437b828e7e12401671efb2c7e303030654be2cd9d2e"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "symbol": "native Project create/navigation",
+      "lineStart": 2036,
+      "sha256": "e0c17f44132c79ab84b24a96d8fb729f0135a1422a96730cd72a95de69f4ecd9"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+      "symbol": "existing create/list surface",
+      "lineStart": 16,
+      "sha256": "12aff5cb907ab7606759b9d7b3f2ae3da4d3a35546664940afed95cb36feffe8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "symbol": "native detail and local tasks/assets consumers",
+      "lineStart": 51,
+      "sha256": "50eff1ed1db446b4cbc9c766f28ebfc60a28be50f713d97a6a786f246ef36d6c"
+    },
+    {
+      "path": "packages/core/src/types/workspace.ts",
+      "symbol": "existing RemoteServerConfig authority descriptor",
+      "lineStart": 24,
+      "sha256": "756826653934f75b7ec4e8be08c387a18b8d486b7e864057659b0e956df3f4af"
+    },
+    {
+      "path": "packages/server-core/src/command-gateway/pending-commands.ts",
+      "symbol": "durable approval store, not network outbox",
+      "lineStart": 84,
+      "sha256": "f92bb1201eac36d1dd4e020ee633fbc13d90e22fdfae47a87a1f874b9e3c1228"
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "symbol": "existing jose workspace dependency",
+      "lineStart": 40,
+      "sha256": "fbcb470ea2ba68bbe009a61d56e3d6cb4c8b648adf7d5e975b619e29000b4538"
+    },
+    {
+      "path": "package.json",
+      "symbol": "apps workspace inclusion",
+      "lineStart": 18,
+      "sha256": "39320f80a67cfb0a13a2fcfc0fd0660ece99d167b1421d90c8e51be7668dcb3b"
+    },
+    {
+      "path": "ops/fleet-infra/roles/windmill-control/templates/compose.yml.j2",
+      "symbol": "unrelated Windmill DB topology; not workspace DB",
+      "lineStart": 8,
+      "sha256": "cee21483379d64f67250213934f03d3fdea3ece4f85499bcc1a366b851570316"
+    },
+    {
+      "path": "bun.lock",
+      "symbol": "locked jose 6.1.3 package",
+      "lineStart": 2711,
+      "sha256": "946826020c591340ea4f2684ce5a9da7ff24c92420dbd2263792db26464ea729"
+    }
+  ],
+  "limitations": [
+    "All observations bind current local source snapshots; historical WP01 preflight hashes are rehashed now and not inherited as runtime evidence.",
+    "No network/service/DB/UI was contacted; no infrastructure success or product acceptance is claimed.",
+    "No relevant memory registry match; plan uses current sources."
+  ]
+}
