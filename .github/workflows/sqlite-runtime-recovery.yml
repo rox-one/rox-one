@@ -92,6 +92,11 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
         run: |
           bun test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts \
+            packages/server-core/src/transport/__tests__/before-response-authority.test.ts \
+            packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts \
+            scripts/electron-main-cjs.test.ts \
+            scripts/__tests__/check-i18n-coverage.test.ts \
+            packages/pi-agent-server/src/custom-endpoint-registration.test.ts \
             apps/electron/src/main/__tests__/native-notes-runtime.test.ts \
             apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \
             apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \
