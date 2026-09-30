@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test'
+import type { ElectronAPI } from '../../../../shared/types'
 import { createDesktopSettingsSession } from '../desktop-settings-session'
 import * as desktopSettings from '../desktop-settings-session'
 
@@ -218,7 +219,7 @@ test('runtime getter errors are observed as capability refusal without dispatchi
 
 test('pending optional history cannot delay actual core prefs or a successful preference save', async () => {
   const prefs = { cloudAsrConsent: false } as any, health = { whisper: 'ready' } as any
-  const pendingHistory = deferred<{ page: unknown[] }>()
+  const pendingHistory = deferred<Awaited<ReturnType<ElectronAPI['listVoiceHistory']>>>()
   const api = { getVoicePrefs: async () => prefs, getVoiceHealth: async () => health, listVoiceHistory: () => pendingHistory.promise }
   const coreValues: unknown[] = [], historyValues: unknown[] = []
   const core = createDesktopSettingsSession<unknown>(desktop, value => coreValues.push(value), () => { throw new Error('Unexpected core refusal') })
@@ -231,7 +232,7 @@ test('pending optional history cannot delay actual core prefs or a successful pr
   expect(await core.run(async () => ({ prefs: actualSaved, health }))).toBe(true)
   expect(coreValues.at(-1)).toEqual({ prefs: actualSaved, health })
   history.dispose()
-  pendingHistory.resolve({ page: [] })
+  pendingHistory.resolve({ page: [], continueCursor: null, isDone: true })
   expect(await pending).toBe(false)
   expect(historyValues).toEqual([])
   core.dispose()
