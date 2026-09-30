@@ -1,0 +1,394 @@
+{
+  "task_id": "RS-MTG-02-preflight",
+  "attempt_id": "17229b7def250bd7ff1f56cd2062dd85",
+  "packet_hash": "062d238e06bc15d126a8a322289c0e5beb4364038d77717d0b4c09ef2be5287d",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-MTG-02",
+  "featureComplete": false,
+  "mode": "preflight-only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-MTG-01"],
+  "dependencyEvidence": "plans/rox-suite/issues.json:389-418; published RS-MTG-02:88-95. The empty dispatch depends_on concerns this independent preflight, not feature implementation order.",
+  "inspection": {
+    "productSourceChanged": false,
+    "testsBuildsNativeUiNetworkRun": false,
+    "gitStateChanged": false,
+    "specManifestHashesMatch": true,
+    "evidenceScope": "Working-tree source read during preflight, followed by whole-file shasum -a 256. input_revision is the dispatch revision, not a claim that uncommitted source equals that commit. No Git commands were run.",
+    "freshness": "Temporal inspection snapshot; concurrent lead integration may invalidate symbols, lines and hashes. No observed content-change notification establishes stale evidence yet, but this report must not be treated as post-wave0 or dependency acceptance evidence. Re-read/re-hash affected files after the wave0 commit and accepted RS-MTG-01 receipt before patching.",
+    "toolLimitations": [
+      "Codegraph reported no index for this project; built-in tools used instead, no index created.",
+      "Descriptive find failed because its judgment service returned 402; its no-hits output is not evidence of absence. Subsequent concrete reads/grep/glob supplied evidence.",
+      "Glob found only MeetingRecordingIndicator.tsx in the normative components/meetings directory, and reported apps/workspace-service/src/modules/calls and tests/rox-suite/meetings absent. The proposed service path needs a lead-owned runtime placement decision, not a fabricated service.",
+      "Scoped grep found no CallParticipants or LiveCallView symbols in the inspected app/server/shared paths. This is a bounded search result, not a repository-wide absence claim."
+    ]
+  },
+  "foundationGates": [
+    {
+      "gate": "Committed wave0 and accepted predecessor receipt",
+      "kind": "dispatch-integration-gate",
+      "evidence": "Worker instruction forbids implementation before the lead wave0 commit and accepted dependency receipts; RS-MTG-01 is PLANNED_NOT_IMPLEMENTED in issues.json:384.",
+      "missingPrerequisite": "Lead-delivered wave0 revision, typed registry contracts and accepted RS-MTG-01 implementation receipt.",
+      "releaseCondition": "Lead provides committed revision and accepted receipt; refresh this source snapshot before implementation."
+    },
+    {
+      "gate": "Canonical Call, shared authenticated principal, ACL and registered ROX device",
+      "kind": "hidden-foundation-not-an-explicit-DAG-edge",
+      "evidence": "RS-MTG-02:31,63,68-71. RequestContext has only clientId/workspaceId/webContentsId (transport/types.ts:7-11); server.ts:787-791 constructs only those fields. ROOM_JOIN ignores ctx and takes body actorId (handlers/rpc/meetings.ts:387-391).",
+      "missingPrerequisite": "Accepted shared principal resolver, Call/channel membership authorization and registered device ownership contract. clientId or renderer local-actor/desktop defaults cannot stand in for these.",
+      "releaseCondition": "Authenticated gateway produces principal and registered device association server-side; spoofed body actor, foreign workspace and stale ACL are denied before lookup/token mint."
+    },
+    {
+      "gate": "Shared Postgres authority, intent reservation and transactional outbox",
+      "kind": "hidden-foundation-not-an-explicit-DAG-edge",
+      "evidence": "RS-MTG-02:35-39,70,74; MeetingRepository delegates to a file MeetingJournal, and commit dedupes commandId without a payload hash contract (repository.ts:4-25; journal.ts:112-131).",
+      "missingPrerequisite": "Lead's canonical Postgres/domain repository and migration/outbox interfaces for Call, room alias, participation intervals, scoped grants and revocation epoch. No existing apps/workspace-service/src was found in the scoped grep.",
+      "releaseCondition": "One shared transactional authority stores reserve/bind/outbox and enforces CAS plus same-key/same-hash replay; preserve local files/journal only as local adapter, not second shared authority."
+    },
+    {
+      "gate": "Real SFU choice, credentials, provider sandbox and callback observability",
+      "kind": "hidden-foundation-not-an-explicit-DAG-edge",
+      "evidence": "RS-MTG-02:5,35-39,63,75; ROOM_PROVIDER_DECISION.provider/license null and decided false, roomCapabilityEnabled returns false (rooms.ts:12-16,41-43). #389 and #385 are mandatory related issues, not additional dependsOn values.",
+      "missingPrerequisite": "Verified LiveKit/SFU deployment, configuration, secrets, callback endpoint/signature validation, ejection permission and provider readback. Credentials were not inspected or probed under this task.",
+      "releaseCondition": "Actual room creation/connect/readback and signed callbacks work in a sandbox; room readiness is independent from egress readiness; unavailable stays visible until then."
+    },
+    {
+      "gate": "Legacy room result path is unconditionally non-live",
+      "kind": "surprising-code-foundation-gate",
+      "evidence": "joinNativeRoom has a literal false result (native-shells.ts:159-175). gateMeetingConationShell always attaches queued/fixture and rejects live (meeting-conation-shell.ts:11-44). Its header references legacy Conation; native-shells.ts:3-4 mentions AUD #333.",
+      "missingPrerequisite": "Lead-approved clean cutover of the room handler/wrapper/classification to verified canonical call results. Changing only ROOM_PROVIDER_DECISION cannot activate live calls.",
+      "releaseCondition": "Room no longer passes through the unconditional Conation shell gate; mail/CRM/calendar remain fail-closed. This code gate does not invent a new normative dependency on #333."
+    },
+    {
+      "gate": "Native Electron/device and real media evidence lanes",
+      "kind": "hidden-foundation-not-an-explicit-DAG-edge",
+      "evidence": "RS-MTG-02:51,54,58,63,75 requires native/media evidence and #385. Existing recorder is a local module singleton with teardown, not a live room client (recorder.ts:117-182,200-216).",
+      "missingPrerequisite": "macOS Electron permission/picker surface, native test runner and devices, two real principals/endpoints with tone/video/screen oracle, narrow/IME/ARIA/font evidence capture.",
+      "releaseCondition": "All three lanes produce revision-bound expected/observed artifacts; Linux fixtures or token receipts never substitute for native/media proof."
+    },
+    {
+      "gate": "Shared event taxonomy and ACL-aware compound consumers",
+      "kind": "hidden-foundation-not-an-explicit-DAG-edge",
+      "evidence": "RS-MTG-02:43,68-75; current MeetingJournalEvent only has meeting/segment/proposal/note/operation variants (rpc.ts:42-50); sharing.ts only filters a local member array and revokeMember only edits it (44-64).",
+      "missingPrerequisite": "Accepted common History/Activity/Notifications/Search/agent/memory event and provenance contracts plus policy-revision invalidation.",
+      "releaseCondition": "Canonical events reach existing consumers once, under the same ACL, and no invite/token/hardware identifiers enter projections, logs or agent context."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/meetings/CallJoinDialog.tsx",
+    "apps/electron/src/renderer/components/meetings/CallPreflight.tsx",
+    "apps/electron/src/renderer/components/meetings/LiveCallView.tsx",
+    "apps/workspace-service/src/modules/calls/media-adapter.ts",
+    "tests/rox-suite/meetings/join-native-provider.spec.ts"
+  ],
+  "ownedNewFilesQualification": "Exactly the five normative proposed files at RS-MTG-02:77-85, not files created by this preflight. Their future ownership and typed registry must be accepted by the lead. The service parent and test parent are currently absent; do not create a non-running second service or silently relocate the normative adapter.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "symbol": "MeetingsPage / selectMeeting / handleRecord / handleImport",
+      "change": "Against accepted RS-MTG-01 landing hooks, mount CallJoinDialog, CallPreflight and LiveCallView in this routed destination. New-online starts authorized draft/preflight, join opens an empty dialog, active call selects routes.view.meetings(canonicalId). Preserve local recorder/import/catalog/detail flow and local aliases; never replace handleRecord with call.start.",
+      "reason": "RS-MTG-01 identifies this root page as routed owner; nested MeetingsWorkspace is not an alternative landing. Preserve #568 local capture regression."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/ConationPanels.tsx",
+      "symbol": "ConationPanels / meeting-room-panel",
+      "change": "Remove the obsolete disabled room-shell panel on clean cutover, or have the shared owner project the single canonical call capability/action into its existing context without another call store. Keep mail/CRM/calendar gates unchanged; all room actions open the same CallJoinDialog/preflight.",
+      "reason": "Current lines44-49 are permanently disabled. A second dialer/surface would conflict with the one Meetings destination contract."
+    },
+    {
+      "path": "packages/core/src/meetings/model.ts",
+      "symbol": "Meeting / MeetingEntityRef / OperationResultV2",
+      "change": "Extend the canonical call model using Rox2EntityRef with provider-room alias, explicit domain room lifecycle including ending/ended, stable participant principal/ref and intervals, scoped grant/revocation epoch projection. Do not overload local capture MeetingStatus or overwrite native sourceBinding. Keep executionMode/lifecycle/verification separate from connected/ended domain outcome; token mint remains unverified for joined.",
+      "reason": "Existing model is call-specialized but has only local capture statuses and one sourceBinding; room bindings, live state and scoped participation are not modeled. Shared owner must reconcile the existing production-mode meeting result with Rox2 live-mode result once."
+    },
+    {
+      "path": "packages/core/src/meetings/rpc.ts",
+      "symbol": "MEETING_RPC_METHODS / MeetingCommitCommand / MeetingJournalEvent / MeetingOutboxEntry",
+      "change": "Register typed call.start/call.join/call.end, leave, join-target lookup, invite/revoke and media-authorization through the accepted registry. Commands carry workspaceId/commandId/idempotencyKey/payloadHash/expectedRevision/policyRevision and registered deviceId, not authoritative body actorId. Join response carries canonical CallRef, endpoint/token/expiry/participantRef. Add typed room/participation/revocation events and transactional outbox payloads; retain local capture contracts.",
+      "reason": "Only meetings:roomJoin exists; commandId-only dedupe and present event variants cannot express required recovery/webhooks/compound propagation. Names beyond the three specified calls require the lead's registry approval, not new parallel channels."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.meetings",
+      "change": "Add the accepted typed call command/query/event channel mappings in this single registry; retire meetings:roomJoin as part of the same all-caller cutover rather than keeping an alias. Keep physical channel names consistent with the lead's registry decision.",
+      "reason": "ROOM_JOIN at1012 is the only room channel; no start/end/invite/revoke/lookup/push contract is present in this inspected block."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "RPC_CHANNELS.meetings routing entries at339-360",
+      "change": "Classify newly accepted call commands/queries and push events in the existing routing registry with remote authenticated domain execution and local-only native device operations; remove old ROOM_JOIN entry on cutover.",
+      "reason": "Transport registration and routing must change together; room backend must not be modeled as local capture IPC."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI meeting methods near633-732",
+      "change": "Expose typed call start/join/leave/end/lookup/invite/revoke/media authorization and participant/room event subscription using common DTOs; keep token response memory-only and exclude it from serialized renderer state. Update actual preload/RPC bridge implementations through their owner after discovery; their implementation path was not established by this inspection.",
+      "reason": "Existing inspected API has catalog/proposals/capture, not a typed live call client. Do not reuse createMeeting/startCapture body actor/grant shapes for live authorization."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext",
+      "change": "Through wave0's shared identity owner, expose an authenticated principal/registered-device resolver or typed context reference populated by the transport, including scoped guest provenance. No actor/device authority may come from call payload or raw handshake fields.",
+      "reason": "The current context has no authenticated actorId or registered device; actorFromRpc cannot create missing identity."
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "symbol": "WsRpcServer request context construction at787-795",
+      "change": "Bind the accepted identity resolver to the established authenticated peer and its workspace/device before invoking call handlers; preserve existing localBinding checks. Reject unresolved identities and workspace/device mismatches rather than assigning clientId as userId.",
+      "reason": "Current transport invokes handlers with only client/workspace/window fields; foundation integration must establish identity before calls become live."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/meetings.ts",
+      "symbol": "registerMeetingHandlers / MEETING_HANDLED_CHANNELS / ROOM_JOIN handler",
+      "change": "Replace lines387-392 and joinNativeRoom import with accepted domain call command/query handlers through the same authenticated gateway. Derive principal from ctx/resolver, validate envelope and fresh ACL, route commands to the canonical repository/media adapter, and return separated operation outcome. Lookup authorizes before title/host response. Register signed provider delivery handling in the same calls domain module, not an unauthenticated RPC argument pretending to be a callback.",
+      "reason": "Current ROOM_JOIN ignores ctx and workspaceId, accepts actorId from args, hardcodes recordingConsent true, and always returns a gated unavailable shell. Recording consent must be an actual policy decision, not silently granted by join."
+    },
+    {
+      "path": "packages/server-core/src/meetings/rooms.ts",
+      "symbol": "ROOM_PROVIDER_DECISION / RoomJoinRequest / joinRoom / roomCapabilityEnabled",
+      "change": "Replace literal undecided-only implementation with an injected verified provider readiness contract and canonical call service facade, following accepted service placement. Request contains CallRef and trusted principal; join mints scoped short-lived credentials only after fresh ACL/device checks. Room readiness does not depend on egress. Unconfigured provider remains unavailable. Never accept callbackReplay or guest booleans as authorization evidence.",
+      "reason": "Flipping decided alone still returns sfu-undecided at38 and capability false at41; the current signature cannot produce endpoint/token/expiry/participantRef or provider ejection."
+    },
+    {
+      "path": "packages/server-core/src/meetings/conation/native-shells.ts",
+      "symbol": "joinNativeRoom / rooms.ts import",
+      "change": "Remove obsolete joinNativeRoom and its room imports after all callers move to canonical call service. Do not widen its literal-false return into a compatibility shim or route live calls through the Conation shell wrapper.",
+      "reason": "Clean cutover removes the non-live leftover rather than maintaining two room implementations."
+    },
+    {
+      "path": "packages/core/src/rox2/meeting-conation-shell.ts",
+      "symbol": "MEETING_CONATION_SHELLS / gateMeetingConationShell",
+      "change": "Remove room from legacy shell classification once its caller is migrated. Keep assertMeetingConationShellNotLive and queued/fixture behavior for mail/CRM/calendar intact; canonical call results use existing Rox2 triad/receipt mechanisms, not this gate.",
+      "reason": "The wrapper unconditionally queues every native/conation room DTO, so a real provider implementation would still not reach the live surface."
+    },
+    {
+      "path": "packages/server-core/src/meetings/repository.ts",
+      "symbol": "MeetingRepository / createMeetingRepository",
+      "change": "Attach canonical shared Call transactions to the lead-owned Postgres repository and migration/outbox interfaces, preserving file MeetingJournal for local capture adapter. Persist start intent before createRoom, bind the unique provider alias afterward, and reconcile by the original intent/canonical ID after unknown DB effects. Unique keys cover workspace/idempotencyKey with payloadHash and provider/room alias; participant intervals and webhook delivery dedupe commit with events.",
+      "reason": "Current repository is file-backed, and pending uses startsWith(workspaceId) || true at20. It is not workspace-isolated transactional shared authority; do not use that pending path for room events or build a second calls database. Exact shared schema/migration path remains a wave0 prerequisite."
+    },
+    {
+      "path": "packages/shared/src/meeting-agents/policies.ts",
+      "symbol": "authorizeMeetingAction / MeetingGrant / MEETING_CAPABILITIES",
+      "change": "Integrate the accepted shared call policy rather than trusting renderer-supplied MeetingGrant. Require server time for expiry, explicit call target/action checks, registered device ownership, membership or call-scoped guest, and fresh policy/revocation epoch. Separate call.join, publish_screen and call.end. Preserve local mic/system/archive policy and do not infer workspace grants from guest invites.",
+      "reason": "Existing expiry is checked only if action.now is passed, targetIds only when both sides supply target, and capability list has no call.join/end semantics. These primitives alone cannot authorize scoped live guests."
+    },
+    {
+      "path": "packages/server-core/src/meetings/security-policy.ts",
+      "symbol": "actorFromRpc / approveThenRevoke",
+      "change": "Use actorFromRpc only on the transport-established identity and apply fresh deny precedence to every mint/retry/reconnect/tool action. Wire persistent grant expiry/revoke to immediate provider ejection plus a reconciled ejection receipt, not just approveThenRevoke's boolean result.",
+      "reason": "Current helpers illustrate deny precedence but perform no ACL lookup, token invalidation or active room ejection."
+    },
+    {
+      "path": "packages/server-core/src/meetings/sharing.ts",
+      "symbol": "revokeMember / audienceRecap / searchVisible",
+      "change": "Do not use member-array revocation as live guest revocation. Route canonical invite/revoke through shared scoped grant authority and emit the existing ACL/provenance events to consumers; invalidate their views and eject active provider participants. Private notes/transcript access stays separately authorized.",
+      "reason": "revokeMember only removes a local string and clears links; that is not a provider removal receipt or cross-consumer permission update."
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/rooms.test.ts",
+      "symbol": "rooms fail-closed tests",
+      "change": "Replace tests pinning incidental decided=false/sfu-undecided with behavioral unconfigured-provider denial, forged actor/guest denial, token-not-joined, signature/replay/ordering, idempotent recovery and active ejection assertions. Keep unavailable coverage via an injected unconfigured provider rather than pinning a global default. Coordinate removal of obsolete shell-only assertions and source-text UI tests with their existing owners.",
+      "reason": "The unauthorized/replay test currently never passes the provider gate, and replay expects sfu-undecided; it does not prove authorization or callback validation."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "meetings call/preflight translation keys",
+      "change": "Shared locale owner adds all new user-facing strings through t() in all ten existing locales, ASCII-sorted with Russian plural forms; use localized unavailable, listen-only, preview-only, reconnect, ended and end-effects confirmation/help labels.",
+      "reason": "Repository AGENTS requires ten-locale parity. Pattern is an explicit shared-owner patch request; locale file bodies were not inspected in this scoped preflight."
+    },
+    {
+      "path": "docs/rox-suite/published/RS-MTG-02.md",
+      "symbol": "Implementation evidence / verification handoff",
+      "change": "Lead documentation owner records final actual service placement, domain and native/provider verification entrypoints, failure/reconciliation behavior and revision-bound evidence without weakening any published criterion; keep this normative acceptance record and update existing project docs/changelog through their owners.",
+      "reason": "Published proposed paths are not proof of a running service; complete feature requires documented operations, security and recovery. No docs are changed by this worker."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD1: Two users genuinely hear controlled tone, see video and screen; preserve media/native evidence",
+      "currentEvidence": "rooms.ts:12-43 has no provider and always denies; native-shells.ts:159-175 returns false; routed MeetingsPage.tsx:1-6 is local-only. No media runtime was exercised.",
+      "symbolOrSeam": "joinRoom / roomCapabilityEnabled; proposed media-adapter.ts and LiveCallView",
+      "requiredChange": "Implement adapter-backed canonical room creation/connect and participant media subscriptions; render actual participant grid/list, mic/camera/share controls and provider connection state. Record production outcome only after actual provider/media readback, not token or fixture DTO. Egress is independently gated.",
+      "verification": "Future real provider/macOS lane: authenticated Anna and Boris in synthetic Technical review room; received controlled tone matches known frequency/timing at the remote receiver, video carries known changing frame marker, screen share carries a distinct marker at receiver. Save expected/observed, revision, native permission/picker evidence, media stats/recordings and provider readback.",
+      "missingPrerequisite": "Accepted SFU adapter runtime placement, sandbox credentials/callbacks, two real endpoints/principals and native runner (#389/#385 related gates).",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD2: Token issued + connect failed never becomes joined",
+      "currentEvidence": "OperationResultV2 and decodeLegacyLiveResult separate verification from fixture success (model.ts:148-156,185-195); no live join response/client exists in inspected seams.",
+      "symbolOrSeam": "OperationResultV2 / gateMeetingConationShell / proposed LiveCallView connection reducer",
+      "requiredChange": "Represent token-issued and connecting separately from joined; only actual connected provider/client evidence and authenticated participation confirmation qualify. A failed/timeout/disconnected connect renders error/unavailable and disposes its tracks/token, never a joined interval from mint alone.",
+      "verification": "Future lane: mint a real token then deliberately block its media endpoint; assert no joined event/interval or connected UI, visible failure and released preview/publishing resources. Restore endpoint and connect as a distinct authorized attempt.",
+      "missingPrerequisite": "Accepted join DTO, client SDK, signed participation events and sandbox connect-failure injection.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD3: Remote room created + DB failure + retry yields one room and canonical Call",
+      "currentEvidence": "MeetingRepository is file-journal backed (repository.ts:4-25); journal.ts:121-131 dedupes commandId and CAS, but does not reserve a provider intent or compare payload hashes.",
+      "symbolOrSeam": "MeetingRepository.commit / MeetingCommitCommand / proposed media-adapter create/readback",
+      "requiredChange": "Reserve canonical Call ID and hashed intent transactionally before provider create; use deterministic unique room alias and original intent key; reconcile provider-created room after failed binding commit instead of reminting room/Call. Same key with changed payload is rejected/new intention, never silently reused.",
+      "verification": "Future domain/provider lane: fault DB after successful provider create and before binding commit, restart service, retry identical envelope, then read DB and provider listing; assert exactly one canonical Call, one alias/room and one committed start event/outbox effect. Also exercise same-key changed-payload conflict and concurrent retries.",
+      "missingPrerequisite": "Shared Postgres transaction/migration/outbox/intent APIs and provider idempotent create/readback contract from wave0.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD4: Permission denied gives explicit listen-only; unplug handled; all local tracks stop on leave",
+      "currentEvidence": "Local recorder has native mic permission, track.onended and teardown (recorder.ts:117-182,200-216). capture.ts:1-4 explicitly is not OS capture or live SFU. buildMeetingCaptureGrant defaults registered device placeholder to desktop (capture-rpc.ts:30-41).",
+      "symbolOrSeam": "recorder teardown ownership pattern; proposed CallPreflight / LiveCallView",
+      "requiredChange": "Implement preflight-owned ephemeral mic/camera IDs and default-off toggles, permission-aware preview labeled local-only, explicit listen-only choice, devicechange/track-ended/permission-revoked states. Stop every preflight track on close/cancel; stop owned call mic/video/screen tracks and disconnect on leave/failure. Do not seize or stop the independent local recorder singleton; no preview publication before connection.",
+      "verification": "Future native lane: deny mic/camera, choose listen-only and verify subscribed audio/no publication; unplug selected device and revoke permission; close preflight and leave call, assert every owned track readyState ended, capture indicators off and provider subscription/publication removed. Verify concurrent/exclusive local-recording device behavior using accepted ownership policy without second capture.",
+      "missingPrerequisite": "Native permission/device ownership adapter and registered ROX device association; media hardware IDs must remain local and distinct from ROX deviceId.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD5: Valid guest only in scoped Call; expiry/revoke actively eject and never grant workspace access",
+      "currentEvidence": "joinRoom checks guest actor against a passed array only after an unreachable provider gate (rooms.ts:26-38); revokeMember is a local array edit (sharing.ts:62-64); authorizeMeetingAction expiry is optional on action.now (policies.ts:45-60).",
+      "symbolOrSeam": "joinRoom / authorizeMeetingAction / revokeMember / actorFromRpc",
+      "requiredChange": "Persist expiring invite capability bound to canonical Call and allowed actions under shared principal identity, never workspace membership. On expiry/revoke update revocation epoch and actively call provider removal with readback/reconciliation; deny mint/refresh/reconnect/tools on fresh ACL. Keep bearer only in memory and scrub URL before history/logging/context exposure.",
+      "verification": "Future domain/provider lane: invite guest to Call A; guest can join A but cannot list workspace, read Call B/transcripts/search/agent context. Expire and independently revoke an active guest; observe remote disconnection/provider removal receipt before relying on token expiry, and denial on refresh/reconnect. Inspect history, logs, persistence, projections and tool prompts for bearer absence.",
+      "missingPrerequisite": "Canonical scoped principal/grant/epoch persistence, server time, provider eject API/receipt and lead-approved secure invite ingestion.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD6: Replay webhook gives one event; reconnect gives a new interval under same principal",
+      "currentEvidence": "RoomJoinRequest.callbackReplay is a request boolean, not signature verification (rooms.ts:18-38); MeetingJournalEvent has no participant variants (rpc.ts:42-50).",
+      "symbolOrSeam": "MeetingJournalEvent / MeetingRepository / proposed media-adapter signed delivery handling",
+      "requiredChange": "Verify signature over actual request body and provider delivery ID, persist dedupe and event in one transaction, reject forged/mismatched room/principal delivery, order or reconcile delayed join/leave deliveries using provider sequence/time/readback. Rejoin appends a new participation interval for the existing principalRef, not a duplicate user. Token issuance never opens an interval.",
+      "verification": "Future domain/provider lane: deliver the exact signed join twice; assert one canonical join/outbox event. Exercise invalid signatures and body modifications with no mutation; deliver out-of-order leave/join and reconnect; read two correct non-duplicated intervals associated with one principal and no resurrected ended room.",
+      "missingPrerequisite": "Provider callback signing contract/keys, raw-body gateway entrypoint, delivery uniqueness schema and canonical participation event taxonomy.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD7: Ordinary Leave does not end room; organizer End creates one archive",
+      "currentEvidence": "Only ROOM_JOIN is registered (handlers/rpc/meetings.ts:128-151,387-392); MeetingStatus has local finalizing/completed rather than ending/ended (model.ts:13-21).",
+      "symbolOrSeam": "registerMeetingHandlers / Meeting domain lifecycle / proposed LiveCallView",
+      "requiredChange": "Separate participant leave from organizer/admin call.end. Leave stops owned tracks/disconnects and reconciles interval only. End validates organizer privilege and expected/policy revision, confirms room/recording effects, transitions ending to ended, terminates participants and emits exactly one canonical archive/finalization intention without enabling recording/egress implicitly.",
+      "verification": "Future provider lane: A leaves, B remains connected and continues receiving media. Unauthorized B cannot end. Organizer confirms End; all participants disconnect, provider room closes, exactly one archive reference/event persists across duplicate end, retry/restart and delayed webhooks. Confirmation accurately explains whether recording is active/unavailable.",
+      "missingPrerequisite": "End/leave command schema, organizer policy, canonical archive/finalization owner interface and provider terminate/readback; archive does not mean fabricated recording.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD8: Reload/offline/reconnect after grants change gives fresh denial; keyboard/IME/narrow screenshots",
+      "currentEvidence": "MeetingsWorkspace load has offline/empty but no call client state (37-90); root page selection reuses routes.view.meetings (MeetingsPage.tsx:59-77); RequestContext lacks principal/policy revision (types.ts:7-11).",
+      "symbolOrSeam": "routes.view.meetings / MeetingsPage selection / proposed join/preflight/live state",
+      "requiredChange": "On renderer reload or offline recovery retain safe canonical ref only, dispose old owned resources and discard old token; resolve fresh membership/grant/policy revision before remint/connect or publish_screen. UI keeps truthful offline/reconnecting/denied/ended states. Implement composition-aware Enter, one-shot loading lock, error focus, combobox arrows/Space toggles, accessible leave/end/share Stop and narrow layout.",
+      "verification": "Future native/provider lane: change grants while offline, reload renderer and attempt reconnect/share; assert fresh denial and no remint/publication/old-token reuse. Exercise IME composition Enter versus submit, repeated Enter lock, error focus, combobox keyboard, cancel/end focus restoration and narrow screenshots/ARIA.",
+      "missingPrerequisite": "Policy-revision invalidation and reload device ownership contracts; actual Electron narrow/IME/media sandbox lanes.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD9: trust-body-actor, fixture-connected and revoke-only-TTL seeds fail specific assertions",
+      "currentEvidence": "ROOM_JOIN already takes body actorId (meetings.ts:389); rooms.test.ts unauthorized/replay cases are swallowed by undecided gate (11-21); decodeLegacyLiveResult returns fixture/unknown (model.ts:185-195). No mutations executed.",
+      "symbolOrSeam": "ROOM_JOIN transport boundary / OperationResultV2 / guest ejection oracle / normative join-native-provider.spec.ts",
+      "requiredChange": "Add deterministic domain/native/provider negative-control cases tied to consumer outcomes, not default constants/source text. Each seeded variant must reach the relevant live/authorized boundary and fail a precise actor identity, connected evidence or immediate ejection assertion.",
+      "verification": "Future healthy baseline: spoof another actor in body while principal unchanged and prove denial; seed trusting body actor and expect that assertion to fail. Feed fixture/token-only success to client and assert never connected, then seed fixture-connected to break it. Revoke active guest with removal disabled and assert continued media/participant presence violates bounded ejection oracle while token remains otherwise valid. Infrastructure failures are reported separately, not mutant kills.",
+      "missingPrerequisite": "Functional authenticated call path, working provider/native baseline and deterministic mutation runner/evidence manifest accepted by lead.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Layout/API: Strict authorized join target parser and title/host privacy",
+      "currentEvidence": "Existing ROOM_JOIN takes arbitrary roomId and body actorId; root route builder encodes ID (routes.ts:180-181) but is not a join URL parser. Proposed CallJoinDialog is absent from normative directory listing.",
+      "symbolOrSeam": "proposed CallJoinDialog / authenticated domain join-target lookup / routes.view.meetings",
+      "requiredChange": "Accept only canonical allowed ROX ID/URL forms approved by the domain registry, normalize to CallRef, reject arbitrary external URLs/iframe and ambiguous targets. Enter resolves/authorizes without auto-connect. Return title/host only after membership or valid scoped capability; foreign codes do not leak metadata. Cancel performs no domain write.",
+      "verification": "Future domain/render/native lanes: valid ID/allowlisted URL normalize identically; malformed/foreign/external/iframe targets reject; denied lookup reveals no title/host. IME Enter does not submit, normal Enter resolves only, primary join acts once. Inspect URL/history for bearer and confirm safe canonical route only.",
+      "missingPrerequisite": "Lead accepted ROX join URL grammar/origins and secure invite transport, typed canonical lookup/ACL contract plus RS-MTG-01 entrypoints.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Controls: Native screen picker permission, real publication receipt, cancellation and Stop keyboard",
+      "currentEvidence": "Root imports a mic MediaRecorder singleton, not screen publication (MeetingsPage.tsx:26; recorder.ts:126-182). Room shell UI is disabled (ConationPanels.tsx:44-49).",
+      "symbolOrSeam": "proposed LiveCallView / shared native device adapter / call media authorization",
+      "requiredChange": "Request publish_screen permission separately under fresh ACL, open native source picker and publish actual screen track only after connection; display receipt/state only once publication is observed. Picker cancellation leaves mic/camera selections/tracks unchanged. Keyboard Stop unpublishes and stops owned screen tracks.",
+      "verification": "Future native/provider lane: cancel picker with active mic/video and observe unchanged media; deny publish_screen and observe no source/publication; select synthetic screen marker and verify at remote receiver with receipt, then keyboard Stop and verify publication/track removed.",
+      "missingPrerequisite": "Native screen permission/picker adapter, accepted media authorization policy and provider client publication readback.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Common contract: One Meetings route/entity/store, local capture preserved, authenticated idempotent commands",
+      "currentEvidence": "Meeting is canonical call specialization (model.ts:1-11,162-164); MeetingsPage has working local start/import and singleton recorder imports (26,171-196); model sourceBinding only holds one provider alias. Existing journal is local, not Postgres authority.",
+      "symbolOrSeam": "MeetingsPage / routes.view.meetings / MeetingRepository / MeetingCommitCommand / recorder",
+      "requiredChange": "Integrate online scenarios into accepted landing and shared canonical Call/domain module; keep local alias/files/device ownership and no second users/catalog/SFU authority. Use same authenticated command envelope and payload/hash/key on replay with CAS/policy revision. New payload means new intent. Migrate obsolete room callers/classification rather than keep aliases.",
+      "verification": "Future integrated regression: #568 local record-pause-stop-reload/audio/transcript and import remain reachable, no second capture; route/search/notification/agent references resolve same canonical Call. Concurrent replay and changed-payload intent tests read canonical persisted results. Verify live Call does not overwrite local capture binding/files.",
+      "missingPrerequisite": "Accepted RS-MTG-01 and wave0 identity/repository/typed registry receipts with explicit shared-file allocation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Compound contract: ACL/provenance History, Activity, Notifications, Search, agents and memory; no token/private leaks",
+      "currentEvidence": "rpc.ts:42-58 has limited meeting event/outbox variants; sharing.ts:44-64 performs local member checks only. No actual shared call event integrations were established in this scoped inspection.",
+      "symbolOrSeam": "MeetingJournalEvent / shared transactional outbox / actorFromRpc / audienceRecap/searchVisible",
+      "requiredChange": "Emit normalized call/participant/end/revoke events once from domain command/webhook commits into existing ACL-aware consumers. Project safe canonical refs, permitted participant metadata and provenance; invites/mentions do not grant access. Guest tools use same principal and scope. No bearer, hardware IDs or private transcript/notes copied into wider search, notifications, logs or LLM context without export decision.",
+      "verification": "Future integrated lane: member sees one allowed event/search/notification linking same Call; outsider and guest receive no wider rows/count/title/transcript. Revoke removes subsequent access and invalidates stale context. Duplicate webhook/command does not duplicate notifications/activity; inspect persisted/logged/agent projections for token/private-source absence.",
+      "missingPrerequisite": "Wave0 common event taxonomy, transactional outbox, ACL/provenance consumers and agent typed registry; exact consumer patch paths must be supplied/discovered within lead integration scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Common UI contract: Russian compact themed UI, loaded font, help, focus, reduced motion and touch targets",
+      "currentEvidence": "Existing MeetingsPage/Workspace use useTranslation and existing tokens; room UI has no controls besides disabled button. RS-MTG-02:72 defines inherited light/dark theme, not forced light, and full help requirements.",
+      "symbolOrSeam": "proposed CallJoinDialog/CallPreflight/LiveCallView / existing mode-screen UI and ten-locale t() contract",
+      "requiredChange": "Reuse current UI primitives/theme/tokens/font; all user text via t() with ten-locale parity. Help appears after hover500ms, on focus and separate What is this click, explaining meaning/units/source/asOf/example; no side effects on hover/focus. Desktop controls28-36px with sufficient hit area, narrow touch>=44px; reduced-motion and accessible dialogs/participants/status labels.",
+      "verification": "Future real Electron screenshots/ARIA for light/dark/narrow/loading/denied/empty/offline/reconnecting/ended; inspect actual loaded font, target bounds and focus order; hover timer/focus/click help, no writes on these interactions; reduced-motion preference and keyboard/IME controls. Synthetic names only, no user screenshots published.",
+      "missingPrerequisite": "RS-MTG-01 accepted UI hooks, shared UI/locale owner allocation and native visual evidence runner.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Full feature DoD: Persistence/realtime/recovery/observability/tests/docs with three revision-bound lanes",
+      "currentEvidence": "observability.ts exposes budget ledger functions rather than call lifecycle telemetry (13-47). No builds/tests/native/provider operations run by this preflight; source inspection is not runtime proof.",
+      "symbolOrSeam": "canonical calls command/webhook/outbox boundaries / proposed join-native-provider.spec.ts / existing observability owner",
+      "requiredChange": "Record sanitized command/intent/call/provider delivery/principal references, policy decisions, recovery/ejection and media outcomes through existing observability, not a second telemetry store; persist/reconcile domain outcomes and outbox. Add meaningful failure/concurrency/security regressions and operational docs for setup/readback/recovery. Bind evidence to exact delivered revision/environment, including logs/screenshot/ARIA hashes.",
+      "verification": "Future lanes: Linux domain/render fixtures with signature/idempotency/ACL failures; true macOS Electron/IPC/devices with permissions/reload/keyboard; real sandbox media/provider readback with dual participants and outages. Archive expected/observed, sanitized logs and negative control assertion failures; run packet verifier on this report separately as artifact acceptance, never feature proof.",
+      "missingPrerequisite": "Accepted runtime/telemetry/doc owner interfaces, working three-lane runners, credentials/devices and delivered revision. The packet verifier has not been executed under the read/write-only preflight boundary.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-MTG-02.md","symbol":"E2E / DoD and integration/new-file contract","lineStart":49,"lineEnd":95,"sha256":"1a677b83146d9982d09f9bdd156b6e2792f24251f4feb8ebf23b3d382a189f00"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-MTG-02 normative record","lineStart":389,"lineEnd":418,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"docs/rox-suite/published/RS-MTG-01.md","symbol":"Root routed landing seam and local regression","lineStart":47,"lineEnd":59,"sha256":"fec41688a5bd49a70e2482955d36b275c9cb44cfdf96839150dac010e1fdd730"},
+    {"path":"packages/server-core/src/meetings/rooms.ts","symbol":"ROOM_PROVIDER_DECISION / joinRoom / roomCapabilityEnabled","lineStart":12,"lineEnd":43,"sha256":"5bab2a582a2f87ebc2e88bbb769d55fdfbc97e2fddb7e9acb0d6fe517e7cda88"},
+    {"path":"packages/server-core/src/meetings/security-policy.ts","symbol":"actorFromRpc / approveThenRevoke","lineStart":13,"lineEnd":48,"sha256":"463ea4e391b97f30f3c3c42514a6633a460b6ef8ff7715adc7b26f2d93657640"},
+    {"path":"packages/server-core/src/handlers/rpc/meetings.ts","symbol":"registerMeetingHandlers ROOM_JOIN handler","lineStart":387,"lineEnd":392,"sha256":"f229c26fa5b194570454af9d9c230243681dac258ea5935974e4cd982e83f263"},
+    {"path":"packages/server-core/src/meetings/conation/native-shells.ts","symbol":"joinNativeRoom","lineStart":159,"lineEnd":175,"sha256":"a54b740633d806054c08921773d4fdc0b88ba042442cd91c14009451842d5a01"},
+    {"path":"packages/core/src/rox2/meeting-conation-shell.ts","symbol":"meetingConationShellResult / gateMeetingConationShell","lineStart":7,"lineEnd":45,"sha256":"92d7849447fae6263d8e02ef26e0e18718dd921a8c83ce66b74d9066adb0730d"},
+    {"path":"packages/core/src/meetings/model.ts","symbol":"MeetingEntityRef / Meeting / OperationResultV2 / isUiVerified","lineStart":68,"lineEnd":182,"sha256":"67b9b6f0f90315eb3cf537a1a3a73762d47427d74989aa8b82e2ca45ad7781d5"},
+    {"path":"packages/core/src/meetings/rpc.ts","symbol":"MeetingCommitCommand / MeetingJournalEvent / MeetingOutboxEntry","lineStart":33,"lineEnd":63,"sha256":"6c10c01f90b111e60acc2189ec7ba9f4218e85bbb0534534aa65096d3e900e6d"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Permission / Rox2Event / Rox2Status","lineStart":55,"lineEnd":141,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/server-core/src/meetings/repository.ts","symbol":"MeetingRepository / createMeetingRepository","lineStart":4,"lineEnd":26,"sha256":"56d58884ab24097b7c5853339a2331afc938c1c822c5263b151e0a9c23f2c00b"},
+    {"path":"packages/server-core/src/meetings/journal.ts","symbol":"MeetingJournal.commit / applyCommand","lineStart":112,"lineEnd":189,"sha256":"c5938700403fe6c90c189c6229fd9d9c58fdba63507c542ad71c6122d2d0baf1"},
+    {"path":"packages/server-core/src/meetings/sharing.ts","symbol":"audienceRecap / searchVisible / revokeMember","lineStart":44,"lineEnd":64,"sha256":"1d9ecf62a485e1b5b708e9fe849051245d33d08c38d7ef27ea179229dbb2b203"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"WsRpcServer request context construction","lineStart":787,"lineEnd":805,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/shared/src/meeting-agents/policies.ts","symbol":"MeetingGrant / authorizeMeetingAction","lineStart":16,"lineEnd":63,"sha256":"f5ab0ed8f26ff63eda1c9da16eb9588ec030231f9cc7c65f2ad471996c4aa2bd"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.meetings","lineStart":998,"lineEnd":1021,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"Meeting routing entries","lineStart":339,"lineEnd":360,"sha256":"f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI meeting and capture methods","lineStart":633,"lineEnd":705,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.meetings","lineStart":180,"lineEnd":181,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/renderer/pages/MeetingsPage.tsx","symbol":"MeetingsPage / handleRecord / handleImport / handlePlan","lineStart":171,"lineEnd":207,"sha256":"85d3159d5c618df80973c650af3e9b85a68acbe3ad90eef595781f17fa6ebfc8"},
+    {"path":"apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx","symbol":"MeetingsWorkspace / onStart","lineStart":59,"lineEnd":122,"sha256":"c88204d2edabea775190a103cfa698fe28554dbd97895388d4e201066a4f69dd"},
+    {"path":"apps/electron/src/renderer/pages/meetings/capture-rpc.ts","symbol":"buildMeetingCaptureGrant","lineStart":30,"lineEnd":42,"sha256":"b4c02ab68ea05a37787c2f17256cb369fb8fabdfcd8c2fad27b4c11d5d476f8d"},
+    {"path":"apps/electron/src/renderer/pages/meetings/ConationPanels.tsx","symbol":"ConationPanels room panel","lineStart":44,"lineEnd":49,"sha256":"acac4c34e6976b448e0357c917159a2099727c61d29dae8bc7e81baa2c760ce6"},
+    {"path":"apps/electron/src/renderer/lib/meetings/recorder.ts","symbol":"teardown / startRecording / stopRecording","lineStart":117,"lineEnd":216,"sha256":"086de22cb3db2c0d805e336b6b02bd5e3de6c09d2528eab6d4a25d23685c6a71"},
+    {"path":"packages/server-core/src/meetings/capture.ts","symbol":"applyNativeCaptureIntent / nativeCaptureBinding","lineStart":24,"lineEnd":110,"sha256":"360e676d7be841fda31fa448b50abcfe7275f2683cf4db3084af0066477a0edc"},
+    {"path":"packages/server-core/src/meetings/observability.ts","symbol":"createBudget / reserve / settle / remaining","lineStart":13,"lineEnd":47,"sha256":"920c74cc6a10b9cda777d27e97844b4c995ccf01e5186bfd5f567ac277a03ea8"},
+    {"path":"packages/server-core/src/meetings/__tests__/rooms.test.ts","symbol":"rooms fail-closed assertions","lineStart":4,"lineEnd":22,"sha256":"2036986b12f25a0152440079287e3125f31cf5261ddfcf936deae7c0033b8fe8"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reviews this artifact and accepts or returns precise shared-file/typed-registry requests; this worker makes no product changes. Lead may execute the packet's independent artifact verifier within its own authorization.",
+    "implementationAfterGate": "After the lead wave0 commit and accepted RS-MTG-01 receipt, re-read/re-hash affected source, obtain explicit canonical calls repository/principal/device/outbox contracts and decide the real runtime placement of the normative media adapter. First implement and observe fail-closed authorized lookup/start-intent reservation and same-intent provider reconciliation; then scoped mint/webhooks/ejection, native preflight/live controls and full three-lane acceptance. Do not label unavailable landing or token-only smoke as feature completion.",
+    "missingInformationOwner": "Lead integration owners provide shared service/schema/registry interfaces, SFU/native sandbox availability and archive owner handoff; no user question is required for this preflight."
+  },
+  "risks": [
+    "Explicit DAG only includes RS-MTG-01; its spec explicitly allows landing with live disabled. Its acceptance cannot substitute for canonical ACL/storage/SFU/native foundations.",
+    "Normative adapter points into absent apps/workspace-service/src; adding a file there without a running service/registry would be a misleading scaffold. Lead must reconcile service placement with published spec before implementation.",
+    "Changing provider decision alone leaves joinRoom, joinNativeRoom and gateMeetingConationShell unavailable/queued; three distinct gates need a clean room-only cutover.",
+    "Current ROOM_JOIN trust boundary accepts body actor and ignores workspace/context; recordingConsent is hardcoded. Never enable this path before transport identity and fresh authorization are established.",
+    "MeetingRepository.pending workspace filter contains || true; file journal commandId dedupe has no payload hash conflict and is not a shared Postgres/outbox transaction. Reusing it for live calls risks cross-workspace events and duplicate provider side effects.",
+    "Media hardware identifiers are not registered ROX device IDs. The renderer's desktop/local-actor grant defaults and guest boolean cannot prove identity/device ownership.",
+    "Guest expiry/revoke needs active ejection including crash/recovery reconciliation; a database flag or waiting for token TTL fails published DoD. Reconnect can resurrect access without fresh policy checks.",
+    "One sourceBinding and capture statuses cannot silently serve local recording plus provider room/participation/archive; protect existing local files and singleton recording behavior.",
+    "Proposed CallParticipants is named in scope but no implementation seam was found in bounded search; compose participant display within normative LiveCallView or reuse a lead-delivered component, not an invented extra owned file.",
+    "Existing room assertions are dominated by undecided state; their green status, if run later unchanged, would not prove actor/webhook/security behavior. No test outcome is claimed here.",
+    "Published full-feature contract includes search/notifications/agents/memory, font/help/accessibility, observability and documentation in addition to nine E2E bullets; narrowing to a dialog or SFU token would leave acceptance incomplete.",
+    "Hashes bind the inspected working-tree snapshots, not the lead's future commit. Root-owned uncommitted integration can stale line references; lead must compare and refresh before applying requests."
+  ]
+}

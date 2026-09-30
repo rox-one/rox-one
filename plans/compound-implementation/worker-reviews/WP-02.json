@@ -1,0 +1,389 @@
+{
+  "task_id": "WP-02-preflight",
+  "attempt_id": "a69592cc54b4cfb171c7986a5cc75262",
+  "packet_hash": "955c61d5e8b44c6ce95245595a33a43fef675787b3298c41e2813f42e81b6160",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-02",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report artifact only",
+  "dependencies": ["WP-01"],
+  "dependencyReceiptsRequired": {
+    "WP-01": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceScope": {
+    "basis": "Actual working-tree source and published package record; input_revision is dispatch identity, not a claim that these bytes equal committed HEAD.",
+    "specManifestMatchesPacket": true,
+    "sourceStatus": "Whole-file hashes captured after reading. Concurrent wave0 integration may invalidate them; compare each hash and re-read affected ranges before applying patches.",
+    "runtimeStatus": "NOT_RUN: builds, tests, native UI and network operations prohibited by packet. All verification entries below are future acceptance procedures, not pass claims.",
+    "discovery": "Codegraph reports no index; find failed because its judging provider returned 402. Continued via exact known-symbol grep and bounded reads.",
+    "scopeLimit": "Inspected the three normative existing WP-02 files and direct Soup type import, plus exact specification and its documentation. Renderer consumers, service composition root, transport implementation and downstream modules were not inspected; their integration seams require lead discovery, not guessed implementations.",
+    "newArtifactObservation": "Glob returned Path not found for normative graph contracts directory, graph service module directory, service migrations directory and WP-02 test path at inspection time. This is a snapshot, not a claim that lead wave0 cannot subsequently create them."
+  },
+  "foundationGates": [
+    {
+      "id": "wave0-authority-composition",
+      "explicitDagEdge": false,
+      "evidence": "Packet requires lead wave0 commit before implementation; work-packages.json:1617-1623 requires same gateway, transaction/outbox/inbox and composition-root-created adapters. Normative new graph directories were not present when inspected.",
+      "required": "Accepted wave0 commit and executable workspace-service composition root, selected database/migrator and common graph transaction/policy/receipt ports. Shared entities must not fall back to the local Map or membership store.",
+      "resolution": "Lead accepts foundations and assigns registration/UI/transport patch owners; worker starts only after wave0 and WP-01 receipts."
+    },
+    {
+      "id": "resource-policy-and-revoke-fence",
+      "explicitDagEdge": false,
+      "evidence": "WP-02 permissions require resource grants and linked-ref recheck (work-packages.json:1064-1067); REVOKE_FENCE_PENDING is an operation error (1354-1364). authorizeRox2Action:601-610 checks actor+permission only, with no workspace/resource/epoch. Published WP-03 generalizes grants and depends on WP-02 (21-implementation-plan.md:46-63).",
+      "required": "An accepted fail-closed resource policy port covering both endpoints and query delivery, including current policy epoch/fence. Full revoke/guest/sharing acceptance needs generalized WP-03 mechanisms even though WP-03 is downstream.",
+      "resolution": "Do not invent a WP-03 back-edge or call membership alone full ACL. Lead supplies the minimal shared policy port in foundation/WP-01, then binds WP-03 implementation; keep full-feature gate open until downstream revoke scenarios pass."
+    },
+    {
+      "id": "durable-receipts-outbox-inbox",
+      "explicitDagEdge": false,
+      "evidence": "WP-02 restart-after-commit test, outbox and revisioned replay are normative (1081-1097,1588-1598,1617-1623). WP-04 generalizes the same command/receipt/outbox mechanism but depends on WP-02 and WP-03 (21-implementation-plan.md:65-82).",
+      "required": "Atomic graph mutation+receipt+event transaction; immutable request hash and actor/workspace idempotency key; revision CAS, consumer inbox dedup, lease recovery and replay cursor. A fixture or in-memory receipt does not satisfy this.",
+      "resolution": "Lead establishes minimum durable gateway ports before graph implementation and WP-04 later generalizes them without creating a second store. Full graph acceptance cannot pass before these mechanisms actually execute."
+    },
+    {
+      "id": "offline-projection-replay",
+      "explicitDagEdge": false,
+      "evidence": "WP-02 UI includes offline_queued and completeness includes offline/reconnect (1072-1079,1148). WP-05 introduces SQLite projection/outbox and policy-aware replay downstream of WP-04 (21-implementation-plan.md:84-102).",
+      "required": "Durable shared projection/outbox, cursor, restart-safe drafts and reconnect authorization, integrated into existing surface rather than a second registry.",
+      "resolution": "Expose graph pending/receipt DTOs early; request shared client queue integration from lead/WP-05. Do not equate queuedResult with persistence or label rejected draft synced."
+    },
+    {
+      "id": "search-attention-and-context-completeness",
+      "explicitDagEdge": false,
+      "evidence": "22-test-plan.md:197-222 explicitly disallows N/A for unwritten permissions/search/agent. WP-06 search has ACL/watermarks; WP-07 attention has dedup/recipient state (21-implementation-plan.md:104-140). Plan line 5 requires WP-50 provenance before shared transcripts/context.",
+      "required": "Graph events and canonical refs feed accepted search/mention/attention/activity consumers; shared agent context has acting-user ACL and provenance, not just permissionMode.",
+      "resolution": "Provide graph event/query ports now; lead assigns downstream consumer and context patches and records their actual receipts before closing full DoD. These are completion gates, not changes to dependencies=[WP-01]."
+    },
+    {
+      "id": "existing-surface-and-route-owner",
+      "explicitDagEdge": false,
+      "evidence": "WP-02 promises existing entity detail panels and SurfaceContext (1069-1079), but affectedFiles lists only core modules. bindSurfaceContext:31-48 is a pure binder, not a renderer or navigation route.",
+      "required": "Lead discovers actual renderer/detail/deep-link/history consumers within its wider scope, assigns exact shared patches and acceptance harness, and binds authenticated native RPC/HTTP routes to one domain handler.",
+      "resolution": "Do not add a new detail surface or claim binder tests as native UI proof. Keep renderer and routing acceptance missing until actual interaction/reload is observed."
+    },
+    {
+      "id": "additional-domain-api-contracts",
+      "explicitDagEdge": false,
+      "evidence": "WP-02 apiChanges names RegisterEntity / LinkEntity / GetBacklinks (1058), but operations:1162-1564 specifies only entity.link. relationKind is arbitrary string in request schema while ROX2_RELATION_RULES uses a closed union; transport status string differs from Rox2CanonicalResult triad.",
+      "required": "Accepted typed RegisterEntity and GetBacklinks request/result/error/cursor definitions; registered relation-kind runtime validation; explicit transport-status-to-triad mapping with evidence-dependent verification. No arbitrary relation string may reach indexed rule access.",
+      "resolution": "Implement these domain ports in normative graph/contracts.ts and get lead interface acceptance before callers integrate; preserve core triad and unknown payloads."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/graph/contracts.ts",
+    "apps/workspace-service/src/modules/graph/commands.ts",
+    "apps/workspace-service/src/modules/graph/repository.ts",
+    "tests/macro-integration/wp-02.test.ts",
+    "apps/workspace-service/migrations/02-domain-contract.sql"
+  ],
+  "ownershipNote": "These are only normative future WP-02 implementation artifacts, not permission to create them during preflight. The migration identifier is proposed; selected migrator determines the actual filename. This worker writes only this report.",
+  "proposedImplementation": {
+    "contracts": "Reuse Rox2EntityRef, Rox2ExternalBinding, Rox2RelationKind and status triad. Define strict entity.link schema with from/to/relationKind/sourceKey and no body actor; RegisterEntity includes typed kind and optional provider binding/import provenance; GetBacklinks takes workspace-scoped target, bounded limit and actor-authorized opaque cursor. Results carry canonical ref/revision, receipt and typed link provenance with no denied titles/totals. Confirm additional operation names/routes with lead because spec only fixes entity.link HTTP/nativeRpc names.",
+    "commands": "RegisterEntity, LinkEntity and GetBacklinks execute through accepted actor/policy/idempotency/revision gateway. Recheck both refs and account aliases inside mutation transaction. Reject route/envelope/ref workspace mismatch and unknown relation kinds before helper calls. Authorize before receipt/query serialization. LinkEntity validates kind pair via isAllowedRox2Relation and forbidden cycle via wouldCreateRelationCycle on the transaction's workspace-and-kind graph. Serialize concurrent acyclic link writes by workspace+relation kind using accepted DB lock/serializable retry port; endpoint-only locks do not prevent all long-cycle races. Store one directed edge with relationKind/sourceKey provenance; incoming backlinks read that same edge rather than persisting a reversed copy.",
+    "repository": "One service authority: entity PK(workspace_id,entity_id), alias UNIQUE(workspace_id,provider,account,remote_type,remote_id) with composite entity FK, link composite endpoint FKs and provenance-aware unique edge key agreed with lead. Index target/type and stable cursor sort. Preserve schema version, nonnegative revision, timestamps and retained tombstones. Concurrent same-binding create converges on the existing canonical alias target; do not regenerate the target as proof of collision. Use one transaction for graph rows, immutable command receipt and outbox events; inbox consumption/replay uses common foundation. Persist conflicting/ambiguous import candidate and provenance in the accepted receipt/import quarantine mechanism without overwriting canonical alias, inventing another registry or adding nonnormative files.",
+    "migration": "Additive backfill only after WP-01 workspace keys/migrator accepted; reuse encoded four-slot parsing for legacy aliases and preserve accepted historical canonical IDs. Ambiguous five-plus-slot keys or unknown-version payloads are retained/quarantined, never guessed or discarded. Ordinary same remote ID in different workspace/account is distinct, not a global collision. Snapshot and writer-route restoration before cutover; after accepted shared writes use forward repair/verified reverse replay, never remove recent writes.",
+    "tests": "Future wp-02.test.ts exercises actual composed graph service/storage gateway, not pure helper echoes. Cover binding retry/concurrent retry, legacy alias second retry, same remote ID across accounts/workspaces, collision retention, directed edge/backlink parity, endpoint ACL, cross-workspace denial, per-kind cycle policy and concurrent long cycle, revision/idempotency conflict, restart after commit before reply, duplicate/reordered/dropped events and tombstone fence. Seed 20260932; independent negative control omits account namespace and independent holdout variant bypasses target ACL or cycle enforcement. UI/native agent proof is separate and mandatory."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "registerExternalBinding / formatRox2ExternalBindingKey / entityRefFromBinding",
+      "change": "Preserve encoded four-slot and safe legacy dual-read behavior, but treat an accepted imported alias's canonical target as authoritative on subsequent retries. Current legacy hit stores existing ID at encoded key (360-367); next call compares that ID with regenerated binding ID (357-358) and can quarantine a legitimate retry. Add explicit collision validation against known registry identity/kind/provenance rather than only regenerated entityId. Keep standalone helper; shared commands use service uniqueness and receipt gateway. Lead must map callers before adjusting Map scope: binding-only key is valid only for a workspace-isolated map, not a shared multi-workspace registry.",
+      "reason": "Meets stable import/retry and genuine collision acceptance without merging accounts or converting a successful legacy import into a later collision. This is a source-derived risk, not a runtime-reproduced failure."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / Rox2Relation / Rox2Event / parseRox2TypedRecord",
+      "change": "Reuse canonical ref and typed record envelope; extend kinds only for accepted domain kinds with an explicit relation-rule entry for any new relation. Preserve unknownFields and whole unsupported payload. Add typed optional link source provenance and scoped/revision event metadata only as agreed with graph contracts; keep workspace/resource authority in service ports and no service I/O in core. Bridge response status enum to existing triad rather than redefine Rox2CanonicalResult.",
+      "reason": "Published spec demands additive kind migration, type+source provenance, event policy/watermark observability and preserved status semantics. Existing Rox2Relation has only bare IDs/kind and Rox2Event lacks workspace/policy epoch."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "isAllowedRox2Relation / wouldCreateRelationCycle / ROX2_RELATION_RULES",
+      "change": "Retain the existing relation rules and traversal; introduce a runtime relation-kind guard used by graph input validation before rule lookup. Service passes only a same-workspace, same-kind consistent edge snapshot and enforces transaction-level cycle serialization; do not turn cyclic mentions/attached-to into globally acyclic relations.",
+      "reason": "JSON relationKind is string, but unregistered values can reach undefined rule access. Pure cycle check has no workspace or concurrency protection; service must add those without duplicating relation semantics."
+    },
+    {
+      "path": "packages/core/src/rox2/project-membership.ts",
+      "symbol": "Rox2ProjectMembership / ProjectMembershipStore / linkEntityToProject / unlinkEntityFromProject / visibleProjectsForEntity",
+      "change": "Preserve standalone schema, primary/member/reference roles, deduped portfolio and unlink-without-history-deletion. Shared-mode composition must derive membership projection from authorized canonical member-of links, carrying role provenance and resolving raw projectId to project:ID within authenticated workspace before commands. Do not let cloneStore mutations become shared writes or client-readable flag become server ACL. Add versioned projection metadata only if required by accepted ports; preserve unknown future payload on import.",
+      "reason": "Current membership rows and compatibility pointer have no workspace/revision/receipt. Making them a second shared membership authority would violate canonical graph and one-writer constraints."
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "SurfaceContextInput / bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext / requiresContextGrant",
+      "change": "Reuse binder and snapshot/live policy; introduce a typed scoped-ref input path backed by accepted canonical registry resolution, validating workspace and revision before projecting legacy string IDs. Filter both entityRefs and associated revisionByEntityId/acceptedOutcomeIds metadata to authorized refs at host context assembly. Keep permissionMode as execution policy, not ACL: requiresContextGrant read/write shortcut cannot substitute for server resource check. Rebase only from monotonic accepted revision/policy cursor and clear revoked references through existing host integration.",
+      "reason": "Current binder checks only nonempty workspace/surface; string refs and copied revision map can carry unresolved/cross-workspace or denied metadata. visibleContextEntityRefs filters strings only; allow-all must not expose denied backlink/context."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-02 section / foundation ordering paragraph",
+      "change": "Document accepted RegisterEntity/GetBacklinks interfaces, alias/quarantine and cycle transaction semantics, standalone versus shared writer route, and minimum policy/receipt/offline prerequisites without changing explicit dependencies. Record which downstream capabilities prevent full-feature completion.",
+      "reason": "Published DAG starts graph before generalized policy/commands; implementation ordering and completion gates must be explicit rather than silently waived."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Feature completeness checklist / Scoped identity and Links/tasks invariants / evidence record",
+      "change": "Add exact accepted WP-02 scenario harness/readback details, legacy alias second retry, concurrent cycle race and collision quarantine recovery, plus implementation revision/schema/dirty-byte hashes and real UI/API/agent artifacts when executed. Do not relabel this preflight as a runtime receipt.",
+      "reason": "Existing document is explicitly future acceptance; precise graph checks and observed evidence are required for feature-complete claim."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Retry same provider binding reuses one entity",
+      "currentEvidence": "platform-contract.ts:291-370 encodes all four binding slots, produces accountNamespace and reuses Map hit; no durable service observed. Legacy raw-key canonical ID can be accepted first then rejected on encoded retry.",
+      "requiredChange": "RegisterEntity + repository atomic alias upsert on all five workspace/provider/account/type/id columns; authoritative canonical target reuse and immutable idempotency receipt. Preserve safe legacy aliases and account separation.",
+      "verification": "Future actual API/native import twice, concurrent retry and restart: identical canonical ID, one alias/entity/create event and same receipt for same command. Include legacy arbitrary canonical ID repeated twice and independent account with same remote ID.",
+      "missingPrerequisite": "Wave0 DB/gateway and accepted WP-01 workspace/actor ports; additional RegisterEntity schema acceptance.",
+      "state": "MISSING_SHARED_IMPLEMENTATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "collision quarantines",
+      "currentEvidence": "registerExternalBinding:354-358 returns transient workspace-mismatch/binding-collision; typed parsers preserve unsupported payloads (658-690; project-membership:40-75). No persistent quarantine/readback in inspected paths.",
+      "requiredChange": "Retain conflicting candidate/raw payload and provenance via accepted durable receipt/import quarantine port, do not overwrite alias/entity. Reject ambiguous legacy keys closed; do not call legitimate cross-workspace/account separation collision.",
+      "verification": "Future conflicting import yields quarantined/rejected result with retained candidate after restart, original canonical ID unchanged, no linked side effect; authorized UI distinguishes collision from empty/retryable error.",
+      "missingPrerequisite": "Accepted persistent quarantine receipt DTO/location and UI host patch; no additional owned quarantine file authorized.",
+      "state": "MISSING_DURABLE_QUARANTINE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "backlink is symmetric query",
+      "currentEvidence": "Rox2Relation:125-129 stores from/to/kind. visibleProjectsForEntity:171-182 offers limited inverse membership traversal but no generic graph query/source provenance.",
+      "requiredChange": "Persist one typed directed link with sourceKey, GetBacklinks reads its incoming projection and uses canonical refs/revision, current ACL on both endpoints, bounded stable authorized cursor; no synthetic reverse edge or permissions inheritance.",
+      "verification": "Future link A→B and fetch A outgoing/B incoming: same link identity/type/source; one persisted row, no duplicate on retry; denied A produces no title/count/cursor leak in B backlinks; native detail follows authorized canonical target.",
+      "missingPrerequisite": "GetBacklinks contract, resource policy port, generic detail/query consumer discovery by lead.",
+      "state": "MISSING_CANONICAL_QUERY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "cross-workspace and forbidden cycle rejected",
+      "currentEvidence": "ROX2_RELATION_RULES:380-389 and wouldCreateRelationCycle:404-428 enforce per-kind cycle semantics in passed edges; Rox2Relation lacks workspace; bindSurfaceContext:31-48 does not validate scoped refs.",
+      "requiredChange": "Require route/envelope/both refs workspace equality and scoped endpoint FKs; kind guard and allowed domain/range check; serialize cycle checks plus insertion for workspace+kind. Recheck both endpoint grants/fences in transaction.",
+      "verification": "Future HTTP/native forged refs and outsider rejected without graph changes; parent/blocks/derived-from cycles including concurrent long-cycle attempts rejected; legitimate mentions cycle accepted per existing rule; no raw error from unknown kind.",
+      "missingPrerequisite": "WP-01 actor/workspace boundary, DB transaction serialization and policy ports.",
+      "state": "PARTIAL_PURE_RULES_SHARED_GATE_MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "bindSurfaceContext:31-48 is existing pure context seam; published UI detail panels in work-packages.json:1069-1079 are not renderer evidence.",
+      "requiredChange": "Lead patches existing entity detail host to canonical authorized backlinks and receipt-driven link/import outcomes; preserve surfaces, Russian t() strings/all locales, visual conventions and accessible state labels.",
+      "verification": "Future actual Electron renderer + RPC and supported web + HTTP detail actions, hover/focus/keyboard, screenshots/ARIA, denied/collision/reload states on exact revision.",
+      "missingPrerequisite": "Lead-scoped discovery of actual detail renderer consumers and accepted UI patch owner/harness.",
+      "state": "MISSING_SURFACE_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "formatRox2EntityId/parseRox2EntityId:218-230 and Rox2EntityRef:233-239 provide identity, not navigation.",
+      "requiredChange": "Existing detail/deep-link resolver receives canonical scoped refs from registry, resolves legacy aliases, and uses denied/missing states without hidden titles; preserve history/tabs/panel focus.",
+      "verification": "Future navigate backlink and legacy alias, reload/deep-link/back/history in same existing panel; forged workspace denied with no metadata.",
+      "missingPrerequisite": "Actual navigation consumer discovery by lead; no route file inspected in this package scope.",
+      "state": "MISSING_ROUTE_BINDING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "ROX2_ENTITY_KINDS:17-40, ref/binding:233-250, typed parser:622-690 already exist; Soup mapping:196-208 uses concrete read-only imported types.",
+      "requiredChange": "Reuse canonical types, additive registered kinds and strict command schemas, retained unknown payloads/provenance; aliases are scoped mappings, not new entities per retry.",
+      "verification": "Future typed contract tests plus authorized API readback of workspace/kind/account/revision, reserved-slot aliases and unsupported-version retention.",
+      "missingPrerequisite": "Accepted graph domain DTOs and migration mapping for legacy IDs.",
+      "state": "PARTIAL_CORE_MODEL_SHARED_SCHEMA_MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "registerExternalBinding:336 Map parameter and ProjectMembershipStore:25-30 are local state seams; SQL constraints only proposed at spec:1565-1609.",
+      "requiredChange": "One service writer with composite entity/alias/link FKs, revisions/tombstones and transaction receipt/outbox. Local files/cache are projection/import assets in shared mode; standalone explicit mode unchanged.",
+      "verification": "Future real DB migration, concurrent imports, restart between commit/reply and fresh readback: stable canonical ref/receipt/revision/one event; rollback/forward-repair retains accepted writes.",
+      "missingPrerequisite": "Selected database/migrator and accepted wave0/WP-01 migration receipt.",
+      "state": "MISSING_SERVICE_PERSISTENCE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Spec:1164-1197 fixes entity.link payload/routes and 1354-1366 fixes errors/revision policy; core helpers perform no gateway I/O.",
+      "requiredChange": "Strict schema, transport-derived actor, authorization, expectedRevision and actor/workspace idempotency request-hash gateway; graph mutation/receipt/event atomic. Link retries must not increment twice.",
+      "verification": "Future same key same payload retry returns same revision/receipt; changed payload IDEMPOTENCY_CONFLICT; stale revision REVISION_CONFLICT; unknown/body actor rejected; crash after commit retry converges.",
+      "missingPrerequisite": "Accepted common durable gateway minimum; WP-04 generalization is downstream.",
+      "state": "MISSING_COMMAND_IMPLEMENTATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "entityIdsForProject/visibleProjectsForEntity:143-182 filter caller-provided readability; no generic authorized backlink repository/query.",
+      "requiredChange": "GetBacklinks queries canonical service with current resource policy, stable bounded cursor and sanitized DTO; receipts must not disclose denied refs.",
+      "verification": "Future pagination with insert/delete and actor changes, incoming/outgoing parity, inaccessible endpoint filtering before serialization and no hidden total/title leakage.",
+      "missingPrerequisite": "GetBacklinks schema/cursor acceptance and service policy/repository ports.",
+      "state": "MISSING_QUERY_IMPLEMENTATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Rox2Event:131-141 has causation/correlation/revision; spec:1081-1084 requires outbox/replay. isAuditableRox2Event:618-619 only checks three metadata fields.",
+      "requiredChange": "Emit entity.created/entity.linked atomically with revision/policy fence, authorized replay cursor and inbox dedup; update existing detail/membership/context projection monotonically, handle gaps/tombstones.",
+      "verification": "Future duplicate/reordered delivery and subscriber reconnect/restart; exactly one effect, visible backlink refresh at watermark, revoked subscriber receives no payload; dropped event caught by gap/readback assertion.",
+      "missingPrerequisite": "Foundation outbox/inbox and authorized subscription port; WP-03/04 generalized implementations.",
+      "state": "MISSING_DURABLE_REALTIME_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "authorizeRox2Action:601-610 fails closed for missing actor/grant but has no resource scope; requiresContextGrant:93-95 skips read/write explicit-grant logic and is not ACL.",
+      "requiredChange": "Transport actor and workspace/resource action policy on register/link/query, both endpoints and query delivery, revocation fence; allow-all controls execution only.",
+      "verification": "Future owner/member/viewer/outsider/guest and Agent-V allow-all scenarios; forged actor/workspace denied; revoked context/backlink disappears on future read/subscribe without title/count leaks.",
+      "missingPrerequisite": "WP-01 authenticated boundary and accepted resource policy bootstrap; full WP-03 revocation support.",
+      "state": "MISSING_RESOURCE_AUTHORITY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "ROX2_PERMISSIONS includes share/publish:55-64; memberships use readable boolean:19-23. Links contain no ACL inheritance semantics.",
+      "requiredChange": "Integrate links with accepted explicit grants/inheritance/expiry policy; relationship itself never grants access, shared backlink DTO filters inaccessible source/target.",
+      "verification": "Future mixed private/shared linked endpoints, viewer cannot share, expired public link and revoked grant return denied without metadata or implicit access expansion.",
+      "missingPrerequisite": "Lead-owned sharing/resource policy implementation and host sharing consumer patch; not N/A.",
+      "state": "MISSING_SHARING_POLICY_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Canonical entity/events are core seams; published WP-06 search requires ACL/current watermark (21-implementation-plan.md:104-121). No search consumer inspected here.",
+      "requiredChange": "Feed canonical registry/link create/update/tombstone events to existing authorized search projection; provenance and ref/revision retained, read-time policy and watermark prevent stale denied snippets.",
+      "verification": "Future imported/linked entity search at watermark, repeated import no duplicate hit, tombstone removed, revoke before index catch-up no title/snippet leak.",
+      "missingPrerequisite": "Accepted downstream WP-06 extractor/inbox/search adapter and lead patch owner.",
+      "state": "MISSING_SEARCH_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "ROX2_RELATION_RULES mentions:382 is cyclic with clear-edge deletion; no occurrence/source-revision extraction in bare Rox2Relation:125-129.",
+      "requiredChange": "Reuse canonical typed mentions links and sourceKey/revision provenance in accepted extraction/occurrence consumer; target ACL validation and tombstone behavior; no new mention store in this package.",
+      "verification": "Future mention creation/change/removal/replay from existing surface: canonical occurrence retained once, target denied hides preview; mentions cycles remain allowed and stale source revision cannot resurrect occurrence.",
+      "missingPrerequisite": "Lead-discovered mention producer/consumer and accepted occurrence/provenance contract.",
+      "state": "MISSING_MENTION_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "Rox2Event is integration seam; WP-07 has recipient/event/reason uniqueness and seen/done state (21-implementation-plan.md:123-140), not implemented graph evidence.",
+      "requiredChange": "Graph events/mention links feed accepted attention policy with authorized recipients, common dedup and recipient state; graph retry must not notify twice or bypass mute/snooze.",
+      "verification": "Future repeated link/import and event replay with overlapping mention/assignment recipients: one appropriate notification; denied recipient gets none; seen/done/mute/snooze persists in existing inbox.",
+      "missingPrerequisite": "WP-07 attention implementation and lead-owned inbox host integration.",
+      "state": "MISSING_ATTENTION_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event:131-141 and isAuditableRox2Event:618-619 support actor/cause/revision only; privacy requirement spec:1120.",
+      "requiredChange": "Consume graph transaction events in existing audit/activity stream with authenticated actor, command cause/correlation/revision and policy-filtered display; no raw private payload in logs.",
+      "verification": "Future actual link/import shows one authorized activity item after replay/restart, accurate actor/revision, denied audience absent; inspect redacted event/log evidence.",
+      "missingPrerequisite": "Accepted activity consumer/common inbox and existing activity host patch.",
+      "state": "MISSING_ACTIVITY_INTEGRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Rox2Context:143-155 and bindSurfaceContext/visibleContextEntityRefs/rebaseLiveContext:31-90 are existing context seams, with bare string refs and client permissionMode.",
+      "requiredChange": "Common domain tool/query handler for actor+acting user, current endpoint ACL and bounded canonical context with accepted provenance/revisions; filter related metadata as well as refs. Preserve snapshot/live behavior and execution grants separation.",
+      "verification": "Future real native agent dispatcher reads authorized backlinks/context and links via same receipt gateway; Agent-V allow-all denied mutation/private marker PRIVATE_WP-02 absent; revoke/reload removes future context.",
+      "missingPrerequisite": "Lead-owned native tool registration/host consumer discovery, policy port and WP-50 shared-context provenance gate.",
+      "state": "MISSING_AGENT_DOMAIN_BINDING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Spec:1166-1170 fixes HTTP entity.link and nativeRpc domain.entity.link, actor rejection and envelope. No mounted implementation inspected.",
+      "requiredChange": "Lead registers HTTP/native RPC/domain tool routes through one graph handler with identical validation/policy/results; service composition root owns adapters, core has no I/O. Define RegisterEntity/GetBacklinks routes via accepted typed contract rather than inventing published endpoints.",
+      "verification": "Future actual HTTP/native RPC/agent-dispatch parity for allowed link, forged actor/ref, stale revision, idempotency conflict and denied query; verify auth-derived principal, not passed body actor.",
+      "missingPrerequisite": "Accepted WP-01 transport boundary, graph schemas and transport/dispatcher patch owners.",
+      "state": "MISSING_TRANSPORT_REGISTRATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event optional causation/correlation/aggregateRevision:138-140, Rox2Receipt:99-105. Spec:1110-1120 additionally requires commandId/policyEpoch/projectionWatermark/retry-DLQ counters and privacy.",
+      "requiredChange": "Propagate accepted envelope metadata and policy/watermark through receipts/events, common lag/retry/DLQ diagnostics; redact body/email/transcript/tokens.",
+      "verification": "Future correlate one command to immutable receipt/entity revision/outbox/inbox/watermark; replay failure increments correct retry/DLQ metrics; captured logs have no PRIVATE_WP-02 payload or secret values.",
+      "missingPrerequisite": "Accepted common metadata/metrics port and running event pipeline.",
+      "state": "PARTIAL_EVENT_FIELDS_FULL_OBSERVABILITY_MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "Normative test path not present at inspection; spec:1678-1709 fixes seed, mutation, holdout and receipts. Existing source was inspected only, not executed.",
+      "requiredChange": "Implement normative wp-02.test.ts positive/boundary/concurrent/recovery cases against real gateway/repository; independent account-namespace mutation and holdout variant; relevant existing core regression plus real UI/API/agent receipts.",
+      "verification": "Future bun test tests/macro-integration/wp-02.test.ts and relevant existing package tests, then actual surface scenarios. Baseline passes before mutation, specific semantic assertion fails under mutation; infrastructure failure is not caught control. Save seed 20260932 and smallest failing case.",
+      "missingPrerequisite": "Wave0 runtime, accepted dependency receipts, runner and mutation evaluator. Packet prohibits running these now.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan.md:27-44 describes planned graph behavior; 22-test-plan.md:197-247 demands evidence and completeness, not runtime success.",
+      "requiredChange": "Lead updates these existing docs with accepted schemas, authority/import/quarantine/cycle/recovery behavior, migration filename and real integration limits/receipts, retaining unfinished states honestly.",
+      "verification": "Future documentation readback matches accepted interfaces/migration and exact observed surface behavior; no preflight or fixture mislabeled live completion.",
+      "missingPrerequisite": "Accepted implementation interfaces and observed runtime receipts; docs are shared and not writable in preflight.",
+      "state": "PLAN_EXISTS_IMPLEMENTATION_DOCS_PENDING"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Binding result quarantine:248-250; typed unsupported preservation:639-641; spec operation errors:1354-1364. Core queued/fixture/triad are not durable error UI.",
+      "requiredChange": "Map authentication/policy/workspace/schema/revision/idempotency/provider/fence and quarantine outcomes to typed state and existing surface; pending/unknown never become applied_verified. Persist useful draft/collision recovery data without exposing denied IDs.",
+      "verification": "Future each relevant error through real handler/surface, including expired auth, unknown kind/schema, offline unavailable, collision and conflicting retry; inspect original graph unchanged and retry/recovery honest.",
+      "missingPrerequisite": "Accepted status-to-triad error mapping, quarantine persistence and UI consumer owner.",
+      "state": "PARTIAL_TYPES_UI_RECOVERY_MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Spec:1073 declares loading; binder has no async state or query readiness.",
+      "requiredChange": "Existing detail query host distinguishes initial loading from retained stale authorized data/refresh; canonical receipt/watermark defines applied readiness, not network idle or boolean helper success.",
+      "verification": "Future slow query/invalidation/reload: loading marker and stale refresh behavior, no premature empty/applied_verified or stale denied data after revoke.",
+      "missingPrerequisite": "Actual detail query host and graph receipt/watermark integration.",
+      "state": "MISSING_LOADING_SURFACE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Membership queries:148-154 and 176-182 return [] for hidden project; generic graph DTO/host states absent in inspected scope.",
+      "requiredChange": "Separate authorized genuine no-backlinks state from forbidden/offline/unconfigured/retryable query failures without leaking hidden totals; preserve standalone membership privacy semantics.",
+      "verification": "Future zero authorized links shows genuine empty; outsider denied, offline unavailable and schema failure do not claim empty; private hidden link does not leak count/title.",
+      "missingPrerequisite": "Accepted GetBacklinks error/result DTO and existing detail UI owner.",
+      "state": "MISSING_EMPTY_STATE_CONTRACT_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Spec:1076 requires offline_queued and 1148 full offline/reconnect; ProjectMembershipStore local clone is not shared outbox. WP-05 planned replay foundation in docs:84-102.",
+      "requiredChange": "Existing shared client queue persists graph command/draft+idempotency; reconnect rechecks policy and expected revision, accepts once or retains rejected draft/quarantine; cursor recovery restores projection. Never report Map/local write as shared verified success.",
+      "verification": "Future offline link/import draft, app restart, reconnect: one accepted link/canonical entity and receipt; revoked pending command rejected, draft retained and no graph mutation; event replay/gap catches up.",
+      "missingPrerequisite": "Accepted shared client queue/projection and WP-05 integration, native reload harness.",
+      "state": "MISSING_DURABLE_CLIENT_REPLAY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "negative-control sensitivity and persistence-recovery",
+      "currentEvidence": "Spec:1090-1096 requires unauthorized/dropped-duplicated event failure and restart between persisted command/reply; verification:1697-1700 requires omit account namespace mutation plus independent holdout.",
+      "requiredChange": "Keep deterministic same-account/other-account reference assertions and actual receipt/event/revision durability oracle; independent evaluator injects second variant. Record implementation/environment/schema and dirty-byte hashes, UI/API readbacks and failed attempts.",
+      "verification": "Future baseline succeeds, omit account mutation fails precise identity assertion, unauthorized or dropped event fails policy/watermark assertion, crash-after-commit returns same canonical ref/revision/receipt with no duplicate event. Save artifacts mandated at 1702-1709.",
+      "missingPrerequisite": "Composed runtime, controlled crash/replay capability and independent evaluator. No product executions authorized for this preflight.",
+      "state": "NOT_RUN_ACCEPTANCE_GATE_OPEN"
+    },
+    {
+      "criterion": "license policy",
+      "currentEvidence": "work-packages.json:1150 specifies BEHAVIOR_REIMPLEMENTATION and exact license audit before upstream dependency.",
+      "requiredChange": "Implement behavior using existing ROX mechanisms; do not copy upstream implementation or add unaudited dependencies. If a new dependency is proposed, lead performs exact version/license audit first.",
+      "verification": "Future review implementation/dependency diff and retained license audit receipt if any upstream dependency is used.",
+      "missingPrerequisite": "Implementation diff and audit receipt for any proposed dependency; none added by preflight.",
+      "state": "IMPLEMENTATION_REVIEW_PENDING"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"registerExternalBinding / formatRox2ExternalBindingKey / Rox2EntityRef","lineStart":232,"lineEnd":370,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_RELATION_RULES / isAllowedRox2Relation / wouldCreateRelationCycle","lineStart":373,"lineEnd":428,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isAuditableRox2Event / parseRox2TypedRecord","lineStart":592,"lineEnd":690,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"ProjectMembershipStore / parseProjectMembershipStore / linkEntityToProject / visibleProjectsForEntity","lineStart":25,"lineEnd":182,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"SurfaceContextInput / bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext / requiresContextGrant","lineStart":18,"lineEnd":95,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-02 normative record","lineStart":1016,"lineEnd":1735,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"Foundation ordering / WP-02 / WP-03/04/05/06/07 integration gates","lineStart":1,"lineEnd":140,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Common acceptance boundary","lineStart":1,"lineEnd":34,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness checklist / seeded controls / evidence record","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "actor": "lead integration owner",
+    "action": "Accept/read back this preflight report, complete wave0 commit and verify WP-01 typed interface/migration/scenario receipts. Compare inspected hashes with current files, re-read changed seams, resolve minimum policy/receipt/DB composition contracts and assign actual renderer/route/tool consumers. Only then dispatch WP-02 implementation of its five normative artifacts and requested shared patches in dependency order.",
+    "workerResumption": "Start graph/contracts.ts against accepted wave0/WP-01 ports, obtain RegisterEntity/GetBacklinks and provenance/cursor interface acceptance, then migration/repository, command handler and normative scenarios. Do not wait for generalized downstream WP-03/04 by creating a circular DAG; keep full DoD open until their needed behaviors integrate.",
+    "reportVerification": "Only owned JSON readback is performed here. The packet's launch-worker-pool.py --verify invocation is reserved for lead acceptance; no product build/test/UI/network execution performed."
+  },
+  "risks": [
+    "Source-derived legacy retry inconsistency: raw-key hit reuses old canonical ID, encoded-key next retry compares it to regenerated binding ID and may quarantine. Not runtime-reproduced under this read-only packet.",
+    "A global Map keyed only by provider/account/type/id confuses legitimate different-workspace bindings; service alias uniqueness must include workspace while preserving local helper's isolated scope.",
+    "Serialized cycle enforcement is required; two transactions individually seeing acyclic snapshots can jointly create a cycle, including cycles whose endpoints are not the same pair.",
+    "Spec relationKind string permits values absent from ROX2_RELATION_RULES; strict runtime guard needed before indexing. Do not constrain permissive payload by throwing an accidental TypeError.",
+    "Symmetric backlink means query parity over one directed typed edge, not automatically inserting the reverse relation or expanding ACL.",
+    "Raw projectId and bare context strings are legacy presentation seams; resolution must stay workspace-scoped and preserve primary role/history while shared writer remains the service.",
+    "Filtering entityRefs alone leaves denied revisionByEntityId/acceptedOutcomeIds metadata in copied context unless host assembly sanitizes it; execution permissionMode is not resource authority.",
+    "Full-feature DoD names downstream mechanisms absent from explicit WP-02 DAG. A compile/helper/fixture pass cannot close search, notifications, sharing, agent access, realtime or offline gates.",
+    "Quarantine needs retained original ambiguous payload/provenance and recovery/readback, not a transient helper discriminant; reuse accepted receipt/import mechanism rather than create a nonnormative second store.",
+    "Observed file hashes bind this preflight snapshot only. Root-owned uncommitted wave0 changes were not modified and may make evidence stale during integration.",
+    "Normative migration filename is proposed. Database/migrator and HTTP/native composition registration must be accepted by lead; no fabricated timestamp, runtime, receipt or route symbol claim.",
+    "Core no-I/O modules cannot themselves deliver entity-detail UI, history, search or MCP surface completeness; these require lead discovery beyond this worker's inspection scope."
+  ]
+}

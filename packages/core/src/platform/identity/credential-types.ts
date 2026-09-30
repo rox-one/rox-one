@@ -230,8 +230,16 @@ function assertExactKeys(
 }
 
 function validateLocator(locator: ProviderLocator): ProviderLocator {
-  if (!locator || typeof locator !== 'object' || Array.isArray(locator)) {
+  if (!locator || typeof locator !== 'object' || Array.isArray(locator) || Object.getPrototypeOf(locator) !== Object.prototype) {
     throw new Error('Invalid credential metadata: locator');
+  }
+
+  // Keep locator metadata inert before inspecting its discriminant or values.
+  for (const key of Reflect.ownKeys(locator)) {
+    const descriptor = Object.getOwnPropertyDescriptor(locator, key);
+    if (typeof key !== 'string' || !descriptor?.enumerable || !('value' in descriptor)) {
+      throw new Error('Invalid credential metadata: locator');
+    }
   }
 
   const record = locator as unknown as Record<string, unknown>;

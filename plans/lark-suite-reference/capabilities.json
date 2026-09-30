@@ -1,0 +1,816 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
+  "status": "REFERENCE_AND_PROPOSED_DESIGN",
+  "features": [
+    {
+      "id": "LC-001",
+      "name": "Docs / текстовый документ",
+      "aliases": [
+        "docs",
+        "notes"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-001",
+      "documentedScreens": 7,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-02",
+        "LO-03",
+        "LO-04",
+        "LO-05"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/06-rox-docs-design.md"
+    },
+    {
+      "id": "LC-002",
+      "name": "Sheets / электронная таблица",
+      "aliases": [
+        "sheets"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-002",
+      "documentedScreens": 6,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-03"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "NEW_ROX_PRIMITIVE",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-003",
+      "name": "Drive / хранилище и Docs Home",
+      "aliases": [
+        "drive"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-003",
+      "documentedScreens": 6,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-02"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-004",
+      "name": "Wiki / пространство знаний",
+      "aliases": [
+        "wiki"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-004",
+      "documentedScreens": 6,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-14"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-005",
+      "name": "Base / типизированные записи и приложения",
+      "aliases": [
+        "base",
+        "bases"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-005",
+      "documentedScreens": 8,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-06",
+        "LO-07",
+        "LO-08",
+        "LO-09"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/05-rox-bases-design.md"
+    },
+    {
+      "id": "LC-006",
+      "name": "Forms / сбор ответов",
+      "aliases": [
+        "forms"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-006",
+      "documentedScreens": 8,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-15"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "NEW_ROX_PRIMITIVE",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-007",
+      "name": "Messenger / чаты и сообщения",
+      "aliases": [
+        "chats",
+        "messenger"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-007",
+      "documentedScreens": 6,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-01"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "NEW_ROX_PRIMITIVE",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-008",
+      "name": "Contacts / люди и организация",
+      "aliases": [
+        "contacts"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-008",
+      "documentedScreens": 5,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-13"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-009",
+      "name": "Meetings / звонки и видеовстречи",
+      "aliases": [
+        "meetings",
+        "calls"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-009",
+      "documentedScreens": 7,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-10"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-010",
+      "name": "Calendar / события и календари",
+      "aliases": [
+        "calendar"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-010",
+      "documentedScreens": 7,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-10",
+        "LO-11"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-011",
+      "name": "Tasks / задачи и task lists",
+      "aliases": [
+        "tasks"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-011",
+      "documentedScreens": 7,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-12",
+        "LO-08"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-012",
+      "name": "Mail / электронная почта",
+      "aliases": [
+        "email",
+        "mail"
+      ],
+      "classification": "CORE_PRODUCT",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-012",
+      "documentedScreens": 6,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-16"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-013",
+      "name": "Favorites / личное избранное",
+      "aliases": [
+        "favorites"
+      ],
+      "classification": "CROSS_PRODUCT_UTILITY",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-013",
+      "documentedScreens": 4,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-02",
+        "LO-33"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-014",
+      "name": "Templates / шаблоны",
+      "aliases": [
+        "templates"
+      ],
+      "classification": "CROSS_PRODUCT_UTILITY",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-014",
+      "documentedScreens": 5,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-06",
+        "LO-15"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-015",
+      "name": "Reminders / напоминания",
+      "aliases": [
+        "reminders"
+      ],
+      "classification": "CROSS_PRODUCT_UTILITY",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-015",
+      "documentedScreens": 5,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-10"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-016",
+      "name": "Announcements / объявление группы",
+      "aliases": [
+        "announcements"
+      ],
+      "classification": "MESSENGER_SUBFEATURE",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-016",
+      "documentedScreens": 5,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-19"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "NEW_ROX_PRIMITIVE",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-017",
+      "name": "OKR / цели и ключевые результаты",
+      "aliases": [
+        "okr"
+      ],
+      "classification": "OFFICIAL_APP",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-017",
+      "documentedScreens": 7,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-31"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "NEW_ROX_PRIMITIVE",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LC-018",
+      "name": "Subscriptions / официальные аккаунты и Broadcasters",
+      "aliases": [
+        "subscriptions"
+      ],
+      "classification": "OFFICIAL_APP",
+      "catalog": "core-catalog.json",
+      "catalogRecord": "LC-018",
+      "documentedScreens": 7,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-30"
+      ],
+      "liveScope": "Only linked observation findings; a launcher is not full editor verification.",
+      "targetApproach": "NEW_ROX_PRIMITIVE",
+      "targetSpec": "docs/lark-suite-reference/02-core-suite.md"
+    },
+    {
+      "id": "LB-HELPDESK",
+      "name": "Help Desk",
+      "aliases": [
+        "help desk"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-HELPDESK",
+      "documentedScreens": 5,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-26"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-ATTENDANCE",
+      "name": "Attendance",
+      "aliases": [
+        "attendance"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-ATTENDANCE",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-18"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-WORKPLACE",
+      "name": "Workplace / app launcher / app administration",
+      "aliases": [
+        "workspace",
+        "workplace",
+        "suite admin"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-WORKPLACE",
+      "documentedScreens": 5,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-27",
+        "LO-32"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-APPROVAL",
+      "name": "Approval",
+      "aliases": [
+        "approval"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-APPROVAL",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-17"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-RECRUITMENT",
+      "name": "Recruitment",
+      "aliases": [
+        "recruitment"
+      ],
+      "classification": "approvalTemplate",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-RECRUITMENT",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-27"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-LEAVE",
+      "name": "Leave",
+      "aliases": [
+        "leave"
+      ],
+      "classification": "approvalTemplate",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-LEAVE",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-27"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-PURCHASE",
+      "name": "Purchase",
+      "aliases": [
+        "purchase"
+      ],
+      "classification": "approvalTemplate",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-PURCHASE",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-27"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-OOO",
+      "name": "Out-of-office",
+      "aliases": [
+        "out-of-office"
+      ],
+      "classification": "approvalTemplate",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-OOO",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-27"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-REIMBURSEMENT",
+      "name": "Reimbursement",
+      "aliases": [
+        "reimbursement"
+      ],
+      "classification": "approvalTemplate",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-REIMBURSEMENT",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-17"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-REPORT",
+      "name": "Reports / Report",
+      "aliases": [
+        "reports",
+        "report"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-REPORT",
+      "documentedScreens": 2,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-28"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-LINGO",
+      "name": "Lingo",
+      "aliases": [
+        "lingo"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-LINGO",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-29"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-MOMENTS",
+      "name": "Moments",
+      "aliases": [
+        "moments"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-MOMENTS",
+      "documentedScreens": 2,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-27"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-MEEGLE",
+      "name": "Meegle",
+      "aliases": [
+        "meegle"
+      ],
+      "classification": "independentApp",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-MEEGLE",
+      "documentedScreens": 4,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-20"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-COZE",
+      "name": "Coze",
+      "aliases": [
+        "coze"
+      ],
+      "classification": "independentApp",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-COZE",
+      "documentedScreens": 5,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-22"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-TANCA-HR",
+      "name": "Tanca HR",
+      "aliases": [
+        "tanca hr"
+      ],
+      "classification": "thirdPartyAddon",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-TANCA-HR",
+      "documentedScreens": 2,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-21"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-SELEAM",
+      "name": "Seleam",
+      "aliases": [
+        "seleam"
+      ],
+      "classification": "thirdPartyAddon",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-SELEAM",
+      "documentedScreens": 2,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-23",
+        "LO-24",
+        "LO-25"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-DOCUGENIUS",
+      "name": "DocuGenius",
+      "aliases": [
+        "docugenius"
+      ],
+      "classification": "thirdPartyAddon",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-DOCUGENIUS",
+      "documentedScreens": 3,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-08",
+        "LO-27"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "LB-SUBSCRIPTIONS",
+      "name": "Subscriptions / Broadcasters / content distribution",
+      "aliases": [
+        "subscriptions"
+      ],
+      "classification": "nativeLarkFeature",
+      "catalog": "business-catalog.json",
+      "catalogRecord": "LB-SUBSCRIPTIONS",
+      "documentedScreens": 4,
+      "evidenceLabel": "DOCUMENTED",
+      "liveObservationIds": [
+        "LO-30"
+      ],
+      "liveScope": "Only linked observation findings; vendor onboarding/launchers do not establish private product depth.",
+      "targetApproach": "EXTEND_ROX",
+      "targetSpec": "docs/lark-suite-reference/03-business-ecosystem.md"
+    },
+    {
+      "id": "CI-P-OW",
+      "name": "OpenWiki",
+      "aliases": [
+        "openwiki",
+        "repowiki"
+      ],
+      "classification": "SOURCE_VERIFIED",
+      "catalog": "code-intelligence.json",
+      "catalogRecord": "CI-P-OW",
+      "documentedScreens": 0,
+      "evidenceLabel": "SOURCE_VERIFIED",
+      "liveObservationIds": [],
+      "liveScope": "Source/public asset audit only; provider not executed and not computer-use observed.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/13-code-intelligence.md",
+      "uiSpec": "docs/lark-suite-reference/14-code-intelligence-ui.md"
+    },
+    {
+      "id": "CI-P-GD",
+      "name": "GitDiagram",
+      "aliases": [
+        "gitdiagram"
+      ],
+      "classification": "SOURCE_VERIFIED",
+      "catalog": "code-intelligence.json",
+      "catalogRecord": "CI-P-GD",
+      "documentedScreens": 0,
+      "evidenceLabel": "SOURCE_VERIFIED",
+      "liveObservationIds": [],
+      "liveScope": "Source/public asset audit only; provider not executed and not computer-use observed.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/13-code-intelligence.md",
+      "uiSpec": "docs/lark-suite-reference/14-code-intelligence-ui.md"
+    },
+    {
+      "id": "CI-P-GR",
+      "name": "Groma",
+      "aliases": [
+        "groma"
+      ],
+      "classification": "SOURCE_VERIFIED",
+      "catalog": "code-intelligence.json",
+      "catalogRecord": "CI-P-GR",
+      "documentedScreens": 0,
+      "evidenceLabel": "SOURCE_VERIFIED",
+      "liveObservationIds": [],
+      "liveScope": "Source/public asset audit only; provider not executed and not computer-use observed.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/13-code-intelligence.md",
+      "uiSpec": "docs/lark-suite-reference/14-code-intelligence-ui.md"
+    },
+    {
+      "id": "CI-P-RG",
+      "name": "Repogrep.com",
+      "aliases": [
+        "repogrep",
+        "repo search"
+      ],
+      "classification": "SOURCE_VERIFIED_WEB_ASSET",
+      "catalog": "code-intelligence.json",
+      "catalogRecord": "CI-P-RG",
+      "documentedScreens": 0,
+      "evidenceLabel": "SOURCE_VERIFIED_WEB_ASSET",
+      "liveObservationIds": [],
+      "liveScope": "Source/public asset audit only; provider not executed and not computer-use observed.",
+      "targetApproach": "REIMPLEMENT",
+      "targetSpec": "docs/lark-suite-reference/13-code-intelligence.md",
+      "uiSpec": "docs/lark-suite-reference/14-code-intelligence-ui.md"
+    },
+    {
+      "id": "CI-P-ZK",
+      "name": "Zoekt",
+      "aliases": [
+        "zoekt"
+      ],
+      "classification": "SOURCE_VERIFIED",
+      "catalog": "code-intelligence.json",
+      "catalogRecord": "CI-P-ZK",
+      "documentedScreens": 0,
+      "evidenceLabel": "SOURCE_VERIFIED",
+      "liveObservationIds": [],
+      "liveScope": "Source/public asset audit only; provider not executed and not computer-use observed.",
+      "targetApproach": "ADAPTER",
+      "targetSpec": "docs/lark-suite-reference/13-code-intelligence.md",
+      "uiSpec": "docs/lark-suite-reference/14-code-intelligence-ui.md"
+    }
+  ],
+  "duplicates": [
+    {
+      "a": "LC-018",
+      "b": "LB-SUBSCRIPTIONS",
+      "reason": "Core content-distribution model and business ecosystem classification of same feature."
+    },
+    {
+      "a": "LC-016",
+      "context": "Workplace Announcement composer",
+      "reason": "Group announcement documentation and organization composer observed are related but not asserted identical backend."
+    }
+  ],
+  "requiredAliases": [
+    "sheets",
+    "docs",
+    "drive",
+    "wiki",
+    "okr",
+    "chats",
+    "meetings",
+    "help desk",
+    "attendance",
+    "announcements",
+    "reminders",
+    "tasks",
+    "bases",
+    "contacts",
+    "workspace",
+    "forms",
+    "tanca hr",
+    "seleam",
+    "approval",
+    "recruitment",
+    "meegle",
+    "leave",
+    "purchase",
+    "out-of-office",
+    "reimbursement",
+    "lingo",
+    "moments",
+    "docugenius",
+    "reports",
+    "subscriptions",
+    "email",
+    "favorites",
+    "templates",
+    "coze",
+    "openwiki",
+    "gitdiagram",
+    "repogrep",
+    "groma"
+  ]
+}

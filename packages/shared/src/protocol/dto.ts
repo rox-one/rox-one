@@ -704,6 +704,10 @@ export interface NoteDocument extends NoteSummary {
   backlinks: NoteBacklink[]
   /** Present for journal-backed native notes; distinct from the legacy content hash. */
   nativeRevision?: number | null
+  /** Native content revision. Optional for older remote peers and stored fixtures. */
+  revision?: string
+  /** Server-issued native owner binding; a write precondition, never a grant. */
+  sourceStoreId?: string
 }
 
 export interface NoteMutationOptions {
@@ -792,7 +796,9 @@ export interface NoteAssetRenameResult {
 
 export interface NoteChangedPayload {
   workspaceId: string
-  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties'
+  /** Stable identity of a durable native invalidation; replay may deliver it again. */
+  eventId?: string
+  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'descriptor'
   noteId?: string
 }
 
@@ -1355,3 +1361,7 @@ export interface CredentialMigrationRollbackDto extends CredentialMigrationCount
 export type CredentialMigrationResult<T> =
   | { ok: true; data: T }
   | { ok: false; code: CredentialMigrationErrorCode }
+
+/** Native document block projections carry the exact authority preconditions. */
+export type { GetBlockTreeRequest, BlockTreeResult, PreviewMarkerMappingRequest, NativeMarkerMappingPreview,
+  ApplyMarkerMappingRequest, MarkerMappingCommitResult } from '@craft-agent/server-core/docs/block-tree-service'

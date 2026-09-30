@@ -1,0 +1,209 @@
+{
+  "task_id": "CI-002-preflight",
+  "attempt_id": "15e37dbc85b35aa5ee825ed4f1a8cc08",
+  "packet_hash": "404f16a516346f017bdb08706f011ed28b041be1e3f80e58eea2415a4f453f68",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-002",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report is the sole write",
+  "workTier": "bounded-workflow; one package preflight within the lead's dispatched pool",
+  "dependencies": ["CI-001"],
+  "dependencyInterpretation": {
+    "normativeSource": "plans/lark-suite-reference/execution-packages.json:4174-4208; code-intelligence.json:2331-2357",
+    "preflightPacketDependsOn": [],
+    "meaning": "The empty dispatch depends_on permits inspection now; it does not remove the implementation dependency on CI-001. Implementation starts only after the lead's wave0 commit and accepted CI-001 artifact plus authoritative readback receipts. Neither receipt nor the wave0 commit was supplied/verified in this preflight."
+  },
+  "inspectionEvidence": {
+    "scope": [
+      "CI-002 existingFiles: workspace-scope.ts and sources/types.ts",
+      "CI-002 existing test: security/workspace-scope.test.ts",
+      "Direct imports: transport/types.ts and shared/protocol index/types",
+      "Published CI specification, normative execution record, and provided report verifier"
+    ],
+    "inputManifest": [
+      {"path": "plans/lark-suite-reference/code-intelligence.json", "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7", "matchesPacket": true},
+      {"path": "plans/lark-suite-reference/execution-packages.json", "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b", "matchesPacket": true}
+    ],
+    "newFileDirectoryObservation": "glob of packages/server-core/src/code-intelligence/* returned Path not found. The four proposed CI-002 files were not present at inspection.",
+    "codegraph": "The per-project query reported no .codegraph index; no indexing or upgrade attempted.",
+    "searchLimitation": "Descriptive find in the security directory failed its judge requests with HTTP 402. Its no-hits header is not absence evidence. Continued using the specification's exact paths, directory read, literal grep and line-numbered reads.",
+    "freshness": "Whole-file SHA-256 values describe inspected working-tree bytes, not proof that the entire dirty tree equals input_revision. sources/types.ts and workspace-scope.ts match their published CI-R-02/CI-R-15 hashes. Concurrent root integration may invalidate any reference; the lead must compare hashes and re-read affected symbols before applying a request. No Git command or Git mutation performed.",
+    "runtimeVerification": "NOT_RUN_BY_DESIGN: this is preflight only; no builds, product tests, native UI, providers or network operations were run. Proposed verification below is future implementation work, not a passing receipt.",
+    "reportValidation": {"command": "PYTHONDONTWRITEBYTECODE=1 python3 plans/compound-implementation/launch-worker-pool.py --verify plans/compound-implementation/worker-reviews/CI-002.json ${ROX_COMPOUND_PACKET_ROOT}/CI-002/packet.json", "observedResult": {"validPreflight": true, "featureComplete": false, "references": 10}, "scope": "JSON parse, packet lineage and current whole-file reference hashes only; not feature/runtime verification"},
+    "promptEvolution": "No prompt/skill change proposed: the temporary find judge failure was handled through existing authorized exact-path reads; it does not justify a permanent capability rule. This worker's authority remains one report file."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-IDENTITY",
+      "kind": "hidden foundation / published external EG-IDENTITY, not an extra DAG edge",
+      "evidence": "RequestContext (transport/types.ts:7-11) exposes clientId, workspaceId and webContentsId only. assertCallerOwnsWorkspace compares workspace IDs; it cannot establish actor ownership or source ACL. The specification requires authenticated actor/workspace/source at every boundary (code-intelligence.json:146,152,2386-2389; execution-packages.json:4248-4252).",
+      "missingPrerequisite": "An accepted EG-IDENTITY receipt and a trusted server-side actor/principal + source-authorization lookup contract usable at each read/write/job boundary. clientId, renderer input and isAuthenticated are not substitutes for an actor identity.",
+      "integrationRequest": {
+        "path": "packages/server-core/src/transport/types.ts",
+        "symbol": "RequestContext",
+        "change": "Identity/transport owner must supply an authenticated principal reference or an authoritative lookup keyed by the existing server context, including authorization generation/revocation semantics. If RequestContext is extended, transport construction and validation callsites must be migrated by that owner; no CI-002 edit to this path is authorized.",
+        "reason": "A signed lease must be bound to the current actor as well as workspace/source; the current context type cannot express that binding.",
+        "requiresExpandedOwnershipOrExternalOwner": true
+      },
+      "state": "RECEIPT_AND_INTERFACE_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-LEASE-AUTHORITY",
+      "kind": "hidden foundation for optional offline lease; not an explicit package dependency",
+      "evidence": "code-intelligence.json:146,155,2364,2371-2372,2389,2396,2414 requires a signed, scoped, expiring lease, reconnect invalidation, durable freshness and recorded disconnected revocation exposure. None of the inspected CI-002 files implements a lease authority or reconnect state.",
+      "missingPrerequisite": "Accepted signing/verifying authority, trusted actor/source scope, expiry clock contract, revocation/policy generation, authoritative reconnect signal and persistence/readback seam for leases and exposure metadata. A renderer-provided online flag or self-signed test lease cannot prove production authorization.",
+      "requiredIntegration": "provider-policy.ts owns lease verification and transition decisions; the lead supplies the existing authoritative identity/connectivity/persistence services. Restart must not revive a revoked, expired or pre-reconnect lease. Without authority, deny remote-private offline reads; do not mark the optional signed-lease acceptance verified.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-CREDENTIAL-EGRESS",
+      "kind": "published external readiness plus hidden secure credential-reference seam",
+      "evidence": "ProviderPolicy fields include credentialRef, dataEgress, telemetry, retention and maxBytes (code-intelligence.json:1364-1379). LoadedSource documents source_oauth::{workspaceId}::{sourceSlug} credential lookup (sources/types.ts:560-564). Provider policy screen mandates the existing secure credential flow (spec:1907). execution-packages.json:4251 requires upstream version/license/runtime readiness.",
+      "missingPrerequisite": "Lead-provided existing secure credential resolver contract, actor-scoped source credential ownership receipt, selected provider/version/capability readiness and task-authorized remote/model egress policy. The credential manager implementation is outside CI-002 existing paths/direct imports and was deliberately not audited here.",
+      "requiredIntegration": "Validate opaque credential references against the existing scoped credential service immediately before provider dispatch; never serialize token bytes into policy/job/artifact/audit. Preserve existing source storage and credential namespace rather than adding a second credential store.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-CONSUMER-CUTOVER",
+      "kind": "hidden full-DoD integration gate involving downstream packages; not a backwards dependency",
+      "evidence": "DoD AC-5 and API changes require one authorizeRepositoryRead/Write/Job resolver for search/wiki/diagram/agents (spec:2364,2380). Published downstream package titles identify CI-003 search, CI-004 RPC/jobs, CI-006 wiki, CI-007 graph, CI-008 freshness and CI-012 agent transport. CI-002 ownership contains only its four new files and two shared patch paths.",
+      "missingPrerequisite": "Integration-owner callsite inventory and accepted consumer wiring/readback receipts. These consumer implementations are outside this preflight's path scope; their runtime symbols were not inspected and are not guessed.",
+      "requiredIntegration": "Publish the resolver contract now, then require every consumer and cached artifact/snippet path to use it. Apply denial/expiry/reconnect controls on actual search, wiki, diagram and agent reads. Do not claim AC-5 complete merely because resolver unit tests pass; record the downstream integration gate without introducing a cyclic CI-002 dependency.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-EXECUTION-LINEAGE",
+      "kind": "published launch gates and user wave0 handoff requirement",
+      "evidence": "execution-packages.json:4213-4216,4231-4246 has the historical product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and unresolved delivery revision/digest placeholders, requires approved prerequisites, exclusive shared-path leases, exact artifact hashes and authoritative integrated readback. The supplied preflight input revision is a21aeab1da5a67e56788384ff930945b0f487879.",
+      "missingPrerequisite": "Root wave0 commit receipt, explicit implementation checkout/base binding reconciling the published historical baseline with the approved current revision, resolved delivery manifest hashes, accepted CI-001 implementation receipt, assigned owner and leases on both shared paths.",
+      "requiredIntegration": "Lead issues a new implementation packet from the approved committed base and dependency receipts. This preflight neither checks out the historical baseline nor authorizes source changes. Relevant native-agent transport readiness is additionally required when CI-012 tools are exercised.",
+      "state": "WAITING_FOR_LEAD_RECEIPTS"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/code-intelligence/repository-scope.ts",
+    "packages/server-core/src/code-intelligence/provider-policy.ts",
+    "packages/server-core/src/code-intelligence/__tests__/repository-scope.test.ts",
+    "packages/server-core/src/code-intelligence/__tests__/offline-lease.test.ts"
+  ],
+  "proposedCodeContributions": [
+    {
+      "path": "packages/server-core/src/code-intelligence/repository-scope.ts",
+      "symbols": ["authorizeRepositoryRead", "authorizeRepositoryWrite", "authorizeRepositoryJob", "resolveRepositoryFile"],
+      "change": "Proposed exports, not existing symbols: accept RequestContext, a server-resolved RepositoryBinding/policy and trusted authorization services; authorize workspace via assertCallerOwnsWorkspace before binding/policy content or provider access, then validate current actor/source ACL. Requests identify a binding/ref and repository-relative file, never an authoritative caller-chosen absolute root. Resolve binding.canonicalRoot and allowedRoots by realpath, compare node:path.relative containment with separator boundaries, reject absolute/traversal/foreign paths, and reject symlink targets outside the allowed repository. Apply mandatory exclusions plus policy exclusions, bounded byte size and binary checks before returning authorized content. Keep one internal resolver for reads/writes/jobs; return content/version provenance and safe skip/denial codes, not raw paths/secrets in denial errors. For mutation/job dispatch recheck scope and the opened file identity against canonical containment so a symlink swap cannot bypass an earlier check.",
+      "contractDependency": "Exact RepositoryBinding/RepositorySnapshot/ProviderPolicy types and exports come from accepted CI-001, not locally duplicated interfaces. Trusted actor/source lookup is FG-IDENTITY."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/provider-policy.ts",
+      "symbols": ["validateProviderPolicy", "authorizeProviderJob", "verifyAuthorizationLease", "invalidateRepositoryAuthorization"],
+      "change": "Proposed exports: validate the CI-001 canonical ProviderPolicy schema; canonicalize server-owned allowedRoots, hash effective exclusions/policy, validate positive byte limits and declared retention/telemetry. Before remote dispatch require task-authorized per-job exposure metadata naming provider/version, authorized repository/source/snapshot scope, data categories, egress destination, retention and telemetry, with opaque credentialRef only. Local-only policy rejects remote provider/model egress before any dispatch. Verify signatures via the accepted authority, bind lease actor/workspace/source/repository scope and policy generation, enforce expiry/revocation, and invalidate on reconnect before reauthorization. Record last authoritative check, disconnection start and permitted-until exposure boundary; never claim immediate disconnected remote revocation detection. Mark repository-derived instruction content untrusted, with binding/source/version provenance; it cannot alter roots, ACL, credential authority or egress policy.",
+      "contractDependency": "Lease, identity, credential and durable job/event readback services must be real accepted integrations; no mock production fallback or second policy/credential store."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/repository-scope.test.ts",
+      "symbols": ["proposed repository authorization and canonical file resolution cases"],
+      "change": "Reuse bun:test, CodedError, MemoryScopeAudit and mkdtemp/finally-cleanup conventions from security/workspace-scope.test.ts. Use isolated real filesystem fixtures: accepted included file with exact bytes/hash; foreign/missing workspace and forged root; ../, absolute path, same-prefix sibling root and outward symlink; exclusions for secret/build/binary inputs; byte limit boundaries with multi-byte UTF-8; local-only remote dispatch denial; untrusted repository instruction escalation. Assert denied files' sentinel bytes are absent from returned content, artifacts, audit and errors. Observe provider call count zero on rejection; include symlink-change negative control for the actual open/read boundary. Do not reduce these to source-text assertions or a bare not-throw."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/offline-lease.test.ts",
+      "symbols": ["proposed scoped signed-lease state transition cases"],
+      "change": "Use deterministic fixture keys and a controlled verification clock in isolated tests, while separately requiring a real signing-authority integration receipt. Verify owned-local policy, default remote-private offline denial, valid signed lease content access, actor/workspace/source/scope/policy mismatch, altered signature, expiry boundary, revoked lease, reconnect invalidation and restart persistence. Simulate remote revocation while disconnected: assert no invented immediate detection and assert the recorded exposure window ends no later than expiry or reconnect. Drive the same policy decisions through consumer integration scenarios after their implementations are accepted."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/security/workspace-scope.ts",
+      "symbol": "ScopeAuditAction / ScopeAuditEvent / new recordRepositoryPolicyDenial helper; retain assertCallerOwnsWorkspace",
+      "change": "Integration owner: retain resolveCallerWorkspaceId and assertCallerOwnsWorkspace as the authoritative workspace guard, including AUTH_FAILED and existing cross-workspace event shape. Add a fixed repository-policy-denied action and an optional typed safe reason code for root-out-of-scope, excluded, egress-disallowed, offline-unauthorized and lease-invalid; add recordRepositoryPolicyDenial(context, audit, reason) that appends through the existing ScopeAuditSink with constant resourceKind='repository' and caller workspace from resolveCallerWorkspaceId. Do not include requested root, foreign workspace/source ID, repository content, credentialRef or tokens in this audit event. repository-scope.ts calls the existing guard first and this helper for subsequent policy denials. Preserve old JSONL audit readers and existing tests; extend behavior coverage in the two owned new tests.",
+      "reason": "Reuse one existing audit sink and workspace-denial mechanism; safely distinguish repository/egress/offline denials without a second audit store or duplicating authorization. The current scope guard has no repository-policy denial action.",
+      "owner": "integration-owner",
+      "prerequisite": "Shared path lease and fresh source hash; adapt to CI-001/root changes before applying."
+    },
+    {
+      "path": "packages/shared/src/sources/types.ts",
+      "symbol": "FolderSourceConfig / CreateSourceInput; preserve SourceType, LocalSourceConfig and LoadedSource",
+      "change": "Integration owner, after CI-001: expose the accepted canonical repository capability/binding reference on FolderSourceConfig and CreateSourceInput as an optional typed field carrying bindingId and providerPolicyId (reuse CI-001's final type/export rather than redeclare policy or lease DTOs). Keep SourceType='mcp'|'api'|'local', LocalSourceConfig.path and existing credential-bearing transport config intact. Absence of the capability must leave old source configs readable but confer no repository authority. Store only refs, not raw credentials, full signed leases or caller authentication; effective policy is server-resolved using source workspace ownership. Reuse any equivalent CI-001 field already added instead of introducing a second representation.",
+      "reason": "The current config has only mcp/api/local connection blocks and no repository policy/binding capability. It already has source identity and workspace-scoped credential provenance; CI-002 must extend that mechanism without a new source store or a fourth source surface.",
+      "owner": "integration-owner",
+      "prerequisite": "Accepted CI-001 source contract and migration receipt, source schema/storage integration supplied by the lead, shared path lease and fresh hash. Existing runtime schema validators were not in this inspection scope; a TypeScript-only addition is not a validated persistence receipt."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-002-AC-1",
+      "criterion": "Renderer cannot choose unauthorized root/workspace",
+      "currentEvidence": "workspace-scope.ts:67-95 validates context.workspaceId and compares resource workspace, with safe AUTH_FAILED audit; workspace-scope.test.ts:20-48 covers own/foreign/missing workspace. LocalSourceConfig.path (types.ts:453-456) is a plain path string. No canonical repository resolver is present at the normative new paths. Tests were read, not run.",
+      "actualSeam": "assertCallerOwnsWorkspace, resolveCallerWorkspaceId, LocalSourceConfig, FolderSourceConfig; proposed authorizeRepositoryRead/Write/Job and resolveRepositoryFile",
+      "requiredChange": "Resolve repository binding and policy in trusted server scope; call the existing workspace guard before data/credentials/provider access; check current actor/source ACL; derive canonical root only from the accepted binding and policy. A renderer root/workspace or source config field is a request, never authority. Apply the guard to reads, writes and jobs.",
+      "verification": "Future repository-scope.test.ts plus integrated RPC scenario: own binding returns the fixture's exact content/hash; foreign and missing workspace, forged binding/root and same-prefix sibling path fail with AUTH_FAILED or agreed safe denial code; provider/credential/file-content access does not occur on authorization rejection; no foreign identifiers appear in audit/errors. Repeat after reconnect/restart and with a cached ref to ensure no stale authority bypass.",
+      "missingPrerequisite": "Lead wave0 commit, accepted CI-001 binding/policy DTO + lookup/migration receipt, FG-IDENTITY and integration-owner RPC/job wiring receipt.",
+      "state": "GAP_BLOCKS_COMPLETION_NOT_VERIFIED"
+    },
+    {
+      "id": "CI-002-AC-2",
+      "criterion": "symlink escape and secrets/build/binary excluded",
+      "currentEvidence": "The existing scope guard (workspace-scope.ts:74-95) checks only workspace identifiers. LocalSourceConfig (types.ts:453-456) carries path/format without canonicalization/exclusion fields. No filesystem resolver implementation exists in the inspected CI-002 paths. The published SourceFile/ProviderPolicy contracts specify skipReason, normalized paths, excludes and maxBytes (spec:1077-1091,1364-1379).",
+      "actualSeam": "LocalSourceConfig.path and assertCallerOwnsWorkspace; proposed resolveRepositoryFile in repository-scope.ts",
+      "requiredChange": "Authorize first; use real canonical root and path-relative boundary checks rather than substring/prefix checks; reject traversal and outward symlinks, including path changes between resolution and opening. Enforce mandatory secret, build and binary exclusions plus configured exclusions; bound bytes with actual bytes, not string characters; classify excluded inputs without exposing their contents. Hash the effective inclusion/exclusion policy for snapshot identity.",
+      "verification": "Future repository-scope.test.ts with real temp directories and ../, absolute, sibling-prefix and outward symlink fixtures; positive in-root file with exact bytes/hash; secret sentinel, build artifact and binary/NUL fixtures excluded across responses/errors/audit/artifacts; multi-byte UTF-8 maxBytes boundary; symlink swap negative control. Run the changed canonical resolver and integrated search/job path, not merely mocked source inputs.",
+      "missingPrerequisite": "Accepted CI-001 canonical binding/snapshot/exclusion fingerprint contracts; source-exclusion policy/mandatory exclusion definitions; integration-owner consumer/open-file boundary wiring. No product verification is authorized in this preflight.",
+      "state": "GAP_BLOCKS_COMPLETION_NOT_VERIFIED"
+    },
+    {
+      "id": "CI-002-AC-3",
+      "criterion": "remote exposure declared per job",
+      "currentEvidence": "FolderSourceConfig (types.ts:490-528) contains provider and transport blocks, not a per-job egress declaration. LoadedSource (550-564) has workspace-bound credential lookup provenance. assertIncidentKillSwitchInactive (workspace-scope.ts:98-111) already provides an incident cloud denial mechanism, but it is not a repository egress policy. ProviderPolicy is conceptual in spec:1364-1379.",
+      "actualSeam": "FolderSourceConfig.provider/mcp/api/local, LoadedSource.workspaceId, assertIncidentKillSwitchInactive; proposed validateProviderPolicy / authorizeProviderJob",
+      "requiredChange": "Validate actor/workspace/source policy before provider dispatch; require a durable, exact-scope per-job exposure declaration for remote provider/model use, pinned provider capability/version, destination/data categories, telemetry and retention. Resolve credentialRef through the existing secure scoped service, never record token bytes. Reject remote providers under local-only policy and preserve any applicable existing kill-switch boundary. Carry policy/snapshot identity in job receipts.",
+      "verification": "Future repository-scope.test.ts tests local-only rejects remote dispatch, absent/mismatched egress authorization and foreign credential refs fail closed, and the approved remote request produces a redacted exact-scope job receipt. After CI-004/provider readiness, exercise a real authorized read-only provider job, inspect persisted receipt before/after restart, and prove denial occurs before remote I/O. No provider/network call was made here.",
+      "missingPrerequisite": "FG-CREDENTIAL-EGRESS; accepted CI-001 ProviderPolicy schema; lead's CI-004 durable job/event contract and provider-version/license/runtime receipt for the exercised provider. Those are full-DoD integration gates, not added CI-002 DAG dependencies.",
+      "state": "GAP_BLOCKS_COMPLETION_NOT_VERIFIED"
+    },
+    {
+      "id": "CI-002-AC-4",
+      "criterion": "repository instructions treated as scoped untrusted content",
+      "currentEvidence": "FolderSourceConfig.tagline and LoadedSource.guide (types.ts:512-514,550-552) expose repository/source descriptive content. No inspected CI-002 symbol labels instruction trust or enforces repository instruction scope. Specification InstructionPatch (1383-1397) preserves authoritative policy; AC-4 is explicit at 2363/2468-2480. No repository instruction/context files were searched or opened.",
+      "actualSeam": "FolderSourceConfig.tagline, LoadedSource.guide; proposed authorization result provenance and provider-policy instruction trust classification",
+      "requiredChange": "Return repository-derived instruction material only through the canonical authorized resolver, tagged as untrusted repository content with binding/source/version scope. Keep it separate from authenticated system/policy authority; it cannot change roots, workspace/source ACL, credential refs or egress/lease policy. Agent/job consumers must retain the tag and reauthorize tool reads. Reuse existing instruction reconciliation rather than a second instruction surface.",
+      "verification": "Future isolated fixture contains an escalation instruction requesting a foreign root, secret credential or remote provider. Read permitted content with its untrusted provenance, then assert attempted escalation is denied by the same resolver and no secret sentinel/provider call appears. CI-012/CI-013 integrated tool/instruction lane must prove repository content cannot override policy; actual transport receipt required, not a string assertion or instruction-file presence check.",
+      "missingPrerequisite": "Accepted CI-001 content/provenance refs; FG-IDENTITY; integration-owner/CI-012 agent boundary and CI-013 instruction reconciliation receipts. Existing agent/instruction consumer code lies outside the allowed inspection paths and is not claimed verified.",
+      "state": "GAP_BLOCKS_COMPLETION_NOT_VERIFIED"
+    },
+    {
+      "id": "CI-002-AC-5",
+      "criterion": "Shared authorization resolver serves search/wiki/diagram/agent reads; remote-private offline default denied, optional scoped signed lease expires fail-closed",
+      "currentEvidence": "RequestContext has no actor identity (transport/types.ts:7-11). assertCallerOwnsWorkspace supplies workspace scope only. None of the inspected CI-002 files contains authorization lease/offline/reconnect symbols. Specification explicitly requires the shared resolver, expiry/revocation/reconnect controls and disconnected exposure record (146,155,2364,2371-2372,2380,2396).",
+      "actualSeam": "RequestContext and assertCallerOwnsWorkspace; proposed authorizeRepositoryRead/Write/Job, verifyAuthorizationLease, invalidateRepositoryAuthorization",
+      "requiredChange": "Implement one policy/lease decision resolver for live content and cached snippets/artifacts. Owned-local reads obey current local policy; remote-private offline reads deny by default. Optional leases require a genuine trusted signature and exact current actor/workspace/source/repository scope, expiry and policy generation; fail closed on missing/mismatched/revoked/expired inputs. Reconnect invalidates prior remote authority before any read. Persist freshness and a truthful revocation exposure window through the lead's existing durable state seam, with no private content/tokens in events. Cut over every search/wiki/diagram/agent path; do not satisfy this with an unused helper.",
+      "verification": "Future offline-lease.test.ts covers default denial, valid lease exact content, signature tamper, all scope mismatches, expiry equality boundary, revocation, reconnect and restart. A disconnected remote revocation scenario must retain uncertainty until expiry/reconnect and record last authoritative check plus the bounded exposure interval. After downstream integration, execute the identical fixture through all four real consumer paths, including their cached content paths, and prove consistent denial/revalidation before/after restart; inspect authorized invalidation/policy-change receipts.",
+      "missingPrerequisite": "FG-IDENTITY, FG-LEASE-AUTHORITY and FG-CONSUMER-CUTOVER; accepted CI-001 refs; authoritative signing, revocation, connectivity and persistence/readback services. Required full-DoD consumer proof cannot be supplied by CI-002's two unit-test files alone.",
+      "state": "GAP_BLOCKS_COMPLETION_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/server-core/src/security/workspace-scope.ts", "symbol": "resolveCallerWorkspaceId / assertCallerOwnsWorkspace", "lineStart": 67, "lineEnd": 96, "sha256": "1f12f9065f7938a1ff922b3bd2f10d515e746fbfdd4280dc0346c83fe66d89f9"},
+    {"path": "packages/server-core/src/security/workspace-scope.ts", "symbol": "ScopeAuditEvent / ScopeAuditSink / FileScopeAudit", "lineStart": 17, "lineEnd": 50, "sha256": "1f12f9065f7938a1ff922b3bd2f10d515e746fbfdd4280dc0346c83fe66d89f9"},
+    {"path": "packages/server-core/src/security/workspace-scope.test.ts", "symbol": "ctx / assertCallerOwnsWorkspace test cases", "lineStart": 16, "lineEnd": 49, "sha256": "a84c283fa625c45c10222bcabf09e9135b848ffdb2a47ce6dd1109e09e67b72b"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext", "lineStart": 7, "lineEnd": 11, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/shared/src/sources/types.ts", "symbol": "LocalSourceConfig", "lineStart": 450, "lineEnd": 456, "sha256": "ada334585bc07a29dbce1fddfd7f1aadbc9c6399e6d73b71cc4150758ae8d377"},
+    {"path": "packages/shared/src/sources/types.ts", "symbol": "FolderSourceConfig", "lineStart": 490, "lineEnd": 528, "sha256": "ada334585bc07a29dbce1fddfd7f1aadbc9c6399e6d73b71cc4150758ae8d377"},
+    {"path": "packages/shared/src/sources/types.ts", "symbol": "LoadedSource / CreateSourceInput", "lineStart": 550, "lineEnd": 588, "sha256": "ada334585bc07a29dbce1fddfd7f1aadbc9c6399e6d73b71cc4150758ae8d377"},
+    {"path": "packages/shared/src/protocol/types.ts", "symbol": "CodedError wire-code contract", "lineStart": 165, "lineEnd": 179, "sha256": "ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "/workPackages/1 CI-002", "lineStart": 2330, "lineEnd": 2529, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "CI-002 normative dependencies, ownership and cloudPacket", "lineStart": 4173, "lineEnd": 4255, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"}
+  ],
+  "nextExecutableAction": "Lead accepts this preflight as inspection only. After committing wave0, accept CI-001 implementation by artifact and authoritative readback receipts, resolve the approved implementation base/delivery hashes and identity/lease/credential interfaces, and acquire the two shared-path leases. Recompare all source hashes and read changed seams. Then dispatch CI-002 with only its four normative new-file paths; integration owner serially applies the two patch requests and coordinates downstream consumer proof. The current worker's next action is only readback and the packet's read-only report verifier, not feature implementation.",
+  "risks": [
+    "Workspace equality is not authenticated actor/source authorization; using clientId or isAuthenticated to sign a lease would weaken the contract.",
+    "Published historical baseline and supplied preflight revision differ; unresolved manifest placeholders must not silently become launch authorization.",
+    "Concurrent wave0/CI-001 integration can make source hashes and proposed field names stale; CI-001 owns canonical types and the final source capability representation.",
+    "Lexical prefix checks and realpath-only check-then-read leave sibling-prefix and symlink-swap escapes; exercise actual file access boundaries.",
+    "Secret/build/binary exclusion and byte limits must precede output/artifact/log exposure; merely filtering displayed search results is insufficient.",
+    "Offline cache authorization can outlive source ACL, lease or reconnect unless every consumer reuses the same resolver and durable invalidation state.",
+    "Immediate remote revocation while disconnected is unobservable; record the actual exposure window rather than promising impossible immediate denial.",
+    "Per-job remote exposure must include provider/model paths, telemetry and credentials; provider installation/availability is not egress authorization.",
+    "An optional source TypeScript field without coordinated runtime schema/storage migration can be ignored or dropped; that integration remains lead-owned and unverified.",
+    "Full AC-5 and untrusted-instruction acceptance depend on actual downstream consumers outside this package's ownership. Unit tests or unused resolver exports cannot establish full feature completion."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

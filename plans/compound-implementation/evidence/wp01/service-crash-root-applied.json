@@ -1,0 +1,16 @@
+[
+  {
+    "path": "tests/macro-integration/wp-01-service-crash-child.ts",
+    "source": "/tmp/rox-wp01-service-crash/proposed/tests/macro-integration/wp-01-service-crash-child.ts",
+    "sha256": "6d79c4a483519a30dadabdb463da059a769203648046eff1fe5c70f25345c211",
+    "checkoutState": "ABSENT",
+    "status": "PROPOSED_ONLY"
+  },
+  {
+    "path": "tests/macro-integration/wp-01-service-crash.test.ts",
+    "source": "/tmp/rox-wp01-service-crash/proposed/tests/macro-integration/wp-01-service-crash.test.ts",
+    "sha256": "20652eb2113bfdffdbd13325d194212dfa5a2d509c8d70499c8954d6735ef3ac",
+    "checkoutState": "ABSENT",
+    "status": "PROPOSED_ONLY"
+  }
+]

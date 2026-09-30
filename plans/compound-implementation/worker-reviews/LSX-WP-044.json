@@ -1,0 +1,303 @@
+{
+  "task_id": "LSX-WP-044-preflight",
+  "attempt_id": "cfbeba6a678353f4cd621c519c3ad2d2",
+  "packet_hash": "1ebc1e7ed695bb657edca25cde8aafb088bdd154bbcfc559a2015d53b4ac9e6e",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-044",
+  "featureComplete": false,
+  "mode": "READ_ONLY_PREFLIGHT_WITH_OWNED_REPORT",
+  "dependencies": ["LSX-WP-004", "LSX-WP-037", "LSX-WP-040", "LSX-WP-041"],
+  "evidenceStatus": {
+    "productBehavior": "NOT_RUN_NOT_VERIFIED",
+    "source": "Actual working-tree ranges inspected; whole-file SHA256 values obtained read-only with shasum. This is not feature implementation.",
+    "revisionBinding": "input_revision is the dispatch revision, not a independently verified clean checkout. No Git command was run. User reports root-owned uncommitted wave0 work; do not assume source is exclusively committed at input_revision.",
+    "manifestHashes": "Both dispatch manifest hashes matched the observed whole-file SHA256 values.",
+    "baselineComparison": "All five normative existing-code files inspected match their blob_sha256 values in the LSX-WP-044 record. The package also cites historical product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and linked published specs cite 249b3b44220bcfbd7d467de9cfc18f76e1c37807; these are not substitutes for the integration revision.",
+    "staleness": "Hashes bind the inspected snapshot only. Concurrent root integration may make this evidence stale after capture. Re-read affected symbols and rehash after the wave0 commit and each accepted prerequisite integration; line numbers must be refreshed before patches.",
+    "inspectionLimits": "Product reads limited to the package's normative source paths and direct imports. Referenced package/specification records were read locally. No builds, product tests, native UI, network effects, source edits, shared-file edits or Git mutations performed.",
+    "discoveryLimitations": [
+      "Codegraph reported no index for this project; built-in source tools used instead; no index created.",
+      "Two scoped find calls had all judge requests fail with OpenRouter 402; their no-hits output is not absence evidence. Recovered with explicit known-path grep/read; tool inconsistency reported.",
+      "Exact normative proposed new paths were checked with glob and were reported absent at inspection. Their baseline absence alone does not prove dependencies unavailable."
+    ]
+  },
+  "foundationGates": [
+    {
+      "id": "EG-FORMS",
+      "kind": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_DAG_EDGE",
+      "state": "READINESS_NOT_VERIFIED",
+      "evidence": "work-packages.json:172-177,15916-15920; RS-FORM-01.md:27-34,46-56,78-80",
+      "requiredReceipt": "Accepted Forms owner with immutable FormRevision fieldIDs, response ref/revision/schemaVersion, payload-read grant and atomic response+outbox commit. Verify a successful accepted event from authority, not a submit click.",
+      "hiddenCompatibilityGate": "Published Forms describes response.submitted; LSX-WP-044 proposes form.responseAccepted. Neither is present in the inspected AppEvent union. Require a registered, semantically verified alias and accepted-state contract; do not treat arbitrary submitted/queued events as accepted."
+    },
+    {
+      "id": "EG-ATTENTION",
+      "kind": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_DAG_EDGE",
+      "state": "READINESS_NOT_VERIFIED",
+      "evidence": "work-packages.json:132-137,16120-16129; 08-automation-integration.md:49,55; 07-domain-entity-model.md:189",
+      "requiredReceipt": "Existing durable notification/reminder owner (Macro WP-07), current assignee ACL/preferences, recipient-scoped delivery dedupe and authoritative assignment/delivery readback. No recipe-local notification engine."
+    },
+    {
+      "id": "EG-AUTOMATION",
+      "kind": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_DAG_EDGE",
+      "state": "READINESS_NOT_VERIFIED",
+      "evidence": "work-packages.json:156-161; graph.ts:1-6,385-488; RS-AUT-05.md:46-50,97,108-111",
+      "requiredReceipt": "Ready existing immutable workflow/run/step executor with durable receipts, pinned schema/version/principal, restart replay and terminal/repair errors. Current graph compiler is explicitly not a graph executor.",
+      "hiddenPublishedPrerequisites": ["RS-AUT-01", "RS-AUT-02", "RS-AUT-03", "RS-AUT-04"],
+      "hiddenCompatibilityGate": "RS-AUT-05 requires the Draft/PublishedRevision authority and legacy cutover from RS-AUT-01, not a second scheduler/table. Its sentence saying already implemented is not runtime proof; its handoff remains PLANNED_NOT_IMPLEMENTED. Debug, preview and draft edits must not activate this recipe."
+    },
+    {
+      "id": "RS-DRV-01_AND_RS-BASE-01",
+      "kind": "HIDDEN_PUBLISHED_FOUNDATION_NOT_ADDED_TO_EXPLICIT_DAG",
+      "state": "ACCEPTED_IMPLEMENTATION_RECEIPTS_NOT_INSPECTED",
+      "evidence": "RS-FORM-01.md:46,98,109-110; RS-BASE-01.md:28,46-56,98,109",
+      "requiredReceipt": "Forms publication depends on RS-DRV-01 and RS-BASE-01; Base itself depends on RS-DRV-01. Require canonical page/contentKind and child FormResponse registry/ACL, and Base native Task projection/query readback. A Base-local record containing copied Task values cannot satisfy this recipe.",
+      "scopeRule": "These are foundation readiness gates from linked published specifications, not additional LSX-WP-044 dependencies or permission to implement full Forms/Base/Drive here."
+    },
+    {
+      "id": "NATIVE_TASK_SOURCE_BINDING_AND_ASSIGNMENT_CAPABILITY",
+      "kind": "HIDDEN_NATIVE_DOMAIN_CAPABILITY_GATE",
+      "state": "MISSING_IN_INSPECTED_CORE_TYPES",
+      "evidence": "store.ts:32-54,158-204; types.ts:14-22,42-75; 07-domain-entity-model.md:31-33; work-packages.json:16079-16087,16120",
+      "requiredReceipt": "Accepted native Task owner adapter must expose typed create/source binding, scoped origin idempotency, durable receipt/ref/revision/hash and intended owner/assignment capability. CreateTaskInput has no assignee/owner/idempotency/expectedRevision; TaskLinkKind has no form-response member; PersonalTask has no assignee. Native identity must retain sourceStoreId/ownerPrincipalId/nativeId rather than infer owner from the current workspace.",
+      "resolution": "Request exact accepted creation/origin API from LSX-WP-037 and validation/receipt API from LSX-WP-004. LSX-WP-004 specifies patchFields/previewBatch/applyBatch, not a guaranteed create-with-origin API. Fail closed with missingDependency or blocked publish if assignment/source-link support is absent; do not drop owner, synthesize a fake TaskLink kind or write another task store."
+    },
+    {
+      "id": "SHARED_COMMAND_AND_RENDERER_REGISTRATION_SCOPE",
+      "kind": "HIDDEN_SCOPE_GATE",
+      "state": "NEEDS_DEPENDENCY_INTERFACE_OR_REVIEWED_PACKET_EXPANSION",
+      "evidence": "work-packages.json:16051-16072,16093-16107,16123-16125,16275; types.ts:15-54,219-225; schemas.ts:269-283,312-341; graph.ts:432-450",
+      "requiredReceipt": "LSX-WP-041 must supply extensible typed node/command registration and existing inspector wiring; LSX-WP-040 must supply event aliases/checkpoint outcomes. Server/renderer commands and locale changes are outside LSX-WP-044's two authorized shared paths. If dependency APIs cannot register the new schema/preview/apply action without other edits, update the reviewed packet before source changes."
+    },
+    {
+      "id": "REFERENCE_AND_INTEGRATION_LAUNCH_GATES",
+      "kind": "EXPLICIT_EXECUTION_GATES_SEPARATE_FROM_DAG",
+      "state": "NOT_RESOLVED_IN_THIS_PREFLIGHT",
+      "evidence": "execution-packages.json:3853-3856,3886-3896; work-packages.json:16265-16275",
+      "requiredReceipt": "Resolve reference_package_revision/digest from delivery manifest; verify spec_ref hashes; await lead wave0 commit and accepted dependency artifact+readback receipts; reconcile approved baseline/ancestor state without destroying user work; acquire exclusive serial leases for automation-system.ts and event-bus.ts. Integration proof must use the actual integrated revision."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/automations/recipes/form-native-task.ts",
+    "packages/core/src/bases/submission-task-mapping.ts",
+    "tests/lark-suite-extension/lsx-wp-044.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-044.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/submission-task-mapping.ts",
+      "symbols": ["SubmissionTaskMappingSchema (proposed)", "validateSubmissionTaskMapping (proposed)", "mapSubmissionTaskFields (proposed)"],
+      "change": "Define pure versioned typed field-ID mapping against the owner-verified pinned FormRevision and accepted native Task capability/validators. Map title, due, project and owner to native fields/commands; retain explicit date precision/timezone and native ref types. Reject removed fields, incompatible types, unsupported capabilities and unknown versions with diagnostics; rename preserves stable field IDs. No z.coerce/Number/String conversion bypass, natural-language quickEntry reinterpretation, independent persistence or Base-local Task rows.",
+      "prerequisite": "Use accepted LSX-WP-004 native validators, LSX-WP-041 schema/port contracts and EG-FORMS response schema. Proposed symbol names are design requests, not existing exports."
+    },
+    {
+      "path": "packages/shared/src/automations/recipes/form-native-task.ts",
+      "symbols": ["SubmissionTaskRequestSchema (proposed)", "SubmissionTaskResultSchema (proposed)", "SubmissionTaskErrorSchema (proposed)", "FormNativeTaskRecipe (proposed)"],
+      "change": "Implement previewSubmissionTaskMapping(input) as authorized side-effect-free validation and applySubmissionTaskMapping(eventId) as an existing executor step. Resolve event/response body from the Forms owner using authenticated workflow principal; verify accepted state, schema and mapping pinned version, recheck current ACL before each attempt, invoke native create-with-origin/source binding through the accepted Task adapter and use its durable receipt. Link the actual response ref without copying response contents into generic bus/log payloads. Use existing notification owner only for the permitted intended assignee. Record terminal/repair outcomes in the existing step authority, not a new recipe database.",
+      "originKeyContract": "Reuse native origin mapping, with an unambiguous versioned canonical tuple including workspace, fully scoped sourceFormRef, responseId, conversionKind and target Task source binding. Do not dedup by responseID alone, labels, bare eventID alone or process-memory Set. Workflow/schema revisions pin semantics but must not make replay create a second Task for the same origin.",
+      "notificationKeyContract": "Reuse durable common owner dedupe for the origin/assignment and intended recipient; crash between Task commit and notification must resume to one Task and one intended notification.",
+      "prerequisite": "Accepted LSX-WP-037 origin/create adapter, LSX-WP-040 durable event cursor/alias/checkpoint, LSX-WP-041 node/command registry, EG-AUTOMATION step executor and EG-ATTENTION. Exact dependency export names must be inspected after their integration."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-044.test.ts",
+      "symbols": ["LSX-WP-044 domain/property/seeded-control cases (proposed)"],
+      "change": "Exercise real accepted owner adapters: source-scoped response collisions, concurrent replay/crash checkpoints, one Task and notification, strict native validation, removed field invalidation, denied actor/source binding/assignee, stale schema/revision conflict, deleted response, unsupported offline, missing dependency, rate limit and unknown format. Preserve seeds and inputs. Mutate responseID-only dedup and Base-local Task creation separately and assert named semantic failures, not source-text or wiring assertions.",
+      "prerequisite": "Actual owner fixtures and exact accepted APIs, no adapter simulations used as owner proof."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-044.spec.ts",
+      "symbols": ["LSX-WP-044 actual Electron inspector workflow (proposed)"],
+      "change": "Use the discovered supported Electron runner to exercise the existing LSX-WP-041 inspector with live owner-backed Form mapping preview/publish blockers, Task/Base same-ref navigation, terminal repair and reload. Capture pointer/keyboard/IME/focus/help/reduced-motion/200% zoom/theme/Russian/all existing locale parity/actual loaded Rox Mono evidence.",
+      "prerequisite": "Dependency-provided inspector/command registration and actual Electron runner. No UI run or supported runner discovery performed in this read-only preflight; no invented passing command."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystemOptions; AutomationSystem.createHandlers; AutomationSystem.dispose",
+      "change": "After dependency integration, import the new recipe directly from ./recipes/form-native-task.ts (no handlers/index.ts patch). Add the existing-principal/owner-executor injection seam using the accepted dependency contracts and an optional recipe instance on AutomationSystem. Register the Form recipe via the existing LSX-WP-041 typed node registry and LSX-WP-040 accepted-event dispatch seam; wire results/errors to existing durable step history/repair rather than treating onError logging as a terminal receipt. At createHandlers attach only once, and dispose/unsubscribe before eventBus.dispose. Missing owner capability must prevent publish/execution, not look like success. Keep scheduler, config and other handlers unchanged.",
+      "reason": "This is the existing per-workspace orchestration owner. Current options inject native executors and createHandlers/dispose provide the lifecycle pattern; no Form recipe is registered. Shared path also belongs to LSX-WP-040, so the patch must be serial and based on its accepted changes.",
+      "currentEvidence": "automation-system.ts:41-74,80-118,298-374,635-658; meeting-followup-handler.ts:28-64",
+      "prerequisite": "Lead wave0 commit, accepted dependency receipts, exact injected runtime interface, exclusive shared-path lease. Proposed new option/recipe symbol names are not claims about current exports."
+    },
+    {
+      "path": "packages/shared/src/automations/event-bus.ts",
+      "symbol": "EventPayloadMap; WorkspaceEventBus.emit/on/off; KnowledgeDocumentEventPayload compatibility",
+      "change": "Use the LSX-WP-040 registered canonical accepted-Form alias and add only its narrowly typed envelope to EventPayloadMap using the existing domain envelope contract. Preserve eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId and legacy timestamp translation; do not reuse a KnowledgeDocument event as a fake Form event or add raw response fields to generic logs. Preserve KnowledgeDocumentEventPayload compatibility unchanged unless the accepted alias adapter explicitly needs an additive shared envelope. Durable consumer acknowledgement must depend on actual recipe StepReceipt: dropped/disposed emit and swallowed handler errors are not successful acknowledgements. Use the dependency's delivery outcome/checkpoint seam; if it does not exist, require reviewed serial patch at WorkspaceEventBus rather than return void as success.",
+      "reason": "The bus currently has no Form/Task lifecycle entry, no durable checkpoint, returns void on disposal/rate-limit drop and catches handler errors. A fulfilled emit promise therefore does not prove accepted delivery or native Task commitment.",
+      "currentEvidence": "event-bus.ts:25-31,134-164,200-217,224-290; types.ts:15-54; schemas.ts:269-283,374-383",
+      "prerequisite": "LSX-WP-040 verified aliases/checkpoints and EG-FORMS accepted-event semantics. AppEvent/APP_EVENTS must already recognize the alias through an approved prerequisite or expanded packet; no unsafe casts, unregistered event names or second event store."
+    }
+  ],
+  "integrationRequestsOutsideCurrentWriteScope": [
+    {
+      "path": "packages/core/src/tasks/personal/types.ts",
+      "symbol": "TaskLinkKind; TaskLink; PersonalTask",
+      "change": "Request the prerequisite Task-source authority's accepted source/ref/assignment contract. If that contract cannot represent FormResponseRef and permitted intended owner, propose an additive typed source-link/assignment capability through the domain owner and review a packet expansion before editing this file. Preserve canonical native identity and existing link kinds.",
+      "reason": "Current TaskLinkKind has no form response, TaskLink only kind/id/label and PersonalTask has no assignee; inventing a note link or silently dropping owner weakens the required output.",
+      "authorization": "READ_EVIDENCE_ONLY; NOT_AN_AUTHORIZED_LSX_WP_044_PATCH"
+    },
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "symbol": "AppEvent; APP_EVENTS; AutomationAction; AutomationGraphNodeKind",
+      "change": "Ask LSX-WP-040/041 integration owner to provide registered accepted Form event and extensible typed native-command node/action exports. If absent, submit an expanded reviewed packet for exact union/registry additions instead of bypassing them with casts.",
+      "reason": "EventPayloadMap alone cannot add an AutomationEvent; the current graph/action unions do not expose the required native Task node.",
+      "authorization": "DIRECT_IMPORT_READ_EVIDENCE_ONLY; NOT_AN_AUTHORIZED_LSX_WP_044_PATCH"
+    },
+    {
+      "path": "packages/shared/src/automations/schemas.ts",
+      "symbol": "AutomationGraphEventSchema; AutomationGraphNodeSchema; ActionDefinitionSchema",
+      "change": "Require LSX-WP-041's typed registry extension to cover this recipe's schemas. If it does not, request reviewed exact schema registration coordinated with the types/graph cutover; never use the unknown-action passthrough as validation or runnable native command support.",
+      "reason": "Graph validation rejects unknown event/node kinds while config loading tolerates unknown action payloads. Parseability is not execution support.",
+      "authorization": "DIRECT_IMPORT_READ_EVIDENCE_ONLY; NOT_AN_AUTHORIZED_LSX_WP_044_PATCH"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "registerAutomationsHandlers (normative dependency seam, not inspected here)",
+      "change": "Request LSX-WP-041/EG-COMMANDS accepted authenticated command registration for automation.previewSubmissionTaskMapping and automation.applySubmissionTaskMapping. If registration is not extensible from the owned recipe file, add this exact seam to a reviewed packet before implementing handlers.",
+      "reason": "Package requires server/renderer typed boundary APIs but allows shared patches only to automation-system.ts/event-bus.ts; this RPC seam is in LSX-WP-041's specification, not authorized by LSX-WP-044.",
+      "authorization": "SPECIFICATION_REQUEST_ONLY; SOURCE_NOT_INSPECTED; NOT_AN_AUTHORIZED_LSX_WP_044_PATCH"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/DocsBasesNodeInspector.tsx",
+      "symbol": "LSX-WP-041 inspector schema/preview integration (proposed dependency surface, not inspected)",
+      "change": "Request dependency-owned schema-driven preview and invalid-field/missing-capability publish blockers for the Form recipe. Reuse existing help/focus/theme/i18n mechanisms; locale keys must cover all 10 locales. If recipe registration cannot supply that UI declaratively, revise the reviewed packet rather than create a second inspector.",
+      "reason": "The LSX-WP-044 DoD explicitly requires a changed existing inspector but its allowed files include no renderer implementation or locale JSON file.",
+      "authorization": "SPECIFICATION_REQUEST_ONLY; SOURCE_NOT_INSPECTED; NOT_AN_AUTHORIZED_LSX_WP_044_PATCH"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "actual owner readback across Form→Task→Base",
+      "currentEvidence": "work-packages.json:16165,16169; PersonalTaskStore.create/get/list (store.ts:150-204); types.ts:42-75; 08-automation-integration.md:55; 05-rox-bases-design.md:98-103,203. create puts one in-memory native Task and links source, but no Form recipe or owner-chain readback was exercised.",
+      "seam": "FormNativeTaskRecipe (proposed owned recipe) → accepted LSX-WP-037 native create/source adapter → LSX-WP-004 owner receipt → existing Base native projection",
+      "requiredChange": "Resolve authoritative accepted response, strictly map its pinned fields, create exactly one native Task with actual source response link and return native ref/revision. Base query must resolve that exact scoped Task, not create a Base record containing task values.",
+      "verification": "In owner-backed isolated scope submit a real authorized Form response, apply recipe, resolve Form source response, native Tasks and Base projection; compare full scoped refs and revision/hash. Repeat after reload/restart and exercise opening source/Task from the existing UI.",
+      "missingPrerequisite": "EG-FORMS, accepted native create/source-binding API from LSX-WP-037/004, permitted Base query adapter and external foundation readback receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "native field validators no string coercion bypass",
+      "currentEvidence": "work-packages.json:16166,16170; CreateTaskInput (store.ts:32-54) types dueAt:number/projectId:string but create only trims/checks title and assigns dueAt/projectId (158-196); update Object.assign (207-214). TypeScript types alone are not runtime validation.",
+      "seam": "mapSubmissionTaskFields (proposed) plus LSX-WP-004 accepted native validator invoked by the Task create command",
+      "requiredChange": "Validate typed title/due/project/owner against pinned Form schema and native capabilities before preview/publish/apply. Reject incompatible field IDs, numeric/date strings passed as native timestamps, invalid refs and unsupported ownership; do not use quickEntry parsing or coercion to make invalid submissions succeed.",
+      "verification": "Positive typed title/date/project/owner case; reject removed field, incompatible renamed schema, string timestamp, invalid/null/unknown-format value and owner/project ref outside capability/ACL. Prove no Task/notification side effect for rejected mapping. Renaming a stable field ID must remain valid; deleted ID must block publish.",
+      "missingPrerequisite": "Accepted Form field type semantics, native validator/create support and LSX-WP-041 mapping schema/capability registry; owner assignment is absent from inspected Task types.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:16090-16107,16171; graph.ts:90-99,538-566 has schema validation/CAS for graph saves; event-bus.ts:25-31 has workspaceId/timestamp but no authenticated principal enforcement. The two requested submission APIs are only PROPOSED.",
+      "seam": "SubmissionTaskRequestSchema/ResultSchema/ErrorSchema (proposed recipe) registered through LSX-WP-041 command registry; SubmissionTaskMappingSchema (proposed core mapping)",
+      "requiredChange": "Use shared request/result/error contracts at both boundaries, with exact discriminants validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Preview is effect-free. Apply accepts eventId and resolves response internally. Actor/workspace/policy and permitted owner binding come from authenticated transport/current workflow principal, never payload actor/owner/workspace.",
+      "verification": "After implementation compile actual server+renderer boundaries; exercise each typed error with owner-backed scenarios. Spoof actor/workspace/owner in request and confirm denial/no source leakage; revoked workflow principal is denied on retry. Keep preview free of Task/link/notification writes.",
+      "missingPrerequisite": "LSX-WP-041/EG-COMMANDS extensible authenticated command registration and exported validator contracts; RPC/renderer shared paths require a reviewed expanded packet if not already supported.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "work-packages.json:16172; store.ts:73-86,158-204 returns an in-memory Task and exportJson only serializes; no durable receipt in CreateTaskInput/PersonalTask. WorkspaceEventBus.emit (240-290) returns void, drops at rate limit/disposal and catches errors. 07-domain-entity-model.md:180-189 requires atomic content+receipt+outbox and consumer checkpoint.",
+      "seam": "Accepted native Task command/origin transaction → existing EG-AUTOMATION StepReceipt → LSX-WP-040 durable consumer acknowledgement",
+      "requiredChange": "Keep Task/source binding/origin idempotency/owner receipt in native authority and atomically commit notification intent through common outbox or its supported recovery journal. Acknowledge accepted event only on persisted step/native receipt; use existing readback to validate exact scoped ref/revision/hash. A fulfilled bus emit or callback is not that receipt.",
+      "verification": "Crash before Task commit, after Task commit/before checkpoint, and after notification intent/before acknowledgement; restart actual owner/executor and replay event. Compare persisted response, origin mapping, native Task ref/revision/hash and recipient delivery receipt; exactly one Task and notification per origin.",
+      "missingPrerequisite": "Accepted LSX-WP-004/037 atomic native creation/origin transaction, LSX-WP-040 durable outcome/checkpoint and EG-AUTOMATION/ATTENTION readiness receipts. Do not fabricate receipt from exportJson.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:16139-16141,16173; store.ts:198-200 deduplicates links only inside a Task, not duplicate task creation; event-bus.ts:226-229 has process-memory handler/rate-count Maps, not origin receipt persistence. No product tests run in preflight.",
+      "seam": "tests/lark-suite-extension/lsx-wp-044.test.ts (proposed) using native accepted owner adapters, not a replacement task store",
+      "requiredChange": "Cover happy path, Forms read denial, Task create/binding denial, intended assignee denial, stale schema/revision conflict, replay after crash, removed mapped field, and different forms sharing a responseID. Record each attempt/terminal repair and seed. Concurrent duplicate deliveries must share the native origin result.",
+      "verification": "Run normative bun test tests/lark-suite-extension/lsx-wp-044.test.ts after approved implementation and integration. Separately run actual native owner persistence/restart scenario. Retain input SHA256, exact seed, expected/observed refs/revisions, denied outputs and failed attempts.",
+      "missingPrerequisite": "Committed implementation and all accepted owner/ACL/executor dependencies. Artifact validation alone is not this verification.",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:16154-16162,16174 requires responseID-only dedup or Base-local creation mutant; source-scoped identities mandated by 07-domain-entity-model.md:31-33. No baseline/mutant was executed.",
+      "seam": "Owned LSX-WP-044 test cases and recipe origin adapter integration",
+      "requiredChange": "Prepare isolated reproducible owner fixtures with two source forms sharing responseID, duplicate same-origin deliveries and a native Task/Base projection. Evaluate separate mutants for responseID-only dedup and Base-local Task creation on exact tested bytes.",
+      "verification": "Green real implementation baseline, then mutant must fail source-scoped submissions distinct, one native Task/event notification per origin, or Base ref equals Tasks ref as appropriate. Retain seed/input/artifact hashes and assertion messages. A runner/import/timeout failure does not count as semantic mutant rejection.",
+      "missingPrerequisite": "Real integrated owner-backed implementation, isolated accepted fixture support and mutation/evaluation harness under lead authorization.",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "work-packages.json:16123-16125,16175; LSX-WP-041 proposes DocsBasesNodeInspector.tsx (14856-14857). Current graph.ts/schema supports only prompt/webhook executable authoring. No renderer/UI inspected or run outside the authorized source scope.",
+      "seam": "Dependency-owned existing node inspector/typed recipe registration; owned tests/lark-suite-extension/ui/lsx-wp-044.spec.ts",
+      "requiredChange": "Expose live schema mapping diagnostics and side-effect-free preview in the existing inspector; removed field or missing owner capability blocks publish with exact reason. Show terminal/repair errors through existing run surface. Reuse t(), Russian default, all ten locales, user theme and Rox Mono; add no second UI surface.",
+      "verification": "Discover supported actual Electron runner after gates open. Capture actual owner-backed pointer mapping/publish/reload, keyboard/IME/focus/help, reduced motion, 200% zoom, preserved light/dark user theme, Russian and locale parity, ARIA and actual computed/loaded Rox Mono font. Confirm preview/debug/closing review do not activate workflow. Record screenshot hashes and tested integrated revision.",
+      "missingPrerequisite": "Accepted LSX-WP-041 existing inspector/registry extensibility, UI command transport/localization integration and supported real Electron runner. Scope amendment required for renderer/locale changes not supported declaratively; not N/A.",
+      "state": "PLANNED_NOT_RUN_SCOPE_GATE"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:16145-16152,16176,16255-16272 explicitly separates SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI. All are unexecuted for this package in this preflight.",
+      "seam": "Lead integration acceptance of recipe/native adapter/inspector on exact committed revision",
+      "requiredChange": "Produce separate lane receipts, exact base/implementation diff, schema report, seeds/mutant assertions, native owner readback before/after restart and actual UI artifacts. Bind receipt validity to integrated revision and redact by actor. Provider/collaboration lanes are additionally required if actually exercised; queued external effects never establish external success.",
+      "verification": "Lead checks every required lane's expected/observed behavior, artifact SHA256, native ref/revision/hash and integration revision, then reruns authoritative integrated owner readback. This JSON and its structural checker are evidence of preflight delivery only.",
+      "missingPrerequisite": "Implementation, accepted foundation/dependency receipts, serial integration and observed lane artifacts. No feature completion claim is made.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Duplicate accepted event one Task and one notification; notification only intended permitted assignee; validation errors visible terminal/repair.",
+      "currentEvidence": "work-packages.json:16120-16129; 08-automation-integration.md:49,55; store.ts:158-204 has no assignment/dedupe command; WorkspaceEventBus.emit catches errors (270-285).",
+      "seam": "Native origin receipt + existing EG-ATTENTION notification owner + EG-AUTOMATION error/repair authority",
+      "requiredChange": "Use durable origin key and recipient-scoped assignment dedupe, verify native assignment support/current ACL and recipient preference before intent/delivery. Persist meaningful typed validation/terminal/repair outcomes in the existing executor; do not rely on swallowed bus exceptions or broadcast to workspace members.",
+      "verification": "Replay/concurrent/crash cases produce one owner Task, one permitted assignee intent/delivery and no viewer/other-member notification. Denied/revoked assignee and invalid fields produce observable typed terminal/repair outcome with no unauthorized effects or hidden response body.",
+      "missingPrerequisite": "Native assignment/source-link capability, EG-ATTENTION readiness and durable executor outcome/repair interface.",
+      "state": "NOT_IMPLEMENTED_NOT_RUNTIME_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"CreateTaskInput; PersonalTaskStore.snapshot/exportJson/get/create/update","lineStart":32,"lineEnd":214,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"TaskLinkKind; TaskLink; PersonalTask","lineStart":14,"lineEnd":75,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystemOptions; AutomationSystem constructor","lineStart":41,"lineEnd":118,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.createHandlers","lineStart":298,"lineEnd":374,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.dispose","lineStart":635,"lineEnd":658,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/event-bus.ts","symbol":"EventPayloadMap; EventBus; WorkspaceEventBus.emit","lineStart":134,"lineEnd":290,"sha256":"1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"compileGraph; compileAutomationGraph","lineStart":385,"lineEnd":494,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"buildAutomationGraphSave; parseSaveAutomationGraphPayload","lineStart":538,"lineEnd":567,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AppEvent; AutomationEvent; APP_EVENTS","lineStart":15,"lineEnd":54,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AutomationAction; AutomationGraphNodeKind","lineStart":219,"lineEnd":323,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"ActionDefinitionSchema","lineStart":152,"lineEnd":166,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"AutomationGraphEventSchema; AutomationGraphNodeSchema; AutomationsConfigSchema","lineStart":269,"lineEnd":383,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/shared/src/automations/handlers/meeting-followup-handler.ts","symbol":"MeetingFollowupExecutor; MeetingFollowupHandler.subscribe/dispose/handleEvent","lineStart":28,"lineEnd":88,"sha256":"6f5427b03240b58fa5a179d3bdc2c717a001bfbd9642526774ed37940edb78c2"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-044 execution record","lineStart":3808,"lineEnd":3897,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"LSX-WP-044 /work_packages/43","lineStart":15892,"lineEnd":16276,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"external_prerequisite_gates EG-ATTENTION/EG-COMMANDS/EG-AUTOMATION/EG-FORMS","lineStart":131,"lineEnd":177,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"docs/rox-suite/published/RS-FORM-01.md","symbol":"Form authority; API; permissions; published dependency links","lineStart":44,"lineEnd":114,"sha256":"c30ab28cf3014ed22e6e7c80bbba47fb7cbddbc3e5f3b5361dc48a360a2515d8"},
+    {"path":"docs/rox-suite/published/RS-AUT-05.md","symbol":"RS-AUT-01 authority reuse; immutable publication; dependency links","lineStart":44,"lineEnd":115,"sha256":"d744861d35de4c46df3de25d7649341414f1d22a5cd111ec19736682bce8aa75"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Native projections; shared authority; RS-DRV-01 dependency","lineStart":44,"lineEnd":113,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path":"docs/lark-suite-reference/08-automation-integration.md","symbol":"Section 4 Form→native Task recipe; registered domain/notification semantics","lineStart":34,"lineEnd":57,"sha256":"32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"Section 9 canonical mutation/readback and TaskNotes source mapping","lineStart":195,"lineEnd":216,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Source-scoped personal Task identity","lineStart":24,"lineEnd":33,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Section 8 event envelope/atomic receipt/outbox/checkpoint","lineStart":169,"lineEnd":189,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reviews this artifact and resolves prerequisite interface/ownership requests; worker has no source implementation authorization.",
+    "implementationOrder": [
+      "Await the lead's wave0 commit. Resolve reference delivery manifest and verify specification hashes against the approved integration baseline; refresh any source evidence changed by root integration.",
+      "Accept LSX-WP-004, then LSX-WP-037 and LSX-WP-040 according to their own DAGs, then LSX-WP-041 (depends on LSX-WP-040); require artifact+authoritative readback receipts for all four, not final messages.",
+      "Verify EG-FORMS/EG-ATTENTION/EG-AUTOMATION and hidden published prerequisites. Obtain exact native create/origin/source-link/assignment, durable checkpoint/step and typed node/command/inspector registration exports. Reconcile response.submitted versus form.responseAccepted aliases.",
+      "If these interfaces do not cover server/renderer/assignment/type/schema changes, submit the precise reviewed scope amendments before editing. Acquire shared-path leases for the two authorized integration patches.",
+      "Implement the four normative new files, apply reviewed serial shared patches, then collect all six required proof lanes and seeded semantic negative controls on the integrated revision with native readback before/after restart."
+    ]
+  },
+  "risks": [
+    "Source can change during root integration; this report is a hashed snapshot, not proof of current clean HEAD or dependency acceptance.",
+    "Form submit click, published issue status or queued mapping result is not the verified accepted response event required for Task creation.",
+    "Published Forms and recipe event names differ; unverified alias may trigger before accepted durable response or never trigger.",
+    "Existing PersonalTaskStore.create returns mutable in-memory data and lacks origin dedupe/assignee/durable revision receipt. Reusing it directly as production authority would underdeliver.",
+    "Expected LSX-WP-004 patchFields contract does not itself guarantee a create-with-origin or assignment API; creation/source binding must be explicitly established with LSX-WP-037/native owner.",
+    "Current TaskLink cannot directly type a FormResponseRef; fake note links or copied response text would lose provenance/ACL. Request owner-supported typed source binding rather than casts.",
+    "Event bus rate limit is 10 events/minute for non-SchedulerTick events; it drops and resolves void, and handler failures are swallowed. Advancing a durable outbox cursor from emit success would lose submissions.",
+    "Unknown-action config passthrough is not native validation or execution; graph currently accepts only registered event and prompt/webhook executable paths.",
+    "ResponseID-only dedup merges distinct source forms. Dedup by eventID alone or workflow revision may duplicate the same origin across repeated accepted events/replay.",
+    "Task commit, source binding, event acknowledgement and notification delivery have crash boundaries; process-memory dedup cannot satisfy restart recovery or one intended notification.",
+    "Task IDs are source-store/owner scoped; current workspace inference or Base-local copies would leak personal tasks and violate canonical identity.",
+    "The allowed shared files do not include command RPC, renderer inspector, locales, task types or schemas. Dependency extensibility or reviewed scope expansion is mandatory; no silent feature reduction.",
+    "Native intended-assignee capability is absent in inspected core types. Dropping owner mapping or notifying every workspace member is not an acceptable fallback.",
+    "UI criteria are mandatory for this specified inspector change; isolated fixture UI, structural report validation and toast success cannot close the package."
+  ]
+}

@@ -26,6 +26,8 @@ import {
   isEmptyDiff,
   isPersonalTasksApi,
   pushPersonalTaskDiff,
+  putPersonalTaskConfirmed,
+  PersonalTaskCreationError,
   type PersonalTasksApi,
 } from './personal-tasks-sync'
 
@@ -159,6 +161,33 @@ async function syncBundle(remote: PersonalTasksApi, next: PersonalTaskBundle): P
     }
   }
   emit()
+}
+
+/** Home quick-add commits to the existing cache only after native ACK. */
+export async function persistPersonalTaskConfirmed(task: PersonalTask): Promise<void> {
+  const remote = api()
+  if (!remote) throw new PersonalTaskCreationError(task, new Error('Native personal task storage unavailable'))
+  syncState = 'syncing'
+  try {
+    const accepted = await putPersonalTaskConfirmed(remote, task)
+    // A server push or another screen may have updated the shared store while
+    // this write was in flight. Acknowledge only this ID and preserve other edits.
+    const latest = loadPersonalTaskStore().snapshot()
+    const next = { ...latest, tasks: [...latest.tasks.filter((entry) => entry.id !== accepted.task.id), accepted.task] }
+    revisions[accepted.task.id] = accepted.revision
+    if (synced) {
+      synced = { ...synced, tasks: [...synced.tasks.filter((entry) => entry.id !== accepted.task.id), accepted.task] }
+    }
+    currentBundle = next
+    persistPersonalTaskCache(kv(), new PersonalTaskStore(next), loadStatus)
+    syncState = syncConflicts.length > 0 ? 'error'
+      : synced && isEmptyDiff(diffPersonalTaskBundles(synced, next)) ? 'synced' : 'syncing'
+    emit()
+  } catch (cause) {
+    syncState = 'error'
+    emit()
+    throw cause instanceof PersonalTaskCreationError ? cause : new PersonalTaskCreationError(task, cause)
+  }
 }
 
 async function refreshFromServer(remote: PersonalTasksApi): Promise<void> {

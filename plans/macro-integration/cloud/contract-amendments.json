@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "status": "PROPOSED_REVISION_3_CONTRACT_SUPPLEMENT",
+  "precedence": "Revision3 leaf screen contracts and this supplement refine original primary schemas. Worker extends shared contracts/tests before accepting a new field; aliases below are adapters to one canonical dispatcher, never new tables/ACL/outbox authorities.",
+  "dispatcherAliases": [
+    {"wrapper": "message.post", "canonicalOperation": "message.create", "inputMapping": "parent/body/threadRoot/attachments unchanged; mentions extracted/validated through shared mention resolver", "owner": "WP-08"},
+    {"wrapper": "message.postCompanyDiscussion", "canonicalOperation": "message.create", "inputMapping": "company→parent; body/mentions/threadRoot passed; attachments default[]; parent kind verified crm-company or explicit contact wrapper", "owner": "WP-25"},
+    {"wrapper": "PostMessage / PostEntityDiscussion", "canonicalOperation": "message.create", "inputMapping": "typed MessageParent EntityRef→parent, richbody serialized editor-neutral; identical recipient/dedupe/policy semantics", "owner": "WP-08"},
+    {"wrapper": "document.comment", "canonicalOperation": "message.create", "inputMapping": "document→parent, anchor/sourceRevision validated and stored as message anchor metadata; wrapper returns shared Message ref; no new comment message table", "owner": "WP-15"},
+    {"wrapper": "preferences.setFavorite", "canonicalOperation": "favorite.set", "inputMapping": "ref/favorite mapped to original request fields; preference scoped actor", "owner": "WP-40"},
+    {"wrapper": "file.finalizeUpload", "canonicalOperation": "file.finalize", "inputMapping": "uploadId/partReceipts/sha256 map to upload manifest/checksum primary schema; add typed manifest validation", "owner": "WP-39"},
+    {"wrapper": "canvas.patchRevision", "canonicalOperation": "canvas.save", "inputMapping": "pageRef/file/expectedRevision; whole-file CAS only", "owner": "WP-43"},
+    {"wrapper": "sheet.setCell", "canonicalOperation": "spreadsheet.editCell", "inputMapping": "pageRef/address/value/expectedRevision; same formula engine", "owner": "WP-42"},
+    {"wrapper": "session.publishExport", "canonicalOperation": "session.shareAuthorized", "inputMapping": "projectionId/digest/audience/expiry reviewed provenance projection, never raw stored Session JSON", "owner": "WP-50"},
+    {"wrapper": "agent.executeCommand", "canonicalOperation": "agent.invokeDomain", "inputMapping": "previewId/contentDigest/executionGrant to invocation with validated current typed domain payload", "owner": "WP-36"},
+    {"wrapper": "crm.company.setOwner / crm.company.setRevenue", "canonicalOperation": "crm.updateCompany", "inputMapping": "validated property patch; owner doesn't change ACL; Money minor integer currency and null/unset distinct zero", "owner": "WP-24"}
+  ],
+  "taskSourceTransfer": {
+    "owner": "WP-11",
+    "primaryOperation": "task.createFromMessage",
+    "default": "title/body manually authored; no auto-derived private source excerpt to wider audience",
+    "requestSchemaExtension": {
+      "sourceTransfer": {
+        "oneOf": [
+          {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {"kind": {"const": "backlink_only"}}},
+          {"type": "object", "additionalProperties": false, "required": ["kind", "decisionId", "contentDigest", "sourceRevision", "audiencePolicyRevision"], "properties": {"kind": {"const": "approved_export"}, "decisionId": {"type": "string", "minLength": 1}, "contentDigest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "sourceRevision": {"type": "string", "minLength": 1}, "audiencePolicyRevision": {"type": "integer", "minimum": 1}}}
+        ]
+      },
+      "body": {"type": "string", "maxLength": 10000}
+    },
+    "serverConstraints": ["export/declassify decision server signed and source policy permitted", "bind actor/source ref/revision/content digest/audience policy/version and expiry", "changing source/audience/revision invalidates preview", "caller cannot attest its own policy/export permission", "backlink_only never copies source body to Task/search/push/agent projections"],
+    "errors": ["source_denied", "export_not_permitted", "export_decision_stale", "content_digest_mismatch", "audience_policy_changed"],
+    "negative": "A can read private Message, assignedB cannot; unique private marker absent in Task/title/body/push/search/agent unless separately policy-approved signed export. Removal of decision validation fails seeded test."
+  },
+  "separateOperations": [
+    {"canonicalOperation": "calendar.event.rsvp", "owner": "WP-28", "reason": "Own-attendee write must not grant organizer field edit; typed result/capability/errors in CAL02"},
+    {"canonicalOperation": "notification.setRead", "owner": "WP-07", "reason": "Read state distinct markDone/dismiss/snooze and agent approve/deny. Both operations share attention primitive, not aliasing semantics."},
+    {"canonicalOperation": "consent.record / consent.bindLocalUpload", "owner": "WP-33", "reason": "room consent and final artifact checksum/audience binding discriminated; leafMTG06 normative contract"}
+  ],
+  "invariantTests": ["one registered canonical dispatcher per alias family", "same parent resolver/principal namespace/outbox notification dedup", "wrong alias parent kind denied", "no automatic sharing from mention/link", "all target extra fields added to compiled schemas and endpoint tests before UI dispatch"]
+}

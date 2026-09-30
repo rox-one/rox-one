@@ -1,0 +1,376 @@
+{
+  "task_id": "RS-FORM-01-preflight",
+  "attempt_id": "d36accc225845ab0da99caebb9325921",
+  "packet_hash": "61ece51328826171a7a7dc692567f27b243ace5c418fac49340a0b773fe33a8d",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-FORM-01",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; artifact-only write",
+  "workTier": "bounded-workflow within an already dispatched independent worker",
+  "dependencies": ["RS-DRV-01", "RS-BASE-01"],
+  "dependencyEvidence": {
+    "path": "plans/rox-suite/issues.json",
+    "lineStart": 168,
+    "lineEnd": 198,
+    "githubIssue": 1095,
+    "dependencyIssueNumbers": [1109, 1094],
+    "distinction": "The dispatch packet depends_on=[] schedules this preflight only. It does not remove the normative implementation dependencies. Implement only after the lead's wave0 commit and accepted RS-DRV-01 and RS-BASE-01 receipts."
+  },
+  "inspectionLimits": {
+    "sourceScope": "Published RS-FORM-01 specification, exact issues record, named Pages/platform/event-bus seams and their direct Page types/routes/renderer/locale integrations. No broad search of unrelated packages.",
+    "operations": "Read/grep/find/glob plus read-only shasum; only this report was written. No product, test, manifest, progress, shared source or Git mutation; no build, test, native UI or network run.",
+    "codegraph": "Attempted project-scoped codegraph_explore; it reported no .codegraph index. Used permitted built-in inspection instead; did not initialize or upgrade.",
+    "findFallback": "Scoped find for Page detail rendering failed with the search judge's HTTP 402; scoped literal grep found PageView and PageFrame instead.",
+    "revisionBinding": "input_revision is the dispatch baseline, not a claim that inspected working-tree bytes equal committed HEAD. Root-owned uncommitted wave0 work was preserved. Whole-file hashes below bind this inspection; they must be checked again against the lead's committed integration revision. Hashing was not an atomic repository snapshot.",
+    "runtimeEvidence": "None: runtime, builds, tests and UI were forbidden for this preflight. All verification entries below are proposed acceptance work, not executed PASS results.",
+    "artifactVerification": "Report JSON parsed successfully with all required fields, 4 normative new files, 13 acceptance rows, 8 foundation gates, 9 shared patch requests and 17 source references. Read-only delivery comparison checked 15 unique source files; no product verification or packet verification runner was executed.",
+    "staleEvidenceAtDelivery": [
+      {
+        "path": "packages/shared/src/i18n/locales/ru.json",
+        "inspectedSha256": "00f1c379fb222ea3cb0c4408c561ab44b2bf2c20e58bd0454f413d63e59dd496",
+        "observedDeliverySha256": "b86080eb92eea97bca6f14acb6910e41a3a6651581b91e4327e87f8cedb86d3c",
+        "state": "STALE_EVIDENCE",
+        "impact": "Concurrent root integration changed the Russian locale after inspection. Retain the inspected hash and line references as historical evidence only; root must re-read current locale keys/line numbers before applying the locale patch request. The other 14 unique inspected files matched at this comparison, not an atomic final snapshot."
+      }
+    ]
+  },
+  "foundationGates": [
+    {
+      "id": "FG-AUTHORITY-HOST",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:46-52,62-67",
+      "currentEvidence": "apps/workspace-service does not exist in the inspected tree. platform-contract.ts:592-609 authorizeRox2Action matches actor plus permission only, without resource/action-scoped publication grants or trusted request context. The proposed form-service path is not an existing runnable service seam.",
+      "requiredPrerequisite": "Lead must provide the actual shared authority host, schema/command registry, trusted session-derived actor/workspace/policy context and transaction interface after wave0. Register form.saveDraft/publish/submit/listResponses/mapResponse there; do not invent a parallel server/store or accept renderer actorId. Agree how the normative new form-service module is hosted.",
+      "integrationOwner": "lead/shared foundation owner; Forms implements domain handlers after accepted authority interfaces"
+    },
+    {
+      "id": "FG-PAGE-CONTENT-MIGRATION",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:46",
+      "currentEvidence": "core/types/page.ts:35 defines PageKind as static/interactive/live; PageConfig:294-320 has no contentKind. shared/pages/types.ts:71-81 has HTML creation input only. PageView:79-111,387-437 assumes contentDigest/HTML lease before render.",
+      "requiredPrerequisite": "Accepted canonical Page schema migration and registry must add contentKind=form independently of PageKind/CSP, preserve Page ID/slug/grants, and define FormRevision/Publication/Response child identity and ACL. Document remains payload, never a new ref/store. Do not route Forms via an unrelated form entity library.",
+      "integrationOwner": "lead canonical domain owner with RS-DRV-01/RS-BASE-01 interfaces"
+    },
+    {
+      "id": "FG-TRANSACTION-OUTBOX",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:33-34,50,56",
+      "currentEvidence": "WorkspaceEventBus:224-228 holds handlers/rate counters in memory; emit:246-258 can drop events, and :270-285 catches handler errors. EventPayloadMap and AppEvent have no response.submitted. This is not durable exactly-once intake or transactional notification delivery.",
+      "requiredPrerequisite": "Shared persisted transaction/outbox and deduplicating dispatcher/consumer receipts: atomic Response plus outbox, unique submission key and mapping key, durable operation receipt, restart recovery and provider delivery status separate from domain acceptance. Reuse the existing automation/notification engine; do not implement a Forms-specific engine. Shared policy must reconcile event-bus throttling/drop behavior with non-lossy intake delivery.",
+      "integrationOwner": "lead activity/outbox/automation foundation owner; not a newly inferred explicit RS-AUT-01 edge"
+    },
+    {
+      "id": "FG-SAFE-PUBLIC-INTAKE",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:28,34,46,50",
+      "currentEvidence": "PageShareInfo:231-257 describes an existing Cloudflare view capability. SharePageDialog:97-105 states public copies are view-only for privileged actions. runPublish:147-165 publishes optional snapshots/password, not a scoped submit API. PageFrame's per-frame limiter is not public-server abuse control.",
+      "requiredPrerequisite": "Shared publication authority must support hashed expiring resource/action-scoped submit tokens, internal/scopedlink audiences, revoke, atomic max-submission enforcement, server rate limiting/challenge and retention confirmation. Public read payload is revision-safe schema only: no response data, mappings, private fields or reviewer capabilities.",
+      "integrationOwner": "lead public authority/publication owner; provider lane only when actual external publication occurs"
+    },
+    {
+      "id": "FG-ATTACHMENT-APPROVAL",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:22,28,34,46",
+      "currentEvidence": "Normative requirement explicitly reuses Attachment/Approval commands. Inspected PageActionGrant is a source-action grant, not a quarantine/scan receipt. Attachment scanner and common command implementation paths were not in the allowed inspected imports; their availability is unverified.",
+      "requiredPrerequisite": "Accepted shared Attachment command interface with workspace/public-upload authorization, size/type validation, quarantined state, scan result and safe download ACL; Approval interface where policy requires it. Do not present a fake scan or let pending/unsafe uploads reach mapped entities or global snapshots.",
+      "integrationOwner": "lead shared Attachment/Approval owners"
+    },
+    {
+      "id": "FG-MAPPING-CONTACTS",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:5,29,33,46",
+      "currentEvidence": "PagesHome creates a generic Page and PageView renders HTML. Neither contains a CustomRecord/HelpDeskTicket mapping contract. Base and Help Desk command/verified-contact interfaces were not inspected outside allowed scope.",
+      "requiredPrerequisite": "Accepted RS-BASE-01 CustomRecord and verified contact resolution APIs, plus a HelpDeskTicket intake command/interface if that optional mapping is enabled. Drive create, Base Form view and Help Desk intake must consume the same renderer/submit contract. No client-supplied ownerId/contact claim is authoritative.",
+      "integrationOwner": "RS-BASE-01/RS-DRV-01 owners and lead Help Desk integration owner; no inferred Help Desk DAG dependency"
+    },
+    {
+      "id": "FG-ACL-INDEX-REVOKE",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:46,50-56,86",
+      "currentEvidence": "Rox2EntityRef:232-239 is workspace scoped; Rox2ActorGrant:592-609 is not resource scoped. pagesAtom:17 is the existing library store, but has no response/reviewer revocation policy. Common index, subscriptions and MCP command-adapter locations are not established by this scoped inspection.",
+      "requiredPrerequisite": "Lead supplies accepted EntityRef/child schema registry and common grant, ACL-aware search/mentions/links, activity and agent command adapters with revocation hooks. Responses inherit private intake ACL, require reviewer authority and are excluded from global PII indexing. Revoke invalidates writes/subscriptions/caches across UI/RPC/IPC/MCP/provider.",
+      "integrationOwner": "lead shared authority/index/agent owners"
+    },
+    {
+      "id": "FG-ACCEPTANCE-LANES",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-FORM-01.md:87-93",
+      "currentEvidence": "All four normative proposed new files are absent. No feature proof was run. Published cloud handoff says the old 52-WP manifest does not automatically authorize this RS package.",
+      "requiredPrerequisite": "Accepted current RS packet/scheduler ownership, Linux domain/renderer execution lane, actual Electron visual/ARIA/theme/font lane and independent review. External provider lane needs real external-effect readback, not a fixture receipt. Lead binds exact diff/source commit/log hashes and migration/rollback to the tested revision.",
+      "integrationOwner": "lead integration and verification owners"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/forms/contracts.ts",
+    "apps/workspace-service/src/modules/forms/form-service.ts",
+    "apps/electron/src/renderer/components/forms/FormBuilder.tsx",
+    "tests/rox-suite/forms/intake.spec.ts"
+  ],
+  "ownedNewFilePlan": [
+    {
+      "path": "packages/shared/src/forms/contracts.ts",
+      "proposedSymbols": ["FormRevision", "FormField", "FormCondition", "FormPublication", "FormResponse", "FormMappingResult", "FormSubmitInput", "FormCommandResult"],
+      "change": "Define immutable stable field IDs; typed short/longtext,email,numeric,date,choice,multi-choice,attachment,internal entitypicker fields; required/min/max/options and a bounded non-executable conditional AST. Define pinned revision, idempotencyKey, operationId/expectedRevision mutation envelope, private child refs, publication policy, validation errors and queued/succeeded/failed mapping status. Validate unknown fields/disabled conditional fields under the pinned version without eval/scripts. All symbol names are proposed, not existing exports.",
+      "prerequisite": "Accepted common schema/registry/EntityRef/command types; no Forms-owned replacement identity system."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/forms/form-service.ts",
+      "proposedSymbols": ["FormService.saveDraft", "FormService.publish", "FormService.submit", "FormService.listResponses", "FormService.mapResponse"],
+      "change": "Implement the five proposed commands under the shared authority: session-derived actor/workspace, optimistic revisions, immutable published schema, policy validation, scoped token checks, atomic submission quotas/idempotent Response+outbox, reviewer queries and exports, verified contact resolution and idempotent mapping with separate durable status/receipt. Reuse Attachment, Approval, Automation and target entity commands.",
+      "prerequisite": "apps/workspace-service is absent; root must deliver/approve the host and transaction/registry interfaces first. Do not fabricate an independent workspace service to satisfy the path."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/forms/FormBuilder.tsx",
+      "proposedSymbols": ["FormBuilder", "FormRenderer"],
+      "change": "Provide palette/ordered editor/properties panes and draft/publish/preview header, plus reusable typed schema renderer exported from the same normative file until approved ownership says otherwise. Implement all question types, conditional branching preview, response table/filter/export/drawer, safe receipt and mapping status; internal-only entitypicker, accessible errors, reorder and keyboard, explicit audience/retention publish confirmation and responsive panes. Route all effects to the common commands; preview is side-effect-free.",
+      "prerequisite": "Accepted Page contentKind route plus typed bridge/command client and public-host integration; inherited ROX UI tokens/theme/font and locale keys. Public, Base and Help Desk consume the same renderer/submit contract rather than copy implementations."
+    },
+    {
+      "path": "tests/rox-suite/forms/intake.spec.ts",
+      "proposedSymbols": ["Forms intake/version/ACL/idempotency/recovery acceptance scenarios"],
+      "change": "Implement deterministic consumer-visible version preservation, duplicate concurrent submission/mapping, ACL leakage/revoke, conditional validation, quota/spam/challenge, file quarantine and durable recovery scenarios against the real shared authority. Include a seeded broken negative control that the suite rejects; avoid source-string wiring assertions or mock-echo PASS.",
+      "prerequisite": "Accepted existing test runner/authority fixture conventions and Linux runnable host from root; UI/native/provider evidence remains separate from test success."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig / PageKind / PageShareInfo",
+      "change": "Add canonical form content discrimination and form payload/revision reference to PageConfig via the lead's migration contract; keep PageKind exactly the runtime/CSP capability discriminator. Preserve existing id/slug/grants/share fields and treat old configs as legacy Pages. Represent FormPublication as an explicit registered child, not by reinterpreting PageShareInfo's existing view-only capability. No new standalone form top-level entity kind.",
+      "reason": "Spec:46; current PageKind:35 and PageConfig:294-320 otherwise force form to masquerade as HTML or alter CSP; ShareInfo:231-257 does not authorize submit."
+    },
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput / LoadedPage / PageConfig re-export",
+      "change": "Extend CreatePageInput with the approved canonical contentKind/form payload contract, preserve HTML content and PageKind behavior, re-export approved core changes and retain LoadedPage's identity/path shape. Persistent writes must go through the common authority, not new renderer mirrors or Pages snapshots of private responses.",
+      "reason": "CreatePageInput:71-81 currently only supports generic HTML Page creation; needed for Drive and Pages creation with stable Page identity."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / Rox2TypedRecord / Rox2ActorGrant / authorizeRox2Action",
+      "change": "Coordinate root-owned canonical child-schema registration for FormRevision/Publication/Response while retaining form identity kind=page. Route authorization through accepted trusted-context/resource/action grant evaluation; do not treat entity.permissions or actor+permission membership alone as authority for listResponses/submit. Include versioned refs and audit causation/correlation/revision in Forms results/events. Root chooses the shared registry implementation location; no parallel Forms registry.",
+      "reason": "Spec:46-56; current EntityRef:232-239 is reusable, but grant matcher:592-609 cannot distinguish publication submit from private reviewer read."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "handleCreatePage / openPage",
+      "change": "Keep blank Page creation behavior; add the approved create-Form option using canonical page/contentKind=form creation through the shared command client, boundProjectId and existing routes.view.pages(created.slug). Continue reading pagesAtom; do not introduce formsAtom or another library surface. This is a Page seam; Drive's required create menu is a separate dependency-owned patch, not claimed covered here.",
+      "reason": "handleCreatePage:86-101 currently hardcodes kind=interactive and opens canonical Page route; spec:5 requires creation without a second store/surface."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "symbol": "PageView / contentDigest lease effect / render branch / SharePageDialog mounting",
+      "change": "Select the approved FormBuilder/shared FormRenderer by config.contentKind=form before the HTML hasContent/lease/snapshot branch. Guard HTML-only lease/data effects for form content; retain them unchanged for existing static/interactive/live Pages. Use the same stable Page route, common grants, response ACL-aware command queries and revoke cleanup. Do not expose generic includeData Page publishing for private form responses.",
+      "reason": "Current :79-132 and :387-457 assume index.html/digest and show view-only SharePageDialog; a new React builder file alone would be unreachable."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+      "symbol": "SharePageDialog / runPublish / usePageShareCapabilities",
+      "change": "Retain existing generic Page publish/password/unpublish behavior. Discriminate form content at the existing publication surface and delegate to the accepted form.publish confirmation/authority contract with audience, expiration, max submissions, attachment policy and retention. Prevent private response snapshots from entering includeData. Reuse shared publication host and capability plumbing; never grant responses.read via submit link.",
+      "reason": "Current :97-105 explicitly acknowledges public view-only actions and :147-165 only publishes optional snapshots/password; not secure form submit publication."
+    },
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "symbol": "AppEvent / APP_EVENTS",
+      "change": "Register the normative response.submitted event in both the event union and runtime catalog, with shared-owner review of naming/dispatch adapters. Do not substitute the unrelated agent Notification event for a durable domain intake event.",
+      "reason": "Spec:34; current AppEvent:15-28 and APP_EVENTS:48-54 do not contain response.submitted."
+    },
+    {
+      "path": "packages/shared/src/automations/event-bus.ts",
+      "symbol": "EventPayloadMap / WorkspaceEventBus.emit",
+      "change": "Add a typed response.submitted payload containing common workspace/timestamp and minimal authorized response/form/revision/operation references, not answer PII. Consume shared durable outbox events with stable event IDs and downstream dedupe/receipts. Resolve drop-on-rate-limit and swallowed errors in the shared delivery contract so a successful bus call cannot acknowledge undelivered intake effects. No per-Forms event engine; event-bus alone remains insufficient for exactly-once semantics.",
+      "reason": "Spec:34,50,56; current map:134-164 lacks intake and emit:246-288 may drop events/swallow failures."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "Flattened forms.* translation keys / pages.newPage sibling create-form label",
+      "change": "Add ASCII-sorted flattened keys for builder questions/help, audience/retention, responses/count/date/filter/export, receipt, mapping states, validation/error summary, denied/loading/empty/retry, keyboard and upload/challenge feedback. Use Russian default and correct plural forms. Root must apply identical key coverage to existing de.json,en.json,es.json,fr.json,hu.json,ja.json,pl.json,zh-Hans.json,zh-Hant.json and reconcile the additionally observed ar.json/ko.json under the current i18n parity policy. All visible copy goes through t(); no hardcoded fallback prose.",
+      "reason": "Spec:42 and repository i18n rule; ru.json:1-25 uses flat keys and grep found pages.newPage:3853 but no forms.* in ru/en. Directory listing has at least 12 locale files, whereas loaded guide names 10; actual accepted key-parity scope needs root reconciliation."
+    }
+  ],
+  "dependencyIntegrationRequests": [
+    {
+      "owner": "RS-DRV-01",
+      "path": null,
+      "symbol": "Drive Create menu (exact owner path unresolved in allowed inspection)",
+      "change": "Add Create → Rox Forms using canonical Page/contentKind=form command and existing stable route; no duplicate Forms library/store.",
+      "reason": "Spec:5. Accepted dependency receipt must identify actual path/symbol before source edits."
+    },
+    {
+      "owner": "RS-BASE-01",
+      "path": null,
+      "symbol": "Base Form view / CustomRecord create command (exact owner path unresolved)",
+      "change": "Consume shared FormRenderer/FormSubmitInput and expose typed idempotent field→CustomRecord mapping with expectedRevision/operationId and private ACL.",
+      "reason": "Spec:5,29; this worker must not guess source paths outside scoped imports."
+    },
+    {
+      "owner": "lead Help Desk integration owner",
+      "path": null,
+      "symbol": "Help Desk intake / HelpDeskTicket create command (exact owner path unresolved)",
+      "change": "Use the same renderer/submit contract and verified-contact, idempotent mapped-ticket creation; establish the shared target command before enabling its optional mapping.",
+      "reason": "Spec:5,29; a hidden contract prerequisite, not an additional declared dependency."
+    },
+    {
+      "owner": "lead shared authority/transport/index/Attachment/Approval owners",
+      "path": null,
+      "symbol": "Actual command registry, IPC/RPC/MCP/provider adapters, persisted transaction/outbox, ACL index/subscriptions and Attachment/Approval commands",
+      "change": "Supply concrete accepted interface/path receipts and integrate the five Form handlers under common policy and revocation. Root requests exact shared patches after wave0; Forms worker must not invent transport endpoints or overwrite uncommitted foundations.",
+      "reason": "Spec:46-56,86. These locations were not established by allowed scoped inspection; proposals are intentionally not fabricated as exact existing source patches."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "AC-1",
+      "criterion": "Publish v1 → submit response → edit v2 → v1 response semantics preserved; reload lists authorized response.",
+      "currentEvidence": "Spec:78; PageConfig stores HTML digest/share only (core/types/page.ts:294-320). Proposed forms/contracts.ts and form-service.ts absent; PageView:56-74 reloads a Page, not immutable form revisions/responses.",
+      "requiredChange": "FormRevision/FormService.publish/submit/saveDraft store immutable schemas and stable field IDs; Response pins v1 and uses it for validation/render/export despite v2 edits. Reviewer-only listResponses reloads durable responses through PageView/FormBuilder.",
+      "verification": "Publish choice/conditional schema v1, submit, rename/reorder/change choice constraints in v2, restart/reload and assert exact saved v1 values/labels/validation semantics and authorized listing; a nonreviewer cannot list/detail/export.",
+      "missingPrerequisite": "wave0 plus both dependency receipts, canonical child registry, persisted authority and reviewer ACL",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "AC-2",
+      "criterion": "Duplicate submit/retry yields one response and one mapped record; private response unavailable with submit link.",
+      "currentEvidence": "Spec:79; PageActionRequest:203-213 replay IDs are per lease and not durable Forms idempotency. WorkspaceEventBus has no persistent uniqueness/transaction. Existing public PageShareInfo is a view capability.",
+      "requiredChange": "FormService.submit atomically enforces a workspace/form/publication-scoped stable idempotency key and response+outbox; retries recover original receipt, mismatched duplicate payload fails. mapResponse uses stable response/target-operation uniqueness and separate queued/succeeded/failed result. Token grants only submit, never response reads or exports.",
+      "verification": "Race two equal submits, retry after timeout and restart, race/retry mapper, read back exactly one response and one target record. Reuse key with changed payload is rejected. Use submitlink on list/detail/export/search and observe denial with no answer PII or mapped-record metadata.",
+      "missingPrerequisite": "atomic transaction/unique constraints/outbox, target idempotent command and scoped publication authority",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "AC-3",
+      "criterion": "Conditional required logic, spam throttle, unsafe file quarantine and failure UI tested; agent can draft schema but cannot read responses beyond grants.",
+      "currentEvidence": "Spec:80; PageFrame:54-57 is per-frame defense-in-depth, not public throttle. Rox2ActorGrant/authorizeRox2Action:592-609 lack response-resource scope. Shared Attachment/agent handler availability not proven.",
+      "requiredChange": "FormCondition validator and shared renderer evaluate pinned conditional visibility/required/min/max/options; exclude disabled fields per version. Server verifies challenge/rate/quotas, Attachment quarantine/scan and internal-only entitypicker. Agent calls same saveDraft/listResponses commands with trusted grants. Render typed validation/denied/upload/mapping failures and safe retry.",
+      "verification": "Submit hidden-required, invalid active-required, forged disabled values and public entitypicker; check precise validation. Exercise server spam threshold/challenge failure, oversized/mismatched/unsafe/pending files and quarantine ACL. Agent draft succeeds with write grant; agent response access without reviewer grant fails on all adapters. Verify failure UI and error-focus without response leakage.",
+      "missingPrerequisite": "shared validation, public abuse authority, Attachment/scan receipts and common agent adapters",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-1",
+      "criterion": "UI/routing/input/output/help/keyboard/state contracts implemented; loading/empty/error/denied/retry available and checked.",
+      "currentEvidence": "Spec:84; PagesHome:86-101 creates generic Pages and PageView:387-437 renders only generic HTML. FormBuilder is absent. Existing t() and canonical Pages route are reusable.",
+      "requiredChange": "Implement FormBuilder/FormRenderer with three panes, draft/publish/preview, response table/count/date/filter/export/drawer, all question types and receipt; integrate contentKind at PageView and dependency entry points. Add loading/empty/error/denied/retry, persistent descriptions, hover/focus/click help, error summary first-invalid focus, keyboard reorder, multiline Enter safety and responsive back-navigation.",
+      "verification": "Exercise Drive create, Base Form view and Help Desk intake against the same schema. Interact with palette at cursor, drag and keyboard reorder, branching preview, response filters/export/drawer and explicit publish. Inspect actual states and hover/focus/click at widths >=1100, <1100 and <800; multiline Enter must not submit; preview close must not publish; verify keyboard/ARIA and denial draft scrubbing.",
+      "missingPrerequisite": "canonical Page migration, accepted dependency routes/command client, locale integration and live renderer/Electron lane",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-2",
+      "criterion": "Persistence and reload; meaningful negative case; concurrency/reconnect where applicable; N/A justified in receipt.",
+      "currentEvidence": "Spec:85; Pages page.json/snapshot contract exists (core/types/page.ts:10-19), but not Forms response/version persistence. proposed form-service absent; in-memory event bus cannot recover after restart.",
+      "requiredChange": "Persist draft/revision/publication/response/mapping state in shared canonical store; expectedRevision conflicts on mutations; transactionally enforced max submissions/idempotency; restart-recover outbox/mapping. Distinguish allowed local draft from restricted fields on denial and reconnect through authoritative reload, not a second entity store.",
+      "verification": "Restart between publish/submit/commit/outbox/mapping, reconnect after ambiguous submit, race draft edits and final quota slot, assert persisted exact revisions/receipts/no duplicates and conflict/no lost update. Denied caller cannot mutate; revoke during pending work prevents subsequent write/stream and scrubs restricted drafts/caches.",
+      "missingPrerequisite": "shared persistence/migration/recovery/revocation hooks",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED; concurrency/reconnect applicable, not N/A"
+    },
+    {
+      "id": "DOD-3",
+      "criterion": "Common grants, links, search, mentions, activity, notification and agent policy integrated for new domain entity.",
+      "currentEvidence": "Spec:86; reusable Rox2EntityRef:232-239 and Rox2Event:131-141 exist. Current permission matcher is actor-only; EventPayloadMap and AppEvent lack response.submitted. Common search/mention/notification implementation not established in scoped imports.",
+      "requiredChange": "Register canonical Page form children and EntityRefs, private reviewer ACL, authorized links/mentions/search projection with response PII excluded globally. Durable response.submitted drives activity and configured-recipient notifications via existing outbox/dedupe. Bind UI/RPC/IPC/MCP/provider/agent to common policy; revoke cancels writes/subscriptions and removes forbidden cache entries.",
+      "verification": "Matrix editor/reviewer/submitter/unrelated workspace/agent grants across list/detail/export/link/mention/search/write; submit-token read fails. Response PII absent in global search. Crash/retry notification event and assert one intended notification/event effect with durable delivery receipt. Revoke active reviewer and validate cache/subscription removal and subsequent denial.",
+      "missingPrerequisite": "accepted shared child registry, resource ACL, index/mentions/adapters, outbox/notifications and revoke lifecycle",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED; full package is not the spec's UI-only focus slice"
+    },
+    {
+      "id": "DOD-4",
+      "criterion": "Targeted tests + seeded broken control genuinely rejected; existing route/authority regression passes.",
+      "currentEvidence": "Spec:87; normative tests/rox-suite/forms/intake.spec.ts absent; no tests run under preflight restrictions. Existing generic Pages routes and sandbox must stay unchanged.",
+      "requiredChange": "Add real authority-driven version/idempotency/ACL/validation/quarantine/recovery scenarios in intake.spec.ts, and select applicable existing Page creation/render/publication/authority regressions through root runner conventions. Include reproducible negative control, e.g. seeded submit grant incorrectly permitting listResponses, which must fail the same consumer-visible ACL assertion.",
+      "verification": "Lead runs exact targeted command(s), captures failing seeded-control output and passing corrected-source output, then existing static/interactive/live Pages and authority regression on integrated revision. No source-copy/wiring assertions or narrowed mocks count as acceptance.",
+      "missingPrerequisite": "runnable host, accepted test harness/seeds and integrated dependencies",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-5",
+      "criterion": "Linux domain/renderer evidence; actual Electron screenshots/ARIA/theme/font after UI changes; provider lane only for real external effects.",
+      "currentEvidence": "Spec:88; current UI uses bg-background/t() and generic PageFrame. No Forms UI exists and no runtime/native/network operations performed.",
+      "requiredChange": "Produce separate real Linux domain/renderer acceptance and native Electron visual/ARIA/theme/font evidence for changed Forms states. Verify inherited font via computed style and loaded face, not CSS name alone. Motion only opacity/transform for 120-160ms with reduced-motion disabled. Obtain external publication/upload/notification provider readback only if real external effects occur.",
+      "verification": "Record seeded domain/renderer inputs and actual observed outcomes on Linux; capture Electron builder, preview, validation, responses, denied/failure and responsive states; inspect ARIA/focus and actual computed font/theme. Check transition properties/duration and reduced motion. Actual external effect ID/revision/status readback must match operation receipt in provider lane.",
+      "missingPrerequisite": "Linux and Electron runners plus real provider authorization only for enabled external effects",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED; no provider N/A claim made before implementation effects are known"
+    },
+    {
+      "id": "DOD-6",
+      "criterion": "Source commit, exact diff, logs/hashes, expected/observed, migration/rollback and independent review attached; screen without mechanism cannot be accepted.",
+      "currentEvidence": "Spec:89; report records dispatch revision and inspected whole-file hashes only. These are preflight evidence, not feature commit/diff/runtime/review receipts.",
+      "requiredChange": "Lead commits wave0 then dependency/package changes in order, records final integrated revision/diff and evidence hashes, expected/observed per criterion, child schema/Page migration and recovery/rollback preserving old Page IDs/slug/grants and immutable response semantics. Obtain independent review of actual mechanism/security and verification.",
+      "verification": "Reconcile report hashes with committed source, bind logs/screenshots/provider receipts to exact integrated revision, rehearse migration and rollback on seeded old/new records without data loss or ACL expansion, and attach independent review disposition. Accept only mechanisms plus actual PASS lanes, never this report as implementation proof.",
+      "missingPrerequisite": "root integration revision, migration/rollback tooling, runtime evidence and independent reviewer",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-INPUTS",
+      "criterion": "Immutable field IDs, required/min/max/options/conditional AST, pinned revision + idempotencyKey; audience/expiry/max submissions/rate/challenge/attachment policy; optional mapping with verified contacts and no arbitrary ownerId.",
+      "currentEvidence": "Spec:25-29; these fields are not in PageConfig/CreatePageInput. Proposed FormRevision/FormPublication/FormSubmitInput are absent.",
+      "requiredChange": "Define and validate complete contracts in forms/contracts.ts and enforce in FormService and renderer. Resolve authenticated contacts via shared verified matching; refuse or ignore untrusted identity fields according to typed validation contract. Restrict entitypicker to internal audience and forbid executable condition scripts.",
+      "verification": "Boundary min/max/choice/date/numeric and invalid AST cases, stale pinned revision, expired/revoked token, last quota-slot race, forged owner/contact fields and public entitypicker; ensure server rejects even when client validation bypassed.",
+      "missingPrerequisite": "versioned schema/registry, authority policy and verified contact service",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-OUTPUTS",
+      "criterion": "Response ID/time/revision/validation errors; separate queued/succeeded/failed mapping; quarantined attachments; configured notifications; response.submitted once.",
+      "currentEvidence": "Spec:31-34; existing PageActionResult:215-225 is generic action status/body, not a typed Forms receipt. Event bus cannot guarantee once or retain receipt.",
+      "requiredChange": "Use typed safe FormCommandResult/response receipt without foreign/private answers, persisted mapping result separately from accepted submission, shared attachment scan refs and configured-recipient outbox delivery. Durable event/consumer identity dedupes retries; provider deliverystatus is independent.",
+      "verification": "Read response receipt then observe mapping queued→succeeded/failed and retry without new response/target. Pending unsafe file remains inaccessible. Configure notification recipients and assert authorized delivery exactly once after crash/retry with persisted receipt; unconfigured recipients receive none.",
+      "missingPrerequisite": "typed authority results, shared attachments/outbox/notifications and target mapping commands",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-UX-I18N",
+      "criterion": "Hover/focus/click help, keyboard reorder/errors, multiline Enter safety, no preview publish, allowed cancel draft/restricted-field denial clearing; Russian i18n, inherited theme/font, 120-160ms motion/reduced motion, responsive inspector/pane navigation.",
+      "currentEvidence": "Spec:36-42; generic Pages use t() but no Forms builder. ru.json uses flat sorted keys and no forms.* keys were found in ru/en. At least 12 locale filenames observed vs 10 documented in loaded repository guide.",
+      "requiredChange": "Implement FormBuilder/FormRenderer focus and state contracts, all flattened locale keys/parity under root's current locale policy, explicit audience/retention confirmation and allowed draft handling. Inherit current theme/font; text/icon statuses complement color; collapse inspector below 1100 and show one pane/back navigation below 800.",
+      "verification": "Native Electron hover/focus/click help and keyboard walkthrough; first-invalid focus; Enter in textarea produces newline; cancel/preview has no effects; denial scrubs restricted values. Observe actual Russian help/errors, computed font, motion timings and reduced-motion behavior at both responsive boundaries.",
+      "missingPrerequisite": "working renderer/commands, reconciled locale scope and actual Electron acceptance lane",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-AUTHORITY",
+      "criterion": "Canonical kind=page/contentKind=form, preserved Page IDs/slug/grants, explicit child registry, private Response ACL, submit-only publication, shared Attachment/Approval/Automation/entity links; operationId/expectedRevision commands, server session actor/policy, revoke and authorized PII search.",
+      "currentEvidence": "Spec:44-56; Rox2 kinds include page (:17-38), PageKind is separate (:35), EntityRef is reusable, but no form contentKind/child schema or resource/action submit-vs-read grant. Proposed command API is explicitly a target, not existing endpoint.",
+      "requiredChange": "Use accepted common authority/registry/transaction and Page migration, never renderer actorId or standalone form store. Register form.saveDraft/publish/submit/listResponses/mapResponse with operationId and expectedRevision on mutations; reconcile pinned immutable form revision with concurrency token. Enforce policy on all command entry points, preview no effects, revoke live writes/subscriptions/caches, reviewer-only response search with global PII exclusion.",
+      "verification": "Old Page identity/grants round-trip migration, cross-workspace and forged actor attacks denied, stale mutation revision conflicts, preview no write/outbox, submit-link cannot read, revoked in-flight/subscribed caller denied and caches scrubbed; UI/IPC/RPC/MCP/agent policy consistency checked.",
+      "missingPrerequisite": "accepted canonical authority/schema/transport/ACL/index interfaces after wave0 and dependencies",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED; domain requirements cannot be marked N/A for this full feature"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-FORM-01.md","symbol":"Inputs/Outputs/domain/API/Acceptance criteria/Definition of Done","lineStart":19,"lineEnd":104,"sha256":"c30ab28cf3014ed22e6e7c80bbba47fb7cbddbc3e5f3b5361dc48a360a2515d8"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues record RS-FORM-01 / dependsOn / publishedSpec","lineStart":168,"lineEnd":198,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/components/pages/PagesHome.tsx","symbol":"PagesHome / handleCreatePage / openPage","lineStart":25,"lineEnd":101,"sha256":"3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS / Rox2Entity / Rox2Event / Rox2EntityRef","lineStart":17,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2ActorGrant / authorizeRox2Action / Rox2TypedRecord / parseRox2TypedRecord","lineStart":592,"lineEnd":690,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/shared/src/automations/event-bus.ts","symbol":"EventPayloadMap / WorkspaceEventBus.emit","lineStart":134,"lineEnd":291,"sha256":"1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AppEvent / APP_EVENTS / AutomationEvent","lineStart":15,"lineEnd":60,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/pages/types.ts","symbol":"PageConfig re-export / CreatePageInput / LoadedPage","lineStart":11,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageKind / PageActionGrant / PageActionRequest / PageShareInfo / PageConfig","lineStart":29,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"apps/electron/src/renderer/atoms/pages.ts","symbol":"pagesAtom / pagesProjectFilterAtom","lineStart":1,"lineEnd":23,"sha256":"d429fb649961031ab860ce7c107c69f121aee46cf61648f26962de9d6ff18ff2"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView / pageFromAtom / contentDigest lease effect","lineStart":50,"lineEnd":134,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"HTML content render branch / PageFrame / SharePageDialog","lineStart":387,"lineEnd":457,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageFrame.tsx","symbol":"PageFrame security contract / sandboxForKind","lineStart":34,"lineEnd":76,"sha256":"7cb551294c720b87443d645041c0514c3b48a6ea04cad668b8c083629c1e3ba1"},
+    {"path":"apps/electron/src/renderer/components/pages/SharePageDialog.tsx","symbol":"usePageShareCapabilities / SharePageDialog / runPublish","lineStart":22,"lineEnd":165,"sha256":"a06d7bf806cdac1c044c01ba2a75fb7103d04e7cbd82ee4136c69577f38bb5e0"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.pages","lineStart":219,"lineEnd":223,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/renderer/lib/navigate.ts","symbol":"routes re-export / navigate","lineStart":15,"lineEnd":49,"sha256":"fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path":"packages/shared/src/i18n/locales/ru.json","symbol":"Flattened locale keys / pages.newPage","lineStart":3852,"lineEnd":3856,"sha256":"00f1c379fb222ea3cb0c4408c561ab44b2bf2c20e58bd0454f413d63e59dd496"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads and validates this owned preflight report; request accepted concrete shared authority/transaction/registry/publication/Attachment/index/agent and dependency integration interface receipts. This worker does not implement product code.",
+    "implementationGate": "After lead's wave0 commit and accepted RS-DRV-01, RS-BASE-01 receipts, compare whole-file hashes to committed integration source and re-read changed seams. Resolve foundation gates before using any unproven interface.",
+    "firstImplementationSlice": "Finalize forms/contracts.ts against accepted Page child/command interfaces; register and implement immutable revision publish→submit→durable authorized reload in the real authority; connect canonical PageView/FormBuilder and dependency-owned entry points. Include submit-token-denied response read as first negative scenario. Follow with idempotent mapping/outbox/quarantine/recovery and complete all remaining matrix criteria, not a narrowed usable screen."
+  },
+  "risks": [
+    "Full specification includes domain/security/agent/provider requirements; the line-56 UI-only N/A exception does not apply to this package preflight or full-feature implementation.",
+    "Absent workspace-service host is a hard runnable-host prerequisite; creating the proposed file alone cannot satisfy the API or persistence mechanism.",
+    "Generic PageKind/CSP, Page action grants and Cloudflare view publication must not be conflated with contentKind=form, reviewer ACL or submit capability.",
+    "Using generic includeData/snapshot publication for Forms could expose private response PII; existing best-effort secret scan is not a Forms privacy boundary.",
+    "Event-bus rate limiting drops events and handler failures are swallowed; in-memory replay protection cannot enforce one response, mapped record, notification and event across crashes/retries.",
+    "Public attachment abuse, unchecked conditional AST execution, stale schema semantics, arbitrary owner/contact claims and quota races are consumer-visible security/data-integrity failures, not cosmetic edge cases.",
+    "Drive/Base/Help Desk routes and common command/index/Attachment adapter paths were not available within the inspected import scope; root must supply concrete interface receipts rather than treating proposals as existing implementation.",
+    "Concurrent root integration can stale any source reference; hash binding is per inspected working-tree file, not an atomic snapshot or final tested source commit.",
+    "Loaded i18n guide lists ten locales, while actual scoped listing shows ar and ko as well. Root must reconcile current locale parity without shrinking user-facing acceptance.",
+    "No runtime or native evidence exists in this preflight. Proposed tests/screenshots/provider readback must be actually observed and independently reviewed on the delivered revision."
+  ]
+}

@@ -961,7 +961,22 @@ export interface ElectronAPI {
   // Notes
   listNotes(workspaceId: string): Promise<NoteSummary[]>
   readNote(workspaceId: string, noteId: string): Promise<NoteDocument>
-  saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
+  resolveContent(ref: import('@craft-agent/core/rox2').Rox2EntityRef): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').ContentResolution | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
+  describeContent(ref: import('@craft-agent/core/rox2').Rox2EntityRef): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').ContentResolution | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
+  adoptContentDescriptor(command: import('@craft-agent/server-core/docs/descriptor-resolver').AdoptDescriptorCommand): Promise<import('@craft-agent/server-core/docs/descriptor-resolver').DescriptorReceipt | import('@craft-agent/server-core/docs/descriptor-resolver').ContentFailure>
+  getBlockTree(request: import('@craft-agent/server-core/docs/block-tree-service').GetBlockTreeRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').BlockTreeResult>
+  previewMarkerMapping(request: import('@craft-agent/server-core/docs/block-tree-service').PreviewMarkerMappingRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').NativeMarkerMappingPreview>
+  applyMarkerMapping(request: import('@craft-agent/server-core/docs/block-tree-service').ApplyMarkerMappingRequest): Promise<import('@craft-agent/server-core/docs/block-tree-service').MarkerMappingCommitResult>
+  commitMarkdown(command: import('@craft-agent/core/docs').MarkdownCommitCommand): Promise<{ note: NoteDocument; receipt: import('@craft-agent/server-core/docs/markdown-commit').MarkdownCommitReceipt }>
+  getMarkdownCommitReceipt(workspaceId: string, noteId: string, operationId: string, sourceStoreId: string): Promise<import('@craft-agent/server-core/docs/markdown-commit').MarkdownCommitReceipt | null>
+  previewProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryPreviewInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryPreview>
+  bindProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryBindInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryBinding>
+  captureProjectRepository(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<import('@craft-agent/shared/code-intelligence').RepositorySnapshotSummary>
+  listProjectRepositorySnapshots(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryConnectionInspection>
+  readProjectRepositorySpan(input: import('@craft-agent/shared/code-intelligence').RepositoryReadSpanInput): Promise<import('@craft-agent/shared/code-intelligence').FileSpan>
+  checkProjectRepositoryFreshness(input: import('@craft-agent/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@craft-agent/shared/code-intelligence').RepositoryFreshness>
+  cancelProjectRepositoryRequest(input: import('@craft-agent/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
+  saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
   createNote(workspaceId: string, title: string, folder?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
   moveNote(workspaceId: string, noteId: string, targetFolder: string, operation: NoteMutationOptions): Promise<{ note: NoteDocument }>
@@ -979,7 +994,7 @@ export interface ElectronAPI {
   listNoteAssets(workspaceId: string): Promise<NoteAsset[]>
   deleteNoteAsset(workspaceId: string, relativePath: string): Promise<boolean>
   renameNoteAsset(workspaceId: string, relativePath: string, nextName: string): Promise<NoteAssetRenameResult>
-  updateNoteProperties(workspaceId: string, noteId: string, properties: Record<string, unknown>, operation?: NoteMutationOptions): Promise<NoteDocument>
+  updateNoteProperties(workspaceId: string, noteId: string, properties: Record<string, unknown>, operationOrExpectedRevision?: NoteMutationOptions | string, reviewedDigest?: string, sourceStoreId?: string): Promise<NoteDocument>
   watchNotes(workspaceId: string): Promise<void>
   unwatchNotes(workspaceId: string): Promise<void>
   onNotesChanged(callback: (payload: NoteChangedPayload | string) => void): () => void
@@ -1950,9 +1965,9 @@ export interface ElectronAPI {
   getToolIconMappings(): Promise<ToolIconMapping[]>
 
   // Theme (app-level default)
-  getAppTheme(): Promise<import('@config/theme').ThemeOverrides | null>
-  loadPresetThemes(): Promise<import('@config/theme').PresetTheme[]>
-  loadPresetTheme(themeId: string): Promise<import('@config/theme').PresetTheme | null>
+  getAppTheme(): Promise<import('@craft-agent/shared/config').ThemeOverrides | null>
+  loadPresetThemes(): Promise<import('@craft-agent/shared/config').PresetTheme[]>
+  loadPresetTheme(themeId: string): Promise<import('@craft-agent/shared/config').PresetTheme | null>
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
   getWorkspaceColorTheme(workspaceId: string): Promise<string | null>
@@ -1960,7 +1975,7 @@ export interface ElectronAPI {
   getAllWorkspaceThemes(): Promise<Record<string, string | undefined>>
 
   // Theme change listeners
-  onAppThemeChange(callback: (theme: import('@config/theme').ThemeOverrides | null) => void): () => void
+  onAppThemeChange(callback: (theme: import('@craft-agent/shared/config').ThemeOverrides | null) => void): () => void
 
   // Logo URL resolution
   getLogoUrl(serviceUrl: string, provider?: string): Promise<string | null>
@@ -2131,6 +2146,17 @@ export interface ElectronAPI {
   setDefaultThinkingLevel(level: ThinkingLevel): Promise<{ success: boolean; error?: string }>
   setWorkspaceDefaultLlmConnection(workspaceId: string, slug: string | null): Promise<{ success: boolean; error?: string }>
 
+  // Domain-only shared projects. LoadedProject/folder APIs remain host-owned.
+  getProjectAuthorityState(): Promise<import('./project-authority').ProjectAuthorityState>
+  getProjectAuthorityConfiguration(workspaceId: string): Promise<import('./project-authority').ProjectAuthorityConfiguration | null>
+  connectProjectAuthority(workspaceId: string, input: import('./project-authority').ProjectAuthorityLoginInput): Promise<import('./project-authority').ProjectAuthorityMutationResult>
+  disconnectProjectAuthority(workspaceId: string): Promise<import('./project-authority').ProjectAuthorityMutationResult>
+  onProjectAuthorityChanged(callback: () => void): () => void
+  getSharedProjects(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').ProjectPage>
+  getSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProject>
+  createSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProjectResult>
+  getSharedProjectEvents(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').IdentityEventPage>
+
   // Projects (workspace-scoped)
   getProjects(workspaceId: string): Promise<unknown>
   getProject(workspaceId: string, projectIdOrSlug: string): Promise<unknown | null>
@@ -2142,6 +2168,10 @@ export interface ElectronAPI {
   listProjectAssets(workspaceId: string, projectSlug: string): Promise<unknown>
   uploadProjectAsset(workspaceId: string, projectSlug: string, input: { filename: string; base64?: string; text?: string; sourcePath?: string }): Promise<import('@craft-agent/shared/projects/types').ProjectAsset>
   deleteProjectAsset(workspaceId: string, projectSlug: string, filename: string): Promise<void>
+  getProjectRoadmap(workspaceId: string, projectSlug: string): Promise<import('@craft-agent/shared/projects/roadmap-storage').LoadedRoadmap | null>
+  saveProjectRoadmap(workspaceId: string, projectSlug: string, roadmap: import('@craft-agent/shared/projects/roadmap').ProjectRoadmap): Promise<import('@craft-agent/shared/projects/roadmap').ProjectRoadmap>
+  getProjectAiStatus(workspaceId: string): Promise<{ available: boolean; connectionName?: string; model?: string; reason?: string }>
+  runProjectRoadmapAi(workspaceId: string, projectSlug: string, request: import('@craft-agent/shared/projects/roadmap-ai').RoadmapAiRequest & { language?: string; today?: string; inputs?: string[] }): Promise<import('@craft-agent/shared/projects/roadmap-ai').RoadmapAiResponse>
   onProjectsChanged(callback: (workspaceId: string, projects: unknown) => void): () => void
 
   // Pages (workspace-scoped mini dashboards)

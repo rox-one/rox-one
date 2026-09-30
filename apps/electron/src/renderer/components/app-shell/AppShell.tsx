@@ -105,6 +105,7 @@ import {
 } from "../../platform"
 import { useModeHotkeys } from "@/platform/useModeHotkeys"
 import { useExtraScreensBackground } from "@/pages/extra-screens/background"
+import { useInspectorSuppressed } from "@/platform/inspector-suppression"
 import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
@@ -325,6 +326,7 @@ function AppShellContent({
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const inspectorSuppressed = useInspectorSuppressed()
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
   // PR-2: the rail offset follows the same two-key decision as the host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
@@ -1707,6 +1709,7 @@ function AppShellContent({
     labels: displayLabelConfigs,
     onSessionLabelsChange: handleSessionLabelsChange,
     projects: projectMenuOptions,
+    loadedProjects: projects,
     onSetProjectId: handleSessionProjectChange,
     enabledModes,
     sessionStatuses: effectiveSessionStatuses,
@@ -1726,7 +1729,7 @@ function AppShellContent({
     automationTestResults,
     getAutomationHistory,
     onReplayAutomation: handleReplayAutomation,
-  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
+  }), [contextValue, registerCompactHeader, unregisterCompactHeader, compactHeaderRenderer, isAutoCompact, navState, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, displayLabelConfigs, handleSessionLabelsChange, projectMenuOptions, projects, handleSessionProjectChange, enabledModes, effectiveSessionStatuses, handleSessionSourcesChange, handleJumpToTaskSessions, searchActive, searchQuery, handleChatMatchInfoChange, handleTestAutomation, handleToggleAutomation, handleDuplicateAutomation, handleDeleteAutomation, automationTestResults, getAutomationHistory, handleReplayAutomation])
   // Persist expanded folders to localStorage (workspace-scoped)
   React.useEffect(() => {
     if (!activeWorkspaceId) return
@@ -2522,7 +2525,7 @@ function AppShellContent({
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
           onOpenMap={handleOpenMap}
           mapAvailable={Boolean(effectiveSessionId)}
-          showInspectorToggle={unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled}
+          showInspectorToggle={(unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled) && !inspectorSuppressed}
           compactHeaderRenderer={compactHeaderRenderer}
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
           isCompactSettingsMode={isWebUI && isAutoCompact && isSettingsNavigation(navState)}
@@ -3114,8 +3117,8 @@ function AppShellContent({
         />
         </WorkspaceSurfaceHost>
 
-        {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
-        {!effectiveSidebarAndNavigatorHidden && (
+        {/* A collapsed sidebar has no resize boundary; its sash would intercept main-panel controls. */}
+        {isSidebarVisible && !effectiveSidebarAndNavigatorHidden && (
         <ResizeHandle
           labelKey="shell.resize.sidebar"
           controlsId="shell-sidebar"
@@ -3128,10 +3131,7 @@ function AppShellContent({
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
             height: 'auto',
-            left: unifiedRailOffset + (isSidebarVisible
-              ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
-              : -PANEL_GAP),
-            transition: sidebarResize.dragging ? undefined : 'left 0.15s ease-out',
+            left: unifiedRailOffset + sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2,
           }}
           onPointerDown={(event) => {
             setIsResizing('sidebar')

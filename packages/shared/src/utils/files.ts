@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync, mkdtempSync, renameSync, openSync, fsyncSync, closeSync } from 'fs';
-import { extname, basename, resolve, join, relative } from 'path';
+import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync, mkdtempSync, renameSync, openSync, closeSync, fsyncSync } from 'fs';
+import { extname, basename, resolve, join, relative, dirname } from 'path';
 import { execSync } from 'child_process';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
@@ -35,7 +35,7 @@ export function readJsonFileSync<T = unknown>(filePath: string): T {
  * write/flush cannot truncate the prior snapshot. A successful return means
  * the replacement completed; callers must still handle and surface failures.
  */
-export function atomicWriteFileSync(filePath: string, data: string): void {
+export function atomicWriteFileSync(filePath: string, data: string, options?: { readonly durable?: boolean }): void {
   // Unique temp name per write: a fixed `${filePath}.tmp` lets two concurrent
   // writers to the same target (e.g. a page's refresh script and a host one-shot
   // both regenerating snapshot.json) clobber each other's temp mid-rename,
@@ -69,8 +69,15 @@ export function atomicWriteFileSync(filePath: string, data: string): void {
   }
 
   try {
-    writeFileSync(tmpPath, data);
+    if (options?.durable) {
+      const fd = openSync(tmpPath, 'wx');
+      try { writeFileSync(fd, data); fsyncSync(fd); } finally { closeSync(fd); }
+    } else { writeFileSync(tmpPath, data); }
     renameSync(tmpPath, filePath);
+    if (options?.durable) {
+      const directoryFd = openSync(dirname(filePath), 'r');
+      try { fsyncSync(directoryFd); } finally { closeSync(directoryFd); }
+    }
   } catch (error) {
     try { unlinkSync(tmpPath); } catch {}
     throw error;

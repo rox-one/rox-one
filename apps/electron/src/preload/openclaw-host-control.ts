@@ -4,15 +4,13 @@
  * either capability.
  */
 
+import type { OpenClawHostControlApi } from '../shared/openclaw-host-control.ts'
+export type { OpenClawHostControlApi } from '../shared/openclaw-host-control.ts'
+
 export const OPENCLAW_HOST_CONTROL_CHANNELS = Object.freeze({
   OPEN_PANEL: '__openclaw-host:open-panel',
   COPY_SETUP_CREDENTIAL: '__openclaw-host:copy-setup-credential',
 })
-
-export interface OpenClawHostControlApi {
-  openControlUi(input: { workspaceId: string }): Promise<void>
-  copyGatewayTokenForSetup(input: { workspaceId: string }): Promise<void>
-}
 
 export interface OpenClawHostControlBridgeOptions {
   readonly isClientOnly: boolean
@@ -37,11 +35,4 @@ export function createOpenClawHostControlBridge(
       await options.invoke(OPENCLAW_HOST_CONTROL_CHANNELS.COPY_SETUP_CREDENTIAL, { workspaceId: input.workspaceId })
     },
   })
-}
-
-declare global {
-  interface Window {
-    /** Present only in a native Electron renderer attached to the local host. */
-    openClawHostControl?: OpenClawHostControlApi
-  }
 }

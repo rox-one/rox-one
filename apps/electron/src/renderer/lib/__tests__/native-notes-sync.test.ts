@@ -84,3 +84,109 @@ test('overlapping workspace starts keep the last requested workspace and close o
   await controller.stop()
   expect(calls.closed).toEqual(['handle-workspace-a', 'handle-workspace-c'])
 })
+
+test('a canonical read for another native identity cannot enter the durable Notes outbox', async () => {
+  const calls = install({ nativeData: { readEntity: async () => ({ ...snapshot, nativeId: 'another-note' }) } })
+  const controller = createNativeNotesSyncController()
+  await controller.start('workspace-a')
+  try {
+    await expect(controller.queueSave({ ...note, nativeId: 'note-a', nativeRevision: 1 }, 'after')).rejects.toThrow('identity changed')
+    expect(calls.enqueue).toBe(0)
+  } finally { await controller.stop() }
+})
+
+test('a concurrent canonical revision discovered after the await preserves the opened draft', async () => {
+  const read = Promise.withResolvers<typeof snapshot>()
+  const calls = install({ nativeData: { readEntity: () => read.promise } })
+  const controller = createNativeNotesSyncController()
+  await controller.start('workspace-a')
+  const save = controller.queueSave({ ...note, nativeId: 'note-a', nativeRevision: 1 }, 'my unsaved draft')
+  read.resolve({ ...snapshot, revision: 2, files: [{ ...snapshot.files[0]!, content: 'another writer changed this' }] })
+  try {
+    await expect(save).rejects.toThrow('revision changed')
+    expect(calls.enqueue).toBe(0)
+    expect(calls.mutate).toBe(0)
+  } finally { await controller.stop() }
+})
+
+test('missing opened native revision cannot be upgraded to a fresh write grant', async () => {
+  const calls = install()
+  const controller = createNativeNotesSyncController()
+  await controller.start('workspace-a')
+  try {
+    await expect(controller.queueSave(note, 'unbound draft')).rejects.toThrow('opened revision')
+    expect(calls.enqueue).toBe(0)
+  } finally { await controller.stop() }
+})
+
+test('a matching opened identity and revision uses the existing main-owned enqueue and receipt ACK', async () => {
+  const calls = install()
+  const controller = createNativeNotesSyncController()
+  await controller.start('workspace-a')
+  try {
+    const queued = await controller.queueSave({ ...note, nativeId: 'note-a', nativeRevision: 1 }, 'after')
+    expect(queued.expectedRevision).toBe(1)
+    await controller.flush()
+    expect(calls.enqueue).toBe(1)
+    expect(calls.mutate).toBe(1)
+    expect(calls.acknowledge).toBe(1)
+  } finally { await controller.stop() }
+})
+
+test('only an observed main ACK advances the same opened draft through its own queued revision chain', async () => {
+  let revision = 1
+  let pending: typeof operation[] = []
+  let nextOperation = 0
+  install({
+    nativeData: {
+      readEntity: async () => ({ ...snapshot, revision }),
+      mutate: async (input: typeof operation) => ({ ...input, revision: input.expectedRevision + 1, issuer: 'issuer', subject: 'subject', sequence: input.expectedRevision + 1, contentHash: 'a'.repeat(64), deleted: false }),
+    },
+    nativeReplica: {
+      enqueue: async (_handle: string, input: typeof operation) => {
+        const queued = { ...operation, ...input, operationId: `own-${++nextOperation}`, expectedRevision: pending.at(-1)?.expectedRevision! + 1 || revision }
+        pending.push(queued)
+        return queued
+      },
+      pending: async () => [...pending],
+      acknowledge: async (_handle: string, receipt: { operationId: string; revision: number }) => {
+        revision = receipt.revision
+        pending = pending.filter(op => op.operationId !== receipt.operationId)
+        return true
+      },
+    },
+  })
+  const controller = createNativeNotesSyncController()
+  const opened = { ...note, nativeId: 'note-a', nativeRevision: 1 }
+  await controller.start('workspace-a')
+  try {
+    await controller.queueSave(opened, 'first offline draft')
+    expect((await controller.queueSave(opened, 'second offline draft')).expectedRevision).toBe(2)
+    expect((await controller.flush()).map(receipt => receipt.revision)).toEqual([2, 3])
+    expect((await controller.queueSave(opened, 'after own ACK')).expectedRevision).toBe(3)
+    await controller.flush()
+    revision = 5 // An external writer advanced the canonical snapshot beyond our own receipt.
+    await expect(controller.queueSave(opened, 'preserve this draft')).rejects.toThrow('revision changed')
+    expect(pending).toEqual([])
+  } finally { await controller.stop() }
+})
+
+test('an unacknowledged or mismatched receipt cannot grant revision progression', async () => {
+  let revision = 1
+  install({
+    nativeData: {
+      readEntity: async () => ({ ...snapshot, revision }),
+      mutate: async () => ({ ...operation, nativeId: 'another-note', revision: 2 }),
+    },
+    nativeReplica: { acknowledge: async () => true },
+  })
+  const controller = createNativeNotesSyncController()
+  const opened = { ...note, nativeId: 'note-a', nativeRevision: 1 }
+  await controller.start('workspace-a')
+  try {
+    await controller.queueSave(opened, 'draft')
+    await controller.flush()
+    revision = 2
+    await expect(controller.queueSave(opened, 'still bound to revision 1')).rejects.toThrow('revision changed')
+  } finally { await controller.stop() }
+})

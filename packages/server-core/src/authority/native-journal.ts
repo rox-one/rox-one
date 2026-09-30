@@ -15,7 +15,7 @@ import {
   realpathSync,
 } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
+import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
 import type { NativePrincipal } from './native-authority.ts'
 export type JournalAction = 'read' | 'write' | 'delete'
 export type JournalChange = { path: string; content: string | null }

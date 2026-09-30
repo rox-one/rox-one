@@ -1,0 +1,1116 @@
+{
+  "schemaVersion": 1,
+  "status": "PREPARED_NOT_LAUNCHED",
+  "nodes": [
+    "LSX-WP-001",
+    "LSX-WP-002",
+    "LSX-WP-003",
+    "LSX-WP-004",
+    "LSX-WP-005",
+    "LSX-WP-006",
+    "LSX-WP-007",
+    "LSX-WP-008",
+    "LSX-WP-009",
+    "LSX-WP-010",
+    "LSX-WP-011",
+    "LSX-WP-012",
+    "LSX-WP-013",
+    "LSX-WP-014",
+    "LSX-WP-015",
+    "LSX-WP-016",
+    "LSX-WP-017",
+    "LSX-WP-018",
+    "LSX-WP-019",
+    "LSX-WP-020",
+    "LSX-WP-021",
+    "LSX-WP-022",
+    "LSX-WP-023",
+    "LSX-WP-024",
+    "LSX-WP-025",
+    "LSX-WP-026",
+    "LSX-WP-027",
+    "LSX-WP-028",
+    "LSX-WP-029",
+    "LSX-WP-030",
+    "LSX-WP-031",
+    "LSX-WP-032",
+    "LSX-WP-033",
+    "LSX-WP-034",
+    "LSX-WP-035",
+    "LSX-WP-036",
+    "LSX-WP-037",
+    "LSX-WP-038",
+    "LSX-WP-039",
+    "LSX-WP-040",
+    "LSX-WP-041",
+    "LSX-WP-042",
+    "LSX-WP-043",
+    "LSX-WP-044",
+    "LSX-WP-045",
+    "LSX-WP-046",
+    "CI-001",
+    "CI-002",
+    "CI-003",
+    "CI-004",
+    "CI-005",
+    "CI-006",
+    "CI-007",
+    "CI-008",
+    "CI-009",
+    "CI-010",
+    "CI-011",
+    "CI-012",
+    "CI-013",
+    "CI-014",
+    "CI-015"
+  ],
+  "edges": [
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-002",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-003",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-004",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-005",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-006",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-007",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-008",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-008",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-009",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-009",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-009",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-009",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-009",
+      "to": "LSX-WP-010",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-011",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-008",
+      "to": "LSX-WP-013",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-013",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-013",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-014",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-014",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-014",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-015",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-014",
+      "to": "LSX-WP-015",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-016",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-016",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-014",
+      "to": "LSX-WP-016",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-017",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-015",
+      "to": "LSX-WP-017",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-017",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-018",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-018",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-019",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-019",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-020",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-020",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-020",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-021",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-009",
+      "to": "LSX-WP-021",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-021",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-021",
+      "to": "LSX-WP-022",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-015",
+      "to": "LSX-WP-023",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-017",
+      "to": "LSX-WP-023",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-024",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-024",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-017",
+      "to": "LSX-WP-024",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-025",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-025",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-026",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-026",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-026",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-027",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-027",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-028",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-028",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-028",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-028",
+      "to": "LSX-WP-029",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-030",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-030",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-028",
+      "to": "LSX-WP-030",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-031",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-031",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-032",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-033",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-033",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-033",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-034",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-034",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-034",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-034",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-035",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-015",
+      "to": "LSX-WP-035",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-035",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-035",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-029",
+      "to": "LSX-WP-036",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-030",
+      "to": "LSX-WP-036",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-036",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-037",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-037",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-037",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-021",
+      "to": "LSX-WP-038",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-037",
+      "to": "LSX-WP-038",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-028",
+      "to": "LSX-WP-039",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-039",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-040",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-040",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-040",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-041",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-041",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-033",
+      "to": "LSX-WP-041",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-040",
+      "to": "LSX-WP-041",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-033",
+      "to": "LSX-WP-042",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-036",
+      "to": "LSX-WP-042",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-040",
+      "to": "LSX-WP-042",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-041",
+      "to": "LSX-WP-042",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-024",
+      "to": "LSX-WP-043",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-037",
+      "to": "LSX-WP-043",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-041",
+      "to": "LSX-WP-043",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-042",
+      "to": "LSX-WP-043",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-044",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-037",
+      "to": "LSX-WP-044",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-040",
+      "to": "LSX-WP-044",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-041",
+      "to": "LSX-WP-044",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-045",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-045",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-045",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-045",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-045",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-046",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-046",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-031",
+      "to": "LSX-WP-046",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-033",
+      "to": "LSX-WP-046",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-046",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-045",
+      "to": "LSX-WP-046",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-001",
+      "to": "CI-002",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-001",
+      "to": "CI-003",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-002",
+      "to": "CI-003",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-001",
+      "to": "CI-004",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-002",
+      "to": "CI-004",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-001",
+      "to": "CI-005",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-002",
+      "to": "CI-005",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-001",
+      "to": "CI-006",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-002",
+      "to": "CI-006",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-004",
+      "to": "CI-006",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-001",
+      "to": "CI-007",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-002",
+      "to": "CI-007",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-004",
+      "to": "CI-007",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-003",
+      "to": "CI-008",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-004",
+      "to": "CI-008",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-005",
+      "to": "CI-008",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-006",
+      "to": "CI-008",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-007",
+      "to": "CI-008",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "CI-008",
+      "reason": "Generated artifact adoption uses the same content descriptor and aliases",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "CI-008",
+      "reason": "Applying a generated document requires aggregate CAS and revision receipts",
+      "satisfied": false
+    },
+    {
+      "from": "CI-001",
+      "to": "CI-009",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-003",
+      "to": "CI-009",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-004",
+      "to": "CI-009",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-007",
+      "to": "CI-010",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-008",
+      "to": "CI-010",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-009",
+      "to": "CI-010",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-006",
+      "to": "CI-011",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-008",
+      "to": "CI-011",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-009",
+      "to": "CI-011",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-025",
+      "to": "CI-011",
+      "reason": "RepoWiki opens through the same library and document identity",
+      "satisfied": false
+    },
+    {
+      "from": "CI-003",
+      "to": "CI-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-004",
+      "to": "CI-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-005",
+      "to": "CI-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-006",
+      "to": "CI-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-008",
+      "to": "CI-012",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-002",
+      "to": "CI-013",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-005",
+      "to": "CI-013",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-006",
+      "to": "CI-013",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-008",
+      "to": "CI-013",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-003",
+      "to": "CI-014",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-008",
+      "to": "CI-014",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-010",
+      "to": "CI-015",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-011",
+      "to": "CI-015",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-012",
+      "to": "CI-015",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    },
+    {
+      "from": "CI-013",
+      "to": "CI-015",
+      "reason": "Package prerequisite; implementation receipts required",
+      "satisfied": false
+    }
+  ],
+  "crossProgramDependencies": [
+    {
+      "from": "LSX-WP-001",
+      "to": "CI-008",
+      "reason": "Generated artifact adoption uses the same content descriptor and aliases"
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "CI-008",
+      "reason": "Applying a generated document requires aggregate CAS and revision receipts"
+    },
+    {
+      "from": "LSX-WP-025",
+      "to": "CI-011",
+      "reason": "RepoWiki opens through the same library and document identity"
+    }
+  ],
+  "topologicalOrder": [
+    "LSX-WP-001",
+    "CI-001",
+    "LSX-WP-002",
+    "LSX-WP-003",
+    "LSX-WP-007",
+    "CI-002",
+    "LSX-WP-004",
+    "LSX-WP-005",
+    "LSX-WP-011",
+    "CI-003",
+    "CI-004",
+    "CI-005",
+    "LSX-WP-009",
+    "LSX-WP-040",
+    "LSX-WP-006",
+    "CI-006",
+    "CI-007",
+    "CI-009",
+    "LSX-WP-010",
+    "LSX-WP-008",
+    "LSX-WP-026",
+    "CI-008",
+    "LSX-WP-012",
+    "LSX-WP-014",
+    "LSX-WP-025",
+    "LSX-WP-013",
+    "LSX-WP-027",
+    "LSX-WP-028",
+    "LSX-WP-031",
+    "LSX-WP-032",
+    "LSX-WP-033",
+    "CI-010",
+    "CI-012",
+    "CI-013",
+    "CI-014",
+    "LSX-WP-018",
+    "LSX-WP-019",
+    "LSX-WP-020",
+    "LSX-WP-021",
+    "CI-011",
+    "LSX-WP-015",
+    "LSX-WP-016",
+    "LSX-WP-029",
+    "LSX-WP-030",
+    "LSX-WP-039",
+    "LSX-WP-041",
+    "LSX-WP-022",
+    "CI-015",
+    "LSX-WP-017",
+    "LSX-WP-034",
+    "LSX-WP-045",
+    "LSX-WP-023",
+    "LSX-WP-024",
+    "LSX-WP-035",
+    "LSX-WP-036",
+    "LSX-WP-037",
+    "LSX-WP-046",
+    "LSX-WP-042",
+    "LSX-WP-038",
+    "LSX-WP-044",
+    "LSX-WP-043"
+  ],
+  "resourcePolicy": "Acquire exclusive integration-owner file leases across LSX/CI and prior Macro/Suite programs; no status implies implementation."
+}

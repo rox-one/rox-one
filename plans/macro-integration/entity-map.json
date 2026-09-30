@@ -1,0 +1,1651 @@
+{
+  "schemaVersion": 1,
+  "architectureRevision": 2,
+  "baseline": {
+    "macro": {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+    },
+    "rox": {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+    }
+  },
+  "entities": [
+    {
+      "macroEntity": "User",
+      "macroId": "macro|email text alias",
+      "roxCounterpart": "Profile / verified account / org member",
+      "targetKind": "person",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Verified auth subject → principal UUID; user email only legacy alias",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Authenticated Principal distinct CRMContact; person projection verified binding",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "14"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Team",
+      "macroId": "UUID",
+      "roxCounterpart": "org membership",
+      "targetKind": "team",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Explicit team/workspace mapping, member roles and owners",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "No per-surface user/team store; new kind proposal",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "14"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Organization",
+      "macroId": "database organization identity",
+      "roxCounterpart": "org types/config",
+      "targetKind": "workspace",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Import explicit organization↔workspace map",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Do not equate local folder path with tenant ID",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "14"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Project (legacy folder/container)",
+      "macroId": "text ID",
+      "roxCounterpart": "ProjectConfig",
+      "targetKind": "project",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Preserve aliases; keep source subtype/container meaning",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Not same as Initiative",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "09"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Initiative",
+      "macroId": "UUIDv7",
+      "roxCounterpart": "ProjectConfig + TaskProject",
+      "targetKind": "project",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Map unique source(kind,id) to canonical Project; task links/backfill; title collisions quarantine",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "TaskProject local ID scope preserved",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "09"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Document Markdown",
+      "macroId": "Document.id text / metadata version",
+      "roxCounterpart": "Notes + Pages content representation",
+      "targetKind": "page",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Stable UUID native; Macro document alias; path alias for native Notes; linked document content",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "One canonical Page/Note identity per imported content, not duplicate editors",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "07"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Task document",
+      "macroId": "Document.id text subtype task",
+      "roxCounterpart": "PersonalTask",
+      "targetKind": "task",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Task identity alias to original Document; rich body separate content binding",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Keep recurrence/checklist; shared status != personal Today placement",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "09"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "PDF/DOCX/code/canvas/spreadsheet/image/video Document",
+      "macroId": "Document.id + documentVersion",
+      "roxCounterpart": "File/Page/Notes representations",
+      "targetKind": "file",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Original IDs as alias; contentKind/document backing with file attachment links",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Code/canvas save semantics not automatically CRDT",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "02"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Channel",
+      "macroId": "UUID domain id",
+      "roxCounterpart": "new shared human channel; Sessions separate",
+      "targetKind": "channel",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Canonical stable id preserving channel alias, membership grants",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "DM/group human model distinct agent chat",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "08"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Channel Message / shared Message",
+      "macroId": "UUID with legacy ID mappings",
+      "roxCounterpart": "TeamComment bridge + new Message",
+      "targetKind": "channel-message",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Preserve canonical message ID/source parent, import legacy mapping",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Current Rox2 channel-message kept; domain Message supports entity discussion parent",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "08"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Thread / anchored discussion",
+      "macroId": "thread UUID + parent Entity",
+      "roxCounterpart": "TeamTarget / TeamComment",
+      "targetKind": "thread",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Common discussion/thread ID + parent ref; legacy comment alias",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "New kind registration; anchor occurrence not entity identity",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "08"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Comment (legacy)",
+      "macroId": "comment IDs preserved in imported mapping",
+      "roxCounterpart": "TeamComment",
+      "targetKind": "channel-message",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Alias into common Message; no second Comment write store",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Thread/anchor supplies presentation; old facade compatibility",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "08"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "EntityMention",
+      "macroId": "source + target + occurrence metadata",
+      "roxCounterpart": "KnowledgeRef/CraftRef/Team mention",
+      "targetKind": "mention",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Occurrence UUID idempotent source-revision extraction; EntityLink mentions",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Typed primitive; no automatic sharing or training consent",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "15"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "CrmCompany",
+      "macroId": "UUID team-scoped",
+      "roxCounterpart": "Dossier company card",
+      "targetKind": "crm-company",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Explicit aliases legacy Dossier/remote; normalized source domain key scoped",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Do not create fake Company for generic mail domain",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "10"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "CrmContact",
+      "macroId": "UUID company relationship",
+      "roxCounterpart": "Dossier person card",
+      "targetKind": "crm-contact",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Normalize email only business contact alias; merge provenance journal",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "New kind distinct person/principal login",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "10"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "CrmDomain",
+      "macroId": "UUID, company UUID, normalized domain",
+      "roxCounterpart": "none",
+      "targetKind": "crm-domain",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Typed company domain record; directory enrichment separate",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Domain source metadata not principal identity",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "10"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "CrmContactSource",
+      "macroId": "contact + source email link",
+      "roxCounterpart": "none",
+      "targetKind": "contact-source",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Composite contact/account provenance; relation record, no UI master",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "New primitive not necessarily independently navigable entity",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "10"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Stage / owner / revenue",
+      "macroId": "property definition/option UUID; owner value",
+      "roxCounterpart": "project board/status patterns",
+      "targetKind": "property",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Map stable option ID and meaning; typed money+currency; owner principal ref",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Not separate CRMOwner table competing with User",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "10"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Email Link/account",
+      "macroId": "UUID + Gmail provider account",
+      "roxCounterpart": "MailService/JMAP account",
+      "targetKind": "mail-account",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Provider/account binding scoped; credentials encrypted reference",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "MailAccount internal identity distinct provider auth principal",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "11"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Email Thread",
+      "macroId": "UUID + provider thread id",
+      "roxCounterpart": "Mail thread DTO",
+      "targetKind": "mail-thread",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Stable entity ID and provider-specific aliases; do not merge accounts by provider ID",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Existing Rox2 kind retained",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "11"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Email Message",
+      "macroId": "UUID + provider message id + internet Message-ID",
+      "roxCounterpart": "MailMessage",
+      "targetKind": "mail-message",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Own canonical ID; aliases include account; cross-account shared Internet ID is candidate relation",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Provider-neutral typed body/headers; private account ownership",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "11"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Email Draft",
+      "macroId": "draft/provider ID",
+      "roxCounterpart": "existing JMAP draft",
+      "targetKind": "mail-draft",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Mutable draft revision; submission intent receipt not sent message reuse",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Scheduled send separate job intent",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "11"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Email attachment/label",
+      "macroId": "DB/provider ID in account",
+      "roxCounterpart": "JMAP attachments/folders",
+      "targetKind": "file",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Attachment File identity+binding; Label account-scoped domain row",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Same file ref across surfaces, no copied binary authority",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "11"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Calendar account/calendar",
+      "macroId": "UUID and provider calendar ID scoped by account",
+      "roxCounterpart": "CalendarStore",
+      "targetKind": "calendar",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Provider aliases; account capability state explicit",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Production currently unavailable; not iframe",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "12"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Calendar Event",
+      "macroId": "UUID + owner/source_link/iCalUID",
+      "roxCounterpart": "CalendarEvent",
+      "targetKind": "calendar-event",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Preserve source-link/calendar occurrence namespace; explicit duplicate candidate merge",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "UID alone is not globally unique event identity",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "12"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Calendar Attendee/Occurrence",
+      "macroId": "event attendee identity; occurrence start key",
+      "roxCounterpart": "Calendar recurrence DTO",
+      "targetKind": "calendar-event",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Occurrence selectors + exception rows; attendees contact/email refs",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Event identity vs instance identity distinct",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "12"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Meeting / shareable call room",
+      "macroId": "call_meetings ID/token context",
+      "roxCounterpart": "Meeting model specialization of call",
+      "targetKind": "call",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Planned subtype + event links; existing meeting IDs become call aliases",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "No independent Meeting store first migration; guest grant not separate user system",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "13"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Active Call / CallRecord",
+      "macroId": "Same UUID retained across archive",
+      "roxCounterpart": "LocalMeetingStore + MeetingJournal",
+      "targetKind": "call",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Preserve stable call ID and state; alias local/server IDs explicitly",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Do not roll up away raw transcript evidence",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "13"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Recording",
+      "macroId": "recording key/egress ID associated call",
+      "roxCounterpart": "local recording file",
+      "targetKind": "recording",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Canonical asset ID + object hash + egress receipt; linked File backing",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Consent/retention/private download proxy",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "13"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Transcript / segments",
+      "macroId": "segment ID plus archived rollup MIN IDs",
+      "roxCounterpart": "TranscriptSegment/EvidenceSpan",
+      "targetKind": "transcript",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Retain immutable raw segment UUID + revision and optional derived display rollup",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Speaker mapping correction not destructive reidentification",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "13"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "File/StaticFile",
+      "macroId": "Document or SFS object/file ID",
+      "roxCounterpart": "files/project assets/page bundles",
+      "targetKind": "file",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Stable File ID + checksum/object key alias; finalize before attachment",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Asset metadata shares parent policy only explicitly",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "17"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Notification",
+      "macroId": "notification/event/user state IDs",
+      "roxCounterpart": "Inbox + system notification",
+      "targetKind": "notification",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "One recipient scoped primitive with causal dedup and seen/done states",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Do not confuse agent session unread with notification global source",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "15"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Activity",
+      "macroId": "activity row/event ID",
+      "roxCounterpart": "TeamActivity/Feed",
+      "targetKind": "activity",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Append durable domain fact; activity projection filtered current policy",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "UI coalescing does not drop audit events",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "15"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Favorite / Recent",
+      "macroId": "user + typed entity composite",
+      "roxCounterpart": "pin/favorite/recents",
+      "targetKind": "favorite",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "User/EntityRef unique; source rank and private history migrated",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "No favorite grants entity access",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "02"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "ScheduledAction / Reminder",
+      "macroId": "UUID or owner-scoped reminder",
+      "roxCounterpart": "Automations/recurring personal task",
+      "targetKind": "automation",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Map domain intent/trigger vs task recurrence; preserve owner+source aliases",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Event-run dedup/budget stops loops",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "16"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Chat / AgentSession",
+      "macroId": "legacy AI Chat ID / agent_session UUID",
+      "roxCounterpart": "Session JSONL/store",
+      "targetKind": "session",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "AgentSession ID preserved via canonical session ref; chat distinct source alias",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Tool/thinking transcript not human Message; source taint sharing enforced",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "16"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "ForeignEntity / PR / integrations",
+      "macroId": "external source + provider/account/object keys",
+      "roxCounterpart": "Sources/Connections/diff",
+      "targetKind": "source",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Use Rox2ExternalBinding unique four slots; register query/action capabilities",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Provider keys encoded; conflicting aliases quarantined",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "16"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    },
+    {
+      "macroEntity": "Skill / memory profile",
+      "macroId": "skill Document/system ID; per-user memory profile",
+      "roxCounterpart": "Skills + Memory",
+      "targetKind": "skill",
+      "targetId": {
+        "format": "Rox2EntityRef(workspaceId, entityId=kind:stableId, revisionId?, accountNamespace?)",
+        "stableIdPolicy": "Preserve existing canonical IDs or issue UUID once with immutable aliases; never derive identity from title/path/email login"
+      },
+      "migration": {
+        "strategy": "Skill document/source alias; memory profile imports as provenance proposal, not blanket fact graph",
+        "sourceKey": [
+          "source repository",
+          "source entity type",
+          "legacy scope/account",
+          "legacy ID"
+        ],
+        "mode": "read-only inventory → dry-run → alias backfill+quarantine → shadow compare → one writer cutover",
+        "idempotency": "importBatchId+sourceKey unique; hash mismatch quarantined",
+        "rollback": "preserve export/source hash; forward repair after shared accepted writes"
+      },
+      "notes": "Memory retrieval current ACL; no private text auto training",
+      "evidence": {
+        "baseline": {
+          "macro": {
+            "repository": "macro-inc/macro",
+            "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+          },
+          "rox": {
+            "repository": "rox-one/rox-one",
+            "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+          }
+        },
+        "detailDoc": "16"
+      },
+      "status": "PROPOSED_MAPPING",
+      "identityConstraints": [
+        "canonical principal distinct contact",
+        "workspace boundary enforced",
+        "provider/account source alias scoped",
+        "legacy Project vs Initiative source types retained"
+      ]
+    }
+  ],
+  "notes": "Kinds absent from ROX baseline are additive proposals; link/supporting records need registration only when independently addressable. No second N×N identity universe."
+}

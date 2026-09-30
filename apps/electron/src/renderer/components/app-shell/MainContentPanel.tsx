@@ -109,6 +109,7 @@ export function MainContentPanel({
     workspaces,
     sessionStatuses,
     projects,
+    loadedProjects,
     labels,
     activeSessionWorkingDirectory,
   } = useAppShellContext()
@@ -346,7 +347,7 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <ProjectsHomeInMain workspaceId={activeWorkspaceId || ''} />
+        <ProjectsHomeInMain projects={loadedProjects ?? []} workspaceId={activeWorkspaceId || ''} />
       </Panel>
     )
   }

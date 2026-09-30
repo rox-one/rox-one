@@ -1,0 +1,522 @@
+{
+  "task_id": "WP-46-preflight",
+  "attempt_id": "1ee2dca3b5370ef83fe1bba5821e9498",
+  "packet_hash": "9c29ba04d050aa344dd3a9a0e552b02d767568afede91be6444244725390989e",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-46",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; not implementation",
+  "workTier": "bounded-workflow: one package-scoped report, direct investigation, no delegated implementation",
+  "dependencies": ["WP-41"],
+  "dependencyReceiptsRequired": {
+    "WP-41": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "implementationStart": "Lead's wave0 commit and acceptance of the dependency receipts must precede implementation. Dispatch depends_on=[] schedules this preflight only; it does not remove the normative WP-41 edge."
+  },
+  "evidenceBoundary": {
+    "source": "Actual working-tree source, not an assertion that inspected bytes equal the supplied input HEAD. No Git operation performed.",
+    "manifest": "plans/macro-integration/work-packages.json whole-file SHA-256 matches the supplied 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0.",
+    "codegraph": "Project has no codegraph index; tool explicitly requested built-in fallback. No index created.",
+    "searchFailure": "Descriptive find on server-core failed with judgment-provider HTTP 402. Recovered using known specification paths, literal symbols and direct imports.",
+    "inspectionScope": "Affected files, their directly referenced protocol/handler/native transport contracts, and package specifications. Actual renderer components were not inspected because they are neither WP-46 affected paths nor their direct imports.",
+    "freshness": "Whole-file hashes below were measured after inspection. Server transport relevant ranges were refreshed and its digest measured twice identically. Concurrent integration can invalidate any source reference; the lead must refresh changed references after wave0 rather than treating input_revision as a clean-tree receipt.",
+    "runtime": "No builds, feature tests, native UI, provider probes or network operations performed. Every verification below is a future acceptance action, not an observed pass.",
+    "writeScope": "Only this report is authored. Product source, tests, manifests, shared progress and Git state are not changed."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-AUTH",
+      "producers": ["WP-01", "WP-03"],
+      "relationToDAG": "Required foundation, not an additional explicit WP-46 edge; expected transitively through WP-41.",
+      "evidence": "RequestContext currently contains clientId/workspaceId/webContentsId only; validateToken and validateSessionCookie return boolean. Remote workspaceId comes from handshake. authorizeWorkspace compares workspace strings, not principal/resource policy.",
+      "requiredReceipt": "Transport-derived principal, credential/device binding, workspace membership and current resource-policy API accepted for RPC and HTTP, including revocation of active sockets.",
+      "source": "transport/types.ts:7-11; transport/server.ts:106-120,508-552,787-791; command-gateway.ts:38-55; implementation-plan.md:9-63",
+      "state": "missing in inspected seams; dependency implementation not verified"
+    },
+    {
+      "id": "FG-IDENTITY",
+      "producers": ["WP-02"],
+      "relationToDAG": "Foundation reused through WP-41, not a replacement dependency list.",
+      "evidence": "Rox2EntityRef and kind:id helpers exist, but registered kinds do not include device-session or capability. Normative domainEntities uses device_session, whereas the result entityId pattern rejects underscore kinds. The migration allows typed keys for principal/receipt/job rows.",
+      "requiredReceipt": "Accepted decision whether device_session is entity-owned or a typed principal/device record; canonical ref mapping and composite workspace identity; no invented underscore entity kind or second entity registry.",
+      "source": "platform-contract.ts:17-38,218-239; work-packages.json:41445-41448,41970-41994",
+      "state": "requires accepted registry/migration interface before implementation"
+    },
+    {
+      "id": "FG-COMMAND-REPLAY",
+      "producers": ["WP-04", "WP-05", "WP-51"],
+      "relationToDAG": "Hidden operational prerequisites, normally transitive through WP-41's Page/local-meeting dependencies.",
+      "evidence": "Current RPC gateway is owner approval/deny over PendingCommandsStore, not RoxCommand v2. Three normative commands files and workspace-service migrations directory are absent. WS replay is a process-local TTL/size ring buffer, not durable transaction outbox/projection_cursor. Shared-path ownership is explicitly centralized in implementation-plan.md:7.",
+      "requiredReceipt": "Accepted shared command schemas/ports, transaction receipt+outbox+inbox, authenticated replay cursor, existing durable client projection/outbox, writer-mode routing, policy epoch and revoke fence. Reuse those stores; no WP-46-specific parallel command queue.",
+      "source": "command-gateway.ts:1-7,58-113; handler-deps.ts:70-71; server.ts:177-180,877-929; implementation-plan.md:65-100,1020-1036",
+      "state": "not ready in inspected working tree"
+    },
+    {
+      "id": "FG-SURFACE-OWNERSHIP",
+      "producers": ["WP-10", "WP-15", "WP-40", "WP-41"],
+      "relationToDAG": "WP-46's affectedFiles omit actual desktop/web rendering surfaces although full DoD requires real interaction, font, motion, keyboard and touch evidence.",
+      "evidence": "GetDeviceCapabilities/ResumeSync/OpenDeepLink are names in the specification, not verified declarations in inspected affected files. Actual notification/search/mention/Project/Page renderer ownership must be supplied by accepted producer interfaces; a WS client class cannot implement visible focus or media status by itself.",
+      "requiredReceipt": "Lead maps existing Project/entity actions and supported narrow web route to actual files/symbols, accepts UI patch ownership and platform adapter contracts, and provides WP-41 scenario runner. Extend existing destinations only; do not create a second mobile shell.",
+      "source": "work-packages.json:41428-41468; test-plan.md:7-9,36-56,189-195",
+      "state": "renderer seam intentionally unverified under this worker's inspection scope"
+    },
+    {
+      "id": "FG-CROSS-SURFACE-POLICY",
+      "producers": ["WP-06", "WP-07", "WP-09", "WP-36", "WP-38", "WP-40", "WP-50"],
+      "relationToDAG": "Transitive feature adapters needed for full completeness; not separate explicit edges introduced by this report.",
+      "evidence": "Full checklist requires sharing/search/mentions/notifications/activity/agent/API checks. Existing Rox2Context exposes refs, but their consumer registrations and current-ACL watermarks are not implemented by transport capability advertisements.",
+      "requiredReceipt": "Accepted common authorized query/context/link/attention/deep-link APIs and provenance invalidation; delivery and recovery receipts showing no revoked title, snippet, count or body.",
+      "source": "platform-contract.ts:125-156,592-619; implementation-plan.md:104-178,736-838,1002-1018; test-plan.md:197-222",
+      "state": "not verified; cannot mark N/A because producer features are missing"
+    },
+    {
+      "id": "FG-RUNTIME-MEDIA",
+      "producers": ["WP-31", "WP-33", "WP-34", "WP-35", "WP-39", "WP-52"],
+      "relationToDAG": "Runtime capability foundation, expected through WP-41; positive media parity cannot be inferred from handshake support.",
+      "evidence": "LOCAL_CLIENT_CAPABILITIES lists six Electron actions, no SFU/egress/STT/device-capture readiness. WP-52 requires independent real health receipts and fail-closed unavailable states; WP-35 preserves local capture and unavailable summaries.",
+      "requiredReceipt": "Runtime capability DTO with independent platform support, configured/ready state and evidence freshness for media components, authorized asset/call APIs and supported failure fixtures. No provider sandbox is needed for a pure unavailable-state assertion; actual outbound media operations need existing sandbox receipts.",
+      "source": "capabilities.ts:10-36; implementation-plan.md:622-733,1038-1055",
+      "state": "required before live capability-specific UX acceptance"
+    },
+    {
+      "id": "FG-CONTRACT-RECONCILIATION",
+      "producers": ["WP-04", "WP-41", "WP-46 integration owner"],
+      "relationToDAG": "Published schema ambiguity independent of schedule.",
+      "evidence": "device.resume payload protocolVersion is integer; transport protocolVersion is string. Result prose names Rox2CanonicalResult while JSON schema status is an enum string, with only status/receiptId required. Current triad and isClaimableLive require policy verification; no receiptId/commandId/requestHash in Rox2Receipt. resume requires a nonempty cursor even on first connect.",
+      "requiredReceipt": "Accepted mapping of domain schema integer versus wire major-version string; bootstrap cursor semantics; typed result DTO containing required verified-receipt invariants and mapping enum states to existing triad without making queued/unavailable/pending_fence success. Additional API schemas for GetDeviceCapabilities/ResumeSync/OpenDeepLink must be accepted, not guessed from their names.",
+      "source": "work-packages.json:41562-41595,41745-41810; platform-contract.ts:99-111,158-166,515-562; protocol/types.ts:32-33; ProtocolVersionPolicy.swift:6-24",
+      "state": "needs integration contract decision; acceptance remains unchanged"
+    },
+    {
+      "id": "FG-RELEASE-LICENSE",
+      "producers": ["WP-48"],
+      "relationToDAG": "Published license/release gate is not a direct WP-46 edge.",
+      "evidence": "WP-46 permits behavior reimplementation only; upstream dependencies need exact license audit. WP-48 specifies exact artifact SBOM and file origin gate.",
+      "requiredReceipt": "Keep implementation native to existing mechanisms; any new upstream dependency/copy requires accepted exact license/SBOM decision before release.",
+      "source": "work-packages.json:41540; implementation-plan.md:965-982",
+      "state": "release prerequisite, no dependency introduced by this preflight"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/commands/contracts.ts",
+    "apps/workspace-service/src/modules/commands/commands.ts",
+    "apps/workspace-service/src/modules/commands/repository.ts",
+    "tests/macro-integration/wp-46.test.ts",
+    "apps/workspace-service/migrations/46-domain-contract.sql"
+  ],
+  "newFileOwnershipNotes": [
+    "These are exactly the normative proposed files, not authorization to write them during preflight. Glob found all five absent, including their service module/migration directories.",
+    "contracts.ts, commands.ts and repository.ts repeat across WP-04/05/41/51. Their domain-area owner must create them once; WP-46 submits additive patches after predecessor interfaces are accepted, never overwrites prior work.",
+    "46-domain-contract.sql is a proposed migration identifier. The selected migrator determines actual filename; no fabricated timestamp. Reuse any existing projection_cursor, command_receipt, entity/alias/outbox/inbox tables rather than recreating them. Only missing device-specific schema is additive."
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / Rox2Receipt / Rox2Event / isClaimableLive / formatRox2EntityId / parseRox2EntityId",
+      "change": "Reuse scoped refs and triad. Integrate accepted command receipt fields and device.session_changed policyEpoch/projectionWatermark metadata through the foundation owner; map applied plus independently validated receipt to live+succeeded+verified, pending states to non-success. Append an accepted device kind only if the registry decision makes devices entity-owned; never emit device_session as a canonical kind. Preserve relation/binding helpers and standalone behavior, and add no service I/O.",
+      "reason": "Canonical cross-device identity and no false success require the existing contract, not a parallel device model/status convention."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext / RpcHandlerOptions / RpcServer",
+      "change": "Consume the WP-01 authenticated authority context with principal, bound device/credential and explicit shared versus standalone mode; resource authorization remains server-derived. Expose negotiated device capabilities and durable resume results through typed domain ports without treating capability strings or webContentsId as grants. Do not bypass the existing localElectron gate.",
+      "reason": "Current three-field context cannot deny forged actor/workspace, check revoke fences or bind a resume cursor to a principal."
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "symbol": "WsRpcServerOptions.validateToken / validateSessionCookie / ClientConnection / onConnection / onRequest / push / registeredChannelsFor",
+      "change": "Use accepted foundation principal resolvers instead of interpreting a boolean auth result as actor identity. Bind resume to principal+device+workspace+credential/policy epoch, compare those on reconnect, refresh capabilities from the new validated advertisement (current reconnect reuses the old Set), and reauthorize resource events before live delivery or buffered replay. Domain.device.resume invokes the durable gateway after handshake; retain transport seq/ring replay only as acceleration. Do not replay revoked raw buffers or ACK domain projection progress merely because bytes were sent. Preserve trusted Electron-main proof and localElectron channel filtering.",
+      "reason": "Current reconnect compares workspace/webContents/local proof but not actor/device; buffers and workspace broadcast lack current resource checks, and capabilities can remain stale after reconnect."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "symbol": "HANDLED_CHANNELS / registerCommandGatewayHandlers / authorizeWorkspace / requireStore",
+      "change": "Register domain.device.resume through the accepted typed domain command port. Strictly validate deviceId/cursor/protocolVersion/capabilities, reject extra/body-actor fields, inject principal from context, enforce current device/workspace/resource policy and fence, and forward the same RoxCommand v2 idempotencyKey/expectedRevision path as HTTP. Keep command:list/approve/deny's pending-owner workflow separate from shared transaction receipts; do not use decide(...,'owner') for device resume. Add typed capability/resume/deep-link query adapters only after their contracts are accepted.",
+      "reason": "Existing gateway is phase-0 pending-command review, not the authoritative v2 mutation gateway."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps.commandGateway",
+      "change": "Inject the accepted common workspace-domain command/query port next to the existing PendingCommandsStore dependency, or use the foundation owner's already added port. Do not repurpose PendingCommandsStore as the device receipt DB. Composition root provides service/repository/provider instances.",
+      "reason": "Direct import currently exposes only pending owner approvals; the shared handler needs an actual authoritative domain implementation."
+    },
+    {
+      "path": "packages/server-core/src/transport/capabilities.ts",
+      "symbol": "LOCAL_CLIENT_CAPABILITIES / requestClientOpenExternal / requestClientOpenPath",
+      "change": "Keep the six local Electron action constants and wrappers. Publish the accepted typed platform capability descriptor derived from handlers actually available on that client, distinct from server media readiness and ACL grants. Native path/reveal/browser actions must not be advertised on iOS/web. OpenDeepLink resolves an authorized canonical ref through the existing route adapter rather than passing an arbitrary ref as a filesystem path or claiming external-open means entity navigation succeeded. Preserve unavailable errors and fallback URL semantics.",
+      "reason": "An Electron action catalog alone does not establish device support, media readiness or authorized route success."
+    },
+    {
+      "path": "packages/server-core/src/transport/client.ts",
+      "symbol": "WsRpcClient.onMessage / onDisconnect / onConnectionStateChanged / emitReconnected / handleCapability / isChannelAvailable",
+      "change": "Reuse lazy connect, backoff, connection generation and existing reconnected notification. Bind the accepted durable resume adapter at handshake/reconnect and gap detection; keep transport connected distinct from domain synchronized. On sequence gap signal stale/recovery rather than only warning and advancing a domain watermark. Persist domain cursor only after projection transaction via WP-05. Advertise only supported registered handlers; missing legacy channel advertisements must not imply new domain/media capability. Do not retry mutations blindly after Connection lost; reconcile the original idempotent command receipt first.",
+      "reason": "Current event branch warns then advances seq and invokes listeners, requests are rejected on disconnect, and connected means handshake complete rather than projection verified."
+    },
+    {
+      "path": "apps/ios/CraftAgentKit/Sources/CraftAgentKit/Client/RPCClient.swift",
+      "symbol": "RPCClient.connect / call / callOptional / callVoid",
+      "change": "Add typed device.resume/GetDeviceCapabilities/ResumeSync/OpenDeepLink facade methods using accepted shared schemas mapped to Swift Codable DTOs in the existing protocol layer; route through transport.request and enforce canonical scoped ref/receipt decoding. Resume may not use callVoid, because dropping status/receipt permits false success. Preserve independent domain versus transport readiness and expose rejection/unavailable states to existing ViewModels.",
+      "reason": "Facade currently has generic calls only; no typed resume/result/capability contract."
+    },
+    {
+      "path": "apps/ios/CraftAgentKit/Sources/CraftAgentKit/Transport/RPCTransport.swift",
+      "symbol": "RPCTransport.openSocketAndHandshake / handle / request / connect / disconnect",
+      "change": "In .response first reject envelope.error as TransportError.remote before considering result/null; preserve legitimate null successes only when error is absent. Consume reconnected/stale ACK fields, reset transport seq on fresh connection, trigger authorized durable resume/full refresh before domain-ready, and handle gaps/duplicates via the accepted projection adapter. Keep empty Electron capabilities on iOS unless a real supported handler exists. Scope retained clientId/lastSeenSeq to current principal/workspace/device, clearing stale reconnect identity on explicit target/account switch; maintain existing Task cancellation and socket identity guards.",
+      "reason": "Server sendResponseError sends type=response with error. Swift currently resolves such envelopes as null, while callVoid discards it. ACK's stale/reconnected fields are ignored and reconnect state survives workspace changes."
+    },
+    {
+      "path": "apps/ios/CraftAgentKit/Sources/CraftAgentKit/Transport/ConnectionState.swift",
+      "symbol": "ConnectionState / RPCTransportDelegate",
+      "change": "Use existing delegate/state pathway to expose the accepted resume lifecycle (loading/stale, denied, queued, retryable, applied_verified) separately from socket connected, with canonical refs and policy/watermark data. Update all delegate consumers through the native owner once mapped; do not introduce a second transport actor or success-only callback.",
+      "reason": "Current delegate has only didChangeState and didReceiveEvent; stale/full-refresh has no typed visible domain seam."
+    },
+    {
+      "path": "apps/ios/CraftAgentKit/Sources/CraftAgentKit/Protocol/ProtocolVersionPolicy.swift",
+      "symbol": "ProtocolVersionPolicy.major / isCompatible",
+      "change": "Keep wire string major-version validation separate from the integer device.resume domain schema version. Agree one malformed-version rejection policy with the TS protocol owner; reject unsupported domain versions before mutation and preserve typed protocol/schema errors. Do not stringify a domain integer and reuse it silently as a wire version.",
+      "reason": "Swift Int(head) and server parseInt(head,10) have different malformed-input acceptance; more importantly the normative payload and transport represent different version contracts."
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "symbol": "ErrorCode / KNOWN_ERROR_CODES / MessageEnvelope",
+      "change": "Through the shared protocol owner add the accepted device.resume domain error codes to both ErrorCode and KNOWN_ERROR_CODES, retaining capability-unavailable and transport errors. If foundation chooses typed result errors instead, define that common DTO explicitly and ensure RPC/HTTP preserve it. Never let FORBIDDEN, WORKSPACE_MISMATCH, INVALID_PAYLOAD, REVISION_CONFLICT, IDEMPOTENCY_CONFLICT, PROVIDER_UNAVAILABLE, UNKNOWN_EXTERNAL_EFFECT, SCHEMA_VERSION_UNSUPPORTED, REVOKE_FENCE_PENDING or UNAUTHENTICATED collapse to HANDLER_ERROR.",
+      "reason": "None of the ten normative domain errors are currently in the inspected transport error vocabulary; server uses isErrorCode to sanitize handler failures."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.commandGateway",
+      "change": "Add the accepted domain namespace/channel mapping for domain.device.resume without renaming the existing command:list/approve/deny channels. Add named query channels only after GetDeviceCapabilities/ResumeSync/OpenDeepLink contracts are accepted and ensure native advertisement uses the same definitions.",
+      "reason": "Current shared declarations only describe pending command review; additional operation names in prose are not callable routes."
+    },
+    {
+      "path": "apps/ios/CraftAgentKit/Sources/CraftAgentKit/Protocol/WireError.swift",
+      "symbol": "ErrorCode.wireMap / wireValue / WireError",
+      "change": "Add typed cases for the accepted domain errors so ViewModels can distinguish revoked/denied, conflict, reauth, schema incompatibility, retryable unavailable and pending fence. Preserve .unknown(rawValue) for future wire values, and verify .response error propagation before UI state mapping.",
+      "reason": "Unknown values are decode-safe but cannot currently drive typed domain-specific recovery decisions."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/commands/contracts.ts",
+      "symbol": "proposed device.resume request/result schemas and domain ports; file currently absent",
+      "change": "After the common-file owner creates the foundation contract, add strict normative payload limits (nonempty deviceId/cursor up to 10000, integer protocolVersion >=0, <=1000 nonempty capability strings each <=10000), RoxCommand v2 envelope and typed authorized result/query DTOs. Define capability support/readiness/unavailable reasons, bootstrap/authorized cursor semantics and strict receipt validation once. No service I/O in core/contracts.",
+      "reason": "Shared normative path repeats across predecessor packages; one additive schema implementation avoids divergent mobile/desktop DTOs."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/commands.ts",
+      "symbol": "proposed device.resume and GetDeviceCapabilities/ResumeSync/OpenDeepLink domain handlers; file currently absent",
+      "change": "Extend the accepted authenticated command/query gateway: validate ownership and policy fence, compare expected device aggregate revision, hash immutable request with actor/workspace scope, reconcile duplicate key, apply device/cursor update transaction, authorize each returned ref, and serialize typed receipt only after commit. GetDeviceCapabilities intersects actual platform support and authorized runtime readiness; ResumeSync uses current-ACL bounded cursor; OpenDeepLink reuses common resolver. Reuse existing shared service composition, HTTP route and native adapter rather than a new authority.",
+      "reason": "WP-46 operation must produce verified behavior, not an in-memory connected flag or a new standalone device service."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/commands/repository.ts",
+      "symbol": "proposed device_session / projection_cursor transaction methods; file currently absent",
+      "change": "Extend foundation repository transaction methods with device binding, durable authorized cursor/policy epoch, schema/revision checks, atomic state+same command_receipt+device.session_changed outbox, and inbox dedup by consumer/event. Advance cursors after projection commit, retain rejected queued draft/receipt, and revoke credential references without persisting a reusable shared service secret in renderer. Reuse existing cursor/receipt/outbox tables and migration owner.",
+      "reason": "Restart-after-commit-before-reply and duplicate/out-of-order replay cannot be satisfied by transport ring buffers."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-46 section",
+      "change": "On implementation acceptance record concrete accepted capability/resume/deep-link interfaces, renderer owner patches, version/bootstrap-cursor mapping, generated migration filename and foundation receipts. Preserve WP-41 explicit dependency; do not change planned to complete on preflight evidence.",
+      "reason": "Published entry-point declarations are not verified user-surface flow ownership."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "COLLAB-01 / Desktop-mobile WP-46 regression gate / feature completeness and evidence record",
+      "change": "Bind live WP-46 desktop+narrow-web+iOS reconnect/capability assertions to actual implementation SHA/schema and UI routes. Include baseline, Electron-only-on-iOS mutant, independent holdout, denied replay, commit-before-reply recovery and actual focus/reduced-motion/font evidence. Record platform/media limits and credential recovery without exposing secrets.",
+      "reason": "Fixture or static interface parity is explicitly insufficient for completion."
+    }
+  ],
+  "surfaceIntegrationRequest": {
+    "knownActualSeams": ["WsRpcClient.onConnectionStateChanged and __transport:reconnected", "RPCTransportDelegate.didChangeState/didReceiveEvent", "RpcServer.hasClientCapability/invokeClient", "Rox2EntityRef and isClaimableLive"],
+    "missingOwnerMapping": "Lead must supply exact existing desktop Project/entity action, narrow web, media-action, routing and Swift ViewModel component paths/symbols from accepted WP-41 producers. No guessed renderer source path is presented as inspected evidence.",
+    "requiredChange": "Existing action surfaces consume the same typed canonical ref/resume lifecycle; render all six normative states, accessible unavailable-media explanations and help, keyboard focus/history restoration, touch interaction, reduced-motion-safe transitions and verified loaded font. All new user-facing strings go through existing t() with parity across ten locales. Do not add a second shell/store/default style system.",
+    "whyOutsideAffectedFiles": "The eight published affected paths are transport/domain contracts, not JSX/SwiftUI renderer components. Transport-only edits cannot meet the UI DoD."
+  },
+  "acceptanceMatrix": [
+    {
+      "criterion": "Desktop and narrow web client show same entity refs",
+      "currentEvidence": "platform-contract.ts:218-239 provides kind:id and workspace/revision/account-scoped refs. RPCClient.call can decode arbitrary results; no typed device resume. No inspected renderer consumes this new operation.",
+      "requiredChange": "Rox2EntityRef-backed ResumeSync/OpenDeepLink DTOs through common gateway and existing routes; match entityId/workspace/account namespace/revision on desktop and narrow web, including authorized missing/tombstone states, never display-title identity.",
+      "verification": "Future live W1 A1 desktop/A2 narrow-web open the same existing Project/Page/linked entity, rename/reload/reconnect, compare typed API read-back and rendered route refs+revision; outsider forged W1 ref denied without title/count. Save screenshots/ARIA and canonical ref evidence.",
+      "missingPrerequisite": "FG-IDENTITY, FG-AUTH, FG-SURFACE-OWNERSHIP and accepted WP-41 receipts",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/revoke UX no false success",
+      "currentEvidence": "isClaimableLive enforces triad policy; WsRpcClient.onDisconnect rejects pending requests. Server replay is in-memory; Swift .response ignores error and ACK ignores stale, so callVoid can return without error on a server denial.",
+      "requiredChange": "Reuse durable WP-05 queue/projection and WP-51 fence; socket connected is not domain-ready. Reconcile original command receipt on reconnect, quarantine revoked draft, clear unauthorized subscriptions/caches and reject Swift response errors. Only verified committed receipt reaches applied_verified.",
+      "verification": "Future offline edit+reload remains queued without saved badge; reconnect accepts once; revoke during suspension/pending append blocks read/edit/rejoin, drops private delivery and quarantines draft. Kill server after commit before reply; same key returns original receipt/revision/event. Retain UI traces and DB counts.",
+      "missingPrerequisite": "FG-AUTH, FG-COMMAND-REPLAY, accepted result/credential/fence contracts and UI owner",
+      "state": "missing"
+    },
+    {
+      "criterion": "reduced motion/key focus",
+      "currentEvidence": "Affected transport files provide connection callbacks, not visual motion/focus implementation. test-plan.md:192-195 requires actual viewport, keyboard/touch, background reconnect, lazy initialization and loaded font.",
+      "requiredChange": "Through existing renderer owners preserve semantic buttons/live status, visible focus, focus return/history/panel after retry/deep link, reduced-motion transitions and existing compact Russian/font convention; do not introduce transport-only fake accessibility evidence.",
+      "verification": "Future desktop and supported narrow viewport: keyboard-only traversal, activate retry/deep link, denied/unavailable explanation accessible on focus/click; touch activation; emulate prefers-reduced-motion and observe disabled/reduced movement; inspect actual loaded Rox font. Save before/after screenshots plus ARIA/focus/motion assertions.",
+      "missingPrerequisite": "FG-SURFACE-OWNERSHIP; actual component paths are not supplied by published WP-46 affectedFiles",
+      "state": "missing"
+    },
+    {
+      "criterion": "media unavailable clearly",
+      "currentEvidence": "LOCAL_CLIENT_CAPABILITIES lists OS path/browser/dialog actions. invokeClient checks advertised capability and returns CAPABILITY_UNAVAILABLE, but no typed media readiness contract exists in these seams.",
+      "requiredChange": "GetDeviceCapabilities combines honest platform support with separately verified media/provider readiness and unavailable reason; existing media actions display unavailable/denied/not-configured distinctly, with no started/playing/recording success when absent. Never advertise Electron path/reveal/browser control on iOS.",
+      "verification": "Future iOS/narrow web absent capture/Electron APIs; SFU/egress/STT/object service stopped independently; each relevant action disabled/explained and no provider success receipt. Restore one service and observe only that capability's authorized transition. Electron-only advertisement mutation must fail a specific assertion.",
+      "missingPrerequisite": "FG-RUNTIME-MEDIA, accepted capability DTO and existing media component owner",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Normative ui.existingSurface is Native Project/entity actions; actual seams available are transport callbacks and RpcServer capability methods, not rendering.",
+      "requiredChange": "Patch mapped existing native/web actions to consume common typed resume/capability state; do not create a parallel destination. Include individual help and localization via existing t() conventions.",
+      "verification": "Future real interaction/visual assertions in desktop and supported narrow web, with before/after/error screenshots; iOS capability exclusions independently checked.",
+      "missingPrerequisite": "FG-SURFACE-OWNERSHIP and localization/component ownership",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "Rox2EntityRef and parseRox2EntityId exist; OpenDeepLink is only a spec API name. requestClientOpenExternal opens URL but is not a domain router.",
+      "requiredChange": "Use accepted WP-40 canonical resolver, current ACL and aliases, existing history/tabs/panel/focus route; do not coerce an entity ref into shell.openPath.",
+      "verification": "Future same ref after rename/reload opens same entity on both surfaces, history/back/focus correct; stale/missing/denied ref produces safe state without title leakage.",
+      "missingPrerequisite": "FG-IDENTITY, WP-40 resolver and mapped route owner",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "platform-contract.ts:17-38,232-239 defines registered kinds and scoped refs; device_session/capability are not in the kind list.",
+      "requiredChange": "Accept device row key/kind classification, bind device to authenticated principal/workspace, keep account namespace distinct and extend existing registry only if entity-owned.",
+      "verification": "Future same device/user across reconnect preserves canonical identity, distinct A1/A2 share principal without peer collision, cross-workspace IDs rejected, alias import retry stable.",
+      "missingPrerequisite": "FG-IDENTITY accepted typed interface and migration ownership",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "server eventBuffer/disconnectedClients and client pendingReconnect are in-memory; normative repository/migration paths absent.",
+      "requiredChange": "Add device_session/cursor changes through existing PostgreSQL transaction and foundation client projection/outbox; preserve one authority, revision and credential reference/revoke.",
+      "verification": "Future restart client/server between command commit and reply; read same state/ref/revision/receipt and one outbox event; snapshot restore/replay does not duplicate rows. Record DB schema revision and unique-key counts.",
+      "missingPrerequisite": "FG-COMMAND-REPLAY and selected migrator/device schema decision",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "registerCommandGatewayHandlers only registers list/approve/deny and uses PendingCommandsStore; domain.device.resume is not registered there.",
+      "requiredChange": "Implement exact strict device.resume schema and RoxCommand v2 gateway in shared common files: actor injected, expectedRevision for mutable device aggregate, immutable request hash and scoped idempotency.",
+      "verification": "Future valid HTTP and native RPC resume produce same typed result; extra actor/workspace mismatch, invalid bounds/version, stale revision and changed payload same key rejected; exact duplicate returns original receipt.",
+      "missingPrerequisite": "FG-AUTH, FG-COMMAND-REPLAY and FG-CONTRACT-RECONCILIATION",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "hasClientCapability/findClientsWithCapability return transient transport advertisements, not authorized domain DTOs/pagination/cursors.",
+      "requiredChange": "Implement accepted GetDeviceCapabilities/ResumeSync/OpenDeepLink queries through common domain port; current ACL, typed limited DTOs, authorized stable pagination/cursor and no hidden totals/title.",
+      "verification": "Future owner/member queries compare typed ref/revision/capability data across clients; outsider/revoked cursor replay and forged cursor denied; paginated replay covers each authorized event once.",
+      "missingPrerequisite": "Additional named query schemas, foundation cursor/query interface and bootstrap semantics",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "server push targets all/workspace/client and keeps TTL buffers; client event seq gap only warns before dispatch. Rox2Event has revision/correlation fields but no durable transport cursor.",
+      "requiredChange": "Atomic device.session_changed outbox, current-policy authorized replay, dedup inbox and monotonic projection revision/watermark; keep transport seq and lossy presence separate from durable domain cursor.",
+      "verification": "Future drop/duplicate/reorder events, evict ring buffer, restart server: ResumeSync converges from durable cursor without resurrection/duplicate activity; revoked subscriber sees no private payload. Mutation that drops required event fails convergence oracle.",
+      "missingPrerequisite": "WP-04/05 durable event contracts and WP-51 fencing receipts",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "authorizeWorkspace checks caller workspace only; RequestContext lacks principal. authorizeRox2Action requires actor/grant, and catalog permissions are explicitly not actor authorization.",
+      "requiredChange": "Inject transport actor, enforce current workspace/resource read/write/action rights, cursor/device ownership, linked-ref ACL and fence; agent allow-all and client capability advertisement never override policy.",
+      "verification": "Future owner/editor/viewer/guest/outsider/revoked matrix through HTTP/RPC and delegated agent; forged actor and workspace denied, viewer mutation rejected, no forbidden ref/title/snippet/count or future event.",
+      "missingPrerequisite": "FG-AUTH plus resource-policy/revoke API",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "platform contract lists share/publish as sensitive and has actor grants; reconnect identity and workspace broadcast do not implement audience inheritance or expired-link policy.",
+      "requiredChange": "Consume existing explicit resource grants and WP-50 provenance/audience decisions on resume/deep link/media; links/device association must not extend access; invalidate revoked/expired audiences before delivery.",
+      "verification": "Future B sees explicitly shared ref only, linked private mail/recording title/body remains absent, expiring guest link and session revoke cannot resume access, owner remains authorized.",
+      "missingPrerequisite": "FG-CROSS-SURFACE-POLICY and sharing/fence receipts",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Rox2 refs/event revisions exist, but inspected device transport has no search projection/read policy; WP-06 defines common authorized search and watermark.",
+      "requiredChange": "Preserve existing search extractor/upsert/tombstone adapters for resumed entity kinds; query with current actor/policy and accepted projection watermark, not cached client grants.",
+      "verification": "Future search same resumed entity on desktop/narrow web yields same ref/revision after watermark; revoke before index update hides snippet/title/count, delete/restart/replay does not resurrect.",
+      "missingPrerequisite": "WP-06 accepted query/projection adapter; not N/A due to missing search",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "Rox2Relation supports mentions; actual occurrence extraction and policy resolver are outside inspected paths and owned by WP-09.",
+      "requiredChange": "Reuse accepted occurrence/source-revision/target-policy APIs for mention deep links on resumed entities, preserving canonical identity and revocation filtering; no device-specific mention store.",
+      "verification": "Future mention opens same authorized target across devices, edit removes obsolete backlink, revoked target yields safe denial and grants no access implicitly after replay.",
+      "missingPrerequisite": "WP-09 occurrence/resolver interface and UI routing owner",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WS events deliver by workspace/client and can replay; they are not recipient-level notification/read state. WP-07 supplies common attention state.",
+      "requiredChange": "Reuse recipient-authorized notification API/dedup and per-user seen/done/mute/snooze persistence; reconnect should reconcile attention once, not emit one alert per replay.",
+      "verification": "Future duplicate reconnect/event delivers one semantic notification, seen/done across A1/A2 agree, user B read state remains independent, revoked target omitted without hidden details.",
+      "missingPrerequisite": "WP-07 recipient/cursor state API and event dedup receipts",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event actor/causationId/correlationId/aggregateRevision and isAuditableRox2Event exist; transport ring replay lacks persisted domain audit identity.",
+      "requiredChange": "Emit one device.session_changed from transaction outbox with authenticated actor, command cause/revision/policy; consume common authorized activity projection and preserve privacy.",
+      "verification": "Future retry/restart yields one activity row with same event/command/revision and authorized actor; duplicate/out-of-order replay no duplicate or stale overwrite; outsider cannot observe private activity.",
+      "missingPrerequisite": "WP-04 outbox and common activity projection/consumer contract",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Rox2Context has workspace/entityRefs/permissionMode/binding revisions; permissionMode is not resource ACL. No device tool is implemented in inspected gateway.",
+      "requiredChange": "Consume WP-36 domain tools/context with acting user/device restrictions and WP-50 provenance. Agent accesses same refs/capability limitations and receipts; no authority based on local profile/email or allow-all.",
+      "verification": "Future Agent-A queries/opens permitted resumed ref through native tool, Agent-V allow-all cannot mutate; revoked source removed from context/cache/exports, unavailable media disclosed without invented success.",
+      "missingPrerequisite": "WP-36 domain tool registration and WP-50 context invalidation interfaces",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Normative HTTP POST and native domain.device.resume specified; current HANDLED_CHANNELS only command:list/approve/deny. MCP producer interface is not inspected.",
+      "requiredChange": "Wire HTTP and RPC to the same typed authenticated domain handler; use existing WP-36 API/MCP adapters for applicable queries/actions with identical policy/error/receipt contracts, not a parallel implementation.",
+      "verification": "Future HTTP/RPC/applicable MCP duplicate key returns identical canonical receipt/result; same denied actor and workspace mismatch produce equivalent typed denial, not generic HANDLER_ERROR/null success.",
+      "missingPrerequisite": "Shared service HTTP composition, domain channel/error schemas and accepted MCP applicability/registration receipt",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Rox2Event includes cause/correlation/revision; server logs transport reconnect counts. Neither supplies all seven normative command/policy/projection/retry fields.",
+      "requiredChange": "Use common structured command/event logging with commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ counters, including unavailable/fence/replay outcomes. Never log tokens/raw email/body/transcript.",
+      "verification": "Future correlate one resume/retry/fence/recovery trace to receipt/outbox/DB/watermark and backlog counters; plant PRIVATE_WP-46 and secret markers, assert absent in logs/evidence public text.",
+      "missingPrerequisite": "Accepted common telemetry schema/privacy redaction and queue metrics ports",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "tests/macro-integration/wp-46.test.ts absent. Spec provides seed 20260976, W1/A/B/C, PRIVATE_WP-46, three test kinds and Electron-only-on-iOS negative control.",
+      "requiredChange": "Add normative scenario, meaningful negative-control and persistence/recovery test after accepted interfaces; reuse existing package fixtures/runner. Assert consumer behavior/identity/ACL/cursor invariants, not source strings or mock forwarding.",
+      "verification": "Future bun test tests/macro-integration/wp-46.test.ts, relevant existing package tests, and live browser/Electron/native capability scenario. Baseline passes before seeded fault; independent holdout; distinguish infrastructure failure from caught assertion.",
+      "missingPrerequisite": "Accepted WP-41 scenario runner and all changed-path foundation interfaces; no tests run in this preflight",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "implementation-plan.md WP-46 and test-plan.md contain planned acceptance, not implementation receipts or runtime parity.",
+      "requiredChange": "Update existing sections with actual operations/DTOs, supported clients/media limits, cursor/version/credential recovery, writer-mode/revoke behavior, migration filename and revision-bound receipts; no extra unrequested docs.",
+      "verification": "Future review docs against exercised UI/API behavior and exact delivered SHA/schema, ensuring queued/unavailable states and failed attempts are retained and no fixture called live evidence.",
+      "missingPrerequisite": "Implemented and observed behavior plus accepted owner changes; no documentation edits authorized here",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Transport models auth/protocol/timeout/network/server failures; domain result schema includes reconciling/ambiguous/pending_fence/rejected/unavailable, not currently mapped to typed transport errors.",
+      "requiredChange": "Preserve typed terminal/reauth/schema/conflict/pending-fence/retryable errors and quarantined drafts in existing surfaces; .response.error must throw in Swift; unknown external effects reconcile before retry.",
+      "verification": "Future invalid/stale/auth-revoked/schema-unsupported/timeout-after-commit and unavailable runs show correct safe recovery action, no empty/saved false state, no duplicate effects or revoked access.",
+      "missingPrerequisite": "FG-CONTRACT-RECONCILIATION and UI/error owner patches",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Socket state connecting/reconnecting/connected exists, but connected ACK arrives before replay/projection verification. Swift marks connected without inspecting stale ACK.",
+      "requiredChange": "Keep loading/stale/refresh domain state until authenticated durable resume/projection readiness; lazy initialization uses existing clients, not a new eager runtime; preserve known content as stale only when policy permits.",
+      "verification": "Future delayed replay and background resume visibly loading/refreshing, no false empty/success, ready only when explicit authorized watermark/receipt meets oracle; cold open confirms lazy runtime initialization.",
+      "missingPrerequisite": "Accepted resume lifecycle/projection readiness and surface binding",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "LIST returns [] when its result is not claimable; this existing phase-0 behavior cannot be reused to represent device denial/unavailability.",
+      "requiredChange": "Use typed query/domain states so genuinely empty authorized collection differs from denied/unconfigured/unavailable/loading; do not reuse [] or null as permission/media success.",
+      "verification": "Future empty W1 collection versus denied C versus unconfigured media versus delayed resume produce distinct accessible UI and typed API states without forbidden metadata.",
+      "missingPrerequisite": "Accepted query DTO/state union and actual surface owner",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "WsRpcClient retains clientId/lastSeq in memory; Swift sends reconnect only when lastSeenSeq>0 and ignores stale/full-refresh. No durable device cursor implementation in inspected paths.",
+      "requiredChange": "Reuse accepted durable drafts/outbox/cursor, resume after suspended/background/cold restart as well as brief socket loss, recheck policy/device credential and queue receipt, signal gaps and stale refresh, retain standalone mode.",
+      "verification": "Future zero-event reconnect, disconnect before reply, buffer TTL expiry, server cold restart, client reload, suspended/background wake, workspace/account switch and revoke each recover without duplicate identity/events or unauthorized content; COLLAB-01 logical content converges, not timestamp equality.",
+      "missingPrerequisite": "WP-05/10/15/51 replay/CRDT contracts and native/web lifecycle adapter ownership",
+      "state": "missing"
+    },
+    {
+      "criterion": "Negative-control sensitivity: unauthorized actor or dropped/duplicated event; Electron-only action advertised on iOS; independent holdout",
+      "currentEvidence": "Spec tests and verification.negativeControl name different complementary faults; both remain required. Existing capability transport can be lied to via advertisement without proving actual iOS support.",
+      "requiredChange": "Build independent consumer-visible assertions for actor denial, durable replay/unique identity and platform capability truth. Seed one mechanism fault per run; retain independent second variant rather than replacing the normative control.",
+      "verification": "Future passing baseline then explicit Electron-only-on-iOS mutation fails capability/visible action oracle; actor-injection bypass and drop/duplicate event fail their specific denial/convergence/count oracle. Independent evaluator injects unseen second variant; infrastructure error is not caught mutant.",
+      "missingPrerequisite": "WP-41 mutation/scenario runner and accepted implementation",
+      "state": "missing"
+    },
+    {
+      "criterion": "Persistence-recovery: restart between persisted command and reply retains state/receipt/canonical ID",
+      "currentEvidence": "Pending request promises are volatile; gateway pending approval store is not a domain transaction. Normative command_receipt unique key and inbox constraints are specified.",
+      "requiredChange": "Atomically persist device revision/cursor/receipt/outbox before returning applied; replay same scoped key/hash returns original command receipt, event and canonical ref; altered hash rejected.",
+      "verification": "Future kill at transaction-commit-before-RPC-reply boundary; restart/retry/read back one device update, one command receipt/event, same canonical ID/revision/requestHash; replay inbox and projection watermark consistent. Preserve reproduction seed and failure trace.",
+      "missingPrerequisite": "Common authoritative repository transaction and accepted migration/recovery runner",
+      "state": "missing"
+    },
+    {
+      "criterion": "Migration constraints and forward/rollback safety",
+      "currentEvidence": "Normative migration names device_session/projection_cursor and requires composite identity, idempotency/request hash, aliases and inbox delivery constraints; migration directory absent.",
+      "requiredChange": "Selected migrator generates actual filename; reuse foundation tables and constraints, add only missing device columns/relations, schema_version>0/revision>=0, stable workspace+device cursor indexes, credential revoke reference and policy/tombstone fencing. Ambiguous aliases quarantined; rollback before cutover restores writer route/snapshot, after accepted writes forward repair or verified reverse replay, never erase new writes.",
+      "verification": "Future apply on fresh and predecessor-populated DB, inspect constraints/indexes, duplicate/hash conflict/forged FK cases fail, restore/replay retains recent accepted writes and device/receipt/cursor identity.",
+      "missingPrerequisite": "Selected migrator plus WP-02/04/05 schema and device-row classification receipts",
+      "state": "missing"
+    },
+    {
+      "criterion": "Verification gate: actual changed surface and relevant failure/reload observed; fixture is not live receipt",
+      "currentEvidence": "All cited evidence is static source/spec inspection. Input_revision is supplied lineage; no runtime executed and fullFeatureDoD remains NOT_VERIFIED.",
+      "requiredChange": "Lead verifies the integrated implementation on actual desktop+narrow-web surface and native capability path, preserving implementation/source SHA, dirty patch digest, schema/image revision, fixture IDs/seed, receipts, event/policy/watermark and screenshot/ARIA/failure artifacts.",
+      "verification": "Future WP-41-backed user scenarios and recovery/negative controls at exact delivered version; completion only after observed UI/API/DB agreement. Local deterministic convergence <=2s and search/attention <=10s after healthy restoration per test plan; provider infrastructure failures kept distinct.",
+      "missingPrerequisite": "Implementation after wave0 and accepted WP-41 receipts, supported live surface and all foundation gates",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages WP-46 dependencies/operations/migrations/verification; WP-41 producer inputs","lineStart":41402,"lineEnd":42402,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-46 and shared-file ownership/foundation descriptions","lineStart":923,"lineEnd":940,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Desktop/mobile regression and full feature completeness/evidence gates","lineStart":179,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS / Rox2Status / Rox2Receipt / Rox2Event / Rox2EntityRef / formatRox2EntityId / parseRox2EntityId","lineStart":17,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"normalizeRox2Result / liveResult / isClaimableLive / queuedResult / authorizeRox2Action / isAuditableRox2Event","lineStart":496,"lineEnd":619,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/server-core/src/handlers/rpc/command-gateway.ts","symbol":"authorizeWorkspace / requireStore / HANDLED_CHANNELS / registerCommandGatewayHandlers","lineStart":20,"lineEnd":131,"sha256":"2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps.commandGateway","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext / RpcHandlerOptions / RpcServer / RpcClient","lineStart":7,"lineEnd":40,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/server-core/src/transport/capabilities.ts","symbol":"LOCAL_CLIENT_CAPABILITIES / requestClientOpenExternal / requestClientOpenPath","lineStart":10,"lineEnd":80,"sha256":"2c59734b75fe7f970dc5a5078010a0ab60fbd1fbd2aec6058ed8538d90cfdf3a"},
+    {"path":"packages/server-core/src/transport/client.ts","symbol":"WsRpcClientOptions / WsRpcClient.invoke / isChannelAvailable / onConnectionStateChanged / emitReconnected","lineStart":83,"lineEnd":301,"sha256":"dce98dac82735fc5d585acf36465d59a6992027facb5127de723b2af746fb5f0"},
+    {"path":"packages/server-core/src/transport/client.ts","symbol":"WsRpcClient.onMessage / onServerRequest / onDisconnect","lineStart":632,"lineEnd":899,"sha256":"dce98dac82735fc5d585acf36465d59a6992027facb5127de723b2af746fb5f0"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"ClientConnection / WsRpcServerOptions / registeredChannelsFor / push / invokeClient","lineStart":47,"lineEnd":313,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"WsRpcServer.onConnection authenticated handshake and reconnect identity/replay","lineStart":491,"lineEnd":691,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/server-core/src/transport/server.ts","symbol":"WsRpcServer.onRequest / bufferAndMaybeSendEvent / evictBuffer / matchesTarget / sendResponseError","lineStart":743,"lineEnd":977,"sha256":"16d942fd168f2fb705db0a89ea6af27df08cdb2aa4492a0fe46520d6cd67e5a3"},
+    {"path":"packages/shared/src/protocol/types.ts","symbol":"MessageEnvelope / ErrorCode / KNOWN_ERROR_CODES / isErrorCode / CodedError","lineStart":20,"lineEnd":179,"sha256":"ba2d2070819ca69ea0ffa63b1c5ab97152bc9136f89254ef87d91a19c5688395"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.commandGateway","lineStart":679,"lineEnd":683,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"apps/ios/CraftAgentKit/Sources/CraftAgentKit/Client/RPCClient.swift","symbol":"RPCClient.connect / call / callOptional / callVoid","lineStart":6,"lineEnd":40,"sha256":"f3a8e3b42f14ab8135e3f477ca9304c6fe1cb6bf81b5be3af90d799be148b690"},
+    {"path":"apps/ios/CraftAgentKit/Sources/CraftAgentKit/Protocol/ProtocolVersionPolicy.swift","symbol":"ProtocolVersionPolicy.major / isCompatible / rejectionMessage","lineStart":6,"lineEnd":25,"sha256":"b360220a598e0a51aa500739a65951e741678cce06047b9bd8bc937c437e7c14"},
+    {"path":"apps/ios/CraftAgentKit/Sources/CraftAgentKit/Transport/RPCTransport.swift","symbol":"RPCTransport.request / openSocketAndHandshake / receiveHandshakeAck / handle / reconnect loop","lineStart":153,"lineEnd":382,"sha256":"54d4cf12986b60945e61d941a98c58fcd7e8f8fda85ebb960b6baf14989db189"},
+    {"path":"apps/ios/CraftAgentKit/Sources/CraftAgentKit/Transport/ConnectionState.swift","symbol":"ConnectionState / RPCTransportDelegate","lineStart":25,"lineEnd":40,"sha256":"9d739b639fc8e2570225b15c51fa3f88971190f0c39dbf4ff82e153850ad2f97"},
+    {"path":"apps/ios/CraftAgentKit/Sources/CraftAgentKit/Protocol/MessageEnvelope.swift","symbol":"MessageEnvelope.error / protocolVersion / clientCapabilities / reconnect fields","lineStart":17,"lineEnd":38,"sha256":"3abbb5e278526fb2688aab209864e3644770233663bb36f45aeb1d13f228749f"},
+    {"path":"apps/ios/CraftAgentKit/Sources/CraftAgentKit/Protocol/WireError.swift","symbol":"ErrorCode.wireMap / unknown decoding / WireError","lineStart":6,"lineEnd":94,"sha256":"5e317c85182bac73334f023b0d2e837b0298a84c20efb3fabf7ce7278893688a"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead accepts or rejects this source-backed preflight, resolves domain-area and actual renderer patch ownership, and reconciles the published contract ambiguities without changing the four acceptance criteria.",
+    "implementationAfterGate": "After wave0 commit and accepted WP-41 interface/migration/scenario receipts, refresh all changed file hashes, consume the shared foundation command/cursor/policy interfaces, then implement the strict device.resume contract and additive device repository/migration before wiring transport/native/UI adapters. The lead integrates shared patches, all callers, localization/docs and performs the specified live acceptance and failure/recovery runs.",
+    "owner": "Root integration lead; this worker has no product-source write authority",
+    "blockingReceipt": "WP-41 accepted typed interface, applied migration or N/A receipt, scenario verification receipt; root wave0 commit; exact renderer owners and command/result/cursor/version decisions"
+  },
+  "risks": [
+    "Transport-only changes cannot satisfy actual reduced-motion/focus/font/touch/media UX; published affectedFiles do not contain rendering components.",
+    "Boolean handshake authentication and client-declared workspace are not transport-derived actor authorization; replay must bind principal/device/credential and current policy.",
+    "Swift RPCTransport.handle(.response) resolves error envelopes as null; callVoid can appear successful without domain action. This is static code evidence, not a reproduced runtime failure.",
+    "Swift ignores stale/reconnected ACK and retains seq/clientId across explicit target/workspace changes; TS treats fresh reconnect as stale but marks transport connected before durable domain projection readiness.",
+    "Current reconnect retains the old capability Set, which can advertise actions absent on the reconnecting platform; Electron action advertisement is untrusted support metadata, never a security grant.",
+    "Workspace/all push buffers can retain private payload after revoke; replay must reauthorize or invalidate them, and domain event delivery uses durable outbox/current policy rather than raw in-memory buffers.",
+    "Client event sequence gaps currently only warn; treating transport lastSeq as durable projection cursor risks acknowledging dropped events and stale content.",
+    "Three normative new files are shared across foundation packages; WP-46 must request additive contributions, not create competing stores or overwrite integration work.",
+    "projection_cursor may already exist when predecessors land; generating a second table or migration constraint copy would create a competing cursor authority.",
+    "Normative domain integer version versus wire string, device_session kind naming, first-resume required cursor and result enum-versus-triad/receipt invariants require accepted contracts rather than silent coercion.",
+    "WP-41 is a broad integrated gate and COLLAB-01 lists WP-46 among scenario packages. Lead must stage baseline producer acceptance separately from final WP-46-integrated rerun; do not remove the explicit edge or claim final cross-device scenario before WP-46 exists.",
+    "Search/mentions/notifications/sharing/agent completeness cannot become N/A simply because this package exposes transport seams; require producer interfaces and cross-device regressions.",
+    "No shared reusable service credential may be stored in renderer. Bearer/session credentials require the accepted secure credential/device contract; ephemeral localClientProof must remain local and never become remote identity.",
+    "Whole-file hashes are working-tree snapshots while root wave0 work is uncommitted; input HEAD is lineage only. Any verifier mismatch means stale evidence requiring scoped refresh, not a reason to edit source or conceal drift.",
+    "All live scenarios, package tests, schema/migration execution and UI evidence remain unperformed in this preflight. featureComplete is false."
+  ]
+}

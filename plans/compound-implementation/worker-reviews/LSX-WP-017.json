@@ -1,0 +1,269 @@
+{
+  "task_id": "LSX-WP-017-preflight",
+  "attempt_id": "eafa16c1d9d674331a094bd5653cefd0",
+  "packet_hash": "831a2cb8f5db2425eab0d002b7463ce7d6fb81032ce57c93b35464231f451d02",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-017",
+  "featureComplete": false,
+  "mode": "inspect-only / owned preflight artifact",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-012", "LSX-WP-015", "LSX-WP-016"],
+  "evidenceStatus": {
+    "scope": "Existing package paths, their directly imported Docs contracts, and normative package/specification records. No product implementation, builds, tests, native UI, Git operations or product runtime verification performed.",
+    "revisionBinding": "input_revision is the dispatch value, not a newly verified Git HEAD. Source evidence is the observed working-tree snapshot identified by whole-file SHA256, not proof of either published baseline or committed input bytes.",
+    "manifest": "Both inspected plan file SHA256 values match the dispatch input_manifest.",
+    "baselineDrift": [
+      "NotesViewHost.tsx observed SHA256 a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a differs from the normative baseline digest 2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358.",
+      "NotesPage.tsx observed SHA256 872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba differs from normative baseline digest 0266d999906c17b5c7d9d69945495f9584b276e46c5ccf76537f40dc801d356b. saveCurrentNote is now at line 1023, not baseline line 871.",
+      "note-views.ts observed SHA256 matches the normative baseline digest. No conclusion about the rest of the tree is inferred."
+    ],
+    "freshness": "Root integration may change inspected files after observation. Rehash and reread changed seams after wave0 commit and accepted prerequisite integration; this report is not a path lease or an implementation receipt.",
+    "discovery": "Codegraph reports no index for this checkout. Descriptive find failed because its judgment backend returned 402; known-path reads and literal searches supplied the evidence instead.",
+    "newFilePresence": "Exact-path glob returned path-not-found for all four normative proposed files at inspection. This is an observation of this working snapshot, not a future integration guarantee."
+  },
+  "foundationGates": [
+    {
+      "id": "published-drive-foundation",
+      "kind": "hidden published-spec dependency, not an added explicit LSX DAG edge",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:95-113",
+      "requirement": "RS-BASE-01 explicitly depends on RS-DRV-01 / issue #1109. LSX-WP-017 lists no external prerequisites, but publication does not waive canonical Drive/Base container readiness.",
+      "missingPrerequisite": "Integration owner must supply accepted RS-DRV-01 readiness or a reviewed mapping of its actual containers/authority into the LSX dependency receipts. No such receipt was supplied or inspected."
+    },
+    {
+      "id": "canonical-record-model-resolution",
+      "kind": "published specification conflict / authority gate",
+      "source": "docs/rox-suite/published/RS-BASE-01.md:44-52; docs/lark-suite-reference/05-rox-bases-design.md:41,47-52,294-296",
+      "requirement": "Published spec proposes a newly registered CustomRecord entity kind and Postgres typed payload; Bases design chooses kind=page with additive contentKind=record unless a separate migration is approved. The grid must consume one accepted canonical model, not select a new store or entity kind itself.",
+      "missingPrerequisite": "Lead-authorized model/contract resolution and native owner receipts from foundation packages. This bounded renderer worker cannot modify platform registration, storage or migrations."
+    },
+    {
+      "id": "server-paste-boundary",
+      "kind": "scope/transport foundation gate",
+      "source": "plans/lark-suite-reference/work-packages.json:6730-6762,6812; docs/rox-suite/published/RS-BASE-01.md:48-56",
+      "requirement": "base.previewPaste(queryRef,mapping,clipboard) and base.applyPaste(previewDigest) need compiled server and renderer request/result/error schemas, authenticated actor derivation, current ACL/schema checks, operationId/expectedRevision and native receipt/readback. Normative new files include only renderer components and tests; no server/protocol path is owned by LSX-WP-017.",
+      "missingPrerequisite": "Accepted dependency must expose the real paste transport and preview-digest authority or integration owner must issue a reviewed expanded packet naming server/protocol owner and symbols. A renderer-only batch of unguarded writes or locally asserted digest is not the target API."
+    },
+    {
+      "id": "canonical-query-and-config-handoff",
+      "kind": "upstream interface integration gate",
+      "source": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx:48-98,133-155; apps/electron/src/renderer/pages/NotesPage.tsx:2390-2406; docs/lark-suite-reference/05-rox-bases-design.md:162-177,220",
+      "requirement": "Existing host accepts NotesViewNote without row revision, source owner, queryRef, schema revision or permission epoch. Its parent supplies empty Markdown for every inactive note. Existing views are persisted solely in workspace localStorage. None is a complete authorized query/config handoff.",
+      "missingPrerequisite": "Accepted upstream queryRef/field descriptors/config service and an exact route handoff. If it cannot be resolved from the dependency-owned host context, an approved NotesPage prop-mapping patch is required outside the current sharedPatchPaths; do not pretend the existing notes array is authoritative. Legacy view migration must have a readback/rollback receipt before old keys or old table are retired."
+    },
+    {
+      "id": "transitive-effects-readiness",
+      "kind": "transitive prerequisite not a new explicit LSX-WP-017 edge",
+      "source": "plans/lark-suite-reference/work-packages.json:6303-6310,6422-6439; docs/lark-suite-reference/05-rox-bases-design.md:203-205",
+      "requirement": "LSX-WP-016 has external prerequisite EG-EFFECTS. Its accepted receipt must include the relevant migration/effects readiness; offline drafts use an existing supported durable outbox, never a second row/task store.",
+      "missingPrerequisite": "Accepted LSX-WP-016 receipt including EG-EFFECTS and declared per-owner offline capability. Unsupported offline targets remain explicitly read-only/offlineUnsupported."
+    },
+    {
+      "id": "localization-and-ui-proof-ownership",
+      "kind": "shared resources / proof runner gate",
+      "source": "plans/lark-suite-reference/work-packages.json:6763-6766,6784-6793,6816; repository AGENTS.md i18n contract",
+      "requirement": "New user-facing strings require t() and parity across de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant. New translation writes are not in this package's allowed paths. Actual supported Electron/UI runner must be discovered before use; a fixture page cannot replace native integration.",
+      "missingPrerequisite": "Lead-owned locale patch for BaseTable/PastePreview editor, help, state and per-cell errors; actual Electron runner/seed workspace/focus lease and loaded Rox Mono proof. No UI or tests were launched in preflight."
+    },
+    {
+      "id": "implementation-launch-provenance",
+      "kind": "explicit launch prerequisite, separate from feature DAG",
+      "source": "plans/lark-suite-reference/execution-packages.json:1446-1489; dispatch instruction",
+      "requirement": "Implementation starts only after lead wave0 commit, accepted artifact+readback dependency receipts, resolved reference_package_revision/digest/spec_ref hashes and exclusive shared-path lease. Published product baseline e953786b and dispatch input a21aeab1 are different stated revisions.",
+      "missingPrerequisite": "Lead must resolve the approved integrated implementation base and reference manifest without this worker checking out, committing or discarding the root-owned dirty tree."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/BaseTable.tsx",
+    "apps/electron/src/renderer/pages/bases/PastePreview.tsx",
+    "tests/lark-suite-extension/lsx-wp-017.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-017.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "apps/electron/src/renderer/pages/bases/BaseTable.tsx",
+      "change": "Proposed BaseTable component consumes accepted queryRef, field descriptors, snapshot queryRevision/permissionEpoch/schemaRevision and view config; composes LSX-WP-012 ScalarCellEditor/cell-edit-command, not a duplicate scalar validator. Render a virtualized ARIA grid keyed by full EntityRef+fieldId; keep navigation/selection independent of visual indices; clear hidden/denied selections and protected caches on filter/revoke. Keep editor draft stable during virtualization/IME. Read summaries from the same authorized snapshot over the full filtered set, not mounted rows. Resize/reorder/pin have keyboard equivalents; persist shared widths/order through accepted config service and keep personal selection separate. Show explicit pending/conflict/denied/deleted/unsupported/offline/error states. Invoke accepted preview/apply paste transport and track each native receipt and authoritative readback before committed display."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/PastePreview.tsx",
+      "change": "Proposed PastePreview component displays server-authorized preview digest, pinned target EntityRefs/fieldIds/expected revisions/schema revision and eligible/skipped/invalid cells with reasons. Preserve quoted multiline Unicode clipboard values and locale-aware decimal/date interpretation via accepted typed parser. Confirm applies exactly the previewDigest; cancelling has zero writes. Surface per-cell native outcomes and conflict/local-current drafts; changed schema/ACL/revisions must invalidate/re-preview, not redirect target by visual row number."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-017.test.ts",
+      "change": "Normative permanent behavior tests for mixed-owner multiline Unicode/decimal/date paste, denied/invalid targets never written, ref-stable selection after resort/virtualization/filter, snapshot summary ACL invariants, conflict/schema races, replay, native receipt/readback and restart. Preserve property seeds and baseline input hashes; mutation controls bypass typed patch validation or replace ref selection with visual indices and must fail the named semantic assertions. Do not replace real owner/readback lanes with mock-echo assertions."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-017.spec.ts",
+      "change": "Use the actual discovered Electron runner against integrated native Notes+Tasks and real base route. Exercise pointer and keyboard selection/edit/paste/column controls, virtualized focus, IME composition, Escape draft cancel, per-cell status announcements, hidden-target cleanup, 200% zoom, narrow layout, current themes, reduced motion, Russian labels/help and loaded font. Capture revision/environment-bound screenshots/ARIA/focus and native reload evidence."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "change": "After accepted query/config/transport handoff exists, add the BaseTable import and replace only the view==='table' return at lines 90-100 with BaseTable receiving authoritative queryRef/descriptors/snapshot/config and native open callbacks. Stop deriving table rows from notes.map(parseNoteDocument); retain that helper only if another host branch actually needs it. Remove obsolete private NotesTableView and table-only imports/state after canonical legacy view migration readback succeeds; preserve canvas/graph/outline routing and their helpers. Exact patch must be rebased to the post-wave0 file under integration-owner lease.",
+      "reason": "Current table is unvirtualized read-only local projection and localStorage view store. Keep the single existing table route, not a parallel hidden table or independent row store. Existing host props cannot currently supply the required queryRef; dependency/context or approved parent seam must resolve this first."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "change": "At lines 48-56, do not reinterpret id/title/markdown as EntityRef/revision/capability or add fabricated revisions. Reuse the accepted upstream canonical table context contract separately from the legacy note inputs used by canvas/graph/outline. If accepted dependency integration extends NotesViewNote, reference those imported canonical metadata types and update callers through the lead's approved packet; remove redundant table-only projection metadata rather than establish a writable mirror.",
+      "reason": "This named seam currently has no revisions, source owner or authenticated grants. NotesPage passes a partial display projection, so widening the type alone cannot satisfy durable native edit/readback."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "keyboard editing and summary consistent snapshot",
+      "currentEvidence": "NotesViewHost.NotesTableView lines 161-164 derives visible/groups locally; lines 234-295 render a plain table and open/convert buttons without cell editing/navigation or summaries. projectNoteRows lines 133-157 calculates local counts from supplied arrays. NotesPage lines 2394-2402 supplies Markdown/backlinks only for active note, so counts for other notes are incomplete. No queryRevision/permissionEpoch exists in NoteProjectionRow lines 73-83.",
+      "symbolOrSeam": "NotesViewHost table branch; NotesTableView; projectNoteRows; proposed BaseTable composed with dependency ScalarCellEditor",
+      "requiredChange": "Replace the table route with ref-keyed virtualized BaseTable, Arrow/Tab/Shift+Tab/F2/Enter/Escape and Shift-selection; preserve IME/editor focus across streaming resort and virtualization. Consume one authorized query snapshot for all cells and full filtered-set summaries. Add resize/reorder/pin and keyboard equivalents using canonical config, not notes:views as sole persistence.",
+      "verification": "Actual Electron navigation/edit/cancel/resize/reorder and focus under scroll/resort/filter; authoritative Task and Note values after reload. ACL fixture A=10,B=20,hidden C=900 yields sum30/count2/mean15 then revoke B yields10/1/10 independently of mounted rows; retain queryRevision/permissionEpoch and ref evidence.",
+      "missingPrerequisite": "Accepted LSX-WP-012 scalar editor/native write contract, LSX-WP-015 authorized aggregate receipt, LSX-WP-016 stable schema/config plus canonical query handoff and UI runner.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "per-cell failures visible; unsupported never blank writable",
+      "currentEvidence": "NotesTableView lines 276-281 substitutes an em dash for empty folder/tags and displays numeric built-ins, without typed cell capabilities or per-cell status/error. NoteProjectionRow has untyped properties and no denied/unsupported/error union. Normative paste outputs require eligible/skipped/invalid preview and per-cell native receipts.",
+      "symbolOrSeam": "NoteProjectionRow; NotesTableView; proposed BaseTable and PastePreview; dependency previewCellEdit/applyCellEdit",
+      "requiredChange": "Render typed null/empty/read-only/unsupported/redacted/error separately and mount no writer for denied/derived/unsupported targets. Preview every rectangle cell, show eligible/skipped/invalid and reason, then expose validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat per target; retain failed drafts and never present pending as committed. Filtered-out selected refs cannot stay hidden action targets.",
+      "verification": "Mixed Task+Note Unicode multiline/decimal/date clipboard happy path and partial failures; clipboard preview/cancel produces zero writes; invalid and denied targets unchanged at native readback. Stale schema and unknown field type remain read-only; invalid reason accessible by focus and announcement, not only color.",
+      "missingPrerequisite": "Accepted field registry/typed cell validator, server preview/apply schema+ACL recheck and digest contract; locale keys and explicit per-owner offline capabilities.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "Normative API names are base.previewPaste and base.applyPaste; contract_file points to proposed BaseTable.tsx, not an observed server endpoint. Existing MarkdownCommitCommand carries native sourceStoreId, expectedRevision and operationId; decoder validates revision format. NotesViewNote/NoteBaseView are display/local-layout types, not transport schemas. Server/auth implementation was not inspected in this bounded preflight.",
+      "symbolOrSeam": "Proposed BaseTable paste boundary; dependency cell-edit-command; existing MarkdownCommitCommand/decodeMarkdownCommitCommand",
+      "requiredChange": "Import and compile the same accepted request/result/error schemas at real server and renderer transport. Paste preview pins authorized refs/fields/revisions/schema and digest; apply resolves actor/policy from authenticated session, verifies digest and rechecks each target. Map native errors exhaustively to all eight required discriminants without payload authorization or raw provider access.",
+      "verification": "After integration, compile actual renderer/server consumers, round-trip real transport preview/apply, inject malformed/cross-workspace/ref/revision/digest and forged actor inputs; confirm typed failures and zero unauthorized writes. Observe non-writing preview and per-cell durable result shape.",
+      "missingPrerequisite": "Reviewed server/protocol integration scope and authenticated paste transport receipt from dependency/lead. Current LSX-WP-017 write paths cannot implement a server endpoint.",
+      "state": "BLOCKED_ON_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "NotesPage.saveCurrentNote lines 1043-1057 reconciles pending commit by exact operation replay, calls commitMarkdown and updates revision from result.receipt; this is a mechanism to preserve, not evidence that Base paste exists. Current table never commits cells and NotesViewNote has no revision/hash. No runtime readback or restart was run.",
+      "symbolOrSeam": "NotesPage.saveCurrentNote; MarkdownCommitCommand; proposed BaseTable per-cell receipt reducer",
+      "requiredChange": "Use dependency native-owner commands, source binding, revision preconditions and operation IDs for each eligible target. Show committed only after durable receipt and authoritative normalized value/ref/revision/hash readback; update native details/grid from owner commits and base.viewChanged. Mixed-owner batch exposes explicit partial receipts and safe replay, never global success from one toast or queued response.",
+      "verification": "Change native Task field and Note scalar via grid/paste; capture before/after native refs/revisions/hashes and receipt equality. Restart actual owner service/application, reopen native Task+Note and grid, verify same identities/values and reconcile unknown response without duplicate writes.",
+      "missingPrerequisite": "Accepted LSX-WP-012/native owners with receipt/idempotency/readback guarantees and runtime restart lane; actual event aliases/envelope schema must be verified, not inferred from proposed names.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Normative tests lines 6779-6782 name mixed-owner multiline Unicode/decimal/date paste, virtualization/hidden-row cleanup and restart native Task+Note readback. Existing saveCurrentNote distinguishes HASH_CONFLICT/AUTH_FAILED/NOT_FOUND and retains unconfirmed commands for replay; no package tests currently exist or were run.",
+      "symbolOrSeam": "Proposed lsx-wp-017.test.ts and UI spec; BaseTable selection/pending state; PastePreview confirmation; native commit replay seam",
+      "requiredChange": "Implement deterministic behavioral scenarios on integrated canonical owners for happy edits/paste, denied target and ACL revoke between preview/apply, concurrent row/schema change, deleted target, identical operation replay, offlineUnsupported and restart recovery. Assert EntityRef stability after sort/stream/virtualization and remove hidden selections before actions. Preserve drafts on validation/conflict while refreshing current values.",
+      "verification": "Run normative bun test tests/lark-suite-extension/lsx-wp-017.test.ts only in later authorized implementation; real Electron tests with native owners separately. Preserve every attempt, input SHA256, property seed, expected/observed receipts and infrastructure failures; two writers with same revision yield exactly one commit and one conflict.",
+      "missingPrerequisite": "Accepted implementations, real scoped owner fixtures, authenticated actors, authoritative transports and supported restart/Electron runner. Preflight is expressly prohibited from launching these checks.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "Package seeded_negative_control lines 6795-6803 explicitly mutates typed patch validation or selection by visual row index and names three assertions: invalid/denied targets not written; same refs receive intended values after resort; native readback equals receipts.",
+      "symbolOrSeam": "Proposed BaseTable/PastePreview target planning and typed validator integration; tests/lark-suite-extension/lsx-wp-017.test.ts",
+      "requiredChange": "Keep one deterministic baseline input/seed and evaluate exact-byte mutants that bypass typed validation or replace ref-based selection with visual indices. Require semantic rejection against native writes/ref mapping/receipt readback, not an unrelated compile failure or test timeout.",
+      "verification": "Green baseline, then each mutant fails the appropriate named assertion on the identical scenario; record baseline/mutant hashes, seed, attempted commands/results, failing semantic assertion and separate infrastructure status. Confirm the regression catches post-resort wrong-target writes and denied/invalid native changes.",
+      "missingPrerequisite": "Actual target-planning/validator implementation and reproducible native test lane. No mutation was applied or evaluated in this preflight.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "Host currently uses useTranslation, shared Button/PremiumMenuSelect and inherited theme tokens; this is source evidence only. No actual Electron surface/font/focus evidence was produced. Published RS-BASE-01 lines 38-42 specifies focus/click help, Enter/Esc/Tab, opacity/transform 120-160ms, reduced motion, non-color status and responsive panes.",
+      "symbolOrSeam": "NotesViewHost table route; proposed BaseTable/PastePreview; dependency ScalarCellEditor; normative UI spec",
+      "requiredChange": "Use t() for every label/help/error and all ten locales through integration owner; inherit current theme and actual Rox Mono. Implement accessible grid/editor/dialog roles, focus-return, IME priority, equivalent column controls, hover/focus/click help with type/unit/source/freshness/examples, reduced motion and responsive layout. Do not commit composition with Enter while IME is active or remount focused drafts on scroll.",
+      "verification": "Actual integrated Electron screenshots, ARIA/focus sequence and computed/loaded-font evidence; pointer and all specified keyboard controls, real IME composition, virtualized editor focus, help access, reduced-motion setting, 200% zoom, themes and Russian locale; responsive drawer/pane behavior at published breakpoints. Verify i18n key parity when authorized, not merely Russian-only rendering.",
+      "missingPrerequisite": "Accepted scalar editor, locale integration ownership, supported real Electron runner/focus lease, native route and real font loading. Screenshots of an isolated fixture do not satisfy this criterion.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Package status PLANNED_NOT_EXECUTED and progress fullFeatureDoD NOT_VERIFIED. Mandatory proof lanes are SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI. This artifact is source-only preflight, not any feature PASS receipt.",
+      "symbolOrSeam": "Normative proof_lanes and cloud_packet; proposed tests and integrated NotesViewHost route",
+      "requiredChange": "Integration owner accepts separate evidence for every required lane on exact integrated commit. Attach diff/base/implementation SHA, compiled schemas, seed/negative-control assertions, ref/revision/hash readback pre/post restart, redacted actual UI evidence and independent review. Additional provider/collaboration proof is required if those lanes are actually exercised; it cannot substitute for native owner proof.",
+      "verification": "Lead compares per-lane expected/observed outputs to all DoD criteria and re-runs authoritative integrated readback after reviewed patch integration; preserve artifact SHA256 and environment/revision linkage. No feature completion claim until every criterion has evidence.",
+      "missingPrerequisite": "Wave0 commit, accepted prerequisite receipts, integrated implementation and all six observed lane results; reference manifest resolution and shared-path lease.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote / NotesViewHost",
+      "lineStart": 48,
+      "lineEnd": 117,
+      "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesTableView",
+      "lineStart": 119,
+      "lineEnd": 301,
+      "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView / NoteProjectionRow / projectNoteRows / applyNoteBaseView / formulaValue",
+      "lineStart": 24,
+      "lineEnd": 203,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "saveCurrentNote",
+      "lineStart": 1023,
+      "lineEnd": 1099,
+      "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "NotesViewHost props mapping in NotesPage",
+      "lineStart": 2390,
+      "lineEnd": 2406,
+      "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"
+    },
+    {
+      "path": "plans/lark-suite-reference/work-packages.json",
+      "symbol": "work_packages[16] LSX-WP-017",
+      "lineStart": 6597,
+      "lineEnd": 6889,
+      "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "LSX-WP-017 execution package",
+      "lineStart": 1406,
+      "lineEnd": 1491,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "Sections 7-9, 13-15",
+      "lineStart": 158,
+      "lineEnd": 298,
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "Published domain/API/DoD and RS-DRV-01 dependency",
+      "lineStart": 19,
+      "lineEnd": 113,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    }
+  ],
+  "nextExecutableAction": {
+    "now": "Lead consumes this source-backed report; reconcile server paste owner, canonical query/config handoff, published record-model and RS-DRV-01 readiness without changing this worker's source scope.",
+    "implementationStart": "After the lead's wave0 commit and accepted LSX-WP-012, LSX-WP-015, LSX-WP-016 artifact+readback receipts, resolve implementation base/reference manifest and shared-path lease; rehash/re-read changed source seams, confirm concrete imported dependency contracts, then implement only the four normative new files and submit the NotesViewHost serial patch requests.",
+    "verificationBoundary": "This preflight writes only its owned JSON. Product builds/tests/UI/network/Git mutations are not authorized here; later implementation must run the mandatory proof lanes and integrated native readback."
+  },
+  "risks": [
+    "Current table gets partial Markdown/backlinks from parent; using local projectNoteRows counts as authorized summary would be incorrect even before ACL concerns.",
+    "Stable row.id keys are not sufficient selection identity: full workspace/account EntityRef plus fieldId and pinned revisions must survive sorting/filtering/stream updates.",
+    "Preview-to-apply races require server revalidation of ACL, schema and each native revision; multiple cells on one native Note/Task must not reuse stale per-cell revisions after earlier same-owner commits. Accepted owner batching/sequencing determines safe revision advancement and partial outcomes.",
+    "Published CustomRecord entity-kind/Postgres proposal versus page contentKind model is unresolved at this renderer seam; silently selecting either would exceed scope.",
+    "Server paste/protocol, NotesPage queryRef handoff and translation files are not writable under this packet. If dependency integration does not supply them, lead must amend the reviewed scope with exact owners/symbols; renderer-only implementation cannot satisfy full DoD.",
+    "Retiring NotesTableView or localStorage views before canonical migration/readback risks losing saved layouts. Preserve rollback receipts and unrelated canvas/graph/outline behavior.",
+    "Native Note commit/replay mechanism already exists in observed wave0 snapshot; replacing it with saveNote or whole-file/frontmatter rewriting would discard authority/source-preservation guarantees. Reuse accepted native adapters and retained-source scalar patchers.",
+    "Mixed owner rectangle paste is not implicitly atomic. Per-target failures, skipped targets and idempotent retry must stay explicit; preview must have no effects.",
+    "Virtualization can remount IME/editor state or move focus to the wrong ref; meaningful actual Electron focus/composition proof is mandatory.",
+    "Whole-file hashes bind this report to inspection bytes only. Root-owned uncommitted integration can invalidate line ranges/contracts; no baseline freshness or feature readiness is claimed."
+  ]
+}

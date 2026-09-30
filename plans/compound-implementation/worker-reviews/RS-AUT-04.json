@@ -1,0 +1,254 @@
+{
+  "task_id": "RS-AUT-04-preflight",
+  "attempt_id": "b0716aea1abfe08f489aec52ec315109",
+  "packet_hash": "365b0ea7edcbb2fb8854d8873e633d480249393f502b8b484cf313c9063346fb",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-AUT-04",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; no implementation or runtime acceptance",
+  "workTier": "bounded-workflow: specification, scoped source inspection, artifact-only delivery",
+  "dependencies": ["RS-AUT-03"],
+  "dependencyInterpretation": "The product DAG is the exact dependsOn array in issues.json:296-298, also published spec:96. Dispatch depends_on=[] schedules this independent preflight only; it does not authorize implementing before RS-AUT-03. RS-AUT-03 itself explicitly depends on RS-AUT-01 and RS-AUT-02; those are transitive, not additional explicit RS-AUT-04 edges.",
+  "evidenceScope": {
+    "snapshot": "Whole-file digests below describe inspected working-tree bytes, not a clean checkout of input_revision. Root-owned wave0 edits were not modified or attributed to this worker.",
+    "staleness": "Re-read and rehash changed files after the lead's wave0 commit and accepted dependency receipts. A digest match alone does not prove feature behavior. No runtime checks, product tests, builds, native UI or network operations were performed.",
+    "discoveryLimits": "Codegraph reported no index. Two scoped find calls failed with judge provider 402; subsequent literal grep and range reads supplied the evidence. Missing normative paths were checked by glob. No global authority, transport implementation, database schema or notification engine was inspected outside package paths/direct imports; their integration is a prerequisite, not an asserted absence across the repository.",
+    "manifest": "Both input manifest digests match observed shasum output. The published source baseline 249b3b44220bcfbd7d467de9cfc18f76e1c37807 differs from dispatch input_revision; current source references take precedence for seam planning."
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and accepted dependency contract",
+      "evidence": "Worker instructions prohibit implementation before lead wave0 commit and accepted dependency receipts; RS-AUT-03 spec:29-35,47-53 requires durable run/node/effect state, leases and replay cursor. runtime-contracts.ts and apps/workspace-service paths were not found by glob.",
+      "requiredReceipt": "Lead supplies committed integration revision, ownership map and accepted RS-AUT-03 runtime-contracts.ts/workflow-runtime.ts/workflow-worker.ts receipts with canonical runId, attemptId, nodeId, operationId, publishedRevision, policy epoch, cursor and immutable attempt semantics.",
+      "classification": "Execution prerequisite plus runtime foundation; not a new explicit DAG edge"
+    },
+    {
+      "gate": "Common command/query authority and service host",
+      "evidence": "RS-AUT-04:49-51 proposes commands rather than existing endpoints. AutomationGraphWorkspaceEditor.refresh/saveGraph currently use getAutomationGraph/saveAutomationGraph with a config revision. apps/workspace-service was not found in scoped glob.",
+      "requiredReceipt": "Root identifies the real service composition and common schema/command registry, derives actor/workspace/policy from authenticated session, registers typed query/export/debug handlers, enforces operationId+expectedRevision on mutations and supplies Electron/RPC/MCP bridge ownership. Do not create a standalone debug service or substitute renderer actorId.",
+      "classification": "Hidden service/authority foundation gate from published contract"
+    },
+    {
+      "gate": "Independent log grant, permission-aware index and revocation",
+      "evidence": "RS-AUT-04:45,55,78 requires independent logs ACL, common index and revocation. Rox2ActorGrant contains actorId and generic permission; authorizeRox2Action checks those fields only. Rox2EntityRef is workspace/revision scoped. These helpers do not themselves express a graph-read versus log-input-read distinction.",
+      "requiredReceipt": "Root provides an existing common resource/field-scoped log authorization contract and revocation subscription semantics; apply it before reading inputs, searching or exporting and on each reconnect/page. Specify how attempts resolve through a workflow EntityRef without inventing a competing entity store.",
+      "classification": "Hidden security/index foundation gate; no speculative package ID assigned"
+    },
+    {
+      "gate": "Common Activity/Audit and deduplicated notification outbox",
+      "evidence": "RS-AUT-04:45,55,84 explicitly demands common projections and notifications. AutomationEventLogger serializes event data and results to local events.jsonl; this is not evidence of authorized Activity/outbox integration.",
+      "requiredReceipt": "Root names canonical Activity/Audit projection, outbox event schema, dedupe key and notification/agent adapters. RS-AUT-04 consumes these, never starts another notification engine.",
+      "classification": "Hidden domain integration foundation gate"
+    },
+    {
+      "gate": "Provider readback and redacted proof contract",
+      "evidence": "WebhookActionResult.success means HTTP 2xx, not provider readback. Rox2Receipt has optional provider/remoteId/requestId/observedRevision/verifiedAt; isClaimableLive checks status/entityId but does not validate receipt presence or expected/observed correspondence. RS-AUT-04:24,32-33,77 requires readback receipt and secret-free proof bundle.",
+      "requiredReceipt": "RS-AUT-03/provider owner defines a durable readback receipt bound to operation/attempt and revision, exact expected/observed assertion, failureClass, source SHA and redaction/proof retention rules. An unavailable or timed-out effect remains unknown/unverified; no readback-free green state.",
+      "classification": "Hidden provider/proof foundation gate beyond generic status triad"
+    },
+    {
+      "gate": "Distinct Linux, renderer, native Electron and provider evidence lanes",
+      "evidence": "RS-AUT-04:86-91 requires actual lane evidence and independent review. No such lane was exercised in this preflight.",
+      "requiredReceipt": "Lead provides seeded Linux runtime/renderer environment, authorized Electron acceptance surface and real provider lane for live external effects, with revision-bound hashes and independent reviewer. Fixture tests do not replace provider readback or native UI proof.",
+      "classification": "Hidden delivery/verification foundation gate"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/automations/WorkflowDebugDrawer.tsx",
+    "apps/workspace-service/src/modules/automations/run-queries.ts",
+    "tests/rox-suite/automations/debug.spec.ts"
+  ],
+  "ownedNewFilesMeaning": "Only the three normative implementation paths from RS-AUT-04:61-65; they were not found during preflight. This worker creates none of them. Its sole writable path is this report. Runtime contracts, worker/service bootstrap and transport files belong to root/dependency owners, not extra RS-AUT-04 owned files.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx",
+      "symbol": "AutomationGraphWorkspaceEditor / refresh / saveGraph / AutomationGraphEditor props",
+      "change": "Mount WorkflowDebugDrawer in the existing graph workspace, add controlled run/node/attempt selection and debug-mode entry, call registered query/debug commands through the existing bridge, and pass selectedNodeId/onSelectedNodeChange to AutomationGraphEditor. Keep authoring graph and published run snapshot separate; tie config pane to the run's publishedRevision, not mutable projection.graph. Restore durable selected run after reload and dispose subscriptions on workspace change or revoke.",
+      "reason": "Existing workspace integration owns graph load/save and optimistic config revision; a second debug route/store would violate existing mechanisms. Dependency canvas changes must be merged by one file owner."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+      "symbol": "AutomationGraphEditorProps / selectNode / graph.nodes button rendering",
+      "change": "Add optional read-only runtime summary/accessibility props supplied by workspace wrapper. Reuse controlled selection for opening exact durable attempts; present hover/focus/click last-attempt summaries with non-color mode/lifecycle/verification labels. In debug inspection, prevent node drag/edit actions from mutating a published snapshot. Do not compile or execute effects from selectNode or inspection handlers.",
+      "reason": "Current node click selects editable authoring metadata and pointerDown starts dragging; it does not identify a runtime attempt."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationTestPanel.tsx",
+      "symbol": "AutomationTestPanel success/error branches",
+      "change": "Keep the panel as quick validation, explicitly identify quick/fixture validation, never infer verified live success from TestResult.state. Display only sanitized diagnostic text; link to exact run/attempt when a canonical runtime reference is supplied. Use separate readback-qualified live result presentation in WorkflowDebugDrawer.",
+      "reason": "Current success branch renders testPassed solely for state=success; stderr is rendered directly."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/types.ts",
+      "symbol": "TestResult / ExecutionEntry / ExecutionStatus",
+      "change": "Project accepted runtime-contracts.ts browser-safe types using type-only imports where supported, with runId/attemptId/nodeId/publishedRevision, Rox2Status and sanitized diagnostics. Keep legacy quick-validation semantics distinct instead of mapping success to readback_verified. Coordinate historical rows lacking receipt as unverified, not fabricated live proof.",
+      "reason": "Current UI records have only aggregate success/error/blocked, timestamp and optional webhookDetails; no immutable node attempt identity or verification. GraphWorkspaceEditor already uses type-only shared automation imports."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationEditor.tsx",
+      "symbol": "RunHistory / refreshHistory / runNow",
+      "change": "Extend existing history with links into the same debug selection, showing explicit mode/lifecycle/verification. Keep runNow's existing quick-run behavior separate from gated debug.run; do not route a retry or config view through automatic save+testAutomation. Use accepted runtime history projection for new graph runs without double-writing history or presenting dispatch success as external effect verification.",
+      "reason": "RunHistory currently shows success as green; runNow auto-saves dirty draft and invokes testAutomation, which cannot be reused as a read-only inspection action."
+    },
+    {
+      "path": "packages/shared/src/automations/history-store.ts",
+      "symbol": "appendAutomationHistoryEntry / withMutex / compactEntries",
+      "change": "Coordinate with RS-AUT-03 to append only bounded, redacted run-summary projections with canonical runtime references using the existing serialized append path. Preserve aggregate automation id for compactEntries grouping; do not insert node attempts as if id meant runId. Retain durable attempts/receipts in the accepted runtime authority and define pruned-history/cursor-expired responses rather than resurrecting or altering old attempts.",
+      "reason": "JSONL append accepts arbitrary records; compaction groups parsed.id and caps at 20 per matcher/1000 overall. This file is not an immutable durable node/effect store."
+    },
+    {
+      "path": "packages/shared/src/automations/event-logger.ts",
+      "symbol": "LoggedAutomationEvent / LoggedAutomationEventInput / AutomationEventLogger.log",
+      "change": "Extend accepted event projection with runtime run/attempt/node/correlation references, severity and source revision metadata as agreed with RS-AUT-03; sanitize and bound data/results before serialization. Expose query-side ordered durable cursor semantics from the common runtime log authority, not this class's in-memory buffer. Handle event-loss evidence explicitly; keep existing event logger as projection rather than a new debug log store.",
+      "reason": "Current UUID/time event shape lacks run/node/cursor/severity; log directly serializes arbitrary data/results, buffer is unbounded, and local batching/requeue does not establish durable resumable query semantics."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Status / Rox2Receipt / Rox2EntityRef / isClaimableLive / authorizeRox2Action",
+      "change": "Reuse status triad and workspace-scoped workflow EntityRef unchanged unless root accepts a cross-domain schema addition. Request root/dependency contract for typed workflow readback details and log-specific resource grants. Workflow success projection must require a matching durable readback receipt in addition to isClaimableLive(result,'readback'); generic helper alone is insufficient. Do not independently change generic status semantics or introduce run entity kinds.",
+      "reason": "The existing helper trusts verification flags and the grant helper has no resource scope; neither proves workflow-specific readback or independent log permission."
+    },
+    {
+      "path": "packages/shared/src/automations/constants.ts",
+      "symbol": "HISTORY_FIELD_MAX_LENGTH / AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER / AUTOMATION_HISTORY_MAX_ENTRIES",
+      "change": "Retain existing history caps; root/dependency owner must define and validate runtime log retention, maximum payload and export limits in the canonical configuration. Reuse these constants for legacy summary bounds rather than repurposing them as durable node-run retention or creating separate debug configuration.",
+      "reason": "Current constants bound legacy string fields and aggregate history entries only; published contract also requires runtime log retentionconfig and boundedpayload."
+    }
+  ],
+  "integrationRequests": [
+    {
+      "owner": "Lead common authority/bridge owner",
+      "targetContract": "workflow.queryRuns/readAttempt/readLogs/exportProof and debug.run",
+      "change": "Provide exact existing registry/IPC/RPC/MCP module paths after wave0. Implement run-queries.ts as authorized read projections over accepted runtime receipts/logs; register query schemas carrying runId/attemptId/nodeId/range/filter/cursor and typed denied/expired/unavailable results. Mutating debug.run/retry/cancel go to the dependency runtime command handler with mode, publishedRevision, scoped sample, operationId and expectedRevision. No alternate execution path.",
+      "missingPrerequisite": "No shared registry/transport file path is asserted because it was not inspected within this package scope. Root must supply a source-backed exact patch destination before implementation."
+    },
+    {
+      "owner": "Lead i18n/shared UI owner",
+      "targetContract": "Existing react-i18next t() calls and all ten locale files mandated by repository instructions",
+      "change": "Add automations.debug.* keys for panes, triad states, denied/cursor-expired/unavailable states, failure classes, time units, copy/export and hover/focus/click help in existing packages/shared/src/i18n/locales/{de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant}.json, ASCII-sorted and Russian-default, using existing theme/font tokens. Coordinate one shared-file writer; no extra RS-AUT-04 locale store.",
+      "missingPrerequisite": "Lead supplies locale ownership and exact existing help/drawer primitives; locale bodies were not inspected in this bounded preflight."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "AC1: Failnode → redactedcause/inputs → fixdraft → freshattempt; oldattemptimmutable.",
+      "currentEvidence": "AutomationGraphEditor.selectNode selects authoring nodes; AutomationGraphWorkspaceEditor.saveGraph updates config projection. ExecutionEntry has aggregate error, no node attempt identity. RS-AUT-03:30,34,40 requires immutable inputs/attempts and isolated draft editing.",
+      "requiredChange": "readAttempt must return authorized sanitized immutable node input/output/cause/error/duration/retry metadata by runId+attemptId+nodeId. Drawer links to draft fix, then gated debug.run against a newly published revision creates fresh run/attempt IDs; old attempt snapshot and receipt remain unchanged. Inspection alone never retries.",
+      "verification": "Seed a failing node with a sensitive field; assert sanitized input/cause through UI, direct query and export. Save/fix/publish and explicitly start fresh attempt; restart/reload and compare old attempt content/hash/identity with original. Count effect intents to prove read/config navigation causes none.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisites": ["Accepted RS-AUT-03 immutable run/attempt and publish contracts", "Canonical grants/redaction query seam"]
+    },
+    {
+      "criterion": "AC2: Fixture and live clearlydistinct; live success requires readback receipt; timeoutunknown not green.",
+      "currentEvidence": "AutomationTestPanel success depends only on TestResult.state; WebhookActionResult.success means 2xx. Rox2Status already splits mode/lifecycle/verification; isClaimableLive accepts claimed flags without inspecting receipt contents.",
+      "requiredChange": "Separate fixture sample and approved live debug commands. Reuse triad, but workflow projection/UI require durable operation-bound provider readback plus expected/observed comparison before verified-live success. Render timeout/worker-unavailable/unknown without successful color or text; expose exact failureClass infrastructure/baseline/assertion/provider.",
+      "verification": "Exercise identical fixture/live inputs; fixture performs zero provider writes. A 2xx response without readback, spoofed verification flag, stale/wrong-operation receipt, worker outage and post-write timeout must never show verified green. Only actual matching provider readback qualifies; reconcile unknown without blind replay.",
+      "state": "PARTIAL_STATUS_FOUNDATION_ONLY_NOT_VERIFIED",
+      "missingPrerequisites": ["Live approval/runtime gate", "Operation-bound receipt validation and actual provider lane"]
+    },
+    {
+      "criterion": "AC3: Viewerwithgraphread butnologgrant cannot retrieveinputs viaRPC/export; reconnect resumes logs withoutduplicate.",
+      "currentEvidence": "authorizeRox2Action checks generic actor permissions only; event logger emits random UUID records and has no read/cursor interface. GraphWorkspaceEditor subscribes to onAutomationsChanged, not durable log stream.",
+      "requiredChange": "Authorize logs/inputs independently of graph view before query, search, export and subscription. Server derives actor/workspace/policy. readLogs uses canonical ordered durable cursor and stable event IDs for dedupe; revoke terminates subscription, blocks pages/exports and clears forbidden UI/query caches. Expired cursor produces typed gap/refetch state.",
+      "verification": "Graph-only viewer calls direct RPC/MCP/IPC/export/search with run and attempt IDs; all sensitive access denied despite visible graph. Disconnect mid-stream, reconnect from last cursor with replay overlap and concurrent writers; assert no skipped/duplicated entries. Revoke during stream/export and ensure no further forbidden payload or cached copy.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED",
+      "missingPrerequisites": ["Independent scoped log grant and revoke contract", "RS-AUT-03 persisted log ordering/cursor", "Registered transport/export handlers"]
+    },
+    {
+      "criterion": "DoD1: UI/routing/input/output/help/keyboard/state contracts implemented; loading/empty/error/denied/retry available and verified.",
+      "currentEvidence": "GraphWorkspaceEditor owns current graph surface; graph node buttons support selection; TestPanel covers idle/running/success/error only. No normative WorkflowDebugDrawer file found.",
+      "requiredChange": "Implement drawer within existing Automations canvas with run selector (mode/status/time), node attempt timeline, Journal/Errors/Configuration/Storage/Search navigation. Show read-only published config and allowed scoped state, not arbitrary DB console. Support filters by run/node/correlation/severity, collapsible schema output tree, sanitized JSON copy, proof download, cause/next action, explicit operation-linked dry/live retry and cancellation intent. Preserve durable attempt selection and keyboard filter/navigation/expand/back/focus restoration. No fake progress while worker unavailable.",
+      "verification": "Renderer and native Electron interactions exercise every pane/control and loading/empty/error/denied/retry/unknown states; hover/focus/click summary and help; arrows/tab/enter/escape filters/tree; compare published snapshot to revision after draft changes; confirm config/error inspection emits zero effects.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisites": ["Query/debug bridge and runtime data", "Accepted canvas selection contract and existing drawer/help primitives"]
+    },
+    {
+      "criterion": "Published UX constraints: Russian i18n, theme/font, accessible help, 120–160 ms opacity/transform motion, reduced-motion, non-color status, <1100 drawer and <800 single-pane back-navigation.",
+      "currentEvidence": "Existing components call useTranslation and use theme utility classes; graph editor has fixed w-56 aside and transition-shadow. No runtime debug responsive layout or actual computed-font evidence inspected.",
+      "requiredChange": "Use existing ROX tokens and all ten locales; add accessible labels/status text and help on hover/focus/click. Drawer transitions only opacity/transform at 120–160 ms; reduced motion disables animation. Under 1100 collapse inspector into drawer; under 800 render one active pane with back navigation and focus recovery. Do not reuse authoring transition-shadow for new debug motion.",
+      "verification": "Native Electron screenshots/ARIA/computed font at wide, 1099 and 799 px; keyboard-only traversal and help; reduced-motion assertion and observed timing/property capture. Verify selected theme and actual inherited font, not just CSS font-family declaration.",
+      "state": "EXISTING_THEME_I18N_SEAMS_ONLY_NOT_VERIFIED",
+      "missingPrerequisites": ["Locale/shared UI ownership", "Real Electron acceptance lane"]
+    },
+    {
+      "criterion": "DoD2: Persistence and reload; meaningful negative case; concurrency/reconnect where applicable; N/A justified in receipt.",
+      "currentEvidence": "history-store serializes append via per-workspace promise mutex and compacts by automation id. event-logger batches local writes and can requeue/loss-callback; neither establishes durable attempt query/subscription or cross-worker fencing.",
+      "requiredChange": "Read accepted runtime durable run/node/effect tables; use existing JSONL only as bounded legacy history projection. Persist replay cursors and publishedRevision through dependency authority. Preserve append-only attempts, configured retention and byte limits; bound query ranges/pages. Cancellation records intent, not an invented undo. All persistence/concurrency/reconnect requirements apply to this domain slice, not N/A.",
+      "verification": "Restart service and renderer with failed/running/unknown attempts; query same immutable IDs and state. Concurrent log readers/writers, duplicate resume, pruning/expired cursors, revoked access and stale published revision yield deterministic typed states without corruption or duplicate effects. Verify existing legacy history remains readable.",
+      "state": "LEGACY_PERSISTENCE_ONLY_NOT_VERIFIED",
+      "missingPrerequisites": ["Accepted durable runtime and lease/cursor contract", "Retention/bounded payload configuration"]
+    },
+    {
+      "criterion": "DoD3: Common grants, links, search, mentions, activity, notification and agent policy integrated for new domain entity.",
+      "currentEvidence": "Rox2EntityRef already scopes entity/workspace/revision; workflow is an existing entity kind, Rox2Event supports causation/correlation. RS-AUT-04:45,55 demands common projections/index/outbox. No package-local implementation proving integration was found.",
+      "requiredChange": "Represent debug run/attempt references through accepted workflow EntityRef and runtime IDs, not a second entity store. Integrate authorized links/mentions/search with common index; route Activity/Audit and deduplicated notifications through existing outbox. Agent commands use identical grants/revision/live gate; preview/read never writes. Enforce permission recheck on resume and revoke caches/subscriptions.",
+      "verification": "Across UI, RPC/IPC/MCP and agent calls, use same seeded principals and refs to compare allowed/denied outcomes. Search/mentions/deep links expose no denied run payload; duplicate events notify once through canonical outbox; agent preview has zero effects; revoke blocks next write and reads.",
+      "state": "BLOCKED_COMMON_INTEGRATION_NOT_VERIFIED",
+      "missingPrerequisites": ["Root-owned entity/index/Activity/outbox/agent adapters", "Independent log ACL mapping"]
+    },
+    {
+      "criterion": "Output/proof contracts: redacted structured logs/hash/proofpaths, expected/observed/providerreadback, failure classes, sourceSHA/workflowrevision/inputmetadata without secrets/raw private bodies.",
+      "currentEvidence": "event-logger.log directly JSON-stringifies data/results. TestPanel renders stderr. Rox2Receipt lacks required expected/observed/proof metadata. Legacy history bounds are entry/string caps, not proof export authorization.",
+      "requiredChange": "run-queries.ts returns sanitized typed projections and exportProof reauthorizes every included artifact. Bundle manifest binds source SHA, published workflow revision, run/attempt/operation IDs, bounded sanitized input metadata, exact expected/observed outcome, provider receipt, structured failureClass and content hashes/proof paths. Redact before persistence and before export/clipboard; do not include auth headers, tokens or raw private bodies by default.",
+      "verification": "Seed nested auth/body/error/response secrets and compare log query, tree, clipboard and downloaded bundle contents; all must be redacted. Validate bundle manifest hashes and expected/observed receipt binding; wrong scope/revision and missing receipt must fail. Retention must not fabricate missing proof.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisites": ["Canonical redaction schema and proof format", "Durable runtime receipt/proof authorization and export limits"]
+    },
+    {
+      "criterion": "DoD4: Targeted tests + seeded broken control actually rejected; existing route/authority regression passed.",
+      "currentEvidence": "Normative tests/rox-suite/automations/debug.spec.ts absent. Existing history-store.test.ts and graph.test.ts were located but not run or claimed passing. This task prohibits product tests.",
+      "requiredChange": "Implement debug.spec.ts behavior cases for the three ACs, reload/reconnect, ACL/revoke/export, immutable attempt and live receipt semantics. Use a seeded broken log-authorization or readback projection negative control and prove the expected invariant rejects it. Retain tests for consumer-visible boundaries, not source strings/copy or mock forwarding.",
+      "verification": "After dependency integration, execute targeted debug cases plus existing graph/history and affected authority/route regressions in lead's test lane. Record the failing negative control and passing corrected implementation with same seeded scenario. No result is supplied by this preflight.",
+      "state": "NOT_RUN_NOT_VERIFIED",
+      "missingPrerequisites": ["Integrated runtime/service/transport", "Seeded test harness and accepted broken control"]
+    },
+    {
+      "criterion": "DoD5: Linux domain/renderer evidence; real Electron screenshots/ARIA/theme/font after UI changes; provider lane only for real external effects.",
+      "currentEvidence": "Specification separates evidence lanes; this preflight performed read-only source inspection and hashing only, not UI/runtime acceptance.",
+      "requiredChange": "Lead exercises actual run-query domain behavior on Linux, changed renderer interactions, native Electron UI and real approved-live provider write/readback. Label fixture evidence as fixture, not live; preserve font/theme/ARIA and expected/observed artifacts on delivered revision.",
+      "verification": "Collect domain logs and durable readback, renderer interaction results, Electron screenshots/accessibility/computed font, and actual provider receipt matched to operationId. Unknown/timeouts and graph-only denied viewer must be observed in appropriate lanes; no lane inferred from another.",
+      "state": "NOT_RUN_NOT_VERIFIED",
+      "missingPrerequisites": ["Lead-authorized Linux/native/provider runners and real credentials", "Implemented changed surface"]
+    },
+    {
+      "criterion": "DoD6: Source commit, exact diff, logs/hashes, expected/observed, migration/rollback and independent review attached; screen alone insufficient.",
+      "currentEvidence": "Input manifest and scoped source hashes are captured below. No implementation diff, migration, runtime receipt, delivery revision or independent review was created in this artifact-only task.",
+      "requiredChange": "Lead binds all acceptance evidence to committed integrated source and exact diff. Document legacy history projection compatibility, versioned runtime/log query schemas and migration/rollback sequence preserving old attempts/receipts and ACLs. Review security/redaction/live verification independently. Rebase the preflight seam plan only by reinspection of changed hashes; do not claim working-tree inspection equals delivered revision proof.",
+      "verification": "Validate source/artifact hashes at accepted revision; exercise migration from legacy config/history and rollback without losing attempts or enabling duplicate effects. Attach independent review and exact expected/observed per lane. Root performs commit/integration, not this worker.",
+      "state": "PREFLIGHT_HASHES_ONLY_NOT_VERIFIED",
+      "missingPrerequisites": ["Lead wave0 and integrated implementation commits", "Migration/rollback procedure and independent reviewer", "Runtime/lane receipts"]
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-AUT-04.md","symbol":"Acceptance criteria / Definition of Done / proposed paths","lineStart":57,"lineEnd":87,"sha256":"2d1358a4044df3aa69dc1ae3a151e1301a103e0e9679344da502a19ab45ace40"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-AUT-04 normative record","lineStart":292,"lineEnd":320,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"docs/rox-suite/published/RS-AUT-03.md","symbol":"Durable WorkflowRun/NodeAttempt/effectreceipt runtime prerequisite","lineStart":27,"lineEnd":67,"sha256":"0d42c0105cecb110427e045272de9237e996f4ee29bf0a2981ce316f7b76b1a8"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationTestPanel.tsx","symbol":"AutomationTestPanel","lineStart":19,"lineEnd":64,"sha256":"5a0bea1ab1d35fc69085f0855c521191296c9f67c9f4232ca364cf7d0b48de92"},
+    {"path":"apps/electron/src/renderer/components/automations/types.ts","symbol":"ExecutionEntry / TestResult","lineStart":268,"lineEnd":309,"sha256":"2210ed9b9adcd74f958d30fb5bcfbf009ffd1b4ca8ce3742bb49121065e73f59"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"runNow / refreshHistory","lineStart":479,"lineEnd":562,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx","symbol":"AutomationGraphWorkspaceEditor","lineStart":18,"lineEnd":114,"sha256":"f862058a2d6bcb3c1dd6b0dfe76b1ac98f8894a40b45c9243b92eeb2694a94e5"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx","symbol":"selectNode / graph.nodes buttons","lineStart":191,"lineEnd":233,"sha256":"a4323fc00bd9bb5548f94c88c35900c0755b090dcd2b54790c6ab826e3471d94"},
+    {"path":"packages/shared/src/automations/history-store.ts","symbol":"appendAutomationHistoryEntry","lineStart":57,"lineEnd":74,"sha256":"8b9140ff67ddecc119259288b5c5c5ea29c3ee0f7fcf66252a13d2b13d3730df"},
+    {"path":"packages/shared/src/automations/history-store.ts","symbol":"compactEntries","lineStart":152,"lineEnd":203,"sha256":"8b9140ff67ddecc119259288b5c5c5ea29c3ee0f7fcf66252a13d2b13d3730df"},
+    {"path":"packages/shared/src/automations/event-logger.ts","symbol":"LoggedAutomationEvent / AutomationEventLogger.log","lineStart":17,"lineEnd":79,"sha256":"f21525d6fac99459b1f3eedf5756a5a21b5c155dd2b8611af993966fb8e20bfd"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AutomationGraph / WebhookActionResult","lineStart":414,"lineEnd":475,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/constants.ts","symbol":"History retention and field caps","lineStart":1,"lineEnd":20,"sha256":"b5b86a1764b3a7cb13ca4d5c38fdd2215e850addc1acb90adb9818a6957c30a4"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"Graph projection invariant / AutomationGraphProjection","lineStart":1,"lineEnd":58,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2Receipt / Rox2Status","lineStart":99,"lineEnd":111,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"isClaimableLive","lineStart":539,"lineEnd":552,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2ActorGrant / authorizeRox2Action","lineStart":592,"lineEnd":610,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"}
+  ],
+  "nextExecutableAction": "Lead validates this preflight against its dispatch packet, then waits for its wave0 commit and accepted RS-AUT-03 receipt before implementation. At that committed revision, re-read changed source hashes and runtime-contracts.ts, confirm common service/registry/log grant/cursor/proof contracts and one-writer shared patch ownership. First implementation slice: authorized readAttempt/readLogs in normative run-queries.ts with graph-only denied input/export control, wired to WorkflowDebugDrawer in existing graph workspace; do not start a parallel store or use testAutomation as live-proof runtime.",
+  "risks": [
+    "Live success inflation: generic verification flag, quick-test success, prompt session dispatch or webhook 2xx is not operation-bound provider readback.",
+    "Private payload leakage through persisted data/results, stderr, error titles, nested JSON tree, clipboard, search or export; UI-only redaction is insufficient.",
+    "Graph-read permission silently granting log inputs/export; common generic read permission helper lacks log resource scoping by itself.",
+    "History compaction assumes id=automation matcher; using run IDs or node rows in existing JSONL can defeat retention/grouping or erase required durable attempts.",
+    "Logger buffer has no size cap or durable cursor; batching/requeue/UUID alone cannot prove ordered reconnect or duplicate-free UI.",
+    "Retry via current runNow auto-saves and executes actions; read/config/focus navigation must not use that path or replay irreversible effects.",
+    "Mutable authoring graph revision mistaken for immutable published run revision; old attempts must not change when draft is fixed.",
+    "Missing workspace-service/runtime-contracts paths mean normative new query file cannot be integrated before service/runtime foundations land; source-only drawer cannot satisfy package.",
+    "Root wave0/shared files may change after inspection. All plan references must be rechecked against accepted hashes before patching; report is not a feature completion receipt.",
+    "No UI-only N/A exemption applies: this package explicitly includes runtime data, ACL, proofs, live effects and reconnect. All three ACs and all six DoD items remain required."
+  ]
+}

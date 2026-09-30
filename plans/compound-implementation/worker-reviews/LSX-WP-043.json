@@ -1,0 +1,287 @@
+{
+  "task_id": "LSX-WP-043-preflight",
+  "attempt_id": "39c0cd50b018e43aca6f1c883aa36e2f",
+  "packet_hash": "c6b6606781daa1b25519da1aa0ba3467fa5c1e85c9cf789cb5a6fcaae3861366",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-043",
+  "featureComplete": false,
+  "reviewMode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow: exact specification, scoped source inspection, one owned report",
+  "dependencies": ["LSX-WP-024", "LSX-WP-037", "LSX-WP-041", "LSX-WP-042"],
+  "evidenceScope": {
+    "repository": ".",
+    "revisionMeaning": "input_revision is dispatch lineage, not a claim that the dirty working tree equals that commit. Source references identify inspected working-tree files by whole-file SHA256.",
+    "sourceStatus": "SOURCE_INSPECTED_NOT_RUNTIME_VERIFIED",
+    "runtimeStatus": "NOT_RUN_BY_AUTHORIZATION",
+    "uncommittedWave0": "User reports root-owned uncommitted wave0 changes; preserved. No Git command or mutation performed.",
+    "staleness": "Digests were observed after source inspection. Concurrent root integration may invalidate them; re-read changed seams and reject a stale preflight before implementation. Dependency acceptance receipts were not supplied or established by this review.",
+    "discovery": "Codegraph returned no index for this project. Scoped find failed with judge service HTTP 402; used explicit package paths, direct imports, grep and read instead. Neither failure is evidence that a product capability is absent.",
+    "specManifest": [
+      {"path": "plans/lark-suite-reference/execution-packages.json", "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b", "matchesPacket": true},
+      {"path": "plans/lark-suite-reference/work-packages.json", "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952", "matchesPacket": true}
+    ]
+  },
+  "foundationGates": [
+    {
+      "gate": "ROOT_WAVE0_AND_ACCEPTED_DEPENDENCY_RECEIPTS",
+      "kind": "implementation_launch_gate_not_extra_DAG_edge",
+      "evidence": "Dispatch requires lead wave0 commit and accepted dependency receipts; work-packages.json:15879-15889 requires exact baseline/prerequisite commits, reference manifest resolution and exclusive shared-path lease.",
+      "requiredPrerequisite": "Lead supplies committed wave0 integration revision, accepted artifact plus authoritative readback receipts for all four explicit dependencies, resolved reference revision/digest and hashes for spec refs, and an approved baseline reconciliation: published product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab differs from dispatch input a21aeab1da5a67e56788384ff930945b0f487879.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "gate": "EG-SEARCH-AGENTS",
+      "kind": "explicit_external_prerequisite_not_DAG_edge",
+      "evidence": "work-packages.json:148-153 and 15546-15549 require authorized context/index/tool readback and no hidden-source leakage; registry status is READINESS_NOT_VERIFIED.",
+      "requiredPrerequisite": "Real authenticated agent Session/tool executor with allowed entity refs, revisions and enforced budget; same scoped actor as native Task/Meeting query, current authorization on resume and no unrestricted tool escape.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "gate": "EG-AUTOMATION_AND_PUBLISHED_DRAFT_AUTHORITY",
+      "kind": "explicit_external_gate_with_hidden_published_foundation",
+      "evidence": "work-packages.json:156-161 requires immutable run/version/step executor; linked RS-AUT-05.md:44-52 assumes RS-AUT-01 Draft/PublishedRevision authority and legacy cutover. Its normative dependencies at 97 and 108-111 are RS-AUT-01, RS-AUT-02, RS-AUT-03, RS-AUT-04, not additional LSX-WP-043 array entries. Current graph.ts:538-555 writes canonical automations directly.",
+      "requiredPrerequisite": "Accepted RS-AUT-01..04 affected-scope receipts for immutable published version, durable run/step/occurrence identity, resume and safe retry; RS-AUT-05 publication review/migration readiness. Recipe setup/preview must not activate a workflow. Do not create a recipe-local workflow store, publication table or scheduler.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "gate": "CANONICAL_DOC_OWNER_AND_LINKED_RS_DOC_FOUNDATIONS",
+      "kind": "hidden_published_foundation_not_explicit_DAG_edge",
+      "evidence": "work-packages.json:15834-15841 links RS-DOC-01. RS-DOC-01.md:3,35-44,50-58 requires one Page/document authority, durable ACK, ACL fences and approved revision export; 62 and 81-82 name RS-DRV-01 and RS-MSG-02. Existing HTML Page is explicitly not a Doc by rename; no separate DocumentComments engine.",
+      "requiredPrerequisite": "Canonical document create/read/revision commands and library route accepted under affected RS-DOC-01/RS-DRV-01/RS-MSG-02 scope; use existing entity identity and any common discussion surface. Relevant collaborative writer, crash/ACK and revoke receipts belong to that owner, not a new report-document storage implementation. Full collaboration proof is required when that lane is actually exercised, not simulated here.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "gate": "TRANSITIVE_COMMAND_AND_APPROVAL_OWNERS",
+      "kind": "transitive_dependency_gate_not_extra_DAG_edge",
+      "evidence": "LSX-WP-041 at work-packages.json:14749-14757 depends on 010/013/033/040 and EG-COMMANDS/EG-AUTOMATION; LSX-WP-042 at 15120-15128 depends on 033/036/040/041 and EG-APPROVAL/EG-AUTOMATION. Gate definitions at 140-145 and 164-169 require registered validator/scoped MCP dispatch and exact approval digest/decision/revoke proof.",
+      "requiredPrerequisite": "Accepted 041/042 receipts must include real command and approval integrations, not only schemas. LSX-WP-024 also needs 010/013/017 and search-agent readiness; 037 needs 004/006/034. Do not change the explicit dependency array or silently bypass missing transitive owners.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "gate": "MEETING_QUERY_CAPABILITY_AND_HONEST_COVERAGE",
+      "kind": "runtime_input_capability_not_new_DAG_edge",
+      "evidence": "work-packages.json:15763-15765 explicitly requires missing Meeting owner to yield missing coverage, not fabricated summary; 15744 requires the query and agent to share a scoped actor.",
+      "requiredPrerequisite": "Real permitted Meeting query adapter if available. When missing, record capability/missing-data status without hidden names/counts, continue permitted Task drafting where safe, and block any claim of complete Meeting coverage. A missing agent or canonical Doc owner cannot be replaced by a synthetic adapter.",
+      "state": "NOT_ESTABLISHED"
+    },
+    {
+      "gate": "RPC_RENDERER_I18N_INTEGRATION_SCOPE",
+      "kind": "packet_scope_gap",
+      "evidence": "Only automation-system.ts is an authorized existing-file patch path (execution-packages.json:3751-3758). Package requires authenticated server/renderer APIs and an actual review surface (work-packages.json:15717-15731,15747-15749,15795-15799). Repo rules require new t() keys in all ten locales.",
+      "requiredPrerequisite": "Integration owner must identify and approve existing authenticated transport registration, current Docs route mounting and localization seams after dependency integration. Existing-file edits outside automation-system.ts need an updated reviewed packet/path lease. No second shell, review store or hardcoded untranslated labels to fit current ownership.",
+      "state": "ADDITIONAL_REVIEWED_PACKET_REQUIRED_IF_NOT_SUPPLIED_BY_DEPENDENCIES"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/automations/recipes/docs-weekly-report.ts",
+    "apps/electron/src/renderer/pages/docs/ReportDraftReview.tsx",
+    "tests/lark-suite-extension/lsx-wp-043.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-043.spec.ts"
+  ],
+  "ownedFileContributions": [
+    {
+      "path": "packages/shared/src/automations/recipes/docs-weekly-report.ts",
+      "observedState": "ABSENT_IN_INSPECTED_WORKING_TREE",
+      "proposedChange": "Define validated preview/run request, result and error contracts for normative automation.previewWeeklyReportRecipe(input) and automation.runWeeklyReportDraft(occurrenceKey). Export recipe composition and executor integration using accepted 041/042 node/runtime contracts. Preview yields exactly next five zoned schedule occurrences, missing-run policy, declared scope/effects and simulation status without writes. Run derives identity from native occurrence/run authority, performs bounded actor-scoped Task/Meeting snapshot query, constrains the existing agent Session to those permitted refs/revisions/budget, persists one canonical draft Doc and SourceCoverage, then waits for revision/digest-pinned owner review. Optional render references that reviewed immutable revision; publish/send is never an implicit continuation. Names of helper exports are proposed, not existing API evidence. Do not add a DB, file store, background scheduler, custom generic retry engine or fake owner adapter."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/ReportDraftReview.tsx",
+      "observedState": "ABSENT_IN_INSPECTED_WORKING_TREE",
+      "proposedChange": "Add a review component mounted through existing Docs/automation navigation supplied by integration owner, not a new surface registry. Display native draft ref/revision/hash, coverage/missing-data/freshness/source links and owner checkpoint status. Render optional artifact only after explicit current revision review and asset ACL. Setup presentation includes next-five schedule instants with timezone and DST policy. Handle loading, empty, denied, offlineUnsupported, conflict, deleted, missingDependency, retry and revoked owner without exposing protected data; close/timeout never publishes. Use t() and existing components/theme/font/motion/help conventions; native receipt drives committed status."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-043.test.ts",
+      "observedState": "ABSENT_IN_INSPECTED_WORKING_TREE",
+      "proposedChange": "Behavioral cases for duplicate and concurrent tick/occurrence identity, DST and bounded missed-run handling, hidden Task/Meeting exclusion from query/context/doc/logs, missing Meeting coverage, explicit draft/review/render transitions, stale digest conflict, owner revoke, timeout/cancel no send, replay with stable logical step keys, and authoritative exact-ref readback/restart using accepted native owners. Record seeds/input hashes; assert source/coverage and transitions rather than nondeterministic prose. Mutation controls must fail named semantic assertions, not source-text or forwarding assertions."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-043.spec.ts",
+      "observedState": "ABSENT_IN_INSPECTED_WORKING_TREE",
+      "proposedChange": "Use discovered supported actual Electron runner to exercise setup preview, generated canonical Doc, coverage/source freshness, owner review and optional render; denial/revocation/stale revision and close/timeout behavior. Capture native pointer/keyboard/IME/focus/reduced-motion/zoom/theme/locale/font/ARIA evidence bound to tested revision. No fixture-only screen may substitute for real Query→Session→Doc→review proof."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystemOptions",
+      "change": "After 041/042 accepted integration, import the typed recipe contract from ./recipes/docs-weekly-report.ts directly (avoid an unauthorized handlers/index.ts edit). Add an optional weekly-report executor/recipe-registration capability supplied by the existing authenticated domain/run owner, following knowledgeExecutor and meetingFollowupExecutor injection at lines 62-69. Bind workspace from the facade options and actor from the trusted owner; never add renderer-supplied actorId/ownerId as authorization or reuse broad PendingPrompt as an ACL contract. Exact export names must be reconciled against dependency interfaces before applying.",
+      "reason": "Shared package must use native server executors and existing Session/run authority without importing a second runtime or authorizing from payload. This is an integration-owner-only serial patch under lease."
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystem.createHandlers / AutomationSystem.getMatchersForEvent / AutomationSystem.dispose",
+      "change": "Register the Weekly Report composition with the accepted immutable-version/typed-node executor once per workspace in createHandlers (298-374); if accepted runtime uses a per-slice subscription, retain its disposer and invoke it from dispose (635-652), following meeting-followup lifecycle. If persisted published weekly recipes require matcher projection, expose them through getMatchersForEvent (258-270) using the native published authority, never private config copies. Route scheduled occurrences through the accepted runtime claim/dedup/recovery owner; startScheduler's existing tick (383-393) is only a wake-up signal. Do not seed an enabled recipe automatically, widen AutomationEvent, introduce a separate timer, or execute via executeAgentEvent's currently matching-only path (584-603). Surface missingDependency at the typed recipe boundary when real required owners are unavailable.",
+      "reason": "Preserves existing facade/event bus and lifecycle while preventing duplicate subscriptions, unpublished execution and false completion from tick/handler dispatch. Dependency runtime must own durability and occurrence identity, not this patch."
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystem (previewWeeklyReportRecipe / runWeeklyReportDraft facade methods, proposed)",
+      "change": "Expose validated facade delegates for the two normative recipe operations only once real authenticated transport and accepted executor contract are registered. Preview is read-only. Run resolves occurrence/run identity from native authority and returns the typed native draft/review receipt with ref/revision/hash, not eventBus.emit completion or PendingPrompt enqueue. Every caller must use trusted current principal scope and independent explicit action policy for any render/publish/send transition; stale revision, revoked owner and unknown external result stay classified.",
+      "reason": "Provides the package's bounded API seam without treating swallowed event-bus errors or queued Session work as durable business success. RPC and route registrations outside this file are scope prerequisites, not authorized patches in this report."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "end-to-end real Query→agent draft→Doc→review receipt",
+      "currentEvidence": "AutomationSystem.createHandlers injects native executors (298-374), but compileGraph (graph.ts:385-489) only maps prompt/webhook flow. No normative recipe/review file exists. projectTasks is an in-memory projection, not a scoped authoritative query.",
+      "seam": "AutomationSystemOptions/createHandlers; compileAutomationGraph supplied by 041; bindSurfaceContext/visibleContextEntityRefs; proposed runWeeklyReportDraft and ReportDraftReview",
+      "requiredChange": "Compose actual permitted Query, constrained existing Session, canonical Doc create and 042 owner-review checkpoint in accepted runtime. Preserve Task origin refs from 037 and query binding from 024, store source revisions and honest coverage on the canonical draft/run.",
+      "verification": "Real authorized fixture with completed/open Tasks and permitted Meetings: invoke registered API, run actual agent, read canonical Doc and pinned review receipt, compare source refs/revisions/coverage, then read the same ref/revision/hash after restart. Do not compare exact generated prose.",
+      "missingPrerequisite": "Accepted 024/037/041/042 plus EG-SEARCH-AGENTS, EG-AUTOMATION and canonical Doc owner/transport receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "simulation labeled; provider send gate separate",
+      "currentEvidence": "platform-contract.ts:539-577 differentiates claimable live, queued, fixture and simulated results; 579-610 requires explicit actor grants including publish/cloud-send. Work package forbids implicit transmission.",
+      "seam": "isClaimableLive/simulatedResult/authorizeRox2Action; proposed previewWeeklyReportRecipe and ReportDraftReview",
+      "requiredChange": "Propagate executionMode/lifecycle/verification to preview/review UI and receipts; simulation cannot commit or be counted as live. Draft/review/render do not send. Publish/send requires a separate registered action and fresh transport-derived policy check; no timeout autoapproval.",
+      "verification": "Preview/simulation writes zero Docs/runs/external effects; native live draft distinct from queued Session; timeout/closing review produces no publish/send receipt. If an external action is exercised, capture its separate authorization and actual provider readback lane.",
+      "missingPrerequisite": "Accepted runtime status contracts and registered explicit action policy; provider owner receipt only if that lane is used.",
+      "state": "SOURCE_STATUS_HELPERS_PRESENT_FEATURE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "schemas.ts:312-360 supports trigger/matcher/prompt/webhook plus metadata; graph.ts:90-99 uses safeParse but no weekly request/result. Required errors are work-packages.json:15721-15731.",
+      "seam": "proposed docs-weekly-report.ts contract; AutomationSystemOptions; dependency 041 registered command/schema boundary",
+      "requiredChange": "Export validated preview/run/result schemas and discriminated errors validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Parse both transport and renderer boundary values; trusted server context supplies actor/workspace. Keep query snapshot, budget, occurrence identity, draft ref/revision/hash, coverage and review/render status typed; reject spoofed payload identity.",
+      "verification": "After authorized implementation, compile server and renderer consumers with project-supported package commands; exercise each discriminant, malformed input and actor/workspace spoofing through real authenticated registration. Schema-only compilation is not feature acceptance.",
+      "missingPrerequisite": "041/042 compiled contracts and integration-owner approved transport/schema registrations beyond current single shared patch path.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "WorkspaceEventBus.emit (event-bus.ts:240-290) drops rate-limited events and catches handler errors; completion of emit is not a domain receipt. Rox2Receipt has observedRevision but no built-in report hash (platform-contract.ts:99-105).",
+      "seam": "native 042 artifact/approval and runtime receipts; proposed runWeeklyReportDraft result; AutomationSystem facade delegate",
+      "requiredChange": "Return committed canonical draft/run/review references with content/payload digest and pinned source revisions only after native authority commit. Classify queued/pending separately; resume reconciles native state and exact receipt, no local report receipt store.",
+      "verification": "Observe native state before/after crash at draft commit/ACK and review persistence; restart real process and read same draft ref/revision/hash and approval digest. One committed draft survives; no duplicated ACK or new origin key.",
+      "missingPrerequisite": "Durable native Doc commit/readback and 042 runtime checkpoint/receipt owner; real restart runner authorization later.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:15763-15765 names duplicate tick, hidden Task/Meeting and missing Meeting owner plus real restart; graph save checks config CAS (graph.ts:538-545), not report content/review CAS.",
+      "seam": "proposed lsx-wp-043.test.ts; 041 query/domain command; 042 review/retry; current buildAutomationGraphSave",
+      "requiredChange": "Exercise actual owners for scoped happy path, denied read/write/review, stale draft/review conflict, duplicate/concurrent tick, crash-after-effect replay and restart/resume. Keep stable occurrence and logical step keys across attempts; re-evaluate current authorization on replay.",
+      "verification": "Run bun test tests/lark-suite-extension/lsx-wp-043.test.ts only in later authorized implementation; retain all attempts, seeds, exact inputs/SHA256, native receipts and expected/observed values. Include completed/cancelled/out-of-window Task boundaries rather than treating 'today' as weekly coverage.",
+      "missingPrerequisite": "Real dependency owners/fixtures and committed implementation; tests explicitly not run during preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:15778-15786 specifies unrestricted agent context or auto-publish on timeout mutants and assertions hidden source absent report/context, one report per occurrence, timeout no publish/send receipt.",
+      "seam": "proposed lsx-wp-043.test.ts negative controls at recipe query/context/review boundaries",
+      "requiredChange": "Keep a green baseline using real owner integration; introduce isolated faulty context and timeout publication variants and require named semantic failures. Include occurrence dedup fault where necessary to demonstrate the one-draft invariant. Keep evaluated bytes, input hash and seed with each result.",
+      "verification": "Baseline succeeds; unrestricted-context mutant fails hidden-source assertion, timeout-publish mutant fails no-transmission assertion, and dedup fault fails unique draft-origin readback. A hung model/provider or setup failure is recorded separately and cannot satisfy mutation proof.",
+      "missingPrerequisite": "Runnable baseline and safe isolated mutation execution from integration owner; no mutations or tests allowed in this preflight.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "ReportDraftReview.tsx and normative UI spec are absent. work-packages.json:15747-15749 requires next5/zone, coverage/source/freshness and common UI contract. Repo requires t() keys in all 10 locales.",
+      "seam": "proposed ReportDraftReview; existing Docs/automation route provided by integration owner; proposed lsx-wp-043.spec.ts",
+      "requiredChange": "Mount the real component on existing navigation; use Russian default, full locale parity, user theme, actual Rox Mono, hover/focus/click definitions/source/freshness/example help, visible keyboard focus, Escape return, IME-safe input and reduced motion. Present review as distinct from publication and disabled actions with exact blockers.",
+      "verification": "Actual Electron flow with real generated canonical draft: pointer/keyboard, IME, focus restore, reduced motion, 200% zoom, light/dark and locale coverage; screenshots/ARIA/computed font plus loaded-font proof bound to revision/environment. Discover runner; do not invent a passing UI command.",
+      "missingPrerequisite": "Approved existing route and localization patches, actual supported Electron runner and real domain integration; native UI prohibited during preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:15769-15775 lists SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI; platform isClaimableLive excludes unverified queued/simulated results.",
+      "seam": "native recipe result/status; ReportDraftReview receipt presentation; integration acceptance artifact",
+      "requiredChange": "Keep six distinct required proof receipts tied to integrated commit and artifact digests. Keep provider/collaboration evidence separate when exercised. UI toast and report validator cannot mark feature complete.",
+      "verification": "Lead reviews all six lanes with exact ref/revision/hash, all attempts/seeds, integrated commit/readback, UI evidence and independent review. Reverify materially changed implementation after root integration.",
+      "missingPrerequisite": "Committed implemented slice and observed runtime/UI receipts; this source-only report cannot supply them.",
+      "state": "NOT_VERIFIED_FEATURE_COMPLETE_FALSE"
+    },
+    {
+      "criterion": "One draft per occurrence including duplicate/DST/missed schedule and real recovery.",
+      "currentEvidence": "SchedulerService.tick (scheduler-service.ts:58-85) uses process-local isTicking and local clock; AutomationSystem.startScheduler forwards local/UTC tick only. schemas.ts:235-250 has optional timezone/cron but no occurrenceKey/missedRunPolicy.",
+      "seam": "AutomationSystem.startScheduler/getMatchersForEvent; dependency immutable run/schedule owner; proposed weekly recipe preview/run",
+      "requiredChange": "Consume accepted schedule authority's scheduledFor/occurrenceKey, explicit timezone/DST/missedRunPolicy and bounded catch-up. Preview next five actual occurrences. Atomically associate occurrence origin with native draft ref through existing runtime/domain idempotency; retries and concurrent ticks reuse that origin.",
+      "verification": "Two same tick events and concurrent run calls yield the same canonical draft and one origin. Spring gap, autumn ambiguity, system-zone mismatch, downtime catch-up and restart retain declared schedule policy; no new per-attempt keys.",
+      "missingPrerequisite": "EG-AUTOMATION durable schedule/version/occurrence owner with accepted DST/restart receipts, not SchedulerService's in-memory overlap guard.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Viewer cannot incorporate hidden Task/Meeting; query, agent, report and logs use same scoped actor.",
+      "currentEvidence": "surface-context.ts:31-56 binds caller-provided refs and filters IDs against supplied readableEntityIds; it does not authenticate or authorize a query/tool call. projectTasks/projections.ts:13-59 filters task state without an actor.",
+      "seam": "bindSurfaceContext/visibleContextEntityRefs; accepted 024 authorized query snapshot and EG-SEARCH-AGENTS tools; proposed recipe query/context composition",
+      "requiredChange": "Authorize server-side before pagination/aggregation and context binding; pass permitted snapshot refs/revisions only, bind same actor to Session tools and enforce budget. Do not use owner-wide cached results or permissionMode allow-all as read authorization. Recheck revoked scope on resume/render/source-link read and prevent private body/name/count leaks in logs/help/coverage.",
+      "verification": "Seed distinct hidden Task and Meeting sentinels; assert absent from query rows, Session context/tool reads, generated Doc, source list, aggregates, errors/logs and artifact. Actor spoofing and grant revoke deny without protected snapshot; unrestricted-context mutant must fail.",
+      "missingPrerequisite": "Accepted 024 server ACL query and search-agent tool fence/readback; helper filtering alone is insufficient.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Missing Meeting owner yields coverage missing, not fabricated summary; partial data remains honest.",
+      "currentEvidence": "Exact named case is work-packages.json:15765. PersonalTask projections provide no Meeting query. Neither dispatch nor inspected package seams establishes Meeting-owner readiness.",
+      "seam": "proposed SourceCoverage result in docs-weekly-report.ts and coverage panel in ReportDraftReview",
+      "requiredChange": "Record per-source capability/freshness/status and permitted refs/revisions, distinguishing missingDependency, denied, partial/capped, empty and stale. Missing Meeting capability produces explicit missing coverage and Task-only draft when safe, not invented Meeting facts or a synthetic adapter. Missing required agent/Doc/runtime blocks the real run.",
+      "verification": "Execute Task-permitted fixture with Meeting owner unavailable, persist and read back explicit missing coverage before/after restart; no fabricated Meeting summary, no hidden counts. Then execute actual available Meeting owner to prove real coverage branch.",
+      "missingPrerequisite": "Native Task query/Doc/Session owners and a real available Meeting branch for full coverage proof; unavailable owner branch alone is not end-to-end feature completion.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Owner checkpoint pins revision/payload digest; owner revoke prevents publication and timeout never autoapproves.",
+      "currentEvidence": "work-packages.json:15753 and LSX-WP-042 goal at 15105 require revoke and changed-content invalidation; automation spec 08:45 pins immutable proposed payload.",
+      "seam": "accepted 042 approval/artifact nodes; proposed ReportDraftReview and weekly recipe continuation",
+      "requiredChange": "Bind review to canonical Doc ref/revision and payload digest, approver policy and deadline. Doc edits invalidate old approval; current owner/grant checked at decision and action. Timeout/rejection/cancel remain waiting/expired/cancelled classifications without publication; optional render uses approved immutable version and current asset ACL.",
+      "verification": "Approve known revision, edit concurrently and reject stale digest; revoke approver while open and after approval, deny decision/action; close and expire review with zero publish/send receipts. Restart retains checkpoint and exact digest.",
+      "missingPrerequisite": "Accepted 042 + EG-APPROVAL digest/decision/revoke receipts and native immutable Doc revision/export owner.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Preserve existing Task/Doc identities and runtime mechanisms; no second stores or surfaces.",
+      "currentEvidence": "graph.ts:1-6 declares metadata projection over canonical automations, not a graph executor; 037 goal links one existing PersonalTask; surface-context.ts reuses Rox2Context.binding; published RS-DOC-01 prohibits two production writers.",
+      "seam": "041 graph registry; 037 native source-origin mapping; 024 Rox2Context.binding; AutomationSystem facade and existing Doc route",
+      "requiredChange": "Recipe is a versioned composition in existing runtime. Draft is a canonical Doc; Task source links remain native refs; ReportDraft/SourceCoverage views refer to native Doc/run state. No recipe-local task table, report content master, private approvals DB or separate builder/shell.",
+      "verification": "Native ref identity equals Tasks/Docs/source-link projections, repeated occurrence run reads same draft, restart retains links and native revision. Existing automation and Doc routes/authority regressions remain intact.",
+      "missingPrerequisite": "Accepted 024/037/041/042 authority and route integration contracts.",
+      "state": "DESIGN_SEAMS_PRESENT_FEATURE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed event aliases, durable retry/cancel and no private output log leak.",
+      "currentEvidence": "Package event families workflow.runChanged/document.revisionCommitted are explicitly proposed aliases (work-packages.json:15737-15740). event-bus.ts:134-164 contains KnowledgeDocument* and SchedulerTick, not those families. AutomationSystem.executeAgentEvent currently only matches and buildSdkHooks returns empty (584-618).",
+      "seam": "accepted 041/042 event/runtime integration; AutomationSystem lifecycle; existing WorkspaceEventBus adapters",
+      "requiredChange": "Verify canonical event mappings/envelopes with eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId in accepted runtime; do not add guessed event aliases here. Native classified retry keeps logical effect key; replay frozen inputs under current authorization; cancel prevents unstarted steps and exposes already committed effects without claiming reversal. Log safe refs/status, not private source text.",
+      "verification": "Duplicate/crash-after-effect event replay reads one draft; stale/revoked event cannot re-enable effects; cancellation during generation/review retains truthful partial receipts; scan redacted authorized run logs for hidden sentinels. Unknown external outcome is reconciliation-needed, not success or blind retry.",
+      "missingPrerequisite": "Accepted canonical outbox/run event aliases, classified step/retry/cancel owner under EG-AUTOMATION/042. EventBus.emit completion is insufficient.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/shared/src/automations/automation-system.ts", "symbol": "AutomationSystemOptions / AutomationSystem.createHandlers / startScheduler / dispose", "lineStart": 41, "lineEnd": 660, "sha256": "94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path": "packages/shared/src/automations/graph.ts", "symbol": "isFlowNode / compileGraph / compileAutomationGraph / buildAutomationGraphSave", "lineStart": 216, "lineEnd": 562, "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path": "packages/shared/src/automations/event-bus.ts", "symbol": "SchedulerTickPayload / EventPayloadMap / WorkspaceEventBus.emit", "lineStart": 55, "lineEnd": 318, "sha256": "1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path": "packages/core/src/rox2/surface-context.ts", "symbol": "bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext", "lineStart": 18, "lineEnd": 96, "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path": "packages/core/src/tasks/personal/projections.ts", "symbol": "projectTasks / matchesProjection / projectProgress / buildTodayPlan", "lineStart": 13, "lineEnd": 261, "sha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path": "packages/shared/src/scheduler/scheduler-service.ts", "symbol": "SchedulerService.tick", "lineStart": 58, "lineEnd": 87, "sha256": "5929b7ccb1b7d1e37167fa036aa09b66bc5e50a8d20c257315adb08459177f57"},
+    {"path": "packages/shared/src/automations/schemas.ts", "symbol": "AutomationMatcherSchema / AutomationGraphNodeSchema / SaveAutomationGraphPayloadSchema", "lineStart": 235, "lineEnd": 360, "sha256": "232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path": "packages/shared/src/automations/types.ts", "symbol": "PendingPrompt", "lineStart": 504, "lineEnd": 530, "sha256": "c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2Context / Rox2EntityRef / isClaimableLive / authorizeRox2Action", "lineStart": 143, "lineEnd": 610, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "/work_packages/42: LSX-WP-043", "lineStart": 15522, "lineEnd": 15891, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-043 execution record", "lineStart": 3719, "lineEnd": 3807, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/rox-suite/published/RS-AUT-05.md", "symbol": "Domain authority / Commands / normative dependency links", "lineStart": 44, "lineEnd": 115, "sha256": "d744861d35de4c46df3de25d7649341414f1d22a5cd111ec19736682bce8aa75"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "Canonical Doc authority / DoD / normative dependency links", "lineStart": 35, "lineEnd": 87, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path": "docs/lark-suite-reference/08-automation-integration.md", "symbol": "Node semantics / Weekly Report / Failure cancellation security", "lineStart": 34, "lineEnd": 84, "sha256": "32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "9.3 TaskNotes / 9.4 Docs links", "lineStart": 207, "lineEnd": 216, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "4 screen registry / 12 DoD", "lineStart": 51, "lineEnd": 231, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"}
+  ],
+  "nextExecutableAction": {
+    "preflight": "Lead may validate this report against the unchanged dispatch packet using the provided read-only --verify command; validation proves lineage/file hashes only, never feature readiness.",
+    "implementation": "After lead wave0 commit and accepted 024/037/041/042 artifact/readback receipts, resolve reference manifest and EG-SEARCH-AGENTS/EG-AUTOMATION/affected published-foundation receipts. Re-hash and re-read changed seams; bind exact accepted integrated revision and lease automation-system.ts. Reconcile real typed runtime/Doc/approval contracts and approve transport/route/i18n packet additions if needed. Then implement only the four normative new files, submit the named serial facade patches, and run the full real-domain/restart/ACL/mutation/Electron lanes on the integrated revision.",
+    "blockedReason": "Feature implementation is outside this preflight authorization and depends on committed root integration plus accepted native owner/dependency readiness; no feature execution is claimed."
+  },
+  "risks": [
+    "Published RS-AUT-05 assumes RS-AUT-01 Draft/Published authority although current graph save commits active canonical configuration; adding a weekly recipe must not execute an unpublished draft.",
+    "Minute tick overlap guard, event-bus rate limiting and emit completion do not provide occurrence durability, effect deduplication or restart recovery; do not patch these symptoms with a report-local store.",
+    "Current context and task projection helpers are not server ACL enforcement; PendingPrompt has no allowed-ref/revision/budget fields. Unrestricted Session tools can leak data even when initial refs are filtered.",
+    "Report generation is nondeterministic. Prove source scope, coverage, native identity and review transitions rather than exact prose; absent Meeting owner is missing coverage, not synthesized content.",
+    "config automationGraphRevision is FNV-based optimistic concurrency, explicitly not a security token; it cannot substitute for immutable Doc content or approval payload SHA256.",
+    "One existing-file patch path is insufficient to assume new authenticated APIs, mounted UI and ten-locale keys already exist. Integration owner must resolve those concrete seams under an updated packet rather than allow unauthorized edits or omit behavior.",
+    "Owner review, workflow publication and document/provider transmission are distinct authority transitions. Timeout/close/cancel/revoke must not collapse them into automatic publish or success.",
+    "Dispatch and published specifications cite different baseline commits; local file hashes match the LSX source evidence but do not prove dependency implementation acceptance or repository revision alignment.",
+    "Root may change inspected files during integration. Whole-file digest mismatch means stale evidence; report validation must reject it and affected source must be re-read before implementation.",
+    "No product builds, tests, native UI, network operations or source mutations were performed. All runtime and UI acceptance remains unverified, not N/A."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

@@ -1,0 +1,1826 @@
+{
+  "schemaVersion": 1,
+  "revision": 4,
+  "status": "PROPOSED_WALKTHROUGHS_PRODUCT_RUNTIME_NOT_RUN",
+  "baseline": {
+    "repository": "rox-one/rox-one",
+    "inputArtifactCommitSha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+    "codeSourceBaseline": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "sourceEvidenceShas": [
+      "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "e780e73ae84c977cf81546b49140d318dfcd6049"
+    ],
+    "macroAuditedSha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+    "readSpecDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b",
+    "inputHashes": [
+      {
+        "path": "plans/macro-integration/collaboration-screen-contracts.json",
+        "sha256": "63c95d71b0f263a1d593a4539be9acdda6cc40f0a3897457ef311f8c8633b89b"
+      },
+      {
+        "path": "plans/macro-integration/cloud/ui-slices.json",
+        "sha256": "64503f3a114312930098039cd61d6c487a2c79f85dc6e12b095197a6a61f9c02"
+      },
+      {
+        "path": "plans/macro-integration/cloud/manifest.json",
+        "sha256": "091b36be31fa2c54100e0ce0bff0cf4aa04a37e0a8ef17df5bfd4b1d08217045"
+      }
+    ]
+  },
+  "fixturePrincipals": {
+    "A": "Алёна, owner/editor authenticatedW1",
+    "A2": "Seconddevice sameprincipalA, notnewuser",
+    "B": "Борис, editor/assigneeW1; source grants separatelyseeded",
+    "V": "Вера, viewerW1; no writepermission",
+    "X": "OutsiderW2, denyW1"
+  },
+  "visualContract": "Inherit existing shell, selected semanticfont/theme andRussianlocale. Textwireframes notscreenshots. Project contextualChannels only; no native destination. Hover/focus/click help has source/freshness/example, never mutation.",
+  "screenContractSource": "plans/macro-integration/collaboration-screen-contracts.json",
+  "sourceEvidence": [
+    {
+      "id": "R01",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "symbol": "APP_NAV_DESTINATIONS",
+      "lineStart": 87,
+      "lineEnd": 181,
+      "claim": "Native Projects/Pages/Tasks/Notes/Sessions exist; human Channels absent in inspected registry."
+    },
+    {
+      "id": "R02",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "buildNotesRoute",
+      "lineStart": 33,
+      "lineEnd": 37,
+      "claim": "Existing notes/note/{encoded noteId}."
+    },
+    {
+      "id": "R03",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.tasks/projects/pages",
+      "lineStart": 170,
+      "lineEnd": 224,
+      "claim": "Existing tasks/task/{id}, projects/project/{slug}, pages/page/{slug} typed routes."
+    },
+    {
+      "id": "R04",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "symbol": "NavigationProvider/navigate",
+      "lineStart": 838,
+      "lineEnd": 898,
+      "claim": "Typed navigation focused-panel updates/newPanel is existing extension point."
+    },
+    {
+      "id": "R06",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig",
+      "lineStart": 294,
+      "lineEnd": 320,
+      "claim": "Artifact runtime kind, digest, action grants, refresh, publication and projectId remain; new contentKind is proposed."
+    },
+    {
+      "id": "R08",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "NotesPage/saveCurrentNote",
+      "lineStart": 871,
+      "lineEnd": 924,
+      "claim": "Native Notes serial save queue/debounced autosave; not shared CRDT authority."
+    },
+    {
+      "id": "R09",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "TiptapMarkdownEditor",
+      "lineStart": 2292,
+      "lineEnd": 2308,
+      "claim": "Existing Tiptap Markdown editor, wiki/tag callbacks, legacy engine, max70ch."
+    },
+    {
+      "id": "R10",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "lineStart": 58,
+      "lineEnd": 113,
+      "claim": "Existing table/canvas/outline/graph representation dispatcher."
+    },
+    {
+      "id": "R11",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/TasksPage.tsx",
+      "symbol": "TasksPage/selectTask",
+      "lineStart": 149,
+      "lineEnd": 186,
+      "claim": "Existing personal task screen state/detail routing."
+    },
+    {
+      "id": "R12",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "packages/core/src/tasks/personal/types.ts",
+      "symbol": "PersonalTask/Recurrence/TaskProject",
+      "lineStart": 8,
+      "lineEnd": 92,
+      "claim": "Personal placement/checklist/source/links/reminder/fixed-after recurrence; TaskProject distinct ProjectConfig."
+    },
+    {
+      "id": "R13",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "symbol": "TaskDetail",
+      "lineStart": 151,
+      "lineEnd": 232,
+      "claim": "Title/notes/details-links-history/restorable trash exist."
+    },
+    {
+      "id": "R14",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+      "symbol": "TaskDetail recurrence controls",
+      "lineStart": 376,
+      "lineEnd": 442,
+      "claim": "Interval/weekdays/fixed-after controls exist."
+    },
+    {
+      "id": "R15",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+      "symbol": "QuickEntry/submit",
+      "lineStart": 18,
+      "lineEnd": 115,
+      "claim": "Natural language parser/preview chips/Enter/Cmd+Enter create."
+    },
+    {
+      "id": "R16",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "symbol": "ProjectInfoPage/tasksForWorkspaceProject/handleStartSession/handleSaveSettings",
+      "lineStart": 133,
+      "lineEnd": 204,
+      "claim": "Project related agent sessions/personal tasks/task creation/cwd-details settings exist."
+    },
+    {
+      "id": "R17",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "packages/shared/src/projects/types.ts",
+      "symbol": "ProjectConfig",
+      "lineStart": 35,
+      "lineEnd": 58,
+      "claim": "Stable id/slug/details/cwd/archivedAt/kanbanColumns existing entity."
+    },
+    {
+      "id": "R19",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "symbol": "ChatPage/useSessionData",
+      "lineStart": 89,
+      "lineEnd": 172,
+      "claim": "Session ID keyed agent transcript/options; not human conversation."
+    },
+    {
+      "id": "R20",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+      "symbol": "SessionPresenceAvatars",
+      "lineStart": 9,
+      "lineEnd": 45,
+      "claim": "listBroPresence query per sessionId change; no live document cursor subscription."
+    },
+    {
+      "id": "R21",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef",
+      "lineStart": 233,
+      "lineEnd": 240,
+      "claim": "Canonical workspaceId/entityId/revisionId/accountNamespace already exists."
+    },
+    {
+      "id": "R22",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS",
+      "lineStart": 17,
+      "lineEnd": 40,
+      "claim": "Existing note/task/project/page/channel/channel-message/session kinds; thread/comment representation aliases planned, no parallel identity."
+    },
+    {
+      "id": "C03",
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "packages/collaboration/src/collab/engine.ts",
+      "symbol": "handleLocalUpdates / persistSnapshot / handleSourceEvent / convergeFromServer",
+      "lineStart": 275,
+      "lineEnd": 465,
+      "claim": "WAL append, five-second snapshot cycle, pending-causal recovery and reconnect anti-entropy."
+    },
+    {
+      "id": "C20",
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "crates/messages/src/domain/models.rs",
+      "symbol": "MessageParent / ThreadAnchor",
+      "lineStart": 38,
+      "lineEnd": 159,
+      "claim": "Messages share channel, document, initiative and CRM parents plus Markdown/PDF/spreadsheet anchors."
+    },
+    {
+      "id": "C21",
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61",
+      "path": "crates/messages/src/domain/models.rs",
+      "symbol": "SimpleMention / Message / root_id",
+      "lineStart": 362,
+      "lineEnd": 432,
+      "claim": "Shared message has sender, bot profile, mentions, timestamps, tombstone, attachments and reactions."
+    },
+    {
+      "id": "R24",
+      "repository": "rox-one/rox-one",
+      "sha": "e780e73ae84c977cf81546b49140d318dfcd6049",
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "saveNote",
+      "lineStart": 502,
+      "lineEnd": 517,
+      "claim": "Optional expectedRevision uses readFile/contentHash check then mkdir/writeFile/stat; no per-note lock/atomic CAS here. NotesPage:885 native call omits revision; single UI save queue is not global lost-update protection."
+    }
+  ],
+  "walkthroughs": [
+    {
+      "id": "CWT-01",
+      "titleRu": "Один Page: двое редакторов, offline replay и отзыв открытого доступа",
+      "screens": [
+        "COL-01",
+        "COL-02",
+        "COL-04"
+      ],
+      "actors": [
+        "A owner/editor",
+        "B editor on deviceB1",
+        "A2 second device of A",
+        "V viewer",
+        "X outsider"
+      ],
+      "entry": {
+        "existing": "pages → pages/page/{slug}; fixture pages/page/launch-brief",
+        "proposed": "Same route resolves page:P1 contentKind=collaborative_document; history adds ?panel=history",
+        "currentLimit": "Existing PageConfig/PageView are artifact runtime. Collaborative body/remote caret/revoke UX are proposed, not inferred from SessionPresenceAvatars."
+      },
+      "refs": {
+        "page": {
+          "workspaceId": "W1",
+          "entityId": "page:P1"
+        },
+        "project": {
+          "workspaceId": "W1",
+          "entityId": "project:PJ1"
+        }
+      },
+      "wireframe": [
+        "Страницы / Launch brief              [Алёна] [Борис] [Доступ]",
+        "Launch brief                                              ",
+        "[Сохранено на сервере · 10:00:12] [История]                 ",
+        "─────────────────────────────────────────────────────────",
+        "Заголовок документа                                        ",
+        "План запуска  |Борис                                      ",
+        "→ обсуждение выделения                         [Обсуждения]",
+        "OFFLINE: Нет связи · На устройстве: 2 изменения             "
+      ],
+      "identityRule": "Page library, opened document, remote cursor room, history and Project link all resolve page:P1. Body versions/frontiers are revisions; never new Page IDs. Existing html_app Page subtype remains separately preserved.",
+      "steps": [
+        {
+          "screenId": "COL-01",
+          "controlId": "open",
+          "labelRu": "Открыть страницу",
+          "actor": "A",
+          "actionRu": "Открыть Launch brief и тем же разрешённым deep link открыть его у B.",
+          "inputs": "page:P1 slug alias launch-brief; workspaceW1",
+          "expectedScreenRu": "Один документ, одинаковый title и начальный body; skeleton завершается разрешённым query, а не пустым экраном.",
+          "expectedData": "A/B entityId page:P1; same initial frontierF0",
+          "expectedReceipt": "Read query has pageRef/revision/policyEpoch; no mutation receipt for open.",
+          "focusHoverHelpRu": "Enter по row переносит focus в title/body; hover row не вызывает edit/read receipt раньше установленной viewing policy.",
+          "microcopyRu": "Загружаем документ…",
+          "recoveryRu": "При 403 показать «Нет доступа к документу», не «Документ пуст».",
+          "negativeAssertion": "X route returns denied; no title/snippet leaked.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-02",
+            "WP-03",
+            "WP-10"
+          ],
+          "operation": "document.read",
+          "productRuntime": "NOT_RUN",
+          "number": 1,
+          "id": "CWT-01-S01"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "presence",
+          "labelRu": "Участники",
+          "actor": "A",
+          "actionRu": "Навести и сфокусировать avatar B, затем B поставить caret после слова «План».",
+          "inputs": "Awareness actorB peer deviceB1 CRDT position",
+          "expectedScreenRu": "Avatar «Борис · редактирует» и помеченный caret видимы A; V остаётся viewer.",
+          "expectedData": "Presence keys by principal/device; expiry removes stale peer; no persisted body operation.",
+          "expectedReceipt": "Awareness no durable content ACK; show freshness from peer event.",
+          "focusHoverHelpRu": "Tab avatar открывает ту же card, click «О присутствии» поясняет TTL/источник; cursor events не aria-live announcements.",
+          "microcopyRu": "Борис · редактирует",
+          "recoveryRu": "После peer timeout avatar «Не в сети», caret удалён; не навечно online.",
+          "negativeAssertion": "B email/contact private attributes absent from presence card.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-10"
+          ],
+          "operation": "awareness.update",
+          "productRuntime": "NOT_RUN",
+          "number": 2,
+          "id": "CWT-01-S02"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "body",
+          "labelRu": "Содержимое документа",
+          "actor": "A+B",
+          "actionRu": "Одновременно A добавить «1. Подготовить материалы», B добавить «2. Проверить доступ» в разных позициях.",
+          "inputs": "CRDT opA/opB at F0; distinct opIds",
+          "expectedScreenRu": "Обе строки появились на обоих устройствах; caret позиции скорректированы без прыжка focus в начало.",
+          "expectedData": "One CRDT document; same converged frontierF1/hash; no last-write-wins loss.",
+          "expectedReceipt": "Append ACK only after durable WAL commit; opId/accepted frontier retained.",
+          "focusHoverHelpRu": "Body remains focused; editing does not open new panel. Screen reader announces save state once, not every keystroke.",
+          "microcopyRu": "Сохранено на сервере",
+          "recoveryRu": "Если append timeout, оставить pending с opId, retry idempotent; UI не рисует server saved заранее.",
+          "negativeAssertion": "Seed ACK-before-persist crashes service: restored body must retain every ACKed op.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-04",
+            "WP-05",
+            "WP-10"
+          ],
+          "operation": "collaboration.append",
+          "productRuntime": "NOT_RUN",
+          "number": 3,
+          "id": "CWT-01-S03"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "sync",
+          "labelRu": "Синхронизация",
+          "actor": "B",
+          "actionRu": "Отключить сеть B, добавить «3. Собрать обратную связь»; A online добавить строку «4. Опубликовать».",
+          "inputs": "Controlled proxy offline forB; queued opB2; A opA2",
+          "expectedScreenRu": "B видит «Нет связи» и local queued count; A видит только свой acknowledged edit.",
+          "expectedData": "Local WAL keeps B pending bytes; server has A op only before reconnect.",
+          "expectedReceipt": "Local persistence receipt ≠ remotely committed; no green live badge.",
+          "focusHoverHelpRu": "Focus badge: help shows lastAckAt and queued count, click opens queue inspector; body remains usable under valid offline authority policy.",
+          "microcopyRu": "Нет связи · На устройстве: 1 изменение",
+          "recoveryRu": "Failure local WAL leaves visible «Не удалось сохранить на устройстве»; keep draft in memory, do not claim saved.",
+          "negativeAssertion": "Before reconnect server/search snapshot cannot contain B opB2.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-05",
+            "WP-10"
+          ],
+          "operation": "collaboration.append queued",
+          "productRuntime": "NOT_RUN",
+          "number": 4,
+          "id": "CWT-01-S04"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "sync",
+          "labelRu": "Синхронизация",
+          "actor": "B + controlled upgrade fixture",
+          "actionRu": "При offline pending edit имитировать новый app build/cache schema и открыть статус синхронизации перед reload.",
+          "inputs": "Pending doc opB2, old/new appBuildVersion and cacheSchemaVersion; CRDT document schemaVersion/frontier tracked independently.",
+          "expectedScreenRu": "Показывается upgrade pending и причина задержки reload. Текущий документ/selection остаётся; app-cache disposal не считается сохранением document ops.",
+          "expectedData": "Durable local document WAL/checkpoint preserved across app cache reset only through supported writer migration. App asset/cache epochs differ from doc CRDT schema/frontier. Protected content is not dumped into unguarded recovery file.",
+          "expectedReceipt": "App-build preparation/drain result separate from doc local persistence/durable server ACK. Unsupported WAL/cache migration blocks reload; no fake document-saved receipt.",
+          "focusHoverHelpRu": "Focus sync badge, click help «Обновление приложения»: версия приложения, версия локального cache, pending ops и lastAckAt показаны отдельно; Escape returns body focus.",
+          "microcopyRu": "Обновление приложения. Изменения ещё синхронизируются.",
+          "recoveryRu": "После reconnect дождаться ACK для opB2, завершить app/cache request drain, только затем reload и проверить same page:P1/frontier/hash. Если offline reload допускается конкретной writer implementation, нужна verified durable WAL migration; иначе дождаться сети. App asset cache можно восстановить без потери document WAL.",
+          "negativeAssertion": "Seed app-cache disposal also clearing document WAL: scenario must fail on lost pending op. Cache upgrade completion alone cannot produce «Сохранено на сервере».",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-05",
+            "WP-10",
+            "WP-51"
+          ],
+          "operation": "sync status / proposed app upgrade recovery guard",
+          "productRuntime": "NOT_RUN",
+          "number": 5,
+          "id": "CWT-01-S05"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "title",
+          "labelRu": "Название документа",
+          "actor": "B",
+          "actionRu": "Пока B offline изменить title, а A online тоже переименовать документ.",
+          "inputs": "B expectedMetadataRevision=r1 title «План B»; A title «План запуска»",
+          "expectedScreenRu": "После reconnect body merge разрешён, title показывает conflict compare: current «План запуска», local «План B».",
+          "expectedData": "Metadata CAS separate from body CRDT. Only chosen rename commits new metadata revision.",
+          "expectedReceipt": "page.rename conflict expectedr1/currentr2; bodyACK independent.",
+          "focusHoverHelpRu": "Inline conflict gets focus; compare buttons «Оставить серверное» / «Применить моё» require explicit fresh command, no silent retry overwrite.",
+          "microcopyRu": "Название уже изменено другим участником",
+          "recoveryRu": "Keep local proposed title through network retry; choosing current cancels rename only, not body ops.",
+          "negativeAssertion": "A title cannot be overwritten by automatic offline queue replay.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-05",
+            "WP-10"
+          ],
+          "operation": "page.rename",
+          "productRuntime": "NOT_RUN",
+          "number": 6,
+          "id": "CWT-01-S06"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "sync",
+          "labelRu": "Синхронизация",
+          "actor": "B",
+          "actionRu": "Вернуть сеть и дождаться body convergence; A2 открыть тот же документ.",
+          "inputs": "B reconnect anti-entropy opB2; A2 same principal newdevice",
+          "expectedScreenRu": "A/B/A2 видят четыре строки и одинаковый server watermark, B queue0.",
+          "expectedData": "Op IDs dedup; CRDT body hash equal; A devices distinct presence peers under one principal.",
+          "expectedReceipt": "Replay durableAck forBop, projection watermark may lag and is shown separately.",
+          "focusHoverHelpRu": "Click queue detail lists accepted opIds; «Сохранено на сервере» only after ACK; cursor local selection restored.",
+          "microcopyRu": "Связь восстановлена · Изменения сохранены",
+          "recoveryRu": "Repeat reconnect/reload cannot append duplicate lines; failed search indexing displays freshness separately.",
+          "negativeAssertion": "Seed duplicate replay: one semantic line and one receipt per opId.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-05",
+            "WP-10"
+          ],
+          "operation": "collaboration.append replay",
+          "productRuntime": "NOT_RUN",
+          "number": 7,
+          "id": "CWT-01-S07"
+        },
+        {
+          "screenId": "COL-04",
+          "controlId": "version",
+          "labelRu": "Версия",
+          "actor": "A",
+          "actionRu": "Открыть history и сравнить F0/F2, не меняя document body.",
+          "inputs": "page:P1 allowed sourceRevisionIds",
+          "expectedScreenRu": "Inspector показывает авторов/time/revision; выбранная версия readonly, live body остаётся F2.",
+          "expectedData": "Versions belong page:P1; artifact bundle digest is not CRDT version.",
+          "expectedReceipt": "Read-only version query; no restore command on select.",
+          "focusHoverHelpRu": "Arrow version list +Enter selects; Escape returns to prior Page focus. Help «Версия документа» distinguishes body/history from ACL.",
+          "microcopyRu": "Просмотр версии · Только чтение",
+          "recoveryRu": "Expired/missing version shows «Версия недоступна»; live page remains open.",
+          "negativeAssertion": "Selecting history must not revert permissions or issue restore.",
+          "uiOwner": "WP-15",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-15"
+          ],
+          "operation": "document.history",
+          "productRuntime": "NOT_RUN",
+          "number": 8,
+          "id": "CWT-01-S08"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "share",
+          "labelRu": "Доступ",
+          "actor": "A",
+          "actionRu": "В «Доступ» отозвать grant B, пока B редактирует; показать final revoke только после fence.",
+          "inputs": "subjectB directgrant; expectedPolicyEpoch; revoke command",
+          "expectedScreenRu": "A sees «Отзываем доступ…», then «Доступ отозван» after committed fence; B open view turns neutral denied.",
+          "expectedData": "Policy epoch increments; sync subscriptions/HTTP/tool reads deny B; no post-fence accepted append.",
+          "expectedReceipt": "Revocation command/fence receipt records epoch and cutoff; pending ≠ complete.",
+          "focusHoverHelpRu": "Dialog initial focus subject; destructive confirmation explicit. Upon B denial focus heading, body/caret/cache previews purged.",
+          "microcopyRu": "Доступ к документу отозван",
+          "recoveryRu": "If fence not complete show pending/retry status; no false final green. Device currently disconnected cannot be erased remotely; enforcement occurs at reconnection or policy lease boundary.",
+          "negativeAssertion": "Seed open websocket/new RPC/direct legacy save: all B writes after revoke fence rejected.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-10",
+            "WP-51"
+          ],
+          "operation": "permission revoke",
+          "productRuntime": "NOT_RUN",
+          "number": 9,
+          "id": "CWT-01-S09"
+        },
+        {
+          "screenId": "COL-02",
+          "controlId": "body",
+          "labelRu": "Содержимое документа",
+          "actor": "B",
+          "actionRu": "Попытаться продолжить через open editor/keyboard, перезапустить app и reconnect с unsent protected draft.",
+          "inputs": "B oldpolicy/writer tokens, queued postrevoke op",
+          "expectedScreenRu": "Editor недоступен; neutral message no previous private body/title/cursors; no copy/export protected content by default.",
+          "expectedData": "No new server op; received revoke purges protected projection and queue per policy. Recovery of declassified self-authored draft needs separate approved export, never implicit.",
+          "expectedReceipt": "Denied receipt currentepoch; no success ACK/outbox search/notification.",
+          "focusHoverHelpRu": "Keyboard event on disabled editor cannot dispatch. «О доступе» focusable help explains request-access only if supported.",
+          "microcopyRu": "Нет доступа к документу",
+          "recoveryRu": "Preserve error/correlation without protected text. Regrant requires fresh read/session; old token does not become valid.",
+          "negativeAssertion": "Server read/tool/search denies B after app reload; physical erasure on unreachable device is not asserted.",
+          "uiOwner": "WP-10",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-05",
+            "WP-51"
+          ],
+          "operation": "collaboration.append denied",
+          "productRuntime": "NOT_RUN",
+          "number": 10,
+          "id": "CWT-01-S10"
+        }
+      ],
+      "gapsResolved": [
+        "Metadata rename uses CAS while body uses CRDT.",
+        "Presence freshness differs from content durability.",
+        "Revocation pending/final fence and unreachable-device limit explicit.",
+        "App-build/cache-schema drain/reload separated from durable document WAL and CRDT schema/frontier; latest Macro upgrade delta is root-owned audit, not new behavior claimed here."
+      ],
+      "sourceEvidenceIds": [
+        "R03",
+        "R06",
+        "R20",
+        "R21",
+        "R22",
+        "C03"
+      ],
+      "uiOwners": [
+        "WP-10",
+        "WP-15"
+      ],
+      "mechanismOwners": [
+        "WP-02",
+        "WP-03",
+        "WP-04",
+        "WP-05",
+        "WP-10",
+        "WP-15",
+        "WP-51"
+      ],
+      "existingSourceFiles": [
+        "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/core/src/types/page.ts"
+      ],
+      "allocatedImplementationFiles": [
+        "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/components/pages/CollaborativeDocumentEditor.tsx",
+        "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/shared/src/workspace-domain/collaboration/contracts.ts",
+        "tests/macro-integration/ui/col-01.spec.ts",
+        "tests/macro-integration/ui/col-02.spec.ts",
+        "tests/macro-integration/ui/col-04.spec.ts"
+      ],
+      "runtimeDoD": {
+        "status": "PLANNED_NOT_RUN",
+        "lanes": [
+          "linux-domain",
+          "linux-renderer",
+          "macos-native"
+        ],
+        "expected": "All authored happy/negative/reload/concurrency steps yield stated screen/data/receipt outcomes; screenshot/ARIA, content hashes, source revisions and real gate receipts required; provider lane only where an external write is actually added.",
+        "proof": "A/B separateauthcontexts, clock/networkfaultcontrols, seededmechanismmutationwithspecificassertion; baselinepass≠infrastructurefailure; nofeaturepassfromwireframe/schema."
+      }
+    },
+    {
+      "id": "CWT-02",
+      "titleRu": "Private сообщение → shared Task: ручной текст и нейтральный backlink",
+      "screens": [
+        "COL-08",
+        "COL-10",
+        "COL-15",
+        "COL-14",
+        "COL-17"
+      ],
+      "actors": [
+        "A private channel member / Task editor",
+        "B Project assignee without source.read",
+        "X outsider"
+      ],
+      "entry": {
+        "existing": "tasks/task/{encodeURIComponent(taskId)} and projects/project/{slug} already supported",
+        "proposed": "Project→Channels→channel:C1→thread=channel-message:M1→CreateTask overlay; after receipt tasks/task/T1",
+        "currentLimit": "Current PersonalTask has source/links, but atomic shared Message→Task/export authorization is proposed."
+      },
+      "refs": {
+        "source": {
+          "workspaceId": "W1",
+          "entityId": "channel-message:M1",
+          "revisionId": "m-r7"
+        },
+        "project": {
+          "workspaceId": "W1",
+          "entityId": "project:PJ1"
+        },
+        "task": {
+          "workspaceId": "W1",
+          "entityId": "task:T1"
+        }
+      },
+      "wireframe": [
+        "Создать задачу                                      [×]",
+        "Источник: сообщение в закрытом канале [Открыть]             ",
+        "Название [                                                ]",
+        "Описание [написать вручную                               ]",
+        "Проект [Launch]      Доступ [Участники проекта]             ",
+        "Исполнитель [Борис]                                       ",
+        "Текст источника не будет скопирован.                       ",
+        "[Отмена]                                  [Создать задачу]"
+      ],
+      "identityRule": "createdFrom TaskT1→channel-message:M1 preserves source revision without copying source ACL/body. Project overview and Tasks list resolve same TaskT1; B denied source placeholder has no channel title.",
+      "steps": [
+        {
+          "screenId": "COL-08",
+          "controlId": "more",
+          "labelRu": "Действия сообщения",
+          "actor": "A",
+          "actionRu": "Открыть toolbar конкретного private сообщения и выбрать «Создать задачу».",
+          "inputs": "M1 body contains PRIVATE-MSG-73; currentread allowedA",
+          "expectedScreenRu": "Overlay attached to selectedM1; source readonly preview forA only, blank manual title/body by default for widerProject audience.",
+          "expectedData": "SourceRef M1/revisionm-r7 captured; no Task row created yet.",
+          "expectedReceipt": "No mutation before submit.",
+          "focusHoverHelpRu": "ShiftF10 opens actions, arrow/Enter selects; dialog focus title. Hover «Создать задачу» explains backlink and recipient privacy.",
+          "microcopyRu": "Текст источника не будет скопирован",
+          "recoveryRu": "Escape closes unsent overlay and returns focus exactM1 toolbar; reopening same draftId restores authored fields.",
+          "negativeAssertion": "No auto-derived title/body/excerpt contains private marker.",
+          "uiOwner": "WP-08",
+          "mechanismOwners": [
+            "WP-08",
+            "WP-11"
+          ],
+          "operation": "open create-from-message draft",
+          "productRuntime": "NOT_RUN",
+          "number": 1,
+          "id": "CWT-02-S01"
+        },
+        {
+          "screenId": "COL-15",
+          "controlId": "title",
+          "labelRu": "Название задачи",
+          "actor": "A",
+          "actionRu": "Вручную ввести title «Подготовить предложение» и body «Согласовать срок с командой».",
+          "inputs": "manual title/body; sourceTransfer.kind=backlink_only",
+          "expectedScreenRu": "Required title label and manualtext visible; title trim/nonempty, field error inline if empty.",
+          "expectedData": "Canonical payload top-level title/body; no taskFields/sourceExcerpt serialized.",
+          "expectedReceipt": "Draft only until submit.",
+          "focusHoverHelpRu": "Tab title→body; help click «Что увидит исполнитель» shows these exact fields, source access stays separate.",
+          "microcopyRu": "Название обязательно",
+          "recoveryRu": "Validation moves focus first invalid field; existing manual draft survives.",
+          "negativeAssertion": "Unknown autoPrefill/sourceExcerpt rejected schema; marker absentTask payload.",
+          "uiOwner": "WP-11",
+          "mechanismOwners": [
+            "WP-11"
+          ],
+          "operation": "task draft",
+          "productRuntime": "NOT_RUN",
+          "number": 2,
+          "id": "CWT-02-S02"
+        },
+        {
+          "screenId": "COL-15",
+          "controlId": "project",
+          "labelRu": "Проект и доступ",
+          "actor": "A",
+          "actionRu": "Выбрать Project Launch и посмотреть effective audience B/V.",
+          "inputs": "ProjectPJ1 currentpolicy revision9; B no source.read",
+          "expectedScreenRu": "Audience preview displays allowed recipient principals; notice source remains private.",
+          "expectedData": "Canonical projectRefPJ1; destination policy current at commit; not channel inherited grant.",
+          "expectedReceipt": "Preview query reports policyRevision; no permission grant issued.",
+          "focusHoverHelpRu": "Enter picker/arrow selection; click help explains source vsTask policy with exampleB.",
+          "microcopyRu": "Задача доступна участникам проекта. Источник остаётся закрытым.",
+          "recoveryRu": "Policy changes before create invalidate exported decision/refresh audience; manual draft remains.",
+          "negativeAssertion": "Choosing Project never auto-grants Channel/M1 toB.",
+          "uiOwner": "WP-11",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-11",
+            "WP-12"
+          ],
+          "operation": "permission preview",
+          "productRuntime": "NOT_RUN",
+          "number": 3,
+          "id": "CWT-02-S03"
+        },
+        {
+          "screenId": "COL-15",
+          "controlId": "assign",
+          "labelRu": "Исполнитель",
+          "actor": "A",
+          "actionRu": "Выбрать Бориса как исполнителя из разрешённых workspace principals.",
+          "inputs": "assigneePrincipalIds:[B]; sourceMessageRefM1",
+          "expectedScreenRu": "Assignee chipB; one notification preview, not sent yet.",
+          "expectedData": "PrincipalB login identity reused; no CRM Contact treatedasprincipal.",
+          "expectedReceipt": "Read picker no task.assign receipt yet.",
+          "focusHoverHelpRu": "Arrow search picker B; label «Исполнитель». Help says recipient will see Task only, not source body.",
+          "microcopyRu": "Борис получит уведомление о задаче",
+          "recoveryRu": "Deleted/disabled principal denied at commit; inline picker error retains text.",
+          "negativeAssertion": "X otherworkspace never appears, hidden totals absent.",
+          "uiOwner": "WP-11",
+          "mechanismOwners": [
+            "WP-01",
+            "WP-03",
+            "WP-11"
+          ],
+          "operation": "assignee preview",
+          "productRuntime": "NOT_RUN",
+          "number": 4,
+          "id": "CWT-02-S04"
+        },
+        {
+          "screenId": "COL-15",
+          "controlId": "create",
+          "labelRu": "Создать задачу",
+          "actor": "A",
+          "actionRu": "Cmd/CtrlEnter отправить canonical backlink_only payload; повторить submit при network timeout.",
+          "inputs": "sourceMessageM1(revisionm-r7),title/body,projectPJ1,assigneeB; stablecommandIdct73; sourceTransfer:{kind:backlink_only}",
+          "expectedScreenRu": "Pending «Создаём задачу…», duplicate button disabled; receipt navigatesTaskT1, toast link «Открыть задачу».",
+          "expectedData": "Atomic TaskT1+createdFrom edge+outbox; one assignment notification; idem retry returnssameT1.",
+          "expectedReceipt": "Rox2 succeeded/receipt_verified only after commit; exposesTaskRef/revision/commandId/notification enqueue, not delivery claim.",
+          "focusHoverHelpRu": "Focus newTask heading after navigation; pending Escape cannot cancel dispatched effect.",
+          "microcopyRu": "Задача создана",
+          "recoveryRu": "Timeout retainscommandId; reconcile before retry; no optimistic newTaskT2.",
+          "negativeAssertion": "Seed idempotency removal: two retries must fail assertioncanonicalcount1.",
+          "uiOwner": "WP-11",
+          "mechanismOwners": [
+            "WP-04",
+            "WP-07",
+            "WP-09",
+            "WP-11"
+          ],
+          "operation": "task.createFromMessage",
+          "productRuntime": "NOT_RUN",
+          "number": 5,
+          "id": "CWT-02-S05"
+        },
+        {
+          "screenId": "COL-14",
+          "controlId": "source",
+          "labelRu": "Исходный контекст",
+          "actor": "B",
+          "actionRu": "Открыть assigned Task через notification и выбрать «Исходный контекст».",
+          "inputs": "TaskT1 createdFromM1; B deniedM1",
+          "expectedScreenRu": "Manualtitle/body visible; source neutral «Источник недоступен», withoutprivatechannelname/snippet.",
+          "expectedData": "Task read allowed; source read denied; agent/search/push projection omitted PRIVATE-MSG-73.",
+          "expectedReceipt": "Source denied result no body; attention enqueue vsdelivery independentlytracked.",
+          "focusHoverHelpRu": "Enter source chip staysneutral or permittedrequestaccess; help reachable with disabledreason.",
+          "microcopyRu": "Источник недоступен",
+          "recoveryRu": "Back navigation/reload preserveTask selection; no stale cached source preview.",
+          "negativeAssertion": "B search/push/agent/screenshot string PRIVATE-MSG-73 absent; Task assignment grants no source.read.",
+          "uiOwner": "WP-13",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-09",
+            "WP-11"
+          ],
+          "operation": "source.read denied",
+          "productRuntime": "NOT_RUN",
+          "number": 6,
+          "id": "CWT-02-S06"
+        },
+        {
+          "screenId": "COL-15",
+          "controlId": "create",
+          "labelRu": "Создать задачу",
+          "actor": "A",
+          "actionRu": "Negative branch: явно выбрать approved_export в отдельном review; подменить decisionId или изменить audience до submit.",
+          "inputs": "approved_export decisionIdserverstored,contentDigest,sourceRevisionm-r7,audiencePolicyRevision9; currentchanges10",
+          "expectedScreenRu": "Inline denial, existing manually authored draft kept; never successTask before check.",
+          "expectedData": "Current authenticatedactor/source/policy/digest/expiry serverbound; noTask/edge/outbox on failure.",
+          "expectedReceipt": "export_decision_stale / audience_policy_changed / content_digest_mismatch / export_not_permitted.",
+          "focusHoverHelpRu": "Error focus onexportreview; help shows exact approvedcontent and targetaudience, notrenderer permission toggle.",
+          "microcopyRu": "Состав участников изменился. Проверьте доступ ещё раз.",
+          "recoveryRu": "Reissue signed preview from authority; removing export chooses safe backlink_only; no local caller signature accepted.",
+          "negativeAssertion": "Unsigned/stale decision or changed digest neverexportsmarker; schema shape alone cannotprove signedauthorization.",
+          "uiOwner": "WP-11",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-11"
+          ],
+          "operation": "task.createFromMessage approved_export validation",
+          "productRuntime": "NOT_RUN",
+          "number": 7,
+          "id": "CWT-02-S07"
+        }
+      ],
+      "gapsResolved": [
+        "Wider-audience default blank manual form.",
+        "Assignment enqueue versus actual delivery distinct.",
+        "Canonical sourceTransfer.kind and signed decision currentpolicy boundary retained."
+      ],
+      "sourceEvidenceIds": [
+        "R03",
+        "R12",
+        "R15",
+        "R19",
+        "R21",
+        "R22"
+      ],
+      "uiOwners": [
+        "WP-08",
+        "WP-11",
+        "WP-13"
+      ],
+      "mechanismOwners": [
+        "WP-01",
+        "WP-03",
+        "WP-04",
+        "WP-07",
+        "WP-08",
+        "WP-09",
+        "WP-11",
+        "WP-12"
+      ],
+      "existingSourceFiles": [
+        "apps/electron/src/renderer/pages/ChatPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/core/src/tasks/personal/types.ts"
+      ],
+      "allocatedImplementationFiles": [
+        "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+        "apps/electron/src/renderer/components/tasks/CreateTaskFromMessageDialog.tsx",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+        "apps/electron/src/renderer/pages/ChatPage.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/shared/src/workspace-domain/messaging/contracts.ts",
+        "tests/macro-integration/ui/col-08.spec.ts",
+        "tests/macro-integration/ui/col-10.spec.ts",
+        "tests/macro-integration/ui/col-14.spec.ts",
+        "tests/macro-integration/ui/col-15.spec.ts",
+        "tests/macro-integration/ui/col-17.spec.ts"
+      ],
+      "runtimeDoD": {
+        "status": "PLANNED_NOT_RUN",
+        "lanes": [
+          "linux-domain",
+          "linux-renderer",
+          "macos-native"
+        ],
+        "expected": "All authored happy/negative/reload/concurrency steps yield stated screen/data/receipt outcomes; screenshot/ARIA, content hashes, source revisions and real gate receipts required; provider lane only where an external write is actually added.",
+        "proof": "A/B separateauthcontexts, clock/networkfaultcontrols, seededmechanismmutationwithspecificassertion; baselinepass≠infrastructurefailure; nofeaturepassfromwireframe/schema."
+      }
+    },
+    {
+      "id": "CWT-03",
+      "titleRu": "Project → private Channel → reply thread без нового native destination",
+      "screens": [
+        "COL-17",
+        "COL-07",
+        "COL-08",
+        "COL-10",
+        "COL-09"
+      ],
+      "actors": [
+        "A Projecteditor",
+        "B invited channelmember",
+        "V Projectviewer notchannelmember"
+      ],
+      "entry": {
+        "existing": "projects/project/launch; existing Projects destination",
+        "proposed": "projects/project/launch?tab=channels&channel=channel%3AC1&thread=channel-message%3AM1; these query fields require typed route/parser work, not current builder support",
+        "currentLimit": "ProjectInfoPage sessions/tasks/cwd/details exist. HumanChannels/tab/thread directory and timeline are proposed; AgentSession ChatPage is not the human model."
+      },
+      "refs": {
+        "project": {
+          "workspaceId": "W1",
+          "entityId": "project:PJ1"
+        },
+        "channel": {
+          "workspaceId": "W1",
+          "entityId": "channel:C1"
+        },
+        "rootMessage": {
+          "workspaceId": "W1",
+          "entityId": "channel-message:M1"
+        },
+        "reply": {
+          "workspaceId": "W1",
+          "entityId": "channel-message:M2"
+        }
+      },
+      "wireframe": [
+        "Проект Launch: [Обзор] [Задачи] [Каналы] [Контекст]           ",
+        "Каналы проекта       | # запуск            [Участники]     ",
+        "# запуск             | Алёна: Начинаем подготовку          ",
+        "[Новый канал]        | [1 ответ] [Реакция] [Действия]       ",
+        "                     | ┌ Тред: Начинаем подготовку ┐     ",
+        "                     | | Борис: Беру материалы     |     ",
+        "                     | | [Ответить…] [Следить]     |     ",
+        "                     | [Сообщение…] [Прикрепить] [Отправить]"
+      ],
+      "identityRule": "ChannelC1 is linkedtoProjectPJ1, not copiedintoProject. Thread root/refM1 and replyM2 retain sameChannelparent; AgentSession IDs never assignedtohumanrows.",
+      "steps": [
+        {
+          "screenId": "COL-17",
+          "controlId": "tabs",
+          "labelRu": "Разделы проекта",
+          "actor": "A",
+          "actionRu": "Из существующего Project открыть вкладку «Каналы».",
+          "inputs": "ProjectPJ1 sluglaunch",
+          "expectedScreenRu": "Contextual channel directory; existing Projects nav remains selected; Sessions destination retainsagentbehavior.",
+          "expectedData": "Query filters permittedProjectlinkedChannelRefs only; titleProject unchanged.",
+          "expectedReceipt": "Read query; route/list selectionrestorable.",
+          "focusHoverHelpRu": "Arrow tablist/Enter; focus active tab then directory. Hover help «Каналы проекта» explains scoped list, no globalduplicate.",
+          "microcopyRu": "Каналы проекта",
+          "recoveryRu": "If nochannels «В этом проекте пока нет каналов» +create; denied query notempty.",
+          "negativeAssertion": "NativeAPP_NAV_DESTINATIONS gains no duplicateChannels/MacroChat destination.",
+          "uiOwner": "WP-12",
+          "mechanismOwners": [
+            "WP-02",
+            "WP-08",
+            "WP-12"
+          ],
+          "operation": "channel.list scoped",
+          "productRuntime": "NOT_RUN",
+          "number": 1,
+          "id": "CWT-03-S01"
+        },
+        {
+          "screenId": "COL-07",
+          "controlId": "create-channel",
+          "labelRu": "Новый канал",
+          "actor": "A",
+          "actionRu": "Создать private канал «запуск», добавить B, оставить history policy explicit.",
+          "inputs": "nameзапуск,visibilityprivate,ProjectPJ1,membersA/B",
+          "expectedScreenRu": "Create dialog audiencepreview; afterreceipt row#запуск selected.",
+          "expectedData": "OneChannelC1+membership+Projectlink; ProjectviewerV notautomaticmember.",
+          "expectedReceipt": "channel.create commandIdcc73 givesChannelRefC1/currentpolicy, eventoutbox.",
+          "focusHoverHelpRu": "Focusname; Enter validation nonblank; tooltipvisibility persistentdescription «Только выбранные участники».",
+          "microcopyRu": "Только выбранные участники",
+          "recoveryRu": "409namecollision promptschoose existing only ifauthorized; doubleclickidemreturnsC1.",
+          "negativeAssertion": "V channel list/search excludesprivateC1; no hidden count.",
+          "uiOwner": "WP-08",
+          "mechanismOwners": [
+            "WP-01",
+            "WP-03",
+            "WP-08",
+            "WP-12"
+          ],
+          "operation": "channel.create",
+          "productRuntime": "NOT_RUN",
+          "number": 2,
+          "id": "CWT-03-S02"
+        },
+        {
+          "screenId": "COL-08",
+          "controlId": "compose",
+          "labelRu": "Сообщение",
+          "actor": "A",
+          "actionRu": "Отправить «Начинаем подготовку» в канал; проверить newline/IME precedence.",
+          "inputs": "body,ChannelC1,parentRef,clientMessageIdm73,commandIdmp73",
+          "expectedScreenRu": "Pendingbubble thenauthor/time/editedmetadata; Enter sends,ShiftEnternewline; optionalCmdEntermode explicitpreference.",
+          "expectedData": "MessageM1 parentChannelC1; canonicalmessage.create commonoutbox.",
+          "expectedReceipt": "Committed receipt returnsM1; typing/awareness notdurable message.",
+          "focusHoverHelpRu": "Composerfocus retainedafter send. IMEcomposition/mentionpicker Enter selectscomposition/option andnever send.",
+          "microcopyRu": "Сообщение",
+          "recoveryRu": "Failedpost keepsdraft+attachment refs, bubblefailedretry samecommandId; offlinequeuednotSent.",
+          "negativeAssertion": "Repeatedcanonicalalias PostMessage samecommandIdcreatesoneM1; noAgentSession transcriptwrite.",
+          "uiOwner": "WP-08",
+          "mechanismOwners": [
+            "WP-04",
+            "WP-05",
+            "WP-08"
+          ],
+          "operation": "message.create",
+          "productRuntime": "NOT_RUN",
+          "number": 3,
+          "id": "CWT-03-S03"
+        },
+        {
+          "screenId": "COL-08",
+          "controlId": "reply",
+          "labelRu": "Ответить в треде",
+          "actor": "B",
+          "actionRu": "Клавиатурой открыть reply у M1.",
+          "inputs": "M1 rootRef,parentChannelC1",
+          "expectedScreenRu": "Rightthreadpanel rootreadonly, focusreplycomposer; maintimeline scrollanchorpreserved.",
+          "expectedData": "No newThreadentity copy; query rootM1 and permittedreplies.",
+          "expectedReceipt": "Readthreadquery no messagecreation merely onopen.",
+          "focusHoverHelpRu": "ShiftF10/arrow «Ответить в треде»; Escape closes andreturnsM1 toolbar; hoverdoesnotmarkread.",
+          "microcopyRu": "Ответить в треде",
+          "recoveryRu": "Rootdeleted becomes tombstone «Сообщение удалено», permittedrepliesremain; forbiddenrootdeniespanel.",
+          "negativeAssertion": "Wrongparentroot fromotherChannel cannotattach despitevalidmessageid.",
+          "uiOwner": "WP-08",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-08"
+          ],
+          "operation": "thread.read",
+          "productRuntime": "NOT_RUN",
+          "number": 4,
+          "id": "CWT-03-S04"
+        },
+        {
+          "screenId": "COL-10",
+          "controlId": "reply",
+          "labelRu": "Ответить",
+          "actor": "B",
+          "actionRu": "Отправить «Беру материалы» и открыть thread у A.",
+          "inputs": "ChannelC1,threadRootM1,body,commandIdreply73",
+          "expectedScreenRu": "Threadone reply, maintimeline«1ответ»;rootparentcomposerpolicy inherited.",
+          "expectedData": "ReplyM2 parentChannelC1/rootM1; commonMessagesprimitive.",
+          "expectedReceipt": "message.create receiptM2; notificationdedup perrecipient/event notsecondthreadengine.",
+          "focusHoverHelpRu": "Enter send inChannelthread; ShiftEnter newline; ifentityDiscussionthread CmdEnter only. Replyfocusretained.",
+          "microcopyRu": "Беру материалы",
+          "recoveryRu": "If rootpermissionrevoked beforecommit typeddenied; pendingdraftnotpostedelsewhere.",
+          "negativeAssertion": "Root+reply canonicalparent equalityasserted; rootstatusreadnotagentmemoryautoshare.",
+          "uiOwner": "WP-08",
+          "mechanismOwners": [
+            "WP-07",
+            "WP-08"
+          ],
+          "operation": "message.create",
+          "productRuntime": "NOT_RUN",
+          "number": 5,
+          "id": "CWT-03-S05"
+        },
+        {
+          "screenId": "COL-10",
+          "controlId": "follow",
+          "labelRu": "Следить за тредом",
+          "actor": "A",
+          "actionRu": "Включить «Следить за тредом», затем перезагрузить route.",
+          "inputs": "rootM1,enabledtrue,actorA",
+          "expectedScreenRu": "Togglechecked persisted;reload restoresChannel+Thread with focusroot, notnewconversation.",
+          "expectedData": "PerprincipalattentionpreferenceA; B preference unchanged.",
+          "expectedReceipt": "Follow receiptcurrentpreference; readcursornotreset byreload.",
+          "focusHoverHelpRu": "Space toggles; aria-pressed/readablehelp «Ответы в этом треде»;no toggleonhover.",
+          "microcopyRu": "Следить за тредом",
+          "recoveryRu": "If preferencesavefails reverttoggle+toastretry, threadsafe; selectionURL remains.",
+          "negativeAssertion": "OtherusercannotoverwriteAfollow; no notification onhover.",
+          "uiOwner": "WP-08",
+          "mechanismOwners": [
+            "WP-07",
+            "WP-08",
+            "WP-40"
+          ],
+          "operation": "thread.follow.update",
+          "productRuntime": "NOT_RUN",
+          "number": 6,
+          "id": "CWT-03-S06"
+        },
+        {
+          "screenId": "COL-07",
+          "controlId": "dm",
+          "labelRu": "Написать человеку",
+          "actor": "A",
+          "actionRu": "Через contextual directory открыть «Написать человеку» B дважды.",
+          "inputs": "recipientPrincipalB,pairA/B,workspaceW1",
+          "expectedScreenRu": "SameDMconversation reused; no newSessions entry; explicitparticipantheader.",
+          "expectedData": "ensureDm uniquepair returnsoneChannelDM1; groupadditiondoesnotcopyhistoryimplicitly.",
+          "expectedReceipt": "IdempotentensureDmref; read/write sameMessageauthority.",
+          "focusHoverHelpRu": "Pickerfocussearch, EnterselectB; help «Личный разговор» distinguishes AgentSessions.",
+          "microcopyRu": "Личный разговор с Борисом",
+          "recoveryRu": "Noaccessibleprincipal→field error; addingC opensnewgroup explicithistory choice.",
+          "negativeAssertion": "A/B principalnamespace reused; orgadmin cannotreadprivateDMautomatically.",
+          "uiOwner": "WP-08",
+          "mechanismOwners": [
+            "WP-01",
+            "WP-03",
+            "WP-08"
+          ],
+          "operation": "channel.ensureDm",
+          "productRuntime": "NOT_RUN",
+          "number": 7,
+          "id": "CWT-03-S07"
+        }
+      ],
+      "gapsResolved": [
+        "Exact existing Projects base versus proposed query seams.",
+        "Thread keyboard inherits parent; IME never accidental send.",
+        "Channelmembership separateProjectpermission; DMnotAgentSession."
+      ],
+      "sourceEvidenceIds": [
+        "R01",
+        "R03",
+        "R04",
+        "R16",
+        "R19",
+        "R21",
+        "R22",
+        "C20",
+        "C21"
+      ],
+      "uiOwners": [
+        "WP-08",
+        "WP-12"
+      ],
+      "mechanismOwners": [
+        "WP-01",
+        "WP-02",
+        "WP-03",
+        "WP-04",
+        "WP-05",
+        "WP-07",
+        "WP-08",
+        "WP-12",
+        "WP-40"
+      ],
+      "existingSourceFiles": [
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+        "apps/electron/src/renderer/pages/ChatPage.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/core/src/rox2/platform-contract.ts"
+      ],
+      "allocatedImplementationFiles": [
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+        "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+        "apps/electron/src/renderer/pages/ChatPage.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/shared/route-parser.ts",
+        "apps/electron/src/shared/routes.ts",
+        "packages/shared/src/workspace-domain/messaging/contracts.ts",
+        "tests/macro-integration/ui/col-07.spec.ts",
+        "tests/macro-integration/ui/col-08.spec.ts",
+        "tests/macro-integration/ui/col-09.spec.ts",
+        "tests/macro-integration/ui/col-10.spec.ts",
+        "tests/macro-integration/ui/col-17.spec.ts"
+      ],
+      "runtimeDoD": {
+        "status": "PLANNED_NOT_RUN",
+        "lanes": [
+          "linux-domain",
+          "linux-renderer",
+          "macos-native"
+        ],
+        "expected": "All authored happy/negative/reload/concurrency steps yield stated screen/data/receipt outcomes; screenshot/ARIA, content hashes, source revisions and real gate receipts required; provider lane only where an external write is actually added.",
+        "proof": "A/B separateauthcontexts, clock/networkfaultcontrols, seededmechanismmutationwithspecificassertion; baselinepass≠infrastructurefailure; nofeaturepassfromwireframe/schema."
+      }
+    },
+    {
+      "id": "CWT-04",
+      "titleRu": "Native Note conflict → явная shared-authority conversion",
+      "screens": [
+        "COL-05",
+        "COL-06",
+        "COL-11"
+      ],
+      "actors": [
+        "A nativeNoteowner",
+        "A2 externalfilewriter",
+        "B proposedsharededitor"
+      ],
+      "entry": {
+        "existing": "notes/note/{encodeURIComponent(nativeNoteId)} from routes.view.notes(nativeNoteId); fixture resolves saved native ID, never guesses filename-derived identity",
+        "proposed": "Same legacy route alias resolves canonical note:N1 after authority receipt; sharedbody embeddedinNotes editor, not newMacroPages destination",
+        "currentLimit": "Notes Tiptap and save queue exist. saveNote optional read-check-write/no lock and UI885 omits expectedRevision: conflict protection/atomicconversion must be implemented."
+      },
+      "refs": {
+        "note": {
+          "workspaceId": "W1",
+          "entityId": "note:N1"
+        },
+        "attachment": {
+          "workspaceId": "W1",
+          "entityId": "file:F1"
+        },
+        "legacy": "nativeNoteId/path alias maps to note:N1 once; contentHash is revision, notentityID"
+      },
+      "wireframe": [
+        "Заметки / Подготовка встречи                   [Сделать совместной]",
+        "Режим: На устройстве · файл только на этом устройстве            ",
+        "Содержимое…                                                     ",
+        "[Конфликт сохранения]                                           ",
+        "Сервер/файл: revN2    Мой черновик: revN1                         ",
+        "[Сравнить] [Оставить файл] [Скопировать мой черновик]              ",
+        "Конверсия: командаW1 | участникиA/B | вложениеF1 требуетразрешение",
+        "[Отмена]                                  [Сделать совместной]"
+      ],
+      "identityRule": "Rename/move/authority switch preserve note:N1 and registered nativealias. A Page wrapper, if laterexplicitlycreated, has distinct page ref plusrelation; never mutate note:N1 into page:N1 or duplicate samecontent writablemasters. This fixture converts authority within W1 only. Moving a personal note to a different workspace requires explicit cross-workspace mapping/new scoped ref; same entityId string does not imply same EntityRef across workspaces.",
+      "steps": [
+        {
+          "screenId": "COL-05",
+          "controlId": "filter",
+          "labelRu": "Теги и поиск",
+          "actor": "A",
+          "actionRu": "Найти native заметку «Подготовка встречи» и открыть её существующийroute.",
+          "inputs": "nativeNoteId resolvedfromread; canonicalaliasN1",
+          "expectedScreenRu": "NativeNotes editor/frontmatter/wikilinks retained; filemode visible.",
+          "expectedData": "NoteN1 stablealias, revisionn-r1=filehash; sameNote acrosslist/editor.",
+          "expectedReceipt": "Native readreceipt metadatahash/mtime notsharedsyncACK.",
+          "focusHoverHelpRu": "Searchfocus followedrowEnter; filterqueryretainedreturn; help source «Файл на устройстве».",
+          "microcopyRu": "На устройстве",
+          "recoveryRu": "Missingfile shows «Файл заметки не найден» withreload/importchoice; notempty newnote.",
+          "negativeAssertion": "Titlematchcannotmerge anothernote withsamefilename/title.",
+          "uiOwner": "WP-16",
+          "mechanismOwners": [
+            "WP-02",
+            "WP-16"
+          ],
+          "operation": "note.read",
+          "productRuntime": "NOT_RUN",
+          "number": 1,
+          "id": "CWT-04-S01"
+        },
+        {
+          "screenId": "COL-06",
+          "controlId": "editor",
+          "labelRu": "Текст заметки",
+          "actor": "A+A2",
+          "actionRu": "A изменить body, A2 independently изменить nativefile beforeA save.",
+          "inputs": "expectedRevisionn-r1; disk now n-r2; localdraftAdifferent",
+          "expectedScreenRu": "Target show compare conflict; localdraftkept, nofalseSaved.",
+          "expectedData": "Per-noteatomicwrite criticalsectionchecksrevision andreplace; ordinarysourcebaseline readcheckwrite insufficient.",
+          "expectedReceipt": "Targetnote.update conflict expected/actual, no overwritecurrentfile.",
+          "focusHoverHelpRu": "Conflictalertfocus compare; «Скопировать мой черновик» limitedunsharednative draft rights; noforcedreload.",
+          "microcopyRu": "Заметка изменилась вне приложения",
+          "recoveryRu": "Choose«Оставить файл» refreshesn-r2; manualmerge retriesnewexpectedrevision. Backup/copy never overwrites currentfile.",
+          "negativeAssertion": "Seed bypassCAS→disk n-r2contentmustsurvive; two writers serialized atactualauthority.",
+          "uiOwner": "WP-16",
+          "mechanismOwners": [
+            "WP-05",
+            "WP-16",
+            "WP-51"
+          ],
+          "operation": "note.update",
+          "productRuntime": "NOT_RUN",
+          "number": 2,
+          "id": "CWT-04-S02"
+        },
+        {
+          "screenId": "COL-06",
+          "controlId": "share",
+          "labelRu": "Сделать совместной",
+          "actor": "A",
+          "actionRu": "Открыть «Сделать совместной» после разрешения native conflict.",
+          "inputs": "NoteN1 revisionn-r3,targetW1,proposedmembersA/B",
+          "expectedScreenRu": "Conversion preview content+metadata+attachmentpolicy; no automaticshare immediatelyonclick.",
+          "expectedData": "Noauthoritychange beforecommit; migration plan registersnativealias andsinglewriter cutover.",
+          "expectedReceipt": "Previewmigrationtoken/digest notcommittedreceipt.",
+          "focusHoverHelpRu": "Dialogfocusaudience first; help «Режим хранения» shows canonicalsource/lastread/checksumandwhy file becomesprojection.",
+          "microcopyRu": "Файл станет проекцией совместной заметки",
+          "recoveryRu": "Cancel returnsNoteeditorfocus unchangedn-r3; conversion draftsavedonlylocally.",
+          "negativeAssertion": "Hover/clickopen dialog cannotgrantB oruploadprivatebody.",
+          "uiOwner": "WP-16",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-10",
+            "WP-16",
+            "WP-51"
+          ],
+          "operation": "note.adoptShared preview",
+          "productRuntime": "NOT_RUN",
+          "number": 3,
+          "id": "CWT-04-S03"
+        },
+        {
+          "screenId": "COL-06",
+          "controlId": "properties",
+          "labelRu": "Свойства",
+          "actor": "A",
+          "actionRu": "Проверить private imageF1 и wiki source before conversion; выбрать разрешённую копиюили исключить.",
+          "inputs": "F1 noB grant; metadata/privatewiki refs",
+          "expectedScreenRu": "Previewlists F1 «Не будет доступно Борису» andsafeplaceholder; body exportpolicyblocksunsupportedprivateembed.",
+          "expectedData": "FileRefF1 unchanged; no automaticgrantfromnote; omit/exclude choicesinmigration plan.",
+          "expectedReceipt": "Capabilityread each referencedobject;copyapprovedexplicitcommand separatelyifneeded.",
+          "focusHoverHelpRu": "Tab warning/action; clickhelp shows grant vslinkdifference, sourcefreshnessfrompolicyquery.",
+          "microcopyRu": "Вложение требует отдельного доступа",
+          "recoveryRu": "If sourcepermissionchanges digestpreviewinvalid, reopenreview; no permissivefallbackrender.",
+          "negativeAssertion": "BconvertedNote must notfetchprivateF1url orwikibodythroughrendercache.",
+          "uiOwner": "WP-16",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-09",
+            "WP-16",
+            "WP-39"
+          ],
+          "operation": "conversion source policy validation",
+          "productRuntime": "NOT_RUN",
+          "number": 4,
+          "id": "CWT-04-S04"
+        },
+        {
+          "screenId": "COL-06",
+          "controlId": "share",
+          "labelRu": "Сделать совместной",
+          "actor": "A",
+          "actionRu": "Подтвердить conversion одинраз; during pending попробовать legacynative save.",
+          "inputs": "n-r3previewdigest,targetW1,A/B grants,conversioncommandIdnc73",
+          "expectedScreenRu": "Pending«Переводим в совместный режим…», thenauthoritybadge«Совместная заметка» afterreceipt.",
+          "expectedData": "Atomicalias/bodyauthority/grants cutover; oldwriterblocked. Nativefile becomesreadprojection/exportasset, notsecondmaster.",
+          "expectedReceipt": "Migrationreceipt canonicalNoteRefN1,sourceAlias,from/toauthority,contentdigest,epoch andreadback; pendingnotconverted.",
+          "focusHoverHelpRu": "Focusreturn editoroncommit; sharedbodybindinginitializedonewriter; no hiddenpagecreation.",
+          "microcopyRu": "Совместная заметка",
+          "recoveryRu": "Crash beforecommit leavesnativeauthority; aftercommit recovery readsreceipt/idempotentmapping andsharedstate, neverdualwriter.",
+          "negativeAssertion": "Postcutover legacy saveNote andagent rawfilewrite rejectedforN1; no cloudclaim untilreadback.",
+          "uiOwner": "WP-16",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-10",
+            "WP-16",
+            "WP-51"
+          ],
+          "operation": "note.adoptShared",
+          "productRuntime": "NOT_RUN",
+          "number": 5,
+          "id": "CWT-04-S05"
+        },
+        {
+          "screenId": "COL-06",
+          "controlId": "editor",
+          "labelRu": "Текст заметки",
+          "actor": "B",
+          "actionRu": "Открыть разрешённую NoteN1 по старойссылке и одновременно редактировать с A.",
+          "inputs": "samelegacyalias→NoteN1,sharedCRDTbinding,peerB",
+          "expectedScreenRu": "SameNotes surface/body, sharedpresence/syncreceipt; nativeMarkdowneditorfeaturespreservedtochosenbindingconformance.",
+          "expectedData": "CanonicalN1 preserved; onecollaborativebody, localfileupdates onlyfrommaterialization.",
+          "expectedReceipt": "SharedappendACK separatefileprojectionwatermark; sourcehash preservedinmigrationreceipt.",
+          "focusHoverHelpRu": "Editorfocus/contentselectionstable; help badge «Совместная» clarifies file freshnessmaylagserver.",
+          "microcopyRu": "Сохранено на сервере · Файл обновляется",
+          "recoveryRu": "Projectionfailure showsfilelag/retry withoutblockingCRDTauthority; filewatcher cannotfeedprojectionbackasnewedit.",
+          "negativeAssertion": "Seedfilewatcherloop producesno duplicatetext; manualfilechangeaftercutover cannotreplaceCRDTsilently.",
+          "uiOwner": "WP-16",
+          "mechanismOwners": [
+            "WP-05",
+            "WP-10",
+            "WP-16",
+            "WP-51"
+          ],
+          "operation": "collaboration.append",
+          "productRuntime": "NOT_RUN",
+          "number": 6,
+          "id": "CWT-04-S06"
+        },
+        {
+          "screenId": "COL-11",
+          "controlId": "new-thread",
+          "labelRu": "Новое обсуждение",
+          "actor": "B",
+          "actionRu": "Обсудить выбранный фрагмент Note и reload bothroutes.",
+          "inputs": "parentNoteN1,sourceRevision/anchormetadata,bodymanual",
+          "expectedScreenRu": "Contextualdiscussionthread anchoredtoNote; reloadanchorresolvedor«Место изменилось» fallback, nothiddenloss.",
+          "expectedData": "CommonMessageparentNoteN1; no perNotecommentengine newtable; legacyMarkdowncomments explicitmigrationprovenance.",
+          "expectedReceipt": "Canonicalmessage.create receipt+anchorversion; notificationssameoutbox.",
+          "focusHoverHelpRu": "Enternewline/CmdCtrlEntersend forentityDiscussion; Escape returnstoeditorselection; focushelp explains anchorrevision.",
+          "microcopyRu": "Место изменилось. Открыть исходный контекст.",
+          "recoveryRu": "Unsupportedlegacycommentanchor shownsafeunanchoredthread withoriginalrevision; no guessedcurrentselection.",
+          "negativeAssertion": "Task/CRM wrapper sameMessageauthority; mentioning outsiderdoesnotgrantNote.",
+          "uiOwner": "WP-15",
+          "mechanismOwners": [
+            "WP-07",
+            "WP-08",
+            "WP-09",
+            "WP-15",
+            "WP-16"
+          ],
+          "operation": "message.create",
+          "productRuntime": "NOT_RUN",
+          "number": 7,
+          "id": "CWT-04-S07"
+        }
+      ],
+      "gapsResolved": [
+        "Native CAS absentcurrentcode; targetpernote criticalsection.",
+        "Noteidentity preserved; Pagewrapper notsamekind.",
+        "Atomic authority cutover, fileprojection freshness and privateembed checks explicit."
+      ],
+      "sourceEvidenceIds": [
+        "R02",
+        "R08",
+        "R09",
+        "R10",
+        "R21",
+        "R24"
+      ],
+      "uiOwners": [
+        "WP-15",
+        "WP-16"
+      ],
+      "mechanismOwners": [
+        "WP-02",
+        "WP-03",
+        "WP-05",
+        "WP-07",
+        "WP-08",
+        "WP-09",
+        "WP-10",
+        "WP-15",
+        "WP-16",
+        "WP-39",
+        "WP-51"
+      ],
+      "existingSourceFiles": [
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/handlers/rpc/notes.ts"
+      ],
+      "allocatedImplementationFiles": [
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
+        "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/shared/src/workspace-domain/messaging/contracts.ts",
+        "tests/macro-integration/ui/col-05.spec.ts",
+        "tests/macro-integration/ui/col-06.spec.ts",
+        "tests/macro-integration/ui/col-11.spec.ts"
+      ],
+      "runtimeDoD": {
+        "status": "PLANNED_NOT_RUN",
+        "lanes": [
+          "linux-domain",
+          "linux-renderer",
+          "macos-native"
+        ],
+        "expected": "All authored happy/negative/reload/concurrency steps yield stated screen/data/receipt outcomes; screenshot/ARIA, content hashes, source revisions and real gate receipts required; provider lane only where an external write is actually added.",
+        "proof": "A/B separateauthcontexts, clock/networkfaultcontrols, seededmechanismmutationwithspecificassertion; baselinepass≠infrastructurefailure; nofeaturepassfromwireframe/schema."
+      }
+    },
+    {
+      "id": "CWT-05",
+      "titleRu": "Task один в списке, доске, detail и Project: конфликт статуса и recurrence",
+      "screens": [
+        "COL-12",
+        "COL-13",
+        "COL-14",
+        "COL-16",
+        "COL-17",
+        "COL-18"
+      ],
+      "actors": [
+        "A editor",
+        "B assignee/editor",
+        "V viewer"
+      ],
+      "entry": {
+        "existing": "tasks/task/T1; projects/project/launch",
+        "proposed": "tasks?view=board&project=project%3APJ1; projects/project/launch?tab=context; newview/query parsingplanned",
+        "currentLimit": "PersonalTask/TaskDetail/recurrence and Project tasks present. Sharedworkflow board/statusCAS,typedProjectgraph and recurrence authority are proposed; personalToday preserved."
+      },
+      "refs": {
+        "task": {
+          "workspaceId": "W1",
+          "entityId": "task:T1"
+        },
+        "project": {
+          "workspaceId": "W1",
+          "entityId": "project:PJ1"
+        },
+        "source": {
+          "workspaceId": "W1",
+          "entityId": "channel-message:M1"
+        }
+      },
+      "wireframe": [
+        "Задачи [Мои / Команда] [Проект: Launch] [Список | Доска]      ",
+        "К выполнению        | В работе             | Готово       ",
+        "Подготовить КП      |                      |              ",
+        "(task:T1, Борис)    |                      |              ",
+        "─────────────────────────────────────────────────────────",
+        "Детали: Подготовить КП [Исполнитель] [Статус] [Срок]        ",
+        "[Повтор: каждые2недели] [Следующие даты] [Исходный контекст]",
+        "Проект/Контекст: тот же TaskT1 → MessageM1(можетбытьнедоступен)"
+      ],
+      "identityRule": "List/board/detail/Projectcontext allTaskT1/revision; onlyfuture recurringoccurrences receive newTaskIDs withseriesmembership. PersonalToday is userplacement, never workflowstatus.",
+      "steps": [
+        {
+          "screenId": "COL-12",
+          "controlId": "scope",
+          "labelRu": "Мои / Команда",
+          "actor": "B",
+          "actionRu": "Выбрать «Команда», Project Launch, открыть TaskT1 созданный изMessage.",
+          "inputs": "permittedProjectPJ1/taskT1,authorisedfilters",
+          "expectedScreenRu": "TaskT1 appearswithsameassignee/body; savedfilters visible; deniedrecordsnotcounted.",
+          "expectedData": "SameTask canonicalcollection usedviews; B personalToday untouched.",
+          "expectedReceipt": "task.list readquery authorised total/asOf/indexwatermark.",
+          "focusHoverHelpRu": "Comboboxkeyboard selection;clickhelp «Мои/Команда» defines assignments vsworkspace scope, authorisedcount.",
+          "microcopyRu": "Нет задач по выбранным фильтрам",
+          "recoveryRu": "ResetfiltersCTA onlyforfilteredempty; backendfailureinlineerror retainsoldresultsmarkedstale.",
+          "negativeAssertion": "Vread-only no QuickEntrywrite; hiddenprivateTask notfacetcount.",
+          "uiOwner": "WP-13",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-06",
+            "WP-13"
+          ],
+          "operation": "task.list",
+          "productRuntime": "NOT_RUN",
+          "number": 1,
+          "id": "CWT-05-S01"
+        },
+        {
+          "screenId": "COL-13",
+          "controlId": "view",
+          "labelRu": "Список / Доска",
+          "actor": "B",
+          "actionRu": "Переключиться «Список → Доска», выбрать ту жеTaskT1.",
+          "inputs": "viewboard,ProjectPJ1,selectedTaskT1,filters unchanged",
+          "expectedScreenRu": "SamecardT1 anddetailselection; no creationtoast/duplicate, headerProjectsame.",
+          "expectedData": "No secondboardstore; canonicalquery projection/workflowstablekeys.",
+          "expectedReceipt": "Preference receipt if persisted, noTaskmutation.",
+          "focusHoverHelpRu": "Tablistarrows/Enter; focuscard afterswitch; hoverhelp «Колонки — статус команды».",
+          "microcopyRu": "Колонки — статус команды",
+          "recoveryRu": "If workflowmissing showtypedconfiguration/unsupportedstate; neverfabricatekanbanfromToday.",
+          "negativeAssertion": "CanonicalTaskIDset list===board forsamefilters/policy watermark.",
+          "uiOwner": "WP-13",
+          "mechanismOwners": [
+            "WP-12",
+            "WP-13"
+          ],
+          "operation": "view preference",
+          "productRuntime": "NOT_RUN",
+          "number": 2,
+          "id": "CWT-05-S02"
+        },
+        {
+          "screenId": "COL-13",
+          "controlId": "move",
+          "labelRu": "Переместить в статус",
+          "actor": "B+A",
+          "actionRu": "B клавиатурой переместить T1 в «В работе» с r5, A concurrently поставить «Готово» с r5.",
+          "inputs": "workflowstablekeysin_progress/done configuredfixture; expectedr5",
+          "expectedScreenRu": "One winnercommitsr6; loser seesconflictcurrentstatus, pendingcardrollback; no silentlybothsuccess.",
+          "expectedData": "Task statusCAS; currentrevisionrenderedallviews, personalToday placement unchanged.",
+          "expectedReceipt": "task.status.update successorconflict expectedr5/currentr6 +commandId.",
+          "focusHoverHelpRu": "Space card/arrowtarget/Enter commit; Escape cancelsbeforedispatch; conflictfocusdialogandfreshstatus.",
+          "microcopyRu": "Статус уже изменился",
+          "recoveryRu": "Refreshcurrentstate; explicitreapplynewcommand/newexpectedrevision iftransitionpermitted; do notautoforce.",
+          "negativeAssertion": "Seed last-write-wins losesconflictassertion; stalecommand cannotoverridewinner.",
+          "uiOwner": "WP-13",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-04",
+            "WP-13"
+          ],
+          "operation": "task.status.update",
+          "productRuntime": "NOT_RUN",
+          "number": 3,
+          "id": "CWT-05-S03"
+        },
+        {
+          "screenId": "COL-14",
+          "controlId": "status",
+          "labelRu": "Статус",
+          "actor": "A",
+          "actionRu": "Открыть Taskdetail и Projectoverview после winnerreceipt/reload.",
+          "inputs": "TaskT1 ref,currentr6",
+          "expectedScreenRu": "Status/assignee/titlematchboard; Projectprogresscountfreshnessshown, notoptimistic100%fake.",
+          "expectedData": "SameTaskT1 inProjectrelation, countersauthorisedset/explicitdenominator; projectionswatermarkvisible.",
+          "expectedReceipt": "task.read metadata revision andProjectqueryasOf; receiptshownonlyactualupdate.",
+          "focusHoverHelpRu": "Tabstatusreadablelabel; hoverprogresshelp formula completed/eligibleauthorisedTasks andsource/asOf.",
+          "microcopyRu": "Данные проекта обновляются",
+          "recoveryRu": "LagProjectprojection labelpendingwatermark; retryquerynevercreateanotherTask.",
+          "negativeAssertion": "UIcounts may notinclude deniedTask; statuschange updatesoneT1 notProjectcopy.",
+          "uiOwner": "WP-13",
+          "mechanismOwners": [
+            "WP-06",
+            "WP-12",
+            "WP-13"
+          ],
+          "operation": "task.read / project overview",
+          "productRuntime": "NOT_RUN",
+          "number": 4,
+          "id": "CWT-05-S04"
+        },
+        {
+          "screenId": "COL-16",
+          "controlId": "rule",
+          "labelRu": "Повторять",
+          "actor": "A",
+          "actionRu": "Настроить повтор каждые две недели, понедельник/четверг.",
+          "inputs": "interval2,weekly,weekdaysMon/Thu,seriesS1,expectedseriesrevision",
+          "expectedScreenRu": "Rulevalidated; previewnotcommitted; Tasks currentitem unchanged.",
+          "expectedData": "SeriesRule referencesT1/currentoccurrence; no newTasks duringpreview.",
+          "expectedReceipt": "Readpreview only; no occurrencecreated.",
+          "focusHoverHelpRu": "Arrowcombobox and weekdaybuttons; clickhelp «Повтор» explainsnewoccurrenceID vscurrentTask.",
+          "microcopyRu": "Каждые 2 недели · Пн, Чт",
+          "recoveryRu": "interval0/weekdayinvalid inlinefieldvalidationfocus, manualdraftpreserved.",
+          "negativeAssertion": "Preview cannotcreateextraTaskT2/notifications.",
+          "uiOwner": "WP-14",
+          "mechanismOwners": [
+            "WP-14"
+          ],
+          "operation": "recurrence draft",
+          "productRuntime": "NOT_RUN",
+          "number": 5,
+          "id": "CWT-05-S05"
+        },
+        {
+          "screenId": "COL-16",
+          "controlId": "mode",
+          "labelRu": "По расписанию / После выполнения",
+          "actor": "A",
+          "actionRu": "Выбрать «По расписанию», затем timezone Europe/Moscow и сравнить «После выполнения».",
+          "inputs": "fixedvsafter,timezoneEurope/Moscow; lastcompletioncontrolled2026-10-01",
+          "expectedScreenRu": "PreviewshowsIANAzone+localdates/UTCsource, explicitmodeexplanation; no shiftpersonalToday unexpectedly.",
+          "expectedData": "Fixedbasedseriesplan; afterbasedcompletion; calendarallDay≠instant.",
+          "expectedReceipt": "PreviewquerysourceRuleRevision/clockfixture; no save.",
+          "focusHoverHelpRu": "Tabmodearrowselection; samehelpviafocus/click «От какой даты считается повтор».",
+          "microcopyRu": "После выполнения: от даты завершения",
+          "recoveryRu": "Ambiguous/gapzone input explicitDSTchoice/errorswherezoneobservesDST; Europe/MoscowfixturesnotprovingDSTcoverage.",
+          "negativeAssertion": "Modechange cannotoverwritepastoccurrences/immutablecompletionhistory.",
+          "uiOwner": "WP-14",
+          "mechanismOwners": [
+            "WP-05",
+            "WP-14"
+          ],
+          "operation": "task.recurrence preview",
+          "productRuntime": "NOT_RUN",
+          "number": 6,
+          "id": "CWT-05-S06"
+        },
+        {
+          "screenId": "COL-16",
+          "controlId": "save",
+          "labelRu": "Сохранить повтор",
+          "actor": "A",
+          "actionRu": "Сохранить повтор, затем B и A одновременно завершить одну occurrenceT1.",
+          "inputs": "seriesS1revision,stablecommandscompA/compB,taskT1occurrencekey",
+          "expectedScreenRu": "Rule receipt; onecompletion andonenextoccurrence; no duplicate«Следующая задача».",
+          "expectedData": "Unique(series,occurrencekey), nextTaskT2distinctidentitylinkedS1/PJ1; T1historicTaskretained.",
+          "expectedReceipt": "task.recurrence.update thencompletionreceipt containingnextOccurrenceRef; duplicatecompletionreconcilesexisting.",
+          "focusHoverHelpRu": "Savefocusreturnrepeatbadge; completionariaannounceonce; newoccurrencecreationnotcheckboxUIassumption.",
+          "microcopyRu": "Повтор сохранён",
+          "recoveryRu": "Scheduler/notificationfailure pendingstage retry byoccurrencekey; currentcompletionnotrolledbackduetodeliverylag.",
+          "negativeAssertion": "Seeduniqueconstraintremove→assertnextoccurrencecount1catchesduplicate.",
+          "uiOwner": "WP-14",
+          "mechanismOwners": [
+            "WP-04",
+            "WP-13",
+            "WP-14",
+            "WP-37"
+          ],
+          "operation": "task.recurrence.update / task.complete",
+          "productRuntime": "NOT_RUN",
+          "number": 7,
+          "id": "CWT-05-S07"
+        },
+        {
+          "screenId": "COL-18",
+          "controlId": "source",
+          "labelRu": "Источник контекста",
+          "actor": "B",
+          "actionRu": "Из Project→Контекст открыть T1 backlinkM1 и собрать authorised contextmanifest дляagent.",
+          "inputs": "ProjectPJ1→TaskT1→sourceM1; B hasnoM1read",
+          "expectedScreenRu": "Taskvalid; source «Недоступно» no title/body; manifest omitsprotectedpayload whilepreservingpermittededgeprovenance.",
+          "expectedData": "Context graph sourceRef stable; noN×Nreadbypass, sourcepolicycheckedatexecutionagain.",
+          "expectedReceipt": "ManifestasOf/sourceRevision/permittedrefs; agentrun/answer verificationseparate.",
+          "focusHoverHelpRu": "Enter sourcechipneutral; «Источник контекста» help freshness/citation. Scopecheckboxreadableexcludedreason.",
+          "microcopyRu": "Источник недоступен",
+          "recoveryRu": "After policychanges rebuildmanifest; existingagentsessioncannotuseoldcachedM1body.",
+          "negativeAssertion": "Askagentaccount/project containsmanualTaskfacts, neverPRIVATE-MSG-73; ProjectmembershipnotM1grant.",
+          "uiOwner": "WP-38",
+          "mechanismOwners": [
+            "WP-03",
+            "WP-06",
+            "WP-09",
+            "WP-36",
+            "WP-38"
+          ],
+          "operation": "project.context / agent context preview",
+          "productRuntime": "NOT_RUN",
+          "number": 8,
+          "id": "CWT-05-S08"
+        }
+      ],
+      "gapsResolved": [
+        "SamecanonicalTaskqueriesforviews.",
+        "BoardCAS vsCRDT andpersonalToday distinct.",
+        "Recurrence newoccurrenceidentity/denominator/projectionfreshness explicit."
+      ],
+      "sourceEvidenceIds": [
+        "R03",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R16",
+        "R17",
+        "R21"
+      ],
+      "uiOwners": [
+        "WP-13",
+        "WP-14",
+        "WP-38"
+      ],
+      "mechanismOwners": [
+        "WP-03",
+        "WP-04",
+        "WP-05",
+        "WP-06",
+        "WP-09",
+        "WP-12",
+        "WP-13",
+        "WP-14",
+        "WP-36",
+        "WP-37",
+        "WP-38"
+      ],
+      "existingSourceFiles": [
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/renderer/pages/TasksPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/core/src/tasks/personal/types.ts",
+        "packages/shared/src/projects/types.ts"
+      ],
+      "allocatedImplementationFiles": [
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/renderer/pages/TasksPage.tsx",
+        "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskBoard.tsx",
+        "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx",
+        "apps/electron/src/shared/routes.ts",
+        "tests/macro-integration/ui/col-12.spec.ts",
+        "tests/macro-integration/ui/col-13.spec.ts",
+        "tests/macro-integration/ui/col-14.spec.ts",
+        "tests/macro-integration/ui/col-16.spec.ts",
+        "tests/macro-integration/ui/col-17.spec.ts",
+        "tests/macro-integration/ui/col-18.spec.ts"
+      ],
+      "runtimeDoD": {
+        "status": "PLANNED_NOT_RUN",
+        "lanes": [
+          "linux-domain",
+          "linux-renderer",
+          "macos-native"
+        ],
+        "expected": "All authored happy/negative/reload/concurrency steps yield stated screen/data/receipt outcomes; screenshot/ARIA, content hashes, source revisions and real gate receipts required; provider lane only where an external write is actually added.",
+        "proof": "A/B separateauthcontexts, clock/networkfaultcontrols, seededmechanismmutationwithspecificassertion; baselinepass≠infrastructurefailure; nofeaturepassfromwireframe/schema."
+      }
+    }
+  ],
+  "verification": {
+    "type": "planning-reference-integrity",
+    "status": "PASS_REFERENCES_ONLY",
+    "walkthroughs": 5,
+    "steps": 39,
+    "uniqueScreens": 16,
+    "sourceEvidenceRanges": 23,
+    "checks": [
+      "EveryCOLscreen/control exists",
+      "UIowner equals current screenPrimaryUiOwners",
+      "MechanismWP IDs existmanifest",
+      "Allocatedimplementationpaths ownedmanifest",
+      "PinnedGitblob/source ranges verified",
+      "Microcopy inputs/outputs/recovery/negative perstep present"
+    ],
+    "runtime": "NOT_RUN",
+    "negativeControls": [
+      {
+        "mutation": "unknown control",
+        "caught": true,
+        "failureKind": "assertion"
+      },
+      {
+        "mutation": "wrong owner",
+        "caught": true,
+        "failureKind": "assertion"
+      },
+      {
+        "mutation": "unallocated path",
+        "caught": true,
+        "failureKind": "assertion"
+      }
+    ],
+    "artifactChecksOnly": true
+  },
+  "operationFieldMeaning": "operation is descriptive command/query/fixture intent. Worker resolves it to leaf/primary/supplement canonical dispatcher and compiled input schema; prose such as permission revoke or sync status is not a new registered API."
+}

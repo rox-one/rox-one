@@ -1,0 +1,398 @@
+{
+  "task_id": "WP-40-preflight",
+  "attempt_id": "6a9a813e3e198cd36d7f4702918cca1e",
+  "packet_hash": "ce67a2cf7672cadf3f057625ba214473fecfe3b4b1aba88d02be1e1dcb08227a",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-40",
+  "featureComplete": false,
+  "mode": "inspect; owned preflight artifact only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["WP-02", "WP-03", "WP-06"],
+  "dependencyReceiptsRequired": [
+    {"producer": "WP-02", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]},
+    {"producer": "WP-03", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]},
+    {"producer": "WP-06", "requiredArtifacts": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]}
+  ],
+  "inspection": {
+    "scope": "WP-40 affected core files, normative artifacts, package specification/documentation and direct Soup type import only; no unrelated renderer/transport exploration",
+    "sourceVersion": "Inspected working-tree bytes, not a verified clean checkout of input_revision. Lead's root-owned wave0 work may change these files. Baseline specification SHA f63294ba is not a runtime or current-source receipt.",
+    "freshness": "Whole-file hashes below identify inspected content. No intervening edit was observed; concurrent root integration may invalidate evidence after hashing. Rehash and reread changed ranges at implementation handoff.",
+    "specificationManifest": {"path": "plans/macro-integration/work-packages.json", "expectedSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0", "observedSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0", "matches": true},
+    "observedMissingPaths": ["packages/shared/src/workspace-domain/graph/", "apps/workspace-service/", "tests/macro-integration/wp-40.test.ts"],
+    "toolLimits": ["Codegraph reported no index; no indexing performed.", "find failed its judge requests with HTTP 402. Its no-hits wording is not absence evidence; exact known-symbol grep, glob and read supplied evidence instead."],
+    "notExecuted": ["product implementation", "builds", "tests", "native UI", "network operations", "Git operations", "dependency acceptance verification", "dispatch verification_argv"],
+    "verificationStatus": "Source-backed preflight only; all runtime verifications below are proposed, not observed passes."
+  },
+  "foundationGates": [
+    {
+      "gate": "Lead wave0 commit and accepted dependency receipts",
+      "classification": "dispatch prerequisite, not an additional explicit DAG edge",
+      "evidence": "Worker instruction requires implementation after lead wave0 commit; WP-40 inputs at work-packages.json:36674-36699 require three accepted artifacts per producer.",
+      "required": "Receive committed integration revision and accepted WP-02/WP-03/WP-06 typed interfaces, migration decisions and scenario receipts; rerun source freshness comparison.",
+      "state": "not supplied or independently verified in this preflight"
+    },
+    {
+      "gate": "WP-04 durable command/receipt/outbox foundation",
+      "classification": "transitive explicit dependency through WP-06, and normative mechanism requirement; not a new direct edge",
+      "evidence": "WP-06 depends on WP-04 at work-packages.json:4389-4391. WP-40 requires transaction outbox, idempotency hash conflict, mutable aggregate revision and crash-after-commit recovery at 36604-36620, 36883-36895 and 37111-37127.",
+      "required": "Use accepted common transaction, command receipt and consumer inbox ports; favorite/reorder/viewed write must commit mutation, receipt and event together, not use an independent favorite gateway.",
+      "state": "missing accepted interface and runtime receipt"
+    },
+    {
+      "gate": "WP-05 durable client projection/offline replay",
+      "classification": "hidden behavioral foundation, absent from WP-40 explicit edges",
+      "evidence": "WP-40 UI includes offline_queued at 36595-36601 and offline/reconnect at 36670; implementation-plan.md:84-102 assigns SQLite projection/outbox, durable cursor and rejection to WP-05.",
+      "required": "Integrate accepted queue/cursor/replay mechanism and explicit personal local-authority mode. Never mark local optimistic favorite applied_verified or create a second offline store.",
+      "state": "integration receipt required before offline/restart acceptance"
+    },
+    {
+      "gate": "WP-51 single-writer and revocation fence",
+      "classification": "hidden shared-writer/security foundation, not an asserted new direct DAG edge",
+      "evidence": "WP-40 errors include REVOKE_FENCE_PENDING at 36893 and requires policy/tombstone fences at 37125-37126. implementation-plan.md:1020-1036 defines writer mode guard and revoke-applied boundary; platform-contract authorizeRox2Action has no workspace/resource/epoch input.",
+      "required": "Consume accepted writer-mode/policy epoch fence, route shared commands through authenticated authority and reject stale replay/subscriptions. If WP-03 already delivers a sufficient favorite read fence, record exact coverage; do not assume the complete WP-51 package is a newly mandated edge.",
+      "state": "coverage and accepted interface missing"
+    },
+    {
+      "gate": "WP-52 shared runtime bootstrap",
+      "classification": "operational gate for live service proof, not provider dependency for favorite.set",
+      "evidence": "implementation-plan.md:5 and 1038-1055 describe bootstrap; apps/workspace-service/ is missing in inspected working tree. WP-40 verificationGate at 36673 prohibits fixture-as-live-receipt.",
+      "required": "Lead supplies real authenticated shared service, selected migrator, applied schema and native transport composition. Favorite operations do not require LiveKit/STT or outbound provider writes; do not block on unrelated provider probes.",
+      "state": "runtime/service/migrator receipt missing"
+    },
+    {
+      "gate": "Graph module ownership and additional operation contracts",
+      "classification": "hidden integration/contract gate",
+      "evidence": "implementation-plan.md:7 and 35 lists WP-02 as creating the same graph contracts/commands/repository paths. WP-40 apiChanges names four operations but operations defines only favorite.set; WP-40 contains no domainApiContracts block before its closing line 37263.",
+      "required": "One graph integration owner extends the WP-02 files. Accept typed Reorder/GetRecents/ResolveDeepLink request/result/error contracts, favorite list query seam and entity-open recording seam before implementation. Names proposed in this report are not observed exports.",
+      "state": "accepted signatures and ownership receipt missing"
+    },
+    {
+      "gate": "Existing native destination and capability adapters for every accepted kind",
+      "classification": "hidden surface/coverage gate, not automatic addition of Company/calendar/call packages as explicit dependencies",
+      "evidence": "Core enum already includes crm-company/calendar-event/task/call at platform-contract.ts:17-38; Soup types expose Company/event/call at types.ts:14-25. WP-40 requires existing detail panels and native navigation, but the affectedFiles enumerate pure contracts/membership/context, not renderer routing.",
+      "required": "Lead must supply exact existing destination/open/history/focus and favorite-list caller paths, accepted canonical adapters and title readback for four required kinds. Current core evidence does not prove those UI destinations are wired. Reuse current panels; no new Favorites application or replacement entity detail store.",
+      "state": "caller paths and real surface evidence not inspected within this packet's scope"
+    },
+    {
+      "gate": "Cross-cutting sharing, mentions, notifications, search and agent completeness",
+      "classification": "published full-DoD integrations, not silently promoted direct DAG edges",
+      "evidence": "WP-40 featureCompleteness at 36648-36670 and test-plan.md:197-222 require every capability item. implementation-plan.md:5 requires WP-50 provenance before shared transcripts/context; test-plan.md:199 forbids treating unwritten permissions/search/agent as N/A.",
+      "required": "Obtain common resolver/policy/provenance and mention/attention integration receipts from lead. Preserve source behavior; keep all items missing until justified verification. Favoriting/viewing must not implicitly grant access or generate duplicate recipient notifications. WP-50 applies if the changed agent context contains shared transcript/source context, not as an unconditional favorite dependency.",
+      "state": "cross-cutting receipts missing"
+    }
+  ],
+  "ownedNewFiles": ["tests/macro-integration/wp-40.test.ts", "apps/workspace-service/migrations/40-domain-contract.sql"],
+  "ownedNewFilesQualification": "These are the WP-40-specific normative implementation contributions, not authorization to write them during preflight. Migration 40-domain-contract.sql is a proposed identifier; final name must come from selected migrator, no invented timestamp. Only this report is currently owned.",
+  "normativeSharedNewFiles": ["packages/shared/src/workspace-domain/graph/contracts.ts", "apps/workspace-service/src/modules/graph/commands.ts", "apps/workspace-service/src/modules/graph/repository.ts"],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/workspace-domain/graph/contracts.ts",
+      "symbol": "WP-02 accepted graph ports; proposed SetFavorite/Reorder/GetRecents/ResolveDeepLink contracts",
+      "change": "Extend the single graph contract, not recreate it: strict favorite.set body {entity:Rox2EntityRef,favorite:boolean,rank?:number}; no actor field; validate entity kind with existing parser, workspace consistency and finite rank. Define principal-scoped favorite/recent DTOs with stable authorized cursor and canonical refs; define Reorder CAS for the user's favorite ordering, GetRecents pagination and ResolveDeepLink alias input plus explicit missing/denied/stale outcome. Agree favorite-list query and entity-open command ports using these contracts. Reuse common RoxCommand v2 and receipt/error definitions; distinguish domain status enum from core status triad at the adapter boundary.",
+      "reason": "Same file belongs to WP-02; only primary operation has schema. Typed supplementary contracts, pagination, privacy and status mapping cannot be fabricated as existing interfaces."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/graph/commands.ts",
+      "symbol": "WP-02 graph command/query registration; proposed SetFavorite/Reorder/GetRecents/ResolveDeepLink handlers",
+      "change": "Register favorite.set on accepted HTTP/native domain dispatch. Derive principal from authenticated transport, reject payload actor, compare envelope/entity workspace, resolve canonical entity via WP-02 and check current WP-03 resource policy before mutation or title serialization. Execute favorites/reorder/viewed-history through WP-04 receipt/revision transaction; use explicit actor-owned list write policy rather than treating a favorite as editing the target content. Query favorites/recents for current principal only, reauthorize every linked target and resolve retained aliases before opening. Record entity.opened only after authorized successful open, with privacy-filtered event delivery.",
+      "reason": "Pure core modules cannot provide server authority or persistence; principal, route registration and shared receipts must remain common. Actor-private favorite state must not leak through graph events."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/graph/repository.ts",
+      "symbol": "WP-02 entity/alias/link repository; favorite/recent transaction and query extensions",
+      "change": "Add favorite/recent_entity access to same repository with unique (workspace_id,actor_principal_id,entity_id), composite entity FK, schema_version/revision/timestamps, user-scoped sort rank and viewed ordering with entity-id tie-break. Persist identity, not title snapshots; resolve authorized current displayName on query. Preserve existing alias identity (workspace/provider/account/type/id) and tombstones; quarantine ambiguous mappings. Atomically write mutation+command receipt+outbox; use existing consumer inbox/lease handling; serialize reorder against accepted per-user ordering revision and policy fence.",
+      "reason": "No second alias, entity, command-receipt or favorite cache authority; rank races and replay must not overwrite new state or revive revoked titles."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef; parseRox2EntityId; registerExternalBinding; Rox2Event; Rox2CanonicalResult/liveResult/queuedResult",
+      "change": "Reuse canonical crm-company/calendar-event/task/call identity and encoded binding rules unchanged. Through foundation owner, carry accepted policy epoch/event projection metadata if not already provided after wave0. Expose pure typed favorite/navigation result projection using shared accepted domain contracts: applied maps to succeeded only with verified receipt/readback, queued/reconciling/ambiguous/pending_fence stay unverified; rejected/unavailable must not map to success. Do not add service I/O, favorite entity kinds or unrelated relation rules. Keep authorizeRox2Action as a local helper, not a server ACL substitute.",
+      "reason": "Existing event lacks policyEpoch/projectionWatermark and response uses a triad whereas WP-40 wire schema uses flat status. Existing kinds already satisfy identity vocabulary."
+    },
+    {
+      "path": "packages/core/src/rox2/project-membership.ts",
+      "symbol": "ProjectMembershipStore; entityIdsForProject; portfolioEntityIds; visibleProjectsForEntity",
+      "change": "Keep memberships/primaryProjectId as relationship pointers, never put favorites/recents into this store. For shared-mode callers extend pure visibility projection to intersect with accepted readable entity IDs after current resource-policy evaluation; ensure related-project traversal cannot reveal a revoked favorite target. Preserve explicit standalone adapter behavior and unlink-not-delete semantics. Do not widen member-of rules to Company/event/call merely to support favorites.",
+      "reason": "Current project readable flags filter projects only; they do not prove per-entity authorization. Favorites are private per-user metadata, not project memberships."
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "bindSurfaceContext; visibleContextEntityRefs; sameContextSnapshot; rebaseLiveContext",
+      "change": "Add a pure binding path consuming accepted authorized canonical refs/current revisions from ResolveDeepLink, not untrusted title/path refs. Shared caller must validate workspace and current policy before calling existing binder; intersect entityRefs and revisionByEntityId with readable set and clear denied selection/outcome-derived context at revoke. Bind live revisions on rename without changing identity; preserve explicit snapshot versus live behavior. Extend snapshot comparison with accepted policy/fence metadata only when foundation contract defines it; no network/storage in core.",
+      "reason": "bindSurfaceContext only checks nonempty workspace/surface and deduplicates strings. visibleContextEntityRefs currently filters IDs but leaves binding metadata unchanged; permissionMode is not ACL."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-40 section, lines 810-826",
+      "change": "After actual implementation proof, document accepted supplementary signatures, graph-owner integration, existing destination caller paths, actor-private favorites/recent policy, rename/alias handling, writer mode, offline behavior and reorder conflict recovery; link revision-bound receipts. Keep planned until actual acceptance.",
+      "reason": "Normative documentation requires behavior/limits/recovery; preflight must not mark feature implemented."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Favorites/deep links row at 189; full checklist 197-222; evidence record 241-247",
+      "change": "Record four-kind navigation/history/focus, title-redaction, actor-private recents, encoded aliases, collision quarantine, rank race and crash/replay assertion/evidence mappings after verification; preserve original acceptance and seeded controls.",
+      "reason": "Existing plan names live surface and full completeness gates, not only fixture-based favorite.set verification."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Favorite Company/event/task/call opens existing surface after rename/restart",
+      "currentEvidence": "platform-contract.ts:17-38 already contains all four kinds; format/parse at 218-239 provide canonical refs; bindSurfaceContext at surface-context.ts:31-48 binds refs/revisions. None persists favorites or opens a destination. Normative service and WP-40 test are absent.",
+      "requiredChange": "Store principal+canonical entity ref, not mutable title/path; query current authorized title/revision and dispatch ResolveDeepLink result to existing kind panel, bind SurfaceContext and record successful entity.opened. Repeat each of four kinds through rename and process restart.",
+      "verification": "Future native scenario W1/A/B/C with seed 20260970: favorite each real kind, rename, restart client/service, open favorite and assert same canonical ID, new display name, correct existing panel/context revision, history/back/focus and persisted unique row; include screenshot/ARIA and typed readback.",
+      "missingPrerequisite": "Accepted dependency receipts, persisted graph repository, exact existing destination/open caller paths and live runtime.",
+      "state": "missing"
+    },
+    {
+      "criterion": "revoked entity does not expose title",
+      "currentEvidence": "Rox2Entity.displayName exists at platform-contract.ts:118; authorizeRox2Action at 601-609 has no workspace/resource/epoch; visibleContextEntityRefs at surface-context.ts:51-56 filters only IDs. ProjectVisibility at project-membership.ts:19-23 is caller-supplied project visibility.",
+      "requiredChange": "Current policy recheck before favorite/recent/alias/query serialization; deny linked targets and hidden totals; evict denied display data and binding metadata from client projection and prevent stale replay from restoring it. Denied/missing UI must not reuse cached PRIVATE_WP-40 title.",
+      "verification": "B caches favorite/recent/context then A revokes. Query HTTP/native/agent/alias paths and reconnect/restart/replay older event; assert marker absent in title, snippets, counts, event payload, bound context, DOM/ARIA and logs. Revoked-title-cache mutation must fail this specific assertion; independent evaluator injects second variant.",
+      "missingPrerequisite": "WP-03 read/subscription fence, WP-05 invalidation/replay integration, policy epoch coverage and rendered surface callers.",
+      "state": "missing"
+    },
+    {
+      "criterion": "old Macro/ROX links resolve mapped aliases",
+      "currentEvidence": "platform-contract.ts:291-313 encodes/decodes four binding slots; registerExternalBinding at 336-370 migrates unambiguous raw four-slot key and quarantines workspace/collision. This is an in-memory binding index, not a legacy URL parser or persistent alias resolver.",
+      "requiredChange": "Resolve legacy supported link grammars to WP-02 retained provider/account/type/id alias under workspace and current target ACL; preserve canonical ID through rename; reject/quarantine ambiguous IDs without name-based guessing. Reuse parser encoding and existing destination routes.",
+      "verification": "Actual mapped Macro and ROX legacy links for all required kinds open same canonical panel after rename/restart. Cover identical remote IDs in different accounts/workspaces, encoded colon/percent/unicode, malformed/ambiguous raw slots, deleted/denied target; no title leakage or resurrection.",
+      "missingPrerequisite": "WP-02 accepted alias store/import receipt and lead-provided actual legacy link grammar/routing fixtures; current spec supplies no concrete legacy URLs.",
+      "state": "missing"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "Spec identifies existing entity detail panels and SurfaceContext at 36592-36602; core binder is data-only.",
+      "requiredChange": "Wire favorite/recent affordances into existing surfaces with canonical resolver and all specified states; use existing translated controls and native presentation, no new surface/store.",
+      "verification": "Actual Electron/browser interactions for four kinds with current screenshot/ARIA, keyboard/focus/help and reduced motion where changed; new user-facing keys must satisfy existing ten-locale convention.",
+      "missingPrerequisite": "Lead-owned renderer integration paths and runnable surface harness.",
+      "state": "missing"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "parseRox2EntityId and bindSurfaceContext exist; neither performs navigation. Test-plan.md:189/202 requires history/back/panel focus.",
+      "requiredChange": "Use one canonical/legacy alias resolver for favorites, recents and deep links; dispatch to existing destination and preserve tabs/history/focus with stale/missing/denied outcomes.",
+      "verification": "Navigate canonical and legacy links, back/forward, reopen after restart and assert correct entity panel/focus; denied entity must not display cached title.",
+      "missingPrerequisite": "Accepted ResolveDeepLink contract and exact existing router/open-panel callers.",
+      "state": "missing"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "Rox2EntityRef at platform-contract.ts:233-239 and alias binding helpers at 291-370; kind parser rejects unknown kinds.",
+      "requiredChange": "Reuse registry composite workspace/entity identity and WP-02 aliases; favorites/recents reference entity rather than become entity copies. Validate body/envelope workspace, namespace and supported kind; quarantine collisions.",
+      "verification": "Same title distinct entities stay distinct; alias retries produce one canonical ref; account/workspace collision and unsupported kind fail closed without loss of raw quarantined input.",
+      "missingPrerequisite": "Accepted WP-02 typed schema and applied entity/alias migration.",
+      "state": "missing"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "ProjectMembershipStore is a pure data shape; registerExternalBinding writes Map; no WP-40 DB files exist. Spec migration at 37094-37138 declares favorite/recent_entity and domain constraints.",
+      "requiredChange": "Apply additive migrator-generated favorite/recent schema with user uniqueness, rank, revisions and entity FK; retain aliases; one authenticated shared writer and explicit local standalone adapter. Never persist title as authorization-independent source.",
+      "verification": "Reload and restart retain rows, rank, canonical refs and receipts; inspect unique row counts; backfill ambiguous aliases quarantines; post-cutover repair retains recent writes rather than destructive rollback.",
+      "missingPrerequisite": "Selected migrator, WP-02/WP-04 schema and real DB runtime.",
+      "state": "missing"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "favorite.set strict body and transport specified at 36700-36727; expectedRevision policy at 36895. Core result helpers do not execute commands.",
+      "requiredChange": "Implement SetFavorite and Reorder with current principal/policy, idempotency request hash, CAS for existing mutable aggregate, atomic receipt and event. Agree list revision semantics for concurrent reorder; preserve no-content-write favorite policy.",
+      "verification": "Retry same key returns same receipt/revision/event; changed payload same key conflicts; stale reorder conflicts without lost updates; forged actor, wrong workspace, nonfinite rank/additional body fields and unsupported schema reject.",
+      "missingPrerequisite": "Accepted WP-04 command gateway and supplemental Reorder contract.",
+      "state": "missing"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "Spec apiChanges names GetRecents/ResolveDeepLink but defines no supplementary operation signatures; requires authorized pagination at 36708 and no hidden total/title at 36881.",
+      "requiredChange": "Typed principal-private favorite-list/GetRecents/ResolveDeepLink queries using canonical source and current ACL, bounded stable cursors bound to workspace/principal/policy; no cached-title or unauthorized total serialization.",
+      "verification": "A/B lists isolated, C denied; multi-page equal ranks/timestamps stable without gaps/duplicates; foreign/expired/unauthorized cursor rejected; renamed target title reflects authorized canonical read.",
+      "missingPrerequisite": "Accepted query DTOs/cursor semantics and graph policy query ports.",
+      "state": "missing"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "favorite.changed/entity.opened and revisioned replay required at 36583-36606; Rox2Event currently has optional aggregateRevision/correlation but no policy epoch/watermark.",
+      "requiredChange": "Transactional outbox plus accepted inbox/event delivery; principal-private delivery for favorite/opened metadata; epoch/tombstone-aware invalidation and cursor replay, rename invalidation from existing entity.updated stream.",
+      "verification": "Duplicate/drop/reorder event injection, consumer crash after claim and cursor gap recovery; one applied revision; stale events cannot restore revoked title; second device converges and outsiders receive no private viewed history.",
+      "missingPrerequisite": "WP-04 event/inbox and WP-05 projection replay ports with WP-03 policy fence.",
+      "state": "missing"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "Entity.permissions is explicitly a capability catalog at platform-contract.ts:598-609; binder permissionMode is not resource ACL. Spec authority at 36587-36590 is server principal plus policy.",
+      "requiredChange": "Derive actor from transport, enforce workspace/target read and actor-owned favorite/order write policy, recheck linked refs and revoked epochs. Never interpret agent allow-all or project readability as target grants.",
+      "verification": "Owner/member/viewer/editor/guest/outsider matrix, body actor forgery, workspace mismatch, revoked cursor/subscription and agent allow-all denial; target viewer may favorite only under explicitly accepted metadata policy, not inferred content edit grant.",
+      "missingPrerequisite": "WP-03 accepted resource-action vocabulary and actor-private metadata policy.",
+      "state": "missing"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "Rox2Permission includes share/publish; requiresExplicitGrant at 579-590 treats them sensitive. WP-40 itself defines no share operation.",
+      "requiredChange": "Verify favorite/view/open does not grant access, modify inheritance or share actor-private lists; resolve links under existing grant/public-link expiry policy. Use common sharing mechanism rather than introducing favorite-specific grants.",
+      "verification": "Favorite or copied deep link cannot open for C; expired/revoked public-link input denies without title; inherited project visibility cannot expose private target. Verify existing share behavior for supported destination kinds.",
+      "missingPrerequisite": "Accepted common sharing/public-link adapters and receipt coverage. Not treated as N/A.",
+      "state": "missing"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "WP-06 explicit dependency provides authorized projection/watermark; test-plan.md:210 requires current ACL and deletion. Core identity/title types alone do not index entities.",
+      "requiredChange": "Reuse canonical entity search projection for favorites/deep links across four kinds; no independently searchable stale favorite title cache. Integrate rename/delete/revoke with common extractor/watermark and preserve actor-private metadata privacy.",
+      "verification": "Search/open four kinds after rename watermark, then revoke before index catches up and assert no PRIVATE_WP-40 title/snippet; tombstone removes target and crash replay does not resurrect it.",
+      "missingPrerequisite": "WP-06 receipt plus accepted search adapters for Company/event/call, beyond its named Page/Task baseline.",
+      "state": "missing"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "ROX2_RELATION_RULES.mentions at platform-contract.ts:382 allows cyclic any-kind links; no extraction/occurrence implementation in inspected seams.",
+      "requiredChange": "Use common canonical resolver for mention-target open of favorite-supported kinds, preserving source revision/occurrence and target ACL. Favorite itself must not synthesize mention edge or implicit access; do not implement second extractor.",
+      "verification": "Mention opens same canonical target after rename/alias mapping; denied target remains redacted; editing/deleting occurrence removes common backlink without deleting favorite/entity; source revision remains correct.",
+      "missingPrerequisite": "Lead supplies common mention integration/interface and scenario receipt; not an added direct DAG edge or N/A.",
+      "state": "missing"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "WP-40 events are favorite.changed/entity.opened; spec provides no notification implementation. Test-plan.md:212 requires recipient policy/dedup/seen/done/mute/snooze.",
+      "requiredChange": "Verify common notification deep links use same resolver and privacy policy; actor-private favorite/open events must not create unrelated recipient notifications. Preserve existing recipient/dedup/seen/done/mute/snooze behavior rather than adding an attention store.",
+      "verification": "Existing authorized notification opens renamed canonical entity; revoked target title absent; duplicate favorite/replay cannot duplicate notification or leak viewed history; existing seen/done/mute/snooze survives restart.",
+      "missingPrerequisite": "Common attention handler integration and durable notification receipts supplied by lead; no N/A claim.",
+      "state": "missing"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Rox2Event includes actor/causation/correlation/aggregateRevision at platform-contract.ts:131-141; private history specified at work-packages.json:37129.",
+      "requiredChange": "Record favorite.changed/entity.opened through common event/audit system with actor/cause/revision and principal-scoped private delivery. Do not broadcast recent viewing or denied metadata on shared activity feed.",
+      "verification": "Inspect authorized audit/event readback correlation and exactly-once state transition; outsider activity feed and logs lack PRIVATE_WP-40 or viewed-history data after revoke/replay.",
+      "missingPrerequisite": "Accepted outbox/activity DTO and privacy/recipient policy.",
+      "state": "missing"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Rox2Context binds IDs/revisions with permissionMode at platform-contract.ts:143-156; visibleContextEntityRefs filters readable set. No agent command registration is in this packet's affected paths.",
+      "requiredChange": "Expose graph domain operations/context via existing agent host domain dispatch, acting as transport principal with same policy/receipt and source refs/revisions/provenance. Purge denied binding metadata; allow-all never bypasses ACL.",
+      "verification": "Agent reads/sets only its own authorized favorites/recents and opens four-kind context; outsider and revoked actor denied; allow-all denial, source revision/provenance and stale watermark are deterministically asserted, not judged by prose answer.",
+      "missingPrerequisite": "Lead-supplied exact agent domain registration, WP-06 context and applicable WP-50 provenance receipts.",
+      "state": "missing"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Spec declares POST /v1/workspaces/{workspaceId}/commands/favorite.set and domain.favorite.set at 36705-36708; neither exists in missing service artifacts.",
+      "requiredChange": "Register HTTP and native RPC through same graph handler and strict schema; existing MCP/agent exposure must call same domain port rather than direct DB/native store. Agree supplementary query routes without inventing them as existing.",
+      "verification": "Compare HTTP/native/agent results and denial/error/receipt identity on same idempotent command; forged actor rejected at transport boundary, unauthorized query cannot leak title/total.",
+      "missingPrerequisite": "Transport composition and accepted additional route/dispatch contracts; exact MCP applicability receipt, not blanket N/A.",
+      "state": "missing"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "WP-40 at 36632-36642 requires commandId, causationId, correlationId, aggregateRevision, policyEpoch, projectionWatermark and retry/DLQ; Rox2Event provides only some optional fields.",
+      "requiredChange": "Propagate all accepted command/event/policy/projection identifiers through existing structured telemetry; measure replay lag/retries/DLQ and privacy-filter errors; log no raw email/body/transcript/tokens or denied title.",
+      "verification": "Correlate command->receipt->outbox->projection watermark across crash/retry; force retry/DLQ and assert counters with absence of private marker/secrets in logs and unauthorized telemetry endpoints.",
+      "missingPrerequisite": "Common telemetry/event schema and live replay worker.",
+      "state": "missing"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "tests/macro-integration/wp-40.test.ts missing; spec verification at 37206-37237 names runner, seed 20260970, title-cache mutation and independent holdout.",
+      "requiredChange": "Create normative behavior suite covering four-kind favorite/open, alias/collision, privacy, reorder concurrency, persisted receipt recovery and event controls using real accepted service contract; no source-text/wiring-only substitutes.",
+      "verification": "Future bun test tests/macro-integration/wp-40.test.ts plus relevant existing package tests; then actual changed surface. Baseline assertions must pass before revoked-title-cache and unauthorized/drop/duplicate seeded mutations fail specific assertions; preserve independent holdout and seed/failure history.",
+      "missingPrerequisite": "Wave0/dependency acceptance, real runtime fixtures, native harness and evaluator. No tests run during this preflight.",
+      "state": "missing"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "implementation-plan.md:810-826 is proposed WP-40 plan; test-plan.md:189/197-247 supplies completeness/evidence protocol.",
+      "requiredChange": "Update these existing normative sections after proof with behavior, limits, supplemental contracts, native destinations, authority, privacy, alias migration and operational retry/conflict/recovery; reference tested implementation revision.",
+      "verification": "Lead reviews documentation against accepted signatures and actual scenario receipts; no fabricated verified status, provider capability or migration timestamp.",
+      "missingPrerequisite": "Implemented accepted contracts and revision-bound observations.",
+      "state": "missing"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "Spec errors at 36883-36893 and statuses at 36900-36909; core queued/live helpers have different status shape and default unverified results.",
+      "requiredChange": "Map authentication/permission/workspace/payload/revision/idempotency/provider/schema/fence errors into existing surface states; distinguish stale/missing/denied/retryable/unavailable/ambiguous/quarantine, never render applied_verified from queued/unknown or fixture result.",
+      "verification": "Inject each reachable error, stale alias, service timeout and pending fence; assert correct terminal/retry recovery and preserved draft/rank, no cached denied title and no false success; outbound-specific statuses require capability evidence rather than fake provider calls.",
+      "missingPrerequisite": "Accepted result/error mapping and existing surface state renderer paths.",
+      "state": "missing"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "Spec UI includes loading at 36596; no renderer inspected; binder cannot represent asynchronous loading itself.",
+      "requiredChange": "Use existing surface asynchronous state for initial loading/refresh/stale projection; do not show true empty or verified state while policy/canonical resolution is pending.",
+      "verification": "Delay query and watermark; inspect initial/refresh loading and focus stability in actual native UI; no transient stale denied-title flash on revoke.",
+      "missingPrerequisite": "Existing favorite/detail caller state paths and runnable UI.",
+      "state": "missing"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "Spec UI includes empty/permission_denied at 36597-36598; queries must omit hidden totals/titles at 36881.",
+      "requiredChange": "Differentiate authorized empty actor list from denied/unavailable/unconfigured/deleted target using privacy-safe states; no hidden total used to explain an empty list.",
+      "verification": "New actor zero favorites/recents, filtered denied list, deleted alias, unconfigured service and offline unavailable each produce correct existing surface state without title/count leakage.",
+      "missingPrerequisite": "Accepted query outcome DTOs and surface state mapping.",
+      "state": "missing"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Spec requires offline_queued and offline/reconnect; implementation-plan.md:84-102 assigns durable projection/outbox/cursor to WP-05.",
+      "requiredChange": "Queue favorite/reorder through existing accepted client outbox, persist original idempotency/revision and reconcile receipt after reconnect; reject/quarantine revoked queued request without updating canonical projection; keep standalone local-authority regression explicit.",
+      "verification": "Offline favorite/reorder -> client restart -> reconnect applies once; service crash after commit before reply -> retry same receipt; revoke while offline rejects and old cursor/event cannot rehydrate title. Existing personal standalone behavior remains usable.",
+      "missingPrerequisite": "WP-05 accepted replay adapter and WP-51 applicable authority/fence coverage.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Negative-control unauthorized actor or dropped/duplicated event must fail acceptance",
+      "currentEvidence": "work-packages.json:36613-36616 and 37224-37227 explicitly require boundary/event negative controls and independent second variant.",
+      "requiredChange": "Add meaningful oracle for unauthorized title exposure, missing canonical update after event drop and duplicate mutation after replay; distinguish gap recovery that correctly repairs drop from permanent lost update.",
+      "verification": "Baseline passes; seeded permission bypass or permanently lost update causes named assertion failure, duplicate event never creates duplicate canonical favorite. Infrastructure failure is not caught mutation. Independent evaluator exercises undisclosed second variant.",
+      "missingPrerequisite": "Runnable accepted baseline and independent evaluator; no mutation executed in preflight.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Restart between persisted command and reply keeps state/receipt/canonical ID consistent",
+      "currentEvidence": "work-packages.json:36617-36620 explicitly requires persistence-recovery; composite idempotency and event_delivery constraints at 37116-37126.",
+      "requiredChange": "Same transaction persists favorite/rank/history state, request hash receipt and outbox; post-restart retry returns prior outcome rather than recomputing canonical ID or repeating event. Consumer lease claim remains distinct from processed ACK.",
+      "verification": "Kill after DB commit before HTTP/native reply; restart, retry same idempotencyKey and assert identical receiptId/requestHash/canonical ID/revision, one favorite row and event; kill consumer after claim and verify replay/inbox recovery.",
+      "missingPrerequisite": "WP-04 accepted transaction/inbox machinery and live process recovery harness.",
+      "state": "missing"
+    },
+    {
+      "criterion": "Live surface and failure/reload verification gate; fixture is not live receipt",
+      "currentEvidence": "work-packages.json:36673/37229-37236 and test-plan.md:241-247 require actual UI/API/DB/event artifacts and implementation/source revision identifiers.",
+      "requiredChange": "Lead binds all successful and failed observations to delivered revision/dirty patch/schema/runtime and evidence hashes; distinguish implemented, verified and delivered. No feature completion claim from this report.",
+      "verification": "Retain screenshots/ARIA, typed API readback, canonical ID+revision, DB unique count, receipt, event/watermark and seeded failure trace against exact tested version after all material integration changes.",
+      "missingPrerequisite": "Complete implementation, accepted dependent receipts and actual exercised runtime. Forbidden in preflight.",
+      "state": "missing"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_ENTITY_KINDS; Rox2Entity; Rox2Event; Rox2Context; Rox2CanonicalResult", "lineStart": 17, "lineEnd": 167, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "formatRox2EntityId; parseRox2EntityId; Rox2EntityRef; formatRox2ExternalBindingKey; parseRox2ExternalBindingKey; registerExternalBinding", "lineStart": 218, "lineEnd": 370, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_RELATION_RULES; wouldCreateRelationCycle; normalizeRox2Result; liveResult; isClaimableLive; authorizeRox2Action", "lineStart": 380, "lineEnd": 609, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/project-membership.ts", "symbol": "ProjectMembershipStore; linkEntityToProject; unlinkEntityFromProject; entityIdsForProject; portfolioEntityIds; visibleProjectsForEntity", "lineStart": 13, "lineEnd": 187, "sha256": "c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path": "packages/core/src/rox2/surface-context.ts", "symbol": "bindSurfaceContext; visibleContextEntityRefs; sameContextSnapshot; rebaseLiveContext; requiresContextGrant", "lineStart": 18, "lineEnd": 96, "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path": "packages/core/src/conation/soup/types.ts", "symbol": "SoupEntityConcreteType; SoupEntity.isFavorited/viewerPermission/frecencyScore", "lineStart": 14, "lineEnd": 52, "sha256": "bb030fb5bfa8bebd40fb317bbca05a684720fc8cee1c57f090df43ecce6a6cd9"},
+    {"path": "plans/macro-integration/work-packages.json", "symbol": "workPackages WP-40 complete normative record", "lineStart": 36536, "lineEnd": 37263, "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-40; shared domain module ownership", "lineStart": 810, "lineEnd": 826, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-04/WP-05/WP-06 durable command, replay and authorized projection prerequisites", "lineStart": 65, "lineEnd": 121, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/21-implementation-plan.md", "symbol": "WP-51/WP-52 writer/fence and shared runtime bootstrap", "lineStart": 1020, "lineEnd": 1055, "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path": "docs/macro-integration/22-test-plan.md", "symbol": "Favorites/deep links regression gate; mandatory full completeness; invariant suites; evidence/completion record", "lineStart": 179, "lineEnd": 245, "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead consumes this preflight; no implementation work is authorized for this worker.",
+    "afterPrerequisites": "After wave0 commit and accepted WP-02/WP-03/WP-06 receipts, compare inspected hashes with integrated source, read changed graph interfaces and obtain exact existing native destination/caller and legacy URL grammar mappings. The single graph integration owner accepts supplementary DTOs/routes and principal-private policy, then extends WP-02 graph files; WP-40-specific worker contributes the selected additive migration and behavior/recovery test. Reuse accepted WP-04/WP-05/WP-51 ports; integrate native surface via lead-owned exact callers before live verification.",
+    "verificationHandoff": "Root runs dispatch verification_argv for this report; future implementation runs normative bun test runner and actual native four-kind/failure/restart scenarios only under lead authorization."
+  },
+  "risks": [
+    "Three normative graph artifacts overlap WP-02; independently creating them would replace registry/policy mechanisms or create conflicting writers.",
+    "AffectedFiles is not sufficient to deliver UI/HTTP/native/agent behavior: all three core files are pure. Exact caller/registration paths are an explicit lead integration prerequisite, not guessed paths in this report.",
+    "Supplementary Reorder/GetRecents/ResolveDeepLink signatures, favorite-list query and viewed-event command are unspecified; body-only primary schema cannot satisfy the entire feature.",
+    "Current result triad differs from normative wire status enum and wire required status/receiptId is weaker than prose receipt obligations. Preserve receipt/readback verification and do not treat queued/fence/ambiguous as success.",
+    "Rox2EntityRef optional revision/accountNamespace is not the command expectedRevision or resource ACL. isRevisionedEntityRef requiring account namespace must not become an incorrect requirement for native favorites.",
+    "Project membership permits only session/note/task member-of and filters project readability, not entity ACL. Supporting Company/event/call favorites must not widen membership or leak indirectly through project queries.",
+    "Soup is read-only and isFavorited/frecencyScore/viewerPermission are remote read fields. They are not an authorized write API or a durable actor-private local/server store.",
+    "In-memory binding map handles unambiguous encoded/raw keys but is not persisted alias import or legacy URL routing. Reject ambiguity rather than inventing title/path or account-less fallback.",
+    "Private recent history may leak through entity.opened realtime/activity/search/logs even if favorite query titles are redacted. Subscriber/recipient/privacy policy must be principal-scoped.",
+    "Same-rank reorder races require stable tie-break and per-user ordering CAS; per-entity revisions alone may not protect a whole reordered list.",
+    "Revoke can remove future read/delivery but cannot make previously received plaintext unread retroactively. Acceptance requires no continuing title exposure from app-controlled cache/serialization after revoke, not an impossible erasure guarantee.",
+    "Search dependency WP-06 goal names Page/Task; four-kind Company/event/call search/context coverage needs accepted adapters and receipt rather than assumption.",
+    "Cross-cutting sharing/mentions/notifications/agent requirements remain missing until actual common-path verification; absent producer edges are not permission to silently declare N/A or write duplicate subsystems.",
+    "Working tree may change under root integration. All source references are hash-bound inspected evidence, not claims of current HEAD or accepted dependency completion.",
+    "Proposed migration identifier must be assigned by the selected migrator; aliases and post-cutover recent writes must survive recovery. No destructive rollback or fabricated SQL timestamp."
+  ]
+}

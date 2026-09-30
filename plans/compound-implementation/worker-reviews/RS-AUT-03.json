@@ -1,0 +1,295 @@
+{
+  "task_id": "RS-AUT-03-preflight",
+  "attempt_id": "b8cec6976e6e4affff981af536a274ef",
+  "packet_hash": "0ba798e960aaa25146803cfe50147510d05fe0ce6cf6e324bf1be457a504908a",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-AUT-03",
+  "featureComplete": false,
+  "dependencies": ["RS-AUT-01", "RS-AUT-02"],
+  "scope": {
+    "mode": "inspect-only; write owned report",
+    "tier": "bounded-workflow",
+    "reason": "One preflight artifact, source inspection and dependency handoff; no feature implementation.",
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/RS-AUT-03.json",
+    "implementationStartGate": "Lead wave0 commit plus accepted RS-AUT-01 and RS-AUT-02 receipts, followed by source/hash revalidation and an implementation packet.",
+    "inspectionBoundary": "Published package specification, its exact manifest entry, named automation seams, automation-local tests and direct imports. No broad workspace-service or renderer exploration.",
+    "notPerformed": ["product/source/test/manifest/progress changes", "Git operations", "builds", "tests", "native UI", "network operations"]
+  },
+  "evidenceFreshness": {
+    "inputRevisionMeaning": "Revision supplied by dispatch; no Git command was used to assert current HEAD or a clean tree.",
+    "sourceSnapshotMeaning": "Whole-file SHA-256 hashes measured from the inspected working tree, which may contain lead-owned uncommitted changes; not asserted to be committed at input_revision.",
+    "staleness": "Not known stale at inspection, but concurrent root integration can invalidate any source reference. Rehash and reread changed sources after wave0 before applying requests. No coherent committed-source snapshot or behavioral PASS is claimed.",
+    "specHashMatchesPacket": true,
+    "manifestHashMatchesPacket": true,
+    "discoveryLimitations": [
+      "Codegraph returned no .codegraph index; used read/grep/glob without indexing.",
+      "Scoped find for existing verification seams failed because its judge backend returned HTTP 402; used local filename glob and literal grep/read instead. Its no-hits result is not evidence of absence.",
+      "glob found no packages/shared/src/automations/runtime-contracts.ts and no apps/workspace-service; tests/rox-suite exists but the proposed automations test paths were not found. These are current path observations, not claims about other stores or authorities elsewhere in the repository.",
+      "Renderer/command registry/migration/ACL index paths are outside the inspected seams and were not guessed. Lead must provide their exact foundation interfaces and shared-file owners."
+    ]
+  },
+  "foundationGates": [
+    {
+      "gate": "Workspace command/event authority and Postgres module host",
+      "explicitDagEdge": false,
+      "specEvidence": "docs/rox-suite/published/RS-AUT-03.md:45-53",
+      "currentEvidence": "AutomationSystem.loadConfig/reloadConfig use workspace automations.json; history-store appends JSONL. Proposed apps/workspace-service directory is absent in the scoped glob.",
+      "requiredReceipt": "Lead identifies the accepted common workspace service, server-derived session actor/workspace/policy, command/schema registration, typed results, operationId/expectedRevision enforcement, Postgres transaction and migration ownership. Supply run/node/effect/outbox/lease schema and fenced transaction API before runtime integration.",
+      "reasonSeparate": "Published domain authority is required but no foundation package is listed in this package's two explicit dependencies. Do not invent a DAG edge or establish an automation-only authority."
+    },
+    {
+      "gate": "Canonical event producer and createTask command",
+      "explicitDagEdge": false,
+      "specEvidence": "docs/rox-suite/published/RS-AUT-03.md:29-35,51,79",
+      "currentEvidence": "types.AppEvent and event-bus.EventPayloadMap have no email.received; AutomationAction has no createTask. BaseEventPayload lacks canonical event id, actor, EntityRef, policyEpoch and causation.",
+      "requiredReceipt": "Accepted email.received outbox envelope and task-domain command with workspace-scoped operation dedupe/readback; identify real event and task providers. Supply entity references, publication correlation and authorized effect adapter."
+    },
+    {
+      "gate": "Grants, revocation and common entity integrations",
+      "explicitDagEdge": false,
+      "specEvidence": "docs/rox-suite/published/RS-AUT-03.md:30,51-57,80,87",
+      "currentEvidence": "AutomationMatcher.permissionMode configures prompt sessions, not canonical execution-principal grants. WorkspaceEventBus.PermissionModeChange is local metadata, not evidence of policyEpoch revocation enforcement.",
+      "requiredReceipt": "Common EntityRef/grants API, current-policy check before every resumed effect, revoke subscription/cache invalidation, ACL-aware links/search/mentions and activity-to-notification outbox adapter shared by UI/RPC/IPC/MCP/provider/agent. Approval resume must use current grants rather than captured authorization."
+    },
+    {
+      "gate": "Provider idempotency and unknown-effect reconciliation",
+      "explicitDagEdge": false,
+      "specEvidence": "docs/rox-suite/published/RS-AUT-03.md:25,30-41,51,81,89,104",
+      "currentEvidence": "RetryScheduler.pendingAcks is memory-only; its comments explicitly permit at-least-once refiring across process restart. RetryQueueEntry.id is random/time-based and is not a stable external operation receipt.",
+      "requiredReceipt": "Effect adapter declares dedupe/readback capabilities; stable logical effect operationId survives attempts, distinct attempt IDs identify retries, uncertain outcome is reconciled before repetition. Real external provider lane/readback required, without claiming exactly-once provider guarantees."
+    },
+    {
+      "gate": "Existing canvas/history owners and platform evidence lanes",
+      "explicitDagEdge": false,
+      "specEvidence": "docs/rox-suite/published/RS-AUT-03.md:5,21-43,85,89-94",
+      "currentEvidence": "graph.ts describes metadata projection, not node execution. No renderer source was inspected under this worker's boundary.",
+      "requiredReceipt": "Accepted AUT-01/AUT-02 canvas/inspector/history interfaces and exact renderer patch owners; approved Linux domain/renderer and native Electron evidence lanes, seeded real provider data where effects are external, migration/rollback and independent reviewer. Do not add a second history or canvas."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/automations/runtime-contracts.ts",
+    "apps/workspace-service/src/modules/automations/workflow-runtime.ts",
+    "apps/workspace-service/src/modules/automations/workflow-worker.ts",
+    "tests/rox-suite/automations/recovery.spec.ts"
+  ],
+  "newFileContributionPlan": [
+    {
+      "path": "packages/shared/src/automations/runtime-contracts.ts",
+      "change": "Define version-discriminated compiled workflow contracts, immutable publishedRevision and node inputs, canonical event/occurrence references, executionprincipal scopes/budget, WorkflowRun, NodeAttempt, effect receipt, replay cursor/checkpoint, typed command results and diagnostics. Represent queued/running/waitingapproval/succeeded/failed/cancelled/unknown separately from executionMode/lifecycle/verification. Condition uses typed yes/no/error ports; DateTimeHelper has explicit input/timezone/outputformat; Wait/Approval carries deadline/resumecondition. Import canonical EntityRef and policy contracts from accepted authority, do not redeclare them."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/automations/workflow-runtime.ts",
+      "change": "Extend the single automation runtime through accepted authority: register workflow.publish/start/cancel/resume/reconcile, freeze compilation per publishedRevision, atomically dedupe canonical event/occurrence and create persisted run, commit node/checkpoint/effect transitions through fenced transactions. Recheck principal grants/budget at effects and resumes; preserve cancellation distinction between pending and already-started writes. Reconcile unknown effects and allow selected failed idempotent-step retry rather than whole-graph replay. Query persisted attempts for existing history/canvas."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/automations/workflow-worker.ts",
+      "change": "Use common lease/outbox authority for claim, heartbeat, fencing and recovery. Consume canonical authorized event/occurrence intents at least once, resume persisted checkpoints, compute scheduling with shared cron preview semantics, carry stable effect operationId across attempt IDs, and persist actionable deadletter reasons. Never acknowledge durable delivery merely because WorkspaceEventBus.emit returned; never use JSONL or memory-only generation as distributed authority."
+    },
+    {
+      "path": "tests/rox-suite/automations/recovery.spec.ts",
+      "change": "Behavioral scenarios against real accepted authority: email.received -> DateTimeHelper -> Condition -> createTask with duplicate delivery and worker crash; DST preview/runtime equality; stale fence rejection; paused approval revocation; unknown effect readback; legacy equivalence and unsupported graph diagnostics. Seed broken dedupe/fence/policy controls and require rejection. Bind expected/observed outputs to migrations and tested revision. No tests executed in this preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "symbol": "AUTOMATION_GRAPH_VERSION; AutomationGraph; AutomationGraphNode; AutomationGraphDecisionNode; AutomationGraphEdge; AutomationsConfig; AppEvent",
+      "change": "Replace single-version graph assumption with explicit v1/v2 discriminated contracts while retaining v1 semantics; introduce executable scheduler/datetime/typed condition/wait/approval/effect node contracts and typed branch ports by referring to runtime-contracts.ts. Keep v1 decision metadata-only; do not silently reinterpret expression. Add a canonical event adapter only after producer envelope receipt; email.received must not be an unvalidated arbitrary local event string. Keep published workflow definition separate from mutable draft and legacy config.version.",
+      "reason": "Current graph version is literal 1, graph is authoring metadata, and there are no durable run/attempt/effect contracts or canonical email trigger. Numeric config version and graph version are distinct."
+    },
+    {
+      "path": "packages/shared/src/automations/schemas.ts",
+      "symbol": "AutomationGraphNodeSchema; AutomationGraphEdgeSchema; AutomationGraphSchema; SaveAutomationGraphPayloadSchema; AutomationsConfigSchema",
+      "change": "Add strict discriminated v1/v2 schema dispatch and diagnostics for unsupported versions, node kinds and branch ports; validate DateTime timezone/input/output, Scheduler cron, Wait/Approval deadline/resumecondition, immutable publish contract and command revision/idempotency payloads through accepted shared command schemas. Preserve legacy unknown-action acceptance where required by existing contract, but reject unsupported v2 executable content explicitly. Do not run new canonical event names through the legacy unknown-event filtering path.",
+      "reason": "Current graph schema accepts only literal version 1 and decision.expression; legacy config schema warns and ignores unknown event types, which would lose a canonical trigger."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "compileAutomationGraph; compileGraph; isFlowNode; detectCycles; projectAutomationsToGraph; buildAutomationGraphSave; automationGraphRevision",
+      "change": "Dispatch by graph semantic version: preserve current v1 matcher/action projection and diagnostic behavior; compile v2 executable plan with typed branches, immutable inputs, complete cycle/reference validation and explicit unsupported-version errors for publication. Keep baseRevision optimistic draft saves and unknown root-field preservation; use authority-owned publishedRevision/expectedRevision for command writes rather than the FNV authoring revision as a policy/publication token. Provide verified legacy migration and rollback without installing a parallel executor in this module.",
+      "reason": "isFlowNode excludes decision; compileGraph rejects branching and only produces linear prompt/webhook actions. FNV revision explicitly is not a security token."
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystemOptions; createHandlers; startScheduler; loadConfig; reloadConfig; dispose",
+      "change": "Inject the accepted workflow-runtime authority adapter into this existing facade; select v1 compatibility or v2 execution once per definition so a canonical intent never triggers both paths. Keep existing optional knowledge/meeting/page scheduling mechanisms intact. Bridge schedule occurrences and domain events to persisted authorized workflow commands, with persisted run queries for current history. Configuration reload changes drafts/future publications only, never a running plan. Dispose releases only owned subscriptions/timers/leases and leaves checkpoints recoverable.",
+      "reason": "Current facade owns handlers and a minute scheduler and reads live config; blindly adding a second engine risks dual execution and loss of immutable run semantics."
+    },
+    {
+      "path": "packages/shared/src/automations/event-bus.ts",
+      "symbol": "BaseEventPayload; EventPayloadMap; WorkspaceEventBus.emit",
+      "change": "Add a typed bridge for accepted canonical event envelope and run/attempt correlation as needed by existing subscribers; keep this bus a local notification surface. The durable worker must consume/ack the authoritative outbox before or separately from local emit and must not let emit's rate-limit dropping or swallowed handler errors mark canonical delivery successful. Preserve existing rate-limit behavior for legacy local events rather than treating it as a durable queue.",
+      "reason": "emit drops over-limit events and catches handler errors yet returns void; payload has no outbox identity or policy epoch."
+    },
+    {
+      "path": "packages/shared/src/automations/cron-matcher.ts",
+      "symbol": "matchesCron",
+      "change": "Extract/reuse explicit-instant cron occurrence computation using the existing croner dependency for both v2 runtime and next-five preview, with explicit timezone and declared DST skipped/repeated local-time behavior. Preserve legacy matchesCron current-minute predicate through that implementation; persist occurrence identity from workflow publication/schedule and actual occurrence instant, not process-local tick arrival.",
+      "reason": "Current matchesCron constructs Cron and uses new Date internally, so runtime replay and UI preview cannot share an explicit clock/occurrence contract."
+    },
+    {
+      "path": "packages/shared/src/automations/retry-scheduler.ts",
+      "symbol": "RetryQueueEntry; RetryScheduler.enqueue; tick; pendingAcks; isStale",
+      "change": "After the common durable effect authority is accepted, route v2 workflow effects exclusively through its retry/checkpoint/fenced operation API; prevent this legacy JSONL queue from replaying v2 effects. For any legacy queue migration, import rows transactionally into that same authority with migration receipts and rollback and route each migrated row once. Keep legacy compatibility behavior for unmigrated v1 rows until an approved migration, without presenting random retry IDs or in-process generation as distributed fences.",
+      "reason": "Existing queue explicitly is single-process and can refire after restart; v2 dedupe/crash acceptance cannot be met by retaining pendingAcks as authority. Scope is a cutover boundary, not a new independent queue."
+    },
+    {
+      "path": "packages/shared/src/automations/history-store.ts",
+      "symbol": "appendAutomationHistoryEntry; compactAutomationHistorySync; compactEntries",
+      "change": "Make existing history integration consume/query canonical persisted v2 WorkflowRun/NodeAttempt/effect receipts with exact attempt IDs and redacted diagnostics; JSONL may remain legacy compatibility/export, not a second v2 write authority. Keep v1 retention and ensure compaction cannot delete v2 recovery checkpoints or effect dedupe receipts. Lead must map this adapter to the existing history query owner supplied by dependency receipts.",
+      "reason": "Current append is a per-process mutex-protected JSONL write; compaction drops malformed and old rows grouped by parsed.id. It cannot hold durable v2 leases or recovery authority."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.test.ts",
+      "symbol": "automation graph compiler describe block",
+      "change": "Retain existing consumer-visible SchedulerTick roundtrip, unknown legacy-action protection and cyclic/dangling-path regression cases. Add v1-to-v2 migration equivalence, explicit version rejection and typed branch validation only where they catch real behavior; keep unsupported legacy data from being silently erased during save.",
+      "reason": "Actual existing tests assert these invariants; new compiler semantics must preserve them, not repin incidental copies or source text. Tests were inspected but not run."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "AC1: email.received -> DateTimeHelper -> Condition -> createTask; one task after duplicateevent and workercrash.",
+      "specLines": "79",
+      "currentEvidence": "types.AppEvent:15-28 and AutomationAction:219-225 lack canonical email/createTask; graph.compileGraph:385-488 has no executable DateTime or branch; retry-scheduler.test.ts:300-334 explicitly expects a fresh request after restart.",
+      "seams": ["EventPayloadMap", "compileAutomationGraph", "proposed workflow-runtime.ts / workflow-worker.ts"],
+      "requiredChange": "Atomically dedupe canonical envelope to one published-revision run, persist DateTime output and yes/no/error selection, and execute accepted createTask command with stable workspace-scoped effect operationId. Recover from both pre-effect and post-effect/pre-ack crashes through receipts/readback without whole-graph irreversible replay.",
+      "verification": "Future integrated recovery.spec.ts and real scenario: publish seeded workflow, deliver same canonical email twice, crash/restart worker around task commit, query authoritative task and run/node/effect receipts; exactly one task and a consistent resumed run. Repeat crash before dispatch and after dispatch before persisted completion.",
+      "missingPrerequisite": "Wave0 + accepted AUT-01/02; common Postgres/outbox/leases, canonical mail producer and idempotent task command/readback.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "AC2: DST recurrence preview equals runtime; stale worker fence cannot commit; approval revoked whilepaused blocks next effect.",
+      "specLines": "80",
+      "currentEvidence": "cron-matcher.matchesCron:25-55 uses implicit current clock; SchedulerService.tick:58-86 emits minute-local payload without occurrence identity; RetryScheduler.isStale:276-278 is only an in-memory generation; permissionMode on AutomationMatcher is not a server policy epoch.",
+      "seams": ["matchesCron", "AutomationSystem.startScheduler", "proposed workflow-worker.ts", "proposed runtime-contracts.ts"],
+      "requiredChange": "Use same explicit-time timezone/DST occurrence computation for preview and scheduling, persist deterministic occurrence IDs, require lease fence in every run/node/effect state transaction, persist approval checkpoint/deadline and check live authorization before next effect.",
+      "verification": "Enumerate next five occurrences and actually execute at those instants across spring gap and autumn overlap; compare UTC instants/occurrence IDs. Lease to worker A then advance lease/fence to B: A completion must be rejected without advancing run/receipt. Pause approval, revoke grant, resume: typed denied state and no next provider write.",
+      "missingPrerequisite": "Accepted scheduling UI contract and chosen explicit DST semantics; authority lease/fence API and revocation/approval command semantics.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "AC3: Legacyautomation roundtrip remains equivalent; graph cycle/version unsupported fails with explicitdiagnostic, unknown external effect reconciles.",
+      "specLines": "81",
+      "currentEvidence": "graph.test.ts:32-35 asserts legacy SchedulerTick roundtrip; :70-81 protects unmappable legacy actions; :123-140 asserts cycle/dangling errors. AutomationGraphSchema:350-354 is v1-only; graph decision is metadata-only. RetryScheduler has no persistent unknown-effect reconciliation.",
+      "seams": ["compileAutomationGraph", "projectAutomationsToGraph", "buildAutomationGraphSave", "AutomationGraphSchema", "proposed workflow.reconcile command"],
+      "requiredChange": "Keep v1 semantics and verify migration/rollback equivalence; add explicit v2 compiler version/branch diagnostics while validating cycles for all executable v2 nodes. Persist unknown effect after uncertain dispatch, read provider receipt/object before retry and distinguish unresolved from failed/succeeded.",
+      "verification": "Legacy load/project/save/reload yields equivalent matcher/action outcomes including conditions and unmappable-action refusal; v1 and v2 cyclic graphs and unsupported version return typed actionable diagnostics. Real provider timeout after successful write then reconcile confirms existing object without duplicate write; unavailable readback stays unknown/actionable.",
+      "missingPrerequisite": "Migration authority and version contract, canonical effect adapter/provider readback, real provider verification lane.",
+      "state": "PARTIAL_SOURCE_BASELINE_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD1: UI/routing/input/output/help/keyboard/state contracts; loading/empty/error/denied/retry available and checked.",
+      "specLines": "21-43,85",
+      "currentEvidence": "AutomationGraphDecisionNode is metadata.expression; graph.save produces config, not persisted attempts. No renderer evidence was gathered and no accepted renderer interface is supplied in this preflight.",
+      "seams": ["AutomationGraphNode/Edge", "SaveAutomationGraphPayloadSchema", "proposed WorkflowRun/NodeAttempt read contracts", "existing AUT-01/AUT-02 canvas/history surface, exact renderer symbols pending lead receipt"],
+      "requiredChange": "Render persisted queued/running/waitingapproval/succeeded/failed/cancelled/unknown node states and progress on existing canvas/history; exact-attempt drilldown, source/freshness help, Scheduler cron/timezone/next-five, DateTime input/timezone/output, typed Condition branches, Wait/Approval deadline/resumecondition. Draft edits cannot affect current run. Cancel previews pending/started effects and reconciles unknown writes; retry selects failed idempotent step. Russian i18n in all ten locales, keyboard-accessible hover/focus/click help, non-color status, inherited theme/font, opacity/transform motion 120-160ms and reduced-motion, drawer below 1100px and single pane/back below 800px. Exercise all loading/empty/error/denied/retry states.",
+      "verification": "Future Linux renderer interaction and actual Electron screenshots/ARIA/computed font: navigate existing route, keyboard traverse inspectors/history, hover/focus/click help, open exact attempt, edit draft during run, cancel/retry, test 1099/799px boundaries and reduced motion. Expected/observed state must match persisted attempt, not aggregate inference.",
+      "missingPrerequisite": "Accepted AUT-01/AUT-02 renderer seams and exact shared owners; run query/revocation contracts; authorized Linux/Electron lanes. Renderer symbol locations deliberately not invented.",
+      "state": "NOT_VERIFIED_NO_UI_INSPECTION"
+    },
+    {
+      "criterion": "DoD2: Persistence/reload, meaningful negative case, concurrency/reconnect where applicable; N/A justified in receipt.",
+      "specLines": "45-53,86",
+      "currentEvidence": "AutomationSystem.loadConfig/reloadConfig read JSON; history-store uses local mutex; RetryScheduler queue survives restart but pendingAcks do not. Durable graph run/node/effect/outbox/lease state is not present in these seams.",
+      "seams": ["AutomationSystem.loadConfig/reloadConfig/dispose", "RetryScheduler.tick", "appendAutomationHistoryEntry", "proposed workflow-runtime.ts/workflow-worker.ts"],
+      "requiredChange": "Persist immutable run and attempt/checkpoint/effect state in common Postgres transaction authority; fence concurrent claims and preserve recoverable waits across restart; restore exact history/canvas from queries after reconnect, without mutating running plans on draft reload. Add meaningful denied/stale/unsupported negative outcomes. None of persistence/concurrency/reconnect is N/A for this distributed runtime.",
+      "verification": "Restart service and reload renderer mid-run/mid-wait, reconnect subscriber, redeliver event and race two workers; compare persisted revision/attempt/checkpoint and task/effect receipt before/after. Reject stale expectedRevision and stale fence with no mutation.",
+      "missingPrerequisite": "Postgres schema/migrations, shared command/outbox lease host, query/subscription owner and dependency receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD3: Common grants, links, search, mentions, activity, notification and agent policy for new domain entity.",
+      "specLines": "53-57,87",
+      "currentEvidence": "AutomationMatcher.permissionMode governs prompt sessions. BaseEventPayload lacks canonical actor/EntityRef/policyEpoch. Local event bus and JSONL history are not evidence of common entity index/ACL/notification integration.",
+      "seams": ["BaseEventPayload/EventPayloadMap", "AutomationSystemOptions authority adapter", "proposed runtime-contracts.ts and workflow commands"],
+      "requiredChange": "Use canonical EntityRef and server-derived actor/workspace/policy on definition/run commands. Integrate read/write/share across UI/RPC/IPC/MCP/provider/agent, preview without effects, revoke writes/subscriptions/caches, ACL-aware links/search/mentions and shared activity/outbox-to-notification dedupe. Return typed denied errors; do not add separate index or notification engine.",
+      "verification": "Future allow/deny and grant-revoke scenarios through every exposed entrypoint: forged renderer actor cannot elevate access; unauthorized run lookup/link/search/mention does not leak entity; revoked paused run cannot write; prohibited cache/subscription is removed; redelivered activity produces one notification; agent preview produces no effect.",
+      "missingPrerequisite": "Exact common authority/entity-index/subscription/notification adapters and shared integration owners from lead; no foundation source beyond scoped imports was inspected.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD4: Targeted tests + seeded broken control rejected; existing route/authority regression passed.",
+      "specLines": "88",
+      "currentEvidence": "Existing graph tests cover true roundtrip, unmappable legacy actions and cycle diagnostics; retry tests show same-process ack protection versus process-restart refiring. No test or runtime scenario ran in this worker.",
+      "seams": ["graph.test.ts automation graph compiler block", "retry-scheduler.test.ts recovery cases", "proposed tests/rox-suite/automations/recovery.spec.ts"],
+      "requiredChange": "Implement deterministic real-authority recovery/fencing/revocation scenarios and retain consumer-visible legacy regression cases. Seed broken dedupe/fence/policy controls in isolated verification fixtures and require they fail acceptance. Exercise existing automation route and authority rather than treating static tests as runtime proof.",
+      "verification": "Lead runs targeted graph/retry/cron/conditions compatibility tests and new recovery spec after integrated implementation, observes seeded controls rejected, then exercises unchanged existing automation route and common command authority; archive exact logs and expected/observed outputs.",
+      "missingPrerequisite": "Implemented integrated revision, accepted migrations/fixtures, enabled test/domain lanes and root authorization to run them. Current preflight explicitly prohibits tests.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD5: Linux domain/renderer evidence; real Electron screenshots/ARIA/theme/font after UI changes; provider lane for actual external effects.",
+      "specLines": "43,89,94",
+      "currentEvidence": "Static code inspection only. No Linux run, renderer run, Electron launch, screenshot, ARIA/font inspection or provider request was performed.",
+      "seams": ["proposed recovery.spec.ts", "existing canvas/history surface supplied by dependencies", "accepted effect adapter and run/attempt queries"],
+      "requiredChange": "Collect separate actual Linux domain and renderer, native Electron, and real external provider evidence for the integrated behavior. Bind UI evidence to persisted run/attempt truth and exact artifact/revision. Do not replace provider receipts with mocked echoes or claim screenshots prove recovery.",
+      "verification": "Domain crash/restart/fence runs on Linux; renderer behavior/denied states; Electron screenshots and keyboard/ARIA/theme/computed Rox font checks; provider readback of actual created task and uncertain-effect reconciliation. Only lane outcomes actually executed may be PASS.",
+      "missingPrerequisite": "Lead-owned integrated revision and configured separate runners/native desktop/provider lane. This preflight permits none of these executions.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD6: Source commit, exact diff, logs/hashes, expected/observed, migration/rollback and independent review; no screen-only acceptance.",
+      "specLines": "90",
+      "currentEvidence": "Dispatch supplies input revision; matching specification/manifest digests and inspected whole-file source hashes are recorded. No implementation diff, committed delivery, runtime logs or review receipt exists in this report.",
+      "seams": ["buildAutomationGraphSave versioned save/migration boundary", "AutomationSystem.loadConfig/reloadConfig", "history-store/retry-scheduler cutover", "proposed authority runtime"],
+      "requiredChange": "Lead supplies exact committed implementation revision/diff and versioned schema/data migration plus rollback for definition/history/queue cutover; attach hashes/logs and expected/observed for every acceptance case and independent review of authority, fencing and effect recovery. Revalidate any source changed by concurrent wave0 work.",
+      "verification": "Future isolated migration/reload/rollback on legacy fixtures preserves behavior and pending effects without duplicates, followed by revision-bound lane evidence and independent review acceptance. Never accept UI without persisted mechanism evidence.",
+      "missingPrerequisite": "Wave0 and dependency receipt acceptance, implemented source revision, migration owner/rollback protocol, reviewer and verification receipts.",
+      "state": "PREFLIGHT_HASH_EVIDENCE_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Additional mandatory input/output/authority contract: immutable published workflow, stable effect identity, redaction, dedupe/correlation, resume/deadletter.",
+      "specLines": "29-35,45-53,104",
+      "currentEvidence": "AutomationGraph is authoring metadata; AutomationGraphRevision is FNV optimistic revision; RetryQueueEntry contains matcherId/action/timestamps but no publication/principal/fence/receipt/replay cursor. Event handlers catch and log untyped errors.",
+      "seams": ["automationGraphRevision/buildAutomationGraphSave", "BaseEventPayload", "RetryQueueEntry", "proposed runtime-contracts.ts/workflow-runtime.ts/workflow-worker.ts"],
+      "requiredChange": "Canonical outbox id/actor/entityRef/policyEpoch/causation and schedule occurrenceId enter immutable publishedRevision run. Persist replay cursor, principal scopes/budget and correlated node/effect receipt with separate attempt IDs and stable logical effect operationId, redacted logs, distinct executionMode/lifecycle/verification, resume checkpoint and actionable deadletter. At-least-once delivery is deduped, not advertised as exactly-once provider behavior. Each mutation carries operationId/expectedRevision and uses server session authority.",
+      "verification": "Inspect persisted correlated receipts after duplicate delivery/restart and denied resume; attempt forged actor/stale revision, exceed configured budget, induce failed/unknown effect and deadletter, assert diagnostics contain reason/correlation but no provider secrets. Published plan and active run stay unchanged after draft save.",
+      "missingPrerequisite": "Canonical shared event/principal/command contracts, transaction schema, publication/migration protocol and provider capability receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-AUT-03.md","symbol":"Acceptance criteria / Definition of Done / domain authority","lineStart":21,"lineEnd":90,"sha256":"0d42c0105cecb110427e045272de9237e996f4ee29bf0a2981ce316f7b76b1a8"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-AUT-03 normative record","lineStart":259,"lineEnd":290,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem constructor/loadConfig/reloadConfig","lineStart":80,"lineEnd":195,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.startScheduler/stopScheduler","lineStart":380,"lineEnd":408,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/event-bus.ts","symbol":"BaseEventPayload","lineStart":24,"lineEnd":31,"sha256":"1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path":"packages/shared/src/automations/event-bus.ts","symbol":"WorkspaceEventBus.emit","lineStart":236,"lineEnd":291,"sha256":"1878c95dd48fdba1a9ffb165051e2e944a47c4151e8c54461fb3501c4de69ecb"},
+    {"path":"packages/shared/src/automations/retry-scheduler.ts","symbol":"RetryScheduler single-process invariant","lineStart":1,"lineEnd":26,"sha256":"c6a88847a789eeeee3734770c3d307b8869cfc17a1d23db0931df41a8d7bf1d9"},
+    {"path":"packages/shared/src/automations/retry-scheduler.ts","symbol":"RetryScheduler.tick/isStale","lineStart":159,"lineEnd":278,"sha256":"c6a88847a789eeeee3734770c3d307b8869cfc17a1d23db0931df41a8d7bf1d9"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AutomationMatcher/AutomationGraphDecisionNode/AutomationGraph/AutomationsConfig","lineStart":274,"lineEnd":432,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"compileGraph/detectCycles","lineStart":359,"lineEnd":489,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"buildAutomationGraphSave","lineStart":538,"lineEnd":562,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"AutomationGraphSchema/SaveAutomationGraphPayloadSchema/AutomationsConfigSchema","lineStart":312,"lineEnd":388,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/shared/src/automations/history-store.ts","symbol":"appendAutomationHistoryEntry","lineStart":31,"lineEnd":74,"sha256":"8b9140ff67ddecc119259288b5c5c5ea29c3ee0f7fcf66252a13d2b13d3730df"},
+    {"path":"packages/shared/src/automations/history-store.ts","symbol":"compactEntries","lineStart":143,"lineEnd":204,"sha256":"8b9140ff67ddecc119259288b5c5c5ea29c3ee0f7fcf66252a13d2b13d3730df"},
+    {"path":"packages/shared/src/scheduler/scheduler-service.ts","symbol":"SchedulerService.tick","lineStart":58,"lineEnd":87,"sha256":"5929b7ccb1b7d1e37167fa036aa09b66bc5e50a8d20c257315adb08459177f57"},
+    {"path":"packages/shared/src/automations/cron-matcher.ts","symbol":"matchesCron","lineStart":25,"lineEnd":57,"sha256":"63f4abdaf5ac77d36d0048ca708031966d2b8962915ccc45affb977ddb16f3b9"},
+    {"path":"packages/shared/src/automations/utils.ts","symbol":"matchesBasePredicate/matcherMatchesWithContext","lineStart":146,"lineEnd":183,"sha256":"637691787219160e83082366a96e3a9ff7519b51ebdf4b824fcfa755e1b3a262"},
+    {"path":"packages/shared/src/automations/graph.test.ts","symbol":"roundtrip and unmappable legacy action behavior","lineStart":31,"lineEnd":82,"sha256":"62f28211cd8b9518209cdbf8a84ec7f62909876924f203d54bcd2cd999114f6d"},
+    {"path":"packages/shared/src/automations/graph.test.ts","symbol":"dangling and cyclic executable path rejection","lineStart":123,"lineEnd":140,"sha256":"62f28211cd8b9518209cdbf8a84ec7f62909876924f203d54bcd2cd999114f6d"},
+    {"path":"packages/shared/src/automations/retry-scheduler.test.ts","symbol":"same-process ack protection / process-restart at-least-once behavior","lineStart":264,"lineEnd":336,"sha256":"bb538efa115595536b5ce5bfdcff665acf454ffd12542e11b87538d5b1d135f4"}
+  ],
+  "nextExecutableAction": "Lead may immediately review this artifact and resolve named foundation owners/interfaces. Do not implement RS-AUT-03 yet: first obtain lead wave0 committed revision and accepted RS-AUT-01/RS-AUT-02 receipts; then revalidate these whole-file hashes, map exact common authority/renderer/migration/provider seams, and dispatch an implementation packet beginning with runtime-contracts.ts plus strict versioned schema/compiler integration. Apply shared patches through their one-writer owners before wiring runtime/worker and running acceptance lanes.",
+  "risks": [
+    "Dispatch depends_on is empty for independent preflight scheduling, but normative implementation dependsOn remains exactly RS-AUT-01/RS-AUT-02; empty dispatch must not authorize premature implementation.",
+    "Published baseline commit 249b3b44220bcfbd7d467de9cfc18f76e1c37807 differs from supplied input revision and live tree. Source hashes, not historical links, bind this inspection; concurrent lead changes require reread.",
+    "Decision.expression and matcher condition gating are not executable typed graph branches; merely changing visual nodes or enabling flow edges will not meet acceptance.",
+    "Legacy automations config.version can be 2 while graph.version is 1; do not conflate config format with executable graph semantic version.",
+    "WorkspaceEventBus silently drops over-limit events and swallows handler exceptions, so returned emit completion cannot acknowledge an authoritative outbox event.",
+    "RetryScheduler.generation/pendingAcks protect a single process only; post-effect crash and process restart can duplicate non-idempotent external writes unless canonical receipt/readback drives recovery.",
+    "Fencing local DB commits alone cannot undo a provider write already started by a stale worker; provider operation dedupe and unknown reconciliation must remain explicit.",
+    "History retention compacts old/malformed JSONL rows. Making these rows recovery/dedupe authority would lose required state and create false completion.",
+    "Unspecified DST repeated/skipped wall-time semantics can make preview disagree with runtime or collide occurrence IDs. Agree the contract and use the same explicit-instant computation.",
+    "Captured permissionMode or approval does not survive revoked grants; resumed effects require current server policy, cache/subscription invalidation and budget checks.",
+    "Canonical email producer, task authority, Postgres host, renderer seams and platform/provider receipts are hidden gates in the published specification. Do not add substitute stores/surfaces or mark full-domain integration N/A.",
+    "Cancel/abort cannot imply an external effect was undone; selected-step retry cannot default to replaying all irreversible nodes.",
+    "Current dependency acceptance status is not independently known; implementationStatus PLANNED_NOT_IMPLEMENTED and this preflight are not feature completion evidence."
+  ],
+  "verification": {
+    "performed": ["Static source/spec inspection", "Read-only whole-file shasum -a 256; specification and manifest hashes match dispatch"],
+    "behavioralVerification": "NOT_RUN_BY_SCOPE",
+    "packetVerifier": "Not executed in this preflight; lead retains acceptance verification using supplied verification_argv.",
+    "featureAcceptance": "NOT_VERIFIED"
+  }
+}

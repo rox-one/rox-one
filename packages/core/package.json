@@ -31,7 +31,13 @@
     "./platform/session-apply": "./src/platform/session-apply/index.ts",
     "./research": "./src/research/index.ts",
     "./rox2": "./src/rox2/index.ts",
-    "./meetings": "./src/meetings/index.ts"
+    "./meetings": "./src/meetings/index.ts",
+    "./docs": "./src/docs/index.ts",
+    "./docs/*": "./src/docs/*",
+    "./bases": "./src/bases/index.ts"
+  },
+  "dependencies": {
+    "yaml": "^2.8.2"
   },
   "peerDependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.258",

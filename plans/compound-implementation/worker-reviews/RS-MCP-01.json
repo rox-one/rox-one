@@ -1,0 +1,351 @@
+{
+  "task_id": "RS-MCP-01-preflight",
+  "attempt_id": "56ce9ed84e0798cbd7b27644c60c8c40",
+  "packet_hash": "04167756a41e457d3ad44a4e60d091d8a5ae15f8ef9040de527eee674a843bf5",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-MCP-01",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-ADM-01"],
+  "evidenceScope": {
+    "source": "Actual working-tree bytes, not a claim that all inspected bytes belong to input_revision. Root-owned uncommitted wave0 changes are preserved.",
+    "specManifestMatches": true,
+    "codegraph": "Unavailable: project has no .codegraph index. Used bounded read/grep/glob instead; did not index.",
+    "runtime": "NOT_RUN: builds, tests, native UI and network forbidden for this preflight. Verification descriptions below are future acceptance work, not observed results.",
+    "freshness": "Whole-file SHA256 values bind inspected sources. Any subsequent integration drift invalidates affected references and requires rereading/rebinding before implementation. Input lineage must remain unchanged."
+  },
+  "foundationGates": [
+    {
+      "ids": ["WP-01", "WP-02", "WP-03", "WP-07", "WP-36", "WP-37"],
+      "source": "docs/rox-suite/published/RS-MCP-01.md:13,99",
+      "requirement": "Published architecture prerequisites and existing Revision2 authority contracts must have accepted implementation receipts. These are hidden foundation gates, not additional explicit dependsOn entries.",
+      "state": "NOT_VERIFIED",
+      "missingPrerequisite": "Lead-provided accepted receipts and exact callable/exported Revision2 authority interfaces. This bounded inspection does not establish the implementation status or individual purpose of each WP."
+    },
+    {
+      "ids": [],
+      "source": "docs/rox-suite/published/RS-MCP-01.md:13,54,75-79",
+      "requirement": "Remote identity and resource gateway mandatory before shared enablement; authenticated actor is transport-side and the same current-policy enforcement applies to Sessions, Pages, API/MCP, jobs and replay.",
+      "state": "NOT_VERIFIED",
+      "missingPrerequisite": "Verified actor binding, resource authorization, organization principal/group scope, policyEpoch invalidation and cross-surface gateway contracts; safe-mode naming and credential leases are not substitutes."
+    },
+    {
+      "ids": [],
+      "source": "docs/rox-suite/published/RS-MCP-01.md:52-71,77,99",
+      "requirement": "Consume canonical EntityRef/Principal/ProviderConnection, durable revision/command ledger/outbox, shared projections and one-owner routes/contracts/migrations/transport/i18n; do not implement duplicate foundation stores or an extra MCP pool.",
+      "state": "NOT_VERIFIED",
+      "missingPrerequisite": "Wave0 commit, accepted canonical migration/authority/projection contracts, owner-assigned shared integration patches and event consumer registrations."
+    },
+    {
+      "ids": [],
+      "source": "docs/rox-suite/published/RS-MCP-01.md:115,130-133",
+      "requirement": "Linux domain/renderer, source-pinned macOS native IPC/font/device and provider-live lanes, independent review and revision-bound artifacts remain completion gates.",
+      "state": "NOT_RUN",
+      "missingPrerequisite": "Authorized implementation verification lanes, synthetic principals/resources, a real scoped provider adapter and exact tested implementation commit. No live-operation authorization exists for this worker."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/connections/CapabilityCatalog.tsx",
+    "packages/shared/src/workspace-domain/capabilities/contracts.ts",
+    "apps/workspace-service/src/modules/capabilities/commands.ts",
+    "apps/workspace-service/src/modules/capabilities/queries.ts",
+    "apps/workspace-service/migrations/capabilities.sql",
+    "tests/rox-suite/mcp-capabilities.spec.ts"
+  ],
+  "newFilePresence": "All six normative target paths returned Path not found in bounded glob inspection. This is not a claim that every capability-related implementation elsewhere is absent. These are future normative outputs, not files this preflight worker may create.",
+  "proposedContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/capabilities/contracts.ts",
+      "change": "Define CapabilityDescriptor, CapabilityVersion, CapabilityGrant and ConsumerBinding references using accepted canonical EntityRef/Principal/ProviderConnection; typed capabilities.list/read, capability.grant/revoke and tool.preview/invoke requests/results. Include version/schemaHash/effect, resource/principal scopes, purpose/expiry/revision, asOf, commandId, receipt/outcome and policy revision. Accept no renderer actor or credentials. Model domain states separately from unchanged Rox2Status enums. Preview binds canonical args, target refs, source/schema and current policy into previewHash."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/capabilities/queries.ts",
+      "change": "Implement authorized cursor list/read against canonical persistence: filter by text/provider/state/effect only after current resource policy, redact denied titles/count/schema/examples and return authorized asOf/version/provenance. Discovery reconciles current pool/provider metadata without granting permission or copying secret payloads; adapter discovery failure is degraded/needs_auth, not empty."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/capabilities/commands.ts",
+      "change": "Implement revision-checked grant/revoke and preview/invoke through the accepted authority gateway. Grant preview yields no active permission; Apply returns a durable receipt. Invoke validates pinned schema/args and previewHash before provider, intersects actor/resource/connection/capability scopes, deduplicates commandId with durable command ledger, invokes existing pool via adapter, distinguishes local_durable/provider_accepted/readback and unknown_provider_outcome, and reconciles without blind replay of uncertain writes. Revoke advances policyEpoch, retracts projections/definitions and cancels active calls only where supported. Register discovered/version_changed/grant_changed/revoked and invocation_requested/completed/failed through commit-bound outbox. Required background reconciliation/expiry/refresh consumes accepted job/event mechanisms; registration patches remain lead-owned."
+    },
+    {
+      "path": "apps/workspace-service/migrations/capabilities.sql",
+      "change": "Add capability_descriptors(providerConnectionId,externalToolId,version,schemaHash,effect) with Unique(providerConnectionId,externalToolId,version), and capability_grants(resourceScope,principalScope,purpose,expiry,revision), canonical IDs/workspace ownership and accepted connection/binding linkage. Use existing secret authority and command ledger/outbox, no new secret storage. Migration numbering/aliases/runner registration and upgrade transaction conventions require foundation owner approval."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/connections/CapabilityCatalog.tsx",
+      "change": "Implement one searchable capabilities table/detail/drilldown consumed by Connections and SourceInfo/Admin links: version/input-output schema/effects/scopes/principals/purpose/expiry/audit/asOf; explicit draft Availability/Apply receipt, read-only fixture check with Cancel, preview separate from dispatch and revision-checked revoke summary. Preserve filters, selection/scroll and scoped drafts across errors/navigation, invalidate forbidden drafts on policy changes. Use existing React shell/native controls/tokens/preferences and t() only; truthful unsupported/degraded/offline/unknown states and full keyboard/help/narrow/zoom/reduced-motion behavior."
+    },
+    {
+      "path": "tests/rox-suite/mcp-capabilities.spec.ts",
+      "change": "Cover all five normative conformance scenarios and end-to-end Configure→preview→agent invoke→reload→revoke across Sessions/Pages, API equivalents, denied metadata, org/private target scope, schema drift, concurrency/reconnect and seeded guard removal. Fixture registry tests do not substitute for real provider-live execution. Permanent assertions must observe behavior/persisted output rather than wiring/source text."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+      "symbol": "TABS; ConnectionsPage; confirmGrant; confirmRevoke; confirmUnbind",
+      "change": "Add localized Capabilities/Инструменты within this existing surface, render CapabilityCatalog from typed connection/capability navigation state rather than a separate app, and consume the accepted authenticated capabilities client. Retain existing connection fabric create/import/test flows. Availability/revoke drafts use purpose/expiry/principal refs and expectedRevision, Apply is separate from preview, and success only follows receipt; unavailable backend stays disabled with a reason.",
+      "reason": "Existing tabs at line32 exclude capabilities; grants at336-370 are connection consumer/actions/resources, not principal/resource capability grants. Local tab state at70 does not support capability deep links."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+      "symbol": "SourceInfoPage; loadTools; buildToolsData; MCP Tools/Permissions sections",
+      "change": "Reuse the single catalog/detail for SourceInfo Доступ, join source slug to canonical ProviderConnection/EntityRef via accepted mapping, load authorized descriptors/provenance rather than treating McpToolWithPermission.allowed as effective resource access, and refresh/retract when policy changes. Keep source editing and source-auth errors separate; preserve unsaved scoped drafts rather than resetting them on unrelated source push.",
+      "reason": "loadTools at256-279 is existing typed loading/error seam; buildToolsData at140-146 reduces tools to allowed boolean; onSourcesChanged at293-322 overwrites edit drafts. Existing ToolsDataTable is not organization ACL or grant administration."
+    },
+    {
+      "path": "packages/shared/src/agent/session-tool-defs.ts",
+      "symbol": "SessionToolDefBuildOptions; buildSessionToolDefs",
+      "change": "Add an accepted-authority authorized definition snapshot/context seam and use it before adding MCP source proxy definitions and before lens filtering. Keep name dedup, browser gate, mini model description and host bash behavior. Route both OMP single-frame and Pi separate-frame registration through the same authorized metadata filter; lead must migrate backend callers and connect policy epoch refresh, not just this builder.",
+      "reason": "At87-92 every pool definition is advertised without actor/resource context; Pi bypasses pool composition by design and applyMcpLens at102-104 is presentation only. Names, descriptions and schemas must not leak denied metadata."
+    },
+    {
+      "path": "packages/shared/src/agent/source-policy.ts",
+      "symbol": "SourceActionPolicyDecision; evaluateApiEndpointPolicy; evaluateMcpToolPolicy",
+      "change": "Preserve existing read-only/approval classification as a secondary action policy. Compose accepted authenticated resource/connection/capability policy before evaluating action approval, with typed deny/expiry/stale policy reasons enforced by all callers. Bind approval to effective effect and previewHash; GET convention or safe-mode names may never override denial. Exact gateway interface is a foundation prerequisite, not invented here.",
+      "reason": "GET is unconditionally allow at36-38 and MCP safe-mode allow at58-63 has no actor/resource/version; classifier alone cannot implement intersection authorization."
+    },
+    {
+      "path": "packages/server-core/src/pages/mcp-executor.ts",
+      "symbol": "PagesMcpExecutorDeps; createPagesMcpExecutor returned invocation function",
+      "change": "Require trusted server-resolved actor/capability/version/commandId/receipt context from the PageActionBroker-to-gateway boundary and execute through the same typed invoke command as Sessions/API/jobs. Recheck current policy after credential refresh and before dispatch; validate args/version/preview, persist idempotency/outcome through command authority, and propagate AbortSignal/cancellation. Retain source usability, token refresh cooldown, existing pool, fresh build and result ceiling; no renderer-supplied actor.",
+      "reason": "Current invocation at55-56 carries only sourceSlug/toolName/args and signal, and98-100 directly calls pool; broker validation described in header must remain, but is not evidence of capability current-policy conformance."
+    },
+    {
+      "path": "packages/server-core/src/workgraph/create-grant.ts",
+      "symbol": "CreateConnectionGrantKernel; createConnectionGrant",
+      "change": "Adapt accepted capability grant command to reuse connection lookup/bindConsumer/credential broker and audit. Link canonical capability and consumer binding IDs, include resource/principal/purpose/expiry/revision checks, await authority durability and emit a receipt/event only after durable state/outbox. Reconcile broker activation failure explicitly rather than claiming a distributed transaction across broker/provider. Coordinate canonical persistence and broker changes with their owners; no duplicate grant/secret authority.",
+      "reason": "At29-55 binding, broker grant and audit are sequential; returned bindingId/grantId at57 is not a command receipt and carries no revision/expiry/commandId."
+    },
+    {
+      "path": "packages/shared/src/mcp/mcp-pool.ts",
+      "symbol": "McpClientPool.getProxyToolDefs; McpClientPool.callTool; onToolsChanged",
+      "change": "Preserve pool as transport/discovery cache, not a second authorization store. Expose immutable source/tool/version/schema metadata needed by the canonical adapter, integrate authorized registry snapshots and refresh on policy epoch independently of connection sync. Ensure public invoke entrypoints cannot bypass the accepted authority gateway; enforcement context or internal-only transport boundary must be finalized with lead and migrated for every caller.",
+      "reason": "getProxyToolDefs at395-416 enumerates tool cache; callTool at426-447 resolves proxy/client then dispatches with no resource authorization shown. onToolsChanged at132-133 currently documents connection sync, not grant changes."
+    },
+    {
+      "path": "packages/server-core/src/workgraph/index.ts",
+      "symbol": "ConnectionBindingRecord; bindConsumer; revokeConnectionBinding; appendConnectionAudit",
+      "change": "Provide canonical capability-to-existing-binding linkage under accepted authority, revision-checked revoke, commit-bound audit/outbox and principal/purpose/expiry metadata without inventing a parallel connection store. Lead chooses migration from existing workgraph bindings into canonical authority using accepted migration/alias contracts. Actor/command/receipt/policy correlation must come from authenticated transport, not consumerId treated as actor.",
+      "reason": "ConnectionBindingRecord at115-122 has no principal/expiry/revision. bindConsumer inserts independently at528-540; revoke deletes before audit at626-638; audit at710-725 uses system and consumer actor with null correlation/causation."
+    },
+    {
+      "path": "packages/server-core/src/workgraph/revalidation.ts",
+      "symbol": "revokeConnectionBindingAndRevalidate; revokeConnectionAndRevalidate; rotateConnectionAndRevalidate; revalidateAffected",
+      "change": "Have capability revoke/expiry/rotation share accepted policy epoch invalidation, durable receipt and registry/projection retraction while retaining credential lease revoke and affected consumer traversal. Scope capability revoke narrowly: do not revoke unrelated capabilities sharing a credential or consumer. Reauthorize current calls/replays, cancel supported provider operations and represent uncancellable outcomes honestly.",
+      "reason": "Existing binding revoke at169-181 revokes all active grants matching workspace/consumer/credential, not capability-specific grants; revalidation uses agent consumer kind and lease status, not proof of all Sessions/Pages/API/job denial."
+    },
+    {
+      "path": "packages/shared/src/credentials/fabric/broker.ts",
+      "symbol": "AccessGrant; InProcessCredentialBroker.grant; revokeGrant; acquireLease",
+      "change": "Request credential authority owner to expose awaited durable grant/revoke acknowledgments and canonical capability binding identifiers as required, preserving existing lease/resource enforcement. Purpose/expiry/principal/revision authority belongs to accepted canonical grants, not a new broker-only ACL. Update all broker consumers under owner integration; never return capability success while grant store persistence is unacknowledged.",
+      "reason": "grant/revokeGrant at88-96 discard put/revoke promises; AccessGrant at12-22 lacks purpose/expiry/principal/revision. acquireLease at124-132 does credential consumer/action/resource intersection but not organization/resource capability authorization."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.connections; ViewRoute",
+      "change": "Add a typed capability subview builder for canonical connection/{id}/capability/{id} within the existing Connections route contract, with encoded IDs and optional validated filter state. Keep bare connections. Lead route owner must resolve exact shell prefix spelling against the published subview and migrate callers/deep-link registry together.",
+      "reason": "Only bare connections builder exists at254; user acceptance requires typed contextual links/history, not local selection state."
+    },
+    {
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "symbol": "connections branches in compound parsing/building, convertCompoundToViewRoute, parseRouteToNavigationState and navigationStateToCompoundRoute",
+      "change": "Parse/build typed connection/capability details consistently in every listed branch; reject malformed extra segments/IDs instead of collapsing to root. Roundtrip capability selection plus filters, preserve bare route behavior, and route Settings/Admin/SourceInfo deep links to the same capability panel with stable history keys.",
+      "reason": "Connections details are currently discarded at290-291,620-621,839-840,1049-1050 and1526-1530. Updating one branch is insufficient."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ConnectionsNavigationState; ElectronAPI.workgraph; getMcpTools",
+      "change": "Extend ConnectionsNavigationState.details from null to typed connection/capability selection, propagate accepted shared capability request/result/event types through existing generated authenticated transport surface, and forbid renderer actor. Coordinate serialization/deep-link consumers and channel/preload registrations with transport owner; retain source discovery API for existing source flows while capability UI uses authorized domain projections.",
+      "reason": "ConnectionsNavigationState at2514-2517 has null details; workgraph grant/revoke API at974-1016 lacks versioned capability contracts; getMcpTools at1716 is source discovery. Exact channel/generated client owner paths require handoff, not guessed edits."
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "symbol": "NavigationProvider; navigate; URL-driven history and panel reconciliation",
+      "change": "Integrate the new typed capability view through existing navigate/parser/history/panel reconciliation, preserving stable keys/filters/scroll on Back/Forward and opening contextual links into the same authorized detail. No separate history/store. Parser/navigation type changes must land together with renderer host routing under lead ownership.",
+      "reason": "Imports at45-56 establish shared parser/builders and history reconciliation; existing source navigation at133-134 alone cannot open capability details."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "New capability catalog/control/state/help translation keys",
+      "change": "Shared i18n owner adds all required Russian/default labels and full hover/focus/click explanations to all ten locales, ASCII-sorted with existing plural conventions. Use t() for every user-facing string and inherit selected typography/theme without global resets.",
+      "reason": "Repository AGENTS.md requires ten-locale parity; both inspected pages already use useTranslation. This is an owner-level file-set request, not an uninspected claim about individual locale contents."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD1: UI и typed routes/history/contextual deep links работают в существующем ROX.",
+      "currentEvidence": "ConnectionsPage.TABS at32 and local tab at70; routes.view.connections at254; route-parser connections branches currently discard details; SourceInfoPage.loadTools at256-279 is reusable.",
+      "requiredChange": "Implement CapabilityCatalog; integrate existing pages plus typed routes/types/all parser conversions/history/Admin links; one panel/catalog, persisted filter/selection and narrow drilldown.",
+      "verification": "Future route registry/parser roundtrips and malformed routes; UI from Connections, SourceInfo and Admin links opens same capability; Back/Forward/reload retains IDs/filters/scroll; existing connection/source flows remain usable.",
+      "missingPrerequisite": "Committed wave0; accepted RS-ADM-01 deep-link/admin receipt; shared route/host/client owner integration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD2: Entity model, persistence/migration aliases, queries/commands/receipts и required background processing реализованы.",
+      "currentEvidence": "createConnectionGrant at11-57 and WorkGraphKernel.bindConsumer at512-541 provide connection/broker seams; six normative target files not present; spec52-71 defines required canonical entities, ledger/outbox and events.",
+      "requiredChange": "Implement contracts, canonical migration, list/read/grant/revoke/preview/invoke, unique version constraint and schema validation; bind existing consumer/credential authority; durable command receipts/outbox; discovery refresh, expiry/invalidation and unknown-outcome reconciliation through accepted job mechanisms.",
+      "verification": "Future migration upgrade/aliases and reload grants/results; stale revision conflict; concurrent duplicate discovery uniqueness; expire grant; restart pending outbox/reconcile; verify one receipt/one effect per commandId including timeout and provider rejection without fake distributed transaction.",
+      "missingPrerequisite": "Accepted WP-01/02/03/07/36/37 contracts, canonical persistence/migration/ledger/outbox/job registration interfaces and provider outcome/readback capability.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD3: Source/entity links и mentions используют общие IDs; source audience не расширяется автоматически.",
+      "currentEvidence": "SourceInfoPage is keyed by sourceSlug; createConnectionGrant uses workspaceId/connectionId/consumerId; pool uses slug/originalName. No canonical EntityRef mapping demonstrated in these seams.",
+      "requiredChange": "Reference accepted EntityRef/ProviderConnection/Principal contracts in descriptors/bindings; map slug/tool/version to canonical IDs; links/mentions reuse shared resolver and policy; org availability is explicit and cannot grant private target access.",
+      "verification": "Future source→capability link/mention resolution and reload preserve identity/version; authorized org member can discover shared capability but private target/title remains denied; link addition does not enlarge source audience.",
+      "missingPrerequisite": "Canonical ID/mapping/link/mention resolver and audience contracts from foundations and RS-ADM-01.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD4: Shared authorization/sharing/revoke покрывают UI/API/MCP/jobs/offline replay.",
+      "currentEvidence": "evaluateMcpToolPolicy at53-68 is safe-mode approval classification; createPagesMcpExecutor at54-100 directly dispatches source tool; credential acquireLease at124-132 enforces consumer/action/resource but not canonical capability ACL; revalidation existing credential revoke at70-111 and binding revoke at166-188.",
+      "requiredChange": "Use one authenticated actor/resource gateway for queries and dispatch, scope intersection and previewHash current-policy checks. Advance policyEpoch on revoke/rotation/expiry; filter definitions and metadata; reauthorize all open Sessions/Pages/API/jobs/replay; cancel supported active calls, explicitly record unsupported cancellation/outcome.",
+      "verification": "Future two-principal listing/invocation; grant→registry refresh→call→revoke→same open Session and Page retry denied; direct API/MCP/job bypass attempts denied; reconnect replay checks current policy; org membership alone cannot open private target. Seed guard removal must fail intended denial assertion.",
+      "missingPrerequisite": "Remote identity/resource gateway and trusted caller context for every transport; accepted policyEpoch and cancellation contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD5: Search/notification/activity/agent/memory projections сохраняют policy и provenance; dedup/retraction проверены.",
+      "currentEvidence": "buildSessionToolDefs at87-104 adds pool schemas with lens only; pool.getProxyToolDefs at395-416 exposes cached metadata; spec58,77-79 requires versioned events and filtered/retractable projections. Those broad foundation projections are not inspected or claimed implemented.",
+      "requiredChange": "Publish canonical capability/invocation events through commit-bound outbox; register authorized projection consumers preserving version/provenance/scope/asOf, dedup and revoke retraction. Exclude secret schemas/examples and denied title/count/body from search/push/memory; refresh Pi and OMP definitions on policy changes; notify only action-requiring changes.",
+      "verification": "Future duplicate/out-of-order events do not duplicate attention; revoke retracts title/count/definitions/search/push/memory for denied principal across reconnect; allowed principal retains permitted projection; secret sentinel absent from all projected/logged payloads.",
+      "missingPrerequisite": "Accepted shared search/attention/activity/memory/event consumers and backend registry refresh owners; precise integration paths supplied by lead.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD6: Required realtime/reconnect/persistence concurrency сценарии из tests пройдены; unavailable capability честно disabled.",
+      "currentEvidence": "pool.onToolsChanged at132-133 is connection-sync callback; SourceInfoPage.onSourcesChanged at293-322 reloads source/drafts; ConnectionsPage.classifyFailClosed at43-47 has unavailable/error; no capability epoch stream demonstrated.",
+      "requiredChange": "Wire accepted durable grant/schema/policy events and reconnect resync to catalog/registries; preserve scoped drafts and invalidate forbidden cached content. Implement explicit discovered/stale_schema/needs_auth/available/denied/preview_pending/executing/unknown_provider_outcome/revoked plus generic failure states; never equate missing backend with empty or verified success.",
+      "verification": "Future concurrent grant/revoke CAS, schema change during preview, token rotation before dispatch, out-of-order push, offline denied mutation, permitted queued replay under changed policy, reload same grant/result, provider timeout and cancellation. Unsupported backend/tool test is disabled with actionable reason.",
+      "missingPrerequisite": "Accepted realtime/policyEpoch/reconnect/offline replay service and canonical receipt persistence.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD7: Hover/focus/click help, keyboard, loading/empty/error/offline, narrow390px, zoom200%, reduced-motion verified.",
+      "currentEvidence": "Inspected pages reuse t(), native controls, Info_Section and semantic theme classes; SourceInfo tools have loading/error. Spec31-48 provides additional control/help/draft acceptance not proven by source reading.",
+      "requiredChange": "Catalog implements all six controls and definitions: provider vs connection vs capability vs permission, required scopes/asOf, explicit org scope, safe test, effect recipients/fields, invalidated preview and revoke. Hover500ms/focus brief help plus independent Что это? popover with full meaning/units-or-not-applicable/source/freshness/example/role/disabled reason; proper focus return, ring, tab order and drafts. Inherit selected font/theme; stable keys; no shell-wide overflow.",
+      "verification": "Future actual hover/focus/click at500ms; help click never mutates; / focuses search, Enter opens, Esc clears/closes/returns focus, Tab/ShiftTab and restricted roving keys; real loading/empty/filtered_empty/forbidden/error/offline/conflict; 390px/200% zoom drilldown Back and reduced-motion without spatial transitions.",
+      "missingPrerequisite": "Integrated renderer/provider states and authorized native/browser verification surface; accepted localized help keys and preferences.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD8: Linux domain/renderer lane; source-pinned macOS native для IPC/font/device; provider-live где actual adapter действует. Pending required lane оставляет feature incomplete.",
+      "currentEvidence": "createPagesMcpExecutor reuses refresh/build/pool and forwards AbortSignal at98-100; spec115 forbids registry-only proof and130 defines required lanes. No lane executed in preflight.",
+      "requiredChange": "Lead supplies runnable domain/renderer conformance, native authenticated IPC/font/device acceptance and real provider adapter scenarios using synthetic scoped resources; bind every lane to tested source revision and retain baseline/environment distinctions.",
+      "verification": "Future all five normative tests in Linux lane, integrated renderer scenario, macOS actual app route/IPC/font proof and provider-live authorized/denied invocation with independent provider readback/effect count. Any unavailable required lane retains featureComplete=false.",
+      "missingPrerequisite": "Implementation commit, provider credentials/fixtures limited to accepted scope, Linux execution destination and macOS native verification authorization.",
+      "state": "NOT_RUN_REQUIRED_LANES"
+    },
+    {
+      "criterion": "DoD9: Screenshots/ARIA и logs/hash/expected-observed предоставлены с synthetic data и exact tested commit.",
+      "currentEvidence": "Preflight records whole-file digests only. Spec107,119,131 requires runtime correlation and tested-commit artifacts; no screenshot/log runtime evidence is claimed.",
+      "requiredChange": "Capture real catalog/detail/grant/revoke/failure/390px/zoom screenshots and ARIA assertions; retain secret-free correlation logs for workspace/entity/command/receipt/event/policy revisions, metrics source/denominator and expected-observed scenario records/artifact hashes at exact tested commit.",
+      "verification": "Future independent artifact readback against tested revision: screenshots/ARIA match exercised surface, provider outcome and durable receipt match logs, secret/body sentinels absent, every required lane and failure has expected/observed result.",
+      "missingPrerequisite": "Exercised implementation and revision-bound artifact delivery owner; preflight hashes are not UI/provider proof.",
+      "state": "NOT_RUN_REQUIRED_EVIDENCE"
+    },
+    {
+      "criterion": "DoD10: Independent review, meaningful negative controls, runbook, source licensing/dependencies и user docs готовы.",
+      "currentEvidence": "Spec7,99 prohibits vendor logos/assets/source copying; spec107 requires on-call reconciliation/stale permissions/search/cache cleanup; spec115,119 demands seeded resource-guard mutant. Existing code reuse seams are known; review/runbook/license audit not performed.",
+      "requiredChange": "Independent review of scope widening/metadata leakage/schema drift/idempotency and integration. Add meaningful denied-principal/private-target/preview/version/resource guard controls and seeded mutant; document read-only tests, explicit org scope, revision conflicts, unknown provider outcome reconciliation, expiry/revoke and cache/search cleanup. Reuse project assets/dependencies and document provenance/license without assuming screenshot license.",
+      "verification": "Future green baseline then seed removal of resource guard causes intended permission assertion to fail; restore and prove green revision. Independent reviewer signs exact commit; exercise runbook against unknown outcome and stale cache; inspect user docs and dependency/license evidence.",
+      "missingPrerequisite": "Implemented integrated behavior, independent review owner, documentation/runbook destination assigned by lead and provider reconciliation capability.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD11: GitHub completion связывает implementation commit/PR и доказательства, а не только rendered screen.",
+      "currentEvidence": "plans/rox-suite/issues.json:716-739 records issue1113 OPEN, PLANNED_NOT_IMPLEMENTED and explicit RS-ADM-01; spec133,144 requires completion evidence and dependency link. No network/Git operation was performed.",
+      "requiredChange": "Lead publishes implementation commit/PR plus all accepted dependency and full-DoD lane/artifact/review receipts to issue1113; do not close based on this preflight, planning validator or one mock/rendered screen.",
+      "verification": "Future GitHub readback confirms exact commit/PR and full evidence links at complete acceptance; pending foundation/provider/native lane leaves issue incomplete.",
+      "missingPrerequisite": "Lead-authorized GitHub delivery after accepted dependencies and all DoD gates. Worker has no Git state or network write authority.",
+      "state": "NOT_RUN_REQUIRED_DELIVERY"
+    },
+    {
+      "criterion": "Normative test1: two principals allowed discovery/invoke vs denied; denied title/count absent.",
+      "currentEvidence": "pool.getProxyToolDefs has no principal argument; evaluateMcpToolPolicy has no resource actor context.",
+      "requiredChange": "Authorize list/read metadata and invocation under same effective policy before projection/provider dispatch; denied schema/title/count are absent rather than only disabling a button.",
+      "verification": "Future real authorized principal lists/reads/invokes synthetic capability; denied principal cannot discover title/count/schema or invoke through API/MCP/agent, with provider readback showing no denied effect.",
+      "missingPrerequisite": "Authenticated two-principal synthetic workspace/provider fixtures and gateway integration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative test2: grant→agent registry refresh→call→revoke→same open Session/Page retry denied.",
+      "currentEvidence": "buildSessionToolDefs composes schemas; credential revalidation exists but capability policy refresh is not demonstrated.",
+      "requiredChange": "Commit grant/revoke receipts and epoch events, refresh both backend registration paths, reauthorize already-open consumers and redact/retract stale definitions.",
+      "verification": "Future exercise same open Session and Page without restarting; first invocation succeeds and survives reload; revoke receipt followed by both retry denials, empty unauthorized metadata and no second provider effect.",
+      "missingPrerequisite": "Canonical grant authority, epoch/realtime wiring and Sessions/Pages caller migration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative test3: typed invalid args/schema version mismatch fail before provider.",
+      "currentEvidence": "Pages invocation uses Record<string,unknown> and pool.callTool dispatches cached proxy without version input.",
+      "requiredChange": "Pin toolRef/version/schemaHash at preview/invoke and validate args with accepted schema contract before dispatch; schema/source/policy/args change invalidates approval.",
+      "verification": "Future invalid required field/type and stale version/previewHash yield typed errors, preserved draft and zero provider dispatch; valid current schema succeeds.",
+      "missingPrerequisite": "CapabilityVersion persistence and schema validator/preview hashing authority.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative test4: duplicate commandId timeout one provider effect/one receipt; unknown provider outcome reconciling.",
+      "currentEvidence": "createPagesMcpExecutor and pool.callTool signatures have no commandId/ledger; createConnectionGrant return is only bindingId/grantId.",
+      "requiredChange": "Durable idempotency ledger/outbox around invoke with single-flight claims, cached receipt and explicit unknown-provider reconciliation using accepted provider idempotency/readback; never blindly retry ambiguous non-idempotent writes.",
+      "verification": "Future concurrent duplicate commandId, timeout after provider acceptance and process restart: independently observe one provider effect, one durable receipt, coherent unknown→reconciled transition; incompatible duplicate args rejected and new command works. Unsupported provider reconciliation must remain truthful unsupported/unknown, not claim the criterion passed.",
+      "missingPrerequisite": "Accepted command ledger and provider idempotency/reconciliation/readback guarantees. A ledger alone cannot guarantee exactly one external effect for a non-idempotent provider after uncertain timeout.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Normative test5 and user scenario: resource guard mutant fails; fixture registry not live proof; Configure scope→safe preview→agent invoke→reload→revoke both surfaces; org does not open private target.",
+      "currentEvidence": "Spec115-119 defines mutation control/live provider/full user scenario; source-policy safe-mode classification and typed schema presence cannot meet it.",
+      "requiredChange": "Implement full vertical scenario with read-only check fixture and separate effect-bound preview/dispatch; preserve canonical grant/result on reload; run real scoped adapter and seeded resource-guard negative control. Retain neighboring source/connection flows.",
+      "verification": "Future baseline real provider scenario passes; write tool safe-check remains unsupported with zero effect, mutated resource guard fails intended denied/private-target assertion, restored tested source passes. Revoke prevents both already-open Session/Page calls and All members remains org-only.",
+      "missingPrerequisite": "All foundations, accepted RS-ADM-01, integrated UI/domain/provider, authorized live fixture and independent mutation reviewer.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-MCP-01.md","symbol":"Architecture prerequisites; normative paths; tests; Definition of Done","lineStart":11,"lineEnd":133,"sha256":"7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues[RS-MCP-01].dependsOn/publishedSpec/implementationStatus","lineStart":716,"lineEnd":739,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/pages/ConnectionsPage.tsx","symbol":"TABS; ConnectionsPage; confirmGrant; confirmUnbind","lineStart":32,"lineEnd":370,"sha256":"3a11d3f6b27d8ced54fb8312bd2256842997a8594744b1230e2d01a5a39c0591"},
+    {"path":"apps/electron/src/renderer/pages/SourceInfoPage.tsx","symbol":"buildToolsData; SourceInfoPage.loadTools; onSourcesChanged","lineStart":140,"lineEnd":322,"sha256":"aace7e5efb2a07b053780b2727b36b2304e64df500e47c70ff2feab91aeb5960"},
+    {"path":"packages/shared/src/agent/session-tool-defs.ts","symbol":"SessionToolDefBuildOptions; buildSessionToolDefs","lineStart":34,"lineEnd":107,"sha256":"67ead826b61bdfc6e979b26fc22d6d4e07ab3c6d3c1704a2eb241678a69c9de6"},
+    {"path":"packages/shared/src/agent/source-policy.ts","symbol":"evaluateApiEndpointPolicy; evaluateMcpToolPolicy","lineStart":18,"lineEnd":68,"sha256":"7d1338f2ccf86e662f0b32ea57f3967e3e2d8d591aa01cfa5b48fbf9f7367410"},
+    {"path":"packages/server-core/src/pages/mcp-executor.ts","symbol":"PagesMcpExecutorDeps; createPagesMcpExecutor","lineStart":32,"lineEnd":110,"sha256":"b020289d401bc780595237e337fa644749c75fb557c96dafa5162fbe8e80e6c1"},
+    {"path":"packages/server-core/src/workgraph/create-grant.ts","symbol":"CreateConnectionGrantKernel; createConnectionGrant","lineStart":6,"lineEnd":58,"sha256":"ec153dc6cffdfc427693f85de7ce2c0d0e7dbaaad1d596d1dd99ebc5b40f6abe"},
+    {"path":"packages/shared/src/mcp/mcp-pool.ts","symbol":"McpClientPool.getProxyToolDefs; McpClientPool.callTool","lineStart":395,"lineEnd":450,"sha256":"75fbf4d722ee7fe83e8d459fb07e45588b7ce3377f7d91a7e6cbc381bc97c690"},
+    {"path":"packages/server-core/src/workgraph/index.ts","symbol":"WorkGraphKernel.bindConsumer; revokeConnectionBinding; appendConnectionAudit","lineStart":512,"lineEnd":727,"sha256":"854ea93532577a994b0a7a7f1221ae06cccbb18229e932016a24642afabeace3"},
+    {"path":"packages/server-core/src/workgraph/revalidation.ts","symbol":"revalidateAffected; revokeConnectionAndRevalidate; revokeConnectionBindingAndRevalidate","lineStart":44,"lineEnd":189,"sha256":"21597288c072f865cae4a7f7e95416cd2c9516674853c17c334ccf1bb054e536"},
+    {"path":"packages/shared/src/credentials/fabric/broker.ts","symbol":"AccessGrant; InProcessCredentialBroker.grant/revokeGrant/acquireLease","lineStart":12,"lineEnd":138,"sha256":"937d7a3cea18823fee97829c773573df67142e117d7441af404a89cc7ece46e9"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.connections; ViewRoute","lineStart":250,"lineEnd":254,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"connections parse/build/convert/navigation branches","lineStart":290,"lineEnd":291,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI.workgraph grant/revoke connection methods","lineStart":974,"lineEnd":1016,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ConnectionsNavigationState","lineStart":2514,"lineEnd":2517,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/renderer/contexts/NavigationContext.tsx","symbol":"NavigationContext parser/history imports and navigate contract","lineStart":45,"lineEnd":134,"sha256":"40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"},
+    {"path":"packages/server-core/src/pages/source-gate.ts","symbol":"assertPageSourceUsable","lineStart":13,"lineEnd":28,"sha256":"3af343f62f924e17a523d4e9738d0f8f6dbcfbd4ce015202f1bd213a56a126d9"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead verifies this report's packet lineage and whole-file hashes; no feature/source work by this worker.",
+    "startConditions": ["Lead commits wave0 and issues current implementation dispatch/owned path binding.","RS-ADM-01 accepted dependency receipt is available.","Published foundation prerequisites and remote identity/resource gateway are accepted, with actual exported authority/client/migration/event interfaces.","Lead assigns shared route/transport/registry/i18n/projection patch ownership and rebinds any drifted inspected files."],
+    "implementationOrder": ["Discovery/read vertical slice: canonical descriptors/contracts and migration, authorized list/read, existing catalog/typed routing, filtered agent definitions; conclude with two-principal persisted scenario and policy-safe projections.","Grants/revoke vertical slice: canonical scoped grants/preview/receipt/outbox, existing connection/broker binding, expiry/epoch/retraction/reconnect; conclude with org/private-target and open Session/Page revoke scenario.","Agent dispatch conformance vertical slice: one gateway across Sessions/Pages/API/MCP/jobs/replay, pinned schema/preview and command ledger/provider reconciliation; conclude with provider-live, duplicate timeout and resource-guard mutant controls.","Lead integrates shared patches, independently executes all required DoD lanes, delivers revision-bound artifacts/review/runbook/docs and only then links commit/PR/full evidence to GitHub completion."]
+  },
+  "risks": [
+    "Hidden foundation gates exceed the sole explicit DAG edge RS-ADM-01; admin availability alone cannot enable secure multi-user capabilities.",
+    "Tool schemas/safe-mode GET or naming conventions are not resource grants. UI filtering alone leaves dispatch bypass and denied title/count/schema leakage.",
+    "Pi advertises pool definitions separately while OMP uses this builder; changing only buildSessionToolDefs misses Pi and other pool callers. Backend migration exact paths must be supplied/inspected in the lead integration scope.",
+    "Source slug, external tool name, connection ID and canonical EntityRef/version are different identities; stable mapping and version mismatch rejection are required.",
+    "Existing grant/binding/audit operations are sequential and broker store writes are unawaited; capability receipt must not precede durability. Do not fabricate atomic external transactions.",
+    "Existing revokeConnectionBindingAndRevalidate matches consumer/credential, risking unintended revocation of unrelated capability grants; capability scope and active lease handling require precise authority semantics.",
+    "Exactly one provider effect after ambiguous timeout is not provided by a local ledger alone. Provider idempotency/readback/reconciliation support is a required adapter gate; no blind replay or fake success.",
+    "Connections route parsers currently discard details in multiple conversion branches; single-branch changes lose capability IDs on history/reload/deep links.",
+    "SourceInfo onSourcesChanged resets edit drafts; catalog reactivity must preserve allowed scoped drafts and remove denied sensitive content after revoke rather than retain it globally.",
+    "Pool disconnection returns empty cached tool list and catalog must distinguish genuine empty from needs_auth/degraded/unavailable discovery; stale_schema must invalidate previews.",
+    "Canonical Rox2Status enums must not be expanded to represent capability-specific states; provider/local/readback outcomes remain separate domain results.",
+    "Root integration can change inspected sources during preflight. Hash drift invalidates affected evidence; report does not claim HEAD/source cleanliness or an implementation revision.",
+    "No builds/tests/native UI/network were executed. All feature/runtime acceptance remains unverified and this report cannot close issue1113."
+  ],
+  "artifactVerification": {
+    "scope": "Packet lineage, report JSON fields and exact source hashes only; not feature tests or E2E proof.",
+    "plannedArgv": ["python3","plans/compound-implementation/launch-worker-pool.py","--verify","plans/compound-implementation/worker-reviews/RS-MCP-01.json","${ROX_COMPOUND_PACKET_ROOT}/RS-MCP-01/packet.json"],
+    "pythonBytecode": "Disabled for verification to prevent incidental writes outside owned artifact."
+  },
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

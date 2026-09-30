@@ -1,0 +1,356 @@
+{
+  "task_id": "RS-MTG-03-preflight",
+  "attempt_id": "bd05de03e76467c85c11c0eb0af9b6e1",
+  "packet_hash": "fc422656a0aeafc40db33e4d5d344ac52f05392c90a45715c0956287060e4cb9",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-MTG-03",
+  "featureComplete": false,
+  "mode": "inspect-only preflight; report artifact only",
+  "dependencies": ["RS-MTG-01"],
+  "dependencyInterpretation": "issues.json lines 424-426 and published specification lines 79/105 are the explicit feature DAG. Dispatch depends_on=[] applies to this preflight, not permission to implement the feature before RS-MTG-01.",
+  "evidenceScope": {
+    "tier": "bounded-workflow",
+    "source": "Read-only observations of the shared working tree, not a claim that these bytes are the committed input HEAD",
+    "specificationHashMatchesPacket": true,
+    "issuesManifestHashMatchesPacket": true,
+    "codegraph": "Attempted per-project query; tool reports no .codegraph index. No index initialization performed.",
+    "searchLimitation": "Initial descriptive find failed with provider 402. Continued using concrete specification paths, known-symbol grep, filename glob and their direct imports. No network operation initiated by this worker.",
+    "verificationExecuted": ["Whole-file SHA-256 of inspected sources and both normative inputs", "Owned JSON artifact readback"],
+    "verificationNotExecuted": ["builds", "tests", "native UI", "provider/network operations", "feature acceptance", "root launch-worker-pool receipt verifier"],
+    "staleness": "Hashes identify inspected file versions. Root wave0 may replace them concurrently. Rehash and re-read changed seams after the lead's wave0 commit and accepted dependency receipt; do not treat this report as implementation evidence for that future revision. No Git operation performed."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0",
+      "gate": "Lead wave0 commit and accepted RS-MTG-01 receipt",
+      "explicitDagEdge": false,
+      "evidence": "Worker authorization requires lead wave0 commit before implementation; RS-MTG-01 itself is the explicit dependency, while the integration commit/accepted receipt is an execution gate.",
+      "requiredReceipt": "Lead-owned committed foundation revision and accepted RS-MTG-01 delivery with route/entity/context/persistence interfaces; rebase the contribution plan on inspected post-integration source without modifying Git here."
+    },
+    {
+      "id": "FG-IDENTITY-ACL-GATEWAY",
+      "gate": "Authenticated calendar command/query authority, owned provider-account binding and common policy layer",
+      "explicitDagEdge": false,
+      "evidence": "Spec lines 48/54/56/79/84-87. meetingsApi returns direct electronAPI.meetingsLocal; local CREATE accepts renderer workspaceId. CALENDAR_BIND receives _ctx plus caller credentialsPresent, and does not implement the normative calendar gateway. Rox2EntityRef already exists.",
+      "requiredReceipt": "Root must allocate typed gateway registry and workspace calendar module, resolve actor from transport, validate workspace/account/calendar permissions and expectedRevision/policyRevision before any provider request. Do not turn direct local IPC or credentialsPresent into authorization."
+    },
+    {
+      "id": "FG-CALENDAR-PROVIDER",
+      "gate": "Verified production calendar adapter and credential vault resolution",
+      "explicitDagEdge": false,
+      "evidence": "Spec lines 13/16/38/79. CalendarAdapter exposes only listEvents; createProductionAdapter always returns UnavailableCalendarAdapter. CalendarAccount.credentialRef is an opaque pointer; environment presence is explicitly not live evidence.",
+      "requiredReceipt": "One real writable test-calendar sandbox account and adapter supporting create/get/update, conditional ETag, own RSVP, recurrence scope and authorized freebusy, with truthful per-operation capabilities and actual readback watermark. DF-07/08/09 and CAL-03 are normative targets only; this worker did not inspect their separate specifications or infer their package IDs."
+    },
+    {
+      "id": "FG-DURABLE-OUTBOX",
+      "gate": "Canonical calendar persistence, provider aliases, master/exceptions and durable original-intent reconciliation",
+      "explicitDagEdge": false,
+      "evidence": "Spec lines 50/54/58/79/86. CalendarStore is a cloned JSON bundle used by Tasks localStorage. meetings/outbox.ts is a fail-closed mail helper, not a calendar provider transaction. MeetingRepository wraps MeetingJournal, not proof of calendar Postgres authority.",
+      "requiredReceipt": "Root-owned workspace calendar module and transactional outbox schema/command receipt with crash-safe idempotencyKey+payload hash, provider operation correlation and reconciliation readback; local outage after remote acceptance must recover the same event/invitation. No second CalendarStore or browser-local authoritative calendar."
+    },
+    {
+      "id": "FG-CONATION-CONDITIONAL",
+      "gate": "Confirmed live Conation source schema if Conation is chosen as provider implementation",
+      "explicitDagEdge": false,
+      "evidence": "CONATION_LIVE_SCHEMA_CONFIRMED=false; GraphqlSoupCalendarEvent writes blocked; applyCalendarWrite uses authPresent=true but still returns blocked/denied; bindCalendarOccurrence only records a blocked reminder. Source comments identify audit #333.",
+      "requiredReceipt": "If using Conation, source SHA/license/schema, authenticated capability and verified provider GET receipt must satisfy confirmWrite. Do not flip the constant or pass fixture schema as evidence. A verified native provider adapter may serve the normative calendar contract without falsely declaring Conation live; choose route at root."
+    },
+    {
+      "id": "FG-MEDIA-OPTIONAL-CAPABILITIES",
+      "gate": "Online room provisioning, guest start/invite control, resources and check-in service readiness",
+      "explicitDagEdge": false,
+      "evidence": "Spec lines 27/31-38/79: RS-MTG-02 separately gates online room link. Resources and check-in require their own working services. These are not additional explicit dependencies in issues.json.",
+      "requiredReceipt": "Accepted RS-MTG-02/media adapter for online provisioning and capability receipts for organizer control, guest start and resource booking; check-in remains unavailable until its service exists. Disabled controls with exact reason/Connections are mandatory, not claims that those services are implemented."
+    },
+    {
+      "id": "FG-PROJECTION-AND-EVIDENCE",
+      "gate": "Common search/activity/notifications/agents and revision-bound native/provider acceptance lanes",
+      "explicitDagEdge": false,
+      "evidence": "Spec lines 58/87/90-91. Inspected MeetingsPage searches local meetings/transcripts; that is not common CalendarEvent indexing or event delivery evidence.",
+      "requiredReceipt": "Root assigns shared projection consumers and invite/notification dedup owner, then supplies actual macOS Electron/IPC and provider sandbox verification environment. Linux fixtures alone cannot close DoD."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/meetings/CalendarEventEditor.tsx",
+    "apps/electron/src/renderer/components/meetings/AvailabilityPane.tsx",
+    "tests/rox-suite/meetings/schedule-provider.spec.ts",
+    "tests/rox-suite/meetings/availability-dst.test.ts"
+  ],
+  "ownedNewFilesStatus": "Exactly the four normative proposed implementation paths at spec lines 97-100; not a grant of current write authority. Current worker owns only this JSON. Glob found both proposed components and tests/rox-suite/meetings absent. No additional implementation files invented or allocated.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "symbol": "MeetingsPage planning state, handlePlan, planning form, selectMeeting",
+      "change": "Replace two-input provider scheduling UI with CalendarEventEditor plus AvailabilityPane inside the existing Meetings destination; keep local planned meetings available and unbound until explicit event binding receipt. Pass canonical Meeting/calendar/project refs and capability/query state from accepted foundation. Save through the authenticated calendar gateway, render committed versus reconciling honestly, and refresh via common canonical event readback. Preserve existing recording/import/search and routes.view.meetings(id).",
+      "reason": "Lines 198-207 only call local api.create; lines 305-311 lack time zone, end, attendees, capabilities, availability and conflict/draft handling. Spec requires one Meetings destination, not a second Calendar app."
+    },
+    {
+      "path": "packages/core/src/calendar/types.ts",
+      "symbol": "CalendarAccount, CalendarEvent, CapabilityGap, SyncConflict, SyncJournal, CalendarBundle",
+      "change": "Extend the existing model via root-agreed typed contracts with calendar writable binding, description/location/link, verified attendees and own response/status, transparency/cancellation, civil all-day start/exclusive end, organizer capabilities, separate recurrence rule/master ref/original occurrence key/exceptions, canonical revision and normalized readback watermark; add per-operation support rather than assuming supportsRecurrence permits following. Retain account+calendar+remote ID identity and opaque credentialRef; migrate serialized bundles explicitly rather than dropping existing plans/events.",
+      "reason": "Current event has only times/title/rule/deleted/etag; availability, organizer edits, own RSVP and exception identity cannot be expressed. Conflict eventId alone is insufficient for cross-calendar collisions."
+    },
+    {
+      "path": "packages/core/src/calendar/adapters.ts",
+      "symbol": "CalendarAdapter, CalendarListPage, createProductionAdapter, UnavailableCalendarAdapter",
+      "change": "Root adapter owner adds credential-bound calendar discovery/capabilities, normalized get/readback, conditional create/update/updateOccurrence, own RSVP and authorized freebusy, each returning typed errors/outcomes and query/provider watermark. Preserve factory's never-fixture invariant; return unavailable for unverified providers and reject unsupported following before any write. Durable command/idempotency ownership stays in the gateway/outbox, not a renderer adapter call.",
+      "reason": "Interface lines 9-15 is read-only listEvents and factory lines 112-114 is always unavailable. Fixtures must not satisfy live provider lane."
+    },
+    {
+      "path": "packages/core/src/calendar/store.ts",
+      "symbol": "CalendarStore.fromJson, sync, markLocalDirty, proposeReminder",
+      "change": "Reuse the accepted root calendar authority as backing store and retain this store only in the agreed local/device/read projection role. Make dirty/conflict/event lookup fully account+calendar+event scoped; CAS+ETag reject stale organizer changes while preserving draft and provider baseline. Add explicit receipt-driven local-plan binding, scoped exception persistence and query watermarks through the root workspace module; do not implement remote write success with localDirty or localStorage. Preserve explicit reminder proposal behavior and no automatic Event-to-Task conversion.",
+      "reason": "sync is an incremental list merge only; markLocalDirty omits calendarId, proposeReminder permits account omission, and JSON bundle has no provider transaction/outbox/Meeting binding."
+    },
+    {
+      "path": "packages/core/src/calendar/occurrences.ts",
+      "symbol": "TemporalOccurrence, occurrenceFromCalendarEvent, occurrenceKey, occurrencesInRange",
+      "change": "Keep half-open range intersection and shared occurrence projection. Derive editable/permission from authorized canonical capability instead of hardcoded write; use immutable original occurrence key, never recurrence rule, for recurrenceInstance. Project reviewed master exceptions and civil all-day boundaries in source IANA zone; implement reusable domain availability/civil-time operations within the root-agreed existing calendar module/export seam, not another store. Reject gaps, require explicit fold offset and reviewed nonexistent working-hour boundaries.",
+      "reason": "Lines 58-60 use event.recurrence as instance ID and unconditionally grant write. Existing civilDateInZone formats instants only and cannot resolve gaps/folds; filter does not expand recurrence or compute availability."
+    },
+    {
+      "path": "packages/core/src/calendar/merge.ts",
+      "symbol": "eventOverlapsLocalDay, mergeTodayUpcoming, startOfLocalDay",
+      "change": "Replace next-day calculations based on start+MS_DAY with next civil boundary in the applicable zone while preserving Tasks stripe ordering and task/event separation. Use canonical source-zone all-day boundaries for availability rather than this host-local day filter.",
+      "reason": "Lines 18/31/36 add fixed 24-hour days; Berlin spring/fall acceptance would expose day-length errors. This direct calendar-store import is shared with Tasks and needs root integration rather than a private fix."
+    },
+    {
+      "path": "packages/core/src/calendar/capabilities.ts",
+      "symbol": "CALENDAR_CAPABILITIES, capabilityFor",
+      "change": "Retain provider static descriptions but gate actual account/calendar operation capabilities from verified adapter discovery, including organizer edit, own RSVP on readonly events, following, guest start/invite, provision link and resource booking. Never infer runtime permission from OAuth/allDay/recurrence static booleans.",
+      "reason": "CapabilityGap currently lacks writable calendar, freebusy, RSVP, recurrence scope and organizer/resource controls required by form and gateway."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/calendar/CalendarStatusStrip.tsx",
+      "symbol": "loadStore, persist, connect, merged event list and proposeReminder handler",
+      "change": "Preserve existing Tasks stripe/local reminders surface while making CalendarEvent reads share root calendar authority. Remove production connect's FixtureCalendarAdapter seed path and route connection/sync to verified credential-bound discovery/readback. Keep fixture injection restricted to tests. Use full scoped event identity as list key/reminder source, not remote item.id. No second Meetings localStorage calendar bundle.",
+      "reason": "Lines 58-71 mark account connected then sync a fixture. Disabled chips currently make this unreachable, but enabling a real adapter would expose synthetic success. Lines 118/123 use unscoped event ID."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/calendar/CalendarConnectorChips.tsx",
+      "symbol": "CalendarConnectorChips wired/capability handling",
+      "change": "Use verified account/operation capability and preserve disabled explanation with accessible focus/click help and Connections target. Enabling a listable provider must not imply writable calendar or freebusy readiness.",
+      "reason": "Current wired check only asks adapter availability; scheduling capabilities need stricter scope and truthful unavailable reasons."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/meetings.ts",
+      "symbol": "registered RPC_CHANNELS.meetings.CALENDAR_BIND handler; root calendar gateway integration",
+      "change": "Root owns registration of calendar.createEvent/updateEvent/updateOccurrence/event.rsvp and availability query in the existing typed authenticated registry. Use transport ctx actor, envelope workspaceId/commandId/idempotencyKey/expectedRevision/policyRevision and provider-account ownership; reject supplied actor/email authority. CALENDAR_BIND must delegate explicit receipt-based Meeting association, not blocked reminder bookkeeping. Exact registry/workspace-calendar persistence paths must be allocated by root after wave0; no guessed parallel module.",
+      "reason": "Inspected CALENDAR_BIND lines 379-384 ignores _ctx and accepts credentialsPresent. No create/update/RSVP/freebusy implementation observed in scoped calendar files."
+    },
+    {
+      "path": "packages/server-core/src/meetings/conation/calendar-calls.ts",
+      "symbol": "CalendarOccurrence, occurrenceKey, applyCalendarWrite",
+      "change": "Preserve account/calendar namespace and augment originalStart/master linkage according to canonical contract. Dispatch through verified provider route with authorized envelope/capability/ETag rather than hardcoded authPresent. Keep Conation route blocked unless live schema gate is genuinely satisfied; distinguish unsupported/denied/conflict/unknown/reconciling and provider readback.",
+      "reason": "applyCalendarWrite returns blocked or denied('not-live'); current occurrenceId has no reviewed originalStart/master semantics and does not implement recurrence writes."
+    },
+    {
+      "path": "packages/server-core/src/meetings/conation/native-shells.ts",
+      "symbol": "bindCalendarOccurrence, ReminderLedgerEntry",
+      "change": "Make explicit CalendarEvent-to-Meeting binding consume verified typed eventRef/revision/receipt while preserving local plan identity. Do not count a reminder map insertion as calendar sync, invite or notification. Route domain effects through accepted shared outbox and projections; keep unverified Conation fail-closed.",
+      "reason": "Lines 137-152 only create a blocked reminder; they do not create or read back CalendarEvent or persist Meeting association."
+    },
+    {
+      "path": "apps/electron/src/shared/meetings-local.ts",
+      "symbol": "LocalMeeting, LocalMeetingPatch, MeetingsLocalApi",
+      "change": "After accepted RS-MTG-01 schema migration, retain local meeting recordings/plans and add only root-approved typed canonical Meeting/CalendarEvent association with verified binding receipt. Do not extend local create with direct provider tokens or actor authority; existing local plan without binding remains local.",
+      "reason": "LocalMeeting lines 84-106 has no CalendarEvent/project refs or binding receipt. Local create signature only title/workspace/scheduledAt."
+    },
+    {
+      "path": "apps/electron/src/main/meetings/local-store.ts",
+      "symbol": "LocalMeetingStore.read, write, create, update",
+      "change": "Integrate accepted foundation migration/normalizer for receipt-driven canonical association while preserving device-owned audio/documents and atomic meeting.json writes. Provider writes stay in authenticated shared gateway. Prove old local plans survive reload and remain unbound until explicit command succeeds; do not title/date merge them.",
+      "reason": "Existing folder store has real atomic write persistence but no remote transaction/ETag/idempotency contract. Its create must not be mistaken for provider calendar creation."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef, entityRefFromBinding, registerExternalBinding",
+      "change": "Reuse existing calendar-event kind and binding registry; root agrees collision-safe account+calendar+remote identity encoding mapped onto these refs with workspace/revision/accountNamespace. No new identity kind/store unless the foundation contract specifically requires a model change.",
+      "reason": "Current occurrence sourceRef uses account/calendar/id; common ref additionally requires workspace/account namespace and provenance. Existing stable binding/quarantine mechanism should remain the single binding convention."
+    }
+  ],
+  "integrationRequests": [
+    "Root must name owners and exact post-wave0 paths for typed calendar gateway schema, workspace calendar module, canonical DB migrations and transactional reconciliation worker. Those files were not discoverable as existing implemented calendar seams in this scoped inspection; no guessed source path is asserted.",
+    "Use react-i18next t() for every new user-facing field/error/help string. Root-owned locale request covers packages/shared/src/i18n/locales/de.json, en.json, es.json, fr.json, hu.json, ja.json, pl.json, ru.json, zh-Hans.json and zh-Hant.json under that same directory, ASCII sorted with parity; names are supplied by repository rules, not inspected locale contents. Exact key namespace must be allocated with root to avoid shared edits.",
+    "Root owns common Search/Activity/Notifications/Agents/Memory projections, ACL/provenance and provider invitation/notification dedup, documentation/changelog and verification artifacts. No package-private duplicate surfaces or event feeds.",
+    "CalendarGrid/EventEditor are named target concepts in spec line 79, not proven existing symbols: scoped filename/symbol searches found no such implementation. Reuse the accepted root representation after wave0 rather than claiming an existing grid or allocating unlisted new files."
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: Create in test calendar, actual readback title/time/attendees, reload same ID/context",
+      "currentEvidence": "MeetingsPage.handlePlan 198-207 calls MeetingsLocalApi.create; LocalMeetingStore.create 128-133 writes only local meeting.json. CalendarAdapter 9-15 is list-only and production factory is unavailable. CalendarEvent 22-38 has no attendees/context receipt.",
+      "requiredChange": "Implement calendar.createEvent with explicit writable CalendarRef and validated payload/envelope; preserve local plan until explicit binding; provider normalized GET becomes baseline, receipt binds same canonical event ID and Meeting/Project refs across reload.",
+      "verification": "In schedule-provider.spec.ts use a real isolated writable sandbox calendar, create synthetic title/time/verified example.org attendees, GET provider event and compare all values, reload Electron and assert identical scoped eventRef/context/revision/receipt. Inject fixture adapter as negative control: it must not satisfy live assertions.",
+      "missingPrerequisite": ["FG-WAVE0", "FG-IDENTITY-ACL-GATEWAY", "FG-CALENDAR-PROVIDER", "FG-DURABLE-OUTBOX"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: Move/resize provider echo; stale ETag preserves draft and conflict",
+      "currentEvidence": "CalendarStore.sync 144-150 detects incoming etag mismatch only for localDirty; no conditional update. Meetings planning form has no end time/grid. occurrenceFromCalendarEvent hardcodes editable write.",
+      "requiredChange": "Route move/resize and editor save through calendar.updateEvent with immutable binding, expectedRevision+providerEtag; accept provider normalized echo as baseline. Conflict keeps user draft, shows original/current/attempt versions, requires reviewed new intent rather than silent overwrite.",
+      "verification": "Perform actual move then resize and GET exact provider times. Modify provider event externally, submit old ETag, assert conflict and unchanged provider state plus retained draft; background refresh must not overwrite draft. Readonly drag must not issue a provider write.",
+      "missingPrerequisite": ["FG-WAVE0", "FG-IDENTITY-ACL-GATEWAY", "FG-CALENDAR-PROVIDER", "FG-DURABLE-OUTBOX", "root calendar representation allocation"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 3: Berlin all-day spring 23h/fall 25h, fold 02:30 explicit choice, gap rejection",
+      "currentEvidence": "handlePlan parses host datetime-local with new Date; occurrence civilDateInZone only formats; merge.eventOverlapsLocalDay adds MS_DAY. Existing occurrence test uses +86400000 and is not Berlin DST proof.",
+      "requiredChange": "Use source-zone civil dates and inclusive UI last date to exclusive next civil date; resolve civil timed inputs against IANA zone, reject gap and require reviewed offset for fold. Fix fixed-length local-day boundaries shared with Tasks.",
+      "verification": "availability-dst.test.ts asserts Europe/Berlin 2026-03-29 all-day=23h and 2026-10-25=25h, exclusive civil end; 2026-03-29 02:30 rejects; 2026-10-25 02:30 requires +02:00 or +01:00 yielding distinct instants. Native UI exercises offset picker and help UTC/offset. Negative fixed24h resolver must fail exact duration assertions.",
+      "missingPrerequisite": ["root-approved reusable calendar civil-time domain seam", "FG-CALENDAR-PROVIDER for persisted provider echo", "FG-WAVE0"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Instance change preserves master+originalStart key; unsupported following never writes entire series",
+      "currentEvidence": "CalendarEvent.recurrence is optional string; occurrenceFromCalendarEvent sets recurrenceInstance to rule at line 58. CalendarOccurrence.occurrenceId alone has no reviewed master/originalStart binding. No updateOccurrence adapter method.",
+      "requiredChange": "Separate RRULE from master/event exception identity; persist immutable original occurrence key and recurrence scope. Instance edits update exception with master intact; capability gate following before provider call and do not substitute series.",
+      "verification": "Change one actual recurring instance and GET master and both edited/neighbor instances; compare unchanged master rule and originalStart key after reload. Unsupported following must return unsupported, preserve draft and issue zero provider mutation calls; provider series readback must be unchanged.",
+      "missingPrerequisite": ["FG-CALENDAR-PROVIDER", "FG-DURABLE-OUTBOX", "root canonical recurrence contract"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Denied/timeout freebusy has no private titles/counts and partial state; fixed24h/tentative-free negative controls fail",
+      "currentEvidence": "CalendarAdapter has no freebusy; CalendarEvent lacks transparency/cancelled/own-response fields; occurrencesInRange only performs half-open overlap. No AvailabilityPane exists in inspected tree.",
+      "requiredChange": "Authorized source/participant freebusy query, source watermarks and partial/provisional result. Exclude cancelled/deleted/transparent/own-declined, include tentative/needsAction. Convert all-day from source civil zone, union buffered busy, clip/subtract working windows, intersect required participants and apply duration. Denied source returns no event titles or counts and never implies everyone free.",
+      "verification": "availability-dst.test.ts uses exact expected slots for half-open adjacency, merged buffers, required participants and tentative/needsAction busy. Inject denied and timeout source and assert redacted payload/UI including no count, partial status and retained successful-source watermark. Fixed24h and tentative-as-free mutations each must fail a specific slot assertion, not infrastructure startup.",
+      "missingPrerequisite": ["FG-IDENTITY-ACL-GATEWAY", "FG-CALENDAR-PROVIDER", "reviewed DST working-hours rule", "root reusable availability domain seam"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 6: Own RSVP works on readonly event with capability; wrong account rejected before provider call",
+      "currentEvidence": "No attendee/response field or RSVP adapter command. TemporalOccurrence.permission is unconditional write. CALENDAR_BIND accepts caller credentialsPresent and is not RSVP authority.",
+      "requiredChange": "Separate event.rsvp from organizer update. Resolve owned provider account and exact attendee server-side from authenticated actor, allow readonly organizer event only with own-RSVP capability, reject supplied/wrong account before any provider effect.",
+      "verification": "Real invited readonly test event: organizer edit is denied while own RSVP succeeds and provider readback confirms correct attendee status. Wrong actor/account and forged email produce denied with zero provider calls and unchanged response. Reload retains normalized response.",
+      "missingPrerequisite": ["FG-IDENTITY-ACL-GATEWAY", "FG-CALENDAR-PROVIDER", "FG-DURABLE-OUTBOX"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 7: Provider accepted plus DB outage reconciles to one event/invitation",
+      "currentEvidence": "CalendarStore JSON sync has no original-intent transaction. meetings/outbox reserve uses a supplied array and dispatch blocks mail; MeetingRepository is journal-backed and is not calendar transactional persistence evidence.",
+      "requiredChange": "Persist original command/hash/key before provider dispatch; correlate acceptance/readback to same intent, record reconciling after local outage, recover original accepted event rather than repeat creation/invitation. Same key plus changed hash is rejected; changed intent gets new key only after review.",
+      "verification": "Inject DB failure immediately after provider acceptance, restart recovery worker and reload UI, retry original key/payload, assert exactly one provider event and invitation plus one canonical association/receipt. Reuse key with changed payload must fail before provider call; timeout/unknown intent must reconcile by readback before any resend.",
+      "missingPrerequisite": ["FG-DURABLE-OUTBOX", "FG-CALENDAR-PROVIDER", "FG-IDENTITY-ACL-GATEWAY", "sandbox invitation-count evidence capability"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 8: Keyboard/IME/narrow/offline/loading/empty UI evidence; fixtures do not close provider lane",
+      "currentEvidence": "MeetingsPage 305-311 is inline native form; existing local list has loading/error/empty states at 328-339, not event editor/query states. No CalendarEventEditor/AvailabilityPane exists.",
+      "requiredChange": "Accessible wide/medium/narrow modal with fixed footer, draft-safe states, focus management and IME-aware Cmd/Ctrl+Enter. Description Enter stays newline, picker Enter selects, Escape reviews dirty draft; refresh/offline/partial/provider conflict/reconciling do not falsely signal success.",
+      "verification": "Actual macOS Electron interaction and screenshot/ARIA at wide/medium/narrow: first/invalid focus, composition Enter not submit, description newline, picker selection, shortcut save, dirty Escape, offline/recovery, loading, empty and partial availability. Confirm reduced motion, touch hit targets and no green fixture success; separate provider readback evidence.",
+      "missingPrerequisite": ["FG-WAVE0", "FG-PROJECTION-AND-EVIDENCE", "verified form/query commands", "FG-CALENDAR-PROVIDER"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Full form/layout and capability fields, spec lines 18-38",
+      "currentEvidence": "Current plan has only title and datetime-local. Static CapabilityGap covers OAuth/reminders/allDay/recurrence, not organizer/resource/media controls.",
+      "requiredChange": "CalendarEventEditor: title trimmed 1..512 first focus, explicit writable CalendarRef immutable for updates, exact verified emails at most 1000 with authorized group preview, allowInviteOthers=false, start/end/end>start and zone, allDay=false, reviewed recurrence scope, online none until verified media, guest-start=false until capability, resource/text separate, check-in unavailable without service, authorized ChannelRef and EntityRefs without share. Wide approximately 1000px with 600px editor/360px availability; medium pane below; narrow separate timeline; cancel/save footer.",
+      "verification": "Boundary behavior for blank/512/513 title, 1000/1001 attendees, unauthorized group expansion and calendar move denial; unsupported populated fields fail visibly rather than being discarded. UI evidence for all widths, explicit unavailable reasons and Connections; real resource/media slices require their own readback if enabled.",
+      "missingPrerequisite": ["FG-WAVE0", "FG-IDENTITY-ACL-GATEWAY", "FG-CALENDAR-PROVIDER", "FG-MEDIA-OPTIONAL-CAPABILITIES"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Availability limits, timeline, freshness and privacy, spec lines 40-44",
+      "currentEvidence": "Only occurrence overlap projection exists; list page cursor and CalendarStore.lastSyncAt are not authorized freebusy watermark. No pane or working-hour model observed.",
+      "requiredChange": "Bound query to 31 days, duration 1..480 minutes, buffers 0..1440, authorized source/participant sets, working hours and IANA zone. Today/previous/next date-zone toolbar, hour grid, busy blocks and current-time line use privacy-safe query intervals. asOf must come from actual query watermark, not panel-open Date.now. Explicit review of nonexistent working-hour boundaries.",
+      "verification": "Assert 31/32-day, duration 0/1/480/481 and buffer -1/0/1440/1441 boundaries; no unbounded provider query. Validate exact UTC slot conversion, source-specific freshness/stale/partial display and no private title exposure via tooltip/ARIA/log. Pane opening must not update query asOf without a query.",
+      "missingPrerequisite": ["FG-CALENDAR-PROVIDER", "FG-IDENTITY-ACL-GATEWAY", "root reviewed working-hours/time-resolution contract"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed inputs/outputs and gateway errors, spec lines 46-56/85",
+      "currentEvidence": "Local create returns LocalMeeting, no typed provider operation receipt. CALENDAR_BIND returns blocked shell result; existing event model has optional ETag but no expectedRevision/policyRevision.",
+      "requiredChange": "Root typed schemas include create CalendarRef versus immutable update EventRef+providerEtag, supported title/description/location/link/attendees/allDay/zone/resolved times/scope/original occurrence key; authenticated envelope command/workspace/idempotency/revision/policy. Return eventRef/revision/receiptId, committed|reconciling and normalized provider echo/asOf. Validation/denied/conflict/unsupported/unknown preserve authorized draft; actor is not a form field.",
+      "verification": "Exercise malformed scope/time/payload, stale revision/policy, denied calendar, unsupported field and unknown remote outcome; assert explicit error/outcome and no silent field dropping. Same key/hash is stable; changed payload uses a new reviewed intent or returns key/hash mismatch. Capture typed transport readback rather than renderer-only success.",
+      "missingPrerequisite": ["FG-IDENTITY-ACL-GATEWAY", "FG-DURABLE-OUTBOX", "FG-CALENDAR-PROVIDER", "root typed registry allocation"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Canonical DB/Meeting binding and no automatic Task conversion, spec lines 58/84/86",
+      "currentEvidence": "CalendarBundle persists accounts/events/journals/proposals; LocalMeetingStore persists separate device folders; bindCalendarOccurrence only blocked reminder. Common calendar-event Rox2EntityRef/binding registry is available.",
+      "requiredChange": "Use root canonical provider-neutral account/calendar/event/provider alias/master exceptions/Meeting context/outbox authority, shared Rox2EntityRef and explicit binding receipt; retain unbound local plans and device ownership. Never heuristic title/date merge or Event-to-Task conversion, and do not create a new localStorage calendar in Meetings. Preserve Tasks stripe with same event identity/projection.",
+      "verification": "Create two same-title/time events on separate calendars and same remote ID on separate accounts; assert distinct refs and bindings across reload. Local plan survives provider unavailable and binds only after explicit receipt. Calendar revoke and event creation leave Tasks unchanged; explicit existing reminder proposal remains a separate user action.",
+      "missingPrerequisite": ["FG-WAVE0", "FG-DURABLE-OUTBOX", "root identity/alias migration receipt"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Common search/linking/sharing/activity/notifications/agents/memory, ACL/provenance and invite dedup, spec lines 58/87/90",
+      "currentEvidence": "MeetingsPage local search covers title/transcript; calendar fields have no common projection evidence. Scoped code does not establish accepted common calendar consumers.",
+      "requiredChange": "Publish canonical revisioned event changes through shared transactional event/outbox consumers. Index/query only authorized source; relations/mentions do not grant access; private context cannot be auto-copied to attendee/channel/project audiences. Coordinate provider invitation and shared notification dedup on original receipt; expose commands to agents through same auth/capability path, not a bypass.",
+      "verification": "Two actors with different ACL: calendar search, linked Meeting/Project, activity, notifications and agent query show only authorized data; link/mention alone does not make private event visible. Retry/reconciliation delivers one authorized activity/notification/invite effect. Record provenance and test rejected private export before side effect.",
+      "missingPrerequisite": ["FG-PROJECTION-AND-EVIDENCE", "FG-IDENTITY-ACL-GATEWAY", "FG-DURABLE-OUTBOX", "root shared consumer ownership"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Russian UI, theme/font/help, keyboard/reduced motion and targets, spec lines 62/64/88",
+      "currentEvidence": "MeetingsPage uses t() and theme tokens; connector tooltip describes unavailable provider. Neither inspected plan form nor connector chips implement the full specified field help interactions; loaded font not observed.",
+      "requiredChange": "Use existing theme/tokens/font and all-ten-locale t() parity; do not force light theme. Russian precise unavailable/busy/partial/gap/fold/conflict/reconciling strings. Help on hover 500ms, focus and separate click What-is-this explains meaning/units/source/asOf/example and exact UTC/offset; no data changes on hover/focus. Compact desktop controls 28..36px, touch/narrow at least 44px, accessible reduced motion.",
+      "verification": "Native evidence verifies Russian strings, actual loaded Rox font, light/dark inheritance, help on hover/focus/click with unchanged draft, exact UTC/offset/source freshness, target sizes and reduced-motion behavior. Root runs existing locale parity checks after shared integration; no source-text/default tests added by this worker.",
+      "missingPrerequisite": ["FG-WAVE0", "FG-PROJECTION-AND-EVIDENCE", "root i18n key/locale integration allocation"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Failure/loading/empty/reload/recovery/realtime and independent execution states, spec lines 50/62/86/90",
+      "currentEvidence": "Local onChanged subscription reloads whole LocalMeeting, not provider calendar revisions. Calendar sync sets lastSyncAt from caller now; no event command executionMode/lifecycle/verification or reconciling UI exists.",
+      "requiredChange": "Consume canonical authorized change subscriptions without overwriting dirty editor draft. Separate executionMode/lifecycle/verification from domain operation outcome; queued/token/fixture cannot imply committed/live. Persist/reload same refs and pending original intent; retain authorized draft through conflict/unsupported/offline/unknown while showing exact recovery state.",
+      "verification": "Refresh provider event during dirty edit, lose connection, revoke source, restart app/reconciler and restore connection; assert draft, conflict and watermark transitions plus same identity/context and no repeated remote effects. Check unauthorized realtime listener receives no private event metadata.",
+      "missingPrerequisite": ["FG-DURABLE-OUTBOX", "FG-IDENTITY-ACL-GATEWAY", "FG-CALENDAR-PROVIDER", "root common realtime contract"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Observability/tests/documentation and three revision-bound evidence lanes, spec lines 89-91/93-100",
+      "currentEvidence": "Normative spec proposes two new test entrypoints; existing occurrence tests only exercise basic projection/range/delete. This worker performed no tests/provider/UI checks and makes no feature verification claim.",
+      "requiredChange": "Implement both normative test files with behavioral oracles above, use synthetic test workspace/names, and have root document command semantics/capability limits/reconciliation. Save expected/observed, exact integrated revision, sanitized logs and native screenshot/ARIA; provider readback lane separate from Linux fixture and macOS device lanes. Observe receipt/command/outcome/readback/reconcile IDs without secrets/private titles or denied counts.",
+      "verification": "Root executes the exact real surface and failure scenarios after integration; run scoped domain/provider tests once integrated, collect macOS Electron/IPC evidence and sandbox GETs. Deliberately seed fixed24h, tentative-free and fake-success negative controls and show each breaks its intended assertion. No public user screenshots. Artifact/receipt checker is lead-owned and does not replace behavioral evidence.",
+      "missingPrerequisite": ["FG-PROJECTION-AND-EVIDENCE", "FG-CALENDAR-PROVIDER", "FG-DURABLE-OUTBOX", "lead-owned final integrated revision and verification runner"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-MTG-03.md","symbol":"E2E / DoD; general integration; proposed files","lineStart":66,"lineEnd":105,"sha256":"e2b2521c62599c744d3b7dff9e91b4fa785693a4d57a0489eddfdcb1d6d2a1d3"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-MTG-03 normative record","lineStart":420,"lineEnd":452,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/pages/MeetingsPage.tsx","symbol":"MeetingsPage.handlePlan and planning form","lineStart":198,"lineEnd":207,"sha256":"85d3159d5c618df80973c650af3e9b85a68acbe3ad90eef595781f17fa6ebfc8"},
+    {"path":"apps/electron/src/renderer/pages/MeetingsPage.tsx","symbol":"MeetingsPage planning UI","lineStart":305,"lineEnd":311,"sha256":"85d3159d5c618df80973c650af3e9b85a68acbe3ad90eef595781f17fa6ebfc8"},
+    {"path":"packages/core/src/calendar/types.ts","symbol":"CalendarAccount, CalendarEvent, CapabilityGap","lineStart":11,"lineEnd":47,"sha256":"3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path":"packages/core/src/calendar/adapters.ts","symbol":"CalendarAdapter","lineStart":9,"lineEnd":15,"sha256":"c762334baa96ea8685eeae5ce87179fb15ff1f24018b2dc1ffb05e48eb729997"},
+    {"path":"packages/core/src/calendar/adapters.ts","symbol":"createProductionAdapter","lineStart":108,"lineEnd":118,"sha256":"c762334baa96ea8685eeae5ce87179fb15ff1f24018b2dc1ffb05e48eb729997"},
+    {"path":"packages/core/src/calendar/occurrences.ts","symbol":"occurrenceFromCalendarEvent","lineStart":44,"lineEnd":62,"sha256":"2729411c6d3ffc7946ecda00ebdba3517ecd03679317243d5544ec88e498a1c7"},
+    {"path":"packages/core/src/calendar/store.ts","symbol":"CalendarStore.markLocalDirty and sync","lineStart":111,"lineEnd":158,"sha256":"d6cb1872ea20c9068e9c7765c3c32dae8c3498497856ef7d46f5ad6692872038"},
+    {"path":"packages/core/src/calendar/merge.ts","symbol":"eventOverlapsLocalDay and mergeTodayUpcoming","lineStart":15,"lineEnd":44,"sha256":"1401f058fe868919d614a65d4a2baf0814932125230632855a8b8457006e4e52"},
+    {"path":"packages/core/src/calendar/capabilities.ts","symbol":"CALENDAR_CAPABILITIES","lineStart":3,"lineEnd":44,"sha256":"a7951b3aeec51c8a8dcc2b724e9313a26c01d7808b1bd7396c7f61c2939dbb94"},
+    {"path":"apps/electron/src/renderer/components/calendar/CalendarStatusStrip.tsx","symbol":"connect fixture path","lineStart":58,"lineEnd":76,"sha256":"947c24f62f3d4ca6ea9c4c45fedf1ad37c36e3ee6539f65a875c2b1911dbefec"},
+    {"path":"apps/electron/src/renderer/components/calendar/CalendarConnectorChips.tsx","symbol":"CalendarConnectorChips wired/disabled check","lineStart":19,"lineEnd":47,"sha256":"e3bfe51ba87da998f2b389cf81ca149f46e96ca58734fe985db51621027493d8"},
+    {"path":"apps/electron/src/renderer/lib/meetings/recorder.ts","symbol":"meetingsApi","lineStart":56,"lineEnd":59,"sha256":"086de22cb3db2c0d805e336b6b02bd5e3de6c09d2528eab6d4a25d23685c6a71"},
+    {"path":"apps/electron/src/shared/meetings-local.ts","symbol":"LocalMeeting","lineStart":84,"lineEnd":106,"sha256":"577d5de0a91d51483a0c639b82dbe063f3ca1e6f4c2f6c73b1f4edcf1fa2a2a4"},
+    {"path":"apps/electron/src/main/meetings/local-store.ts","symbol":"LocalMeetingStore.write and create","lineStart":93,"lineEnd":137,"sha256":"ccbe9826afffdd87caf06a466af15948cefa463c65d07634f8693f483700366b"},
+    {"path":"apps/electron/src/main/meetings/local-ipc.ts","symbol":"registerLocalMeetingsIpc CREATE handler","lineStart":67,"lineEnd":87,"sha256":"41da18f46fa5f7b35aedc594b80ddb3911d5a683f563b62f9943b6f46c1a5d50"},
+    {"path":"packages/server-core/src/handlers/rpc/meetings.ts","symbol":"CALENDAR_BIND handler","lineStart":378,"lineEnd":386,"sha256":"f229c26fa5b194570454af9d9c230243681dac258ea5935974e4cd982e83f263"},
+    {"path":"packages/server-core/src/meetings/conation/calendar-calls.ts","symbol":"CalendarOccurrence, occurrenceKey, applyCalendarWrite","lineStart":9,"lineEnd":33,"sha256":"f1045c3410dfab96c3808b257fe66c8b9be8f3084b85c30a4165bc6d8498835c"},
+    {"path":"packages/server-core/src/meetings/conation/native-shells.ts","symbol":"bindCalendarOccurrence","lineStart":137,"lineEnd":152,"sha256":"a54b740633d806054c08921773d4fdc0b88ba042442cd91c14009451842d5a01"},
+    {"path":"packages/server-core/src/meetings/conation/capabilities.ts","symbol":"CONATION_LIVE_SCHEMA_CONFIRMED","lineStart":11,"lineEnd":17,"sha256":"33289bcf406de811d3717d801c72bb31a234060c838052fb6d1a04c82ed2748f"},
+    {"path":"packages/server-core/src/meetings/conation/capabilities.ts","symbol":"confirmWrite","lineStart":345,"lineEnd":372,"sha256":"33289bcf406de811d3717d801c72bb31a234060c838052fb6d1a04c82ed2748f"},
+    {"path":"packages/server-core/src/meetings/outbox.ts","symbol":"reserveOutbox and dispatchOutbox","lineStart":21,"lineEnd":42,"sha256":"b7c802c2e559eac7d43f6ba96ee221aa161abc598fc40a9f7ce47c2e7d2e110f"},
+    {"path":"packages/server-core/src/meetings/repository.ts","symbol":"MeetingRepository and createMeetingRepository","lineStart":4,"lineEnd":26,"sha256":"56d58884ab24097b7c5853339a2331afc938c1c822c5263b151e0a9c23f2c00b"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef and Rox2ExternalBinding","lineStart":232,"lineEnd":246,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"entityRefFromBinding and registerExternalBinding","lineStart":316,"lineEnd":371,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/calendar/__tests__/occurrences.test.ts","symbol":"all-day projection and basic range tests","lineStart":40,"lineEnd":65,"sha256":"d15bca4b636bfa7b345b7f71466bf2e91824b4fd730d1effe4d226e7bbd7fa68"}
+  ],
+  "nextExecutableAction": {
+    "owner": "lead integration owner",
+    "action": "Accept this artifact via the supplied worker-return verification contract. After wave0 is committed and RS-MTG-01 accepted, rehash/re-read changed sources, allocate typed calendar gateway/workspace persistence/adapter/reconciliation shared owners and accept those foundation interfaces. Then authorize package contribution in dependency order: domain contract and provider command/readback foundations first; CalendarEventEditor/AvailabilityPane and representation integration next; exact eight DoD plus general-contract scenarios on the integrated revision last.",
+    "workerBoundary": "No implementation action is authorized for this preflight worker. Exact return verification argv is provided in the dispatch packet; it was not executed here because this worker did not inspect the root verifier's mutation behavior and owns only the report."
+  },
+  "risks": [
+    "Enabling any live adapter currently makes Tasks stripe's fixture connect path reachable; fix that shared seam before enabling connector chips. A fixture-backed green success would violate provider lane.",
+    "Recurrence rule is currently used as occurrence identity, causing exception/dedup ambiguity; hardcoded write permission would expose readonly events as editable.",
+    "Fixed 24-hour next-day arithmetic and host-local Date parsing cannot meet Berlin DST/all-day requirements; do not hide errors by special-casing Berlin only.",
+    "markLocalDirty and reminder/event keys omit calendar/account scope in places despite existing calendarEventIdentity. Cross-calendar/account collisions must be covered.",
+    "LocalMeetingStore persistence is real device-side work but lacks provider/DB original-intent semantics. Do not replace its audio ownership or claim remote commit from a local create.",
+    "CALENDAR_BIND caller credentialsPresent and applyCalendarWrite authPresent=true are not authenticated actor/account authority; do not promote blocked shells into live commands without transport policy enforcement.",
+    "Existing mail outbox and journal repository do not establish canonical Calendar Postgres/outbox/reconciliation. Root must supply the hidden foundation before acceptance, without a second calendar store.",
+    "DF-07/08/09, CAL-03 and #333 are normative/gating references, not accepted dependencies or runtime proof. Do not invent extra explicit DAG edges or infer their implementations.",
+    "Online room capability depends separately on RS-MTG-02; guest controls/resources/check-in need independent working services. Disabled UI is required now, not permission to mark enabled service behavior N/A or feature complete.",
+    "Shared working tree may change while lead integrates. File hashes are per inspected version and are not an atomic revision snapshot; future contributors must invalidate changed evidence.",
+    "Real provider invitation-count and failure-injection evidence may require sandbox instrumentation. Fixtures/log echoes alone cannot prove exactly-once invitation or actual readback.",
+    "No runtime, UI, tests or network verification performed by authorization. All feature criteria remain not implemented/not verified in this report; report delivery is not feature completion."
+  ]
+}

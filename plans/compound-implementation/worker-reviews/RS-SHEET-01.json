@@ -1,0 +1,362 @@
+{
+  "task_id": "RS-SHEET-01-preflight",
+  "attempt_id": "f9292e48963b58dcd6ba858175758d7c",
+  "packet_hash": "be000b425c727c7112c8e06a6948b47d4dc4832dee85d6a53d3c5e20835db70f",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-SHEET-01",
+  "featureComplete": false,
+  "mode": "inspect-only; owned artifact delivery",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-DRV-01", "RS-DOC-01"],
+  "dependencyEvidence": {
+    "normativeRecord": "plans/rox-suite/issues.json:69-100",
+    "publishedSpec": "docs/rox-suite/published/RS-SHEET-01.md:97-118",
+    "dependencyIssueNumbers": [1109, 1110],
+    "dispatchDependsOn": [],
+    "interpretation": "The empty dispatch depends_on authorizes independent preflight only; it does not remove either implementation dependency. Implementation waits for the lead's wave0 commit and accepted RS-DRV-01 and RS-DOC-01 receipts. No dependency completion was verified here."
+  },
+  "inspection": {
+    "scope": "Published package record, four named existing seams, their page/route/type imports and directly relevant canonical content contracts. No product implementation, tests, builds, UI, network, Git operations or shared writes performed.",
+    "sourceSnapshot": "Whole-file hashes are hashes of the live inspected working tree, not a claim that these bytes belong to input_revision. Root wave0 integration may change these files. Re-read and rehash affected sources after wave0 and dependency acceptance before applying patches.",
+    "specManifestMatches": true,
+    "codegraph": "Per-project query reported no .codegraph index; continued with read/grep/glob. No indexing or upgrade performed.",
+    "findFallback": "Scoped find in packages/shared/src/pages failed its judgment requests with HTTP 402; its no-hits result was not used as absence evidence. Literal symbol grep and source reads located actual page contracts.",
+    "normativeNewPaths": "glob reported all four exact proposed NEW files missing at inspection. This establishes absence of those paths only, not a repository-wide proof that no spreadsheet code exists elsewhere.",
+    "runtimeEvidence": [],
+    "verificationBoundary": "This report proposes future verification; none of the feature scenarios below were executed. The worker did not run the packet verifier or product checks. Artifact readback is separate from feature verification."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-CONTENT-DISPATCH",
+      "explicitDagEdge": false,
+      "requirement": "Canonical kind=page, contentKind=sheet; workbook content must share existing entity identity, aliases and routing rather than create another entity kind or store.",
+      "evidence": ["spec:48", "packages/core/src/rox2/platform-contract.ts:17-38,232-239", "packages/core/src/types/page.ts:294-320", "packages/core/src/docs/content-descriptor.ts:5-6,129-158"],
+      "gap": "PageConfig has no content discriminator or workbook pointer. The inspected ContentKind union excludes sheet, and decodeDocumentDescriptor rejects sheet and any authority other than markdown/rich-blocks. These live working-tree definitions may be wave0 work, not an accepted dependency contract.",
+      "requiredReceipt": "RS-DOC-01/wave0 lead must publish the canonical content extension, payload authority and editor dispatch contract, preserving IDs/slug/aliases. A sheet descriptor must round-trip and older unsupported readers must preserve bytes read-only. Do not independently fork DocumentDescriptor.",
+      "state": "MISSING_ACCEPTED_CONTRACT"
+    },
+    {
+      "id": "FG-DURABLE-COLLABORATION",
+      "explicitDagEdge": false,
+      "requirement": "Postgres metadata, CRDT snapshot/WAL, object-storage attachments, durable offline ops, tombstones and CAS sheet structure.",
+      "evidence": ["spec:52", "packages/shared/src/pages/storage.ts:39-46,176-219,281-309", "packages/core/src/types/page.ts:10-19"],
+      "gap": "Observed Pages persistence is page.json/index.html with a local snapshot and script-private SQLite, not evidence of the required shared collaborative storage. The normative sheets service module is absent. No server foundation was searched outside package scope; its availability is unverified, not asserted absent globally.",
+      "requiredReceipt": "Lead must supply the accepted shared workspace-service storage/subscription transaction APIs, tenant identity, migrations, CRDT encoding and WAL recovery/checkpoint ownership, plus object-storage attachment integration. Demonstrate reopen/reconnect and reject edits to deleted stable IDs before calling Sheets persisted.",
+      "state": "UNVERIFIED_FOUNDATION"
+    },
+    {
+      "id": "FG-COMMAND-AUTHORITY",
+      "explicitDagEdge": false,
+      "requirement": "Common command/schema registry, server-derived actor/workspace/policy, typed results, operationId and expectedRevision; read/write/share policy at all entry points and effect-free preview.",
+      "evidence": ["spec:52-58", "packages/core/src/rox2/platform-contract.ts:55-66,158-190", "apps/electron/src/shared/types.ts:2099-2126"],
+      "gap": "Rox2 permissions/results are typed contracts and the page IPC has existing CRUD/source-action grants; neither inspected seam proves a registered spreadsheet command or authenticated service implementation. Page source-action grants are not evidence of document collaboration ACL.",
+      "requiredReceipt": "Accepted authority registration/transport seam and principal-to-workspace policy implementation from the lead/dependencies. Register spreadsheet.createWorkbook, applyCellOps, editCell adapter, patchStructure, export and readRange once; IPC/MCP/provider must call that same authority. Revoke must cancel subscriptions and remove unauthorized cached content and pending effects.",
+      "state": "MISSING_ACCEPTED_CONTRACT"
+    },
+    {
+      "id": "FG-CROSS-ENTITY-SERVICES",
+      "explicitDagEdge": false,
+      "requirement": "Common EntityRef/Attachment/Link, ACL-filtered search/mentions, activity/outbox and deduplicated notifications; Task mentions and Project Documents must resolve the same page.",
+      "evidence": ["spec:5,30,48,52,58,82,88", "packages/core/src/rox2/platform-contract.ts:131-141,232-239,380-388", "apps/electron/src/renderer/components/pages/PagesHome.tsx:66-101"],
+      "gap": "EntityRef and mentions relation already exist. ROX2_RELATION_RULES.member-of currently allows session/note/task but excludes page; attached-to permits file/note origins, so page-origin attachment semantics cannot be assumed. Page projectId/filter is available but does not prove Project Documents, Task mention resolution, search/outbox or notification consumers.",
+      "requiredReceipt": "Lead supplies approved shared relationship semantics and existing search/mention/activity/notification registration locations after dependency receipts. Do not create independent CRM rows, per-cell entities, notification engine or a second search index.",
+      "state": "UNVERIFIED_FOUNDATION"
+    },
+    {
+      "id": "FG-LIMITS-ENGINE-CSV",
+      "explicitDagEdge": false,
+      "requirement": "Safe formula parser without eval/JS/network, supported-function list, bounded expression/range/TSV import with visible truncation confirmation, decimal/date storage, CSV export checksum and injection warning.",
+      "evidence": ["spec:24,28-36,107", "apps/electron/src/renderer/pages/notes/note-views.ts:15-22,188-203"],
+      "gap": "Notes formulas are four counters only. Specification gives the 1-200-character workbook-name bound but leaves cell-expression and paste limits to agreement; engine dependency/license and CSV type mapping are unresolved implementation decisions, not permission to omit functionality.",
+      "requiredReceipt": "Lead-approved numeric limits, typed CSV import/export mapping including boolean/date/decimal/null/string disambiguation, function/error contract and parser/license choice. Use a deterministic bounded AST evaluator with stable-ID references and cycle detection. Do not promise typed CSV round-trip without an explicit reversible mapping.",
+      "state": "DECISIONS_REQUIRED_BEFORE_IMPLEMENTATION"
+    },
+    {
+      "id": "FG-EVIDENCE-LANES",
+      "explicitDagEdge": false,
+      "requirement": "Linux domain/renderer evidence, real Electron font/theme/ARIA/screenshots, seeded broken controls, independent review, source-bound logs, migration and rollback; provider proof only for real external effects.",
+      "evidence": ["spec:44,73-76,89-95"],
+      "gap": "This authorized preflight deliberately cannot run those surfaces. Targeted domain tests alone cannot satisfy UI/native/recovery acceptance.",
+      "requiredReceipt": "Lead schedules accepted Linux/domain and Electron/native lanes at the integrated revision, resolves two authenticated actors and offline/revoke controls, and records independent review and rollback evidence. External publication/provider effects require separate authorization and readback if included.",
+      "state": "NOT_EXECUTED_BY_PREFLIGHT"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/documents/sheets/contracts.ts",
+    "apps/workspace-service/src/modules/documents/sheets.ts",
+    "apps/electron/src/renderer/components/documents/sheets/SheetsEditor.tsx",
+    "tests/rox-suite/sheets/workbook.spec.ts"
+  ],
+  "newFileContributions": [
+    {
+      "path": "packages/shared/src/documents/sheets/contracts.ts",
+      "proposedSymbols": ["Workbook", "Sheet", "Cell", "CellValue", "CellOp", "StructureOp", "SpreadsheetCommandResult", "SpreadsheetReadRangeResult"],
+      "change": "Define versioned workbook payload with stable workbook/sheet/row/column/cell IDs, structureVersion and entity revision, decimal-string/date discriminants separate from text, locale/timezone metadata, raw input separate from computed value/error, stable-ID formula references, limits, operationId/expectedRevision and offline baseStructureVersion. Define tombstone/reconcile draft result and export Attachment/checksum using accepted shared types. Export a single supported-function/error contract. Formula AST/evaluation must be shared deterministic code, not Notes counters; lead assigns any additional engine file before expanding normative ownership."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/documents/sheets.ts",
+      "proposedSymbols": ["createWorkbook", "applyCellOps", "editCell", "patchStructure", "readRange", "exportWorkbook"],
+      "change": "Implement registered authority handlers against dependency-owned canonical page/ACL/storage APIs. Derive actor and workspace from session. Deduplicate operationId transactionally; reject stale structural CAS; merge cell CRDT ops by stable IDs and reject tombstoned targets without resurrection, returning an authorized draft for explicit move. Recalculate dependency graph with bounded cycle/type/ref errors. Persist snapshot/WAL and metadata atomically with outbox sheet.changed/export.ready; support ACL-scoped subscriptions/reconnect and revoke teardown. Return typed EntityRef/revision for agent/UI range reads and a checksummed canonical file artifact for export."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/documents/sheets/SheetsEditor.tsx",
+      "proposedSymbols": ["SheetsEditor"],
+      "change": "Render native React workbook editor inside accepted page content host: breadcrumb/title/saved-sync/presence/share/menu; compact undo/redo/format/number/date/currency/align/filter/insert toolbar; address/formula bar; sticky headers and range selection; initially two sheet tabs and add; comments/links/history inspector. Typed edit, bounded paste/CSV confirmation, own-edit undo, viewer copy, IME-safe keyboard handling, authorized reconcile drafts and explicit loading/empty/error/denied/retry. Use existing tokens/font/components, Russian-default t() keys, focus/click help, reduced-motion and responsive drawer/pane breakpoints. Persist only through shared authority, not localStorage or NotesViewHost."
+    },
+    {
+      "path": "tests/rox-suite/sheets/workbook.spec.ts",
+      "proposedSymbols": ["workbook acceptance scenarios"],
+      "change": "Add behavior tests for typed CSV/formula/reload/export round-trip; stable references after structure reorder; cycle/ref/type/unsupported-formula errors; two actors editing different cells; offline survivor rebase and deleted-row rejection with draft; local-only undo; operationId replay/CAS conflicts; revoked read/write/subscription/cache behavior; cross-workspace denial; Task mention/readRange identity and viewer-agent denial; effect-free preview. Add deterministic seeded broken controls that fail meaningful oracles. Native UI and Linux proofs remain separate required evidence, not claims made by this test file."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/docs/content-descriptor.ts",
+      "symbol": "ContentKind / ContentAuthority / DocumentDescriptor / decodeDocumentDescriptor",
+      "change": "Request dependency-owner extension for contentKind='sheet' and a workbook authority/payload descriptor in the one canonical content contract. Proposed authority token is 'workbook-crdt', subject to the accepted RS-DOC-01 contract; update the decoder's kind/authority checks together and require valid kind-authority pairing. Preserve existing markdown/rich-blocks descriptors, canonical page refs, legacy migration and unknown-version raw-byte read-only behavior. Do not route a workbook through markdown conversion.",
+      "reason": "Current union and decoder reject sheets; a second sheet descriptor would split identity/authority. Normative spec requires page+sheet and raw/computed separation."
+    },
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig / PageKind",
+      "change": "Ask RS-DOC-01 owner to attach the accepted canonical content descriptor/payload reference to PageConfig, supporting sheet without replacing id/slug/projectId/grants/share. Keep PageKind exactly the independent static/interactive/live capability classification; do not append 'sheet' or 'document' to it.",
+      "reason": "PageConfig currently models HTML dashboards; content type and CSP/runtime capability must remain separate per spec:48."
+    },
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput / LoadedPage",
+      "change": "Extend creation input with the dependency-approved canonical descriptor/content reference and sheet creation data, typed from the shared workbook contract. LoadedPage must expose the same canonical content metadata through its existing config, not an independent sheet object registry. Preserve HTML content and PageKind inputs for existing pages.",
+      "reason": "The existing page API takes name/kind/projectId/content only; Drive/Docs creation needs to produce the same page entry and stable reference."
+    },
+    {
+      "path": "packages/shared/src/pages/validation.ts",
+      "symbol": "PageConfigSchema / PageKindSchema",
+      "change": "Validate the dependency-approved descriptor/payload reference and workbook name bounds for sheet content at the existing page save boundary. Keep legacy page configs readable, PageKindSchema unchanged and workbook schema/version validation authoritative. Do not silently accept sheet descriptors as legacy HTML or strip their fields.",
+      "reason": "The inspected PageConfigSchema has no sheet/content descriptor fields and only a name minimum; new typed PageConfig fields need matching persistence validation."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "createPage / savePageConfig / loadPage / loadPageById / UpdatePagePatch",
+      "change": "Have the dependency owner preserve and reload canonical sheet metadata/reference through existing page creation/list/lookup and constrain descriptor changes to the shared content authority. Keep IDs, slug, project binding, grants/share and completion-marker semantics intact. Sheet payload writes must go through the accepted Postgres/CRDT authority, not index.html, script-private store.sqlite or a new local workbook store. Do not allow generic UpdatePagePatch to bypass sheet revisions or mutate authority.",
+      "reason": "Existing atomic local persistence is useful for page metadata compatibility but does not implement workbook collaboration or expectedRevision. Generic metadata patching must not become a bypass."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_RELATION_RULES.member-of / ROX2_ENTITY_KINDS / Rox2EntityRef / Rox2Event / Rox2CanonicalResult",
+      "change": "Request lead-owned addition of 'page' to the member-of domain if this is the accepted Project Documents relationship, with existing projectId migrated/linked once rather than duplicated. Keep ROX2_ENTITY_KINDS unchanged. Reuse Rox2EntityRef with entityId page:<nativeId> and revisionId, existing event causation/correlation/aggregateRevision fields and typed result verification semantics. Resolve page-origin link/attachment semantics centrally before widening attached-to; do not silently widen all relations.",
+      "reason": "A page kind and shared refs/events already exist, but current member-of excludes page. Sheets must join Project Documents and common links without per-cell workspace entities."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "handleCreatePage / openPage / PagesHome",
+      "change": "Add the accepted Drive/Docs Create -> Rox Sheets action to this existing page library creation flow where applicable. Call spreadsheet.createWorkbook through the common authority with name and bound stable projectId; retain existing blank HTML page action. Navigate to routes.view.pages(returned canonical slug) and display typed denied/conflict/retry errors with i18n. Use the existing pagesAtom list/filter rather than a sheets-only library. Lead supplies actual Drive/Docs and Project Documents host locations from accepted dependencies, rather than assuming PagesHome alone covers all three entry points.",
+      "reason": "Current button creates only an interactive Page; the observed page route/project filter should be reused, but the named product entry points are not yet proved."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI page methods / PagesNavigationState",
+      "change": "Request typed transport adapters for the registered spreadsheet create/applyCellOps/editCell/patchStructure/export/readRange operations and ACL-scoped change/presence subscriptions using shared contracts. Preserve PagesNavigationState and pageIdOrSlug lookup, derive actor in server authority rather than accepting renderer actorId, and return operation/revision/conflict/export receipts. Lead must patch actual IPC/RPC handlers and agent gateway registries at their accepted dependency paths; interface declarations alone are not implementation.",
+      "reason": "Observed ElectronAPI only has Page CRUD/HTML data/source-action leases; it exposes neither collaborative workbook edits nor readRange."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageTile.tsx",
+      "symbol": "PageTile / KindIcon / PageKindBadge",
+      "change": "Keep PageKind capability badge distinct. If the dependency content contract supplies contentKind, show the Sheets document subtype/icon from that field without using config.kind='sheet'; continue opening the same page and using authorized existing preview metadata. Ensure any workbook preview is produced by the accepted content host, not forged by index.html or stale contentDigest assumptions.",
+      "reason": "Current icon/badge and poster freshness depend on HTML PageKind/contentDigest; workbook identity must not be confused with runtime class."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/{de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant}.json",
+      "symbol": "proposed documents.sheets.* translation namespace",
+      "change": "Request lead-owned additions in all ten existing locale files for creation, tabs, toolbar, formula list/error explanations, import limits/truncation, CSV injection warning, sync/reconcile/revoke states, share/comments/history/help and ARIA labels. Keep ASCII key sorting and existing Russian plural conventions; all editor copy calls t(). Exact leaf keys must match the implemented control list, not speculative unused translations.",
+      "reason": "Repository i18n rule requires ten-locale parity and Russian-default user-facing copy. Paths/policy come from loaded AGENTS, not an executed locale test or locale-source inspection."
+    }
+  ],
+  "preservedSeams": [
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "NOTE_FORMULA_EXPRS / NoteBaseView / formulaValue", "decision": "No sheet implementation patch: preserve four-count Notes projections and their IDs. Workbook formulas are not another NoteBaseView mode."},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesViewHost / NotesTableView", "decision": "Preserve note table/canvas/outline/graph and local saved layouts. Do not replace this component with the SheetsEditor or copy its localStorage persistence for workbook cells."},
+    {"path": "apps/electron/src/renderer/atoms/pages.ts", "symbol": "pagesAtom / pagesProjectFilterAtom", "decision": "Reuse canonical loaded page list and project filter; no sheetsAtom registry or second workbook entity store."},
+    {"path": "apps/electron/src/shared/routes.ts", "symbol": "routes.view.pages", "decision": "Reuse pages/page/<slug>; no second spreadsheet navigator/deep-link family is justified by the specification."}
+  ],
+  "integrationRequests": [
+    {"owner": "lead / RS-DOC-01", "request": "After accepted receipts, supply actual native content editor dispatch path/symbol for contentKind=sheet; mount SheetsEditor inside that host on the existing page route. PagesHome is creation/list, not the editor host."},
+    {"owner": "lead / RS-DRV-01 / RS-DOC-01", "request": "Supply accepted Drive/Docs create menu and Project Documents adapter paths, universal-link resolver, canonical Attachment/Link contracts and storage ownership. Verify that all open/create routes resolve the same page native ID/ref/revision."},
+    {"owner": "lead / shared foundation owners", "request": "Supply actual command registry, authenticated IPC/RPC/MCP/provider bridge, search/mentions, outbox/notifications and revoke/cache subscription seams. These locations were not explored outside the package/direct imports; no guessed shared-file patch is presented as source-backed."},
+    {"owner": "lead / scheduler", "request": "Approve any additional parser/CRDT/CSV helper files before ownership expands beyond the four normative NEW paths; sequence content and authority patches under one shared-file writer after wave0."}
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "AC-1",
+      "criterion": "Два пользователя меняют разные клетки, формула пересчитывается одинаково; reconnect сохраняет pending ops; revoked пользователь прекращает write/read.",
+      "currentEvidence": "Spec:80. NotesViewHost:128-150 persists layout in localStorage; note-views:188-203 evaluates note counters only. No collaborative workbook implementation was observed in the named seams; proposed new files are absent.",
+      "actualSeam": "Rox2EntityRef; ElectronAPI.onPagesChanged; proposed sheets.ts applyCellOps/readRange/subscription and contracts.ts CellOp",
+      "requiredChange": "Stable-ID cell CRDT plus deterministic formula graph, persisted pending operations with operationId and baseStructureVersion, snapshot/WAL recovery, authenticated read/write checks and revoke-driven subscription/cache/pending-effect teardown. Presence remains ephemeral and distinct from committed edits.",
+      "verification": "At one integrated revision use two real authorized actors, edit distinct precedent cells concurrently and assert equal computed formula values/revisions on both clients after merge. Disconnect/reconnect with pending operations and reopen service/client state; no lost/duplicate edits. Revoke one actor while subscribed and assert writes, range reads, active subscriptions and forbidden caches cease; direct authority calls must also deny.",
+      "missingPrerequisite": ["accepted explicit dependency receipts and wave0", "FG-DURABLE-COLLABORATION", "FG-COMMAND-AUTHORITY", "two authenticated actor and reconnect/revoke fixtures"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "AC-2",
+      "criterion": "Импорт CSV → edit formula → reload → export без потери types/escaping; cycle не зависает UI. A offline edits cell, B deletes its row: reconnect не воскресит row; rebase соседней surviving cell корректен.",
+      "currentEvidence": "Spec:81; Pages createPage/loadPage persist HTML page metadata, not raw/computed workbook cell state. Notes counters have no expression graph. CSV workbook paths are absent.",
+      "actualSeam": "createPage/loadPage for preserved page identity; proposed contracts.ts cell values/formula refs and sheets.ts patchStructure/exportWorkbook",
+      "requiredChange": "Typed reversible CSV mapping and bounded importer/exporter; formula AST/ref dependency graph and cycle handling; durable stable IDs; structural CAS and row/column tombstones; survivor-only rebase; authorized conflict draft available for explicit transfer without resurrection. Export checksummed file artifact with escaping and injection warning.",
+      "verification": "Import text with commas/quotes/newlines and Unicode, decimal-string, boolean, date, null and formula cases using the approved type mapping; edit SUM/AVERAGE/IF, reopen, export and reimport with exact typed/raw/computed comparisons. Cycle returns #CYCLE while keyboard/UI remain responsive. A edits offline, B deletes its row, reconnect A: deleted IDs stay tombstoned, edit is rejected with permitted draft and neighboring surviving cell operation rebases correctly. Repeat operationId and stale structureVersion controls.",
+      "missingPrerequisite": ["FG-LIMITS-ENGINE-CSV", "FG-DURABLE-COLLABORATION", "canonical export Attachment/object storage API"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "AC-3",
+      "criterion": "Sheet mention в Task и agent readRange возвращают тот же entity/ref/revision; viewer agent не может write.",
+      "currentEvidence": "Spec:82; Rox2EntityRef:232-239 supports workspace/entity/revision; mentions relation exists at platform-contract:380-388. ElectronAPI page methods:2099-2126 do not expose sheet readRange.",
+      "actualSeam": "Rox2EntityRef / ROX2_RELATION_RULES.mentions; proposed sheets.ts readRange and common command authority",
+      "requiredChange": "Task mention resolver uses canonical page EntityRef, not A1 IDs or copied content. Register ACL-scoped readRange and viewer-protected write commands in same authority for UI and agents; enforce effect-free preview.",
+      "verification": "Create workbook, mention it in a Task, open mention and query agent readRange; compare canonical entityId/workspaceId/revisionId and values to UI at the same revision. Viewer actor can read but is denied applyCellOps/editCell/patchStructure/export mutations as appropriate to policy even via direct agent transport; preview causes zero writes/events/artifacts.",
+      "missingPrerequisite": ["FG-CONTENT-DISPATCH", "FG-CROSS-ENTITY-SERVICES", "FG-COMMAND-AUTHORITY", "accepted Task mention and agent gateway registration paths"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-1",
+      "criterion": "UI/routing/input/output/help/keyboard/state contracts реализованы; loading/empty/error/denied/retry доступны и проверены.",
+      "currentEvidence": "Spec:20-44,86. PagesHome.openPage/handleCreatePage:79-101 and routes.view.pages:219-223 already provide page navigation. NotesViewHost is not a workbook. Native editor host is not among inspected files.",
+      "actualSeam": "PagesHome.openPage/handleCreatePage; routes.view.pages; PagesNavigationState; proposed SheetsEditor",
+      "requiredChange": "Mount contentKind=sheet in accepted page host; preserve all three entry points and universal identity. Implement specified header/toolbar/formula bar/grid/two tabs/add/inspector, typed inputs, explicit formula help/errors, keyboard and lifecycle states. Loading/empty/error/denied/retry must be distinct usable states, not success placeholders.",
+      "verification": "Real Electron interactions: create via Drive/Docs, open via Project Documents/universal link, confirm same saved page; exercise empty/loading/failure/retry/denied and two sheets. Enter/Tab/Esc/arrows/F2, IME, focus/click help and all toolbar/inspector actions change intended workbook state; reload proves saved state. Inspect ARIA and viewer copy/edit behavior.",
+      "missingPrerequisite": ["FG-CONTENT-DISPATCH", "FG-COMMAND-AUTHORITY", "accepted entry-point and editor-dispatch patch locations", "FG-EVIDENCE-LANES"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-2",
+      "criterion": "Persistence и reload; meaningful negative case; concurrency/reconnect где применимо; N/A обоснован в receipt.",
+      "currentEvidence": "Spec:87; storage.ts:176-219,281-309 writes/loads local page metadata with stable page id, not required collaborative workbook payload. Full Sheets specifies concurrency/reconnect explicitly, so these are applicable.",
+      "actualSeam": "savePageConfig/loadPage/loadPageById for preserved metadata; proposed sheets.ts persistence/reconnect/CAS",
+      "requiredChange": "Store workbook metadata and raw/computed cells with stable sheet/row/column/cell IDs through the accepted shared durable service. Implement atomic CRDT/WAL recovery, idempotency, structural CAS, offline survivor rebase and tombstone rejection. Keep legacy IDs/slug/grants/aliases across migration. Do not mark persistence/concurrency/revoke N/A under the spec's UI-only slice clause.",
+      "verification": "Restart/reopen and compare all IDs/raw inputs/types/results/revisions; two-actor merge and offline row-deletion cases; stale expectedRevision/structureVersion, duplicate operationId, malformed formula and cross-workspace actor are meaningful negative controls; crash/recover snapshot/WAL at a transaction boundary without lost committed changes.",
+      "missingPrerequisite": ["FG-DURABLE-COLLABORATION", "FG-COMMAND-AUTHORITY", "accepted migration and rollback contract"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-3",
+      "criterion": "Общие grants, links, search, mentions, activity, notification и agent policy интегрированы для новой domain entity.",
+      "currentEvidence": "Spec:48,58,88. Existing entity kind page, permissions, EntityRef, relation/event/result types are available in platform-contract.ts. PageConfig.grants at page.ts:314-315 are content-digest-bound source-action grants, not proof of read/write/share collaboration ACL. member-of excludes page.",
+      "actualSeam": "ROX2_PERMISSIONS / Rox2EntityRef / ROX2_RELATION_RULES / Rox2Event / Rox2CanonicalResult; PageConfig.projectId; proposed sheet handlers",
+      "requiredChange": "Use existing page entity and grants rather than a new sheet entity; integrate common policy and relation semantics, tenant/ACL-filtered title/text-cell search, links/mentions and checksummed Attachment exports. Emit transactional sheet.changed/export.ready into common activity/outbox -> notification dedupe. All agent/IPC/RPC/MCP/provider access uses the same server policy; revoke clears reads/subscriptions/caches and blocks pending unauthorized effects.",
+      "verification": "Compare UI/Task/agent refs and revisions; shared search returns textual cells/title for permitted actor only. Edit/export delivers expected single deduplicated activity/notification with operation correlation. Revoke and tenant mismatch deny every direct transport lane and subscriptions, not merely disable controls. Project Documents uses same canonical page; existing relation/authority routes remain intact.",
+      "missingPrerequisite": ["FG-CROSS-ENTITY-SERVICES", "FG-COMMAND-AUTHORITY", "FG-DURABLE-COLLABORATION", "lead-owned registration and transport patches"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-4",
+      "criterion": "Targeted tests + seeded broken control действительно отклоняется; regression existing route/authority пройдена.",
+      "currentEvidence": "Spec:89. Normative tests/rox-suite/sheets/workbook.spec.ts does not exist at inspection. Existing page route/types and note projections have been inspected, but no tests were executed under this preflight authorization.",
+      "actualSeam": "proposed workbook.spec.ts; routes.view.pages; decodeDocumentDescriptor; NotesViewHost and formulaValue preserved behavior",
+      "requiredChange": "Write consumer-visible workbook/recovery/policy tests and negative controls. Keep existing Notes projection and page/descriptor/authority regression coverage; update tests only for intentional contract changes, not incidental source wording. Seed a tombstone-check bypass and ACL-check bypass that the appropriate acceptance oracles reject.",
+      "verification": "After implementation, run targeted workbook tests plus existing route/authority/descriptor/i18n regression checks at the exact integrated revision. Record expected PASS for correct version and observed FAIL for deterministic seeded broken controls, including assertion/log and mutant identity. Test results do not substitute for Electron or service readback.",
+      "missingPrerequisite": ["implemented service/UI/contracts", "accepted test runner/fixtures and foundation receipts", "FG-EVIDENCE-LANES"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-5",
+      "criterion": "Linux domain/renderer evidence; реальные Electron screenshots/ARIA/theme/font после UI changes; provider lane только для реальных external effects.",
+      "currentEvidence": "Spec:44,90. Existing React surfaces use t() and current classes/components; no native UI or Linux run was performed. This is a Mac read-only preflight, not a Linux or Electron acceptance receipt.",
+      "actualSeam": "proposed SheetsEditor mounted in accepted page host; existing useTranslation/token/font conventions in PagesHome/NotesViewHost",
+      "requiredChange": "Deliver independently exercised Linux domain/renderer and actual Electron scenarios, screenshot/ARIA/computed-font evidence and responsive/motion/viewer states. Use a provider lane only when an actual external effect is implemented; local export still requires artifact checksum/readback.",
+      "verification": "On integrated revision collect Linux service/renderer logs and actual Electron screenshots with ARIA tree, computed font and theme, hover/focus/click, IME, widths around 1100/800 px and reduced-motion. Confirm 120-160 ms opacity/transform transitions and non-color-only states. For any included external effect obtain provider receipt and independent remote readback; do not label simulations live.",
+      "missingPrerequisite": ["FG-EVIDENCE-LANES", "implemented mounted editor", "accepted Linux environment and native desktop lane"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD-6",
+      "criterion": "Source commit, exact diff, logs/hashes, expected/observed, миграция/rollback и независимое review приложены. Нельзя принимать экран без механизма.",
+      "currentEvidence": "Spec:91. Input revision is supplied by packet, but live source hashes here are not a delivered implementation revision. featureComplete=false; no product diff, runtime logs, migration or review acceptance exists in this report.",
+      "actualSeam": "savePageConfig/loadPage identity preservation; DocumentDescriptor decode/legacy read behavior; proposed sheet metadata/CRDT service migration",
+      "requiredChange": "Lead binds implemented artifacts, migrations, exact diff and runtime receipts to committed integrated source. Provide page-compatible migration and rollback that preserves original IDs/grants/aliases and workbook/WAL data without converting to HTML/markdown or discarding pending authorized drafts. Obtain independent review of policy, formulas, recovery and UI acceptance.",
+      "verification": "Record exact source commit/diff, artifact and log hashes, expected/observed scenario results and environment IDs. Run migration against existing page fixtures, reload, migrate/rollback safely and verify identity/data/grants; unsupported readers retain read-only raw data. Independent reviewer checks all acceptance and foundation receipts before package acceptance.",
+      "missingPrerequisite": ["wave0 and accepted dependencies", "complete integrated implementation", "migration strategy and rollback receipt", "independent reviewer", "FG-EVIDENCE-LANES"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-INPUTS",
+      "criterion": "Workbook name 1-200; cells null|string|boolean|decimal-string|date; locale/timezone independent; bounded input/formula/TSV with limit/truncation before apply; EntityRef links and mention comments.",
+      "currentEvidence": "Spec:28-30. CreatePageInput.name is string; PageConfigSchema.name only has min(1). Existing Notes properties are Record<string,unknown>, not typed sheet values.",
+      "actualSeam": "CreatePageInput / PageConfigSchema; proposed contracts.ts CellValue/Workbook and SheetsEditor import/paste/comment controls",
+      "requiredChange": "Schema-level sheet bounds and discriminated decimal/date/text types; independently stored locale/timezone; enforce approved formula and paste limits on server and UI; show preview/truncation and require explicit apply; links/comments reuse canonical ref and mention resolver.",
+      "verification": "Accept 1/200-character names and reject empty/201; round-trip decimal precision/date/boolean/null/text independent of UI locale/timezone. Boundary/overlimit pasted ranges show exact limit/truncation before effect. Link cell and mentioned comments resolve permitted canonical entities without copying them.",
+      "missingPrerequisite": ["FG-LIMITS-ENGINE-CSV", "FG-CROSS-ENTITY-SERVICES", "accepted shared descriptor/authority contract"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-FORMULAS-OUTPUTS",
+      "criterion": "Two-sheet slice with SUM/AVERAGE/IF and direct refs; stable IDs; separate raw/computed values; #CYCLE/#REF/#VALUE help; explicit unsupported formulas; CSV escaping/injection warning and checksum artifact.",
+      "currentEvidence": "Spec:24,34-36,52; NOTE_FORMULA_EXPRS and formulaValue are fixed note counters, with no workbook AST or stable cell references.",
+      "actualSeam": "proposed shared contracts/formula evaluator; sheets.ts createWorkbook/exportWorkbook; SheetsEditor formula bar/error help",
+      "requiredChange": "Create two sheets; parse an allowlisted bounded AST without eval/JS/network; bind refs to stable IDs and derive A1 labels after structure changes; maintain dependency graph with cycle detection. Persist input/value/error separately; display supported formula list and explicit unsupported error. Export with RFC-style quoted field escaping, reversible typed policy, formula-injection warning and hash-verified file artifact.",
+      "verification": "Known SUM/AVERAGE/IF/direct cross-sheet reference results match both actors. Reorder/insert/delete preserves surviving refs and yields #REF for deleted targets; cycle gives #CYCLE, type mismatch #VALUE and unsupported function explicit localized error/help via hover/focus/click. Attempt JS/network expressions and overlimit depth/ranges: reject without execution/hang. Download artifact bytes/checksum and reimport CSV edge cases.",
+      "missingPrerequisite": ["FG-LIMITS-ENGINE-CSV", "FG-DURABLE-COLLABORATION", "canonical file artifact storage"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-KEYBOARD-VIEWER-PRESENCE",
+      "criterion": "Enter/Tab/Esc/arrows/F2 and IME; viewer cannot edit but can copy; own-local undo only; structural conflicts reconcile; hover never emits neighboring cursor; ephemeral cursor/range.",
+      "currentEvidence": "Spec:40-42. NotesTableView works on projected rows and saved layouts, not editable workbook grid or presence.",
+      "actualSeam": "proposed SheetsEditor edit/selection/undo/presence handlers; sheets.ts patchStructure/applyCellOps",
+      "requiredChange": "Separate navigation/edit/composition state; Enter row move, Tab column move, Esc cancel local current edit, F2 edit; viewer blocks all mutation paths but supports authorized copy. Track undo by actor/local origin, exclude remote and structure ops from blind undo. Emit presence only for actual local selection/cursor changes, not hover, and keep it outside durable cells; conflicts show explicit authorized reconcile draft.",
+      "verification": "Real keyboard/composition sequence with selection/value assertions; two users edit and A undo cannot revert B. Viewer paste/F2/toolbar/direct commands denied while copy works. Hover on remote cell emits no cursor update. Offline structural conflict preserves allowed draft and requires explicit relocation; disconnect removes stale presence.",
+      "missingPrerequisite": ["FG-COMMAND-AUTHORITY", "FG-DURABLE-COLLABORATION", "implemented grid with real Electron lane"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "CONTRACT-UI-HELP-RESPONSIVE",
+      "criterion": "Russian-default i18n/help; inherited theme/font; focus/click hover-help; 120-160 ms opacity/transform only and reduced-motion; non-color status; inspector drawer below 1100 px and one active pane/back below 800 px.",
+      "currentEvidence": "Spec:44. PagesHome and NotesViewHost import useTranslation and use existing token classes. No SheetsEditor exists and actual computed font/motion/layout were not observed.",
+      "actualSeam": "useTranslation conventions in PagesHome/NotesViewHost; proposed SheetsEditor; existing ten-locale catalog per AGENTS",
+      "requiredChange": "Use shared compact tokens/font/help components, localized labels/errors/ARIA and ten-locale keys, explicit state icons/text, focus/click-accessible explanations of functions/types/limits/status. Implement required inspector/drawer/single-pane breakpoints and reduced-motion without second app surface.",
+      "verification": "Inspect real Electron computed font/theme, ARIA and screenshot states at both breakpoint boundaries. Exercise help via hover, keyboard focus and click, Russian default and translation parity; observe reduced-motion removes animations and normal transitions are 120-160 ms opacity/transform only. Confirm back-navigation from single-pane inspector/editor.",
+      "missingPrerequisite": ["accepted editor host", "lead-owned locale additions", "FG-EVIDENCE-LANES"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "docs/rox-suite/published/RS-SHEET-01.md", "symbol": "Acceptance criteria / Definition of Done / domain authority", "lineStart": 20, "lineEnd": 118, "sha256": "7fcaf1c656415d9e18a852a908428320d39d992daaaf16db1246d94e3af7cac3"},
+    {"path": "plans/rox-suite/issues.json", "symbol": "RS-SHEET-01 normative record", "lineStart": 69, "lineEnd": 100, "sha256": "5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "NOTE_FORMULA_EXPRS / NoteBaseView", "lineStart": 15, "lineEnd": 34, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "formulaValue", "lineStart": 188, "lineEnd": 203, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesViewHost / NotesTableView", "lineStart": 58, "lineEnd": 160, "sha256": "2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_ENTITY_KINDS / ROX2_PERMISSIONS / Rox2Entity", "lineStart": 17, "lineEnd": 123, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2EntityRef", "lineStart": 232, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_RELATION_RULES / isAllowedRox2Relation", "lineStart": 380, "lineEnd": 402, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "apps/electron/src/renderer/components/pages/PagesHome.tsx", "symbol": "visiblePages / openPage / handleCreatePage", "lineStart": 66, "lineEnd": 101, "sha256": "3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"},
+    {"path": "apps/electron/src/renderer/atoms/pages.ts", "symbol": "pagesAtom / pagesProjectFilterAtom", "lineStart": 14, "lineEnd": 23, "sha256": "d429fb649961031ab860ce7c107c69f121aee46cf61648f26962de9d6ff18ff2"},
+    {"path": "apps/electron/src/renderer/lib/navigate.ts", "symbol": "routes re-export / navigate", "lineStart": 15, "lineEnd": 50, "sha256": "fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path": "apps/electron/src/shared/routes.ts", "symbol": "routes.view.pages", "lineStart": 219, "lineEnd": 223, "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path": "packages/shared/src/pages/types.ts", "symbol": "isPageGrantUsable / CreatePageInput / LoadedPage", "lineStart": 40, "lineEnd": 100, "sha256": "89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path": "packages/shared/src/pages/validation.ts", "symbol": "PageKindSchema / PageConfigSchema / validatePageConfig", "lineStart": 178, "lineEnd": 245, "sha256": "dc9579b3f129baae3d81943a6fc2f5a87212af3aa72ecef1facbd9667deaf3f3"},
+    {"path": "packages/shared/src/pages/storage.ts", "symbol": "savePageConfig / loadPage / loadPageById", "lineStart": 176, "lineEnd": 230, "sha256": "b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path": "packages/shared/src/pages/storage.ts", "symbol": "createPage / UpdatePagePatch", "lineStart": 281, "lineEnd": 329, "sha256": "b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path": "packages/core/src/types/page.ts", "symbol": "PageKind", "lineStart": 29, "lineEnd": 35, "sha256": "9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path": "packages/core/src/types/page.ts", "symbol": "PageConfig", "lineStart": 294, "lineEnd": 320, "sha256": "9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path": "packages/core/src/docs/content-descriptor.ts", "symbol": "ContentKind / ContentAuthority / DocumentDescriptor", "lineStart": 3, "lineEnd": 33, "sha256": "0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path": "packages/core/src/docs/content-descriptor.ts", "symbol": "decodeDocumentDescriptor / legacyDocumentDescriptor", "lineStart": 129, "lineEnd": 173, "sha256": "0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "ElectronAPI Page methods", "lineStart": 2099, "lineEnd": 2126, "sha256": "3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "PagesNavigationState", "lineStart": 2460, "lineEnd": 2469, "sha256": "3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path": "apps/electron/src/renderer/components/pages/PageTile.tsx", "symbol": "PageTile kind and poster lookup", "lineStart": 37, "lineEnd": 68, "sha256": "c61e8cf7573bfde76a2d18b8eb4440b448c8a6183d45b230a9e2d97134452497"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reviews this preflight artifact; no product implementation is authorized for this worker.",
+    "afterPrerequisites": "After the lead's wave0 commit and accepted RS-DRV-01/RS-DOC-01 receipts, re-read/rehash the canonical content, page metadata and authority seams and resolve the foundation gates. Obtain one-writer shared patch ownership, numeric limits and typed CSV/formula contracts; then implement contracts + authority/storage first, mount editor in existing page host second, and execute all acceptance/evidence lanes at the integrated revision.",
+    "implementationOrder": ["wave0 committed and explicit dependency receipts accepted", "canonical content/authority/storage/integration contracts accepted", "typed workbook contracts and safe formula/CSV primitives", "service persistence/ACL/CRDT/CAS/recovery/outbox handlers", "existing route/create/task/agent integration plus SheetsEditor", "targeted and seeded-control checks, Linux/Electron readback, migration/rollback and independent review"],
+    "blockedOn": ["wave0 integration receipt", "RS-DRV-01 acceptance receipt", "RS-DOC-01 acceptance receipt", "foundation contract and ownership resolutions"]
+  },
+  "risks": [
+    "Root-owned wave0/shared changes can invalidate line ranges/hashes. References are live working-tree evidence, not certified input-HEAD source; no automatic overwrite or stale patch application.",
+    "A table of notes and fixed counters is not a spreadsheet. Reusing Notes localStorage would falsely imply durable multi-user workbook support.",
+    "ContentKind and descriptor authority currently reject sheets, and PageConfig has no workbook descriptor. Silent markdown/HTML fallback risks destructive conversions or two stores.",
+    "Current member-of relation excludes page despite existing projectId. Project Documents must resolve one approved canonical relationship, not independent page/project membership copies.",
+    "Source-action PageActionGrant is not collaboration read/write/share ACL. Viewer/revoke checks must live in server authority and apply to pending ops, subscriptions, caches and agent transports.",
+    "A1 must never become cell identity. Offline edits against deleted row/column IDs must preserve only authorized draft content, never resurrect tombstoned structure; formulas need stable-ID references and deterministic rebase.",
+    "CSV alone does not distinguish text from decimal/date/boolean/null or formulas. An explicit reversible typed mapping is necessary to meet no-type-loss acceptance without secretly weakening it.",
+    "Expression length/depth/range and paste limits are not numerically fixed in this specification. Lead must finalize them and engine dependency/license before implementation; Excel/XLSX/Pivot parity is outside the specified scope, not an excuse to omit SUM/AVERAGE/IF/direct refs.",
+    "Shared transport/editor/search/outbox locations were not inferred from filenames. Dependency owners must provide accepted seams; a type declaration or create button alone cannot close an integration criterion.",
+    "Full-feature acceptance cannot use the spec's UI-only N/A clause to omit persistence/concurrency/policy. Every AC and DoD is retained as unimplemented/unverified in this report.",
+    "No runtime or native evidence is claimed. This preflight is not feature implementation, a passing test receipt, Linux/native proof, migration proof or independent final review."
+  ]
+}

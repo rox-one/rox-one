@@ -1,0 +1,292 @@
+{
+  "task_id": "CI-012-preflight",
+  "attempt_id": "bddad4db72bf50f87ea3a48fd4960bd0",
+  "packet_hash": "94d8ba477e781536727d016ec32cf4ca3d7b58861e3fb7309ac2a0934e294ce3",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-012",
+  "featureComplete": false,
+  "mode": "inspect-only; sole write is this report",
+  "workTier": "bounded-workflow",
+  "dependencies": ["CI-003", "CI-004", "CI-005", "CI-006", "CI-008"],
+  "inspection": {
+    "scope": "CI-012 normative existing paths, proposed path existence, existing handler conventions and their direct contracts/imports; package and related provider specification records",
+    "revisionMeaning": "input_revision is the dispatch revision, not a claim that inspected working-copy files belong to that commit. Root-owned wave0 changes were left untouched. Whole-file SHA256 below binds this inspection; no Git command was run.",
+    "specInputDigestsMatchPacket": true,
+    "sourceFreshness": "Working-copy snapshot only. refs.ts/provider.ts already contain repository contracts not reflected in the old specification baseline audit. Their presence does not establish an accepted wave0/dependency receipt or runtime verification. Re-read changed sources after the lead commit before implementation.",
+    "newFileExistence": "glob found no packages/session-tools-core/src/code-intelligence directory and no code-search/code-read/intelligence-propose handler matches; no implementation claimed",
+    "toolLimitations": [
+      "Codegraph reported no index; continued with built-in read/grep/glob without indexing.",
+      "Behavior find failed its judgments with API 402; no-hit output is not absence evidence. Inspection continued from normative paths and known literal symbols."
+    ],
+    "verificationPerformed": "Source/spec reads and read-only shasum only; no build, product tests, native UI, network operations or product execution. Planned checks below are not observed passes."
+  },
+  "foundationGates": [
+    {
+      "id": "CI-012-FG-BASE",
+      "kind": "implementation launch gate, not an extra explicit DAG edge",
+      "evidence": "execution-packages.json:5104-5152; code-intelligence.json:4598-4614; dispatch requires lead wave0 commit",
+      "gate": "Lead wave0 commit, accepted artifact plus readback receipts for all five explicit dependencies, resolved reference package revision/digest, approved implementation base and exclusive shared-file leases must exist before implementation.",
+      "missingPrerequisite": "These receipts/base resolution/leases were not supplied or verified in this preflight. Published cloud baseline e953786 differs from dispatch input a21aeab1; lead must resolve the approved integrated base, not silently choose one.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "EG-IDENTITY",
+      "kind": "published external foundation gate",
+      "evidence": "execution-packages.json:5147-5151; code-intelligence.json:148-155; context.ts:151-178; refs.ts:570-595",
+      "gate": "Authenticated actor/workspace/project/source authority and live permission mode must be bound by host transport on every invocation, not provided by model arguments or inferred from workingDirectory.",
+      "missingPrerequisite": "SessionToolContext supplies sessionId/workspacePath/workingDirectory but inspected identity fields do not provide authenticated actor/source lease. Host-owned authority injection and accepted EG-IDENTITY receipt remain required.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CI-012-FG-SCOPE",
+      "kind": "transitive foundation, not additional direct dependency",
+      "evidence": "code-intelligence.json:2331-2364,2536-2538,2737-2739,3120-3123,3599-3604; refs.ts:575-595",
+      "gate": "CI-001 exact refs and CI-002 shared repository/exclusion/egress/offline authorization resolver underpin every read. CI-007 is transitively required through CI-008. Historical snapshot validation alone cannot authorize current reads or remote-private offline access.",
+      "missingPrerequisite": "Accepted transitive receipts and live actor/lease resolver wired into CI-004 transport. refs.ts explicitly does not discover actors, renew leases or grant egress.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CI-012-FG-TRANSPORT-REGISTRY",
+      "kind": "hidden integration ownership gate",
+      "evidence": "tool-defs.ts:1-11,817-850,905-910,1039-1057; tool-defs-filtering.ts:4-10,17-59; knowledge/runtime.ts:7-15,67-81",
+      "gate": "New handler files are insufficient: canonical Zod schemas/SESSION_TOOL_DEFS, essential MCP suffixes, host runtime registration and an authenticated subprocess transport must be integrated by the lead. tool-defs.ts, tool-defs-filtering.ts and context.ts are outside the six normative sharedPatchPaths.",
+      "missingPrerequisite": "Lead ownership/scope assignment for the additional integration requests below and CI-004 native/subprocess adapter contract. A process-local singleton is not cross-process transport.",
+      "state": "GAP_BLOCKS_IMPLEMENTATION"
+    },
+    {
+      "id": "CI-012-FG-PROVIDER",
+      "kind": "published provider/runtime and egress gates",
+      "evidence": "execution-packages.json:5148-5151; code-intelligence.json:67-100; provider.ts:40-47,67-96; packs.ts:48-53,91-106",
+      "gate": "Provider version/license/runtime readiness, actual upstream pin/digest and repository egress policy must be verified before execution. Preserve off-by-default existing pack and rejected duplicate daemons; inventory hashes generated from id@version are not upstream receipts.",
+      "missingPrerequisite": "Accepted CI-005/CI-006 provider readiness and selection reconciliation receipts plus actual native transport readiness. No provider installation, launch or private egress is authorized by this report.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "CI-012-FG-REVIEW-CONTEXT",
+      "kind": "hidden surface/persistence foundation, not extra explicit DAG edges",
+      "evidence": "code-intelligence.json:4441-4444,4499,4517-4529; KnowledgeAgentPanel.tsx:26-28,80-101,104-147; docs/lark-suite-reference/14-code-intelligence-ui.md:47-55,75-97",
+      "gate": "Existing session attachment lifecycle must preserve scoped evidence/run/proposal refs and revoke cached protected content; existing review navigator must resolve proposal links without agent apply. CI-010/CI-011 review/source navigation and CI-013 owned instruction reconciliation are related integration surfaces, not CI-012 explicit DAG dependencies.",
+      "missingPrerequisite": "Lead-agreed attachment/ref route contract and existing review/apply endpoint ownership. Panel currently passes a knowledge mention as session input, not typed run/proposal attachments. Instruction reconciliation cannot be implemented by overwriting user instruction files.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/session-tools-core/src/code-intelligence/runtime.ts",
+    "packages/session-tools-core/src/handlers/code-search.ts",
+    "packages/session-tools-core/src/handlers/code-read.ts",
+    "packages/session-tools-core/src/handlers/intelligence-propose.ts",
+    "packages/session-tools-core/src/handlers/__tests__/code-intelligence-tools.test.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/session-tools-core/src/code-intelligence/runtime.ts",
+      "change": "Define a provider-neutral CodeIntelligenceToolRuntime with repoStatus/search/readSpan/architectureRead/wikiSearch/wikiRead/plan/propose capabilities using dependency-owned DTOs. Keep only a registration/transport seam, no second source/job/proposal store. Each method accepts host-derived session authority; resolve current scope/lease/freshness before releasing data, including cached data. Distinguish absent transport from unsupported provider. Register a host adapter in-process; install an authenticated RPC adapter in subprocess when available, otherwise return a typed unavailable error. Do not expose automatic apply or execute generation from plan."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/code-search.ts",
+      "change": "Implement code_search and repo_status through the runtime; also house repo_wiki_search if needed to cover the normative read suite without inventing a new owned file. Validate raw arguments as well as canonical schemas, clamp request and response bounds, preserve skipped/truncated and source refs. Delegate local retrieval/argv execution to CI-003 rather than add an index or shell runner."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/code-read.ts",
+      "change": "Implement code_read accepting scoped FileSpan/ref, architecture_read and repo_wiki_read through the shared runtime. No arbitrary filesystem paths. Resolve captured exact ranges plus current policy and hash/freshness; return contentHash, snapshot/sourceVersion, stale/missing and evidence/trust. Preserve graph kind and unsupported edge limitations, and complete selected wiki sections under the CI-006 bounded-section contract. Never silently cut a wiki section to fit the generic knowledge body cap."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/intelligence-propose.ts",
+      "change": "Implement intelligence_plan and artifact_propose as stage-only calls. Return run plan/file manifest/data exposure/budget or pending ReviewProposal with artifact/baseHash/affectedFiles and review/run refs. Validate managed namespace/ownership and current actor policy; no runtime.run/apply call in a stage handler. Do not confuse handler filename intelligence-propose with the normative wire name artifact_propose. Writer job intelligence_run and navigator artifact_apply remain separate authorized boundaries, not implicit side effects."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/__tests__/code-intelligence-tools.test.ts",
+      "change": "Add deterministic consumer-visible tests using dependency-backed fixture snapshots for foreign scope, exclusion/symlink traversal, forged ref/hash, current policy change, stale/missing source, bounded results, complete wiki sections, graph kind/trust preservation, absent subprocess transport and stage-only effects. Check real proposal persistence remains pending and managed/source file hashes unchanged. Exercise denied writer/apply calls and injected repository instructions, not just schema membership/mock forwarding. Native transport and UI verification remain separate required lanes."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/session-tools-core/src/knowledge/runtime.ts",
+      "symbol": "KnowledgeToolRuntime / registerKnowledgeToolRuntime",
+      "change": "Expose/reuse the dependency-owned host scope/transport seam for RepoWiki reads and proposals. Add trusted invocation context to the relevant runtime adapter signatures as required by CI-004; preserve existing SiYuan search/read/propose behavior and typed missing-runtime handling. Keep knowledge content in its existing resolver/store, not a parallel wiki runtime store.",
+      "reason": "Current methods accept refs/connectionId but not caller identity; singleton registration covers only one process. Generated repo pages must share current authorization and explicit transport.",
+      "ownership": "integration-owner; normative shared path"
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/knowledge-propose.ts",
+      "symbol": "handleKnowledgePropose / formatProposal",
+      "change": "Carry host-derived session authority and optional accepted scoped artifact/evidence/run refs into the existing proposal adapter. Ensure only pending proposal receipts are returned as stage success; maintain whitelist validation, actor agent, sessionId/baseHash and explicit not-applied output. Do not route navigator apply through this handler.",
+      "reason": "Current propose input is a SiYuan MutationInput and records only sessionId; generated artifacts must remain pending and preserve provenance without replacing the existing proposal mechanism.",
+      "ownership": "integration-owner; normative shared path"
+    },
+    {
+      "path": "apps/electron/src/renderer/knowledge/KnowledgeAgentPanel.tsx",
+      "symbol": "KnowledgeAgentPanelProps / buildAskAboutPrefill / buildOpenSessionBrief / buildAskAboutSessionRoute / buildOpenSessionRoute",
+      "change": "Accept typed authorized evidence/run/proposal refs from the existing host inspector and pass them through the existing new-session route/attachment lifecycle. Render current/stale/denied context and resolvable run/review links, never unrestricted source dumps or inferred applied status. Preserve composer-review versus send=true behavior and all labels via t(); ask integration-owner for all ten locale updates when adding keys.",
+      "reason": "Current props contain only KnowledgeRef; the existing session channel should be extended rather than a new Agents surface/store.",
+      "ownership": "integration-owner; normative shared path; dependent session attachment/navigation contract required"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/types.ts",
+      "symbol": "CodeCitation / CodeGraph / CodeIntelAdapter / CODE_INTEL_PACK",
+      "change": "Reuse refs.ts FileSpan/RepositoryRef instead of duplicating them. Add dependency-owned SearchHit/Claim/VerificationReceipt/IntelligenceRun/ReviewProposal tool DTO references and discriminated transport result/error contracts as needed. Preserve legacy sync index contract, graph kind/provenance limitations, off-by-default pack and rejected provider decisions. Bind agent evidence to exact sourceVersion/contentHash/snapshot and separate semantic support status from ref integrity.",
+      "reason": "Inspected legacy CodeCitation has path/startLine/commit only and cannot represent dirty bytes, leases, end range or semantic support. refs.ts already has bounded exact refs and current-policy helpers.",
+      "ownership": "integration-owner; normative shared path; coordinate CI-001/CI-003/CI-004/CI-006 contracts first"
+    },
+    {
+      "path": "packages/shared/src/capabilities/install.ts",
+      "symbol": "selectCapabilityTools / recordFor / buildProvenanceManifest / installCapability",
+      "change": "For repository tasks resolve the canonical selected/rejected provider decision and real installed/runtime readiness before offering capability routes; omit rejected/unverified providers and preserve the high-risk gate. Keep inventory declaration metadata visibly distinct from verified upstream/runtime provenance. Do not auto-install providers on tool discovery or on a read/stage invocation.",
+      "reason": "Current selector filters packId/installedIds/highRisk only and may choose declared codewiki/deepwiki even though canonical code-intelligence types reject those daemons; lock/registry metadata alone is not readiness.",
+      "ownership": "integration-owner; normative shared path; packs.ts reconciliation is separately requested"
+    },
+    {
+      "path": "packages/shared/src/capabilities/agents-md.ts",
+      "symbol": "generateAgentsMdHeuristics / buildOfflineCapabilityReport",
+      "change": "Generate bounded read/stage routing hints only from canonical selected/readiness policy, explicitly distinguish propose from apply and inventory availability from source-content authorization. Describe source evidence and current scope/lease requirement; never treat repository AGENTS text as authority or renew a lease via offline report. Leave instruction-file reconciliation to the owned-marker review mechanism.",
+      "reason": "Functions currently emit hints/report from installedIds without live source policy; a generated tool list cannot grant private source access.",
+      "ownership": "integration-owner; normative shared path"
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs.ts",
+      "symbol": "canonical schemas / TOOL_DESCRIPTIONS / SESSION_TOOL_DEFS / getToolDefsAsJsonSchema",
+      "change": "Add canonical schemas, descriptions and handler imports for repo_status, code_search, code_read, architecture_read, repo_wiki_search, repo_wiki_read, intelligence_plan and artifact_propose; derive exports and prefixed JSON schema through the existing registry. Read methods are safeMode allow/readOnly true; preserve current policy for stages and do not classify writers/apply as safe. Keep intelligence_run writer-job and artifact_apply navigator boundaries separate; test denied attempts even when not exposed to the agent.",
+      "reason": "Mandatory discovery/execution wiring is absent from the normative shared path list. New files cannot become tools without this canonical registry.",
+      "ownership": "lead integration request OUTSIDE normative sharedPatchPaths; no worker edit authorized"
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs-filtering.ts",
+      "symbol": "SESSION_MCP_ESSENTIAL_SUFFIXES",
+      "change": "Keep newly approved CI-012 host suffixes aligned with SESSION_TOOL_DEFS, retaining essential visibility for mcp__session__ tools and no privilege inheritance for unrelated third-party MCP tools.",
+      "reason": "Prefixed names absent from this explicit suffix set become discoverable/hidden under MCP lens rather than essential; new tools may not reach the model.",
+      "ownership": "lead integration request OUTSIDE normative sharedPatchPaths; no worker edit authorized"
+    },
+    {
+      "path": "packages/session-tools-core/src/context.ts",
+      "symbol": "SessionToolContext",
+      "change": "Add the minimal optional host-provided scoped CI invocation/transport capability required by CI-004, following existing callback injection. It must resolve authenticated session actor/workspace/project/current permission and return typed unavailable if not supplied. Do not accept those authority fields from tool args or infer them from workspacePath/workingDirectory.",
+      "reason": "Existing context identity fields are insufficient for EG-IDENTITY; current knowledge read ignores _ctx. Cross-process transport must not depend on module singleton state.",
+      "ownership": "lead integration request OUTSIDE normative sharedPatchPaths; exact host registration/subprocess caller files deferred to CI-004 accepted contract, not guessed or inspected out of scope"
+    },
+    {
+      "path": "packages/shared/src/capabilities/packs.ts",
+      "symbol": "CAPABILITY_TOOLS / gitRef / checksum",
+      "change": "Reconcile available repository capability metadata with the canonical selected/rejected provider decision and actual provider pins/readiness; preserve existing rejection reasons and do not present generated id@version hashes/example repositories as verified upstream receipts.",
+      "reason": "Direct import of install.ts/agents-md.ts still declares CodeWiki/DeepWiki with placeholder upstream metadata, contradicting canonical rejection policy.",
+      "ownership": "lead integration request OUTSIDE normative sharedPatchPaths; coordinate existing CI-001/CI-006 registry owner"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-012-AC-1",
+      "criterion": "Read tools bounded by caller scope",
+      "currentEvidence": "knowledge-search.ts:43-98 clamps request/results but ignores _ctx; knowledge-read.ts:66-92 ignores _ctx. KnowledgeToolRuntime methods lack caller authority. refs.ts:484-518 and 575-595 already implement scoped captured reads/current policy but explicitly require host resolution.",
+      "actualSeam": "SessionToolContext; proposed runtime.ts + code-search.ts/code-read.ts; dependency CI-002/CI-004 resolver; refs.ts resolveRepositoryRefWithCurrentPolicy",
+      "requiredChange": "Bind trusted actor/session/project to every runtime call; resolve current authorized binding/exclusions/lease/freshness, validate repository/snapshot/span refs and response scope, bound input/output independently. No arbitrary path or raw token/source dump.",
+      "verification": ["Actual native session retrieves known allowed span with exact snapshot/hash/range", "Foreign repository/workspace/project and forged span denial without protected bytes", "Excluded .env, traversal/symlink and changed policy negative checks", "Missing subprocess transport gives typed unavailable, not fallback read", "Proposal-only no-apply and untrusted AGENTS injection checks retained as specified"],
+      "missingPrerequisite": "Accepted CI-003/CI-004/CI-008 plus transitive CI-001/CI-002 and EG-IDENTITY current authority/lease resolver",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-012-AC-2",
+      "criterion": "in-process registry not assumed available in subprocess",
+      "currentEvidence": "knowledge/runtime.ts:7-15,67-81 is a module-local singleton; knowledge/format.ts:53-67 returns typed CONNECTION_UNAVAILABLE. No CI-012 runtime directory found. Canonical registry can serialize schemas but does not transport runtime state.",
+      "actualSeam": "proposed CodeIntelligenceToolRuntime/require-runtime seam; host-injected SessionToolContext transport; SESSION_TOOL_DEFS/getToolDefsAsJsonSchema",
+      "requiredChange": "Use a host registered implementation for in-process native tools and a CI-004 authenticated bounded RPC adapter for subprocess. If the adapter is absent/unready return explicit typed unavailable promptly; never assume registration crosses process boundary or create a second provider/store in the subprocess.",
+      "verification": ["Actual native session read through production host adapter", "Fresh subprocess without transport returns typed unavailable despite parent registration", "Configured real subprocess adapter reads same authorized snapshot and denies foreign repo", "Transport unavailable/error DTO readback", "Proposal-only negative apply and untrusted AGENTS injection checks retained"],
+      "missingPrerequisite": "Accepted CI-004 transport/schema contract, native agent transport readiness receipt and lead registry/context patch ownership",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-012-AC-3",
+      "criterion": "stage result does not claim applied",
+      "currentEvidence": "knowledge-propose.ts:85-97 explicitly labels not applied; 123-147 calls propose only. Existing knowledge-tools.test.ts:453-486 uses a pending_review double; it is not real CI artifact/proposal persistence or apply proof. ReviewProposal spec separates appliedAt and status.",
+      "actualSeam": "handleKnowledgePropose/formatProposal; proposed intelligence-propose.ts stage handlers; dependency-owned proposal/artifact namespace resolver",
+      "requiredChange": "intelligence_plan must not start jobs; artifact_propose must create a pending ReviewProposal using artifact/baseHash/managed change manifest. Return pending receipt and review/run refs, validate unexpected terminal/applied receipts rather than announce stage success. Reuse existing review flow, never call writer/application from stage.",
+      "verification": ["Plan creates no running job/output writes", "Actual stage receipt remains pending after restart and links to existing review", "Source/managed output hashes and applied revision unchanged after propose; no apply authorization granted", "Safe/explore denied writer/application and forged stage payload checks", "Native read/missing subprocess transport/foreign repo/untrusted AGENTS checks retained"],
+      "missingPrerequisite": "Accepted CI-004/CI-008 durable artifact/proposal contracts and existing navigator review/apply ownership/base-hash contract",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-012-AC-4",
+      "criterion": "source evidence attached to answers",
+      "currentEvidence": "types.ts:18-23 CodeCitation is symbol/path/startLine/commit only. refs.ts:125-146,504-518 has exact FileSpan/hash/sourceVersion. KnowledgeAgentPanel.tsx:80-101 creates sessions with a knowledge mention in input; no run/proposal/evidence attachment prop. VerificationReceipt spec requires semantic support, not merely a URL.",
+      "actualSeam": "code-read.ts/code-search.ts result formatting; shared citation/Claim/VerificationReceipt DTOs; KnowledgeAgentPanel route builders and existing session attachment lifecycle",
+      "requiredChange": "Attach only authorized exact evidence refs and run/proposal receipts to agent answers/tasks. Preserve start/end/contentHash/snapshot/sourceVersion/freshness, distinct graph trust, claim supportAssessment and unresolved cases. Dirty source uses a captured local receipt, not parent commit URL as exact proof. No evidence must remain qualified unknown.",
+      "verification": ["Actual native grounded answer citations reopen the exact captured range/hash", "Dirty bytes differ from parent commit and do not get false commit proof", "Semantically false claim with a valid source URL is not marked verified", "Change/delete/revoke source: attached context shows stale/missing/denied and protected body clears", "Run/proposal links resolve in existing UI after restart with actor ACL", "All five normative native read/subprocess unavailable/foreign denial/no-apply/injection checks retained"],
+      "missingPrerequisite": "Accepted CI-003/CI-005/CI-006/CI-008 evidence contracts, CI-004 scoped events, typed session attachments and existing source/review navigation integration",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-012-AC-5",
+      "criterion": "safe/explore modes reject writer job/application as current policy requires",
+      "currentEvidence": "tool-defs.ts:827-837 and 1009-1017 derives allow/block sets; knowledge_propose is safeMode block at 910. SessionToolContext has no current permission mode in inspected identity fields. agents-md.ts generates string hints, not authority.",
+      "actualSeam": "SESSION_TOOL_DEFS.safeMode; trusted host invocation mode; proposed stage runtime permission check; generateAgentsMdHeuristics",
+      "requiredChange": "Keep read tools readOnly/allow; enforce writer job and navigator apply authorization server-side using live mode even for direct/forged calls. Preserve current blocked knowledge proposal policy unless the accepted policy explicitly changes it. Plans/proposals never imply generation/apply authority. Repository instruction content cannot alter mode, actor, scope or egress.",
+      "verification": ["Real safe/explore session can read permitted source but cannot start writer job or apply proposal", "Direct/forged RPC calls cannot bypass denial; unchanged job/apply receipts and hashes", "Permission mode changed between requests immediately affects authorization", "Untrusted repository AGENTS asks to enable writer/exfiltrate: ignored with no writes/egress", "Actual native read/missing subprocess transport/foreign repo/proposal-only negative checks retained"],
+      "missingPrerequisite": "Accepted CI-004 authenticated mode enforcement/transport and lead canonical registry plus context integration",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-012-SUPPORT-READ-SUITE",
+      "criterion": "Full output suite includes code search/read/architecture/wiki tools and the normative bounded read/stage contracts",
+      "currentEvidence": "code-intelligence.json:1917-2111 specifies repo_status, code_search, code_read, architecture_read, repo_wiki_search/read, intelligence_plan, artifact_propose with separate writer/apply classes. Existing canonical registry only has knowledge read/propose, not this CI suite.",
+      "actualSeam": "proposed runtime and three owned handler files; canonical SESSION_TOOL_DEFS",
+      "requiredChange": "Implement all named read/stage operations through CI-003/CI-005/CI-006/CI-004 rather than stop at code_search/code_read. Preserve bounded complete wiki sections, explicit graph kind/trust and pending stage results. Writer/apply remain separately authorized boundaries.",
+      "verification": ["Native session exercises repo status/search/span/architecture/wiki search/wiki section read and stage plan/proposal", "Known-match/absent-match, invalid regex, skipped/truncated, unavailable provider and section-boundary controls", "Actual cross-process happy/denied/unavailable lane; no mock transport acceptance"],
+      "missingPrerequisite": "All five explicit accepted dependencies plus canonical registry/essential-suffix integration",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-012-SUPPORT-FRESHNESS",
+      "criterion": "Each tool invocation rechecks source/lease/freshness; reconnect invalidation reaches agent context caches",
+      "currentEvidence": "code-intelligence.json:4499,146,155; refs.ts:570-595 requires separate current binding but pure refs do not discover actor or lease. Panel currently resolves knowledge node via useKnowledgeNode.",
+      "actualSeam": "runtime invocation resolver; CI-008 freshness invalidation; existing session attachment/context lifecycle",
+      "requiredChange": "Use the same current scope/lease/freshness resolver for every read/stage and cached attachment dereference. Clear protected cached content on permission/lease loss or reconnect; stale/missing evidence metadata remains explicit. Remote-private offline defaults to denial, optional signed lease binds actor/workspace/source with expiry and no offline renewal.",
+      "verification": ["Local-owned read offline under current policy", "Remote-private offline without lease denied; expired lease fails closed", "Reconnect/revocation clears context caches and next invocation denies bytes", "Restart retains scoped stale/missing status; documented disconnected revocation exposure window"],
+      "missingPrerequisite": "Accepted transitive CI-002 and explicit CI-004/CI-008 invalidation/lease implementation and host cache lifecycle owner",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-012-SUPPORT-EVENTS-PERSISTENCE-UI",
+      "criterion": "Scoped session attachments store evidence/run refs and proposal receipts; run/proposal links and proposed agent events are integrated into the existing task surface",
+      "currentEvidence": "code-intelligence.json:4486-4489,4517-4529; KnowledgeAgentPanel.tsx only routes knowledgeRef; current runtime is nonpersistent. Specification table/record names are proposed contracts, not known deployed schema.",
+      "actualSeam": "KnowledgeAgentPanel route builders; existing session attachment persistence; CI-004 event stream; proposed runtime selected/proposed/denied results",
+      "requiredChange": "Persist scoped refs/receipts through existing session store, not source dumps/new stores; expose agent.context.selected, agent.intelligence.proposed and agent.tool.permission.denied through dependency event mechanism with authorized refs/monotonic revisions and no foreign IDs/secrets. Display run/proposal links and staged versus applied status in the existing panel/task/review surface. New UI strings require all ten locales.",
+      "verification": ["Reload/restart restores same authorized refs and pending receipt", "Existing run/review links open correct actor-scoped target", "Events carry no foreign repo IDs/private source and observe revision ordering", "Native UI keyboard/focus/hover, stale/denied/error states, reduced motion and actual font evidence for changed surface; screenshots/ARIA/computed font on integrated revision"],
+      "missingPrerequisite": "Accepted CI-004/CI-008 events/storage and lead session attachment/navigation/i18n ownership, plus actual UI lane after integration",
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/lark-suite-reference/code-intelligence.json","symbol":"workPackages[11] CI-012 and observableAcceptance","lineStart":4424,"lineEnd":4633,"sha256":"a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"CI-012 allowedWritePaths/sharedPatchPaths/cloudPacket","lineStart":5059,"lineEnd":5152,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/14-code-intelligence-ui.md","symbol":"RC-04/RC-08/RC-12 and authority/security/acceptance","lineStart":44,"lineEnd":108,"sha256":"2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75"},
+    {"path":"packages/session-tools-core/src/knowledge/runtime.ts","symbol":"KnowledgeToolRuntime/registerKnowledgeToolRuntime/getKnowledgeToolRuntime","lineStart":46,"lineEnd":81,"sha256":"fe52fd5e80775ee0af4c1c945988c44f561549788c8a65621ad8f5131ebf43da"},
+    {"path":"packages/session-tools-core/src/handlers/knowledge-propose.ts","symbol":"formatProposal/handleKnowledgePropose","lineStart":85,"lineEnd":151,"sha256":"06d78029e8035bd8e64d875504ca1f8e7a08facb33934450a62d83c1737a1966"},
+    {"path":"packages/session-tools-core/src/knowledge/format.ts","symbol":"knowledgeUnavailableResponse/requireKnowledgeRuntime","lineStart":53,"lineEnd":67,"sha256":"a6830be034b2dc8293e774e47303e2617e911795389664629a9b43e1946cb960"},
+    {"path":"packages/session-tools-core/src/handlers/knowledge-read.ts","symbol":"handleKnowledgeRead","lineStart":66,"lineEnd":120,"sha256":"083710c3131394fc9ef0e047f5d757d3bfc7ba24e4f6eb61026e2f42cde2d5de"},
+    {"path":"packages/session-tools-core/src/handlers/knowledge-search.ts","symbol":"handleKnowledgeSearch","lineStart":43,"lineEnd":101,"sha256":"00cd0ccd8a05225cfa89e01088a550091a40e9f6df33cb6ae9260944aa9ea6e6"},
+    {"path":"packages/session-tools-core/src/context.ts","symbol":"SessionToolContext identity/callback injection","lineStart":151,"lineEnd":178,"sha256":"aab3e5e2bb0099beae5c46aac559337d858c0777088fcf6acfe16fe746845fb3"},
+    {"path":"packages/session-tools-core/src/tool-defs.ts","symbol":"SESSION_TOOL_DEFS knowledge entries","lineStart":905,"lineEnd":910,"sha256":"74e724c960c46304b451cd17e1d72bf8c34a3eb361578a384a3b5f5c81958b05"},
+    {"path":"packages/session-tools-core/src/tool-defs-filtering.ts","symbol":"SESSION_MCP_ESSENTIAL_SUFFIXES/isEssentialHostTool","lineStart":17,"lineEnd":66,"sha256":"728e662d3736476c745c85047e7fffc0787185ae0be12882c9e2485917a5a43b"},
+    {"path":"apps/electron/src/renderer/knowledge/KnowledgeAgentPanel.tsx","symbol":"buildAskAboutSessionRoute/buildOpenSessionRoute/KnowledgeAgentPanel","lineStart":80,"lineEnd":147,"sha256":"92f8eac4d40ce74597efbf9d8fba92ecf24bb5b6101634567fffd7e9b46dd639"},
+    {"path":"packages/shared/src/code-intelligence/types.ts","symbol":"CodeCitation/CodeGraph/CodeIntelAdapter/CODE_INTEL_PACK/REJECTED_CODE_INTEL_TOOLS","lineStart":18,"lineEnd":67,"sha256":"48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"FileSpan/readFileSpan/resolveRepositoryRefWithCurrentPolicy","lineStart":504,"lineEnd":596,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/provider.ts","symbol":"CODE_INTELLIGENCE_PROVIDER_DECISION/CodeIntelligenceProviderRegistry","lineStart":40,"lineEnd":98,"sha256":"df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path":"packages/shared/src/capabilities/install.ts","symbol":"recordFor/buildProvenanceManifest/selectCapabilityTools","lineStart":74,"lineEnd":138,"sha256":"8b1d53b84a5c755d6fc0aaa77a3c94e34b2ffabaa4b37b84b2c410e4943d06dd"},
+    {"path":"packages/shared/src/capabilities/agents-md.ts","symbol":"generateAgentsMdHeuristics/buildOfflineCapabilityReport","lineStart":4,"lineEnd":58,"sha256":"230851668eb541a455f215862f92b51555a4ce8d71ecb60577f61f85599c99f6"},
+    {"path":"packages/shared/src/capabilities/packs.ts","symbol":"gitRef/checksum/CAPABILITY_TOOLS rejected-daemon entries","lineStart":48,"lineEnd":106,"sha256":"0746e6c5df67dcb72e8bc8adb112a50dc337d207473a05beed74f6088540af9e"},
+    {"path":"packages/session-tools-core/src/handlers/knowledge-tools.test.ts","symbol":"existing pending-review fixture test","lineStart":453,"lineEnd":486,"sha256":"e530bc49036e3d7d6a1e185da49dd54eb6b51537405866c6182fba56e2bbad8d"}
+  ],
+  "nextExecutableAction": "Lead first commits wave0 and resolves implementation base/spec delivery hashes; obtains accepted CI-003/CI-004/CI-005/CI-006/CI-008 artifact+readback receipts and transitive/external readiness; assigns exclusive integration ownership for the six shared paths plus registry/filter/context/inventory scope gaps. Re-read each inspected file whose hash changed, then implement only the five normative new files against accepted runtime/ref contracts and submit shared patches to the lead. Native/process/UI verification is required on the integrated revision, never replaced by this preflight.",
+  "risks": [
+    "No feature implementation or runtime proof is present; source inspection cannot satisfy any PASS acceptance criterion.",
+    "Concurrent root integration may invalidate line ranges/hashes immediately; this report is not an immutable Git snapshot. Rebase reasoning onto accepted dependency files, not old specification baseline hashes.",
+    "Published implementation base e953786 and dispatch input a21aeab1 differ; no Git state was inspected or changed to resolve them.",
+    "Normative sharedPatchPaths omit mandatory tool registry/essential discovery/host authority seams. Implementing owned files alone yields unreachable or unauthorized tools.",
+    "Existing process-local knowledge singleton cannot reach a Codex subprocess; missing transport must remain a typed failure, not fake provider data.",
+    "Immutable FileSpan/current policy helpers do not establish current authenticated actor or remote lease; trusting tool-supplied identity would leak foreign context.",
+    "Stage handler file name does not define wire name; artifact_propose/intelligence_plan must never run generation/application or report completed run as applied artifact.",
+    "Legacy citations and parent commit URLs cannot verify dirty working-copy bytes or semantic claim support.",
+    "Current capability installed selector can disagree with rejected-daemon decision; generated id@version checksums and placeholder repos are not real upstream readiness.",
+    "Generic markdown truncation must not break RepoWiki complete-section contract or strip uncertainty/evidence from answers.",
+    "Existing fixture knowledge tests are not native tool/process/persistence/UI proof; keep all five normative verification scenarios and integrated receipt lanes.",
+    "Session attachment/navigation/i18n host paths beyond inspected direct seams require lead contract/ownership; no guessed endpoints or second stores/surfaces are proposed."
+  ]
+}

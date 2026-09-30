@@ -1,0 +1,282 @@
+{
+  "task_id": "CI-005-preflight",
+  "attempt_id": "abda864694ef74df9bd49b260f970742",
+  "packet_hash": "fa5824ba0bbff6c7258f4d84141e6b5970f0bbacac101ca3a2850dcb269b2a42",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-005",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "dependencies": ["CI-001", "CI-002"],
+  "inspection": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "sourceAuthority": "Read current working-tree files, not git-show of input_revision. User reports root-owned uncommitted wave0 work; supplied input_revision is dispatch lineage, not a claim that inspected bytes are committed there.",
+    "evidenceValidity": "Whole-file hashes bind the inspected generation. Any hash mismatch invalidates that reference and requires refreshed preflight before implementation. No dependency acceptance receipts were supplied or verified.",
+    "sourceSearch": "Codegraph explicitly reports no index. Scoped find failed because its judgment service returned 402; actual scoped glob/read/literal grep were used instead. packages/server-core/src/code-intelligence did not exist at inspection; shared code-intelligence exists, including refs.ts and provider.ts. Scoped grep found no Groma, OKF, C4Element, GeneratedArtifact or DependencyEvidence implementation.",
+    "executionBoundary": "No product implementation, build, test, provider, native UI, network operation or Git mutation performed. Only the owned report is written. All implementation symbols named below that do not already exist are proposals, not source claims.",
+    "frozenProvider": {
+      "repository": "MrLesk/groma.md",
+      "revision": "46b1572d755ae3736414de4021d06726d282cf77",
+      "version": "0.6.0",
+      "format": "OKF 0.2",
+      "license": "MIT per specification; not independently re-audited",
+      "runtime": {"bun": ">=1.4.1", "node": ">=20.19.0"},
+      "upstreamEvidence": "Specification citations only; upstream source bytes and actual scanner readiness were not inspected or executed. No local frozen-source location is supplied by these records. Exact wire keys, metadata grammar and scanner probe APIs must be resolved from hash-verified delivered sources before coding.",
+      "requiredSourceDigests": {
+        "docs/component-markdown.md": "85309dee322d2f03d6b0373bbba33de8b7f75b80ee6cc7edbd51383096def1e0",
+        "src/types.ts": "7967d3e5cfc18c191e199423a54e574f1cecce362c751d6caedfba8a46921361",
+        "packages/scanner/src/index.ts": "01ff7516c5e8e2eed1e232e7d830fceddfe6ef577068786a2441e4297e5def65",
+        "src/scanner.ts": "a70bf964d5b5ee46792bcaf0ca05925c7c6c84a554a93779bff79e97b6f0bfdd",
+        "src/scan-reconciler.ts": "2e728415dfdd9c7d99ad1332895621b1fb0cf769843fdf4e49d5469d2a963ea1"
+      }
+    }
+  },
+  "foundationGates": [
+    {
+      "id": "FG-CI005-BASELINE",
+      "explicitDagEdge": false,
+      "evidence": "User dispatch requires the lead's wave0 commit and accepted dependency receipts; execution-packages.json:4495-4499 additionally requires delivery manifest resolution, exact approved prerequisite commits and single-writer leases.",
+      "requiredPrerequisite": "Lead supplies committed wave0 descendant generation, accepted artifact+readback receipts for CI-001 and CI-002, resolved reference-package revision/digest and leases on both shared patch files. Rehash inspected inputs. Do not implement against root's dirty tree or silently substitute published e953786 baseline for dispatch a21aeab lineage.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-CI005-PINNED-OKF",
+      "explicitDagEdge": false,
+      "evidence": "code-intelligence.json:366-371,432,5895-5966 pins experimental Groma 0.6.0/OKF 0.2 and source hashes; cloud packet upstream version/license/runtime readiness remains a launch gate.",
+      "requiredPrerequisite": "Hash-verified frozen component-markdown, architecture types, scanner entrypoint, scanner coordinator and reconciliation source; actual repository scanner capability/readiness receipt; distribution notice inventory if code is reused. A historical installation or provider inventory declaration is not readiness.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-CI005-CURRENT-AUTHORITY",
+      "explicitDagEdge": false,
+      "evidence": "code-intelligence.json:152-156 requires authenticated actor checks at every boundary and one shared offline resolver; refs.ts:570-588 explicitly states the pure contracts do not discover actors, renew leases or grant egress. execution-packages.json:4512 lists EG-IDENTITY.",
+      "requiredPrerequisite": "CI-002 host-owned authorizeRepositoryRead implementation must obtain live actor/workspace/project authority and current binding for every import/read. EG-IDENTITY receipt and applicable local-owned/remote-private offline lease behavior must be available; RepositoryScope strings and registry.resolve alone are insufficient authentication.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-CI005-ARTIFACT-JOURNAL-EVENTS",
+      "explicitDagEdge": false,
+      "relatedPackages": ["CI-004", "CI-008"],
+      "evidence": "CI-005 proposes persistence and architecture.imported/coverage.changed/conflict.detected (code-intelligence.json:2971-3003). CI-004 owns typed RPC, events and durable jobs (2732-2783). CI-008 owns artifacts.ts, freshness.ts and output-ownership.ts (3594-3650) and explicitly depends on CI-005.",
+      "requiredPrerequisite": "Lead freezes a common imported artifact/result/event handoff that CI-004 can journal and CI-008 can register with the required source/tool/artifact identity. Do not create a Groma-specific store. Preserve exact snapshot and artifact hashes in CI-005 now; integrated persistence, restart and event readback remain gates until those owners deliver. Do not add CI-008 as a CI-005 start dependency: that would create a cycle.",
+      "state": "INTEGRATION_CONTRACT_REQUIRED"
+    },
+    {
+      "id": "FG-CI005-EXISTING-PACK-ACTIVATION",
+      "explicitDagEdge": false,
+      "evidence": "CI-005 cloud gate requires existing pack/registry selection revision before enabling a provider (code-intelligence.json:3092). types.ts:52-67 keeps only local-fs-symbols/syft-sbom selected; provider.ts:16-48 records CI-DEC-EXTEND-EXISTING-01 and register:79-80 requires revision plus artifact digest for additional providers.",
+      "requiredPrerequisite": "Return a pinned Groma provider definition to the existing registry owner; register through CodeIntelligenceProviderRegistry, alwaysOn=false, explicit enabled/allowedProviderIds and operation c4. Separate OKF-import compatibility from executable-scanner readiness so an unavailable scanner does not forbid compatible read-only import. Do not auto-edit selected tools or create another registry.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-CI005-SURFACE-AND-TRANSPORT",
+      "explicitDagEdge": false,
+      "relatedPackages": ["CI-009", "CI-010"],
+      "evidence": "CI-005 references RC-10/RC-11 and visible conflicts/stale architecture (code-intelligence.json:2979-2983,3005-3010). CI-009/CI-010 own route/page and architecture/evidence panel integration (3838-3854,4030-4046). Native agent transport is an external gate when tools are used (execution-packages.json:4515).",
+      "requiredPrerequisite": "Pass typed C4, conflict and freshness data to the existing Code Intelligence surface owners. Actual display/readback cannot be claimed from this server-only importer or source-only tests. UI proof is required when integrated surface changes; native agent transport proof is required if exposed as an agent tool. Neither is N/A for an exercised lane and neither authorizes CI-005 to create a second surface.",
+      "state": "INTEGRATION_NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/code-intelligence/providers/groma.ts",
+    "packages/server-core/src/code-intelligence/okf-reader.ts",
+    "docs/code-intelligence/groma-compatibility.md",
+    "packages/server-core/src/code-intelligence/__tests__/groma-import.test.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/server-core/src/code-intelligence/okf-reader.ts",
+      "symbols": ["readOkfArchitecture", "parseOkfRecord"],
+      "change": "Proposed pure reader over already authorized immutable snapshot bytes. Require frozen OKF format/provider version; validate nested metadata and C4 identity/parent/relationship references against the actual frozen grammar. Bound record/collection/depth sizes under accepted policy. Return parsed records plus structured diagnostics; reject incompatible versions, never coerce arbitrary Markdown into C4. Resolve index roots groma/index.md or .groma/index.md under the same snapshot; report ambiguity rather than guessing. File references use normalizeRepositoryPath and bounded snapshot reads, not unconstrained filesystem reads. Do not evaluate YAML tags, commands, embedded instructions or external links. Exact parsing library and wire keys are blocked on delivered frozen sources and approved existing dependencies; no install from import."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/providers/groma.ts",
+      "symbols": ["importGromaArchitecture", "inspectGromaScannerCapability", "createGromaProviderDefinition"],
+      "change": "Proposed import entrypoint accepts authorized snapshot, receipt/current binding and host-authorized scope through CI-002; uses existing shared refs/provider registry, scopedProviderResourceId and the pure OKF reader. Produce C4 elements and relationships with provider IDs, snapshot/OKF source refs and provider version, lifecycle distinct from trust, diagnostics/conflicts, unique source ownership and content/fingerprint identity for the common artifact handoff. Proposed scanner inspection accepts a separately authorized, pinned readiness receipt matching repository/runtime/scanner version and coverage; absent/unsupported receipts produce explicit unready/unsupported/unknown coverage outcomes, never fake readiness. No scanner init/scan/watch/export or package installation in the import path. A provider definition with c4 support is registered by the integration owner only after manifest verification; scanner execution remains a separate authorized writer job, not a side effect of viewing/importing."
+    },
+    {
+      "path": "docs/code-intelligence/groma-compatibility.md",
+      "symbols": ["Groma version compatibility matrix", "Repository scanner capability spike"],
+      "change": "Record Groma revision/version, OKF 0.2, cited source hashes, runtime minimums, license/notice handling, parser compatibility and real scanner coverage separately. Include supported/unsupported/unknown outcomes by actual repository language/framework/scanner and observed readiness evidence; unsupported scanner does not invalidate existing compatible OKF. Explain source drift, stable/draft versus trust, unique ownership conflicts, import read-only guarantees and separately gated optional scans. Do not mark matrix rows verified from historical installation or declarative inventory."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/groma-import.test.ts",
+      "symbols": ["canonical OKF import", "Groma import error and ownership invariants"],
+      "change": "Use Bun describe/it/expect and isolated fixture setup/cleanup as in shared contracts.test.ts. Embed frozen-format fixtures in this normative test file rather than create extra owned fixture paths. Cover canonical hierarchy/relationships and exact source refs, unknown schema/version, duplicate ownership, unsupported scanner, malformed nested metadata and source drift. Verify both stable and draft preserve independent trust; assert error semantics and conflict details rather than source text or mocked forwarding. Include path/scope negative controls and before/after repository-byte comparison for import side effects. Future smoke uses a real temporary authorized Git/OKF fixture and import entrypoint; no checks are run in this preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/code-intelligence/types.ts",
+      "symbol": "CodeGraph and new C4Element/GraphEdge/DependencyEvidence/GeneratedArtifact import result contracts",
+      "baseSha256": "48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e",
+      "change": "Integration owner adds provider-neutral typed C4 records and a common architecture import result, extending the canonical CodeGraph with an optional architecture payload rather than reinterpreting CodeSymbol.kind or inventing a second graph/store. Preserve existing required symbols/edges/citations/summaries and synchronous CodeIntelAdapter.index contract. C4Element carries id, artifactId, kind actor|system|container|component, parentId?, external, codeRefs, lifecycle and providerElementId per CI-E-18; refs retain exact snapshot/version. GraphEdge keeps authored/deterministic-supported/model-proposed/unsupported trust independent of stable/draft lifecycle, upstream relationship ID and evidence refs; unresolved evidence stays unresolved. GeneratedArtifact metadata follows the shared source connection/repository/snapshot/tool version/artifact digest identity, not provider IDs as global keys. Add structured ownership conflicts and scanner capability/readiness/coverage outcomes to the shared result, with scanner readiness separate from read-only import compatibility. Freeze the exact artifact envelope with CI-004/CI-008 before adding fields; do not fabricate a run ID or DB record.",
+      "reason": "Current SymbolKind is only file/function/class/type, CodeEdge only contains/imports and CodeGraph has no C4, lifecycle, ownership or diagnostics. Overloading these loses all CI-005 semantics. This is the normative shared seam, owned exclusively by integration."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/index.ts",
+      "symbol": "public type exports from ./types.ts",
+      "baseSha256": "ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39",
+      "change": "Add type exports for the accepted C4/import artifact, relationship evidence, ownership conflict and scanner capability contracts created in types.ts. Retain all current adapter/provenance/SBOM exports and refs/provider/repository-connection exports. Do not export server implementations from the shared module or activate Groma at module load.",
+      "reason": "CI-005 consumers must use the existing public code-intelligence module; a second export surface or server import in shared would violate the canonical integration boundary."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-005-AC-1",
+      "criterion": "Read-only import precedes optional scan execution",
+      "currentEvidence": "provider.ts:60-96 already gates manifest registration, explicit activation, operation, readiness and egress; refs.ts:494-503 returns bounded immutable snapshot bytes. No server importer or OKF reader exists in the scoped tree. No Groma execution was observed.",
+      "requiredChange": "Implement proposed readOkfArchitecture and importGromaArchitecture on immutable authorized bytes; resolve an import-compatible c4 provider through the existing registry. Separate inspectGromaScannerCapability from import and require explicit host-authorized writer/job gates for any later scan. Unknown format/version must return an explicit compatibility failure, not execute a fallback scanner.",
+      "verification": "Future canonical fixture imports existing OKF without scanner execution. Repeat with unavailable/unsupported scanner and observe successful compatible import plus explicit coverage gap. Unknown schema/version and malformed metadata fail closed; duplicate ownership reports conflict; changed source yields distinct exact fingerprint/stale status. Exercise a real temporary authorized repository through the importer, with no init/scan/watch/install operations and no network. Run bun test packages/server-core/src/code-intelligence/__tests__/groma-import.test.ts only during authorized implementation.",
+      "missingPrerequisite": "Accepted CI-001/CI-002 receipts, frozen OKF grammar and hashes, pinned provider definition/import readiness, separate scanner/job authority contract from lead.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-005-AC-2",
+      "criterion": "actor/system/container/component semantics preserved",
+      "currentEvidence": "types.ts:1-30 only represents file/function/class/type and contains/imports. explainer.ts:13-34 projects graph.symbols into architecture notes, not C4. CI-E-18 explicitly prescribes hierarchy, external flag, codeRefs, lifecycle and upstream identity.",
+      "requiredChange": "Add agreed optional architecture payload at the existing CodeGraph seam; parse and preserve all four C4 kinds, canonical parent linkage, external flag, provider identity and typed relationship evidence. Namespace global IDs using scopedProviderResourceId; retain upstream IDs separately. Do not convert C4 actors to source-file nodes or unresolved relationships to proven calls.",
+      "verification": "Canonical fixture contains all four kinds, nested parent structure, external actor and relationships; compare exact typed semantic result and source-version refs. Reject invalid/unknown C4 metadata or dangling invalid parents according to frozen contract; return unresolved evidence explicitly. Also exercise duplicate ownership, unsupported scanner and source drift without silently changing element kinds. UI integration later displays separate C4 versus source graph and uses existing surface.",
+      "missingPrerequisite": "Root-accepted types.ts/index.ts patch, frozen parent/relationship grammar; common artifact envelope and eventual existing RC-10/RC-11 projection owners.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-005-AC-3",
+      "criterion": "stable/draft never mapped to trust confidence",
+      "currentEvidence": "types.ts has no lifecycle or trust fields. code-intelligence.json:448 and CI-E-13:1262 explicitly separate authored lifecycle from trust; CI-E-18:1339 retains lifecycle.",
+      "requiredChange": "Store upstream stable/draft exclusively as C4Element.lifecycle. Derive GraphEdge trust only from actual provenance/evidence: authored architecture remains authored regardless of stable; draft does not mean unsupported. Scanner coverage cannot promote lifecycle to verified; unknown provenance remains explicitly unsupported/unresolved as appropriate.",
+      "verification": "Import stable and draft versions of the same authored relationship and assert equal authored trust with distinct lifecycle. Include stable unsupported evidence and draft deterministic-supported evidence where frozen records support it. Reimport after source drift and assert lifecycle unchanged while freshness/evidence support changes. Unknown schema, malformed metadata, ownership conflict and unsupported scanner never coerce lifecycle into confidence.",
+      "missingPrerequisite": "Frozen Groma types and OKF metadata semantics, agreed orthogonal lifecycle/trust shared contracts and existing-surface projection.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-005-AC-4",
+      "criterion": "one source file ownership invariant and conflicts surfaced",
+      "currentEvidence": "normalizeRepositoryPath in refs.ts:172-176 rejects traversal/absolute paths; readSnapshotFile:494-503 ensures authorized file membership. No ownership mapping or conflict diagnostic exists. Groma reconciler citation states ownership reconciliation, but its actual bytes were not inspected.",
+      "requiredChange": "After frozen-format path/ownership resolution, group claims by canonical repository+snapshot file identity, not basename or provider element ID. Allow at most one unambiguous owner for each exact source file. Conflicting owners produce structured diagnostic with file ref and all candidate element/provider refs; do not choose last writer. Preserve valid independent records while marking conflicted ownership unresolved. Account for the frozen parent/component ownership rules rather than assume every ancestor codeRef is a duplicate. Return architecture.conflict.detected data through shared event owner; do not persist raw scanner calls as a full graph.",
+      "verification": "Canonical ownership map is exact. Duplicate owners for the same canonical file produce one explicit conflict with both claimants and no silently selected owner. Two files with the same basename do not collide. Repeat path claims and hierarchy ownership are handled according to frozen reconciler semantics. Negative traversal/symlink/foreign scope/excluded-file controls must not disclose content. Unknown version, malformed ownership metadata, unsupported scanner and changed/deleted source produce explicit diagnostic/freshness outcomes. Integrated event/UI readback must show conflict rather than only a test assertion.",
+      "missingPrerequisite": "Hash-verified reconciliation rules, accepted CI-002 canonical resolver, root shared diagnostic contract; CI-004 event seam and later existing C4 panel for observable conflict surfacing.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-005-AC-5",
+      "criterion": "no dependency installs or user-file mutations from import",
+      "currentEvidence": "Current shared registry registration does not launch tools (provider.ts:1). Snapshot read path is pure; repository-connection.ts:15 and 43-71 require readOnly=true. Groma spec:444 warns initializer changes managed instruction blocks. No CI-005 implementation exists to verify side effects.",
+      "requiredChange": "Keep importer a bounded reader/parser with no dependency installer, initializer, scanner writer, export/watch process or repository write APIs. Missing parser/provider/runtime prerequisite returns explicit failure/unready, not repair/install. Treat imported Markdown/instructions as untrusted data. Persist eventual imported artifact metadata only through authorized existing workspace artifact handoff, never back into repository OKF or user instruction files.",
+      "verification": "Future real fixture smoke hashes all repository files before/after canonical import and every published error case, asserting exact bytes and file set unchanged. Seed command/instruction-shaped nested metadata and verify it is rejected or retained as inert data per frozen grammar, with no execution. Exercise unknown schema/version, duplicate ownership, unsupported scanner, malformed metadata and source drift without installs/writes or instruction changes. Controlled process/filesystem boundary evidence supplements semantic assertions; production runtime/UI/provider checks remain not run here.",
+      "missingPrerequisite": "Frozen parser implementation using approved existing dependency or explicit compatible bounded parser, CI-002 read-only host authority and root artifact storage interface.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-005-OUTPUTS-SCANNER-MATRIX",
+      "criterion": "Published inputs/outputs and API: actual repository scanner readiness/capability, diagnostics/conflicts, source ownership mapping and version compatibility matrix",
+      "currentEvidence": "Provider version/runtime and limitations are declared in spec:366-450; provider.ts represents only ready/requires-runtime-probe. No repository-specific scanner readiness receipt was supplied. Neither declaration nor historic installation establishes repository coverage.",
+      "requiredChange": "Implement separate proposed inspectGromaScannerCapability and shared structured coverage result using real authorized readiness receipt; document exact Groma/OKF/runtime/scanner compatibility with observed supported/unsupported/unknown repository coverage. Preserve diagnostics and source ownership in the import result. No blanket supported row or simulation.",
+      "verification": "Future capability spike checks actual installed pinned scanner readiness on authorized repository scope without implicit install/scan. Record concrete supported and unsupported language/framework outcomes and version/runtime errors; verify compatible OKF read remains usable without scanner execution. Bind matrix evidence to hashes/runtime/repository generation. All six normative fixture/error scenarios remain required.",
+      "missingPrerequisite": "Delivered pinned scanner source/runtime/license readiness and explicit authorization for probe; common capability contract from root. This preflight cannot run provider/native/network operations.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-005-INTEGRATION-PERSISTENCE-FRESHNESS",
+      "criterion": "Published persistence/events/realtime contract: imported architecture records retain upstream IDs and ownership; source change marks stale; lifecycle remains separate; current authorized reads and existing RC-10/RC-11 surface",
+      "currentEvidence": "refs.ts:519-530 can compare a captured snapshot with a new capture; refs.ts:575-596 rechecks current binding policy. Spec:2971-3003 proposes architecture events and imported artifacts; CI-004/CI-008 own durable job/events/artifacts/freshness while CI-009/CI-010 own surface. None of those server seams existed at scoped inspection.",
+      "requiredChange": "Produce an immutable common artifact handoff with exact OKF/content digest, source connection/canonical repository/snapshot/tool version identity, upstream IDs, ownership/conflicts and source refs. Use host current authorization and future shared journal/freshness projection; no Groma-local store, watcher or UI. Dirty bytes retain working-copy receipt and never cite parent commit as exact source. Persist and publish only under accepted shared ownership; distinguish import completion from application/scan.",
+      "verification": "Future integrated readback before/after restart preserves typed C4, lifecycle, refs, conflicts and identity. Change/delete/exclude a source or OKF file and observe stale/missing; deny revoked/foreign authorization before returning bytes; repeated import/alias does not duplicate artifact. Observe architecture.imported/coverage.changed/conflict.detected through authorized typed events. Verify current C4/evidence panel after shared integration; retain provider/native proof only for actual exercised lane, never claim it from this preflight.",
+      "missingPrerequisite": "Lead-approved CI-004 artifact/event handoff and CI-008 downstream storage/freshness contract without cyclic start dependency, EG-IDENTITY/current host policy, existing UI owners and actual runtime readback receipts.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "packages/shared/src/code-intelligence/types.ts",
+      "symbol": "SymbolKind, CodeGraph, CodeIntelAdapter, CODE_INTEL_PACK, SELECTED_CODE_INTEL",
+      "lineStart": 1,
+      "lineEnd": 67,
+      "sha256": "48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/index.ts",
+      "symbol": "public code-intelligence exports",
+      "lineStart": 1,
+      "lineEnd": 27,
+      "sha256": "ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/provider.ts",
+      "symbol": "CodeIntelligenceProviderRegistry.register/resolve, scopedProviderResourceId",
+      "lineStart": 60,
+      "lineEnd": 123,
+      "sha256": "df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/refs.ts",
+      "symbol": "assertRepositorySnapshotScope, readSnapshotFile, readFileSpan, assessSnapshotFreshness",
+      "lineStart": 484,
+      "lineEnd": 530,
+      "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/refs.ts",
+      "symbol": "assertRepositoryCurrentReadPolicy, resolveRepositoryRefWithCurrentPolicy",
+      "lineStart": 570,
+      "lineEnd": 596,
+      "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/repository-connection.ts",
+      "symbol": "RepositoryConnectionConfiguration, parseRepositoryConfiguration",
+      "lineStart": 8,
+      "lineEnd": 71,
+      "sha256": "fcabbdab22124e8641b0df4404ea780f56da603ec1d277658823a41583b7107c"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/explainer.ts",
+      "symbol": "explainWithProvenance, materializeArchitectureNote",
+      "lineStart": 13,
+      "lineEnd": 35,
+      "sha256": "d2d53f67c406be50c258396e392a77ef5a844ff98b744dd3c81aefa1a01eaeed"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/local-adapter.ts",
+      "symbol": "isSafeToIngest, indexSourceFiles, localFsSymbolsAdapter",
+      "lineStart": 1,
+      "lineEnd": 84,
+      "sha256": "9d805685a6fc19e2487ed57e28550d4211339326157ef871febe2d7dd1b2fb35"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/__tests__/contracts.test.ts",
+      "symbol": "fixture; dirty snapshot source-version/freshness tests",
+      "lineStart": 43,
+      "lineEnd": 138,
+      "sha256": "e7953d32fcdb3b605a7ae21a39a7c9edcd7c50596ae72a8d678acff51d51e35e"
+    },
+    {
+      "path": "plans/lark-suite-reference/code-intelligence.json",
+      "symbol": "/workPackages/4 (CI-005 definitionOfDone/observableAcceptance/cloudGate)",
+      "lineStart": 2916,
+      "lineEnd": 3113,
+      "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "CI-005 execution package ownership and launch gates",
+      "lineStart": 4434,
+      "lineEnd": 4518,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    }
+  ],
+  "nextExecutableAction": "Lead first commits wave0 and supplies accepted CI-001/CI-002 artifact+readback receipts on an approved implementation revision. Resolve/hash-check the frozen Groma sources and reference delivery manifest; revalidate this report's source hashes against that generation. Freeze the two shared type/export patches and the CI-004/CI-008 artifact handoff under one integration writer. Then, and only in authorized isolated implementation scope, create the four normative files, beginning with pure OKF parsing and canonical/error fixtures, then read-only authorized import and separate scanner capability spike. Keep featureComplete=false until authoritative integrated behavior, persistence/freshness, conflict surfacing and applicable surface/provider readback are accepted.",
+  "risks": [
+    "Root integration can change inspected shared files after hashing; report is generation-bound, not a completion or immutable committed-baseline receipt.",
+    "Frozen Groma source citations provide hashes but not independently inspected parser/scanner bytes. Inventing nested wire keys or ownership rules would be incompatible with the required experimental OKF contract.",
+    "Generic registry readiness can conflate importer compatibility with optional scanner availability; treating both as one ready flag would wrongly block read-only import or falsely promise scanner coverage.",
+    "Pure RepositoryScope/binding checks do not authenticate a current actor; import must consume CI-002 host authority, not trust renderer-supplied workspace/root.",
+    "C4 records cannot safely be squeezed into current CodeSymbol/CodeEdge enums; source provenance projection alone does not preserve C4 lifecycle/ownership/trust semantics.",
+    "Ancestor/container/component ownership interpretation and canonical duplicate claims require actual frozen reconciliation rules; last-writer conflict resolution loses user-visible errors.",
+    "CI-008 explicitly depends on CI-005 but owns artifacts/freshness needed for integrated publication. Adding it as an upstream DAG edge creates a cycle; lead must agree the handoff before implementation and retain downstream integration gates.",
+    "No durable architecture store or existing live C4 surface was proven by this inspection. A pure importer and passing unit tests alone cannot satisfy published persistence, stale-state and conflict-surfacing claims.",
+    "Implicit groma init/scan/watch/export or dependency repair can mutate OKF/user instructions; unsupported runtime must remain an explicit outcome, not an automatic install or simulated adapter.",
+    "Raw scanner calls are ephemeral and must not be silently promoted into persistent full-call-graph or deterministic-supported evidence. Dirty source bytes must not receive exact parent-commit citations.",
+    "Actual scanner/runtime/license readiness, EG-IDENTITY, repository/egress policy and native tool transport receipts remain unverified; provider inventory, historical installation and worker final text cannot replace them."
+  ]
+}

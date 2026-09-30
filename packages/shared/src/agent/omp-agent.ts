@@ -52,6 +52,7 @@ import { join } from 'node:path';
 import { mkdirSync, readFileSync, readdirSync, copyFileSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
+import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
 import type { ProjectPromptContext } from '../projects/types.ts';
 import { formatProjectContextForPrompt } from '../prompts/system.ts';
 import type { MemoryPromptBlocks } from '../memory/types.ts';
@@ -391,6 +392,7 @@ export class OmpAgent extends BaseAgent {
         })),
         memoryPath: getProjectMemoryPath(root, slug),
         memoryContent: loadProjectMemory(root, slug) ?? undefined,
+        roadmapContent: loadProjectRoadmapPromptText(root, slug),
       };
     } catch (error) {
       this.debug(`[resolveProjectContext] Failed to load project ${projectId}: ${error instanceof Error ? error.message : error}`);

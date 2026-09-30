@@ -1,0 +1,259 @@
+{
+  "task_id": "LSX-WP-010-preflight",
+  "attempt_id": "fc93e21ee2bfd4ce96a054aac0edff35",
+  "packet_hash": "88cf2ae217d62159d227181d90aff6822573bdb58fd2234365a0fd40e5523771",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-010",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "scope": "Only this report is authored. No product, test, manifest, progress, shared-file or Git changes; no build/test/UI/network execution. All runtime verification below is a required future action, not an observed result.",
+  "dependencies": ["LSX-WP-009"],
+  "externalPrerequisites": ["EG-IDENTITY"],
+  "foundationGates": [
+    {
+      "id": "COMMITTED_WAVE0_AND_ACCEPTED_ADAPTERS",
+      "kind": "dispatch_and_transitive_foundation",
+      "evidence": "User dispatch requires lead wave0 commit and accepted prerequisite receipts. work-packages.json:4022-4029 gives LSX-WP-009 dependencies LSX-WP-002/003/004/007 and EG-DOMAIN-OWNERS.",
+      "requiredReceipt": "Lead supplies committed implementation baseline and accepted LSX-WP-009 source/ref/revision/capability/readback receipts including its prerequisite chain. Packet depends_on=[] schedules preflight only; it does not override product dependencies=[LSX-WP-009].",
+      "state": "NOT_ESTABLISHED_BY_THIS_PREFLIGHT"
+    },
+    {
+      "id": "EG-IDENTITY",
+      "kind": "explicit_external_not_internal_DAG_edge",
+      "evidence": "work-packages.json:74-81,4405-4407: authenticated actor/source grants and read-time revoke; Macro WP-01/WP-03 readiness is NOT_VERIFIED. platform-contract.ts:601-610 only evaluates actorId/permission against flat grants, with no entity/field/policyVersion parameters.",
+      "requiredReceipt": "Existing common policy owner provides authoritative actor, workspace/account resolution, per-row/per-field/target policy checks and current monotonic policy epoch with read-time revoke. Do not substitute entity.permissions, project readable flags, payload actor or a new Base auth engine.",
+      "state": "BLOCKS_SECURITY_IMPLEMENTATION"
+    },
+    {
+      "id": "RS-DRV-01",
+      "kind": "hidden_published_spec_dependency_not_LSX_DAG_edge",
+      "evidence": "RS-BASE-01.md:95-109 explicitly depends on RS-DRV-01 / issue #1109. work-packages.json:4654-4663 links RS-BASE-01 as a refining boundary, not completed implementation.",
+      "requiredReceipt": "Lead reconciles Drive/Base container authority readiness and exact accepted dependency receipt before claiming the published first usable Base scenario; publication is not readiness. Do not silently add this to dependencies=[LSX-WP-009].",
+      "state": "READINESS_NOT_INSPECTED_OR_PROVEN"
+    },
+    {
+      "id": "COMMON_QUERY_SCHEMA_AND_EVALUATOR_HANDSHAKE",
+      "kind": "implicit_contract_foundation",
+      "evidence": "work-packages.json:4537-4545 requires typed filterAST/sorts/fields/schemaRevision and evaluationTime/timezone. 05-rox-bases-design.md:138-156,162-166 requires typed bounded formula/relationship evaluation; 07-domain-entity-model.md:153,161 specifies value-state union and common field policy evaluator.",
+      "requiredReceipt": "Agree the authoritative field registry, filter operators, comparator/value-state semantics, derived evaluator and schema revision interfaces with their owners. Full formula/lookup/rollup behavior cannot be invented within the query slice or reported N/A. These are contract gates, not newly inferred explicit DAG edges.",
+      "state": "INTERFACE_NOT_DELIVERED_IN_INSPECTED_PACKAGE"
+    },
+    {
+      "id": "RPC_RENDERER_AND_SEVEN_VIEW_INTEGRATION_SCOPE",
+      "kind": "implicit_writable_scope_foundation",
+      "evidence": "execution-packages.json:836-844 permits four new service/contract/test files and only vault-index.ts shared patch. work-packages.json:4580-4583,4627-4634 still requires real toolbar states and seven-view identity; 05-rox-bases-design.md:263-267 assigns Page/config/renderers to existing owners. Published RS-BASE-01.md:60 names NotesViewHost.tsx/note-views.ts but does not authorize them in this packet.",
+      "requiredReceipt": "Integration owner supplies approved RPC/IPC registration, renderer client, existing toolbar and all seven renderer consumer seams plus reviewed packet/path leases. No renderer or RPC registration file is writable here; the UI test file alone cannot implement a real surface. Additional discovery/patching outside this bounded source set requires updated reviewed packet.",
+      "state": "BLOCKS_END_TO_END_DOD_NOT_SERVICE_DESIGN"
+    },
+    {
+      "id": "REVISION_WATERMARK_EVENT_AND_RECEIPT_AUTHORITY",
+      "kind": "implicit_durability_foundation",
+      "evidence": "work-packages.json:4551-4552,4571-4574,4585-4587,4630 requires watermark API, invalidation event, revoke fencing and native receipt/readback/restart. 07-domain-entity-model.md:171-189 requires canonical envelope/checkpoints/atomic journal. vault-index.ts is explicitly a rebuildable projection, not a receipt authority.",
+      "requiredReceipt": "Use accepted owner source revisions, common event alias/envelope and durable receipt/journal authority. Define restart behavior: restore only reauthorized valid snapshots or explicitly reject old cursor with typed conflict and issue a fresh readback; never resurrect revoked cached rows. No second canonical row/receipt store.",
+      "state": "OWNER_INTERFACE_AND_RUNTIME_RECEIPT_REQUIRED"
+    },
+    {
+      "id": "REFERENCE_DELIVERY_LINEAGE_AND_PATH_LEASE",
+      "kind": "normative_launch_gate",
+      "evidence": "work-packages.json:4699-4709 and execution-packages.json:879-889 require resolved reference revision/digest, spec hashes, dependency receipts, clean approved launch state and shared-path lease.",
+      "requiredReceipt": "Lead resolves delivery manifest hashes and approved baseline after wave0; rehash inspected generations and acquire exclusive vault-index.ts lease. Input revision remains the preflight dispatch revision; do not treat current uncommitted integration work as an accepted implementation baseline.",
+      "state": "PRE_IMPLEMENTATION_GATE"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/bases/query-service.ts",
+    "packages/core/src/bases/query-contract.ts",
+    "tests/lark-suite-extension/lsx-wp-010.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-010.spec.ts"
+  ],
+  "ownedNewFilesEvidence": "Exact normative proposed_new_files at work-packages.json:4501-4517 and execution allowedWritePaths:836-840. Targeted glob found all four paths absent during inspection. These are future implementation ownership, not files written by this preflight. Published RS-BASE-01 alternate proposed paths are not adopted.",
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/query-contract.ts",
+      "symbols": ["AuthorizedQuerySnapshot", "BaseQueryResult", "PermissionEpoch", "BaseQueryInput", "BaseQueryError", "BaseQueryWatermark"],
+      "change": "Names beyond normative domain entities are proposals to align with accepted prerequisite exports. Define runtime-validated request/result/error schemas shared across server and renderer: sourceBinding/ref, schemaRevision, typed filterAST/sorts/field IDs, aggregation requests, evaluationTime/IANA timezone, page bound and opaque cursor; rows retain Rox2EntityRef, source revision and field capability/value states. Return queryRef/queryRevision/permissionEpoch/freshness, permitted aggregates and conditional totalVisibleRows. Enumerate validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Authenticated context is a separate server parameter, not payload actor authorization. View layout/type and pagination position must not change canonical logical query identity."
+    },
+    {
+      "path": "packages/server-core/src/bases/query-service.ts",
+      "symbols": ["base.query", "base.getQueryWatermark"],
+      "change": "Implement service operations against accepted LSX-WP-009 adapter and common policy authority: resolve source/workspace/account, authorize rows and fields including referenced predicate/sort/group/derived/target fields, reject denied predicate fields before evaluation, evaluate bounded typed AST in permitted graph at pinned time/timezone, sort with full scoped EntityRef tie-break, aggregate entire filtered authorized set, then page. Bind opaque integrity-protected cursor and cache to actor/policy fingerprint, permissionEpoch, source/schema/filter/sort revisions and evaluation snapshot. Check current policy before cached return and again around async reads to fence revocation races. Source/schema/policy changes explicitly invalidate or advance watermark. Never echo raw hidden titles/counts in errors; return missingDependency/offlineUnsupported/diagnostic budget failures rather than plausible empty or partial totals. Store only derived bounded snapshots using established authority/recovery mechanisms."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-010.test.ts",
+      "symbols": ["package semantic query scenarios"],
+      "change": "Future deterministic isolated tests assert authorized totals over multiple pages, denied field rejection, actor spoof rejection, workspace/account isolation, duplicate/skipped ref boundaries including equal sort values, source/schema/policy invalidation, replay/restart semantics, relation target redaction and pinned time. Keep actual seeded counterexample inputs and baseline file SHA. Tests must exercise real accepted service/adapters and policy integration, not mock echoes."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-010.spec.ts",
+      "symbols": ["actual Electron seven-view and toolbar acceptance scenarios"],
+      "change": "After root consumer integration and runner discovery, drive existing real Electron surface against authoritative fixture/source, inspect seven view identity and contributing refs, chart drill-down and export consistency, snapshot/freshness/stale/revoked states and accessible help. Exercise pointer/keyboard/IME/focus/reduced motion/200% zoom/theme/Russian/locales and loaded Rox Mono font. No separate fixture-only Base surface."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/knowledge/vault-index.ts",
+      "symbol": "queryVaultDocuments",
+      "baseSha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0",
+      "change": "At lines 807-812 add a reviewed server-scoped authorized source-read path aligned with the accepted LSX-WP-009 adapter contract. For Base requests require resolver-supplied permitted note IDs/field selection and an authoritative source fence before any query predicate execution; do not run current documentIdsMatching over unrestricted body/title/path/tags/aliases as a Base filter or emit unrestricted loadSummaries output to the caller. Enumerate permitted projection data under a consistent SQLite/source revision, with no user-controlled SQL or payload grants. Distinguish unavailable/corrupt/truncated source from empty authorized result through the agreed typed source outcome. Keep canonical Markdown/index ownership; existing plain-text search semantics are a different operation, not a typed Base query. Request caller/type/helper scope expansion before any necessary change outside this named symbol; migration remains with the integration owner.",
+      "reason": "Current operation executes unrestricted LIKE/FTS matching, returns all summary properties/links, has no authenticated actor/field checks or cursor, and turns openDb failure into []. Wrapping this as the authoritative Base query would perform filtering before ACL and conflate failure with empty.",
+      "prerequisite": "Accepted adapter and entity/field resolver interfaces plus exclusive lease; any additional helper/caller patch requires updated reviewed packet.",
+      "verification": "Through real Base transport viewer total10 not30; denied predicate on body/property yields denied without match/title/count leakage; unavailable SQLite and truncated scan yield explicit source error, not empty/success totals. Existing search behavior verified by root after approved caller integration."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/vault-index.ts",
+      "symbol": "hashVaultMarkdownFiles",
+      "baseSha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0",
+      "change": "At lines 938-950 retain native full-file SHA256 readback and make iteration deterministic by sorting the walked file list before building the returned path/hash map. Query service consumes this only internally via accepted source binding/ref mapping; canonical queryRevision is computed over stable scoped refs/revisions with source health, not object insertion order or raw path labels. Adapter must pair these hashes with the existing rebuild/health truncated/skipped outcome; this map alone is not completeness or authorization. No Markdown writes, second index or policy epoch inferred from file hashes.",
+      "reason": "walkMarkdownFiles uses filesystem enumeration order and caps at 4000 files; hash helper discards truncated/skipped metadata and skips unreadable files. A raw serialized map cannot establish deterministic complete snapshot, durable receipt or field permissions.",
+      "prerequisite": "Source adapter owns completeness diagnostics and identity mapping; typed completeness extension beyond this symbol would need reviewed scope amendment.",
+      "verification": "Reordered enumeration yields same revision when refs/hashes are unchanged; external edit changes authoritative content hash; oversized/truncated/unreadable source reports diagnostic and does not publish guessed totals. Restart rechecks exact refs/revisions/hashes."
+    },
+    {
+      "path": "packages/server-core/src/knowledge/vault-index.ts",
+      "symbol": "applyVaultWatchTick",
+      "baseSha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0",
+      "change": "At lines 982-988 preserve filename normalization/dedupe, debounce ownership and ensureVaultIndex refresh. In the successful refresh branch invoke the accepted existing source-watermark/invalidation integration hook only after refresh completes; query-service invalidates snapshots for changed/deleted refs including source membership changes, and returns typed failure on failed refresh. Emit common base.queryInvalidated through the common event owner, not a second event bus. Exact hook/envelope export must be supplied by prerequisite owner; adding a callback parameter or expanding VaultWatchTickResult/callers requires reviewed packet amendment before integration.",
+      "reason": "Current return contains noteIds and rebuild status only; it neither fences cached query cursors nor conveys permissionEpoch. FS writes and membership/deletion changes otherwise leave stale aggregates or unstable pagination. Policy revocation must also come from policy authority independently of fs.watch.",
+      "prerequisite": "Accepted source.snapshotAdvanced/policy event hooks, native revision fences and reviewed API/caller scope if needed.",
+      "verification": "Coalesced external edit/delete invalidates the affected snapshot after successful indexing; irrelevant paths do not advance query; duplicate event delivery cannot restore old cache; revoke without a file change still invalidates next page and open UI."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "same query identity for all7 views",
+      "currentEvidence": "work-packages.json:4623,4627; 05-rox-bases-design.md:162-166,179-193. Rox2EntityRef (platform-contract.ts:233-239) and surface binding (surface-context.ts:31-48) exist, but there is no inspected typed Base query or seven-view consumer integration. All four normative new files are absent.",
+      "requiredChange": "Canonical logical query identity in query-contract/query-service must be independent of Table/Board/Gallery/List/Calendar/Timeline/Chart layout and page position; all consume same queryRevision/permissionEpoch and authorized contributing refs. Chart drill-down/export reuse predicates and permission snapshot; context binding uses permitted refs/revisions, not raw owner dataset.",
+      "verification": "Actual owner-backed transport plus real seven-view switch: assert identical logical query identity, Table/Board/Gallery/List refs and calendar/timeline/chart contributing sets with documented undated/unsupported presentation cases; chart/table summaries and export match. Native readback/restart keeps source identity.",
+      "missingPrerequisite": "LSX-WP-009 accepted adapter, schema/computation contracts and reviewed RPC/renderer/seven-view integration owners.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "consistent pagination excludes duplicate/skipped refs",
+      "currentEvidence": "work-packages.json:4569,4624,4628. vault-index.ts:741-745 sorts by updated_at/title without ref tie-break and loads all rows; queryVaultDocuments:807-812 has no pagination or snapshot. Project portfolioEntityIds:158-168 deduplicates memberships but is not a paginated authoritative source snapshot.",
+      "requiredChange": "Pin authorized source/query/schema/policy/evaluation snapshot; sort typed values then full scoped EntityRef; integrity-bind cursor to identity/actor/epoch/revisions. Reject mismatched/forged/stale cursor as typed error. Source changes between pages must preserve valid pinned snapshot or explicitly invalidate, never silently skip/duplicate.",
+      "verification": "Seeded generated stable-ref/equal-sort-value fixtures with page size1 and boundary sizes; union of page refs equals authorized filtered set exactly once; insert/delete/schema/filter/sort changes and cross-actor cursor replay cannot silently continue with inconsistent order.",
+      "missingPrerequisite": "Accepted adapter source snapshot/revision and common cursor/recovery storage contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:4555-4565,4629. platform-contract.ts:601-610 accepts supplied flat actorId/grants only; it is not authenticated transport or field evaluator. Vault query accepts notesRoot/string. Published RS-BASE-01.md:50-52 prohibits renderer actor authorization.",
+      "requiredChange": "Shared runtime schemas in query-contract with all eight required error discriminants; trusted server context parameter separate from parsed input. Wire base.query/getQueryWatermark through existing authenticated transport and renderer client under approved scope, not export-only service.",
+      "verification": "Compile the real consumer boundaries after integration; invoke actual transport with absent actor, forged actor/owner/workspace and cross-account refs; require denied/validation and no data disclosure. Schema failures preserve unknown future format as specified.",
+      "missingPrerequisite": "EG-IDENTITY runtime receipt and approved registration/renderer paths; no such writable seam in current package.",
+      "state": "BLOCKED_ON_FOUNDATION_AND_INTEGRATION"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "work-packages.json:4630; platform-contract.ts:99-105 supplies receipt fields and 233-239 revisioned refs. vault-index.ts:4-6 states rebuildable projection; summary hash exists at59-72; hashVaultMarkdownFiles:938-950 computes disk hashes but supplies no durable native query receipt.",
+      "requiredChange": "Return authoritative source-bound receipt/ref/revision/hash via accepted common authority; never label SQLite cache or queued/fixture result as committed native success. Read back native owner then after restart; old cursor is either reauthorized under exact valid generation or explicitly invalidated with conflict and fresh readback.",
+      "verification": "Real native fixture query receipt matched against canonical owner files/records; close/restart actual service, reload and compare refs/revisions/hashes under current policy. Corrupt/missing projection recovery must not acknowledge incomplete success or reuse revoked snapshot.",
+      "missingPrerequisite": "Accepted native domain/receipt owner, supported restart runner, source completeness and lifecycle interfaces.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:4596-4609,4631 gives viewer10/owner30, denied-field and between-pages revoke; no package test files exist. Inspection did not run tests as instructed.",
+      "requiredChange": "Implement exact behavior tests and owner-backed smoke/readback scenarios; record exact evaluated artifact/input hashes, generated seeds, expected/observed, all failed attempts and recovery results. Include conflict from source/schema revision mismatch, cursor replay across actor/epoch and missing/corrupt index restart.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-010.test.ts plus actual transport/native/restart proof. Viewer rows1=10, owner rows1+2=30 across paging; denied-field query fails; revoke cannot reuse old page/cursor. Distinguish infrastructure failure from consumer-visible semantic failure.",
+      "missingPrerequisite": "Committed wave0/prerequisites and implemented service/real runner; tests are forbidden during preflight.",
+      "state": "NOT_RUN_NO_IMPLEMENTATION"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:4612-4620 specifies totals/sort-before-ACL or removing policy fingerprint from cache key; named assertions viewer total10 not30, no hidden title/count, old cursor cannot cross epoch. 05-rox-bases-design.md:288 gives additional A10/B20/C900 control.",
+      "requiredChange": "Preserve exact baseline bytes/input seed then evaluate controlled mutations on isolated implementation artifacts. Assert viewer total10 not30 and no private title/count; old cursor cannot cross new policy epoch. Add A10/B20/C900 owner-visible30/count2/avg15, revoke B =>10/count1/avg10 with chart/rollup/export equivalence.",
+      "verification": "Green exact baseline; totals-before-ACL mutant must fail authorized-total/no-leak assertion; removed-policy-key mutant exercised after prior cache fill and revoke must fail old-cursor/reuse assertion. Preserve semantic failure output, artifact hashes and seeds; do not accept a timeout or compile failure as sensitivity.",
+      "missingPrerequisite": "Executable implemented service, authoritative policy changes and isolated mutation lane.",
+      "state": "NOT_RUN_NO_IMPLEMENTATION"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "work-packages.json:4580-4583,4633 explicitly requires toolbar snapshot/freshness/help and loading/empty/error/stale states. RS-BASE-01.md:19-42 adds actual loaded-font/theme/help/motion/keyboard. No renderer implementation file is permitted by current packet.",
+      "requiredChange": "Root integrates query snapshot/epoch/freshness and error states into existing toolbar/consumers; accessible hover/focus/click meaning/unit/formula/source/freshness help and keyboard/IME behavior; no guessed totals. Use existing t() convention for all ten locales, Russian default, user theme and actual Rox Mono font. Retain reduced-motion support and focus under virtualization/200% zoom.",
+      "verification": "Discover supported actual Electron runner, launch genuine existing surface after source integration, exercise pointer/keyboard/IME/revoke/stale and all required accessibility/display states; collect screenshot/ARIA/computed font and exact revision/environment receipts. No invented runner command, fake font proof or isolated fixture screen.",
+      "missingPrerequisite": "Approved renderer/localization consumer patch scope and actual Electron capability. Remains required, not N/A despite query service file-only scope.",
+      "state": "BLOCKED_ON_UI_INTEGRATION_SCOPE"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:4603-4609 lists SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI;4634 forbids plan-only completion. All inspected evidence is source/spec only.",
+      "requiredChange": "Maintain independent revision-bound receipts for each lane on integrated product. This preflight and its JSON verifier are not feature proof. Provider/collaboration receipts additionally required when those effects are actually exercised; no queued result mistaken for upstream completion.",
+      "verification": "Lead reviews exact commit/artifact hashes and actual expected/observed readbacks for six mandatory lanes plus affected provider/collaboration lanes; rerun relevant proof after material integration change.",
+      "missingPrerequisite": "Implementation/integration and all actual proof receipts.",
+      "state": "ALL_FEATURE_PROOF_LANES_NOT_RUN"
+    },
+    {
+      "criterion": "Authorize rows/fields before filter/sort/formula/relation/group/aggregate; reject denied-field query without side channel.",
+      "currentEvidence": "work-packages.json:4387-4388,4576-4578;05-rox-bases-design.md:162-167. documentIdsMatching:691-725 searches unrestricted title/body/path/tags/aliases;loadSummaries:728-799 includes properties/links. authorizeRox2Action lacks row/field scope; membership visibility is supplied readable booleans.",
+      "requiredChange": "Common authoritative policy resolves row universe and referenced fields before any predicate/evaluation; deny inaccessible filter and other computation dependencies. Authorize relation target+target field before traversal; project membership or saved-view permission never grants underlying row access. Do not send raw rows to renderer for ACL filtering.",
+      "verification": "Owner/viewer mixed row and field policies through transport, hidden sentinel title and C900 value absent from results/errors/search/export/lookup/rollup; denied filter/sort/derived reference fails without matches or hidden counts; membership alone cannot widen read.",
+      "missingPrerequisite": "EG-IDENTITY entity/field/target policy evaluator plus LSX-WP-009 capabilities.",
+      "state": "BLOCKED_ON_SECURITY_FOUNDATION"
+    },
+    {
+      "criterion": "Authorized aggregates cover all pages and no guessed/hidden totals.",
+      "currentEvidence": "work-packages.json:4542-4545,4569;05-rox-bases-design.md:154-165,191-193. Existing vault summaries do not expose an authorized aggregate contract.",
+      "requiredChange": "Aggregate after ACL+typed filters over full authorized snapshot, before page slicing; totalVisibleRows only under allowed policy. Preserve null/missing/invalid/denied distinctions, configured empty-set semantics and decimal/date types; never coerce denied to0 or expose number of hidden targets.",
+      "verification": "Page size1 still yields owner sum30 and viewer10; C900 excluded; count vs nonempty count and avg denominator follow allowed set; chart drill-down/export/rollup/table summary share snapshot.",
+      "missingPrerequisite": "Typed field/aggregate semantics and source completeness receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Pinned evaluationTime/timezone and bounded materialization/AST/relation computation return diagnostic.",
+      "currentEvidence": "work-packages.json:4540,4636-4637;05-rox-bases-design.md:138-140;07-domain-entity-model.md:153. vault-index.ts:48-49,410-447 caps scan at4000 and document size2MiB, but query returns arrays and hash helper loses completeness flags.",
+      "requiredChange": "Bind evaluation time and valid IANA timezone to snapshot/cursor; use accepted bounded typed evaluator with row/AST depth/node/time/fanout service limits and typed budget diagnostics. Reject incomplete source rather than report partial total as authoritative. Use existing field union for explicit error/null distinction.",
+      "verification": "Same now/today result across rows/pages/chart/export at snapshot time, including timezone/DST cases; over-budget AST/source/fanout yields explicit bounded failure without hung UI or plausible partial totals; no eval/browser/network execution.",
+      "missingPrerequisite": "Accepted evaluator/field contract and adapter complete-source diagnostics.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Event/policy watermark advances or explicitly invalidates cursor; revoked cache never reused.",
+      "currentEvidence": "work-packages.json:4551-4552,4571-4574,4585-4587;07-domain-entity-model.md:157,167,171-189. applyVaultWatchTick:978-989 rebuilds index but has no query/policy watermark; surface-context.ts:76-90 rebases only live contexts and does not implement authorization invalidation.",
+      "requiredChange": "Implement base.getQueryWatermark and base.queryInvalidated through common event alias/envelope owner, source/schema/target/policy revision fences and actor-keyed cache. Revoke immediately purges forbidden result/media/aggregate projections; reconnect reauthorizes before read/replay, remote-private offline without valid lease fails closed.",
+      "verification": "Source edit/delete, schema change and policy revoke between pages and while UI is open invalidate watermark/cursor without stale leaked row or old aggregate; replayed/out-of-order events cannot regress epoch; restart/reconnect rejects expired authorization and handles offlineUnsupported honestly.",
+      "missingPrerequisite": "Common event/policy epoch/recovery and offline lease interfaces; approved caller hooks.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/server-core/src/knowledge/vault-index.ts","symbol":"queryVaultDocuments","lineStart":807,"lineEnd":812,"sha256":"7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path":"packages/server-core/src/knowledge/vault-index.ts","symbol":"hashVaultMarkdownFiles","lineStart":938,"lineEnd":950,"sha256":"7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path":"packages/server-core/src/knowledge/vault-index.ts","symbol":"applyVaultWatchTick","lineStart":978,"lineEnd":989,"sha256":"7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action","lineStart":592,"lineEnd":610,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":233,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"portfolioEntityIds","lineStart":158,"lineEnd":168,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/rox2/project-membership.ts","symbol":"visibleProjectsForEntity","lineStart":171,"lineEnd":183,"sha256":"c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"bindSurfaceContext","lineStart":31,"lineEnd":48,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"visibleContextEntityRefs","lineStart":51,"lineEnd":56,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/core/src/rox2/surface-context.ts","symbol":"rebaseLiveContext","lineStart":76,"lineEnd":90,"sha256":"ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path":"packages/server-core/src/knowledge/vault-markdown.ts","symbol":"noteIdFromRelativePath","lineStart":77,"lineEnd":79,"sha256":"6de9e4357c4607dd773b7418dc8cac7646e5686940074480da65951e69119765"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[9] / LSX-WP-010","lineStart":4384,"lineEnd":4711,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"packages / LSX-WP-010","lineStart":808,"lineEnd":889,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"7 Query ACL / 8 seven views / 14 Verification plan","lineStart":158,"lineEnd":290,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"6 Bases / 7 Permissions / 8 Events","lineStart":151,"lineEnd":189,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Dependencies RS-DRV-01 / GitHub dependency links","lineStart":95,"lineEnd":109,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"}
+  ],
+  "evidenceFreshness": {
+    "wholeFileDigests": "Read-only shasum -a 256 captured actual inspected generations; both dispatch input manifest digests and all four normative baseline source digests match inspected bytes.",
+    "revisionClaim": "input_revision records dispatch lineage only. No Git command was executed and no claim is made that concurrent dirty tree work equals that commit.",
+    "recheckTrigger": "Any change to a referenced whole file invalidates this generation and requires exact reread/rehash before implementation. Do not silently rewrite hashes to bless changed source. Lead must rebind to wave0/prerequisite committed state.",
+    "runtime": "NOT_RUN_BY_INSTRUCTION",
+    "researchLimitations": "codegraph returned no project index; no indexing attempted. Targeted find could not judge due provider402; used direct reads and literal grep within the normative package source/spec set instead. No broad source exploration, builds, tests, UI or network operations were performed by worker."
+  },
+  "nextExecutableAction": "Lead validates this report against its packet and current whole-file digests. Implementation starts only after lead wave0 commit plus accepted LSX-WP-009 and EG-IDENTITY receipts, resolved reference manifest and shared lease. Rebind source generations; agree typed adapter/policy/schema/evaluator/watermark contracts and approved transport/renderer integration scope; then implement query-contract.ts followed by query-service.ts, with root applying only reviewed shared patches serially. Outstanding UI/seven-view/native proof stays a completion gate, not a reduced acceptance target.",
+  "risks": [
+    "Flat actor grants, project readable flags, entity capability catalog and surface context are not authoritative per-row/per-field policy; wrapping them as Base ACL leaks data.",
+    "Current unrestricted full-text filtering before ACL leaks through matches, denied property predicates, sort order, links, summary counts or error titles even if result rows are later hidden.",
+    "4000-note/2MiB limits, unreadable files and unavailable bun:sqlite can yield incomplete data or [] today; authorized totals need explicit source completeness/failure diagnostics.",
+    "Path-derived note IDs are not independently guaranteed stable across renames; LSX-WP-009/native binding owner must establish authoritative ref mapping rather than treating display paths as foreign keys.",
+    "Non-unique updatedAt/title order and mutable source enumeration are insufficient for page consistency; tie-break must use full scoped EntityRef and cursor/source/policy generation fence.",
+    "Policy changes must be checked before cached return and across asynchronous source reads; fs.watch alone cannot observe revoke, and actor-only cache keys cannot distinguish policy epochs.",
+    "Published RS-BASE-01 has older source revision, alternate proposed paths and RS-DRV-01 prerequisite; preserve the normative LSX owned files while reconciling shared foundation readiness with lead.",
+    "Current write scope lacks real RPC/renderer/localization/event authority patches; source-only implementation and an isolated UI test cannot satisfy all seven views or actual toolbar DoD.",
+    "Typed fields/evaluation/derived relations are required inputs but their exact interfaces are not delivered in inspected package; do not create duplicate field registry, formula engine, auth or row store.",
+    "hashVaultMarkdownFiles is a bounded projection/readback helper, not transactional source snapshot, permission epoch or durable native receipt; mixed file reads require owner fences.",
+    "Concurrent root integration can stale any whole-file evidence; preflight validity is generation-specific and never feature completion."
+  ]
+}

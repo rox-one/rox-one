@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "epic": 1295,
+  "baseline": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "items": [
+    {
+      "id": "UTB-01",
+      "issue": 1296,
+      "title": "Общий surface contract",
+      "url": "https://github.com/rox-one/rox-one/issues/1296",
+      "depends_on": [],
+      "status": "IMPLEMENTED_UNIT_VERIFIED_NOT_INTEGRATED"
+    },
+    {
+      "id": "UTB-02",
+      "issue": 1297,
+      "title": "Единое создание",
+      "url": "https://github.com/rox-one/rox-one/issues/1297",
+      "depends_on": [
+        1296,
+        1231,
+        1235,
+        1243,
+        1249,
+        1279,
+        1283
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-03",
+      "issue": 1298,
+      "title": "Markdown promotion",
+      "url": "https://github.com/rox-one/rox-one/issues/1298",
+      "depends_on": [
+        1297,
+        1238,
+        1245,
+        1250,
+        1283,
+        1284
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-04",
+      "issue": 1299,
+      "title": "Row Button",
+      "url": "https://github.com/rox-one/rox-one/issues/1299",
+      "depends_on": [
+        1239,
+        1253,
+        1261,
+        1276,
+        1098
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-05",
+      "issue": 1300,
+      "title": "Go to / retry",
+      "url": "https://github.com/rox-one/rox-one/issues/1300",
+      "depends_on": [
+        1098,
+        1276
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-06",
+      "issue": 1301,
+      "title": "Response",
+      "url": "https://github.com/rox-one/rox-one/issues/1301",
+      "depends_on": [
+        1098,
+        1276
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-07",
+      "issue": 1302,
+      "title": "Cancel / history",
+      "url": "https://github.com/rox-one/rox-one/issues/1302",
+      "depends_on": [
+        1098
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-08",
+      "issue": 1303,
+      "title": "Inbound email",
+      "url": "https://github.com/rox-one/rox-one/issues/1303",
+      "depends_on": [
+        1098,
+        1244,
+        1276
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-09",
+      "issue": 1304,
+      "title": "Field permissions",
+      "url": "https://github.com/rox-one/rox-one/issues/1304",
+      "depends_on": [
+        1114,
+        1249,
+        1253,
+        1271,
+        1095
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-10",
+      "issue": 1305,
+      "title": "AI providers",
+      "url": "https://github.com/rox-one/rox-one/issues/1305",
+      "depends_on": [
+        1113,
+        1304,
+        1276
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-11",
+      "issue": 1306,
+      "title": "Dashboard / Graph",
+      "url": "https://github.com/rox-one/rox-one/issues/1306",
+      "depends_on": [
+        1296,
+        1235,
+        1249,
+        1282
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-12",
+      "issue": 1307,
+      "title": "Homepage / catalog",
+      "url": "https://github.com/rox-one/rox-one/issues/1307",
+      "depends_on": [
+        1109,
+        1297,
+        1306
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-13",
+      "issue": 1308,
+      "title": "Group By",
+      "url": "https://github.com/rox-one/rox-one/issues/1308",
+      "depends_on": [
+        1249,
+        1253,
+        1279,
+        1272
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-14",
+      "issue": 1309,
+      "title": "Sync history",
+      "url": "https://github.com/rox-one/rox-one/issues/1309",
+      "depends_on": [
+        1243,
+        1244,
+        1304
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-15",
+      "issue": 1310,
+      "title": "Airtable import",
+      "url": "https://github.com/rox-one/rox-one/issues/1310",
+      "depends_on": [
+        1284,
+        1297,
+        1272,
+        1304
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-16",
+      "issue": 1311,
+      "title": "Publication / quotas",
+      "url": "https://github.com/rox-one/rox-one/issues/1311",
+      "depends_on": [
+        1095,
+        1290,
+        1304,
+        1306
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    },
+    {
+      "id": "UTB-17",
+      "issue": 1312,
+      "title": "Сквозная приёмка",
+      "url": "https://github.com/rox-one/rox-one/issues/1312",
+      "depends_on": [
+        1296,
+        1297,
+        1298,
+        1299,
+        1300,
+        1301,
+        1302,
+        1303,
+        1304,
+        1305,
+        1306,
+        1307,
+        1308,
+        1309,
+        1310,
+        1311
+      ],
+      "status": "PLANNED_NOT_EXECUTED"
+    }
+  ]
+}

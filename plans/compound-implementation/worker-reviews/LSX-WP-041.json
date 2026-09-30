@@ -1,0 +1,294 @@
+{
+  "task_id": "LSX-WP-041-preflight",
+  "attempt_id": "d2afee4015143932b121ac6f9e4b19c5",
+  "packet_hash": "cbb9ef7e8524eb62b0e433a564bd6858c026229d8399a46b61cf841f70245734",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-041",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_GATED",
+  "scope": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "onlyWrittenPath": "plans/compound-implementation/worker-reviews/LSX-WP-041.json",
+    "productSourceChanged": false,
+    "runtimeVerification": "NOT_RUN: explicitly prohibited in this preflight; all feature verification below is prospective.",
+    "codegraph": "Unavailable: tool reported no project index. Continued with scoped source reads and literal searches; no index created.",
+    "searchLimitation": "The descriptive find call failed with upstream 402; its empty results were not used as evidence of absence.",
+    "evidenceGeneration": "Whole-file SHA256 values describe the inspected working-tree bytes, not an assertion that dirty wave0 bytes belong to input_revision. Revalidate each hash and re-read changed seams after the lead wave0 commit and accepted prerequisites. No Git state was changed or inspected."
+  },
+  "dependencies": ["LSX-WP-010", "LSX-WP-013", "LSX-WP-033", "LSX-WP-040"],
+  "dependencyContributions": [
+    {"id": "LSX-WP-010", "requiredReceipt": "Permission filtering before filter/sort/formula/aggregate, snapshot-bound cursor and totals; querying workflow principal must receive only its permitted rows/fields.", "specEvidence": "work-packages.json:4385-4407", "state": "ACCEPTED_RECEIPT_NOT_INSPECTED"},
+    {"id": "LSX-WP-013", "requiredReceipt": "One pinned bounded typed AST evaluation context, typed invalid/cyclic/budget errors and unchanged legacy built-in meanings. Reuse for Condition; no eval/network.", "specEvidence": "work-packages.json:5360-5382; 07-domain-entity-model.md:151-157", "state": "ACCEPTED_RECEIPT_NOT_INSPECTED"},
+    {"id": "LSX-WP-033", "requiredReceipt": "Registered typed action validation, deterministic preview digest, current ACL and idempotent native command receipt shared by UI/agent/workflow.", "specEvidence": "work-packages.json:11872-11896", "state": "ACCEPTED_RECEIPT_NOT_INSPECTED"},
+    {"id": "LSX-WP-040", "requiredReceipt": "Committed domain event aliases, authenticated/scoped event context, durable cursor and deduplication; no duplicate trigger on watcher replay.", "specEvidence": "work-packages.json:14360-14385", "state": "ACCEPTED_RECEIPT_NOT_INSPECTED"}
+  ],
+  "foundationGates": [
+    {
+      "id": "EG-AUTOMATION",
+      "kind": "EXPLICIT_EXTERNAL_GATE_NOT_PACKAGE_DAG_EDGE",
+      "evidence": "work-packages.json:155-161,14755-14758; 08-automation-integration.md:7-14,51,78-84",
+      "required": "Accepted existing immutable workflow version/run/step executor with durable receipts, current principal authorization at every attempt and restart/replay readback; not a second executor.",
+      "currentEvidence": "graph.ts:4-6 explicitly excludes a graph executor; compileGraph:385-489 only linear prompt/webhook; SAVE_GRAPH:218-252 persists compiled runtime config.",
+      "missingPrerequisite": "Exact implementation commit plus native immutable-run/version/step and recovery readiness receipts. Published spec status is READINESS_NOT_VERIFIED, not readiness.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "EG-COMMANDS",
+      "kind": "EXPLICIT_EXTERNAL_GATE_NOT_PACKAGE_DAG_EDGE",
+      "evidence": "work-packages.json:139-145,14755-14758; RS-MCP-01.md:54-79",
+      "required": "Authenticated typed native command/query gateway and MCP dispatcher with registered request/result/error validators, scoped resource ACL and durable idempotency receipts.",
+      "currentEvidence": "createCommandRegistry and CommandContribution store UI contributions; execute returns Promise<void>, services are untyped, permissions are metadata. This is not proof of a domain gateway. RPC graph handlers use _ctx and caller workspaceId.",
+      "missingPrerequisite": "Current registered domain handler/schema/actor/MCP readiness receipt, including revoked-principal replay denial.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "RS-AUT-01-DRAFT-PUBLISH-CUTOVER",
+      "kind": "HIDDEN_PUBLISHED_FOUNDATION_GATE",
+      "evidence": "RS-AUT-01.md:43-55,76-78; RS-AUT-03.md:99,109-110",
+      "required": "Non-executing Draft and immutable PublishedRevision in the existing authority; saveDraft never writes active runtime, explicit publish CAS/policy/checksum only activate path; legacy scheduler/writers fenced after migration snapshot/readback and unfinished effects reconciled.",
+      "currentEvidence": "buildAutomationGraphSave:548-555 replaces automations from the draft graph; workspace saveGraph:66-75 invokes saveAutomationGraph; RPC SAVE_GRAPH:240-250 immediately writes automations.json.",
+      "missingPrerequisite": "Lead-owned accepted migration/cutover and draft/published persistence/gateway changes before this package connects editable typed nodes. RS-AUT-05 is not a substitute for this first foundation.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS"
+    },
+    {
+      "id": "RS-AUT-03-VERSIONED-RUNTIME",
+      "kind": "HIDDEN_PUBLISHED_FOUNDATION_GATE",
+      "evidence": "RS-AUT-01.md:23,45; RS-AUT-03.md:27-35,45-53,77-81,99-110",
+      "required": "Verified v1-compatible/v2 graph compiler migration and the existing durable runtime, fenced workers, node attempts/effect receipts, stable operationId and event dedupe before activating new executable node kinds.",
+      "missingPrerequisite": "RS-AUT-03 readiness plus its RS-AUT-01 and RS-AUT-02 prerequisites; not additional LSX-WP-041 implementation scope. No durable runtime source outside permitted direct imports was audited.",
+      "state": "READINESS_NOT_ESTABLISHED"
+    },
+    {
+      "id": "RS-AUT-02-MCP-CAPABILITY-FOUNDATION",
+      "kind": "HIDDEN_TRANSITIVE_PUBLISHED_GATE",
+      "evidence": "RS-AUT-02.md:28-34,44-56,98,109-110; RS-MCP-01.md:11-13,23,75-79,99,144",
+      "required": "Shared versioned input/output/error capability catalogue, common resource guard and filtered agent definitions; RS-AUT-02 depends on RS-MCP-01, which names RS-ADM-01 and architecture WP-01/02/03/07/36/37 plus remote identity/resource gateway for shared enablement.",
+      "missingPrerequisite": "Readiness receipts for affected command/capability scope and accountable owners; do not assume a local command contribution registry or schema advertisement grants invocation rights. These transitive requirements are not silently appended to the explicit four-element dependencies array.",
+      "state": "READINESS_NOT_ESTABLISHED"
+    },
+    {
+      "id": "TYPED-GRAPH-AND-TRANSPORT-SCOPE",
+      "kind": "CODE_DISCOVERED_INTEGRATION_GATE",
+      "evidence": "types.ts:314-431; schemas.ts:269-396; AutomationGraphEditor.tsx:19-37,64-72,96-107,241-300; automations.ts:136-149,196-254",
+      "required": "Foundation/integration owner supplies versioned graph registry extension points, compatible typed edges/ports and renderer node metadata, generated/authenticated transport operations and locale keys before this slice can be integrated within its bounded patch paths.",
+      "missingPrerequisite": "Current strict node/schema unions reject the four families; editor has exhaustive kind maps and hard-coded inspector; no validateDocsBaseNode/previewNodeMapping handlers appear in the inspected registration/channel list. types.ts, schemas.ts, inner editor, protocol/preload/i18n are not normative shared patch paths for this package. Obtain prerequisite changes or a reviewed expanded packet, never work around this with metadata-only nodes, casts or a second store.",
+      "state": "BLOCKED_ON_FOUNDATION_OR_REVIEWED_SCOPE_EXPANSION"
+    },
+    {
+      "id": "IMPLEMENTATION-LAUNCH-LINEAGE",
+      "kind": "EXPLICIT_LAUNCH_GATE",
+      "evidence": "execution-packages.json:3612-3622; supplied worker contract",
+      "required": "Lead wave0 commit first, four accepted dependency artifact/readback receipts, resolved reference package revision/digest with spec hashes, approved implementation base/generation and exclusive leases for all shared patches.",
+      "missingPrerequisite": "Those launch/readiness receipts were not supplied or verified in this read-only preflight; product_baseline_sha in normative record differs from worker input_revision and must be resolved by the lead's reviewed launch packet, not by this worker changing Git.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/bases/automation-node-contracts.ts",
+    "packages/shared/src/automations/docs-bases-nodes.ts",
+    "apps/electron/src/renderer/components/automations/DocsBasesNodeInspector.tsx",
+    "tests/lark-suite-extension/lsx-wp-041.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-041.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/automation-node-contracts.ts",
+      "proposedSymbols": ["DocsBaseNodeSpec", "TypedNodeMapping", "DocsBaseNodeDiagnostic", "ValidateDocsBaseNodeRequest", "ValidateDocsBaseNodeResult", "PreviewNodeMappingRequest", "PreviewNodeMappingResult"],
+      "change": "Define request/result/error schemas for Query, Condition, DomainCommand and Event. Use existing EntityRef/sourceBinding/fieldId and prerequisite AST/value/query/DomainReceipt contracts; freeze node/schema versions and source schema revision/hash. Typed mapping references stable fieldId, source node/output path and target port, never display label. Carry registered commandId, expectedRevision policy and stable logical operation identity. Discriminate validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Keep simulation result distinct from a durable native command receipt. Diagnostic identifies node/port/field and actionable error without leaking denied metadata. Actor/workspace authorization is transport-derived, not caller actor/owner fields. Names here are proposed, not existing exports."
+    },
+    {
+      "path": "packages/shared/src/automations/docs-bases-nodes.ts",
+      "proposedSymbols": ["registerDocsBasesNodes", "validateDocsBaseNode", "previewNodeMapping"],
+      "change": "Contribute four families to the prerequisite existing registry/runtime, not a new builder: Event resolves registered alias/sourceRef and scoped envelope from WP-040; Query delegates bounded actor-safe snapshot/cursor execution to WP-010; Condition delegates bounded typed AST to WP-013 and distinguishes null/missing/invalid/denied; DomainCommand delegates same registered WP-033/native UI/MCP validator/gateway. Resolve schema/field IDs on validate/publish; rename remains valid, removal invalidates config. Every attempt uses current workflow least-scope principal. Dry-run has no dispatch/effect capability and labels all simulated outputs. Publish freezes versions; source schema event marks draft stale rather than mutating a running version."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/DocsBasesNodeInspector.tsx",
+      "proposedSymbols": ["DocsBasesNodeInspector"],
+      "change": "Implement RA-03 schema-backed inspector/registry picker on the existing selected node and graph draft: source/version/field-ID mapping selection, typed Input/Output/Error and native command expectedRevision policy, permitted preview, inline node/port diagnostics, missing source/scope unavailable state, removed-field publish block. Use t() and existing theme/font controls, no skin reset; hover/focus/click help, keyboard/IME, reduced-motion and narrow/zoom support. Render simulation stamp; no command invoked by selection, help or preview. Preserve invalid/conflicting draft for correction."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-041.test.ts",
+      "change": "Behavior tests for four registered families using accepted domain/query/runtime contracts; Query owner/viewer isolation and bounded cursor; typed Condition null vs denied; field-ID rename and removal; result/error conformance across UI/agent/workflow; malformed args/versions/ports; authenticated actor spoof rejection; dry-run zero effects; duplicate event/command replay and crash/recovery; revoked principal after resume. Seed label-mapping and owner-wide-query mutations and assert their named semantic failures, not source strings or wiring. Runtime/native/restart evidence remains separate from unit fixtures."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-041.spec.ts",
+      "change": "Use discovered supported real Electron runner to interact with the existing workspace constructor and RA-03. Exercise actual fields/ports/publish errors/simulation labels, persisted reload and source-schema changes; pointer, keyboard, IME/focus restoration, Russian/all-locale parity, theme, actual Rox Mono, reduced motion and 200% zoom. Do not substitute standalone component fixtures or invented passing runner commands."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "compileAutomationGraph",
+      "change": "After the versioned foundation registry/compiler is accepted, invoke docs-bases node validation/lowering for the four registered families and typed port compatibility; retain exact v1 linear/metadata semantics. Reject unsupported versions/kinds, unresolved source/scope, removed fieldId, invalid mappings and typed cycles with node/edge/port diagnostics. Resolve fields by ID and freeze registry/node/schema versions for publish. Do not interpret current decision.expression as executable or lower typed conditions to prompt/webhook.",
+      "reason": "parseGraph uses the strict AutomationGraphSchema; compileGraph currently treats decisions as metadata and only allows trigger→matcher→linear prompt/webhook. The exported seam requires prerequisite extension points, not a new executor.",
+      "baseSha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875",
+      "missingPrerequisite": "Accepted types/schema/version/runtime registry hooks; any additional internal-symbol rewrite requires reviewed scope."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "automationGraphRevision",
+      "change": "Use accepted draft/published revision contract, including executable typed mapping IDs and pinned schema/node versions in draft CAS identity. Preserve semantic v1 compatibility and separate published/run version from editable draft revision. Keep the current FNV token strictly an optimistic-concurrency token; immutable content hash must come from the authoritative foundation checksum contract, not be asserted from FNV.",
+      "reason": "Current revision is automation-graph-v1 plus FNV stableJson(config), explicitly not a security token; new immutable version/readback requirements cannot be fulfilled by calling it a payload digest.",
+      "baseSha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875",
+      "missingPrerequisite": "RS-AUT-01 authoritative draft/published revision and checksum contract."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "buildAutomationGraphSave",
+      "change": "On accepted draft/publish cutover, persist validated typed nodes/mappings and their schema pins in existing graph draft persistence without activating runtime config; preserve pre-existing legacy fields. Publish path alone validates current fields/current ACL and freezes immutable schema versions. Removed fields block publish; renamed labels never retarget an ID. Compare CAS revision and return typed conflict without clobbering the draft or a running version.",
+      "reason": "Current body writes compiled.automations into the next live config. It must not be reused as saveDraft activation for new executable families.",
+      "baseSha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875",
+      "missingPrerequisite": "Lead foundation owns persistence/cutover first; no second workflow store."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx",
+      "symbol": "AutomationGraphWorkspaceEditor",
+      "change": "Control selection through existing selectedNodeId/onSelectedNodeChange props and mount DocsBasesNodeInspector for the selected registry family. Pass graph edits back through handleGraphChange, source-safe validation/preview through accepted authenticated typed client, and foundation saveDraft/publish actions distinctly. Preserve unsaved mapping on validation/conflict; a source-schema notification marks stale and offers correction instead of refresh silently replacing an edited draft. Surface missing source/scope and simulation status; retain same workspace constructor.",
+      "reason": "Current wrapper only loads/saves a graph and mounts a hard-coded inner inspector; onAutomationsChanged refresh overwrites projection, stale save refresh also discards graph edits. Existing controlled selection is reusable without a second surface.",
+      "baseSha256": "f862058a2d6bcb3c1dd6b0dfe76b1ac98f8894a40b45c9243b92eeb2694a94e5",
+      "missingPrerequisite": "Accepted inner-editor registry metadata/inspector outlet and typed generated client/i18n support; otherwise the wrapper cannot eliminate the duplicate hard-coded inspector within current scope."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "registerAutomationsHandlers",
+      "change": "Wire accepted typed automation.validateDocsBaseNode and automation.previewNodeMapping operations to the new contract/module using authenticated ctx principal and server-resolved authorized workspace/resource binding, never payload actor. Validate request/result/error at the boundary; current command ACL checked every attempt. Separate safe simulation from effectful legacy TEST, and delegate actual typed command execution to the accepted native gateway/runtime. Gate publish on current source field IDs and immutable node/schema pins; return durable receipts only for committed native operations, with exact ref/revision/hash readback available.",
+      "reason": "GET_GRAPH/SAVE_GRAPH currently ignore _ctx; TEST executes real webhook/script actions and can write history. Existing handler registration and mutex are the seam, but neither workspace lookup nor rpcAutomationsActResult is by itself source-specific ACL proof.",
+      "baseSha256": "aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162",
+      "missingPrerequisite": "Authenticated typed transport and protocol/client channel definitions plus native gateway/runtime dependency receipts. Do not silently change legacy TEST semantics or treat it as dry-run."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "withConfigMutex",
+      "change": "Keep same per-workspace serialized read/validate/CAS/write boundary for existing graph draft metadata. Under accepted foundation CAS/authority fence, re-resolve current field schema and authorization before draft/publish writes; emit validationChanged/stale diagnostics via the canonical registered event mechanism after durable commit. Do not broaden this Promise-chain mutex into claimed cross-process worker fencing or hold it across arbitrary external commands.",
+      "reason": "Current Map<string, Promise<void>> protects only in-process config mutation; native durable runs/leases and restart recovery require the prerequisite authority, not this mutex alone.",
+      "baseSha256": "aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162",
+      "missingPrerequisite": "Foundation shared authority CAS/fencing and event/readback contract; leases on overlapping shared paths."
+    }
+  ],
+  "scopeExpansionNeeds": [
+    {"path": "packages/shared/src/automations/types.ts", "symbol": "AutomationGraphNodeKind / AutomationGraphNode / AutomationGraphEdge / AutomationGraph", "change": "Foundation supplies versioned registered four-family node contract and typed ports/schema pins while retaining v1 decoding.", "reason": "Current union/version only admits seven v1 kinds and flow/metadata edges.", "authorization": "NOT_OWNED: prerequisite owner contribution or reviewed packet amendment required"},
+    {"path": "packages/shared/src/automations/schemas.ts", "symbol": "AutomationGraphNodeSchema / AutomationGraphEdgeSchema / AutomationGraphSchema / AutomationGraphEventSchema", "change": "Foundation provides versioned registry validators, typed port/mapping envelopes and committed domain alias resolution with fail-closed unknown versions.", "reason": "Strict unions reject new kinds/ports and canonical event set rejects new domain aliases; this cannot be fixed solely in compileAutomationGraph after parseGraph.", "authorization": "NOT_OWNED: prerequisite owner contribution or reviewed packet amendment required"},
+    {"path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx", "symbol": "NODE_ACCENT / NODE_ICON / AutomationGraphEditor nodeKindLabels, save and inspector", "change": "Foundation provides registry-based visual metadata and a typed inspector outlet, validates drafts without compiling them into active v1 config, and reuses controlled selection.", "reason": "Exhaustive Record maps require new-kind handling, save calls v1 compiler and the built-in aside cannot currently be replaced by the wrapper.", "authorization": "NOT_OWNED: prerequisite owner contribution or reviewed packet amendment required"},
+    {"path": "packages/shared/src/protocol (imported transport boundary; exact owning files not inspected)", "symbol": "RPC_CHANNELS.automations and generated renderer client contract", "change": "Integration owner identifies exact protocol/client/preload files and adds typed validation/preview/draft/publish contracts through the existing generator/transport.", "reason": "Operations are only proposed; inventing electronAPI method names or untyped dispatch would not compile the server/renderer boundary contract.", "authorization": "NOT_OWNED: resolve exact seams and update reviewed packet before patch"},
+    {"path": "packages/shared/src/i18n/locales/*.json", "symbol": "New Docs/Base node/diagnostic/help translation keys", "change": "Locale owner adds ASCII-sorted keys in all ten locales with Russian defaults and parity verification.", "reason": "Repo i18n rules and actual UI DoD require localization; locale files are outside this package write paths and were not inspected.", "authorization": "NOT_OWNED: exact keys supplied after contract acceptance; lease or amended packet required"}
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "4 node families typed end-to-end",
+      "currentEvidence": "types.ts:314-431 and schemas.ts:312-354 only v1 trigger/matcher/prompt/webhook/metadata kinds. compileGraph:385-489 rejects metadata in flow and branching; CommandContribution.execute returns void, not typed domain receipt.",
+      "requiredChange": "Register Event, Query, Condition and DomainCommand from proposed contracts/module through existing typed graph/compiler/runtime and RA-03. SourceRef/fieldId/typed AST/limits/native command expectedRevision flow unchanged across UI, MCP and workflow; validate compatible ports and typed result/error branches. Null and denied remain distinct.",
+      "verification": "PLANNED: source/schema compilation at both boundaries; targeted test bun test tests/lark-suite-extension/lsx-wp-041.test.ts; native Event→Query→Condition→DomainCommand scenario and authoritative readback; UI/agent/workflow same native handler result schema; malformed port/unknown schema/denied source rejection.",
+      "missingPrerequisite": "All four dependency receipts, EG-COMMANDS/EG-AUTOMATION and versioned graph/schema/transport foundation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "dry-run simulated outputs labeled and no effects",
+      "currentEvidence": "automations.ts:254-300 TEST executes real webhook/script actions and can append history; workspace editor exposes onSave but no simulation path.",
+      "requiredChange": "Use separate safe validation/mapping preview with an execution mode that cannot dispatch domain/provider writes; return explicit simulation-stamped typed outputs and renderer label. Selection/help/preview never activates config or command.",
+      "verification": "PLANNED: preview all four families and assert simulation markers and zero native mutation/receipt/outbox/provider intents; negative control routes draft/preview to live writer and must detect scheduler/domain effect. Real Electron shows simulation label after keyboard and pointer preview.",
+      "missingPrerequisite": "Non-executing draft foundation, safe preview boundary and accepted runtime execution-mode contract; legacy TEST is not usable as dry-run.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "graph.ts:40-77 gives graph DTOs and string issue errors; automations.ts:196,218 ignores _ctx and resolves caller workspaceId. Proposed operations/error discriminants are listed at work-packages.json:14915-14934.",
+      "requiredChange": "New contract file supplies validators for validation/preview inputs/results and validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Register typed operations and generated client through existing transport. Resolve authenticated actor and authorized resource on server; reject caller-supplied authority identity; enforce current command/query ACL.",
+      "verification": "PLANNED: compile accepted server and renderer contracts, malformed request/result and all error-branch tests; actor spoof and cross-workspace/source denial; UI/MCP/workflow conformance against actual native gateway, not mocked forwarded values.",
+      "missingPrerequisite": "EG-COMMANDS registered schemas/actor/MCP proof and integration-owned protocol/client/preload/locale seams.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "SAVE_GRAPH:240-250 returns saved graph after atomic config write, not a DomainReceipt. graph revision:212-214 is FNV CAS, explicitly not a security token; no native graph execution claimed by this source.",
+      "requiredChange": "DomainCommand forwards accepted native handler durable receipt and binds ref/revision/checksum plus stable operation identity. Published schema versions/field mappings remain immutable; real run/step receipt persisted by existing runtime and re-read from canonical authority after process restart. Queued/simulated output cannot be reported as committed.",
+      "verification": "PLANNED: native command commit→read exact entity ref/revision/content hash→restart service/runtime→read same committed entity/receipt and published mapping→replay same operation→same native effect/receipt; retain expected/observed hashes and integrated commit.",
+      "missingPrerequisite": "WP-033 native receipts, EG-AUTOMATION durable runtime and RS-AUT-01 immutable publish/cutover authority.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "buildAutomationGraphSave:544-545 rejects stale baseRevision with a string error; config mutex:28-32 is process-local. No source-backed proof of typed native node attempts/restart exists in inspected seams.",
+      "requiredChange": "Delegate retry/replay to accepted runtime with frozen inputs/schemas and current least-scope ACL. Stable logical side-effect key across attempts, typed conflict branch, source deletion/field removal errors, no owner privilege inheritance or hidden output logging. Persist attempts and seeds in proof receipts; preserve unsaved draft on conflict.",
+      "verification": "PLANNED: actor-safe Query and actual native command happy path; denied read/field/event; conflict expectedRevision; duplicate event; crash after effect before step acknowledgment; restart/replay no duplicate effect; principal revoked while paused denies next attempt; source removal/rename transitions. Include all attempts, baseline input SHA256 and seeds.",
+      "missingPrerequisite": "WP-010/013/033/040 accepted behavior, durable dedupe/step receipts, current policy and run recovery readiness.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:14980-14988 specifies label mapping and owner-wide query mutations, with rename/removal/actor-safe assertions. No mutation run performed in this preflight.",
+      "requiredChange": "In normative test file construct isolated synthetic owner/viewer/source fixture with stable field IDs and pinned seed; seed label-based resolution and owner-wide query mutations independently on exact evaluated bytes. Retain green baseline and named failing semantic assertions, separate infrastructure failures.",
+      "verification": "PLANNED: baseline green; label-mapping mutant fails 'rename does not retarget field' or 'removed field cannot publish'; owner-query mutant fails 'workflow result uses actor-safe query subset'. Preserve seed, evaluated artifact SHA256, baseline input SHA256, logs and exact assertion. Fixture proof supplements, not replaces native/UI lanes.",
+      "missingPrerequisite": "Accepted query/schema/publish implementation and a runnable package test harness; no mutation was executed here.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "AutomationGraphEditor:241-300 has label and metadata expression fields only. Wrapper:106-111 mounts existing editor; controlled selection props exist at inner editor:9-16,74-77. Work package requires RA-03 and all-locale i18n at 14948-14951.",
+      "requiredChange": "Mount schema-backed DocsBasesNodeInspector in the existing constructor, not fixture/new builder; typed field-ID picker shows source/version, missing scope/source diagnostics and publish invalidation, simulation label. Use t() all ten locales, user theme and actual Rox Mono; help on hover/focus/click, visible focus, IME-safe inputs, reduced motion and responsive zoom layout. Preserve draft on denied/conflict.",
+      "verification": "PLANNED: discover supported actual Electron runner, then exercise pointer/keyboard/IME node and field selection, preview and publish denial; focus return after help/errors; narrow layouts and 200% zoom, light/dark user theme, Russian and locale parity, reduced-motion; screenshots/ARIA and computed loaded-font evidence bound to actual integrated commit. Reload persists mapping; rename/remove event updates stale diagnostics without changing active run.",
+      "missingPrerequisite": "Foundation inner-editor registry/inspector outlet, locale updates, authenticated renderer client, accepted draft/publish authority and actual Electron QA capability. No runner was launched in this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Normative proof lanes at work-packages.json:14971-14978 are SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. Published issue receipts expressly do not establish implementation.",
+      "requiredChange": "Lead collects independent, integrated-revision-bound proof receipts for each required lane, exact source/artifact hashes, native authoritative readbacks, all attempts/seeds and UI evidence. Provider/collaboration lanes required when actually used, not fabricated or used to replace native receipts. Keep featureComplete false until full acceptance is observed.",
+      "verification": "PLANNED: review lane-by-lane expected/observed evidence with source commit/generation and hashes; reject source drift, queued-only result, fixture-only UI, missing restart/ACL lane or agent final-text-only dependency receipt. Preflight validator checks only report lineage/hash/shape and is not feature proof.",
+      "missingPrerequisite": "Actual implementation and integrated commit plus all required runtime/UI/negative/readback receipts; preflight expressly prohibits those runs.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Field rename retains mapping; removal invalidates publish; immutable node/schema versions and stale mapping events do not mutate running version.",
+      "currentEvidence": "08-automation-integration.md:51; work-packages.json:14935-14955,14965-14967. Inspected node data schemas contain no field-ID mapping or schema-version pins.",
+      "requiredChange": "Store mappings by fieldId plus source/port and pinned schema version, not label. Current source schema is rechecked at publish; removed IDs produce blocking node/port diagnostics. Schema-change event marks editable mapping stale; labels may update display but do not retarget. Running workflow uses immutable published mappings.",
+      "verification": "PLANNED: bind f1, rename label and reuse old label for f2, run still targets f1; remove f1, publish blocks even if f2 has same label; source schema event leaves in-flight published version unchanged; save/reload/restart retains same IDs/version/hash. Seed label-based mutant must fail.",
+      "missingPrerequisite": "Dependency schema/query/AST/action versions and immutable workflow publish/event foundation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Query viewer subset; Condition null/denied distinct; same command UI/agent/workflow result schemas.",
+      "currentEvidence": "work-packages.json:14964-14967; 08-automation-integration.md:38-42; 07-domain-entity-model.md:151-167. sanitizeForShell only escapes shell strings, not authorization; CommandRegistry only contribution lookup.",
+      "requiredChange": "Apply actor/field/row policy before query filtering/computation; bounded cursor snapshot and policy-safe aggregates. Preserve missing/null/invalid/denied values; Condition denied never coerces to false/zero or reveals private value. Use same native command request/result/error validators and current policy for UI/MCP/workflow with no local bypass.",
+      "verification": "PLANNED: two principals with private rows/fields, compare viewer subset/count/cursor and prove private metadata absent; typed null vs denied condition behavior; current-policy revoke then replay denial; actual UI/agent/workflow native command schema and receipt conformance. Owner-wide result mutation must fail.",
+      "missingPrerequisite": "WP-010 actor-safe snapshots, WP-013 value/AST semantics, WP-033/EG-COMMANDS gateway and scoped workflow principal.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/shared/src/automations/graph.ts", "symbol": "compileGraph / compileAutomationGraph", "lineStart": 385, "lineEnd": 494, "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path": "packages/shared/src/automations/graph.ts", "symbol": "automationGraphRevision", "lineStart": 208, "lineEnd": 214, "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path": "packages/shared/src/automations/graph.ts", "symbol": "buildAutomationGraphSave", "lineStart": 538, "lineEnd": 562, "sha256": "976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path": "packages/shared/src/automations/types.ts", "symbol": "AutomationGraphNodeKind / AutomationGraphNode / AutomationsConfig", "lineStart": 314, "lineEnd": 431, "sha256": "c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path": "packages/shared/src/automations/schemas.ts", "symbol": "AutomationGraphNodeSchema / AutomationGraphSchema / AutomationGraphEventSchema", "lineStart": 269, "lineEnd": 396, "sha256": "232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path": "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx", "symbol": "AutomationGraphWorkspaceEditor / saveGraph / refresh", "lineStart": 18, "lineEnd": 114, "sha256": "f862058a2d6bcb3c1dd6b0dfe76b1ac98f8894a40b45c9243b92eeb2694a94e5"},
+    {"path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx", "symbol": "AutomationGraphEditor / selectedNode inspector", "lineStart": 241, "lineEnd": 300, "sha256": "a4323fc00bd9bb5548f94c88c35900c0755b090dcd2b54790c6ab826e3471d94"},
+    {"path": "packages/server-core/src/handlers/rpc/automations.ts", "symbol": "registerAutomationsHandlers / SAVE_GRAPH / TEST", "lineStart": 196, "lineEnd": 300, "sha256": "aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path": "packages/server-core/src/handlers/rpc/automations.ts", "symbol": "withConfigMutex", "lineStart": 25, "lineEnd": 33, "sha256": "aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path": "packages/core/src/platform/commands/registry.ts", "symbol": "CommandRegistryImpl / createCommandRegistry", "lineStart": 20, "lineEnd": 66, "sha256": "832ae183641c47c28502469a9f8d77dd8a530fab80e958b8060406e610cf6f6f"},
+    {"path": "packages/core/src/platform/commands/types.ts", "symbol": "CommandContribution / CommandContext", "lineStart": 13, "lineEnd": 34, "sha256": "471524b041e4322bc7512ae93833794f45c14f2d2d6d029ab2fb65967f7ebdc3"},
+    {"path": "packages/shared/src/automations/security.ts", "symbol": "sanitizeForShell", "lineStart": 19, "lineEnd": 30, "sha256": "59f5b41a923542016705d14339786776eb827b3758705c8db09a85c75cbe8464"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "/work_packages/40 LSX-WP-041", "lineStart": 14732, "lineEnd": 15100, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-041 normative execution record", "lineStart": 3531, "lineEnd": 3623, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/rox-suite/published/RS-AUT-01.md", "symbol": "Domain persistence authority / draft-publish cutover", "lineStart": 43, "lineEnd": 55, "sha256": "2e5fccefa265389b9d927ed9779f5e2641ae1e10346ebd914326b54912208f3b"},
+    {"path": "docs/rox-suite/published/RS-AUT-02.md", "symbol": "Typed capability contract / dependencies", "lineStart": 26, "lineEnd": 56, "sha256": "35dde92068f8b92b7ba034a62709d8c4e9617c7415c293659d89532b2cb550ab"},
+    {"path": "docs/rox-suite/published/RS-AUT-03.md", "symbol": "Versioned runtime authority / prerequisites", "lineStart": 45, "lineEnd": 53, "sha256": "0d42c0105cecb110427e045272de9237e996f4ee29bf0a2981ce316f7b76b1a8"},
+    {"path": "docs/rox-suite/published/RS-MCP-01.md", "symbol": "Architecture prerequisites / shared resource authorization", "lineStart": 11, "lineEnd": 23, "sha256": "7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50"},
+    {"path": "docs/lark-suite-reference/08-automation-integration.md", "symbol": "Node semantics and exact I/O", "lineStart": 34, "lineEnd": 51, "sha256": "32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "Bases types / permissions and agents", "lineStart": 151, "lineEnd": 167, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"}
+  ],
+  "risks": [
+    "Current shared graph save activates runtime immediately. Adding executable nodes before RS-AUT-01 cutover could execute a draft and violate no-effects preview.",
+    "Strict types/schema unions and exhaustive inner-editor maps sit outside normative sharedPatchPaths. Five new files plus three allowed shared files alone cannot establish typed E2E without prerequisite changes or a reviewed scope amendment.",
+    "Metadata-only decision is not a Condition implementation; prompt/webhook lowering would hide unsupported semantics and violate typed error/port requirements.",
+    "Legacy TEST has real effects and history writes; relabeling its result as simulation would be false.",
+    "Command contribution availability and shell escaping are not server resource authorization. _ctx-ignoring graph handlers and caller workspace lookup do not prove least-scope workflow principal.",
+    "FNV CAS revision is not a cryptographic immutable content hash; process-local mutex is not a fenced durable run authority.",
+    "Label-based field mapping retargets on rename/reused labels; owner-wide cached query/aggregate leaks private rows or counts to workflow viewers.",
+    "Wrapper change notifications and stale-save refresh currently replace edited projection; schema updates must not discard unsaved input or silently replace frozen running mappings.",
+    "Published specifications name transitive runtime/capability/admin/remote identity foundations not present in the explicit LSX dependency array. Publication or agent final text cannot satisfy readiness.",
+    "Root integration may modify inspected source after report creation. Hash drift invalidates affected evidence/patch bases; do not rewrite input_revision or claim compatibility without lead-approved generation/readback.",
+    "Actual UI runner, native domain readback, restart and negative-control lanes remain unexecuted by authorization; passing artifact validation cannot establish feature completion."
+  ],
+  "nextExecutableAction": "Lead first commits wave0 and accepts artifact plus authoritative-readback receipts for LSX-WP-010, LSX-WP-013, LSX-WP-033 and LSX-WP-040. Resolve EG-AUTOMATION/EG-COMMANDS and published draft/publish/runtime/capability foundation gates; assign owners for out-of-scope strict schema/types/inner-editor/transport/i18n seams. Revalidate source hashes on approved committed input, re-read any drift, resolve reference manifest revision/digest, acquire shared-path leases and issue reviewed implementation packet. Only then implement the five normative files and submit the six serial shared patch requests above. This report itself is the complete preflight deliverable, not implementation or feature proof."
+}

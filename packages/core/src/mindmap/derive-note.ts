@@ -1,6 +1,8 @@
 import { addChild, addEdge, createEmptyGraph, finalizeGraph, truncateLabel } from './graph.ts';
 import { headingsToTree, parseOutlineHeadings } from './outline.ts';
 import type { MindMapGraph } from './types.ts';
+import { retainedSourceHash } from '../docs/retained-source.ts';
+import type { ListTreeProjection } from '../docs/list-tree.ts';
 
 export interface MindMapNoteBacklink {
   id: string;
@@ -12,12 +14,33 @@ export interface MindMapNoteInput {
   title: string;
   markdown: string;
   backlinks?: MindMapNoteBacklink[];
+  /** Supplied only from the committed, authorized native block projection. */
+  listTree?: ListTreeProjection;
 }
 
 export function deriveNoteMindMap(input: MindMapNoteInput): MindMapGraph {
   const rootLabel = input.title.trim() || 'Note';
   const graph = createEmptyGraph({ type: 'note', noteId: input.noteId }, rootLabel);
 
+  if (input.listTree) {
+    const tree = input.listTree;
+    if (tree.sourceHash !== retainedSourceHash(input.markdown)) return finalizeGraph(graph, 'note');
+    const root = graph.nodes[graph.rootId];
+    if (!root) return finalizeGraph(graph, 'note');
+    root.meta = { sourceHash: tree.sourceHash, authorityEpoch: tree.authorityEpoch, markerMappingVersion: tree.markerMappingVersion };
+    if (tree.root?.nodeId) root.source = { kind: 'block', id: tree.root.nodeId };
+    for (const node of tree.nodes) {
+      // Snapshot-local IDs distinguish unanchored rows without claiming stable source identity.
+      const id = node.nodeId ? 'block:' + node.nodeId : 'projection:' + tree.sourceHash + ':' + node.blockIndex;
+      const parent = node.parentIndex === null ? graph.rootId : tree.nodes[node.parentIndex];
+      const parentId = typeof parent === 'string' ? parent : parent
+        ? parent.nodeId ? 'block:' + parent.nodeId : 'projection:' + tree.sourceHash + ':' + parent.blockIndex : graph.rootId;
+      addChild(graph, parentId, { id, label: truncateLabel(node.text, 120), kind: 'block', level: node.level + 1,
+        ...(node.identity === 'anchored' && node.nodeId ? { source: { kind: 'block', id: node.nodeId } } : {}),
+        meta: { sourceHash: tree.sourceHash, authorityEpoch: tree.authorityEpoch, identity: node.identity,
+          ...(node.checkbox === undefined ? {} : { checked: node.checkbox }) } });
+    }
+  } else {
   const headings = parseOutlineHeadings(input.markdown);
   if (headings.length > 0) {
     headingsToTree(graph, headings, graph.rootId);
@@ -33,6 +56,8 @@ export function deriveNoteMindMap(input: MindMapNoteInput): MindMapGraph {
     }
   }
 
+  }
+
   for (const bl of input.backlinks ?? []) {
     const id = `backlink:${bl.id}`;
     addChild(graph, graph.rootId, {
@@ -46,4 +71,17 @@ export function deriveNoteMindMap(input: MindMapNoteInput): MindMapGraph {
   }
 
   return finalizeGraph(graph, 'note');
+}
+
+/** Notes routes encode the whole address as their note parameter. */
+export function parseNoteBlockAddress(address: string): { noteId: string; blockId?: string } {
+  const match = /^(.*)#\^([A-Za-z0-9_-]+)$/.exec(address);
+  return match && match[1] && match[2] ? { noteId: match[1], blockId: match[2] } : { noteId: address };
+}
+
+/** Resolve aliases only within an already authorized source projection. */
+export function resolveNoteBlockId(tree: ListTreeProjection, blockId: string): string | null {
+  const matches = tree.mappings.filter(mapping => mapping.blockId === blockId || mapping.nodeId === blockId);
+  const ids = new Set(matches.map(mapping => mapping.nodeId));
+  return ids.size === 1 ? [...ids][0] ?? null : null;
 }

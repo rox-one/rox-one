@@ -1,0 +1,343 @@
+{
+  "task_id": "LSX-WP-018-preflight",
+  "attempt_id": "ff869b3aceb3e75fc575460ca752b647",
+  "packet_hash": "ae737bbb7be7cc2e739c01c27f757783eda24d7dd002159d76fab836f6577338",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-018",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "workTier": "bounded-workflow",
+  "scope": {
+    "mode": "inspect",
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-018.json",
+    "sourceWrites": false,
+    "testsBuildsNativeUiNetwork": "NOT_RUN_BY_INSTRUCTION",
+    "gitState": "NOT_CHANGED; input revision is dispatch lineage, not a claim that the dirty working tree equals HEAD",
+    "inspectionLimit": "Package source paths, direct import quick-entry.ts, package/dependency normative specifications, linked published specification and supplied report verifier"
+  },
+  "dependencies": ["LSX-WP-012", "LSX-WP-010"],
+  "explicitExternalPrerequisites": [],
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-012",
+      "requiredReceipt": "Accepted implementation and native readback receipt for typed status preview/apply, server-derived actor, current transition capability, revision preconditions and durable DomainReceipt. Reuse the accepted cell-edit-command.ts contracts/authority; do not add a second mutation path.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:5161-5278",
+      "transitiveEdges": ["LSX-WP-004", "LSX-WP-005", "LSX-WP-010", "LSX-WP-011"],
+      "readiness": "NOT_ESTABLISHED; dependency records remain PLANNED_NOT_EXECUTED in inspected specifications, and acceptance receipts were not supplied"
+    },
+    {
+      "packageId": "LSX-WP-010",
+      "requiredReceipt": "Accepted permission-aware BaseQueryResult/query-service with queryRevision, permissionEpoch, source/schema/policy-bound cursors and authorized aggregates over all pages; same query identity across views.",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:4501-4587,4622-4634",
+      "transitiveEdges": ["LSX-WP-009"],
+      "externalPrerequisites": ["EG-IDENTITY"],
+      "readiness": "NOT_ESTABLISHED; do not replace this service with renderer-side Note filtering"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "PUBLISHED_RS_DRV_01",
+      "kind": "HIDDEN_PUBLISHED_DEPENDENCY_NOT_EXPLICIT_LSX_EDGE",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:95-113 explicitly requires RS-DRV-01 (#1109).",
+      "required": "Lead must resolve the published Drive/Base creation and routing dependency to an accepted readiness receipt or an explicitly reviewed bounded relationship for this slice; publication is not implementation acceptance.",
+      "state": "UNRESOLVED; do not silently add RS-DRV-01 to the exact LSX dependency array or mark it N/A"
+    },
+    {
+      "id": "AUTHENTICATED_NATIVE_COMMAND_AUTHORITY",
+      "kind": "FOUNDATION_CONTRACT_WITH_TRANSITIVE_DEPENDENCY",
+      "evidence": "RS-BASE-01.md:46-56 requires common authority, transport-derived actor, operationId/expectedRevision and grants at RPC/IPC/MCP. 05-rox-bases-design.md:25,31,99,203 identifies Task versioned mutation hardening. PersonalTaskStore.complete/reopen/cancel are in-memory methods with no actor/revision parameters (store.ts:217-238). LSX-WP-010 explicitly requires EG-IDENTITY; LSX-WP-012 has transitive edges 004/005/010/011.",
+      "required": "Accepted foundation must register Board preview/apply through the existing authenticated command transport, enforce Task transition authorization and CAS atomically with native persistence, implement replay/idempotency and return exact durable ref/revision/hash receipts. These server/runtime seams are outside WP-018's writable paths; request a reviewed packet amendment if dependencies do not expose them.",
+      "state": "NOT_PROVEN; a renderer capability check or a callback executing PersonalTaskStore locally is insufficient"
+    },
+    {
+      "id": "CANONICAL_BASE_CONFIG_AND_TASK_QUERY_HOST",
+      "kind": "HIDDEN_UI_AND_PERSISTENCE_FOUNDATION",
+      "evidence": "RS-BASE-01.md:21-29,46-52; 05-rox-bases-design.md:49-52,171-177 requires persisted Base definition/view schema and independent view revision. NotesViewHost.tsx:58-116 accepts only table/canvas/graph/outline and NotesViewNote[]; note-views.ts:24-34 only permits table/base v1; NotesTableView within NotesViewHost.tsx:133-155 uses localStorage.",
+      "required": "Foundation must provide actual BaseDefinition/status-or-select fieldId/lane option IDs, authorized Task projections, native entity open dispatch, shared lane/order view configuration and a reachable existing route. Extend only the host's named seam after accepted routing/config contracts; do not convert Markdown checkbox counts into Task identities or create a second Base screen/store. Parent route/view-kind changes beyond NotesViewHost require an updated packet owned by integration.",
+      "state": "MISSING_IN_INSPECTED_HOST; no Board file or bases renderer directory exists at inspection"
+    },
+    {
+      "id": "COMMON_EVENTS_REVOCATION_AND_READBACK",
+      "kind": "FOUNDATION_ACCEPTANCE_GATE",
+      "evidence": "work-packages.json:7075-7091 proposes task.updated/base.viewChanged aliases and full event envelope; RS-BASE-01.md:50-56 requires shared outbox and revocation/cache purge; 05-rox-bases-design.md:156-167,203 requires authoritative snapshot invalidation/readback.",
+      "required": "Verify actual native event aliases, durable event/command correlation, query invalidation and permissionEpoch change behavior from accepted foundation. Ignore older/replayed receipts/events; purge inaccessible rows/counts on revoke; refresh from the same authorized query. Existing TaskAuditEvent (types.ts:105-110) is not that event envelope.",
+      "state": "NOT_PROVEN; no claim of an existing task.updated subscription implementation"
+    },
+    {
+      "id": "I18N_SHARED_PATH_OWNERSHIP",
+      "kind": "INTEGRATION_SCOPE_GAP",
+      "evidence": "work-packages.json:7086-7087,7137 requires Russian/all locales and full UI evidence; repository instructions require t() and parity across ten locale files. NotesViewHost.tsx:132-229 already uses useTranslation/t(). Allowed paths contain no locale JSON files.",
+      "required": "Integration owner supplies/reviews all required Board labels, transition/restore diagnostics, help and aria-live strings in existing locale resources under a reviewed expanded shared-path packet if new keys are needed. Worker must not hardcode Russian text or write unleased locale files.",
+      "state": "OWNER_AND_KEY_AVAILABILITY_NOT_VERIFIED; localization resources were not inspected outside the scoped paths"
+    },
+    {
+      "id": "REVISION_BOUND_LAUNCH_AND_REAL_UI_PROOF",
+      "kind": "EXECUTION_GATE",
+      "evidence": "work-packages.json:7199-7209 requires resolved delivery manifest/spec hashes, accepted dependencies, exact prerequisite commits, shared path leases, integrated readback and separate proof lanes. User dispatch additionally requires the lead's wave0 commit before implementation.",
+      "required": "Wait for committed wave0, accepted dependency receipts and a fresh implementation packet resolving reference revision/digest and the relationship between product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and dispatch revision a21aeab1da5a67e56788384ff930945b0f487879. Refresh hashes/line seams after integration and lease NotesViewHost. Discover supported real Electron UI runner only in the implementation phase; no invented UI command.",
+      "state": "IMPLEMENTATION_BLOCKED_BY_LAUNCH_CONTRACT; preflight artifact is independently deliverable now"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/BaseBoard.tsx",
+    "packages/core/src/bases/board-transition.ts",
+    "tests/lark-suite-extension/lsx-wp-018.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-018.spec.ts"
+  ],
+  "ownedFileContributions": [
+    {
+      "path": "packages/core/src/bases/board-transition.ts",
+      "proposedSymbols": ["BoardMoveInput", "BoardMoveEnvelope", "BoardMoveResult", "BoardMoveError", "previewBoardMove", "applyBoardMove"],
+      "preciseChange": "Define Board-specific typed preview/apply contract using accepted shared EntityRef/query/mutation/error types. Input binds Base/view ref, status/select fieldId, target lane option ID, Task row ref, expected row/schema/view revisions and pinned query identity; mutation envelope carries operationId/idempotencyKey per accepted authority contract, never trusted actor fields. Validate target lane and native field/action mapping; preview has no effects. Apply delegates to accepted native owner command through authenticated transport and returns native durable receipt, not a locally patched Task. Unsupported owner/status mapping, missing group field, deleted/trashed Task and stale schema are explicit diagnostics. Reuse all eight normative error discriminants without widening to a new store or transport.",
+      "prerequisite": "Accepted WP-012 status validator and native complete/reopen/cancel authority, WP-010 contracts, foundation typed durable receipt/error schemas. Proposed names are not existing code. Server registration outside listed paths requires integration-owned packet amendment if no accepted dispatcher hook exists."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/BaseBoard.tsx",
+      "proposedSymbols": ["BaseBoard", "BoardLane", "pendingMove"],
+      "preciseChange": "Render only accepted authorized BaseQueryResult rows/aggregates using EntityRef card keys and stable option IDs for lanes. Canonical placement/counts derive from the confirmed query; drag preview is separately labelled pending state. Pointer drag and keyboard move menu call the same preview/apply path with the same frozen preconditions; Escape cancels unsent preview. Confirm durable native receipt then authoritative readback/invalidation before showing committed placement/counts. On denied/conflict/deleted/revoke restore only current authorized state, with accessible reason; never restore a revoked protected row from a local copy. Provide no-group setup and explicit unknown-status lane, owner capability diagnostics, enter-open, arrows/focus retention, composition guard, help/aria-live, theme tokens and reduced-motion behavior. Persist lane/order configuration through foundation Base view owner, not localStorage task state.",
+      "prerequisite": "Actual accepted Base route/query host, authoritative aggregates, native open command, events/readback, locale resources and existing theme/font primitives."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-018.test.ts",
+      "preciseChange": "Exercise authorized counts across multiple cursor pages, native status mapping including completed/cancelled overlap and trashed/unknown cases, preview-no-effect, pre-ACK canonical placement/count invariant, native identity after serialization/reload, denied/stale/deleted/revoke, idempotent replay and recurring completion. Run exact-byte seeded broken controls for Board-only status and counts-before-ACK with semantic native-vs-card, failed-move-lane and one-canonical-entity oracles. Use actual accepted command/persistence integration where required; in-memory PersonalTaskStore tests do not substitute durable/server proof.",
+      "prerequisite": "Accepted isolated authorized fixture and command/persistence harness; save seeds, input hashes and both baseline/mutant assertion outputs."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-018.spec.ts",
+      "preciseChange": "Exercise changed Board route in actual supported Electron runner against isolated canonical native Task fixtures: pointer and keyboard equivalent moves, Escape, focus restoration, arrow/Enter behavior, IME no accidental move, no-group and unknown lanes, validation/stale/denied/error/offline/loading/empty, reduced motion, 200% zoom, Russian and all locale-key parity, theme and actual loaded Rox Mono. Verify same Task ref/revision in native Tasks after reload/restart and count snapshot consistency; retain screenshots/ARIA/font and expected/observed receipts.",
+      "prerequisite": "Discover supported actual UI runner and accessible test workspace after implementation authorization; no runner was launched in this preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "lineStart": 58,
+      "lineEnd": 116,
+      "baseSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "change": "After WP-010/WP-012 and Base host foundation are accepted, import BaseBoard and extend the existing host view dispatch with the agreed board discriminator. Pass the accepted Base definition/view/group-field configuration, authorized query snapshot plus aggregate receipt, preview/apply native command transport, query readback/invalidation and canonical entity-open handler. Add the board branch before the current graph fallback; preserve current table/canvas/outline/graph behavior. Do not manufacture Task rows from projectNoteRows or parseNoteDocument(markdown).tasks; do not instantiate PersonalTaskStore in the renderer.",
+      "reason": "Current host routes only Note views, carries no native Task refs/revisions/capabilities/receipts, and would otherwise fall through to NotesGraphView. Board must be the same shared projection surface, not a second status store.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY_AFTER_LEASE",
+      "missingPrerequisite": "Concrete accepted host props/transport contract and parent routing changes are not supplied by this packet. Re-inspect this already-drifted source after wave0; extra paths require a revised reviewed packet."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "lineStart": 48,
+      "lineEnd": 56,
+      "baseSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "change": "Preserve NotesViewNote as the Note-only document input. Type the Board host input separately using the accepted canonical BaseRowProjection/query contract (prefer discriminated host props) instead of adding mutable status/lane fields to NotesViewNote. Existing id/title/markdown Note calls must remain valid; the Board branch must not permit a Note ID to stand in for a Task EntityRef.",
+      "reason": "A note has only Markdown content and optional properties/links/backlinks, not native Task identity, revision or authorization. Widening this row into a writable Task copy violates the same-entity requirement.",
+      "owner": "integration-owner",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY_AFTER_LEASE",
+      "missingPrerequisite": "Accepted canonical Base row/query type and audited existing host callers; no caller edits are authorized for this worker."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Board counts same authorized query",
+      "currentEvidence": "NotesViewHost.NotesTableView uses applyNoteBaseView/groupNoteRows (161-164); note-views.ts:160-185 groups local Note rows without queryRevision/permissionEpoch or all-page totals. WP-010 specifies authorized all-page aggregates and query identity (4532-4587).",
+      "requiredChange": "BaseBoard must consume WP-010 aggregate/row snapshot at identical queryRevision/permissionEpoch and filter/source/schema fingerprint; no lane totals from rendered window length or raw owner list. On confirmed mutation invalidate/refetch the common query; do not decrement counts in pending state.",
+      "verification": "Implementation: bun test tests/lark-suite-extension/lsx-wp-018.test.ts with two actors and multiple pages; compare exact lane ref sets/counts to same-filter canonical query/Table, include hidden Tasks, zero/unknown lanes, concurrent change and permission revocation. Observe actual UI count/placement before ACK and after readback.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted WP-010 authoritative query/aggregate service and host query input."
+    },
+    {
+      "criterion": "no optimistic committed status",
+      "currentEvidence": "PersonalTaskStore.complete/reopen/cancel return synchronously mutated objects (217-238); no Board surface exists. work-packages.json:7091 and 7117 explicitly reject Board-only mutation/count before ACK.",
+      "requiredChange": "Keep drag target preview separate from confirmed card/lane/count state. Only accepted durable native receipt plus authoritative matching readback/event advances committed state; errors restore latest authorized canonical position and show reason. Escape before apply sends no command.",
+      "verification": "Delay durable ACK, reject validation/denied, and introduce stale drag; assert canonical Task and confirmed lane/counts unchanged while pending and after rejection, then exact agreement after accepted readback. Keyboard must have the same state machine.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Durable native authority, confirmed event/readback and pending UI."
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:7055-7069 proposes base.previewBoardMove/base.applyBoardMove and eight discriminants; store.ts:207-238 has no authenticated actor or revision preconditions. RS-BASE-01.md:52 defines common authority and operationId/expectedRevision.",
+      "requiredChange": "Add Board input/envelope/result validation in board-transition.ts using accepted contracts, share at renderer/server boundaries and register via existing command authority. Preserve validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Actor/workspace are transport-derived and payload refs are validated within that context; enforce preview and apply capabilities on server.",
+      "verification": "Implementation: compile actual consumers at both boundaries and run malformed envelope, cross-workspace/ref, forged actor and viewer direct RPC/tool negative cases. Verify typed errors and no native write, not just disabled drag.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted WP-012 native command schema/transport and EG-IDENTITY via WP-010; server registration needs existing dependency hook or packet amendment."
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "Store constructor/snapshot/exportJson clone/serialize an in-memory bundle (73-87); get returns an object (154-155), audit records no durable revision/hash (685-687). PersonalTask has optional updatedAt but no CAS revision field (42-75). These are mechanisms, not persistence receipts.",
+      "requiredChange": "Reuse accepted native persistence command; bind operation receipt to Task EntityRef/revision/content hash and query refresh. Retain original Task identity and verify owner readback before success and following actual process restart; never treat store.exportJson or renderer localStorage as durable ACK.",
+      "verification": "Create isolated canonical Task; move Board→complete/reopen/cancel, read same native Task ref/revision/hash in Tasks; restart native persistence/application, repeat readback and verify confirmed Board lane/count query. Record pre/post exact hashes and integrated commit.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted durable Task owner, CAS/idempotency and restart harness; persistence source outside this preflight's allowed imports was not inspected."
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:7100-7103 specifies same Task ID after reload, denied/stale restoration and keyboard equivalence; store.require throws untyped Unknown task (679-682). completeTask has recurrence side effects (434-463).",
+      "requiredChange": "Add deterministic semantic cases for complete/reopen/cancel, denied actor, stale row/schema/lane revision, delete/revoke during drag, replay operationId, restart after accepted command before UI ACK, and supported/unsupported offline behavior. Use current canonical state to reconcile conflict; keep diagnostics distinct. Recurring completion delegates to accepted native completion behavior and replay cannot spawn a second next occurrence.",
+      "verification": "Run normative source test command in authorized implementation phase and separately exercise real native denial/stale/replay/restart with recorded seeds/inputs, command correlation and failure history. Compare exact card/native ref sets and revisions, not merely success booleans.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted Task mapping and command integration fixture; current packet prohibits running tests/runtime."
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:7116-7124 names Board-local status or lane count before native ACK and assertions native Task completion equals card state, failed move remains old lane, one canonical Task entity.",
+      "requiredChange": "Create deterministic baseline/isolated mutants in normative test file or approved implementation proof harness, changing only Board committed status or pre-ACK count timing. Add semantic oracles across pending/denied/readback and identity; hash baseline/mutant bytes and fixture input. Distinguish semantic assertion failures from runner failures/timeouts.",
+      "verification": "Green exact-byte baseline; status-copy mutant must fail native/card equality and failed-move lane assertions; premature-count mutant must fail authorized canonical lane/count equality before ACK; any duplicate-Task mutant must fail one-canonical-entity assertion. Preserve seed, tested byte hashes and actual failed assertion output for named controls.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Implemented Board and deterministic accepted command fixture with controllable ACK/denial; no mutants executed in preflight."
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "No normative Board files/bases renderer directory found. NotesViewHost uses useTranslation and shared UI/theme tokens (2-6,132,168-229). RS-BASE-01.md:36-42 requires help, keyboard, theme/font, 120–160ms opacity/transform motion and responsive panes.",
+      "requiredChange": "Implement Board drag and keyboard move menu with shared command semantics, arrows/Enter/Escape, visible/following focus, IME composition guard, accessible labels/help available by hover/focus/click and status not color-only. Reuse existing theme/font; reduced motion removes movement animation. Localize all user-facing copy through t() in ten locales via integration owner.",
+      "verification": "Actual Electron route with native fixture: record pointer and keyboard moves including failure, IME in editable menu/search context cannot accidentally apply, focus through pending/error/virtualization, reduced-motion computed behavior, 200% zoom, light/dark retained theme and widths <1100/<800. Capture screenshots, ARIA and actual loaded Rox Mono/font evidence; locale parity plus Russian visible copy. No simulated fixture screen substitutes actual route.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted reachable route/UI runner, translated keys/shared lease and foundation theme/font; no UI or native operation permitted in this preflight."
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:7107-7114 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. Package and cloud packet explicitly remain planned/not executed.",
+      "requiredChange": "Deliver integrated source/diff/schema receipts, semantic tests/control, durable native readback/restart, direct ACL negative and actual UI evidence separately; root reviews all evidence at integrated revision. Provider/collaboration lanes are additional when actually exercised, not fabricated successes. Keep featureComplete false until full DoD accepted.",
+      "verification": "Lead checks exact integrated commit, input/spec/artifact hashes, expected/observed receipts and each proof lane independently, reruns material changed paths after integration. Preflight JSON verifier proves only lineage/structure/source hashes.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "All six implementation proof lanes and root accepted receipts; this report is not feature implementation."
+    },
+    {
+      "criterion": "Goal: moving a Task card calls existing native complete/reopen/cancel and is reflected in native Tasks with same identity.",
+      "currentEvidence": "store.ts:217-238 modifies timestamps; completeTask:434-463 additionally creates next recurring occurrence. types.ts:60-74 defines completedAt/cancelledAt/trashedAt/updatedAt rather than universal status. cancel does not clear completedAt and reopen does not clear trashedAt.",
+      "requiredChange": "Use accepted owner status category/transition mapping, not PersonalTaskStore.move (list/order only) or update({status}). Resolve overlapping timestamps and trashed-state eligibility through owner validator; delegate completion to the same native operation as Tasks, preserving recurrence behavior. WP-018 must not change native Task methods in read-only source.",
+      "verification": "Compare Board/native Task semantics for open→done, done→open, open→cancelled, cancelled→done, overlapping timestamps, trashed and recurring Task. Original occurrence retains same ref; legitimate next recurring Task is an owner-created distinct occurrence, not a Base mirror; replay must not duplicate it.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted WP-012 native status mapping and definitive owner completion command; native UI call sites are outside inspected scope."
+    },
+    {
+      "criterion": "Board setup/unknown lane, viewer no write, denied/conflict authoritative restoration and preview side-effect freedom.",
+      "currentEvidence": "work-packages.json:7082-7091; 05-rox-bases-design.md:186 explicitly says no group field→setup, unknown status→explicit lane. The phrase 'no group field setup' in package UI summary must be read with this normative design, not as authorization to hide setup.",
+      "requiredChange": "Validate selected stable status/select group field; render actionable setup when missing and explicit unknown-status lane/diagnostic when unsupported. Show transition-specific read-only viewer capability before interaction, enforce again on server, do not write on preview. On errors show current authorized lane/reason, not the stale drag origin.",
+      "verification": "Observe actual UI missing-field, unknown option, unsupported mixed source, viewer disabled affordance, direct denied RPC and conflict with concurrent canonical lane change; preview/Escape must leave native bytes/revision/counts unchanged.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Canonical field/lane configuration, native validator/permissions and reachable host."
+    },
+    {
+      "criterion": "Lane/order view config only; native Task remains owner, shared Task/Base events and revocation reconcile projections.",
+      "currentEvidence": "work-packages.json:7071-7079 requires config-only DB ownership and proposed event envelope; note-views.ts:100-126 is local Note v1 config. types.ts:105-110 TaskAuditEvent lacks workspace/ref/revision/correlation envelope.",
+      "requiredChange": "Save only Board presentation lane/order through accepted Base config command with independent view revision. Use verified native task.updated/base.viewChanged aliases and full event metadata, correlate commands and deduplicate by actual event identity; refresh authorized query and remove revoked values/counts. No Board task persistence/event engine.",
+      "verification": "Task change from native Tasks updates same Board entity, view-only reorder does not alter Task lifecycle fields, stale view config cannot overwrite row state, replay/out-of-order event cannot regress receipt, revoke invalidates caches/selection/counts before next authorized render. Verify reload/restart configuration owner separately.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted Base config persistence, verified native event aliases/transport and permission epoch invalidation."
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "packages/core/src/tasks/personal/store.ts",
+      "symbol": "PersonalTaskStore.complete/reopen/cancel",
+      "lineStart": 217,
+      "lineEnd": 238,
+      "sha256": "d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/store.ts",
+      "symbol": "PersonalTaskStore.completeTask",
+      "lineStart": 429,
+      "lineEnd": 464,
+      "sha256": "d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/types.ts",
+      "symbol": "PersonalTask",
+      "lineStart": 42,
+      "lineEnd": 75,
+      "sha256": "4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost/NotesViewNote",
+      "lineStart": 48,
+      "lineEnd": 117,
+      "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView",
+      "lineStart": 24,
+      "lineEnd": 34,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows/applyNoteBaseView/groupNoteRows",
+      "lineStart": 133,
+      "lineEnd": 186,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "plans/lark-suite-reference/work-packages.json",
+      "symbol": "work_packages[17] LSX-WP-018.definition_of_done",
+      "lineStart": 6890,
+      "lineEnd": 7211,
+      "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "LSX-WP-018 execution record",
+      "lineStart": 1492,
+      "lineEnd": 1577,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "Commands / API / DB / events; Dependencies / связанные issues",
+      "lineStart": 48,
+      "lineEnd": 113,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "4.3 Native field mapping; 7 Query ACL; 8 Board; 9.2 Edit",
+      "lineStart": 94,
+      "lineEnd": 205,
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    }
+  ],
+  "evidenceFreshness": {
+    "hashMethod": "Read-only shasum -a 256 of concrete inspected whole files",
+    "specInputManifest": "Both supplied spec hashes matched observed bytes",
+    "knownSourceDrift": [
+      {
+        "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "normativeBaselineSha256": "2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358",
+        "inspectedSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+        "consequence": "Actual working-tree host differs from published product baseline. Inspected source includes blockTree/onOpenBlock inputs and outline props. Root owns these changes; no attribution or overwrite. Future patch must bind refreshed working bytes, not published hash."
+      }
+    ],
+    "remainingSources": "Inspected Task store/types and note-views whole-file hashes match their package baseline blob_sha256 values; this is byte evidence, not runtime verification or HEAD ancestry proof.",
+    "futureIntegration": "Source evidence becomes historical immediately after relevant wave0/dependency integration; reject stale hashes and re-inspect before implementation. No Git command was run."
+  },
+  "inspectionToolLimits": [
+    "codegraph_explore reported no .codegraph index for this repository; used read/grep/glob fallback and did not initialize/update index.",
+    "Scoped descriptive find calls failed with backend 402 Insufficient credits; did not interpret no hits as absence. Located source by exact paths/symbols from normative record and inspected with read/grep.",
+    "Exact normative file glob reported all four new files absent and read of bases renderer directory reported path not found at inspection. This is not a guarantee they remain absent after root integration."
+  ],
+  "verification": {
+    "featureBehavior": "NOT_RUN; tests, builds, native UI and network prohibited by this task",
+    "artifactOnlyCommand": [
+      "python3",
+      "-B",
+      "plans/compound-implementation/launch-worker-pool.py",
+      "--verify",
+      "plans/compound-implementation/worker-reviews/LSX-WP-018.json",
+      "${ROX_COMPOUND_PACKET_ROOT}/LSX-WP-018/packet.json"
+    ],
+    "scope": "Read-only JSON lineage/structure and exact source hash validation; no feature or acceptance PASS asserted in this report"
+  },
+  "nextExecutableAction": "Lead first validates this preflight against the supplied dispatch packet without product tests, then commits wave0 and supplies accepted LSX-WP-010 and LSX-WP-012 dependency/readback receipts. Resolve RS-DRV-01, authenticated Task CAS/durable receipt/event authority, Base host/config/route and localization ownership gaps; refresh inspected hashes including already-drifted NotesViewHost and resolve baseline/reference manifest. Issue a reviewed revision-bound implementation packet with shared path lease (and explicit amendments for any extra transport/routing/locale paths). Only then implement board-transition.ts and BaseBoard.tsx plus the two normative test files, return serial NotesViewHost patches and collect all six integrated proof lanes before feature acceptance.",
+  "risks": [
+    "Published RS-BASE-01 has RS-DRV-01 foundation dependency absent from LSX-WP-018 explicit edges; an empty external_prerequisites array is not proof of readiness.",
+    "Server registration, Task CAS/persistence/event support, parent routing and locale writes are not among this worker's normative paths. A client-only function or UI callback cannot legitimately satisfy authenticated durable authority; missing seams need reviewed lead scope expansion, not adapter simulation.",
+    "Task status is timestamp-derived, not a writable universal enum: cancel leaves completedAt, reopen leaves trashedAt, and completeTask may create a recurring successor. Incorrect precedence/command choice can silently diverge from native Tasks.",
+    "The existing Notes projection rows represent Note identities and Markdown task counts, not native Tasks. Copying those into Board or storing Board-local status violates one canonical entity.",
+    "Lane counts from pagination/render windows leak or miscount; use the exact common authorized query aggregate and invalidate on permission epoch change.",
+    "Restoring the drag-origin snapshot on conflict/revoke can reveal revoked data or regress newer canonical state; restoration must use current authorized readback.",
+    "No-group setup wording is compressed in the package summary; normative design explicitly requires setup. Do not weaken it to an empty Board.",
+    "Preflight source generations can change under root-owned wave0 integration; NotesViewHost already differs from published baseline. Hash validation is not integrated revision or runtime acceptance.",
+    "Provider/collaboration evidence is required when exercised; no such effects were invoked here. All full DoD and proof lanes remain NOT_VERIFIED."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

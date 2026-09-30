@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "scope": "WAVE0_NATIVE_EDITOR_CORRECTIONS",
+  "featureComplete": false,
+  "launchHead": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "nativeEvidence": {
+    "directory": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790766123173",
+    "artifacts": [
+      {
+        "path": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790766123173/result.json",
+        "sha256": "f1e68c77e58dc0f8a2ede1a1cc7c156277a3e764f2c05dbdf3a29c31df313388"
+      },
+      {
+        "path": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790766123173/run-summary.json",
+        "sha256": "b73eb3db5c0d002c17f49f1311e167edf2f291118fd1c87220d98377d6d91959"
+      },
+      {
+        "path": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790766123173/visual-review.json",
+        "sha256": "552780167bd0297afcd4292bfef7c16403f6a7a15b6bb2ddfdb139200f7e0685"
+      }
+    ],
+    "passed": 1,
+    "failed": 0,
+    "assertions": 204,
+    "elapsedSeconds": 127.93,
+    "sourceHashes": 43,
+    "buildHashes": 1074,
+    "screenshots": 48
+  },
+  "scopedTests": {
+    "path": "/tmp/rox-wave0-native-final-scoped-tests.log",
+    "sha256": "20ab7ca6b62033f132ad0bf43f428c8fa1c50062c18bf5121a74f9b27bc0a3bd",
+    "passed": 153,
+    "failed": 0,
+    "assertions": 1914,
+    "files": 15
+  },
+  "rootVisualReview": {
+    "reviewer": "/root",
+    "method": "Viewed original PNGs and compared actual transcript, geometry and decoded RGBA pixel receipts",
+    "shots": [
+      "native-conflict-recovery-readable-message",
+      "native-map-same-block-ids",
+      "native-outline-existing-ids-read-only",
+      "home-quick-task-pointer-focus",
+      "registered-native-block-address"
+    ],
+    "observations": [
+      "Quiet inset Home accent, no outer focus rectangle",
+      "Readable conflict text and separate actions",
+      "Contained Notes tabs",
+      "Exact native Map/Outline IDs and source; default Map fit labels remain small"
+    ]
+  },
+  "changes": [
+    {
+      "file": "packages/ui/src/components/markdown/legacy-mixed-task-lists.ts",
+      "symbol": "LegacyMixedTaskLists",
+      "why": "Split ordinary and task lists preserving nested nodes without synthetic tasks or read-only writes",
+      "sha256": "053a4f7e6a9ecb61d8fbe18aa4b5ecd00caed3529ab8d31638ba97a689bc8e98"
+    },
+    {
+      "file": "packages/ui/src/components/markdown/retained-trailing-node.ts",
+      "symbol": "createRetainedTrailingNodePlugin",
+      "why": "Append only after actual edits and retain preventUpdate across appended transaction chains",
+      "sha256": "c6aba2bdc4795105ad5c18db3e285b7d0606f83fda880b0895b923a094db76cc"
+    },
+    {
+      "file": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "NotesPage",
+      "why": "Readable recovery, contained tabs, current-note saving state, repeated block source navigation",
+      "sha256": "ef16aff4b580f2bd5cb79cb23e9927a5b4f472e449206d34ee163b60b7412101"
+    },
+    {
+      "file": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "symbol": "navigate",
+      "why": "Signal every accepted navigation including identical current block address replay",
+      "sha256": "a6d2ee3895c0b2144316e701ac719b2ec56f5cf715fd8f932224431ae837b0a9"
+    }
+  ],
+  "limits": [
+    "Scoped native acceptance does not close all six normative DoD or full143 acceptance",
+    "Theme/scale/platform matrix remains open where not exercised",
+    "Read-only Markdown exact; rich editor after actual editing is not claimed universally lossless"
+  ]
+}

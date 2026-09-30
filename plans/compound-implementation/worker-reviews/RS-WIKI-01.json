@@ -1,0 +1,351 @@
+{
+  "task_id": "RS-WIKI-01-preflight",
+  "attempt_id": "ed8d26499c069c852d133542ea3f9254",
+  "packet_hash": "015c3963493bf9fb613ebf3acb727a261fe8e4183d55b0784949cb795b28adb5",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-WIKI-01",
+  "featureComplete": false,
+  "mode": "inspect-only; artifact-only write",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-DRV-01", "RS-DOC-01"],
+  "dependencyEvidence": "plans/rox-suite/issues.json:656-683 and docs/rox-suite/published/RS-WIKI-01.md:59,75-82. Dispatch depends_on=[] schedules preflight only; it does not remove feature dependencies.",
+  "inspectionStatus": {
+    "implementation": "NOT_STARTED_BY_THIS_WORKER",
+    "runtime": "NOT_RUN",
+    "sourceProvenance": "Read current working-tree bytes, not a clean snapshot of input_revision. Root-owned uncommitted wave0 work may be present. No Git commands were run; input_revision is the dispatch baseline, not a verified current HEAD.",
+    "freshness": "Whole-file SHA-256 values were collected after inspection. They are evidence fingerprints, not an atomic repository snapshot. Re-read every affected seam after wave0 commit and accepted dependency receipts; any changed fingerprint makes its recorded lines stale.",
+    "specManifest": "Both inspected normative files match the dispatch input_manifest SHA-256 exactly.",
+    "researchLimit": "Package specification, cited implementation paths and their direct contract/import seams only. No builds, tests, native UI or network operations. Codegraph had no index; built-in find failed with provider 402, so literal searches and reads supplied evidence. No indexing or infrastructure repair attempted.",
+    "artifactVerification": "Readback and SHA-256 only; packet verification_argv is reserved for lead acceptance, not executed because this worker is restricted to read/write-artifact and concrete-file hashing."
+  },
+  "foundationGates": [
+    {
+      "gate": "Committed wave0 and accepted dependency receipts before implementation",
+      "explicitDagEdge": false,
+      "source": "Worker execution contract; normative dependencies at RS-WIKI-01.md:59,75-78",
+      "currentEvidence": "Canonical descriptor contracts and Notes imports already exist in working-tree bytes; their presence is not accepted RS-DOC-01 or RS-DRV-01 completion.",
+      "requiredReceipt": "Lead wave0 revision plus accepted RS-DRV-01 and RS-DOC-01 receipts bound to actual source hashes, canonical open/create/editor contracts and reload proof."
+    },
+    {
+      "gate": "Common container identity, schema and versioned alias migration registered before UI",
+      "explicitDagEdge": false,
+      "source": "RS-WIKI-01.md:19,35,40-41",
+      "currentEvidence": "ROX2_ENTITY_KINDS has page/note/project but no Wiki space/node at platform-contract.ts:17-38. decodeContentEntityRef deliberately only accepts page/note at content-descriptor.ts:58-85. Neither should be misused to hold a Wiki body.",
+      "requiredReceipt": "Foundation owner registers metadata-only Space and Node in common container registry and graph, publishes versioned IDs/schema and unambiguous alias migration. Unknown legacy references remain unresolved; canonical Doc IDs are not changed. Exact common-container implementation path must be supplied by lead; it was not established in this bounded inspection."
+    },
+    {
+      "gate": "Transactional SQL tree, CAS, history, membership, index and outbox",
+      "explicitDagEdge": false,
+      "source": "RS-WIKI-01.md:35,50-53,70",
+      "currentEvidence": "DescriptorStore is descriptor metadata, not tree storage. createNativeContentCommandAdapter explicitly has no journal, filesystem writer or outbox acknowledgement. packages/shared/src/workspace-domain was absent in the inspected tree; server-core/src/domain lists session/helper code rather than a Wiki aggregate.",
+      "requiredReceipt": "Lead's common workspace-domain owner supplies SQL schema/migration/transaction API, tree revision fencing, durable idempotency receipt and outbox recovery. Do not create a second file-backed Wiki document store or repurpose FileDescriptorStore."
+    },
+    {
+      "gate": "Authenticated actor and central PermissionGrant inheritance resolver",
+      "explicitDagEdge": false,
+      "source": "RS-WIKI-01.md:29,35,52,70",
+      "currentEvidence": "RequestContext at transport/types.ts:7-11 carries clientId/workspaceId/webContentsId but no actor principal. ContentPolicy is injected; resolver checks current policy before source reads and again before response. PageConfig.grants are content-digest-bound source-action grants, not space membership ACL. Scoped PermissionGrant search found no implementing symbol in inspected core/server/protocol paths.",
+      "requiredReceipt": "Transport owner derives actor from authenticated connection, never request payload or hardcoded owner. Policy owner supplies direct/inherited/exception decisions, target constraints, epoch fencing and revoke propagation for every projection and history read."
+    },
+    {
+      "gate": "Common domain gateway is not the existing phase-0 pending-command gateway",
+      "explicitDagEdge": false,
+      "source": "RS-WIKI-01.md:35,70",
+      "currentEvidence": "registerCommandGatewayHandlers handles LIST/APPROVE/DENY only; its header states creation is internal-only. RPC_CHANNELS.commandGateway contains command:list/approve/deny, not Wiki commands.",
+      "requiredReceipt": "Lead provides common authenticated command/query compiler and validated operation schemas for wiki.createSpace/linkNode/moveNode/archiveNode/readTree/history/search, access review and tree restore, with current ACL, expected tree revision, idempotency and observable receipt. Avoid bolting raw Wiki writes onto pending approvals."
+    },
+    {
+      "gate": "Authorized event/search/mention/activity/notification/agent projections",
+      "explicitDagEdge": false,
+      "source": "RS-WIKI-01.md:31,35,55,70",
+      "currentEvidence": "ResourceProviderRegistry merges resource titles/routes and catches provider failures as empty contributions; ResourceSearchContext has keys/limit/signal, not an actor ACL resolver. Client prefix filtering is not authorization or a valid denied-versus-empty result.",
+      "requiredReceipt": "Projection owners consume tree/link/policy outbox events and publish policy-filtered search, mentions, activity and bounded agent tree tools. Notification audiences are subscriptions/share/mentions only; cached private title/path/facet/preview data is invalidated on current policy changes."
+    },
+    {
+      "gate": "Shared Docs host, rail and typed route/persistence integration",
+      "explicitDagEdge": false,
+      "source": "RS-WIKI-01.md:3,19,39,50,54",
+      "currentEvidence": "PagesHome opens pages by slug and creates interactive HTML artifacts; NotesPage uses Tiptap for Markdown. These are not proof of a shared Page CRDT Doc host. SurfaceTab lacks Wiki and router union lacks Wiki. NavigationContext already owns focused panels and history.",
+      "requiredReceipt": "RS-DOC-01 supplies the single canonical Doc editor/writer/history host; RS-DRV-01 supplies Docs rail/pin/container seams. Lead chooses common container route contribution within existing shell, with parser/build inverse, route migration and workspace-scoped view-state persistence, not a parallel shell/editor."
+    },
+    {
+      "gate": "Full acceptance surfaces and negative-control sensitivity",
+      "explicitDagEdge": false,
+      "source": "RS-WIKI-01.md:68-72",
+      "currentEvidence": "No runtime was exercised in this preflight; proposed geometry and historical screenshot links are not backend/UI proof.",
+      "requiredReceipt": "Exact delivered revision/inputSha, domain receipts/ref/revision/hash, reload/concurrency/negative assertions, screenshots/ARIA/computed fonts/viewport/locale. Linux fixture, live service, Electron native and provider read-back remain distinct gates; seeded duplicate-body/cycle assertions must actually fail, not time out."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/wiki/WikiSpaceView.tsx",
+    "apps/electron/src/renderer/components/wiki/WikiTree.tsx",
+    "apps/electron/src/renderer/components/wiki/WikiMoveReview.tsx"
+  ],
+  "ownedNewFilesEvidence": "Only the three concrete component names normatively proposed at RS-WIKI-01.md:39 are enumerated. components/wiki was absent during inspection. The specification also names workspace-domain/wiki metadata contracts and test categories, but does not fix their file layout; do not invent ownership of common domain migrations, backend files or test filenames. This preflight writes none of these files.",
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / ROX2_RELATION_RULES / wouldCreateRelationCycle / Rox2Event",
+      "change": "Common registry owner registers metadata-only Wiki space/node identity and parent/member-of relations with versioned schema. Reuse relation-cycle traversal inside the transactional tree command validation, but additionally fence expected treeRevision and validate space, depth, target-parent visibility and archived state. Emit causationId/correlationId/aggregateRevision on tree/link/policy changes. Final kind spellings come from accepted container registry, not a private Wiki ID format.",
+      "reason": "Current kinds omit Wiki; the pure cycle helper does not perform SQL CAS, policy checks or persistence. The specification requires common identity/graph and auditable events."
+    },
+    {
+      "path": "packages/core/src/docs/content-descriptor.ts",
+      "symbol": "ContentEntityRef / DocumentDescriptor / canonicalPageRef / sameContentIdentity",
+      "change": "Doc owner exposes/reuses these existing canonical ref functions for Node.targetRef and shared open/create receipts. Preserve workspaceId, accountNamespace, native ID, origin and authority epoch. Do not widen ContentKind to Wiki, add body fields to nodes or store copied descriptor content. Wiki metadata contracts live in the accepted common workspace-domain namespace.",
+      "reason": "Existing v2 descriptor gives one source-backed Page/Note identity; a Wiki is context/membership, not a new content authority."
+    },
+    {
+      "path": "packages/server-core/src/docs/descriptor-resolver.ts",
+      "symbol": "ContentPolicy / ContentOwner / createDescriptorResolver.resolveContent",
+      "change": "Integrate Wiki node opens and reviewed existing-document picker through the current resolver and injected common policy. Keep alias and target/source authorization independent; tree membership cannot set offlineReadable or canWrite. Policy owner must filter titles/breadcrumbs/history/facets before exposing them and recheck current epoch at commit/response. Do not move Wiki tree/body storage into DescriptorStore.",
+      "reason": "load already authorizes before source lookup and after asynchronous reads; bypassing it for previews or deriving target access from membership would leak restricted Docs."
+    },
+    {
+      "path": "packages/server-core/src/docs/native-content-command-adapter.ts",
+      "symbol": "createNativeContentCommandAdapter / CanonicalNativeSave",
+      "change": "RS-DOC-01 supplies its authenticated common Doc create/write API and receipts. A new-document/link flow calls that API, then links the returned canonical ref idempotently; retry must neither duplicate Doc nor create orphan node. Existing adapter is retained for its source-owner role and is not generalized into a Wiki body writer.",
+      "reason": "Inspected adapter saves kind=notes and delegates atomic revision/permission fences to the owner; it is not a proven collaborative Page create API."
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "symbol": "RequestContext",
+      "change": "Transport owner supplies a trusted server-side actor-principal binding to common domain handlers, including workspace/account scope and policy epoch where required. The binding must originate in authentication and be unavailable for override by command payload; update connected callers in the lead-owned integration.",
+      "reason": "Current RequestContext has only clientId/workspaceId/webContentsId, while normative acceptance requires authenticated actor and central inherited ACL."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/command-gateway.ts",
+      "symbol": "registerCommandGatewayHandlers / authorizeWorkspace / HANDLED_CHANNELS",
+      "change": "Lead keeps this pending-approval surface separate and integrates Wiki via the accepted common domain gateway owner. Reuse authenticated workspace boundary pattern, but do not reuse hardcoded decide(..., 'owner') as a Wiki actor or return {ok:true} in place of revisioned durable receipts. Exact common gateway patch path is a foundation handoff prerequisite, not inferred to be this file.",
+      "reason": "Phase-0 approve/deny storage is not the SQL Wiki command/query compiler required by the specification."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS",
+      "change": "Protocol owner publishes accepted common gateway schemas/channels for the normative Wiki commands/queries and policy/tree change subscriptions. Include typed conflict/denied/deleted/missingDependency/unknownFormat/offline failure results and durable operation receipts; keep transport/channel access restrictions and client types synchronized. Do not invent a separate unauthenticated wiki RPC backend.",
+      "reason": "Inspected commandGateway namespace exposes only list/approve/deny; Wiki operations and realtime invalidation need a real common contract."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view / buildNotesRoute / routes.view.pages",
+      "change": "Router owner adds encoded stable space/node routes using accepted container refs, e.g. a typed wiki(spaceId,nodeId?) builder once ID schema is accepted. Node open resolves targetRef into the shared canonical Doc route rather than alias/title or copied document. Ensure account/workspace scoping survives route/panel state.",
+      "reason": "Current Notes path uses encoded note ID; Pages uses slug. Neither is a typed Wiki container/node route."
+    },
+    {
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "symbol": "NavigatorType / ParsedCompoundRoute / COMPOUND_ROUTE_PREFIXES / parseCompoundRoute / buildCompoundRoute",
+      "change": "In the same router-owner patch add Wiki grammar, typed space/node details, deep-link prefix and parser/build inverse. Migrate known versioned aliases without name-based merges; unknown links show unresolved and do not select a same-title Doc. Preserve current pages/notes routes and history reconciliation.",
+      "reason": "Current parser supports pages and notes but not Wiki; proposed route needs registry/parser/migration before UI. Existing duplicate pages branch is not authority to broaden cleanup scope."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "NavigationState / PagesNavigationState / NotesNavigationState / isPagesNavigation / isNotesNavigation",
+      "change": "Add lead-approved Wiki container navigation shape/type guard with durable space/node refs and selected-node identity. Coordinate all exhaustive NavigationState consumers with router owner; do not encode node ID as pageSlug or noteId.",
+      "reason": "Existing unions distinguish slug-based Pages and ID-based Notes, and have no Wiki state."
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "symbol": "navigate / pushPanel / parseRouteToNavigationState / navigation history restoration",
+      "change": "Route the Wiki host through existing focused-panel/history machinery. Persist only permitted workspace/principal-scoped selected node and expansion IDs; reconcile after reload, move, revoke and archive, restoring visible focus without resurrecting hidden paths. Shared Docs opens retain canonical panel dedup identity.",
+      "reason": "Existing navigate already handles readiness, explicit new panels and focused-panel state; a second Wiki navigation store would break common entity behavior."
+    },
+    {
+      "path": "packages/core/src/platform/surfaces/types.ts",
+      "symbol": "SurfaceTab / SurfaceDescriptor / SurfaceContribution / SurfaceLayoutSnapshot",
+      "change": "Common shell owner defines how container-context Wiki routes resolve through the existing surface registry/Docs host and serializable layout. If a Wiki tab variant is necessary for container context, add it with shared descriptor/route/snapshot migrations under that owner; it must wrap the existing Doc body host, never a separate body surface. WikiSpaceView is the context chrome.",
+      "reason": "SurfaceTab currently has eight variants and no Wiki; registering a second contribution for an existing kind throws. Final host contract depends on accepted Drive/Docs shell integration."
+    },
+    {
+      "path": "packages/core/src/platform/resources/registry.ts",
+      "symbol": "ResourceProviderRegistryImpl.register / ResourceProviderRegistryImpl.search",
+      "change": "Search owner registers a Wiki metadata provider backed by authorized common gateway queries, using target canonical routes and permission-filtered counts/asOf metadata. Do authorization in server projection, not provider prefix filtering; scoped Wiki UI must distinguish denied/offline/provider errors from zero matches despite global registry's empty-on-provider-error fallback.",
+      "reason": "Current fan-out returns provider titles/routes and masks provider failure as empty; neither policy nor valid denied-versus-empty semantics is supplied here."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "TiptapMarkdownEditor.onWikiLinkClick / findNoteByTarget",
+      "change": "Docs owner connects reviewed Wiki node opens to the shared canonical Doc resolver/host. Keep legacy textual [[links]] migration explicit and distinguish unresolved/ambiguous links; a title match must not mint membership, grant permissions or create a second body. RS-WIKI-01 supplies context/tree chrome only.",
+      "reason": "Current callback looks up a local Note by title/alias and handles missing link UI; that is not backend Wiki spaces or canonical permitted container routing."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/wiki-autocomplete.ts",
+      "symbol": "findNoteByWikiTarget / noteMatchesWikiTarget",
+      "change": "Migration/router owner prevents this first name/alias match from resolving stable WikiSpace/Node references. Known stable/versioned IDs resolve through registered aliases; ambiguous or unknown legacy names remain unresolved with reviewed selection rather than silent merge.",
+      "reason": "findNoteByWikiTarget currently returns the first matching note, including case-normalized title and aliases; normative migration explicitly forbids name merges."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "openPage / handleCreatePage / visiblePages",
+      "change": "RS-DRV-01/RS-DOC-01 owners expose shared Docs rail, canonical opening, reviewed existing-Doc picker and new-Doc creation receipts to WikiSpaceView. Do not reuse current kind:'interactive' createPage as collaborative Doc creation or infer Wiki inheritance from projectId.",
+      "reason": "Current PagesHome is HTML artifact library/project filter. Normative Wiki rail and shared writer are explicitly owned by other packages."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/{de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant}.json",
+      "symbol": "Wiki space/tree/move/access/history/search/pin labels and contextual help keys",
+      "change": "Locale owner adds ASCII-sorted parity keys in all ten existing locale files; components use t(). Cover direct/inherited/exception policy help, alias-versus-title, new object-versus-reference, tree-versus-page revision, impact review, denied/conflict/offline/unresolved feedback and freshness/source/example definitions. This is an exact existing-locale set from loaded repo rules, not an inspected implementation claim.",
+      "reason": "RS-WIKI-01.md:23-31,68 mandates RU help/labels and accessibility; loaded repo rules require all ten locales."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "One underlying DocRef/body in Wiki/Drive/Project/pins after reload.",
+      "currentEvidence": "content-descriptor.ts:23-33,95-121 defines source-backed descriptor and canonical page/note alias; descriptor-resolver.ts:395-425 returns canonicalRef, ownerRef, origin, contentHash/revision. PagesHome:79-95 still opens slug/createPage(kind=interactive).",
+      "seam": "Node.targetRef -> createDescriptorResolver.resolveContent -> RS-DOC-01 shared host/writer; RS-DRV-01 rail/pins; canonicalPageRef/sameContentIdentity",
+      "requiredChange": "Persist only WikiSpace/Node membership and targetRef, never body. New Doc flow reuses accepted writer, existing Doc flow links same ref, and Drive/Project/pin opens use the same canonical source. Distinguish node displayAlias from Doc title and persist no copied content.",
+      "verification": "Planned: create Space/new Doc, link existing Doc, edit via one context, open via all four surfaces; compare workspace/account/canonical/native/source IDs and body hash/revision, then restart/reload and compare again. Seed a duplicate Wiki body and require identity/body assertion failure. Inspect durable storage to ensure no WikiBody field/store.",
+      "missingPrerequisite": "Committed wave0; accepted RS-DRV-01 and RS-DOC-01 receipts, canonical create/open APIs, shared Page CRDT host and common SQL metadata registry.",
+      "state": "NOT_VERIFIED; canonical seam exists, Wiki membership and integrated runtime proof absent"
+    },
+    {
+      "criterion": "Cycles/selfmove/race denied; CAS conflict focus, no orphan subtree.",
+      "currentEvidence": "platform-contract.ts:404-429 supplies pure relation cycle helper; native-content-command-adapter.ts:33-59 delegates atomic fences to source owner, not tree commands. No Wiki move implementation appeared in scoped searches.",
+      "seam": "wouldCreateRelationCycle; proposed WikiMoveReview -> common wiki.moveNode transactional tree aggregate",
+      "requiredChange": "Validate same space/current treeRev, self/descendant cycles, maximum bounded depth and permitted parent atomically; update subtree/order and outbox/history/receipt in one SQL transaction. Review affected subtree/audience; keyboard and drag invoke same command. Stale review and CAS conflicts preserve old tree/selection and focus a visible conflict action.",
+      "verification": "Planned: reject self-parent, ancestor-under-descendant, excessive depth and hidden/foreign parent. Send two moves against one treeRev; exactly one commits, rejected one changes no parent/order/history. Replay operation ID safely, restart after interrupted commit, inspect no orphan subtree and verify keyboard focus/conflict feedback.",
+      "missingPrerequisite": "Accepted common SQL/CAS/idempotency/outbox transaction contract, configured depth bound, move impact review and authenticated gateway.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Private-to-shared branch cannot leak titles/breadcrumbs/facets; policy review required.",
+      "currentEvidence": "descriptor-resolver.ts:352-391 authorizes alias/source before read and rechecks policy; ContentPolicy is injected, not an inheritance implementation. PageConfig.grants at page.ts:314-315 are digest-bound source actions. Resource provider results include title/subtitle/data.",
+      "seam": "Common PermissionGrant inheritance resolver + ContentPolicy; WikiMoveReview; authorized tree/search/history/event projections",
+      "requiredChange": "Compute audience impact against current direct/inherited/exception policy and epoch; require reviewed move, deny stale review. Space membership never auto-grants private target. Exclude hidden ancestors/path/title/count/facet/preview from tree, picker, breadcrumbs, search, events and agent; only policy-approved neutral restricted leaves may remain. Invalidate cached private projections on revoke.",
+      "verification": "Planned: distinct owner/member/outsider actors move private branch into shared space, including revoke between review and commit. Assert no unauthorized strings/IDs/counts in API, DOM/ARIA, events, history/search/facets/pins/agent. Verify denied differs from empty; an inherited grant cannot override target denial; warm cache then revoke and reload.",
+      "missingPrerequisite": "Central inheritance resolver, trusted actor binding, revision-bound impact review and policy invalidation event consumers.",
+      "state": "NOT_VERIFIED; existing content policy seam must be preserved"
+    },
+    {
+      "criterion": "Archive node doesn't delete Doc; restore tree doesn't restore body/ACL.",
+      "currentEvidence": "DocumentDescriptor.contentRevision is independent of metadata descriptorRevision in descriptor-resolver.ts:58-81. Node archive/tree history APIs are required at specification:30,35,53, not supplied by the inspected descriptor store.",
+      "seam": "Common wiki.archiveNode/history/tree-restore transaction; canonical Doc body history and policy epoch remain owned elsewhere",
+      "requiredChange": "Archive changes membership metadata only. Maintain separate immutable tree and Doc audit views. Tree restore writes a new tree revision under current ACL/CAS, validating refs/parents/cycles and preserving current Doc content plus direct/inherited policy; never replay archived body/grants. Compare views are read-only and permission-filtered.",
+      "verification": "Planned: archive node while Doc remains openable in Drive; mutate Doc body and revoke access after an older tree revision; restore that tree revision and assert body hash/contentRev and ACL epoch unchanged, new treeRev created, forbidden targets stay hidden. Exercise reload and denied history read.",
+      "missingPrerequisite": "Common tree revision snapshots/audit/restore schema, accepted Doc history API and central current policy resolver.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Keyboard tree aria-level/posinset/expanded states; selected page/expansion restored.",
+      "currentEvidence": "NavigationContext.tsx:837-885 already handles ready/focused/newPanel routes and history. route-parser.ts:59-105 and shared/types.ts:2434-2469,2601-2609 have Notes/Pages but no Wiki; components/wiki was absent.",
+      "seam": "Proposed WikiTree/WikiSpaceView; routes.view and NavigationState parser/build; existing panel snapshot/history persistence",
+      "requiredChange": "Implement roving tree focus, permitted aria-level/posinset/setsize/expanded/selected, separate disclosure/open; arrows/Home/End/Enter and Escape focus return. Keyboard Move uses reviewed gateway operation. Persist selected/expanded IDs per workspace/principal/space, prune on revoke/archive; restore the same shared Doc and visible ancestor focus after reload. No hidden ancestors in ARIA.",
+      "verification": "Planned: actual keyboard interaction and ARIA tree inspection, restart/reload selection/expansion; test move/conflict/archive/revoke with focus recovery. Verify narrow overlay/drilldown Back and Escape. Compare persisted durable refs with canonical target rather than title/slug.",
+      "missingPrerequisite": "Accepted typed container route/parser/migration, shared shell view-state persistence and authorized readTree API.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Agent context bounded/permitted; seed duplicate Wiki body/cycle bypass caught.",
+      "currentEvidence": "ResourceSearchContext:36-41 offers limit/signal but no server policy binding. platform-contract.ts:601-610 denies missing actor/grant; it is not the central inherited resolver. Existing textual Wiki autocomplete is local name matching.",
+      "seam": "Common agent tools -> authenticated wiki.readTree/search/moveNode; common policy projection; canonical descriptor and relation-cycle assertions",
+      "requiredChange": "Expose bounded depth/page-size/context-budget permitted tree through common agent tools, use canonical target refs and current policy/asOf, and reject stale move commands. Agent cannot bypass interactive cycle/review/CAS checks. Add meaningful duplicate-body and cycle-bypass negative controls, not source-text/wiring tests.",
+      "verification": "Planned: agent actor can read only bounded authorized tree and execute reviewed/current-revision move; outsider/private subtree excluded, oversized request bounded, stale move denied. Seed deliberate duplicate content owner and cycle-validation bypass independently; semantic assertions must catch both, not timeout/infra error.",
+      "missingPrerequisite": "Common authorized agent tool compiler, policy-filtered tree queries, defined limits and seed/mutation acceptance harness.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "All controls: Space, node, create/link, move, access, tree/page history, pin/search have real commands, queries and receipts.",
+      "currentEvidence": "Specification:23-35 defines complete controls; gateway handler:69-113 only supports pending list/approve/deny. Notes wiki callback only opens a matched Note or missing-link UI.",
+      "seam": "WikiSpaceView/WikiTree/WikiMoveReview -> accepted common gateway; shared Doc create/picker, policy, pin and history owners",
+      "requiredChange": "Implement select/restore permitted roots with denied-versus-empty; reviewed idempotent new Doc/link; CAS move; access impact review with direct/inherited/exception help; separate read-only audits/new-revision tree restore; personal ref-only pin with rollback on failure; authorized scoped search with permitted counts/asOf. Each response exposes ref/revision/receipt/freshness, not optimistic success masquerading as commit.",
+      "verification": "Planned: execute specification create Space -> new Doc -> link existing -> review/move -> Drive reader -> revoke -> read-only tree history flow, including duplicate retry, pin failure rollback, denied roots, unavailable target and search errors. Read back real domain receipts after reload.",
+      "missingPrerequisite": "Accepted command/query schemas, shared Doc/pin/search APIs, ACL review and durable receipts.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Metadata-only common container model, persistence, versioned migration and ordered tree, not a second editor/store or unproven CRDT tree.",
+      "currentEvidence": "Specification:3,35,39-42 requires Space aggregate/Node{id,space,parent,order,targetRef,displayAlias?}; DocumentDescriptor:23-33 already stores only content reference; findNoteByWikiTarget:48-49 currently picks first name match.",
+      "seam": "Common workspace-domain/wiki schema and container registry; existing canonicalPageRef; versioned alias/router migration",
+      "requiredChange": "Add SQL metadata/membership/index/history/outbox within common owner, retaining unknown future schemas read-only/unresolved; aliases migrate by versioned stable IDs, never title merges. Register schema before components. Bound ordered tree depth and visibility without claiming tree CRDT.",
+      "verification": "Planned: migration fixtures for stable legacy IDs, ambiguous duplicate names, unknown future versions and unknown links; restart durable Space/Node metadata and confirm shared source body unchanged. Inspect metadata schema for no body and assert account/workspace collisions fail closed.",
+      "missingPrerequisite": "Lead common container/schema/migration ownership receipt and SQL transaction API.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Realtime/events feed authorized search, mentions, attention/activity, notifications and agent tools with policy-safe subscriptions.",
+      "currentEvidence": "Specification:35,70 requires tree/link/policy events and notify only subscriptions/share/mentions. isAuditableRox2Event at platform-contract.ts:617-620 checks causation/correlation/revision. Resource registry supplies fan-out, not outbox authorization.",
+      "seam": "Common SQL outbox -> projection/subscription owners; Rox2Event; ResourceProviderRegistry; common attention/agent tools",
+      "requiredChange": "Produce committed revisioned tree/link/policy events atomically, refresh tree/view state and authorized indexes, preserve event replay/idempotency and current ACL on subscribers. Avoid broad space-membership notification fanout; clear revoked cached previews and hidden facets.",
+      "verification": "Planned: two authorized clients observe committed move/link/policy after receipt; offline/reconnect and outbox restart recover without duplicate activity/notifications. Outsider/removed subscriber receives no restricted metadata. Search/mentions reflect current permitted refs and timestamps.",
+      "missingPrerequisite": "Outbox/projection/subscription/revoke contracts and common attention/notification/agent adapters.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Geometry and responsive navigation follow proposed Docs rail/tree/breadcrumb/header/body patterns without hidden paths.",
+      "currentEvidence": "Specification:19 proposes rail220/tree240/breadcrumb40/header48/body70-88ch, bounded indent16, row28 with hitbox32/44, overlay below960 and drilldown below720. NotesPage:2623 currently has max-w-[70ch], not complete Wiki layout evidence.",
+      "seam": "WikiSpaceView context chrome and WikiTree; RS-DRV-01 rail and RS-DOC-01 body host",
+      "requiredChange": "Implement bounded tree indentation, separated disclosure/open controls and shared Docs body/optional TOC; responsive overlay/drilldown with safe Back/Escape focus. Geometry is proposed acceptance layout, not copied screenshot assets.",
+      "verification": "Planned: screenshot and computed viewport/box measurements at desktop, below960 and below720; actual tree interaction and focus restoration; ensure title/breadcrumb path is permitted and body is shared host.",
+      "missingPrerequisite": "Accepted Drive rail/Docs editor geometry contract and authorized tree/UI fixture.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "RU i18n, existing semantic fonts/theme/accent, light fixture/dark regression, accessible hitboxes/focus/reduced motion/contrast/help.",
+      "currentEvidence": "PagesHome and NotesPage use useTranslation; specification:68 mandates full quality gates. Loaded repository rules require t() and ten locale files. No Wiki UI/font/render runtime was inspected.",
+      "seam": "Three proposed Wiki components; existing shared UI primitives/theme and ten locale resources",
+      "requiredChange": "Use current semantic font/theme/accent and t() parity; hitbox at least32 desktop/44 touch, visible focus/contrast, reduced-motion-safe transitions. Explain owner/scope/direct/inherited policy, alias versus title, revisions and definition/source/freshness/example on hover/focus/click. Hover must never mutate/send/share/mark-read.",
+      "verification": "Planned: Russian light and dark/native renders, computed actual font and hitboxes/contrast, keyboard/focus/Escape, reduced-motion mode; hover/focus/click help checks and negative mutation counters; locale parity verification across all ten locales by lead after integration.",
+      "missingPrerequisite": "Shared host/theme integration, translated help key patch and actual UI verification surfaces.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Failures and saved/queued/committed/provider-confirmed states are honest; actor is authenticated and revoke clears cached private previews.",
+      "currentEvidence": "ContentFailure includes validation/conflict/denied/deleted/missingDependency/unknownFormat/offlineUnsupported; resolver rechecks policy and blocks offline unless source binding authorizes it. RequestContext lacks a principal field. Platform results separate executionMode/lifecycle/verification.",
+      "seam": "Common gateway result/receipt contracts; AuthenticatedContentContext; ContentFailure; policy epoch invalidation; Wiki UI failure state",
+      "requiredChange": "No payload actor override, hardcoded owner or inferred grant. Distinguish local saved/queued/durable committed/provider-confirmed; retain old tree on conflict and explicit denied/error/unresolved UI. Clear cached restricted previews after policy change without promising physical erasure of disconnected device storage.",
+      "verification": "Planned: forged actor/workspace/account rejected, unauthenticated request denied, offline queue not labelled committed, provider failure/retry honest, stale source/policy epoch denied. Warm preview then revoke/reconnect/reload and assert no cached private UI exposure.",
+      "missingPrerequisite": "Authenticated principal mapping, receipt/status compiler, policy fences and accepted cache invalidation/recovery contracts.",
+      "state": "NOT_IMPLEMENTED_OR_VERIFIED"
+    },
+    {
+      "criterion": "Acceptance evidence is revision-bound and distinct per Linux fixture/live service/Electron native/provider read-back; seeded assertion failures actually detected; no copied private/reference assets.",
+      "currentEvidence": "Specification:7 describes historical source snapshot; lines68-72 state NOT_RUN and separate acceptance gates. This report records current file hashes rather than treating historical links as live evidence.",
+      "seam": "Lead integration acceptance runner/receipts and real shared service/UI/provider surfaces",
+      "requiredChange": "After material changes bind every result to delivered commit/inputSha, operation ref/revision/hash and surface/actor/locale/viewport. Retain explicit failure history for seeded duplicate-body/cycle controls. Do not copy literal Macro/Lark code/assets or private screenshot names/IDs/images.",
+      "verification": "Planned only: lead runs integrated functional, negative, concurrent, reload/recovery flows on each required surface; archive screenshots/ARIA/computed font and provider read-back separately. Verify assertion-failure sensitivity, not process failure or timeout. Check artifact provenance against tested source hashes.",
+      "missingPrerequisite": "Lead committed integration, real environment/provider access and accepted dependency/foundation receipts. Packet verifier acceptance is still required separately for this preflight artifact.",
+      "state": "NOT_RUN; no feature completion claim"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-WIKI-01.md","symbol":"Domain/API, full DoD, quality gates and normative dependencies","lineStart":1,"lineEnd":82,"sha256":"583895fb30b8be752342323812d85bcbec452839038edd23583740d4643cdb37"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues[RS-WIKI-01]","lineStart":656,"lineEnd":683,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"packages/core/src/docs/content-descriptor.ts","symbol":"DocumentDescriptor / canonicalPageRef / sameContentIdentity","lineStart":23,"lineEnd":121,"sha256":"0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS / Rox2EntityRef","lineStart":17,"lineEnd":238,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5","readRanges":[[17,38],[218,238]]},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"wouldCreateRelationCycle / authorizeRox2Action / isAuditableRox2Event","lineStart":404,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5","readRanges":[[404,429],[601,620]]},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageConfig","lineStart":294,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"apps/electron/src/renderer/components/pages/PagesHome.tsx","symbol":"visiblePages / openPage / handleCreatePage","lineStart":66,"lineEnd":101,"sha256":"3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"TiptapMarkdownEditor.onWikiLinkClick","lineStart":2609,"lineEnd":2624,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"apps/electron/src/renderer/pages/notes/wiki-autocomplete.ts","symbol":"noteMatchesWikiTarget / findNoteByWikiTarget","lineStart":39,"lineEnd":50,"sha256":"58f179e9b08cb2e5e4d92a6ccdd976acd06d896c4c1c1b8e5a5863f14c5571cd"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"buildNotesRoute / routes.view.notes / routes.view.pages","lineStart":33,"lineEnd":223,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29","readRanges":[[33,35],[183,184],[219,223]]},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"NavigatorType / COMPOUND_ROUTE_PREFIXES / pages and notes grammar","lineStart":59,"lineEnd":375,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a","readRanges":[[59,105],[334,375],[642,645]]},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"NotesNavigationState / PagesNavigationState / NavigationState","lineStart":2434,"lineEnd":2609,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a","readRanges":[[2434,2437],[2466,2469],[2601,2609]]},
+    {"path":"apps/electron/src/renderer/contexts/NavigationContext.tsx","symbol":"navigate","lineStart":837,"lineEnd":885,"sha256":"40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"ContentOwner / ContentPolicy / DescriptorStore / createDescriptorResolver.resolveContent","lineStart":15,"lineEnd":425,"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790","readRanges":[[15,114],[344,425]]},
+    {"path":"packages/server-core/src/docs/native-content-command-adapter.ts","symbol":"createNativeContentCommandAdapter","lineStart":21,"lineEnd":61,"sha256":"2bd13f16fe63988e191bf366d68649c8048cc1e9c10777f1c3376a2b41dd89ba"},
+    {"path":"packages/server-core/src/handlers/rpc/command-gateway.ts","symbol":"authorizeWorkspace / registerCommandGatewayHandlers","lineStart":1,"lineEnd":114,"sha256":"2dbf30f23d0df9f217a6bfbc338a5467b93fb59b210703631fd298c347bfb171"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext","lineStart":7,"lineEnd":11,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.commandGateway","lineStart":680,"lineEnd":684,"sha256":"89177712f430183f89657f08f985ea50861c8d774652dbb56471d5eb7cca0aaa"},
+    {"path":"packages/core/src/platform/resources/registry.ts","symbol":"ResourceProviderRegistryImpl.search","lineStart":50,"lineEnd":81,"sha256":"dbbe1bddb349ebb2922e7605d5b300e9973519144b26077596d03f339a054d94"},
+    {"path":"packages/core/src/platform/resources/types.ts","symbol":"ResourceItem / ResourceSearchContext / ResourceProvider","lineStart":23,"lineEnd":50,"sha256":"2e95bc0416269082a13f386045222755fe265cc7b61bca218d9c18ef0841862d"},
+    {"path":"packages/core/src/platform/surfaces/types.ts","symbol":"SurfaceTab / SurfaceContribution / SurfaceLayoutSnapshot","lineStart":34,"lineEnd":110,"sha256":"ee9c126eb028546312cd5f82188f0efb394635fa3c5fc54dfbd8df207bcdd321"},
+    {"path":"packages/core/src/platform/surfaces/registry.ts","symbol":"SurfaceRegistryImpl.register / resolve","lineStart":16,"lineEnd":47,"sha256":"296236063f9295060ca37705edb7044b31625557c14bc5b3e60a080b53d915cb"}
+  ],
+  "nextExecutableAction": {
+    "owner": "Lead integration owner",
+    "action": "Accept this preflight report with the packet verifier. Before feature implementation, commit wave0, accept RS-DRV-01 and RS-DOC-01 receipts, assign/accept hidden foundation interfaces, and re-read changed source hashes. Then register metadata-only Wiki space/node schema and transactional gateway contracts before implementing the three proposed context/tree/review components over the shared Docs host.",
+    "verificationArgvForLead": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/RS-WIKI-01.json", "${ROX_COMPOUND_PACKET_ROOT}/RS-WIKI-01/packet.json"],
+    "workerMustNotDo": "No product implementation, tests, builds, UI/network operations, progress edits or Git mutation from this preflight."
+  },
+  "risks": [
+    "DAG only lists Drive and Docs, while normative specification additionally requires central containers/SQL/CAS/ACL/gateway/outbox/projections; UI-first work would conceal missing backend contracts.",
+    "Existing PageConfig.grants and pending Command Gateway names resemble required foundations but implement different semantics; they cannot prove inherited space ACL or authenticated Wiki commands.",
+    "Textual Note title/alias first-match lookup can silently choose the wrong Doc; stable Wiki alias migration must keep unknown/ambiguous links unresolved.",
+    "Copying content into Wiki metadata, storing a second editor state or rebuilding pins as copies violates the first DoD even if the visible UI looks correct.",
+    "Granting target access from shared space membership or move review leaks private leaf/ancestor titles, counts, breadcrumbs, facets, history or agent context; each projection requires current direct target constraints.",
+    "Unfenced CAS/review epoch or restore snapshot could orphan subtrees, replay old ACL or roll back Doc body. Restore must create a new tree revision under current policy only.",
+    "Global search registry catches provider failure as empty; Wiki denied/offline/error states must remain distinguishable from empty permitted results.",
+    "Surface registry uniqueness and route/panel persistence require a common shell-owner patch; a parallel Wiki shell or duplicate contribution conflicts with existing mechanisms.",
+    "Concurrent root integration may invalidate line ranges/hashes; this working-tree preflight is not a clean input_revision feature receipt.",
+    "No runtime gate has run here. Dependency status, central foundation availability outside inspected seams, tested provider behavior and packet acceptance remain unverified, not N/A."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

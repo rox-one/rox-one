@@ -18,6 +18,9 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
   let flushing: Promise<NativeDataReceipt[]> | null = null
   let generation = 0
   let lifecycleRequest = 0
+  // A draft may follow only receipts from operations queued by this controller.
+  // Fresh reads from another writer must never silently rebase the opened draft.
+  const draftProgress = new Map<string, { openedRevision: number; acknowledgedRevision: number; operations: Set<string> }>()
 
   const assertSession = (session: { workspaceId: string; handle: string; generation: number }) => {
     if (session.generation !== generation || session.workspaceId !== workspaceId || session.handle !== handle) {
@@ -36,6 +39,7 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
     const opening = starting
     const closingHandle = handle
     generation++
+    draftProgress.clear()
     workspaceId = null
     handle = null
     starting = null
@@ -89,12 +93,31 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
           snapshot.revision < 0 || snapshot.files.length !== 1 || !snapshot.files[0]?.path) {
         throw new Error('Native Notes entity does not have one canonical file snapshot')
       }
-      return api.nativeReplica.enqueue(session.handle, {
+      if (snapshot.nativeId !== nativeId) {
+        throw Object.assign(new Error('Native Notes canonical identity changed before enqueue'), { code: 'DOCUMENT_AUTHORITY_CHANGED' })
+      }
+      if (!Number.isSafeInteger(note.nativeRevision) || note.nativeRevision! < 0) {
+        throw Object.assign(new Error('Native Notes requires the opened revision before enqueue'), { code: 'DOCUMENT_VALIDATION_FAILED' })
+      }
+      const progress = draftProgress.get(nativeId)
+      const followsOwnReceipt = progress && progress.openedRevision === note.nativeRevision &&
+        progress.acknowledgedRevision === snapshot.revision
+      if (snapshot.revision !== note.nativeRevision && !followsOwnReceipt) {
+        throw Object.assign(new Error('Native Notes canonical revision changed; preserve and reload the opened draft'), { code: 'HASH_CONFLICT' })
+      }
+      const queued = await api.nativeReplica.enqueue(session.handle, {
         nativeId: snapshot.nativeId,
         expectedRevision: snapshot.revision,
         schemaVersion: 1,
         changes: [{ path: snapshot.files[0].path, content }],
       })
+      assertSession(session)
+      const current = progress && progress.openedRevision === note.nativeRevision ? progress : {
+        openedRevision: note.nativeRevision!, acknowledgedRevision: snapshot.revision, operations: new Set<string>(),
+      }
+      current.operations.add(queued.operationId)
+      draftProgress.set(nativeId, current)
+      return queued
     },
 
     async flush(): Promise<NativeDataReceipt[]> {
@@ -120,7 +143,17 @@ export function createNativeNotesSyncController(api: NativeNotesApi = (globalThi
           })
           assertSession(session)
           const acknowledged = await api.nativeReplica.acknowledge(session.handle, receipt)
+          assertSession(session)
           if (!acknowledged) throw new Error(`Native Notes operation ${operation.operationId} remains unacknowledged`)
+          const progress = draftProgress.get(operation.nativeId)
+          if (progress?.operations.has(operation.operationId) &&
+              receipt.workspaceId === operation.workspaceId && receipt.kind === operation.kind &&
+              receipt.nativeId === operation.nativeId && receipt.operationId === operation.operationId &&
+              Number.isSafeInteger(receipt.revision) && receipt.revision === (operation.expectedRevision ?? 0) + 1 &&
+              progress.acknowledgedRevision === operation.expectedRevision) {
+            progress.acknowledgedRevision = receipt.revision
+            progress.operations.delete(operation.operationId)
+          }
           receipts.push(receipt)
         }
         return receipts

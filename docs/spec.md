@@ -179,3 +179,71 @@ The native shell must not request unclassified legacy host session inventory. Ab
 Only confirmed local authority may read legacy host session inventory, messages or permission state. Native and unresolved callers mark that inventory unavailable, clear stale host metadata/options/error and establish startup readiness without a denied host request. Initial loading, metadata refresh, session-created fallback and permission reconciliation recheck authority at their asynchronous application boundaries. A late local response or transport-state failure cannot restore host state after a native switch. This restriction does not grant a native session or R1 capability and does not suppress actual Notes authorization failures.
 
 Acceptance combines actual helper callback/race behavior, independent App boundary review, Electron source/UI/core union, TypeScript and renderer rebuild. Native desktop creation/banner readback, private receipt custody and original platform criteria remain separate pending gates. A later scheduler terminal-history candidate is outside this source publication.
+
+---
+
+## Isolated Cloud assembly: original Compound programme contract
+
+The September contract above and the Compound contract below remain independently applicable. This source integration preserves both criteria sets; it does not accept the 109/143/native/DATA/SHARED/provider/iOS or UTB product DoD. Native and platform acceptance stays pending until the existing owner supplies real proof. Inputs: September `ea083e387e170552ee6102e29c2cf31adc8b6973`; Compound `8106f22185fb3b3e9a6a585320d48b1bf5f10fbd`. See `docs/cloud-all-surfaces-integration-20260930.md` for immutable integration and validation provenance.
+
+# ROX compound workspace — реализация
+
+## Активная задача: IMPLEMENT IT ALL, 2026-09-30
+
+Пользователь разрешил реализацию всего доставленного scope. Исследования ниже — архив исходных решений, а не текущий запрет реализации. Рабочая ветка: `feat/rox-compound-workspace-20260930`; отдельный checkout сохраняет чужие незакоммиченные изменения. Immutable исходный spec: `242492868a11b4d9af1c1011f20b31a346875f0a`.
+
+Scope: 143 пакета из `plans/compound-implementation/progress.json`: 52 Macro, 30 Suite и 61 Lark/Docs/Bases/Code Intelligence extension. Реализация расширяет существующие Pages/Notes, Tasks, Projects, Meetings, Sources, Sessions и Automations. Полный feature DoD включает UI, persistence, команды/queries, актуальные permissions, events/search/agents, failure/recovery, functional tests и реальную проверку UI. Библиотека, экран с fixture или опубликованный issue не закрывают feature.
+
+Текущий первый вертикальный сценарий: открыть существующую Note без смены ID/байтов; получить canonical Page alias и source/format status; сохранить через SHA256 CAS и durable receipt; сохранить новый ввод, сделанный во время запроса; отклонить устаревший write; восстановить interrupted WAL. Native RPC принимает только подтверждённый Electron-main local binding + текущий workspace/window. Это device principal; remote/team identity требует отдельного authenticated owner и не считается реализованной.
+
+Параллельные сценарии: существующий Project привязывает реальный Git workingDirectory, получает immutable snapshot, видит commit/dirty version отдельно и открывает ограниченный source excerpt; Главная создаёт task без толстой рамки, с keyboard focus, IME и failure states; lossless Markdown/YAML patches готовят editable Map/Outline без второй canonical tree.
+
+Native save и lifecycle writers используют единый WAL/CAS и vault/file leases. Durable invalidation intent имеет стабильный event ID; accepted означает локальный callback, не client ACK. Dead-owner claim recovery проверяется реальными SIGKILL/SIGSTOP сценариями; TTL не даёт право перехвата живого writer. Произвольный внешний процесс не участвует в OS-level CAS; Windows directory fsync пока не проверен. Rich-block cutover, CRDT, remote users, Base/record owners и cloud coding executor остаются отдельными slices.
+
+Результаты и живые runtime receipts: `plans/compound-implementation/`. Эта активная спецификация заменяет прежнее ограничение «только planning».
+
+Detailed current native behavior and remaining gates: [compound implementation](compound-implementation.md).
+
+# Архив: Macro → ROX, спецификация архитектурного исследования
+
+## Новое уточнение: Lark Suite + переносимые Docs/Bases
+
+Цель: через Codex Computer Use исследовать доступные живые Lark screens и дополнить их официальными источниками; разобрать все названные пользователем Suite/third-party areas; проверить 11 Obsidian references по текущим исходникам и лицензиям; выпустить подробные Rox Docs/Bases PRD, UX contracts, target ERD, automation contracts и independently verifiable implementation plans. Это подготовка продукта, без запуска реализации или cloud jobs.
+
+Acceptance: каждый названный раздел имеет классификацию, evidence status, screens/actions/inputs/outputs/entities/dependencies и ограничения; live capture IDs и hashes локально сохранены; текущие ROX seams имеют SHA/path/symbol; Docs, Markdown/Map/Outline, Comments, Tabs/Columns, Tasks, Bases views, formulas/relations и automations имеют single-authority model, permissions/failure/recovery/agent contracts; machine-readable packages и ациклический DAG проверены; независимая критика закрыта; commit/push/readback документации. Private screenshots/AX/customer identifiers не публикуются. Недоступный экран не называется проверенным; proprietary Lark database неизвестна, reference ERD является conceptual inference.
+
+Latest steering adds OpenWiki + GitDiagram + repogrep.com alternative + MrLesk/groma.md to this architecture packet. Acceptance: actual source SHAs/licenses/pipelines/ROX seams, repository snapshots/claims/provenance/ACL/durable jobs contracts,12 concrete Code Intelligence screens, additional independently verifiable work packages and combined DAG. Extend the existing `packages/shared/src/code-intelligence` capability pack; its types are existing shared files, not proposed new worker paths. No installation, cloud launch or source transmission claimed from planning artifacts.
+
+Delivery also includes separate new GitHub issues for the 46 granular Docs/Bases/automation slices and 15 Code Intelligence slices. They link earlier Suite issues as related broader scope, preserve explicit source/spec revision separation, and receive exact body readback. Their publication prepares implementation work; it does not launch coding agents or satisfy product DoD.
+
+## Новое уточнение: ROX Suite issues по восьми screenshots
+
+Создать 30 отдельных новых GitHub issues в rox-one/rox-one: focus input; Messenger/контакты; Meetings; Drive/Notes/Docs/Wiki/Sheets/Slides/Base/Forms; MCP/admin/Help Desk/Approval/Signature; пять slices Automations. Каждая задача содержит source SHA/path/symbol, concrete UI/input/output/hover/focus/keyboard, механизм/persistence/API/ACL/events, tests/DoD, dependencies и cloud handoff. Частные данные изображений не публикуются. Существующие общие issues связать, не закрывать и не переименовывать. Acceptance: все новые issue IDs/URLs сохранены, dependencies превращены в реальные ссылки, точные body bytes прочитаны обратно с GitHub.
+
+RS scope расширяет предыдущие требования. Первоначальный 61-screen/52-WP manifest описывает Macro integration и остаётся отдельным контрактом; новые Suite requirements требуют своих scheduler packets до dispatch, не считаются автоматически включёнными или реализованными.
+
+## Revision 4: конкретный handoff и проверяемые взаимодействия
+
+Продолжение user intent «continue, improve, enhance, enrich»: улучшить уже доставленный пакет без запуска cloud jobs или реализации продуктовых surfaces.
+
+Observable acceptance: authored collaboration walkthroughs с control IDs/маршрутами/receipts/focus/recovery; field-level domain forms с validation, defaults, coercion, payload mapping и negative examples; русские labels/help для всех48shared controls; полный219-control handoff index и coverage gate; provider-neutral executor RunSpec/schema/resume/cancel/proof contract; current source delta recheck; полные spec bytes в новом digest; независимый challenge, actual planning tests и GitHub readback. Screen count остаётся61: enrichment уточняет существующие screens, не создаёт новые destinations.
+
+Existing source facts, proposed schemas и product runtime evidence остаются разными статусами. Registered canonical dispatcher и money/date/identity conversion не могут выводиться из human-readable label. Historical primary schemas сохраняются; normative amendments должны быть явно compiled и включены в assigned packet.
+
+## Revision 3: повторная проверка, конкретный продукт и cloud delivery pack
+
+Дополнительный user intent: подробно определить каждый экран, размещение внутри существующего ROX, функциональность, inputs/outputs, UI/UX/hover/focus/keyboard, PRD/spec/expected results/DoD/plans для будущего cloud execution.
+
+Observable acceptance:50 current source screens and61target screens;219concrete controls; typed command/query/error contracts and exact user scenarios; source HEAD delta recheck308evidence refs;52per-WPcloud packets with immutableinputSHA/specDigest/ownership/dependencies/UI scope; schemas/gates rejecting forged/stale/fixture/incomplete receipts; independent review+corrections; actual artifact checks+commit/push/readback. Feature implementation/provider/native E2Es не являются scope этой подготовки.
+
+Нормативные документы: `docs/macro-integration/product/PRD.md`, `UI-UX-CONTRACT.md`, leaf screen docs/JSON; `cloud/macro-integration/AGENTS.md`, SPEC/PLAN/EXPECTED-RESULTS and52packets. Historical Revision2 research retained below.
+
+Цель: дать coding agents воспроизводимый план развития существующих ROX surfaces до единого collaborative workspace. Исследование включает продукт, фактические backend paths, persistence, collaboration, authorization, search, agents, cloud dependencies и licensing обоих baseline SHA, зафиксированных в `docs/macro-integration/README.md`.
+
+Acceptance: 24 запрошенных тематических документа; 4 обязательных JSON; 30+ пакетов с зависимостями, точками изменения и проверяемыми сценариями; Macro/ROX/target ERD; 10 обязательных Mermaid diagrams; четыре collaboration sequences; лицензии с отдельными условиями; critical review и Revision 2; evidence с валидными paths/symbols/строками; ациклический implementation DAG; точное разграничение наблюдений и предложений.
+
+Основные ограничения: сохранять native ROX Pages/Tasks/Projects/Meetings/Sessions, React/Electron и рабочие локальные pipeline; не считать agent session human channel; не строить второй entity universe рядом с Rox2EntityRef; не копировать AGPL или спорно лицензированные файлы без разрешения; не объявлять UI макет реализованной функцией; не заявлять прохождение runtime E2E без исполнения.
+
+Метод: source snapshot → independent domain audits → implementation graph → capability inventory → выбор архитектуры → independent adversarial review → Revision 2 → механическая проверка артефактов → commit/push документации. Вывод о неизвестной функции допускает NOT_ESTABLISHED с указанием проверенной области; не превращать отсутствие одного grep match в доказательство отсутствия продукта.
+
+Артефакт является планом реализации, а не реализацией всех перечисленных возможностей. Пользователь запросил архитектуру переноса и work packages.

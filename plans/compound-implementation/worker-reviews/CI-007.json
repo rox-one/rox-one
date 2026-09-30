@@ -1,0 +1,331 @@
+{
+  "task_id": "CI-007-preflight",
+  "attempt_id": "42e6e71d004f2b2c65eb565ef185cae0",
+  "packet_hash": "0bbc5d8a8d162f87dbd720acbabfe0c12d25bc033cacfc4ea2a1194e9862b55a",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-007",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_GATED",
+  "mode": "inspect",
+  "workTier": "bounded-workflow",
+  "scope": {
+    "ownedReport": "plans/compound-implementation/worker-reviews/CI-007.json",
+    "productChanges": false,
+    "testsBuildsNativeUiNetwork": "NOT_RUN_BY_AUTHORIZATION",
+    "evidenceBasis": "Actual inspected working-tree bytes, including root-owned uncommitted foundation files; not a claim that these bytes are committed at input_revision or that dependency receipts are accepted.",
+    "codegraph": "Tool reported no .codegraph index; used bounded read/grep/glob instead. Descriptive find failed because its judgment provider returned insufficient credits; subsequent source reads succeeded.",
+    "upstreamEvidenceBoundary": "Upstream identity, limits and frozen hashes below are records in the published local specification, not an independent inspection or execution of upstream source in this preflight."
+  },
+  "dependencies": ["CI-001", "CI-002", "CI-004"],
+  "dependencyFindings": [
+    {
+      "packageId": "CI-001",
+      "currentEvidence": "refs.ts supplies RepositoryBinding, RepositorySnapshot, SnapshotSourceFile, FileSpan, scoped immutable refs and current-policy read helpers. provider.ts supplies an off-by-default registry and scoped resource IDs. types.ts remains the basic synchronous CodeGraph contract. index.ts exports the new foundation modules.",
+      "requiredReceipt": "Lead wave0 commit and accepted artifact plus authoritative readback receipt for canonical snapshots, current authorization boundary, registry reconciliation and public contracts. File existence is not acceptance."
+    },
+    {
+      "packageId": "CI-002",
+      "currentEvidence": "packages/server-core/src/code-intelligence/ was absent in the bounded directory listing. refs.ts:570-595 explicitly requires live currentBinding supplied by the host and does not discover actors, renew leases or grant provider egress.",
+      "requiredReceipt": "Accepted shared authorizeRepositoryRead/Write/Job resolver, exclusion/credential/egress policy and remote-private offline policy. Do not substitute the old receipt binding for current actor authority."
+    },
+    {
+      "packageId": "CI-004",
+      "currentEvidence": "Published contracts propose code-intelligence RPC, jobs.ts and job-store.ts; the server CI directory was absent. Existing CodeIntelligenceProvider has descriptor metadata and an optional synchronous CodeIntelAdapter, not an asynchronous diagram-generation execution interface.",
+      "requiredReceipt": "Accepted typed start/status/cancel/resume/read execution seam, durable job journal, staged artifact ownership and scoped events. Exact asynchronous invocation/error/result schema must be supplied by this dependency before wiring CI-007."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "FG-REVISION-AND-DELIVERY",
+      "kind": "launch-foundation-not-extra-DAG-edge",
+      "evidence": "execution-packages.json:4657-4687 still names product_baseline_sha e953786ba7e30fb5da5dca7e88e20e324d5aebab and unresolved reference_package_revision/reference_package_digest; dispatch input is a21aeab1da5a67e56788384ff930945b0f487879. User requires the lead wave0 commit before implementation.",
+      "requiredPrerequisite": "Lead resolves the committed implementation base and delivery-manifest revision/digest, verifies every spec_ref hash and accepts prerequisite receipts. Reissue implementation packet against that committed base; do not silently use the historical cloudPacket baseline or current dirty tree.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "EG-IDENTITY",
+      "kind": "published-external-gate",
+      "evidence": "execution-packages.json:4697-4701 explicitly lists EG-IDENTITY; code-intelligence.json:148-156 requires authenticated actor/workspace/source checks at every read/write/job boundary.",
+      "requiredPrerequisite": "Affected-scope identity readiness receipt and a real actor-resolved RequestContext from the foundation owner. No identity implementation or acceptance was inspected or inferred.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-APPROVED-MODEL-AND-EGRESS",
+      "kind": "external-readiness-beyond-CI002-code",
+      "evidence": "CI-007 inputs require an approved model provider; permissions at code-intelligence.json:3446-3454 require remote source egress and current scope on reads/exports. provider.ts:87-96 enforces enabled, allowedProviderIds, readiness and dataEgress, but a descriptor is not a runtime receipt.",
+      "requiredPrerequisite": "Approved provider/account/model, declared bounded source exposure, credential-reference policy and tested timeout/cancellation transport. Remote-private policy must deny disconnected access unless the accepted signed lease applies. Native agent transport readiness is additionally required only if the implementation actually uses agent tools, as stated in execution-packages.json:4701.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-FROZEN-SCHEMA-COMPILER-LICENSE",
+      "kind": "hidden-input-foundation",
+      "evidence": "code-intelligence.json:265-359 identifies GitDiagram 0.1.0 at 7cf140c5072ff647fe702b0c54f9dc19c8f7a051, MIT, with internal application routes rather than an SDK. CI-S-GD-GRAPH/VALIDATE/EDGE/CONTEXT/MERMAID/SVG/RENDER record frozen hashes at lines 5670-5802. cloudPacket explicitly requires upstream version/license/runtime readiness.",
+      "requiredPrerequisite": "Obtain and hash-check the frozen schema/compiler reference artifacts against the delivery manifest. Select the bounded extraction/adaptation route; retain applicable MIT notices when redistributing upstream code. Supply actual runtime/provider receipt for the selected route. The full-service Node 22/Next/Redis/R2 requirements are not automatically requirements of an extracted compiler, and the extracted compiler must not be presented as the hosted service. CI-013 notice inventory is a distribution integration need, not a new prerequisite edge or a license waiver.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-SELECTION-AND-PUBLIC-EXPORT",
+      "kind": "hidden-canonical-module-integration",
+      "evidence": "provider.ts:16-48 records CI-DEC-EXTEND-EXISTING-01 and preserves the existing pack. register:79-80 rejects non-baseline providers without sourceRevision and artifactDigest. types.ts:52-67 keeps only local-fs-symbols/syft-sbom selected. index.ts:1-27 has explicit type/function exports and no graph-export export.",
+      "requiredPrerequisite": "Lead records accepted provider selection and genuine upstream manifest digest, registers GitDiagram through the existing registry without auto-activation, and wires canonical public exports. This is not permission to add a second registry, promote placeholder hashes to upstream verification, or re-enable rejected tools.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-RECEIPT-MEANING",
+      "kind": "hidden-semantic-foundation",
+      "evidence": "CI-E-06/12/13/22 distinguish typed dependency evidence, source versus AI nodes, deterministic-supported/authored/model-proposed/unsupported trust and supported/partial/contradicted/unresolved assessment. explainer.ts:37-49 checks path/commit/citation membership only. local-adapter.ts:41-77 produces contains edges, not imports/calls.",
+      "requiredPrerequisite": "Agree the shared evidence/receipt DTO and method identifiers with CI-001/CI-004 owners. A matching path or a name in README cannot become proof of an arbitrary call/HTTP/architecture proposition. Unsupported labels must remain explicitly unsupported/model-proposed. No requirement to add a general language parser or depend on CI-003 is inferred.",
+      "state": "NOT_IMPLEMENTED"
+    },
+    {
+      "id": "FG-DOWNSTREAM-ARTIFACT-AND-RENDER-PROOF",
+      "kind": "full-feature-integration-gate-not-implementation-prerequisite",
+      "evidence": "CI-008 depends on CI-007 at code-intelligence.json:3593-3605 and owns freshness/artifacts/output ownership. CI-010 depends on CI-007/008/009 at 4009-4018 and owns the actual source/graph surface, safe export and unsafe-SVG proof. CI-007 itself requires staged artifacts, authorized stale prior artifact visibility, pinned navigation and inert renderer output.",
+      "requiredPrerequisite": "CI-007 must supply sourceFingerprint, artifact digest, scope, trust and immutable navigation refs now, then integrate with CI-008 artifact/freshness ownership and CI-010's existing explainer-based surface. Do not invert these downstream edges into a circular launch dependency or create a parallel artifact store/UI. Full renderer-directive and navigation acceptance remains unverified until the real downstream surface is exercised.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-SHARED-WRITER-LEASES",
+      "kind": "integration-ownership-gate",
+      "evidence": "code-intelligence.json:3575-3578 and execution-packages.json:4653-4655,4685 assign shared existing paths to the integration owner.",
+      "requiredPrerequisite": "Exclusive lead-owned edits to types.ts/explainer.ts after dependency acceptance; worker writes only normative new implementation files under a later implementation authorization. All additional wiring requests below remain integration-owner requests.",
+      "state": "PREFLIGHT_BOUNDARY_OBSERVED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/code-intelligence/providers/gitdiagram.ts",
+    "packages/server-core/src/code-intelligence/graph-schema.ts",
+    "packages/server-core/src/code-intelligence/graph-evidence.ts",
+    "packages/shared/src/code-intelligence/graph-export.ts",
+    "packages/server-core/src/code-intelligence/__tests__/graph-evidence.test.ts",
+    "packages/shared/src/code-intelligence/__tests__/graph-export-security.test.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/server-core/src/code-intelligence/providers/gitdiagram.ts",
+      "proposedSymbols": ["createGitDiagramProvider", "generateGitDiagramGraph"],
+      "change": "Implement on-demand remote diagram generation using the accepted CI-004 asynchronous execution seam and approved model transport. Resolve GitDiagram via CodeIntelligenceProviderRegistry.resolve for operation diagram, use scopedProviderResourceId for upstream IDs, and feed only CI-002-authorized selected snapshot FileSpans to the model. Require frozen sourceRevision/artifactDigest. Validate context before egress and graph before staging. Normalize optional provider-supplied progress/cost with provider/model/units; record attempt/error/input and output digest audit metadata without credentials/raw secret context. Publish diagram.plan.ready, diagram.progress, diagram.artifact.staged and diagram.evidence.rejected through scoped CI-004 events; timeout/cancel is failed/cancelled, not success. No requests to /api/generate/stream, /api/generate/cost or /api/diagram-state as an assumed stable SDK. Do not implement a new job journal, provider registry or application step.",
+      "prerequisite": "Accepted CI-001/002/004 contracts plus the real approved model transport and frozen reference receipts. These proposed function names do not exist yet."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/graph-schema.ts",
+      "proposedSymbols": ["validateDiagramGraph"],
+      "change": "Validate unknown model output against the frozen structured groups/nodes/edges contract, with unique IDs, known group membership and known edge endpoints, no arbitrary renderer fields, and the published caps of 10 groups, 34 nodes, 48 edges, 72 label characters, 512 path characters. Resolve all claimed source paths against the selected authorized snapshot/excerpts, never a live branch. Reject oversized/malformed graphs and truncated source trees before claiming integrity; bound attempts to the published maximum 3 rather than adding an unrelated retry subsystem. Return the canonical shared graph DTO, not Mermaid/model text.",
+      "prerequisite": "Frozen schema/compiler bytes and canonical DTO agreed with the integration owner; do not invent the upstream field grammar from summary metadata."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/graph-evidence.ts",
+      "proposedSymbols": ["captureGraphSourceEvidence", "validateGraphEdgeEvidence"],
+      "change": "Reuse assertRepositorySnapshotScope, normalizeRepositoryPath, readSnapshotFile/readFileSpan and current authorization. Bind each selected excerpt/citation to repository/binding/snapshot/file/span IDs, Git blobSha, file contentHash, excerpt digest, startLine/endLine and sourceVersion. Compare model citations with the exact excerpts actually sent; reject foreign/forged/mixed-revision citations. Verify a claimed relation only to the extent a typed resolver/assessor demonstrates it. Record a VerificationReceipt method/rationale/supportAssessment; label model-proposed/unsupported interpretation without manufacturing deterministic evidence. Emit rejection audit metadata rather than silently promoting or dropping a bad citation. Construct clean Git navigation from the verified file.commitSha; use immutable rox-code span refs for dirty bytes and never parentCommitSha as their exact source.",
+      "prerequisite": "Shared CI-E-06/13/22 DTO, accepted current actor/source resolver and immutable snapshot receipts."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/graph-export.ts",
+      "proposedSymbols": ["compileSanitizedGraphMermaid"],
+      "change": "Compile only the canonical validated AST, allocating renderer identifiers independently of model/provider IDs and treating labels as escaped text. Whitelist fixed group/node/edge syntax; never interpolate raw Mermaid, HTML, init/config directives, click callbacks or model-supplied URLs. Links, if emitted, come only from verified clean Git source metadata and HTTPS github.com commit-pinned paths with encoded path segments; dirty sources keep host-resolved immutable navigation outside arbitrary Mermaid click code. Export requires current artifact/source authorization at the host boundary. Return compiler-owned Mermaid suitable for the approved safe renderer; SVG sanitization remains a mandatory renderer boundary, not something this text compiler alone proves.",
+      "prerequisite": "Frozen compiler/security references, canonical shared graph DTO and lead wiring of the actual renderer/export boundary."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/graph-evidence.test.ts",
+      "proposedSymbols": ["graph source integrity and support assessment behavior tests"],
+      "change": "Keep deterministic tests for forged paths, altered content/blob, foreign snapshot/branch, dirty bytes, invalid spans, oversized/truncated context, unknown groups/nodes/endpoints and unsupported edge citations. A path-valid but semantically unsupported relation must remain model-proposed/unsupported and unresolved/partial rather than verified. Include provider timeout/cancel through the real accepted execution seam where available; root runtime proof still required. Seed a negative control that would falsely promote an arbitrary README/name mention into dependency proof and require it to be caught.",
+      "prerequisite": "Actual implementations and dependency-owned execution transport; do not pin incidental implementation text or mock forwarding echoes. Tests were not created or run here."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/__tests__/graph-export-security.test.ts",
+      "proposedSymbols": ["graph compiler injection and pinned link behavior tests"],
+      "change": "Exercise malicious labels/IDs containing script/HTML, quotes/newlines, Mermaid init/config and click/callback syntax, encoded traversal, javascript/data URLs, foreign hosts and mutable HEAD/default-branch navigation. Assert generated output remains compiler-owned inert text and clean refs resolve to exact commit/blob/line evidence while dirty refs never become parent-commit permalinks. Include the full published negative vector jointly with server tests; real UI seeded unsafe SVG remains an integration proof lane, not a string assertion substitute.",
+      "prerequisite": "Real graph-export implementation, immutable source DTO and actual downstream renderer for UI proof. Tests were not created or run here."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/code-intelligence/types.ts",
+      "symbol": "CodeGraph, CodeSymbol, CodeEdge, CodeCitation; proposed shared GraphNode/GraphEdge/DependencyEvidence/VerificationReceipt DTOs",
+      "change": "Extend the existing canonical CodeGraph with an optional structured diagram/artifact payload agreed with CI-001/CI-004, keeping the current symbols/edges/citations/summaries and synchronous CodeIntelAdapter callers valid. Define typed source/AI node distinction, groups and edge endpoints, trust (deterministic-supported/authored/model-proposed/unsupported), evidenceRefs and supportAssessment (supported/partial/contradicted/unresolved), receipt method/rationale, exact snapshot/FileSpan source refs and digests, and provider/version/sourceFingerprint/artifact/cost-audit metadata. Do not widen legacy contains/imports edges into arbitrary model facts or populate a dirty symbol's mandatory legacy commit with the parent commit; dirty/AI nodes use the new exact-source projection. Keep CODE_INTEL_PACK off by default and preserve selected/rejected baseline decisions. These are proposed DTO additions, not existing definitions.",
+      "reason": "types.ts:3-41 currently has only path/startLine/commit, two structural edge kinds and a synchronous index function; no groups, evidence ranges/hashes, AI trust or graph artifact envelope. A single shared contract is needed by server validation, shared export and the existing explainer.",
+      "baseSha256": "48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e",
+      "owner": "integration-owner",
+      "prerequisite": "CI-001 and CI-004 accepted schemas; exclusive shared-file lease."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/explainer.ts",
+      "symbol": "ExplainerNode, explainWithProvenance, materializeArchitectureNote, assertEveryNodeHasProvenance",
+      "change": "Reuse explainWithProvenance as the sole projection into the existing explainer surface. Add sourceVersion/endLine/content/blob/span/ref and node/edge trust/receipt metadata for validated structured diagrams; expose unsupported/partial/unresolved status and immutable local snapshot citations instead of formatting every node as path:startLine@commit. Preserve current legacy source-node projection. For materializeArchitectureNote, escape model labels and construct links only from validated refs; never interpolate a model citation into Markdown link syntax. Keep assertEveryNodeHasProvenance a structural provenance assertion; do not rename its existing checks into semantic/hash verification. New exact-evidence paths must consume the server validation receipt and authorized resolver, not copy the assertion as a security boundary.",
+      "reason": "explainer.ts:13-22 blindly formats commit citations; 25-34 interpolates labels/citations into Markdown; 37-49 checks only nonempty provenance and symbolId membership. CI-007 and downstream CI-010 require exact evidence and source/AI distinctions without a parallel graph surface.",
+      "baseSha256": "d2d53f67c406be50c258396e392a77ef5a844ff98b744dd3c81aefa1a01eaeed",
+      "owner": "integration-owner",
+      "prerequisite": "Canonical DTO changes accepted first; existing caller migration/verification owned by the lead."
+    }
+  ],
+  "integrationRequests": [
+    {
+      "path": "packages/shared/src/code-intelligence/index.ts",
+      "symbol": "canonical public export block",
+      "change": "Export the accepted shared graph DTOs and compileSanitizedGraphMermaid through the existing code-intelligence entry point, after the new module exists. Do not change the package export map to create a second subsystem.",
+      "reason": "Current index.ts explicitly exports only legacy graph types and explainer functions plus foundation modules; a new graph-export file alone is not public integration.",
+      "baseSha256": "ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39",
+      "owner": "integration-owner/CI-001 export owner",
+      "permission": "Request only; not a normative CI-007 worker write path."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/provider.ts",
+      "symbol": "CodeIntelligenceProvider, CodeIntelligenceProviderRegistry.register/resolve, CODE_INTELLIGENCE_PROVIDER_DECISION",
+      "change": "Confirm the accepted async diagram execution contract with CI-004 without coercing remote generation into CodeIntelAdapter.index. Register the pinned descriptor at the existing composition point with operation diagram, execution remote, alwaysOn false and receipt-backed readiness. Preserve non-baseline sourceRevision/artifactDigest checks, enabled/allowed-provider policy and rejection rules. This file need not change if dependency-owned composition already supplies that contract; no alternate registry is acceptable.",
+      "reason": "provider.ts:19-29 is descriptor-only plus sync adapter; resolve already has the necessary opt-in/egress guard, so generation must reuse it rather than bypass it.",
+      "baseSha256": "df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404",
+      "owner": "integration-owner/CI-001 and CI-004",
+      "permission": "Interface coordination request only; no worker edit."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/jobs.ts",
+      "symbol": "dependency-proposed diagram execution dispatch and scoped job event/staging seam; concrete symbol unavailable",
+      "change": "Expose the accepted CI-004 start/status/cancel/resume boundary to the GitDiagram provider, pass current authorization, bounded selected snapshot refs and AbortSignal, and persist normalized result/error/optional progress-cost audit through CI-004 job-store ownership. Staging is not application; a provider timeout must leave a failed job and no newly applied artifact.",
+      "reason": "Published CI-004 owns durable jobs and CI-007 owns only the provider/schema/evidence/export; no server CI implementation was present to inspect or safely name as an existing symbol.",
+      "owner": "integration-owner/CI-004",
+      "permission": "Dependency-owned planned-file request only; re-inspect actual symbols after acceptance."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/artifacts.ts",
+      "symbol": "CI-008 proposed artifact/freshness ownership contract; concrete symbol unavailable",
+      "change": "Consume CI-007's exact source fingerprint, provider/version, artifact digest and scope under the existing staged-artifact flow. Keep prior artifacts visible only with current authorization when a provider is unavailable; never overwrite a newer artifact with an older completion or add a GitDiagram-specific store.",
+      "reason": "code-intelligence.json:3454 and CI-008:3593-3667 require outage/stale/ownership behavior outside CI-007's allowed new files.",
+      "owner": "integration-owner/CI-008",
+      "permission": "Downstream integration contract, not a new DAG prerequisite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/ArchitecturePanel.tsx",
+      "symbol": "CI-010 proposed graph rendering/export/navigation seam; concrete symbol unavailable",
+      "change": "Consume canonical explainer projection and sanitized compiler output; configure the actual renderer to disable model-controlled configuration/HTML/callbacks, sanitize SVG, and route source opening/copy/export through current authorization and captured refs. Verify clean commit navigation and dirty local receipts with malicious Mermaid/SVG negative controls on the actual UI.",
+      "reason": "CI-010 owns this proposed surface and depends on CI-007. Text compiler tests alone cannot prove renderer directives never execute. No UI source was opened outside the authorized package inspection scope.",
+      "owner": "integration-owner/CI-010",
+      "permission": "Specification-backed downstream request only; no inspection/implementation claim for the UI."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-007-AC-1",
+      "criterion": "Do not embed hosted internal routes as stable SDK",
+      "currentEvidence": "code-intelligence.json:328-339 identifies /api/generate/* and /api/diagram-state as internal application endpoints with no SDK claim. provider.ts:19-29,60-98 supplies the canonical pinned, opt-in registry; no GitDiagram server adapter exists in the inspected tree.",
+      "actualSeam": "CodeIntelligenceProviderRegistry.register/resolve; dependency-owned asynchronous job execution; proposed providers/gitdiagram.ts",
+      "requiredChange": "Implement a version-pinned structured provider/compiler adaptation using the real approved model transport and the frozen reference receipts. Never depend on undocumented hosted routes. Keep source selection, validation, timeout/cancellation, progress/cost/audit and staged output in the accepted existing job mechanism.",
+      "verification": {
+        "requiredNegativeVector": ["forged path", "mixed blob/branch content", "oversized/truncated tree", "unknown node/group", "unsupported edge citation", "script/config/link injection", "provider timeout"],
+        "focusedProof": "Exercise the real approved provider job through the accepted runtime. Check exact provider revision/digest readback and permitted request destination. Unauthorized/invalid context must prevent source egress; timeout must record a failed job with no successful staged/application result. Observe scoped progress/cost only when actually supplied, not fabricated default telemetry.",
+        "plannedCommands": ["bun test packages/server-core/src/code-intelligence/__tests__/graph-evidence.test.ts", "bun test packages/shared/src/code-intelligence/__tests__/graph-export-security.test.ts"],
+        "performed": false
+      },
+      "missingPrerequisite": "Committed wave0 plus accepted CI-001/002/004 receipts, actual async model/job contract, approved provider/egress/identity, and frozen upstream schema/compiler/runtime receipts.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-007-AC-2",
+      "criterion": "capture source blob hashes and bounds",
+      "currentEvidence": "SnapshotSourceFile:72-85 records contentHash/blobSha/bytes/commitSha/sourceVersion; FileSpan:125-135 records exact line bounds and contentHash. validateRepositorySnapshot:443-482 recomputes content/blob/identity and checks coverage. readFileSpan:504-518 enforces at most 500 lines and 64KiB. CodeCitation currently has no endLine or hash, and no selected-excerpt graph evidence contract exists.",
+      "actualSeam": "assertRepositorySnapshotScope, readSnapshotFile, readFileSpan, validateRepositorySnapshot; proposed graph-schema.ts/graph-evidence.ts",
+      "requiredChange": "Capture all graph input files and selected excerpts from one authorized immutable snapshot, preserve whole-file Git blob/hash and excerpt digest/bounds/IDs, and compare model references to that exact selected context. Enforce the frozen graph limits, reject forged/mixed/over-limit/truncated context as integrity failure, and never fetch branch bytes during evidence resolution.",
+      "verification": {
+        "requiredNegativeVector": ["forged path", "mixed blob/branch content", "oversized/truncated tree", "unknown node/group", "unsupported edge citation", "script/config/link injection", "provider timeout"],
+        "focusedProof": "Seed files at two different commits and dirty bytes, alter claimed contentHash/blobSha/span boundaries, insert ../ or foreign snapshot references and mark source coverage truncated. Each mismatch must fail before egress/staging. A valid captured excerpt must round-trip exact contentHash/blobSha/startLine/endLine and sourceVersion through the staged artifact and authoritative readback after restart.",
+        "plannedCommands": ["bun test packages/server-core/src/code-intelligence/__tests__/graph-evidence.test.ts"],
+        "performed": false
+      },
+      "missingPrerequisite": "Accepted immutable snapshot and current-policy receipts, canonical graph evidence DTO, frozen source-context/schema reference and CI-004 staging/readback.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-007-AC-3",
+      "criterion": "edge evidence validated and unsupported interpretation labeled",
+      "currentEvidence": "CodeEdge:12-16 contains only from/to/kind; local-adapter.ts:58-64 generates contains edges only. assertEveryNodeHasProvenance:37-49 cannot assess edge support. Published CI-E-06/13/22 and GitDiagram limitations:354-358 explicitly separate source support from interpretation.",
+      "actualSeam": "CodeEdge/CodeGraph, assertEveryNodeHasProvenance; proposed validateGraphEdgeEvidence and VerificationReceipt projection",
+      "requiredChange": "Validate edge endpoints/groups and citation membership in the exact supplied excerpt set. Record typed relation evidence and assessor/method/rationale/supportAssessment, preserving deterministic-supported/authored/model-proposed/unsupported trust. Reject invalid references; retain valid but unsupported interpretation as visibly unsupported/model-proposed instead of upgrading it because a path/name exists.",
+      "verification": {
+        "requiredNegativeVector": ["forged path", "mixed blob/branch content", "oversized/truncated tree", "unknown node/group", "unsupported edge citation", "script/config/link injection", "provider timeout"],
+        "focusedProof": "Use a valid source-path citation that does not support the asserted call/HTTP relation, unknown endpoint/group, a file never selected, and a README/name mention without a dependency. Require unsupported/unresolved or partial assessment with method and rationale, never deterministic-supported. Use a known directly evidenced relation as the positive control and confirm trust/receipt survives export/projection and actual evidence inspector rendering.",
+        "plannedCommands": ["bun test packages/server-core/src/code-intelligence/__tests__/graph-evidence.test.ts"],
+        "performed": false
+      },
+      "missingPrerequisite": "Accepted shared typed evidence/receipt schema, authorized resolver, frozen graph/evidence reference, and downstream projection/UI readback for visible labels.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-007-AC-4",
+      "criterion": "commit-pinned navigation",
+      "currentEvidence": "SnapshotSourceFile.commitSha exists only for exact verified parent-commit bytes; SourceVersion distinguishes working-copy. refs.ts:547-595 serializes and resolves immutable scoped snapshot refs with separate current policy. explainWithProvenance:13-22 currently formats arbitrary path:startLine@commit, so it is not verified navigation. Upstream branch links must be rewritten per code-intelligence.json:358.",
+      "actualSeam": "serializeRepositoryRef, resolveRepositoryRefWithCurrentPolicy, explainWithProvenance; proposed graph evidence/export",
+      "requiredChange": "Carry exact file/span snapshot refs through explainer and artifact. Compile remote GitHub links only from validated repository metadata plus file.commitSha/path/line range, not branch/HEAD/model URLs. Dirty bytes must navigate to the captured local working-copy receipt; parent commit may only be contextual, never their exact permalink. Reauthorize every open/copy/export and explain unavailable captured source rather than substituting current branch content.",
+      "verification": {
+        "requiredNegativeVector": ["forged path", "mixed blob/branch content", "oversized/truncated tree", "unknown node/group", "unsupported edge citation", "script/config/link injection", "provider timeout"],
+        "focusedProof": "Generate at commit A, move branch to B and change/delete the file. Source opening must return A's exact captured span or an explicit unavailable result. Dirty bytes must retain working-copy contentHash and no A permalink. Deny foreign workspace/policy-revoked open/copy/export. Observe actual UI navigation and source hash/line readback when CI-010 is integrated.",
+        "plannedCommands": ["bun test packages/server-core/src/code-intelligence/__tests__/graph-evidence.test.ts", "bun test packages/shared/src/code-intelligence/__tests__/graph-export-security.test.ts"],
+        "performed": false
+      },
+      "missingPrerequisite": "Accepted CI-001 exact refs and CI-002 current authorization, canonical projection changes, approved repository navigation metadata, and CI-010 real source-opening surface.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-007-AC-5",
+      "criterion": "model/raw output never executes renderer directives",
+      "currentEvidence": "No graph-export or server schema file exists in the inspected package listing. materializeArchitectureNote:25-34 currently interpolates label/citation into Markdown. Published frozen security references describe directive stripping, HTTPS github.com-only links, HTML labels disabled and SVG sanitization; no actual renderer was inspected or exercised by this worker.",
+      "actualSeam": "materializeArchitectureNote; proposed compileSanitizedGraphMermaid and graph schema; downstream CI-010 renderer/export boundary",
+      "requiredChange": "Accept only validated structured AST and compile fixed Mermaid grammar with escaped literal labels and compiler-owned identifiers. Disallow raw model directives/configuration/callbacks/HTML/URLs; derive allowed pinned links from verified source metadata only. Escape the existing Markdown projection too. Require actual renderer hardening and SVG sanitization before claiming model text can never execute directives; source authorization must also gate export.",
+      "verification": {
+        "requiredNegativeVector": ["forged path", "mixed blob/branch content", "oversized/truncated tree", "unknown node/group", "unsupported edge citation", "script/config/link injection", "provider timeout"],
+        "focusedProof": "Feed labels/IDs/links with script, HTML, Mermaid %%{init}%%, click callbacks, quote/newline grammar escape, javascript/data schemes, encoded traversal and non-GitHub hosts. Compiler output must preserve inert literal text without executable directives. On the actual integrated renderer seed unsafe SVG and observe no script/callback execution or unauthorized navigation, including after export/reload. A passing compiler string test alone is insufficient.",
+        "plannedCommands": ["bun test packages/shared/src/code-intelligence/__tests__/graph-export-security.test.ts", "bun test packages/server-core/src/code-intelligence/__tests__/graph-evidence.test.ts"],
+        "performed": false
+      },
+      "missingPrerequisite": "Frozen schema/compiler/security bytes, shared DTO/projection patch, current export authorization, actual CI-010 renderer with seeded unsafe-SVG proof and integrated runtime receipt.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "additionalContractCoverage": {
+    "outputs": "All four normative outputs remain required: validated graph AST, typed source/AI edges, sanitized Mermaid export and cost/audit metadata. No files or behavior were implemented by this preflight.",
+    "events": ["diagram.plan.ready", "diagram.progress", "diagram.artifact.staged", "diagram.evidence.rejected"],
+    "persistence": "Use dependency-owned workspace-scoped job/artifact records for graph AST/source excerpt digest/audit metadata; exclude credentials and raw secret context. Completion and application remain separate.",
+    "realtimeOffline": "Provider outage produces explicit failed/unavailable run; prior stale artifact remains readable only under current source policy. No fabricated graph success or unauthorized cache fallback.",
+    "verificationLanes": "Future implementation must retain source/schema, runtime, negative-control and authoritative restart readback proof. Actual UI proof is required for changed surfaces; real provider proof is required because generation uses a provider. Collaboration lane applies only if exercised. No lane is reported PASS here."
+  },
+  "sourceReferences": [
+    {"path": "packages/shared/src/code-intelligence/types.ts", "symbol": "CodeSymbol, CodeEdge, CodeCitation, CodeGraph, CodeIntelAdapter, CODE_INTEL_PACK", "lineStart": 1, "lineEnd": 67, "sha256": "48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path": "packages/shared/src/code-intelligence/explainer.ts", "symbol": "explainWithProvenance, materializeArchitectureNote, assertEveryNodeHasProvenance", "lineStart": 1, "lineEnd": 49, "sha256": "d2d53f67c406be50c258396e392a77ef5a844ff98b744dd3c81aefa1a01eaeed"},
+    {"path": "packages/shared/src/code-intelligence/provider.ts", "symbol": "CodeIntelligenceProvider, CodeIntelligenceProviderRegistry, scopedProviderResourceId", "lineStart": 16, "lineEnd": 123, "sha256": "df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "SnapshotSourceFile, RepositorySnapshot, FileSpan", "lineStart": 68, "lineEnd": 146, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "validateRepositorySnapshot, assertRepositorySnapshotScope, readSnapshotFile, readFileSpan", "lineStart": 443, "lineEnd": 518, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "serializeRepositoryRef, resolveRepositoryRef, assertRepositoryCurrentReadPolicy, resolveRepositoryRefWithCurrentPolicy", "lineStart": 547, "lineEnd": 595, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/index.ts", "symbol": "canonical code-intelligence exports", "lineStart": 1, "lineEnd": 27, "sha256": "ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39"},
+    {"path": "packages/shared/src/code-intelligence/local-adapter.ts", "symbol": "isSafeToIngest, indexSourceFiles, localFsSymbolsAdapter", "lineStart": 1, "lineEnd": 84, "sha256": "9d805685a6fc19e2487ed57e28550d4211339326157ef871febe2d7dd1b2fb35"},
+    {"path": "packages/shared/src/code-intelligence/__tests__/adapter.test.ts", "symbol": "local repository index provenance fixture tests", "lineStart": 28, "lineEnd": 57, "sha256": "38d3c94c95a523cd6f9831306b5653038e368f471e8463609e81c41586365297"},
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "/workPackages/6 CI-007 definitionOfDone, observableAcceptance and cloudGate", "lineStart": 3380, "lineEnd": 3591, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "CI-P-GD frozen provider identity, internal routes, graph limits and security", "lineStart": 265, "lineEnd": 359, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "CI-007 normative owned/shared paths and cloudPacket launch/external gates", "lineStart": 4615, "lineEnd": 4703, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "plans/compound-implementation/launch-worker-pool.py", "symbol": "verify read-only report lineage/source-hash validation", "lineStart": 47, "lineEnd": 69, "sha256": "79decd17b310ffde2a086ca7f637862e5199e17e9d47b8a8d3d971a456d56eeb"}
+  ],
+  "evidenceFreshness": {
+    "sourceDigestMethod": "Read-only shasum -a 256 of concrete inspected whole files.",
+    "specManifestMatches": true,
+    "preflightEvidenceIsHistoricalAtImplementation": true,
+    "stalePolicy": "These observations are only about the hashed working-tree bytes. Any root integration changing one of these files makes the affected evidence stale; re-read/re-hash/reissue the relevant request against the new committed generation. Do not infer accepted dependencies or committed implementation from file existence."
+  },
+  "artifactVerification": {
+    "scope": "JSON report identity, required fields, actual source paths and current whole-file hashes only; not feature behavior.",
+    "argv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/CI-007.json", "${ROX_COMPOUND_PACKET_ROOT}/CI-007/packet.json"],
+    "executionPolicy": "Run only the supplied read-only artifact verifier with PYTHONDONTWRITEBYTECODE=1; no product tests, builds, UI, network or Git operations."
+  },
+  "nextExecutableAction": "Lead can validate this owned preflight report immediately. Implementation must wait for the lead's committed wave0 generation and accepted CI-001, CI-002 and CI-004 artifact/readback receipts. Then bind a fresh implementation packet to that committed revision, resolve frozen schema/compiler/provider and identity/egress receipts, re-inspect the accepted async job/DTO seams, acquire shared-file leases, and implement only the six normative new files with the two normative shared patch requests handled by the integration owner. Do not launch CI-007 from current dirty foundation work or treat downstream CI-008/010 as circular launch dependencies.",
+  "risks": [
+    "Root integration may change inspected files during or after preflight; hashes are mandatory generation boundaries, not durable acceptance receipts.",
+    "Historical e953786 cloudPacket base and unresolved delivery fields must not override dispatch input or the required wave0 commit.",
+    "Hosted GitDiagram internal routes are not a stable SDK and its full Redis/R2 application must not be embedded as a second ROX service/store.",
+    "The existing asynchronous diagram execution seam is absent; a sync CodeIntelAdapter or provider metadata alone cannot implement remote generation.",
+    "Source path/URL membership and import/name mentions can be mistaken for arbitrary semantic relation proof; unsupported interpretation must remain labeled.",
+    "Dirty working-copy content must never be attributed to parentCommitSha as an exact remote source citation.",
+    "Selected excerpt provenance can be lost during projection; preserve hashes/bounds/scope and reject mixed branch/blob/snapshot references.",
+    "Raw model labels/citations can escape Markdown or Mermaid syntax; AST compilation, safe navigation and renderer SVG sanitization all remain required.",
+    "Current authority cannot be inferred from cached receipt bindings or provider.allowedProviderIds; live actor/source policy and offline revocation behavior remain external readiness gates.",
+    "A compiler/security unit result would not prove actual renderer behavior, commit navigation, authorization, job restart recovery or stale-artifact outage behavior.",
+    "New files alone are not integration: public exports, dependency-owned jobs, shared explainer projection, staged artifact ownership and actual graph surface need lead-owned wiring and proof.",
+    "Upstream schema/security summaries and syntactically valid manifest hashes are not installed-provider, source hash-readback, MIT notice or deployed private-flow audit receipts."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

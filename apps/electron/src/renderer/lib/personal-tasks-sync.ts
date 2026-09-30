@@ -115,6 +115,48 @@ export async function hydratePersonalTasksFrom(api: PersonalTasksApi, kv: Person
   return { bundle: bundleFromSnapshot(migrated), revisions: migrated.revisions, migrated, cacheStatus: loaded.status }
 }
 
+/** An unconfirmed response retains the exact identity and payload for retry. */
+export class PersonalTaskCreationError extends Error {
+  readonly task: PersonalTask
+
+  constructor(task: PersonalTask, cause: unknown) {
+    super('Personal task was not confirmed by native storage', { cause })
+    this.name = 'PersonalTaskCreationError'
+    this.task = structuredClone(task)
+  }
+}
+
+function sameTaskPayload(left: PersonalTask, right: PersonalTask): boolean {
+  const canonical = (task: PersonalTask) => JSON.stringify(task, (_key, value) =>
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? Object.fromEntries(Object.keys(value).sort().map(key => [key, value[key]]))
+      : value)
+  return canonical(left) === canonical(right)
+}
+
+/** Confirm creation against native CAS; an unknown ACK retries the same identity. */
+export async function putPersonalTaskConfirmed(api: PersonalTasksApi, task: PersonalTask): Promise<VersionedPersonalTask> {
+  try {
+    const receipt = await api.personalTasksPut([{ task, expectedRevision: null }])
+    if (receipt.rejected.length) throw new Error('Native personal task creation was rejected')
+    let record: VersionedPersonalTask | null = null
+    if (receipt.accepted.length === 1 && receipt.conflicts.length === 0) {
+      record = receipt.accepted[0]!
+    } else if (receipt.accepted.length === 0 && receipt.conflicts.length === 1 && receipt.conflicts[0]!.id === task.id) {
+      // Only the identical persisted payload reconciles an unknown create ACK.
+      // A new/different payload never upgrades a stale retry into an overwrite.
+      record = receipt.conflicts[0]!.current
+    }
+    if (!record || record.task.id !== task.id || !Number.isSafeInteger(record.revision) || record.revision < 1
+      || !sameTaskPayload(record.task, task)) {
+      throw new Error('Native personal task creation was not exactly confirmed')
+    }
+    return structuredClone(record)
+  } catch (cause) {
+    throw new PersonalTaskCreationError(task, cause)
+  }
+}
+
 export interface PersonalTaskDiffPushResult {
   accepted: VersionedPersonalTask[]
   removed: string[]

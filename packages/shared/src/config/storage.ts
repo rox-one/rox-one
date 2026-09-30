@@ -1046,7 +1046,7 @@ function withConfigWriteLock<T>(write: () => T): T {
     try { unlinkSync(lockPath); } catch {}
   }
 }
-export function saveConfig(config: StoredConfig): void {
+export function saveConfig(config: StoredConfig, options?: { readonly durable?: boolean }): void {
   ensureConfigDir();
 
   // Convert paths to portable form for cross-machine compatibility and persist
@@ -1092,7 +1092,7 @@ export function saveConfig(config: StoredConfig): void {
     ) {
       throw new Error('Config save conflict: stored config changed; reload and retry');
     }
-    atomicWriteFileSync(CONFIG_FILE, serialized);
+    atomicWriteFileSync(CONFIG_FILE, serialized, options);
     rememberConfigRevision(config, hashConfigContents(serialized));
   });
 }

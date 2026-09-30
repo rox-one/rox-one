@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "acknowledgedAt": "2026-09-30T14:13:05.593310+00:00",
+  "owner": "/root compound implementation",
+  "checkout": "/Users/t/Projects/rox-one-compound-implementation",
+  "branch": "feat/rox-compound-workspace-20260930",
+  "revision": "51f0a0c7253823766a336653837b1c26050aa206",
+  "programPackageCount": 143,
+  "notStartedReported": 130,
+  "fullDoDClosed": 0,
+  "preflightReported": 137,
+  "implementationWorkersReported": 7,
+  "preflightIsCompletion": false,
+  "futureIndependentWorkers": {
+    "model": "gpt-6.1-sol",
+    "reasoning": "ultra where supported"
+  },
+  "externalOwnership": [
+    {
+      "checkout": "/Users/t/Projects/rox-cloud-core-fixes-20260930",
+      "owner": "recovery root",
+      "branch": "fix/cloud-core-baseline-20260930",
+      "reportedRevision": "f8982a04",
+      "scope": "core baseline failures and type guards",
+      "access": "do not read or write"
+    },
+    {
+      "checkout": "/Users/t/Projects/rox-roadmap-recovery-20260930",
+      "owner": "recovery worker",
+      "branch": "fix/roadmap-recovery-20260930",
+      "base": "40391c08",
+      "scope": "orphan roadmap hardening",
+      "access": "do not read or write"
+    }
+  ],
+  "reportedMain": {
+    "revision": "f632",
+    "coreTestFailures": 3,
+    "coreTypeErrors": 13,
+    "webUiTypeErrors": 52,
+    "serverTypeErrors": 8,
+    "liveVerificationInThisCheckout": false
+  },
+  "reportedExternalDeliveryGates": [
+    "selfhost macos-toolchain runners offline; recovery root isolates CI repair",
+    "Vercel Account is blocked; not a compound implementation completion"
+  ],
+  "nextAction": "Review and integrate ready WP-01 durable queue, rebuild and conduct actual native gates; independently continue WP-48; start descendants only when dependencies close."
+}

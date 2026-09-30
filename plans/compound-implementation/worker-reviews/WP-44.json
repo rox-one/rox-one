@@ -1,0 +1,493 @@
+{
+  "task_id": "WP-44-preflight",
+  "attempt_id": "5753620f6b91e11bd3dcb11a8e741173",
+  "packet_hash": "41609df7c5c301e4fe157fc2e87554ea2a28321f2fbc6da4987fab10bd47ec9c",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-44",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report artifact only",
+  "workTier": "bounded-workflow inside the lead's dispatched preflight pool",
+  "dependencies": ["WP-39", "WP-15"],
+  "dependencyReceiptsRequired": {
+    "WP-39": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"],
+    "WP-15": ["accepted typed interface", "applied migration or N/A receipt", "scenario verification receipt"]
+  },
+  "evidenceBoundary": {
+    "basis": "Working-tree source inspection, not a clean HEAD snapshot or runtime acceptance. input_revision is dispatch lineage; inspected whole-file SHA-256 values identify actual source bytes.",
+    "implementationStarted": false,
+    "runtimeVerificationExecuted": false,
+    "buildsTestsNativeUiNetworkOperationsExecuted": false,
+    "staleness": "Hashes are supplied for lead validation. Root wave0 integration may invalidate individual references; a changed hash requires rereading that seam before implementation, not silently relabelling evidence as current.",
+    "staleEvidenceHistory": [{"path": "packages/shared/src/protocol/dto.ts", "previousSha256": "9715263692a742a23936b0068ddc1e56d09a2be27c682371df67ec5de9d7a6ce", "currentSha256": "30fa78f688e035c3ad38b0c1280418c81108b7c7a0ed12939472b32ecc0ade8a", "observation": "First dispatch validator failed because this whole file changed concurrently. FileAttachment lines 625-634 were reread from the new snapshot and are unchanged at the inspected seam; other changes in the file were not audited. Original hash remains explicitly stale evidence, current source reference is rebound only after the seam reread."}],
+    "discoveryLimitations": [
+      "Codegraph reported no .codegraph index for this checkout; no index was created.",
+      "Descriptive find failed because its judgment provider returned 402. Literal searches and direct reads supplied the actual evidence instead; that failure is not evidence of absent viewers.",
+      "Scoped glob reported the normative files-domain directories, WP-44 migration and test path absent at inspection. Future dependency modules are specified interfaces, not observed implementations.",
+      "No accepted dependency receipts were inspected or assumed. Implementation remains behind the lead's wave0 commit and both explicit dependency receipts."
+    ]
+  },
+  "foundationGates": [
+    {
+      "gate": "Canonical identity, transport principal and resource ACL",
+      "relationship": "Transitive foundation through WP-39, not an additional explicit WP-44 DAG edge",
+      "producers": ["WP-01", "WP-02", "WP-03"],
+      "evidence": "work-packages.json:35621-35625 and 39836-39839; files.ts:40-46,62-84,114-120; handlers/utils.ts:56-66,92-162",
+      "requiredReceipt": "WP-39 must expose actor-authorized canonical file/revision resolution, linked-source authorization and signed/download/preview access. Directory allowlisting is local filesystem safety, not shared resource policy. Reject forged actor/workspace and do not derive shared identity from an absolute path."
+    },
+    {
+      "gate": "One transaction for revision, command receipt and outbox; replay inbox and policy fence",
+      "relationship": "WP-04 is transitive; full single-writer and revocation fencing is a published foundation requirement, not a new explicit WP-44 dependency",
+      "producers": ["WP-04", "WP-05", "WP-51"],
+      "evidence": "21-implementation-plan.md:65-121,1020-1036; 22-test-plan.md:7-9,197-222; work-packages.json:40358-40384",
+      "requiredReceipt": "Accepted command/transaction/outbox ports, durable replay cursor and shared/standalone writer-mode routing must cover legacy file/project entry points. Do not add a second file receipt store or permit shared writes through local project assets. Offline annotations/code drafts must survive reload and be reauthorized on replay."
+    },
+    {
+      "gate": "Accepted anchor encoding and existing common discussion/revision ownership",
+      "relationship": "Provided by explicit WP-15, with transitive WP-10/WP-08 and editor/fence foundations; a hidden contract detail beyond a dependency title",
+      "producers": ["WP-15", "WP-10", "WP-08", "WP-49", "WP-51"],
+      "evidence": "work-packages.json:12410-12412,12443-12449; 21-implementation-plan.md:180-198,984-1000; work-packages.json:40080-40119,40344-40347",
+      "requiredReceipt": "Reuse WP-15 DocumentAnchor, common Message discussion and immutable revision ports. Settle PDF region/media span string encoding, schema version handling, orphan behavior and ownership of comment_anchor/document_revision before WP-44 migration; these are not a license to create a files-only comment store."
+    },
+    {
+      "gate": "Full completeness integrations are not covered by five headline scenarios alone",
+      "relationship": "Published DoD obligations; preserve the exact two explicit edges rather than inventing direct scheduling dependencies",
+      "producers": ["WP-06", "WP-07", "WP-09", "WP-36"],
+      "evidence": "work-packages.json:39899-39921; 22-test-plan.md:197-222; 21-implementation-plan.md:104-178,736-753",
+      "requiredReceipt": "Accepted search/extraction, mention, recipient attention/activity and agent-domain registration ports or an explicit lead integration assignment. Search/permissions/agent and annotation mention effects remain missing until implemented and exercised; no N/A for unavailable mechanisms."
+    },
+    {
+      "gate": "Real shared runtime and licensed parser/codec artifact",
+      "relationship": "Operational and release prerequisites omitted from explicit WP-44 edge list",
+      "producers": ["WP-52", "WP-48"],
+      "evidence": "21-implementation-plan.md:965-982,1038-1055; work-packages.json:39878-39879,39923-39924; PDFPreviewOverlay.tsx:13-23",
+      "requiredReceipt": "Authenticated two-client PostgreSQL/object-storage environment with readback and restart controls; exact parser/media dependency license and build-artifact audit. WP-44 does not require LiveKit merely to seek an attached video. Existing pdf.js worker proves decoding placement, not parser sandbox security or licensing approval for new dependencies."
+    },
+    {
+      "gate": "Spec gaps in auxiliary operation schemas and private viewer preferences",
+      "relationship": "Contract clarification needed within WP-44; not an added package edge",
+      "producers": ["WP-39", "WP-15"],
+      "evidence": "work-packages.json:39830-39831,39943-40141,40342-40376",
+      "requiredReceipt": "The record fully schemas file.annotate but only names OpenFileViewer/SaveCodeRevision/SeekVideo. Lead must accept precise DTOs/authority placement, seek units and bounds, binary revision publication/CAS, private principal-scoped preference persistence and anchor codec. Anchor schema allows minimum 0 while persisted rows require schema_version >0: preserve wire rejection/migration policy explicitly rather than silently changing the schema."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/workspace-domain/files/contracts.ts",
+    "apps/workspace-service/src/modules/files/commands.ts",
+    "apps/workspace-service/src/modules/files/repository.ts",
+    "tests/macro-integration/wp-44.test.ts",
+    "apps/workspace-service/migrations/44-domain-contract.sql"
+  ],
+  "newFileOwnershipNotes": [
+    "These are exactly the normative newFiles, not files created by this preflight. The first three are also WP-39 newFiles and must be extensions of its accepted single-owner modules after dependency completion.",
+    "44-domain-contract.sql is a proposed identifier. Use the selected migrator's generated actual filename; reconcile existing anchor/revision tables with WP-15 and never recreate them independently.",
+    "No additional video viewer directory, annotation store, notification store or parallel file surface is proposed. Extend the existing preview dispatch/overlay mechanism."
+  ],
+  "proposedContribution": [
+    {
+      "path": "packages/shared/src/workspace-domain/files/contracts.ts",
+      "change": "Extend WP-39 contracts with strict file.annotate payload {file,anchor,body}; body length 1..10000 and additionalProperties false. Reuse accepted Rox2EntityRef/DocumentAnchor/RoxCommand v2/result and error vocabulary. Add typed OpenFileViewer, SaveCodeRevision and SeekVideo DTOs/ports after lead acceptance. Proposed names are new symbols, not existing code. No filesystem/database/service I/O in contracts."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/files/commands.ts",
+      "change": "Extend the accepted files command/query implementation: annotate against immutable source revision through common discussion/anchor ports; save code with mandatory expectedRevision and new immutable revision; read authorized viewer descriptor including provenance; validate finite bounded seek against media revision/duration without changing shared content for a private playback preference. Authenticate from transport, reject actor fields, recheck file/source/annotation/share refs and current policy fence. Commit effect, canonical receipt and outbox through existing transaction gateway."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/files/repository.ts",
+      "change": "Reuse WP-39 file/object identity and WP-15 anchors/revisions. Persist revision-linked extraction/preview job input hash, state, retries and output provenance; immutable original binary version and separate derived preview/API rendition; private preferences keyed by principal/workspace/file/revision as accepted. Extend transaction/outbox/inbox ports rather than implementing parallel infrastructure; provider adapters remain composition-root owned."
+    },
+    {
+      "path": "apps/workspace-service/migrations/44-domain-contract.sql",
+      "change": "Add only missing files-specific columns/indexes and file_preview_job after accepted dependency migrations; reference the canonical workspace/entity composite key and existing anchor/revision tables. Enforce immutable version identity, positive stored schema version, nonnegative revision, recipient-private preference key, receipt/request-hash uniqueness and consumer event uniqueness via foundation schema. Additive migration/backfill/quarantine and forward-repair rollback, never deletion of accepted recent writes."
+    },
+    {
+      "path": "tests/macro-integration/wp-44.test.ts",
+      "change": "Implement consumer-visible five-scenario assertions plus authorization, conflicting saves, source hash/provenance, hostile/unknown bytes, seek boundaries, policy revoke, replay dedup and crash-after-commit recovery. Use seed 20260974, W1/A owner/B member/C outsider and PRIVATE_WP-44. Test real authority/API state, not copies or source strings. Future UI evidence uses real existing surfaces and revision-bound artifacts; no tests were run by this preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/files.ts",
+      "symbol": "HANDLED_CHANNELS / registerFilesHandlers",
+      "change": "Register domain.file.annotate and accepted viewer/code-revision/seek query-command routes through the existing domain authority gateway. Resolve transport principal and workspace; reject forged body actors and mismatched refs. For READ/READ_BINARY/READ_DATA_URL/READ_PREVIEW_DATA_URL and attachment paths, resolve shared file aliases via WP-39 current ACL/version before any bytes or metadata; retain validateFilePath only for explicit standalone authority. Route STORE_ATTACHMENT shared IDs to accepted upload/finalize instead of local randomUUID writes; preserve local thumbnail and conversion mechanisms as derived renditions, not shared writers.",
+      "reason": "Current handlers validate directories and read bytes by absolute path; only READ/STORE have native liveness checks. That is not per-resource shared authorization or code revision CAS. STORE currently replaces decoded original image bytes during resizing (332-372)."
+    },
+    {
+      "path": "packages/shared/src/projects/storage.ts",
+      "symbol": "listProjectAssets / uploadProjectAsset / deleteProjectAsset / getProjectAssetsPath",
+      "change": "At the accepted writer-mode adapter boundary, return WP-39 canonical file refs, immutable revision and attachment/source relation in shared projections; upload/attach/delete shared IDs only through authoritative domain commands. Keep existing on-disk standalone storage and sanitizer, but never generate independent shared identity from basename/absolutePath or copy-as-new when attaching an existing canonical file. Shared rendering uses authorized descriptors, not raw paths.",
+      "reason": "Asset records currently consist of filename/mime/mtime/absolutePath; collision handling copies into suffixed files and delete unlinks the local path. Annotation/source/revision semantics cannot be layered as a second authority here."
+    },
+    {
+      "path": "packages/shared/src/pages/share-bundle.ts",
+      "symbol": "BuildPageShareBundleOptions / PagePublicManifest / buildPageShareBundle",
+      "change": "Accept only an explicit authority-approved file/annotation export DTO when a Page share includes viewer content. Recheck all linked source/file/revision/annotation permissions and expiry at the authenticated publication/read boundary; serialize approved refs and anchor/source revisions field-by-field, never grants, local paths, viewer preferences or cached private annotations. Preserve script-grant refusal, view-only acknowledgment, includeData opt-in and byte caps. Do not claim bundle field allowlisting sanitizes index.html or makes public copies revocable.",
+      "reason": "Current bundle has no file/annotation authorization port and publishes HTML bytes verbatim. Public-link versus authorized annotation sharing must be explicit; a link cannot grant source access."
+    },
+    {
+      "path": "packages/ui/src/components/overlay/PDFPreviewOverlay.tsx",
+      "symbol": "PDFPreviewOverlayProps / PDFPreviewOverlay / Page rendering",
+      "change": "Extend existing overlay with typed canonical context, authorized revision-scoped annotations and callbacks to create/read anchored comments via the accepted file.annotate adapter. Convert displayed region/page coordinates through the accepted WP-15 pdf_region codec and retain sourceRevision. Show read-only/editor/share capabilities and verified receipt/conflict/denied states, cancel pending loads on revision/policy changes, and clear fetched annotations on revocation. Preserve react-pdf worker, page text/rendering and ItemNavigator.",
+      "reason": "renderAnnotationLayer renders PDF's embedded annotation layer; no user domain annotation CRUD/share/read persistence or ACL currently exists in this component."
+    },
+    {
+      "path": "packages/ui/src/components/overlay/CodePreviewOverlay.tsx",
+      "symbol": "CodePreviewOverlayProps / CodePreviewOverlay",
+      "change": "Add a capability-controlled edit draft and save callback carrying canonical ref/base revision; retain existing Shiki read path. SaveCodeRevision must show applied only after canonical readback, preserve the user's draft on REVISION_CONFLICT and offer reload/explicit new-base resolution without silent overwrite. Keep tool-output previews read-only unless a real authorized file descriptor is supplied. Local offline drafts use the accepted projection/outbox adapter, not component-only persistence.",
+      "reason": "mode write only selects badge/icon/error text and the component always renders ShikiCodeViewer; it is not a code editor or revisioned save."
+    },
+    {
+      "path": "packages/ui/src/components/overlay/ImagePreviewOverlay.tsx",
+      "symbol": "ImagePreviewOverlayProps / contentCache / loadDataUrl effect",
+      "change": "Use authorized canonical file+revision+policy context for shared loads/cache keys; clear presentation/cache on revoke or changed context, display original-versus-derived provenance and private view preferences through accepted adapter. Preserve current zoom/pan/item navigation and cancellation logic. Translate new and touched error/state text with the existing t() convention.",
+      "reason": "Image data/dimension caches are indexed only by source path. Existing zoom/pan works at code level but cannot establish shared identity or current authorization by itself."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useLinkInterceptor.ts",
+      "symbol": "FilePreviewState / LinkInterceptorOptions / handleOpenFile / buildInitialTextState",
+      "change": "Extend existing state with canonical context/source refs/revision, authorized capability and loading/error/offline state; resolve shared viewer descriptors before classification or metadata. Introduce video/download variants in the same flow; unknown shared formats must offer authorized download rather than automatically invoking openFileExternal. Dispatch source-preserving opens from existing attachments/assets. Keep explicit standalone external-open behavior. Prevent older async read completion from replacing a newer file/revision or revoked descriptor.",
+      "reason": "Current state carries filePath only, text reads occur before any loading UI, and nonpreviewable paths are immediately opened in the system application."
+    },
+    {
+      "path": "apps/electron/src/renderer/App.tsx",
+      "symbol": "FilePreviewRenderer / linkInterceptor binding",
+      "change": "Wire canonical viewer descriptor, annotation/save ports, original-source context and policy invalidation into existing PDF/code/image overlays. Add native video controls inside the existing PreviewOverlay mechanism with authorized media loader, metadata-ready seek and revision-scoped position; unknown/download branch uses WP-39 SignedDownload or explicit standalone save. Provide loading/empty/denied/offline/retry/applied states without opening a second Files destination.",
+      "reason": "Current switch only has image/pdf/code/text/markdown/json and default returns null; it cannot display a video or safe unknown-format download. No video component is claimed to exist."
+    },
+    {
+      "path": "packages/ui/src/lib/file-classification.ts",
+      "symbol": "FilePreviewType / classifyFile / EXTERNAL_EXTENSIONS / FILE_EXTENSIONS_PATTERN",
+      "change": "Add a video classification for accepted browser-playable media capability, preserve extension pattern/link discovery and keep unsupported codecs download-only. Extension recognition selects presentation only; authoritative WP-39 MIME/size/quarantine policy decides whether a shared preview is safe. Unknown bytes must never be rendered as active HTML/script or auto-launched.",
+      "reason": "Video extensions are explicitly external-only and FilePreviewType excludes video. Filename extensions are not content validation."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "symbol": "refreshAssets / assets.map rendering",
+      "change": "Make existing asset title an accessible open action into the same viewer using canonical file/revision and attachment Project source, with explicit standalone path adapter. Render asset list loading/denied/retry states separately from genuinely empty, retain upload/delete controls under write capability and show authorized original provenance.",
+      "reason": "Assets currently render filename/KB/mime with only a delete button; the open folder action elsewhere is not a contextual asset viewer. refreshAssets logs failure without an explicit denied/error state."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/files/FileViewer.tsx",
+      "symbol": "FileViewerProps / FileViewer useEffect",
+      "change": "For shared file navigation accept canonical descriptor and delegate to the same contextual preview rendering/authority ports rather than reading all formats as UTF-8. Preserve standalone text view. Display typed loading/empty/denied/conflict states and guard async results against selection/revision/revocation changes.",
+      "reason": "Current FileViewer reads window.electronAPI.readFile(path) and shows a preformatted string; path header can reveal metadata before shared authorization and the async effect has no cancellation guard."
+    },
+    {
+      "path": "packages/core/src/types/message.ts",
+      "symbol": "StoredAttachment",
+      "change": "Coordinate with WP-39 to carry canonical file ref/version and source relation alongside explicit standalone metadata; keep original immutable asset versus thumbnail/markdown/API rendition distinguishable. Do not conflate existing message AnnotationV1 with WP-15 document anchors or use its local session thread as the shared discussion store.",
+      "reason": "StoredAttachment currently exposes random id and paths but no canonical ref/sourceRevision. Original size alone cannot recover bytes replaced by STORE_ATTACHMENT resizing."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "FileAttachment",
+      "change": "Extend the WP-39 accepted attachment/viewer transport DTO for canonical refs and immutable revision/provenance; a video MIME must be handled without assuming the current type union includes video. Import accepted files-domain schemas rather than duplicating request validation or accepting body actor fields.",
+      "reason": "Current union is image/text/pdf/office/audio/unknown and uses a path plus optional base64/text. Shared file identity and video semantics need an explicit transport representation."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.file",
+      "change": "Coordinate registration of the normative domain.file.annotate route and accepted viewer/save/seek routes with the foundation domain gateway; reuse its names if already registered after wave0. Do not create a parallel file-only mutation channel that bypasses RoxCommand v2.",
+      "reason": "Inspected file channels expose reads/store/thumb/dialog only, no annotate or revisioned edit."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "file workspace-routing entries",
+      "change": "Ensure accepted domain file viewer/query/annotate/save routes are workspace-routed with actor/workspace mismatch rejection in the existing routing mechanism, and preserve the native file-dialog separation. Align generated/client transport bindings through the root integration owner after dependency ports are known.",
+      "reason": "Current file workspace routing covers legacy path readers/store only; new domain routes must reach the same authenticated authority."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-44",
+      "change": "Document accepted shared/standalone authority, auxiliary API schemas, anchor encoding, video units/codecs, private preferences, source/rendition preservation and actual dependency ownership; retain NOT_VERIFIED until live evidence is accepted.",
+      "reason": "Published section names the additional operations but does not define their concrete DTOs or runtime integration."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "Notes/Files regression row / feature completeness checklist / evidence receipt record",
+      "change": "Add exact WP-44 live scenario, conflict/seek/revoke/download/recovery assertions and version-bound receipt locations once exercised; record source/revision/hash and negative-control failures without private content.",
+      "reason": "Existing test plan is normative future acceptance, not a runtime proof of the five viewer requirements."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "PDF annotation share/read authorization",
+      "currentEvidence": "PDFPreviewOverlay:30-41,76-109,144-157 loads raw PDF and renders embedded annotation layer; files.ts:114-120 directory-validates binary reads; share-bundle.ts:122-159,193-213 publishes an allowlisted Page manifest with raw HTML. None of these implement shared anchored annotation policy.",
+      "requiredChange": "Implement file.annotate through accepted files command/transaction ports and WP-15 anchor/common discussion; extend PDF overlay to create/read revision-bound region annotations and share only explicitly authorized file+annotation+source refs. Recheck linked-source ACL and public-share policy before serialization/read; never broaden read through a Page link.",
+      "verification": "Future W1/A annotates known page region; B with read sees exact anchor/body and same source revision after reload; viewer cannot annotate/share without grants; C/Agent-V allow-all/forged workspace cannot obtain bytes, filename, counts or annotation body. Revoke B while PDF open and during share/read request, then reload; no future fetch/event. Explicit share receipt and authorized readback must match canonical annotation ID/revision.",
+      "missingPrerequisite": "Wave0 commit; accepted WP-39 file/ACL/share ports and migrations; WP-15 anchor codec/discussion/history ports and receipts; chosen PDF region coordinates and share authority boundary.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "code edit version conflict",
+      "currentEvidence": "CodePreviewOverlay:15-41,67-106 exposes a read/write display badge and ShikiCodeViewer only; App FilePreviewRenderer:2339-2351 always supplies mode read; projects/storage.ts:418-457 directly writes a filename without expectedRevision.",
+      "requiredChange": "Add capability-gated editable draft/save in existing code overlay. SaveCodeRevision validates canonical file/base revision, performs atomic CAS through existing command gateway and publishes a new immutable revision+document.revision_created. Return REVISION_CONFLICT without replacing winner or losing loser draft; preserve receipt/idempotency and read-only tool previews.",
+      "verification": "Future A/B open revision r; A saves content A producing r+1; B saves content B against r and receives typed conflict, content A remains current and B draft survives reload. Explicit rebase then succeeds once. Same idempotency key/payload returns same revision/receipt; changed payload conflicts; viewer/outsider denied before bytes written.",
+      "missingPrerequisite": "Accepted WP-39 immutable file revisions and WP-15 document revision ownership; foundation CAS/receipt port and private durable drafts; accepted SaveCodeRevision schema.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "video seek",
+      "currentEvidence": "file-classification.ts:10,72-81,100-112 puts mp4/mov/avi/mkv in external-only; useLinkInterceptor:147-150 opens nonpreviewable files externally; App FilePreviewRenderer:2316-2420 has no video branch.",
+      "requiredChange": "Extend the same preview state/renderer with native video controls and authorized revision-specific media source. SeekVideo uses accepted finite time units/bounds and media_span sourceRevision, seeks after metadata readiness, verifies actual playback position/frame and persists only actor-private viewer preferences; unsupported codec is safe download, not false playable.",
+      "verification": "Future known-duration, known-frame fixture: seek a chosen timestamp via UI and authorized context API; observe currentTime within fixture tolerance plus expected decoded frame, then reload and confirm accepted private position behavior. Reject NaN/Infinity/negative/out-of-range according to accepted schema; expired/revoked media source denies new access; unsupported/corrupt media shows recoverable/download state.",
+      "missingPrerequisite": "Accepted SeekVideo DTO/units/range policy, browser codec capability and WP-39 authorized media delivery; private preference port/migration and real fixture/runtime.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "attachment source preserved",
+      "currentEvidence": "StoredAttachment:234-246 holds paths/random id; files.ts:260-264 creates a new UUID and 332-372 overwrites decoded image with resized bytes before storage; projects/storage.ts:431-457 copies content and exposes absolutePath; preview state carries only filePath.",
+      "requiredChange": "Use WP-39 single canonical file identity and attachment/source relation through Project/chat/Page viewer opens. Retain immutable original bytes/checksum and source revision; thumbnail/converted Markdown/API resize are derived renditions referencing that version. Carry source ref/revision into viewers and authorized return navigation; recheck source ACL without implying grants.",
+      "verification": "Future attach one file to chat/Page/Project and open each route: canonical file ID/version/original checksum agree, source origin is correct and navigation returns to the selected origin. Resize/conversion does not change original checksum. Rename/move preserves alias identity; denied/deleted source renders bounded authorized fallback without title leakage. Reload reproduces origin.",
+      "missingPrerequisite": "WP-39 accepted canonical identity/attachment aliases/original rendition persistence; typed StoredAttachment/ProjectAsset projection context and root-owned caller migration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "unknown format safe download",
+      "currentEvidence": "classifyFile:100-112 returns no preview for unknown extension; useLinkInterceptor:147-150 automatically calls the external opener. files.ts:71-84 uses application/octet-stream fallback for image data URL but has no safe-download domain contract.",
+      "requiredChange": "For shared unknown/unsupported formats render explicit download fallback in existing viewer with WP-39 authorized SignedDownload, sanitized filename, non-executable attachment disposition and content-type/nosniff delivery. Never parse unknown bytes as HTML or auto-open an executable. Explicit standalone external-open remains distinct from download.",
+      "verification": "Future benign unknown extension downloads byte-identical original; hostile HTML/SVG/polyglot and executable disguised extension do not execute or auto-launch; safe filename and disposition observed. C, forged ref, revoked/expired URL get no filename/blob metadata/bytes; quarantine/corrupt conversion still permits only policy-authorized safe original download.",
+      "missingPrerequisite": "WP-39 accepted MIME/quarantine/download response policy, signed URL expiry/revoke receipt and native/web save adapter at existing authority boundary.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "UI",
+      "currentEvidence": "PDF/image/code overlays and App FilePreviewRenderer exist; ProjectInfoPage:453-468 displays asset name and delete only.",
+      "requiredChange": "Extend those surfaces with contextual origin, annotations/edit/seek/download and capabilities, accessible asset open action, Russian t() strings and existing overlay motion/focus mechanisms. No second Files destination.",
+      "verification": "Future actual Electron/web interaction and visual/ARIA evidence for each file kind, hover/focus/help, keyboard, loaded font and reduced motion on the exact implementation artifact.",
+      "missingPrerequisite": "Accepted viewer adapters and lead-owned UI integration/runtime.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "routing",
+      "currentEvidence": "useLinkInterceptor FilePreviewState:28-73 identifies files by path; App:2301-2422 is existing dispatcher.",
+      "requiredChange": "Resolve canonical file ref/revision plus authorized attachment/source in existing navigation and preview dispatcher; preserve history/back/panel focus and standalone aliases.",
+      "verification": "Future open same file through attachment and asset/deep-link, rename then reopen, back to origin; denied/missing refs do not leak title or fall into raw path reader.",
+      "missingPrerequisite": "WP-39 accepted alias/ref resolver and existing navigation adapter integration.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "entity model",
+      "currentEvidence": "WP-44 spec:39825-39831 names file/document/comment_anchor; StoredAttachment and local asset results have no canonical domain ref.",
+      "requiredChange": "Extend accepted files contracts with typed scoped identity and anchor/source revision; reference common entity/revision/anchor rather than duplicate tables or title-based identity.",
+      "verification": "Future same file identity across surfaces, alias collision quarantine, cross-workspace rejection, anchor source revision survives immutable code/PDF versions.",
+      "missingPrerequisite": "Accepted WP-39/WP-15 models and foundation registry.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence",
+      "currentEvidence": "Local STORE_ATTACHMENT/project asset writes are direct filesystem operations; normative migration:40344-40384 requires anchored comments, revisions and preview jobs.",
+      "requiredChange": "Single authoritative transaction for annotation/revision/receipt/outbox; additive migration extends existing dependency tables, immutable blobs and private preferences; durable drafts use accepted shared projection adapter.",
+      "verification": "Future reload/second client/restart between commit and reply retains identical entity/receipt/current revision/original hash and one effect; applied migration readback and rollback/forward-repair exercise preserve accepted writes.",
+      "missingPrerequisite": "Accepted selected migrator, WP-39/WP-15 schema receipts, transaction and object storage ports.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "commands",
+      "currentEvidence": "Spec:39945-39951,40129-40141 requires file.annotate transport/auth/idempotency/revision and typed errors; legacy file channel list has no such command.",
+      "requiredChange": "Implement strict file.annotate and accepted SaveCodeRevision/SeekVideo ports in existing domain gateway; reject actor extras, workspace mismatch, unsupported anchor schema, stale revision and changed-key payload; use CRDT frontier/fence where applicable, not scalar CAS over CRDT content.",
+      "verification": "Future positive API/native mutation plus unauthenticated/forged actor/workspace, payload boundary, stale revision, replay hash conflict, fence pending and unavailable cases yield exact statuses with no unauthorized side effect.",
+      "missingPrerequisite": "Accepted command gateway and auxiliary DTOs.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "queries",
+      "currentEvidence": "files.ts reads raw path content; spec:40123-40127 demands authorized typed DTO with no hidden total/title.",
+      "requiredChange": "OpenFileViewer and annotation/revision list queries use canonical authority, current file/source/comment ACL and bounded stable authorized cursors; serialize only allowed metadata.",
+      "verification": "Future permission-filtered paginated results, forged/expired cursor, hidden annotation counts/titles absent and revoke between pages rejected; original binary and extraction revision agree.",
+      "missingPrerequisite": "WP-39 query/file resolution ports and WP-15 authorized anchor/revision queries.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "realtime where needed",
+      "currentEvidence": "Spec:39832-39835,39853-39855 requires file.text_extracted/document.revision_created and revisioned invalidation/replay; inspected viewers are local component state.",
+      "requiredChange": "Write required events transactionally and consume via accepted durable inbox/cursor, dedup by consumer/event, enforce revision/policy/tombstone fences, invalidate revision-sensitive UI/cache and reauthorize subscriptions.",
+      "verification": "Future two clients observe revision/extraction after watermark; duplicate/out-of-order/drop then replay never duplicates or resurrects stale content; reconnect repairs gap and revoked client gets no new metadata.",
+      "missingPrerequisite": "Accepted outbox/inbox/replay delivery and projection adapters.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "permissions",
+      "currentEvidence": "handlers/utils.ts:92-162 checks filesystem allowlists/sensitive names; spec:39836-39839 requires actor/resource policy and agent allow-all non-bypass.",
+      "requiredChange": "Authorize read/annotate/edit/share/download/subscription per canonical resource and each linked source, with transport principal and policy epoch; explicit standalone only. Fence legacy path reads/writes for shared refs.",
+      "verification": "Future A/B/viewer/outsider/Agent-V allow-all matrix plus forged actor/workspace/revoked token/alias and race cases; assertions cover bytes, filename, snippet, count, event and command denial.",
+      "missingPrerequisite": "WP-39 accepted ACL delivery and WP-51 writer/revoke fence coverage.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "sharing",
+      "currentEvidence": "buildPageShareBundle:122-213 has view-only action acknowledgment/script refusal/size caps; no file annotation grants or expiring authorized file refs.",
+      "requiredChange": "Reuse accepted explicit grant/share policy for file plus annotation source revision; enforce expiry and linked-source policy at share creation and subsequent reads, separate intentional public byte copy from revocable authenticated link. Preserve raw-HTML containment contract.",
+      "verification": "Future authorized reader sees explicitly shared annotation only, no preferences/grants/local paths/private marker; outsider/expired/revoked link denied. Page share does not expand linked attachment rights.",
+      "missingPrerequisite": "WP-39 shared file download/share policy and lead acceptance of PDF annotation publication boundary.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "search",
+      "currentEvidence": "Spec:39831-39835 requires text extraction; 22-test-plan:210 requires extractor/upsert/delete/current ACL/watermark. No domain extractor/index port is present in inspected viewer mechanisms.",
+      "requiredChange": "Version/hash-keyed preview/extraction jobs emit file.text_extracted through outbox and update existing authorized search projection with canonical original-source refs; revision/delete/revoke invalidate derived content.",
+      "verification": "Future known PDF/code text searchable after exact watermark, updated code removes stale hit, deleted/revoked file never leaks filename/snippet even before index catch-up; worker crash replay retains one extraction effect.",
+      "missingPrerequisite": "Accepted WP-06 projection/extractor ports and WP-39 original-object access with parser sandbox policy.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "mentions",
+      "currentEvidence": "file.annotate body and WP-15 common discussion anchor are normative; 22-test-plan:211 requires occurrence/source revision/target policy, not an exemption for new viewers.",
+      "requiredChange": "Pass annotation discussion body through accepted common mention extraction/linking port, keeping occurrence tied to source/comment revision and authorized target; no implicit share from text mention.",
+      "verification": "Future @B annotation resolves authorized target and retains source anchor; edit/remove changes occurrence/backlink; unauthorized target hidden and mention never grants file/source access.",
+      "missingPrerequisite": "WP-15 common discussion adapter plus accepted WP-09 mention port; no files-only mention store.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "notifications",
+      "currentEvidence": "22-test-plan:212 requires recipient policy/dedup/seen/done/mute/snooze; inspected viewer code has no durable notification mechanism.",
+      "requiredChange": "Annotation reply/mention effects use common recipient attention policy/outbox, dedup overlapping reasons, recheck current file/source read at delivery and keep per-recipient read state.",
+      "verification": "Future permitted B receives one anchored deep-link notification after duplicate event/restart; C/revoked B receives no title/body; seen/done and mute/snooze survive reload according to accepted common policy.",
+      "missingPrerequisite": "Accepted WP-07 attention and WP-15 discussion event adapters.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "activity",
+      "currentEvidence": "Spec:39883-39893 and 22-test-plan:213 require cause/revision/privacy; files.ts logs local failures rather than domain activity.",
+      "requiredChange": "Emit authorized annotation/code-revision/extraction activity through existing audit/activity port with actor/cause/aggregate revision and no raw private bodies or paths in shared logs.",
+      "verification": "Future activity readback matches command/entity/revision, duplicate replay yields one semantic entry, outsider filtered and privacy marker absent from captured logs.",
+      "missingPrerequisite": "Accepted common event/activity port and audience policy.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "agent access",
+      "currentEvidence": "Spec:39839,39913 mandates no agent allow-all ACL bypass and agent completeness; future WP-36 registers domain actions (21-implementation-plan:738-753).",
+      "requiredChange": "Request registration of file viewer/read/annotate/code revision/seek context actions in common agent domain dispatcher using acting principal, same commands/results and immutable source provenance; do not expose raw shared filesystem writes.",
+      "verification": "Future native Agent-A reads/annotates permitted exact revision and source citation; Agent-V allow-all cannot write/share/read denied linked source; stale save returns same conflict as UI; transcript provenance remains authorized.",
+      "missingPrerequisite": "Accepted agent-domain registration/delegation port; lead-owned agent integration seam not inspected outside WP-44 scope.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "currentEvidence": "Spec:39947-39951 explicitly names HTTP POST /v1/workspaces/{workspaceId}/commands/file.annotate and nativeRpc domain.file.annotate.",
+      "requiredChange": "Expose those transports and accepted auxiliary operations through common authority; MCP/native agent adapters must delegate identical typed DTO/policy/idempotency/revision behavior, not echo local reader result.",
+      "verification": "Future HTTP/native/MCP same authorized action returns matching canonical ID/receipt; forged actor/workspace/stale revision and unsupported schema rejected consistently with no side effects.",
+      "missingPrerequisite": "Accepted service composition/authenticated transport and agent/MCP adapter registration; exact foundation symbols await receipts.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "observability",
+      "currentEvidence": "Spec:39883-39893 lists commandId,causationId,correlationId,aggregateRevision,policyEpoch,projectionWatermark,retry/DLQ counters and log privacy.",
+      "requiredChange": "Propagate these fields through annotate/save/extraction/viewer errors and replay; expose preview extraction backlog/retry/DLQ via existing metrics without raw body/token/transcript/email logging.",
+      "verification": "Future trace reconstructs command-to-event-to-projection, counters reflect induced preview failure/retry/DLQ, denial/fence visible and PRIVATE_WP-44/credentials absent in logs.",
+      "missingPrerequisite": "Accepted foundation tracing/metrics and durable job counters.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "tests",
+      "currentEvidence": "WP-44 test path absent during scoped inspection; spec:39857-39868 requires integration, meaningful seeded negative and restart recovery, not only rendering fixtures.",
+      "requiredChange": "Add normative wp-44.test.ts with five consumer scenarios plus auth/conflict/provenance/boundary/replay/recovery; preserve deterministic seed and sensitive controls. Root runs relevant existing regressions and real UI scenarios after integration.",
+      "verification": "Future bun test tests/macro-integration/wp-44.test.ts and relevant existing file/asset/share tests, followed by actual changed Electron/web UI and command readback; record exact dirty patch/source artifact/schema hashes. No build/test/UI run in this preflight.",
+      "missingPrerequisite": "Wave0 and accepted dependencies integrated; executable shared environment and test fixtures.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "documentation",
+      "currentEvidence": "21-implementation-plan:885-903 and 22-test-plan exist as future plans; they do not document a completed feature or precise auxiliary schemas.",
+      "requiredChange": "Root updates specified docs after exercised behavior with formats/limits, authorization/share scope, code conflict flow, seek units, private prefs, immutable original/source semantics, parser failures/offline/recovery and receipt locations.",
+      "verification": "Future compare documented API/capability/recovery instructions with observed typed responses and UI states on delivered revision; retain missing status for any unexercised requirement.",
+      "missingPrerequisite": "Accepted concrete schemas and actual scenario evidence.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "failure states",
+      "currentEvidence": "PDF/image error strings and FileViewer generic errors exist; spec:39844-39850 demands permission_denied/retryable_error and verified outcome semantics.",
+      "requiredChange": "Map typed authority/parser/codec errors to denied/conflict/quarantine/unavailable/retryable terminal states without showing successful save or clearing draft; clear unauthorized metadata and preserve authorized originals across preview failure.",
+      "verification": "Future corrupt PDF/video, extraction timeout, unsupported codec, missing blob, revoked ACL, stale code save and network failure produce appropriate states; retry does not duplicate commands/jobs/revisions.",
+      "missingPrerequisite": "Accepted error/retry/policy contracts and real parser/media failure controls.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "loading states",
+      "currentEvidence": "PDF/image loaders have isLoading; useLinkInterceptor:139-141,161-166 deliberately waits for text reads before showing overlay, ProjectInfoPage refreshAssets has no explicit load state.",
+      "requiredChange": "Show descriptor/bytes/extraction/code-save pending states immediately for shared remote operations in existing surfaces; distinguish stale content/refetch and receipt pending from empty/applied; guard stale async responses.",
+      "verification": "Future delayed authorized reads and rapid file/revision switches show loading, never old file under new identity; commit pending does not show applied_verified; denial does not flash filename/content.",
+      "missingPrerequisite": "Accepted async viewer/query/receipt state adapter.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty states",
+      "currentEvidence": "FileViewer:41-49 has no file selected; ProjectInfoPage:447-450 uses assets.length 0 as empty; PDF starts numPages 0.",
+      "requiredChange": "Separate no selection, zero annotations/genuine empty text, pending extraction, denied/unconfigured/unavailable and invalid zero-page media, preserving typed state in same viewer/list.",
+      "verification": "Future zero annotations/empty code/no selection display truthful empty state; denied file/list and pending preview never look like genuine empty content; missing media is not successful empty viewer.",
+      "missingPrerequisite": "Accepted descriptor/job/annotation query state definitions.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "currentEvidence": "Inspected overlays keep state in React only; spec:39848,39855 and 22-test-plan:222 require offline queued and replay/rejection.",
+      "requiredChange": "Route code/annotation drafts through accepted durable projection/outbox; preserve source/base revision and idempotency key across restart, reauthorize replay, quarantine revoked draft and repair event gaps. Private playback preference persistence follows accepted offline semantics, not shared content mutation.",
+      "verification": "Future disconnect/edit/reload/reconnect applies once with canonical receipt; concurrent remote save conflicts without losing draft; revoke while offline rejects replay with no shared effect and no unauthorized new preview/event; cursor resumes after restart.",
+      "missingPrerequisite": "Accepted WP-05 replay/draft adapter and WP-51 policy fence propagated through WP-15/WP-39.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "negative-control sensitivity",
+      "currentEvidence": "Spec:39863-39864 and 21-implementation-plan:903 require unauthorized preview metadata control; normative verification also requires independent holdout and distinguishes infrastructure failure from caught mutation.",
+      "requiredChange": "After passing baseline, seed preview descriptor/blob-metadata ACL bypass and dropped/duplicated event separately; require the exact privacy/watermark/uniqueness assertion to fail, then remove mutation. Supply independent evaluator with a second boundary failure holdout.",
+      "verification": "Future PRIVATE_WP-44 metadata leak produces specific outsider-denial failure; dropped event causes missing expected revision/watermark until repaired replay; duplicated event never creates duplicate effect. Baseline infrastructure errors are not counted as caught control.",
+      "missingPrerequisite": "Real accepted baseline and root-owned mutation/independent evaluation harness.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "persistence-recovery crash between persisted command and reply",
+      "currentEvidence": "Spec:39867-39868 requires state/receipt/canonical ID consistency; local filesystem cleanup on STORE_ATTACHMENT error is not command-receipt crash recovery.",
+      "requiredChange": "Use existing transaction receipt/outbox and immutable version/job keys; exercise actual server termination after annotation or code revision commit before response, restart and retry same command without duplicate comment/revision/event/extraction job.",
+      "verification": "Future independent readback proves same canonical ID/requestHash/observedRevision/receiptId, exactly one accepted effect/outbox semantic event and expected projection watermark after replay; original bytes and source anchor unchanged. Repeat before commit to prove no false applied result.",
+      "missingPrerequisite": "Accepted service runner with deterministic crash hook, command gateway and database/object persistence.",
+      "state": "MISSING_NOT_VERIFIED"
+    },
+    {
+      "criterion": "license policy and final verification gate",
+      "currentEvidence": "Spec:39923-39924 requires behavior reimplementation and dependency-only after exact license audit; real changed surface and failure/reload observation, fixture not live receipt.",
+      "requiredChange": "Do not copy Macro viewer implementation. Audit exact added/preserved parser/codec artifacts through accepted compliance gate and bind live UI/API/DB/event/negative-control evidence to implementation SHA/image/schema/dirty patch.",
+      "verification": "Future exact SBOM/notices decision and accepted live scenario receipts; featureComplete remains false for missing integration, unavailable parser/runtime, simulated success or unobserved failure/reload path.",
+      "missingPrerequisite": "Lead's accepted compliance and version-bound real runtime evidence.",
+      "state": "MISSING_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"plans/macro-integration/work-packages.json","symbol":"workPackages[WP-44] normative record","lineStart":39787,"lineEnd":40682,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0","readRanges":[[39787,39958],[39953,40002],[40085,40156],[40340,40405]],"note":"Full normative record was also supplied in dispatch; disk reads focused on obligations, schemas and migration."},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-44; WP-48/WP-49/WP-51/WP-52 foundation gate sections","lineStart":885,"lineEnd":903,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Feature completeness checklist and receipt boundary","lineStart":197,"lineEnd":247,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"},
+    {"path":"packages/server-core/src/handlers/rpc/files.ts","symbol":"HANDLED_CHANNELS / registerFilesHandlers READ_BINARY and STORE_ATTACHMENT","lineStart":24,"lineEnd":454,"sha256":"55136639f9da66bce52cf635ff7ebb74ee0e8d265a75a54117697469fe686b68"},
+    {"path":"packages/server-core/src/handlers/utils.ts","symbol":"getWorkspaceAllowedDirs / validateFilePath","lineStart":56,"lineEnd":163,"sha256":"df9c0503c86dee9045fb42be828fb7a4974055782556b5ecb3182f07d283917d"},
+    {"path":"packages/shared/src/projects/storage.ts","symbol":"listProjectAssets / uploadProjectAsset / deleteProjectAsset","lineStart":372,"lineEnd":499,"sha256":"19ed9f5bf2927e7c7fcc76b8c3b2fa7211c03ccc2b9fc800a1f4e37529857092"},
+    {"path":"packages/shared/src/pages/share-bundle.ts","symbol":"PagePublicManifest / BuildPageShareBundleOptions / buildPageShareBundle","lineStart":76,"lineEnd":214,"sha256":"aa1521109a3a47d544006d149cd9f1eca23c51bff42f14cecb55092738b0e001"},
+    {"path":"packages/ui/src/components/overlay/PDFPreviewOverlay.tsx","symbol":"PDFPreviewOverlayProps / PDFPreviewOverlay","lineStart":30,"lineEnd":164,"sha256":"5846be9f49b65f2b198dea98c16d0e35f038b3816c3342f1aaaf3c397792f400"},
+    {"path":"packages/ui/src/components/overlay/CodePreviewOverlay.tsx","symbol":"CodePreviewOverlayProps / CodePreviewOverlay","lineStart":15,"lineEnd":111,"sha256":"2275a0c7c93a8437c96ac9c0442e1ef6c8935012a4cae3d36de2c7077396a33f"},
+    {"path":"packages/ui/src/components/overlay/ImagePreviewOverlay.tsx","symbol":"ImagePreviewOverlay / contentCache / loadDataUrl effect","lineStart":21,"lineEnd":195,"sha256":"ce892368953efef408e810fd2cd0d20c6c712c2b1a8999a1cd1d0c57a1b762fc"},
+    {"path":"packages/ui/src/lib/file-classification.ts","symbol":"FilePreviewType / EXTERNAL_EXTENSIONS / classifyFile","lineStart":10,"lineEnd":127,"sha256":"e5a6cf26d84070f5a68d8bf5986df9f5891d03ed48c183c21677d6e5ee17a8cc"},
+    {"path":"apps/electron/src/renderer/hooks/useLinkInterceptor.ts","symbol":"FilePreviewState / handleOpenFile / buildInitialTextState","lineStart":28,"lineEnd":253,"sha256":"9220dd333ca1ccc1029b25906bdc34576bcc57177309da63baeb38be30b6242d"},
+    {"path":"apps/electron/src/renderer/App.tsx","symbol":"FilePreviewRenderer","lineStart":2301,"lineEnd":2422,"sha256":"71799285b24263d41da3c60dc5c07ca0b71872911f03ecc5b73506979588ca6e"},
+    {"path":"apps/electron/src/renderer/components/files/FileViewer.tsx","symbol":"FileViewerProps / FileViewer","lineStart":7,"lineEnd":85,"sha256":"62c8607b9ee44de7d2f975c3d2f0b4917a383258a056b359d3c80b3d7d59103f"},
+    {"path":"apps/electron/src/renderer/pages/ProjectInfoPage.tsx","symbol":"refreshAssets / assets.map","lineStart":447,"lineEnd":470,"sha256":"50eff1ed1db446b4cbc9c766f28ebfc60a28be50f713d97a6a786f246ef36d6c"},
+    {"path":"packages/core/src/types/message.ts","symbol":"StoredAttachment","lineStart":234,"lineEnd":247,"sha256":"f37d78960e6e3309b86902133419d89fb841d6564598c23234ec80b7a0ee51ca"},
+    {"path":"packages/shared/src/protocol/dto.ts","symbol":"FileAttachment","lineStart":625,"lineEnd":634,"sha256":"30fa78f688e035c3ad38b0c1280418c81108b7c7a0ed12939472b32ecc0ade8a","note":"Reinspected seam after concurrent whole-file change; previous digest retained in staleEvidenceHistory."},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.file","lineStart":155,"lineEnd":165,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"packages/shared/src/protocol/routing.ts","symbol":"file workspace-routing entries","lineStart":581,"lineEnd":588,"sha256":"f9a3ffeef82eb6edfcd7435de78814db3f1c2b7a1ef0d4f7ef1df007ee399d6e"}
+  ],
+  "nextExecutableAction": {
+    "preflightDelivery": "Lead validates this owned report against its dispatch packet and whole-file hashes; no source integration is performed by this worker.",
+    "implementationGate": "After the lead wave0 commit and accepted WP-39 plus WP-15 typed-interface/migration/scenario receipts, reread changed hashes and claim only dependency-compatible files ownership. First extend WP-39 files/contracts.ts with strict file.annotate using accepted WP-15 anchor codec/common discussion and immutable revision ports; concurrently request root-owned patches listed here. Resolve auxiliary SaveCodeRevision/SeekVideo/private-preference contract gaps before migrations or UI wiring.",
+    "verificationPlan": "Root integrates in dependency order, runs normative integration and relevant regressions once on integrated bytes, then real viewer/API/restart/revoke/conflict/download/seek scenarios and seeded sensitivity controls; capture exact revision/schema/object/receipt/event/watermark artifacts. Do not mark this preflight as feature implementation."
+  },
+  "risks": [
+    "WP-39 and WP-44 name identical contracts/commands/repository paths. Independent creation would overwrite accepted foundation work; one files-domain owner must integrate extensions.",
+    "WP-44 migration names comment_anchor/document_revision also owned conceptually by WP-15; a second schema/comment store would violate one authority. Ownership and actual migrator filename require accepted receipts.",
+    "Existing filesystem allowlists are useful standalone safety, not proof of resource ACL. Legacy path/native/tool readers and writes can bypass shared authority unless the single-writer guard covers them.",
+    "Current image storage resizes original bytes before write; preserving only originalSize is not provenance or immutable binary preservation. Coordinate repair through WP-39 rather than layering another store.",
+    "PDF embedded annotation layer and CodePreviewOverlay write badge are misleading near-matches to domain requirements; neither proves annotation persistence or revisioned editing.",
+    "Shared video seek is currently absent in classifier/dispatcher. Decoder readiness, browser codecs, duration/units, range-capable authorized delivery and unsupported-format fallback need concrete acceptance, not a fake player.",
+    "Annotation anchor strings have no PDF/media encoding specified; schemaVersion minimum 0 conflicts with positive persisted schema_version unless accepted validation/migration semantics are explicit.",
+    "Public bundle copies raw HTML and optional raw snapshot. Manifest allowlisting cannot protect private annotations embedded in those bytes or retroactively revoke a downloaded public copy; public and authenticated sharing must be distinguished.",
+    "Preview/parser XSS, SVG/HTML active content, hostile PDFs, decompression/size limits, binary conversion failures and sandbox/license assumptions must be exercised, not inferred from pdf.js worker usage.",
+    "Path-only preview caches/async loads can retain old revision or expose newly revoked metadata. Guard future fetch/delivery/display; do not promise already-read bytes become unread.",
+    "Five headline scenarios do not waive full search/mentions/notifications/activity/agent/observability/offline DoD. Missing foundation integrations are separately recorded, not N/A.",
+    "Root-owned wave0 changes can stale these inspected source bytes; validator failure identifies invalidated references and requires targeted reread before acceptance. No runtime completeness claim is made."
+  ]
+}

@@ -1,0 +1,104 @@
+name: Exact Artifact License Gate
+# Publication must depend on this gate and verify the same final artifact digests.
+# Maintainers must configure the protected environment and immutable trusted
+# checker/review revisions; neither is accepted from producer-controlled code.
+on:
+  workflow_call:
+    inputs:
+      source-revision:
+        description: Exact producer source SHA; source is read as data, never executed
+        required: true
+        type: string
+      review-revision:
+        description: Requested review SHA, required to equal the protected trusted review revision
+        required: true
+        type: string
+      producer-artifact-name:
+        description: Same-run immutable upload containing release.json and staged final artifact bytes
+        required: true
+        type: string
+    outputs:
+      audit-sha256:
+        description: Digest of exact audit evidence, including reviewer/checker revision bindings
+        value: ${{ jobs.audit.outputs.audit-sha256 }}
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    environment: release-license-review
+    runs-on: [self-hosted, macos-toolchain]
+    timeout-minutes: 30
+    outputs:
+      audit-sha256: ${{ steps.binding.outputs.audit-sha256 }}
+    steps:
+      - name: Reject missing or producer-selected trust roots
+        env:
+          SOURCE_REVISION: ${{ inputs.source-revision }}
+          REVIEW_REVISION: ${{ inputs.review-revision }}
+          TRUSTED_REVIEW_REVISION: ${{ vars.LICENSE_REVIEW_REVISION }}
+          TRUSTED_AUDITOR_REVISION: ${{ vars.LICENSE_AUDITOR_REVISION }}
+        run: |
+          [[ "$SOURCE_REVISION" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          [[ "$REVIEW_REVISION" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          [[ "$TRUSTED_REVIEW_REVISION" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          [[ "$TRUSTED_AUDITOR_REVISION" =~ ^[a-f0-9]{40}$ ]] || exit 1
+          test "$REVIEW_REVISION" = "$TRUSTED_REVIEW_REVISION" || exit 1
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ vars.LICENSE_AUDITOR_REVISION }}
+          path: .compliance/auditor
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.10' }
+      - name: Install only the independently trusted checker without lifecycle scripts
+        working-directory: .compliance/auditor
+        run: bun install --frozen-lockfile --ignore-scripts
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source-revision }}
+          path: .compliance/source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ vars.LICENSE_REVIEW_REVISION }}
+          path: .compliance/review
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.producer-artifact-name }}
+          path: .compliance/input
+      - name: Validate final distributed bytes against independently trusted review
+        env:
+          SOURCE_REVISION: ${{ inputs.source-revision }}
+          TRUSTED_REVIEW_REVISION: ${{ vars.LICENSE_REVIEW_REVISION }}
+          TRUSTED_AUDITOR_REVISION: ${{ vars.LICENSE_AUDITOR_REVISION }}
+          AUDIT_PATH: .compliance/evidence/${{ github.run_id }}-${{ github.run_attempt }}/audit.json
+        run: |
+          mkdir -p "$(dirname "$AUDIT_PATH")"
+          test "$(git -C .compliance/source rev-parse HEAD)" = "$SOURCE_REVISION" || exit 1
+          test "$(git -C .compliance/review rev-parse HEAD)" = "$TRUSTED_REVIEW_REVISION" || exit 1
+          test "$(git -C .compliance/auditor rev-parse HEAD)" = "$TRUSTED_AUDITOR_REVISION" || exit 1
+          bun .compliance/auditor/scripts/compliance/generate-sbom.ts check \
+            --release .compliance/input/release.json \
+            --root .compliance/input/staged \
+            --lock .compliance/source/bun.lock \
+            --decisions .compliance/review/plans/compliance/component-decisions.json \
+            --notices .compliance/review/notices/THIRD-PARTY-NOTICES.txt \
+            --source-revision "$SOURCE_REVISION" \
+            --review-revision "$TRUSTED_REVIEW_REVISION" \
+            --auditor-revision "$TRUSTED_AUDITOR_REVISION" \
+            --output "$AUDIT_PATH"
+      - name: Bind publication input to exact immutable audit evidence
+        id: binding
+        env:
+          AUDIT_PATH: .compliance/evidence/${{ github.run_id }}-${{ github.run_attempt }}/audit.json
+        run: |
+          bun -e 'const {createHash}=require("node:crypto");const {readFileSync}=require("node:fs");process.stdout.write("audit-sha256="+createHash("sha256").update(readFileSync(process.env.AUDIT_PATH)).digest("hex")+"\n")' >> "$GITHUB_OUTPUT"
+      - name: Preserve audit evidence even when review is required
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-artifact-license-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .compliance/evidence/${{ github.run_id }}-${{ github.run_attempt }}/
+          if-no-files-found: warn

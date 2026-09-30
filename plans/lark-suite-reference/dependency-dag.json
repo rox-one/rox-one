@@ -1,0 +1,1801 @@
+{
+  "schema_version": 1,
+  "program_id": "LSX-DOCS-BASES-KNOWLEDGE-AUTOMATION",
+  "source_sha": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
+  "product_baseline_sha": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
+  "reference_package_revision": "RESOLVE_FROM_DELIVERY_MANIFEST",
+  "reference_package_digest": "RESOLVE_FROM_DELIVERY_MANIFEST",
+  "status": "PLANNED_NOT_EXECUTED",
+  "launch_state": "PREPARED_NOT_LAUNCHED",
+  "nodes": [
+    {
+      "id": "LSX-WP-001",
+      "title": "Page content descriptor и совместимое открытие Notes",
+      "owner": "platform",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-IDENTITY"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-001",
+        "json_pointer": "/work_packages/0"
+      }
+    },
+    {
+      "id": "LSX-WP-002",
+      "title": "Личные Task source bindings и изолированный picker",
+      "owner": "identity",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-IDENTITY"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-002",
+        "json_pointer": "/work_packages/1"
+      }
+    },
+    {
+      "id": "LSX-WP-003",
+      "title": "Атомарная запись Markdown с CAS/epoch/receipt",
+      "owner": "docs-authority",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-IDENTITY",
+        "EG-EFFECTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-003",
+        "json_pointer": "/work_packages/2"
+      }
+    },
+    {
+      "id": "LSX-WP-004",
+      "title": "Canonical Task field command с revision и partial receipts",
+      "owner": "tasks",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-IDENTITY",
+        "EG-EFFECTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-004",
+        "json_pointer": "/work_packages/3"
+      }
+    },
+    {
+      "id": "LSX-WP-005",
+      "title": "Lossless Markdown/YAML raw-span patch и field readback",
+      "owner": "docs-format",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-EFFECTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-005",
+        "json_pointer": "/work_packages/4"
+      }
+    },
+    {
+      "id": "LSX-WP-006",
+      "title": "Stable block/node anchors без переписывания prose",
+      "owner": "docs-format",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-006",
+        "json_pointer": "/work_packages/5"
+      }
+    },
+    {
+      "id": "LSX-WP-007",
+      "title": "Сохраняемая BaseDefinition и private/shared views",
+      "owner": "bases-schema",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-IDENTITY",
+        "EG-EFFECTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-007",
+        "json_pointer": "/work_packages/6"
+      }
+    },
+    {
+      "id": "LSX-WP-008",
+      "title": "Миграция NoteBaseView v1 с неизменными legacy formulas",
+      "owner": "bases-schema",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-008",
+        "json_pointer": "/work_packages/7"
+      }
+    },
+    {
+      "id": "LSX-WP-009",
+      "title": "Source adapters Notes/Tasks/Projects/Meetings/Calendar",
+      "owner": "bases-adapters",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-DOMAIN-OWNERS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-009",
+        "json_pointer": "/work_packages/8"
+      }
+    },
+    {
+      "id": "LSX-WP-010",
+      "title": "Permission-aware query snapshot, cursor и totals",
+      "owner": "bases-query",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-IDENTITY"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-010",
+        "json_pointer": "/work_packages/9"
+      }
+    },
+    {
+      "id": "LSX-WP-011",
+      "title": "Реестр 18 typed fields и schema inspector",
+      "owner": "bases-schema",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-011",
+        "json_pointer": "/work_packages/10"
+      }
+    },
+    {
+      "id": "LSX-WP-012",
+      "title": "Typed scalar cell editors с native write preview",
+      "owner": "bases-editors",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-012",
+        "json_pointer": "/work_packages/11"
+      }
+    },
+    {
+      "id": "LSX-WP-013",
+      "title": "Bounded formula engine и legacy built-ins",
+      "owner": "bases-computation",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-013",
+        "json_pointer": "/work_packages/12"
+      }
+    },
+    {
+      "id": "LSX-WP-014",
+      "title": "Relations picker, cardinality и inverse recovery",
+      "owner": "bases-relations",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-EFFECTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-014",
+        "json_pointer": "/work_packages/13"
+      }
+    },
+    {
+      "id": "LSX-WP-015",
+      "title": "ACL-filtered Lookup/Rollup и actor-scoped cache",
+      "owner": "bases-computation",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-015",
+        "json_pointer": "/work_packages/14"
+      }
+    },
+    {
+      "id": "LSX-WP-016",
+      "title": "Schema migration preview/type rename/soft delete",
+      "owner": "bases-schema",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-EFFECTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-016",
+        "json_pointer": "/work_packages/15"
+      }
+    },
+    {
+      "id": "LSX-WP-017",
+      "title": "Table grid: typed edits, rectangle paste и readback",
+      "owner": "bases-ui",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-017",
+        "json_pointer": "/work_packages/16"
+      }
+    },
+    {
+      "id": "LSX-WP-018",
+      "title": "Board: native status transition и keyboard move",
+      "owner": "bases-ui",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-018",
+        "json_pointer": "/work_packages/17"
+      }
+    },
+    {
+      "id": "LSX-WP-019",
+      "title": "List: native checkbox и eligible bulk actions",
+      "owner": "bases-ui",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-019",
+        "json_pointer": "/work_packages/18"
+      }
+    },
+    {
+      "id": "LSX-WP-020",
+      "title": "Gallery и typed Image/Audio/Video cells с asset ACL",
+      "owner": "bases-media",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-FILES"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-020",
+        "json_pointer": "/work_packages/19"
+      }
+    },
+    {
+      "id": "LSX-WP-021",
+      "title": "Calendar Base date precision и native/provider capabilities",
+      "owner": "bases-calendar",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-PROVIDERS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-021",
+        "json_pointer": "/work_packages/20"
+      }
+    },
+    {
+      "id": "LSX-WP-022",
+      "title": "Timeline interval move/resize с native atomic bounds",
+      "owner": "bases-calendar",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-022",
+        "json_pointer": "/work_packages/21"
+      }
+    },
+    {
+      "id": "LSX-WP-023",
+      "title": "Chart агрегаты и authorized drill-down",
+      "owner": "bases-ui",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-023",
+        "json_pointer": "/work_packages/22"
+      }
+    },
+    {
+      "id": "LSX-WP-024",
+      "title": "Doc Base embed и actor-scoped range context",
+      "owner": "docs-ui",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-SEARCH-AGENTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-024",
+        "json_pointer": "/work_packages/23"
+      }
+    },
+    {
+      "id": "LSX-WP-025",
+      "title": "Docs library capability filter и same-ref navigation",
+      "owner": "docs-ui",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-025",
+        "json_pointer": "/work_packages/24"
+      }
+    },
+    {
+      "id": "LSX-WP-026",
+      "title": "Existing Tiptap binding, durable draft и history restore",
+      "owner": "docs-ui",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-COLLABORATION"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-026",
+        "json_pointer": "/work_packages/25"
+      }
+    },
+    {
+      "id": "LSX-WP-027",
+      "title": "Discussion anchors, orphan state и private-comment migration",
+      "owner": "docs-discussions",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-DISCUSSIONS",
+        "EG-ATTENTION"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-027",
+        "json_pointer": "/work_packages/26"
+      }
+    },
+    {
+      "id": "LSX-WP-028",
+      "title": "Editable Outline structural commands с aggregate CAS",
+      "owner": "docs-structure",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-COLLABORATION"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-028",
+        "json_pointer": "/work_packages/27"
+      }
+    },
+    {
+      "id": "LSX-WP-029",
+      "title": "Mind map layout/viewport по тому же tree",
+      "owner": "docs-map",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-029",
+        "json_pointer": "/work_packages/28"
+      }
+    },
+    {
+      "id": "LSX-WP-030",
+      "title": "Conversion preview copy/inPlace с CAS и rollback",
+      "owner": "docs-portability",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-030",
+        "json_pointer": "/work_packages/29"
+      }
+    },
+    {
+      "id": "LSX-WP-031",
+      "title": "Semantic tabs/columns и safe basic Markdown fallback",
+      "owner": "docs-blocks",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-031",
+        "json_pointer": "/work_packages/30"
+      }
+    },
+    {
+      "id": "LSX-WP-032",
+      "title": "Code/highlight presentation без исполнения или false redaction",
+      "owner": "docs-blocks",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-032",
+        "json_pointer": "/work_packages/31"
+      }
+    },
+    {
+      "id": "LSX-WP-033",
+      "title": "Action Buttons typed registry и inert imports",
+      "owner": "docs-actions",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-COMMANDS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-033",
+        "json_pointer": "/work_packages/32"
+      }
+    },
+    {
+      "id": "LSX-WP-034",
+      "title": "Portable vault import staged identities/attachments",
+      "owner": "portability",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-FILES"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-034",
+        "json_pointer": "/work_packages/33"
+      }
+    },
+    {
+      "id": "LSX-WP-035",
+      "title": "Base export/import .base/CSV/JSON с loss reports",
+      "owner": "portability",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-035",
+        "json_pointer": "/work_packages/34"
+      }
+    },
+    {
+      "id": "LSX-WP-036",
+      "title": "Map/Outline exports MD/OPML/Canvas/PNG/SVG",
+      "owner": "portability",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-FILES"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-036",
+        "json_pointer": "/work_packages/35"
+      }
+    },
+    {
+      "id": "LSX-WP-037",
+      "title": "Checkbox→native Task и TaskNotes origin mapping",
+      "owner": "tasks-portability",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-037",
+        "json_pointer": "/work_packages/36"
+      }
+    },
+    {
+      "id": "LSX-WP-038",
+      "title": "Docs day-planner binding без нового timer/notification loop",
+      "owner": "tasks-portability",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-ATTENTION",
+        "EG-PROVIDERS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-038",
+        "json_pointer": "/work_packages/37"
+      }
+    },
+    {
+      "id": "LSX-WP-039",
+      "title": "Offline structural intents, recovery и revoke fence",
+      "owner": "docs-recovery",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-COLLABORATION"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-039",
+        "json_pointer": "/work_packages/38"
+      }
+    },
+    {
+      "id": "LSX-WP-040",
+      "title": "Docs/Bases domain-outbox→existing automation aliases",
+      "owner": "automation-adapters",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-EFFECTS",
+        "EG-AUTOMATION"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-040",
+        "json_pointer": "/work_packages/39"
+      }
+    },
+    {
+      "id": "LSX-WP-041",
+      "title": "Existing constructor typed Docs/Base nodes и field-ID mappings",
+      "owner": "automation-nodes",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-AUTOMATION",
+        "EG-COMMANDS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-041",
+        "json_pointer": "/work_packages/40"
+      }
+    },
+    {
+      "id": "LSX-WP-042",
+      "title": "Revision-pinned artifact/approval nodes и safe retry receipts",
+      "owner": "automation-nodes",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-AUTOMATION",
+        "EG-APPROVAL"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-042",
+        "json_pointer": "/work_packages/41"
+      }
+    },
+    {
+      "id": "LSX-WP-043",
+      "title": "Weekly Report workflow recipe с scoped draft/owner review",
+      "owner": "automation-recipes",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-SEARCH-AGENTS",
+        "EG-AUTOMATION"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-043",
+        "json_pointer": "/work_packages/42"
+      }
+    },
+    {
+      "id": "LSX-WP-044",
+      "title": "Form submission→native Task/Base recipe без второй task DB",
+      "owner": "automation-recipes",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-FORMS",
+        "EG-ATTENTION",
+        "EG-AUTOMATION"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-044",
+        "json_pointer": "/work_packages/43"
+      }
+    },
+    {
+      "id": "LSX-WP-045",
+      "title": "Explicit CustomRecord page payload для нового типа данных",
+      "owner": "bases-records",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [
+        "EG-EFFECTS"
+      ],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-045",
+        "json_pointer": "/work_packages/44"
+      }
+    },
+    {
+      "id": "LSX-WP-046",
+      "title": "Versioned template gallery с inert actions и bounded creation",
+      "owner": "docs-templates",
+      "status": "PLANNED_NOT_EXECUTED",
+      "external_prerequisites": [],
+      "packet_ref": {
+        "path": "plans/lark-suite-reference/work-packages.json",
+        "work_package_id": "LSX-WP-046",
+        "json_pointer": "/work_packages/45"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-002",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-003",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-004",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-005",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-006",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-007",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-008",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-008",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-009",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-009",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-009",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-009",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-009",
+      "to": "LSX-WP-010",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-011",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-012",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-012",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-012",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-012",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-008",
+      "to": "LSX-WP-013",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-013",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-013",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-014",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-014",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-014",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-015",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-014",
+      "to": "LSX-WP-015",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-016",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-016",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-014",
+      "to": "LSX-WP-016",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-017",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-015",
+      "to": "LSX-WP-017",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-017",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-018",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-018",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-019",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-019",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-020",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-020",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-020",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-012",
+      "to": "LSX-WP-021",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-009",
+      "to": "LSX-WP-021",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-021",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-021",
+      "to": "LSX-WP-022",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-015",
+      "to": "LSX-WP-023",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-017",
+      "to": "LSX-WP-023",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-024",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-024",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-017",
+      "to": "LSX-WP-024",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-025",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-025",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-026",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-026",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-026",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-027",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-027",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-028",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-028",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-028",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-028",
+      "to": "LSX-WP-029",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-030",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-030",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-028",
+      "to": "LSX-WP-030",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-031",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-031",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-032",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-033",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-033",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-033",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-002",
+      "to": "LSX-WP-034",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-005",
+      "to": "LSX-WP-034",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-034",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-034",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-035",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-015",
+      "to": "LSX-WP-035",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-035",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-035",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-029",
+      "to": "LSX-WP-036",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-030",
+      "to": "LSX-WP-036",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-036",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-037",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-006",
+      "to": "LSX-WP-037",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-037",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-021",
+      "to": "LSX-WP-038",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-037",
+      "to": "LSX-WP-038",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-028",
+      "to": "LSX-WP-039",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-039",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-003",
+      "to": "LSX-WP-040",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-040",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-040",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-041",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-013",
+      "to": "LSX-WP-041",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-033",
+      "to": "LSX-WP-041",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-040",
+      "to": "LSX-WP-041",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-033",
+      "to": "LSX-WP-042",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-036",
+      "to": "LSX-WP-042",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-040",
+      "to": "LSX-WP-042",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-041",
+      "to": "LSX-WP-042",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-024",
+      "to": "LSX-WP-043",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-037",
+      "to": "LSX-WP-043",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-041",
+      "to": "LSX-WP-043",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-042",
+      "to": "LSX-WP-043",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-004",
+      "to": "LSX-WP-044",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-037",
+      "to": "LSX-WP-044",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-040",
+      "to": "LSX-WP-044",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-041",
+      "to": "LSX-WP-044",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-045",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-007",
+      "to": "LSX-WP-045",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-010",
+      "to": "LSX-WP-045",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-011",
+      "to": "LSX-WP-045",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-016",
+      "to": "LSX-WP-045",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-001",
+      "to": "LSX-WP-046",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-026",
+      "to": "LSX-WP-046",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-031",
+      "to": "LSX-WP-046",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-033",
+      "to": "LSX-WP-046",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-034",
+      "to": "LSX-WP-046",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    },
+    {
+      "from": "LSX-WP-045",
+      "to": "LSX-WP-046",
+      "kind": "PREREQUISITE",
+      "satisfied": false
+    }
+  ],
+  "topological_order": [
+    "LSX-WP-001",
+    "LSX-WP-002",
+    "LSX-WP-003",
+    "LSX-WP-007",
+    "LSX-WP-004",
+    "LSX-WP-005",
+    "LSX-WP-011",
+    "LSX-WP-006",
+    "LSX-WP-009",
+    "LSX-WP-040",
+    "LSX-WP-008",
+    "LSX-WP-010",
+    "LSX-WP-026",
+    "LSX-WP-012",
+    "LSX-WP-013",
+    "LSX-WP-014",
+    "LSX-WP-025",
+    "LSX-WP-027",
+    "LSX-WP-028",
+    "LSX-WP-031",
+    "LSX-WP-032",
+    "LSX-WP-033",
+    "LSX-WP-015",
+    "LSX-WP-016",
+    "LSX-WP-018",
+    "LSX-WP-019",
+    "LSX-WP-020",
+    "LSX-WP-021",
+    "LSX-WP-029",
+    "LSX-WP-030",
+    "LSX-WP-039",
+    "LSX-WP-041",
+    "LSX-WP-017",
+    "LSX-WP-022",
+    "LSX-WP-034",
+    "LSX-WP-045",
+    "LSX-WP-023",
+    "LSX-WP-024",
+    "LSX-WP-035",
+    "LSX-WP-036",
+    "LSX-WP-037",
+    "LSX-WP-046",
+    "LSX-WP-038",
+    "LSX-WP-042",
+    "LSX-WP-044",
+    "LSX-WP-043"
+  ],
+  "external_prerequisite_gates": [
+    {
+      "gate_id": "EG-IDENTITY",
+      "required_proof": "Authenticated actor/source grants and read-time revoke",
+      "program_reference": "Macro WP-01/WP-03",
+      "spec_path": "docs/macro-integration/21-implementation-plan.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-EFFECTS",
+      "required_proof": "Atomic native command/receipt/outbox recovery",
+      "program_reference": "Macro WP-04",
+      "spec_path": "docs/macro-integration/21-implementation-plan.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-COLLABORATION",
+      "required_proof": "Single-writer adoption/epoch/revoke and docWAL transport",
+      "program_reference": "Macro WP-49/WP-51; RS-DOC-01",
+      "spec_path": "docs/macro-integration/07-collaboration-runtime.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-DOMAIN-OWNERS",
+      "required_proof": "Native Project/Meeting/Calendar source owners with read/write capability proof",
+      "program_reference": "Macro domain lanes; adapter readiness per source",
+      "spec_path": "docs/macro-integration/05-domain-model.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-FILES",
+      "required_proof": "Common FileRef/assets export and revocation owner",
+      "program_reference": "Macro File/drive lanes; RS-DRV-01",
+      "spec_path": "docs/rox-suite/published/RS-DRV-01.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-PROVIDERS",
+      "required_proof": "Real provider capability/idempotency/ACK reconciliation",
+      "program_reference": "Macro Calendar/provider lanes",
+      "spec_path": "docs/macro-integration/12-calendar.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-DISCUSSIONS",
+      "required_proof": "Common Discussion/Message backend and own ACL",
+      "program_reference": "Macro WP-08; RS-MSG-02",
+      "spec_path": "docs/rox-suite/published/RS-MSG-02.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-ATTENTION",
+      "required_proof": "One durable intended-recipient notification/reminder owner",
+      "program_reference": "Macro WP-07",
+      "spec_path": "docs/macro-integration/15-search-notifications.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-COMMANDS",
+      "required_proof": "Registered command validator/current scoped actor and MCP dispatcher",
+      "program_reference": "Macro command lanes; RS-MCP-01",
+      "spec_path": "docs/rox-suite/published/RS-MCP-01.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-SEARCH-AGENTS",
+      "required_proof": "Authorized context/index/tool readback and no hidden source leakage",
+      "program_reference": "Macro WP-06/agent lanes",
+      "spec_path": "docs/macro-integration/16-agent-integration.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-AUTOMATION",
+      "required_proof": "Existing immutable run/version/step executor proved ready; no new builder",
+      "program_reference": "RS-AUT-01..05",
+      "spec_path": "docs/lark-suite-reference/08-automation-integration.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-APPROVAL",
+      "required_proof": "Existing approval/signature owner exact digest/decision/revoke proof",
+      "program_reference": "RS-APR-01/RS-SIG-01",
+      "spec_path": "docs/rox-suite/published/RS-APR-01.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    },
+    {
+      "gate_id": "EG-FORMS",
+      "required_proof": "Existing accepted response event/schema owner and payload grant",
+      "program_reference": "RS-FORM-01",
+      "spec_path": "docs/rox-suite/published/RS-FORM-01.md",
+      "status": "READINESS_NOT_VERIFIED",
+      "rule": "A published issue/spec is not a readiness receipt; fail closed for affected package until exact implementation commit/runtime evidence is checked."
+    }
+  ],
+  "resource_ownership": {
+    "packages/core/src/rox2/platform-contract.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-001",
+        "LSX-WP-002"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/types/page.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-001",
+        "LSX-WP-045"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/rox2/notes-repository.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-001",
+        "LSX-WP-009"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/lib/navigation-registry.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-001",
+        "LSX-WP-025"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/handlers/rpc/personal-tasks.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-002",
+        "LSX-WP-004"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/handlers/rpc/notes.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-003",
+        "LSX-WP-005",
+        "LSX-WP-020",
+        "LSX-WP-030",
+        "LSX-WP-034"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/pages/NotesPage.tsx": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-003",
+        "LSX-WP-025",
+        "LSX-WP-026",
+        "LSX-WP-039",
+        "LSX-WP-046"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/shared/src/protocol/channels.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-003"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/tasks/personal-persist.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-004"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/tasks/personal-tasks-service.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-004",
+        "LSX-WP-034"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/lib/personal-tasks-sync.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-004"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/rox2/notes-engine.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-006",
+        "LSX-WP-039"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/pages/notes/document-ia.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-006",
+        "LSX-WP-027",
+        "LSX-WP-028",
+        "LSX-WP-031"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/knowledge/vault-markdown.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-006",
+        "LSX-WP-031"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/pages/notes/note-views.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-007",
+        "LSX-WP-008",
+        "LSX-WP-011",
+        "LSX-WP-013",
+        "LSX-WP-015",
+        "LSX-WP-016",
+        "LSX-WP-029",
+        "LSX-WP-030",
+        "LSX-WP-035",
+        "LSX-WP-036",
+        "LSX-WP-037",
+        "LSX-WP-038"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-007",
+        "LSX-WP-008",
+        "LSX-WP-017",
+        "LSX-WP-018",
+        "LSX-WP-019",
+        "LSX-WP-020",
+        "LSX-WP-021",
+        "LSX-WP-022",
+        "LSX-WP-023",
+        "LSX-WP-024",
+        "LSX-WP-028",
+        "LSX-WP-029"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/handlers/rpc/knowledge.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-009"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/knowledge/vault-index.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-010"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/platform/resources/registry.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-014"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/tasks/personal/types.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-022"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-024",
+        "LSX-WP-026",
+        "LSX-WP-031",
+        "LSX-WP-032",
+        "LSX-WP-033",
+        "LSX-WP-046"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-026",
+        "LSX-WP-027"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/platform/commands/registry.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-033"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/tasks/personal/store.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-037"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/core/src/tasks/personal/projections.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-038"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/shared/src/automations/event-bus.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-040",
+        "LSX-WP-044"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/shared/src/automations/automation-system.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-040",
+        "LSX-WP-042",
+        "LSX-WP-043",
+        "LSX-WP-044"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/server-core/src/handlers/rpc/automations.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-040",
+        "LSX-WP-041",
+        "LSX-WP-042"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/shared/src/automations/graph.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-041"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-041"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    },
+    "packages/shared/src/automations/history-store.ts": {
+      "owner": "integration-owner",
+      "writer_count": 1,
+      "packages": [
+        "LSX-WP-042"
+      ],
+      "lease_rule": "Exclusive canonical path lease across all overlapping packages; modules may develop independently, shared integration patches apply in dependency order."
+    }
+  },
+  "scheduler": {
+    "workers": "UNASSIGNED",
+    "parallelism": "Only independently ready new-file modules; no runtime jobs exist.",
+    "integration": "One integration owner for shared existing paths; exclusive path lease + dependency order; exact patch scope/reviewed artifact required.",
+    "readiness": "Dependencies require accepted integrated artifact and native readback receipts; unresolved spec digest/revision or external readiness fails closed.",
+    "failure": "Failed acceptance preserves receipt/history and blocks dependents; independent ready packages may continue.",
+    "cutover": "No writer adoption until snapshot/hash/epoch/revoke gates and authoritative readback; personal sources remain isolated."
+  },
+  "validation": {
+    "acyclic": true,
+    "node_count": 46,
+    "edge_count": 116,
+    "topological_order_complete": true,
+    "all_edges_reference_known_nodes": true,
+    "product_runtime_verified": false,
+    "cloud_jobs_launched": 0
+  }
+}

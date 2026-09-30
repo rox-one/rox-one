@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { useState } from 'react'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { ProjectsListPanel } from './ProjectsListPanel'
 import { CreateProjectDialog } from '../projects/CreateProjectDialog'
-import { projectsAtom } from '@/atoms/projects'
+import type { LoadedProject } from '@craft-agent/shared/projects/types'
 import { navigate as navigateRoute, routes } from '@/lib/navigate'
 import {
   collectionFiltersAtom,
@@ -14,11 +14,12 @@ import {
 
 /** Full-width Projects library (PagesHome pattern) when middle nav is hidden. */
 export function ProjectsHomeInMain({
+  projects,
   workspaceId,
 }: {
+  projects: LoadedProject[]
   workspaceId: string
 }) {
-  const projects = useAtomValue(projectsAtom)
   const { t } = useTranslation()
   const [createOpen, setCreateOpen] = useState(false)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)

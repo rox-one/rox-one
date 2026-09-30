@@ -22,3 +22,6 @@ export {
 export type { ExplainerNode } from './explainer.ts'
 export { runSyftSbom } from './sbom.ts'
 export type { CommandRunner, SbomScan } from './sbom.ts'
+export * from './refs.ts'
+export * from './provider.ts'
+export * from './repository-connection.ts'

@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "checkoutSourceEdited": false,
+  "checkoutBuildExecuted": false,
+  "checkoutGitMutated": false,
+  "scope": "Actual workspace bundle attribution, deployed runtime identity, scoped ROX source lineage",
+  "metafileSha256": "dd8b9a6607b565ded13d8e3c74a3558a13e29884b1b6f4f39cd83ec9bb89eb1e",
+  "outputs": [
+    {
+      "path": "apps/workspace-service/dist/index.js",
+      "bytes": 312462,
+      "sha256": "d8e0bccde6e44dd6aa88e667e16219524cf85d6afc6ec590bef2c462e648298c",
+      "imports": []
+    }
+  ],
+  "sourceBaseRevision": "b9b8aa7197f5d25304ec377a049a8f375eccf3e5",
+  "sourceFiles": 55,
+  "sourceMatchesHead": 39,
+  "trackedDirtySources": 4,
+  "newSources": 12,
+  "remoteBaseBlobsVerified": 43,
+  "remoteCommitSigned": false,
+  "runtime": {
+    "installedExactHomebrewBottle": true,
+    "officialGitHubBinaryExactMatch": false,
+    "installedSha256": "4d410fa7e06d8cb3c6694c85cb61f3024cc4cd5cbe78764c58692384ee06e6b9",
+    "bottleSha256": "1e749a65e17ad90e1fdad40a19481915366771a53d2548a0de1802d0e7c29c16",
+    "officialReleaseZipSha256": "90987a3a16d7db556d886ac3d551e7b6d3edf0a1cf43acaed622e8676be1d12f",
+    "sourceCommit": "744846f844374847c902b5e7fd59b4342a51ef99",
+    "installedLicenseMatchesImmutableSource": true,
+    "sourceLicenseReadbacks": 14,
+    "legalApproval": false
+  },
+  "verification": {
+    "proposedTests": {
+      "pass": 26,
+      "fail": 0,
+      "assertions": 55,
+      "filtered": 0
+    },
+    "strictTypecheckExit": 0,
+    "typescript": [
+      {
+        "path": "scripts/compliance/collect-build-attribution.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "scripts/compliance/verify-registry-attribution.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "scripts/compliance/collect-git-lineage.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "scripts/compliance/verify-bun-runtime.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "tests/macro-integration/wp-48-build-attribution.test.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "tests/macro-integration/wp-48-registry-attribution.test.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "tests/macro-integration/wp-48-git-lineage.test.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "tests/macro-integration/wp-48-runtime.test.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      },
+      {
+        "path": "tests/macro-integration/wp-48-runtime-archives.test.ts",
+        "anyKeywords": 0,
+        "nonNullAssertions": 0,
+        "prohibitedDirectives": 0
+      }
+    ],
+    "actualRegistryMemberReadbacks": 64
+  },
+  "files": [
+    {
+      "path": "workspace-service-inputs-v3.json",
+      "sha256": "50de1ca744b6b540ac3cef252d9c347e3cc204c13fba3dc05557330b8374f1b7"
+    },
+    {
+      "path": "registry-verification-v3.json",
+      "sha256": "4c9f413e219866cfb2ed628f3c1f9e14d5497c79acab9552269ebde361d7e0cf"
+    },
+    {
+      "path": "source-license-manifest-v3.json",
+      "sha256": "e47beb48ee6db63a0e8c6dbfb7a5a3bcc59b65298370ab6f7ded4a71a0fbee17"
+    },
+    {
+      "path": "rox-source-lineage.json",
+      "sha256": "155616239f72f3d16db4102eed226471d4b45e66c82618655c531b8b79e1a6c1"
+    },
+    {
+      "path": "rox-remote-lineage-verification.json",
+      "sha256": "e04ad8831b67705a77ba135b052d06073dfc4ab5ba2142e7f51a27b7566f66bb"
+    },
+    {
+      "path": "official-runtime-verification.json",
+      "sha256": "53374a42f791cf33313bcc5b946a005f7aadc408818a319df408e42cf44b20bc"
+    },
+    {
+      "path": "homebrew-runtime-verification.json",
+      "sha256": "c7056ff2b70140c25ef3af007d207acf42660697de0a50949d7c8d0376efc052"
+    },
+    {
+      "path": "runtime-source-license-verification.json",
+      "sha256": "95af4e2dc4a35d9d0842640bf13fcdab31ab27eab56609307d7cdbed05691a57"
+    },
+    {
+      "path": "BUN-RUNTIME-NOTICE-CANDIDATES.txt",
+      "sha256": "460702a0519b8d2bba7e0ed676c9033a9c28caff61f4902e2663ed024d85c267"
+    },
+    {
+      "path": "proposals/manifest.json",
+      "sha256": "42a7b1b8635a25caa9993f682771056739f9dd9256f1976cbe7d82a4526e919f"
+    }
+  ],
+  "failureHistory": [
+    {
+      "stage": "official ZIP curl download",
+      "exitCode": 28,
+      "reason": "45second timeout; discarded partial bytes"
+    },
+    {
+      "stage": "official ZIP single fetch",
+      "exitCode": 1,
+      "reason": "45second timeout"
+    },
+    {
+      "stage": "official ZIP bounded range download",
+      "exitCode": 0,
+      "reason": "Full asset size and official digest verified before member reads"
+    },
+    {
+      "stage": "archive fixture first run",
+      "pass": 13,
+      "fail": 1,
+      "reason": "Wrong assertion form for synchronous identity rejection; corrected test form, rejection retained"
+    },
+    {
+      "stage": "final exact proposal suite",
+      "pass": 26,
+      "fail": 0,
+      "assertions": 55
+    }
+  ],
+  "cleanup": {
+    "discardedPartialDownloads": true,
+    "unrelatedFullRemoteTreeRemoved": true,
+    "temporaryTestFixturesRemaining": 0
+  },
+  "legalApproval": false,
+  "releaseCleared": false,
+  "remainingGates": [
+    "Qualified source lineage and license applicability review, especially untracked source and imported/vendor ancestry",
+    "Deployed runtime linked/transitive component scopes and distribution obligations require complete qualified review",
+    "Exact source/build reproducibility and multi-component input contribution binding in existing WP48 SBOM/component digests",
+    "Final accepted notice bytes shipped and publisher exact-byte readback",
+    "Normative product authority/permissions/idempotency/receipt/outbox/native compliance operations"
+  ]
+}

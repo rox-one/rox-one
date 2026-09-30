@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rox.one/schemas/macro-integration/completion-v1.json",
+  "title": "Macro integration completion evidence receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "wpId", "specDigest", "inputSha", "commitSha", "status", "owner", "review", "changedPaths", "lanes", "tests", "negativeControls"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "wpId": {"type": "string", "pattern": "^WP-[0-9]{2}$"},
+    "specDigest": {"$ref": "#/definitions/hash"},
+    "inputSha": {"$ref": "#/definitions/gitSha"},
+    "commitSha": {"$ref": "#/definitions/gitSha"},
+    "status": {"enum": ["pending", "verified", "failed", "blocked"]},
+    "owner": {"type": "string", "minLength": 1},
+    "review": {"type": "object", "required": ["status", "reviewer"], "properties": {"status": {"enum": ["pending", "approved", "changes_required"]}, "reviewer": {"type": "string", "minLength": 1}, "notes": {"type": "string"}}, "additionalProperties": false},
+    "changedPaths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/definitions/relativePath"}},
+    "lanes": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "object", "required": ["status", "executionMode"], "properties": {"status": {"enum": ["pending", "passed", "failed", "not_run"]}, "executionMode": {"enum": ["live", "fixture", "simulated"]}, "environment": {"type": "string"}, "reason": {"type": "string"}}, "additionalProperties": false}},
+    "tests": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["lane", "command", "exitCode", "expected", "observed", "logPath", "sha256"], "properties": {"lane": {"$ref": "#/definitions/lane"}, "command": {"type": "string", "minLength": 1}, "exitCode": {"type": "integer"}, "expected": {"type": "string", "minLength": 1}, "observed": {"type": "string", "minLength": 1}, "logPath": {"$ref": "#/definitions/relativePath"}, "sha256": {"$ref": "#/definitions/hash"}}, "additionalProperties": false}},
+    "negativeControls": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["lane", "caught", "mutation", "reproduction", "assertion", "baselineExitCode", "mutantExitCode", "failureKind", "baselineLogPath", "baselineSha256", "mutantLogPath", "mutantSha256"], "properties": {"lane": {"$ref": "#/definitions/lane"}, "caught": {"type": "boolean"}, "mutation": {"type": "string", "minLength": 1}, "reproduction": {"type": "string", "minLength": 1}, "assertion": {"type": "string", "minLength": 1}, "baselineExitCode": {"type": "integer"}, "mutantExitCode": {"type": "integer"}, "failureKind": {"enum": ["assertion", "infrastructure", "baseline_failure", "not_run"]}, "baselineLogPath": {"$ref": "#/definitions/relativePath"}, "baselineSha256": {"$ref": "#/definitions/hash"}, "mutantLogPath": {"$ref": "#/definitions/relativePath"}, "mutantSha256": {"$ref": "#/definitions/hash"}}, "additionalProperties": false}},
+    "visualEvidence": {"type": "array", "items": {"type": "object", "required": ["lane", "path", "sha256", "viewport", "font", "state", "ariaPath", "ariaSha256"], "properties": {"lane": {"$ref": "#/definitions/lane"}, "path": {"$ref": "#/definitions/relativePath"}, "sha256": {"$ref": "#/definitions/hash"}, "viewport": {"type": "string", "minLength": 1}, "font": {"type": "string", "minLength": 1}, "state": {"type": "string", "minLength": 1}, "ariaPath": {"$ref": "#/definitions/relativePath"}, "ariaSha256": {"$ref": "#/definitions/hash"}}, "additionalProperties": false}},
+    "providerEvidence": {"type": "array", "items": {"type": "object", "required": ["provider", "readBack", "path", "sha256"], "properties": {"provider": {"type": "string", "minLength": 1}, "readBack": {"type": "boolean"}, "path": {"$ref": "#/definitions/relativePath"}, "sha256": {"$ref": "#/definitions/hash"}}, "additionalProperties": false}},
+    "externalGates": {"type": "array", "items": {"type": "string"}}
+  },
+  "definitions": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "gitSha": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "relativePath": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"},
+    "lane": {"enum": ["linux-domain", "linux-renderer", "macos-native", "provider-live"]}
+  }
+}

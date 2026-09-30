@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "status": "DRAFTS_PREPARED_NOT_PUBLISHED",
+  "baseline": {
+    "repository": "rox-one/rox-one",
+    "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807"
+  },
+  "visualReferences": [
+    "image6-admin-hub",
+    "image7-product-menu-mcp-detail"
+  ],
+  "issues": [
+    {
+      "id": "RS-MCP-01",
+      "title": "Каталог MCP capabilities, scopes и доступ инструментов агентам",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-MCP-01.md",
+      "dependsOn": [
+        "RS-ADM-01"
+      ],
+      "relatedIssues": [],
+      "area": "mcp",
+      "relatedRequirementIds": []
+    },
+    {
+      "id": "RS-ADM-01",
+      "title": "Organization и capability Admin Hub в существующих Settings",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-ADM-01.md",
+      "dependsOn": [],
+      "relatedIssues": [],
+      "area": "admin",
+      "relatedRequirementIds": [
+        "RS-MCP-01"
+      ]
+    },
+    {
+      "id": "RS-HD-01",
+      "title": "Help Desk: tickets, очереди и idempotent intake",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-HD-01.md",
+      "dependsOn": [
+        "RS-ADM-01",
+        "RS-FORM-01"
+      ],
+      "relatedIssues": [],
+      "area": "helpdesk",
+      "relatedRequirementIds": [
+        "RS-HD-02",
+        "RS-MCP-01"
+      ]
+    },
+    {
+      "id": "RS-HD-02",
+      "title": "Help Desk: triage, SLA calendar, knowledge и agent-assisted ответ",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-HD-02.md",
+      "dependsOn": [
+        "RS-HD-01",
+        "RS-MCP-01"
+      ],
+      "relatedIssues": [],
+      "area": "helpdesk",
+      "relatedRequirementIds": [
+        "RS-ADM-01"
+      ]
+    },
+    {
+      "id": "RS-APR-01",
+      "title": "Approval designer: versioned forms, routes и decision policy",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-APR-01.md",
+      "dependsOn": [
+        "RS-ADM-01"
+      ],
+      "relatedIssues": [],
+      "area": "approvals",
+      "relatedRequirementIds": [
+        "RS-APR-02",
+        "RS-MCP-01"
+      ]
+    },
+    {
+      "id": "RS-APR-02",
+      "title": "Approval Inbox: решения, execution receipts и неизменяемый audit",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-APR-02.md",
+      "dependsOn": [
+        "RS-APR-01",
+        "RS-MCP-01"
+      ],
+      "relatedIssues": [],
+      "area": "approvals",
+      "relatedRequirementIds": [
+        "RS-HD-01",
+        "RS-SIG-02"
+      ]
+    },
+    {
+      "id": "RS-SIG-01",
+      "title": "Secure Document Viewer: file versions, sharing и revocation",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-SIG-01.md",
+      "dependsOn": [
+        "RS-ADM-01",
+        "RS-MCP-01"
+      ],
+      "relatedIssues": [],
+      "area": "documents",
+      "relatedRequirementIds": [
+        "RS-SIG-02"
+      ]
+    },
+    {
+      "id": "RS-SIG-02",
+      "title": "Document signing: immutable sessions, signer intent и evidence lifecycle",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-SIG-02.md",
+      "dependsOn": [
+        "RS-SIG-01",
+        "RS-APR-02"
+      ],
+      "relatedIssues": [],
+      "area": "signing",
+      "relatedRequirementIds": [
+        "RS-MCP-01",
+        "RS-ADM-01"
+      ]
+    }
+  ]
+}

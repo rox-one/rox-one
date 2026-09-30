@@ -4,6 +4,26 @@
 
 import type { PushTarget } from '@craft-agent/shared/protocol'
 import type { NativeAuthorityAction, NativePrincipal } from '../authority/native-authority'
+import type { AuthenticatedActor } from '../../../shared/src/workspace-domain/identity/contracts'
+
+/** Opaque resolver result retained server-side; never decoded from an envelope. */
+export interface WorkspaceAuthoritySession {
+  readonly actor: AuthenticatedActor
+  readonly identity: Readonly<{
+    issuer: string
+    subject: string
+    principalId: string
+    sessionId: string
+    deviceId: string
+    expiresAt: number
+  }>
+}
+
+/** The composition root injects the real cryptographic/persisted-session resolver. */
+export interface WorkspaceAuthorityAuthentication {
+  authenticate(token: string): Promise<WorkspaceAuthoritySession>
+  revalidate(bound: WorkspaceAuthoritySession): Promise<WorkspaceAuthoritySession>
+}
 
 export interface RequestContext {
   clientId: string
@@ -11,6 +31,8 @@ export interface RequestContext {
   webContentsId: number | null
   /** Server-minted capability, never taken from request arguments. */
   principal?: NativePrincipal
+  /** Current verified server-only Actor; absent for standalone/local clients. */
+  readonly actor?: AuthenticatedActor
 }
 
 export type HandlerFn = (ctx: RequestContext, ...args: any[]) => Promise<any> | any
@@ -20,7 +42,7 @@ export type HandlerFn = (ctx: RequestContext, ...args: any[]) => Promise<any> | 
  * transport-compatible unless they explicitly choose a restriction.
  */
 export interface RpcHandlerOptions {
-  readonly access?: 'localElectron'
+  readonly access?: 'localElectron' | 'nativeOrLocalElectron' | 'authenticatedWorkspace'
   /** Native clients are denied unless a handler explicitly declares its grant. */
   readonly nativeAction?: Exclude<NativeAuthorityAction, 'manage'>
 }

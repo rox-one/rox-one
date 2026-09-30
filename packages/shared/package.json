@@ -142,7 +142,9 @@
     "./cli": "./src/cli/index.ts",
     "./capabilities": "./src/capabilities/index.ts",
     "./code-intelligence": "./src/code-intelligence/index.ts",
-    "./security": "./src/security/index.ts"
+    "./security": "./src/security/index.ts",
+    "./projects/roadmap": "./src/projects/roadmap.ts",
+    "./projects/roadmap-ai": "./src/projects/roadmap-ai.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

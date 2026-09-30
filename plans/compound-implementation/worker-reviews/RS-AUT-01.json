@@ -1,0 +1,379 @@
+{
+  "task_id": "RS-AUT-01-preflight",
+  "attempt_id": "f88da5b975e34bb2b85fceb3cd484527",
+  "packet_hash": "f30013b048e8f3c19f3ec441667244a2168c4090ba091c88b643146edfad8d32",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-AUT-01",
+  "featureComplete": false,
+  "mode": "preflight-source-inspection-only",
+  "workTier": "bounded-workflow",
+  "dependencies": [],
+  "dependencyEvidence": {
+    "normativeRecord": "plans/rox-suite/issues.json:201-224; dependsOn=[], dependencyIssueNumbers=[]; relatedIssues=[569] is not a DAG edge",
+    "publishedSpec": "docs/rox-suite/published/RS-AUT-01.md:93-109 explicitly says there are no new direct prerequisites",
+    "manifestHashesMatched": true,
+    "implementationStartBoundary": "Only after the lead's wave0 commit and accepted dependency receipts. No product implementation was performed by this worker."
+  },
+  "evidenceScope": {
+    "observedDate": "2026-09-30",
+    "revisionSemantics": "input_revision is the dispatch baseline, not a claim that inspected working-tree bytes equal that commit. The checkout contains lead-owned uncommitted wave0 work. No Git command was used.",
+    "hashSemantics": "sourceReferences.sha256 is the SHA-256 of the whole concrete file, obtained using read-only shasum after source inspection. Inspection ranges, not entire files, were read. No atomic snapshot or commit binding was available; the lead must recheck these digests after integration and reread changed seams.",
+    "staleness": "No source-change notification was observed during inspection. Concurrent lead integration can nevertheless make this evidence stale; it must not be treated as implementation or runtime proof.",
+    "notExecuted": ["builds", "tests", "native UI", "network operations", "Git operations", "dispatch verification_argv"],
+    "discoveryLimitations": [
+      "codegraph reported no .codegraph index for this project; no indexing was attempted.",
+      "The scoped find call failed all candidate requests with a provider-credit error. That result is not evidence of absence; subsequent literal searches and concrete source reads supplied the package seams.",
+      "Shared registry/outbox/search/provider internals outside package paths and direct imports were not broadly inspected. Exact accepted wave0 service bindings remain a lead integration prerequisite, not invented completed APIs."
+    ]
+  },
+  "foundationGates": [
+    {
+      "id": "F1-draft-published-authority",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:43-51",
+      "currentEvidence": "RPC SAVE_GRAPH calls buildAutomationGraphSave and atomicWriteFileSync(configPath, saved.config) at automations.ts:216-250. graph.ts:538-562 replaces executable automations. Neither is a non-executing draft authority.",
+      "requiredFoundation": "Implement non-executing Draft and immutable PublishedRevision in this package through the accepted existing authority/persistence binding. workflow.saveDraft must never write the runtime config; workflow.publish is the sole activation path with CAS, server policy and a validated projection checksum. workflow.compareRevision must return typed comparison. RS-AUT-05 extends review UX later; it must not be used to defer this foundation.",
+      "blockingFor": "All save/publish acceptance and full DoD",
+      "missingPrerequisite": "Lead-accepted wave0 registry, policy context, durable transaction/receipt and storage binding. Inspected package imports do not establish that binding; no new independent editable store may be introduced."
+    },
+    {
+      "id": "F2-serialized-migration-and-writer-fence",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:45,49,78,87",
+      "currentEvidence": "withConfigMutex serializes only this process's RPC writes. withAutomationMatcher, CREATE and SAVE_GRAPH still write the live file; ensureDefaultAutomations writes it during GET; AutomationSystem.backfillIds writes it during runtime loading. No published-revision fence is visible in these seams.",
+      "requiredFoundation": "Take a legacy snapshot and validated readback, assign stable identities once, serialize scheduler/writer cutover, fence old mutations and ID/seed writers, and resolve all post-fence runtime reads from the active published projection only. Reconcile unfinished effects without replay and preserve enabled:false, empty configs and seed markers. Provide rollback of both fence and authority pointer, not just a UI revert.",
+      "blockingFor": "Draft safety, stale/conflicting writer rejection, migration and rollback",
+      "missingPrerequisite": "A lead-owned inventory/fence for writers and runtime reload/watchers beyond these direct imports; an accepted effect-reconciliation contract and migration receipt. This preflight is not proof that all callers have been migrated."
+    },
+    {
+      "id": "F3-session-derived-grants-and-entity-integration",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:49-55,84",
+      "currentEvidence": "Automation RPC handlers ignore _ctx and take workspaceId from payload. rpcNativeActResult returns a native live result for a write without consulting actor grants. RequestContext exposes clientId/workspaceId/webContentsId but not actor grants. authorizeRox2Action exists as an actor/grant predicate; it is not called by inspected automation handlers.",
+      "requiredFoundation": "Bind workflow identity to shared Rox2EntityRef and server-resolved session actor/workspace/policy. Register typed commands and common grants; enforce read/write/share/publish on RPC/IPC/MCP/provider and agent access. Register links/search/mentions and activity/outbox notification dedupe. Revoke must stop writes/subscriptions and evict prohibited cached draft/history data.",
+      "blockingFor": "DoD domain integration; denied UI and transport scenarios",
+      "missingPrerequisite": "Accepted wave0 actor resolver and scoped policy/registry/index/outbox/cache invalidation interfaces. A native-live receipt helper or renderer-supplied actorId is insufficient. The UI-only N/A clause cannot exempt this slice because it creates Draft/PublishedRevision domain persistence."
+    },
+    {
+      "id": "F4-new-executable-node-runtime-capability",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:23,45,78,101",
+      "currentEvidence": "AutomationGraphNodeKind contains trigger/matcher/prompt/webhook/annotation/group/decision. isFlowNode excludes decision, and compileGraph rejects flow through metadata nodes and action branching.",
+      "requiredFoundation": "Keep Scheduler/Event backed by existing supported trigger/matcher projection. Display DateTimeHelper/Condition/EntityCommand/Connector/ApprovalWait capabilities accurately and mark unimplemented executable kinds unavailable; never coerce them to annotation. Preserve the existing decision as clearly metadata-only. Enable new execution only after RS-AUT-03 runtime verification.",
+      "blockingFor": "New executable kinds only; not a reason to postpone the supported legacy canvas and unavailable-state acceptance",
+      "missingPrerequisite": "An accepted RS-AUT-03 runtime capability receipt before enabling any of those new execution semantics. RS-AUT-03 is not in the explicit RS-AUT-01 dependency array."
+    },
+    {
+      "id": "F5-stable-identity-and-lossless-legacy-projection",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:5,27,32-33,76,101",
+      "currentEvidence": "projectionNodeId derives IDs from event/matcherIndex/actionIndex; reorder or event moves can change IDs. Runtime projection is workspace-wide and graphFromRuntimeConfig rejects non-prompt/webhook actions. Schema parsing can strip unknown matcher/action properties even while buildAutomationGraphSave preserves root fields.",
+      "requiredFoundation": "Persist stable workflow/node/edge identity on migration and keep selected automation ID/workspace unchanged. Merge the selected workflow projection back without overwriting unrelated matchers or losing supported fields. Keep unsupported legacy paths intact with precise diagnostics, not silent conversion/drop. GraphRevision/config schemaVersion must distinguish authoring revision from activation checksum.",
+      "blockingFor": "Save/reload equivalence, simple-editor compatibility and safe migration",
+      "missingPrerequisite": "Lead-approved migration identity mapping and field-preservation boundary, with fixtures for disabled matchers, conditions, action options and unrelated unsupported legacy entries."
+    },
+    {
+      "id": "F6-safe-preview-versus-effectful-test",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:37,45,55,78",
+      "currentEvidence": "AutomationEditor.runNow saves dirty state then calls testAutomation; RPC TEST executes webhooks and other actions. RPC REPLAY executes webhook actions from the live config. These existing execution tools are not graph debug/preview.",
+      "requiredFoundation": "Canvas debug is pure validation/projection preview. Node hover/click/focus, inspector edits and saveDraft do not call TEST/REPLAY or emit automation events. Retain explicit published-run actions as separate policy-controlled operations; do not reuse runNow to debug a draft.",
+      "blockingFor": "No-effect acceptance and meaningful broken control",
+      "missingPrerequisite": "A pure preview command/result binding plus an effect-observing oracle and active-scheduler negative-control scenario, supplied during authorized implementation verification."
+    },
+    {
+      "id": "F7-userprefs-and-conflict-recovery",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:27-28,38-41,83",
+      "currentEvidence": "fitGraphLayout computes a compressed layout, not a camera transform. Workspace editor refreshes on every CHANGED and refreshes immediately on a string-matched stale error, potentially replacing unsaved local edits. No graph camera preferences or typed compare/rebase UI appear in inspected editor seams.",
+      "requiredFoundation": "Keep zoom/pan/selection outside executable config via accepted existing userprefs. Preserve dirty edits across remote changes/reconnect. Add typed conflict compare/reload/rebase with CAS; reload discards only through explicit user action and rebase never publishes automatically.",
+      "blockingFor": "Camera persistence, concurrent editing and recovery acceptance",
+      "missingPrerequisite": "Lead-confirmed structured UI preference mechanism; exposed readPreferences/writePreferences is a content-string interface and must not be repurposed blindly as graph JSON persistence."
+    },
+    {
+      "id": "F8-independent-evidence-lanes",
+      "explicitDagEdge": false,
+      "specEvidence": "published spec:85-91",
+      "currentEvidence": "Existing graph compiler/RPC tests exercise old live-save behavior, while the workspace presentation test asserts source strings. No runtime, Linux, native Electron, provider, migration or independent-review evidence was produced here.",
+      "requiredFoundation": "Bind functional, negative-control, migration/recovery, renderer, native visual/accessibility/font and independent-review receipts to the integrated revision. Provider evidence applies only to actual external effects and must not be substituted with a fake canvas effect.",
+      "blockingFor": "Feature acceptance and full-feature DoD, not source preflight delivery",
+      "missingPrerequisite": "Lead wave0 commit, authorized implementation and execution lanes with source commit/exact diff/logs/hashes and accepted independent review."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/automations/NodePalette.tsx",
+    "apps/electron/src/renderer/components/automations/NodeInspector.tsx",
+    "tests/rox-suite/automations/canvas.spec.ts"
+  ],
+  "ownedNewFilesEvidence": "Only the three normative proposed NEW paths at published spec:61-65. Glob found all three absent at inspection. They are proposed implementation ownership, not files created by this preflight; the sole current write is this report.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationEditor.tsx",
+      "symbol": "AutomationEditor; save; runNow; draftFrom/buildMatcher",
+      "change": "Add the Graph pane in the existing selected-automation editor using automation.id and workspaceId, keep the simple pane as a projection of the same draft, and preserve its dirty-edit protection. Route save through workflow.saveDraft with operationId/expectedRevision rather than updateAutomation to live config. Add explicit publish review using the same authority. Separate existing runNow from draft debug; do not save-then-execute unpublished actions. Preserve trailing/unsupported legacy actions through projection.",
+      "reason": "Current selected route mounts this editor; embedding a workspace-wide second graph surface would violate same-ID/simple-projection requirements and its old live save/run path bypasses draft isolation."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx",
+      "symbol": "AutomationGraphWorkspaceEditorProps; refresh; saveGraph; onAutomationsChanged effect",
+      "change": "Adapt the existing container to selected automation identity and workflow draft/published typed state. Replace saveAutomationGraph/baseRevision with workflow.saveDraft/expectedRevision/operationId, retain local dirty graph on remote pushes, expose explicit retry/denied/conflict compare/reload/rebase, and cancel stale workspace/identity responses. Mount it within the selected editor, not as an alternate workspace authority.",
+      "reason": "Current container only accepts workspaceId, refreshes wholesale on pushes/stale errors and calls the activating legacy graph save."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+      "symbol": "AutomationGraphEditorProps; save; updateNode; deleteSelectedMetadata; dragState; graph SVG/node buttons/aside",
+      "change": "Make onSave an explicitly non-executing draft callback and add explicit publish/debug handlers without effects in pointer/selection paths. Compose normative NodePalette and NodeInspector; add dotted camera viewport, zoom/fit/minimap, undo/redo operation history, 240px palette and 320px inspector, compact status/ports with >=24px hitboxes, labelled interactive wire hit targets and compatible-node edge insertion. Dispatch pointer/keyboard operations through the same graph reducer; add keyboard add/menu/delete/undo/arrows/Esc, double-click config and focus-retained selection. Surface node/edge diagnostics and unavailable executable kinds; implement responsive drawers/panes, accessible help and reduced motion.",
+      "reason": "Existing graph has draggable node buttons, pointer-inert straight edges, a 224px basic label/text inspector and a live-save callback, but none of the required palette/ports/camera or keyboard graph authoring contract."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/graph-fit-layout.ts",
+      "symbol": "fitGraphLayout; NODE_HEIGHT; nodeDisplayLabel",
+      "change": "Use the actual rendered viewport bounds and persisted world coordinates for fit camera calculations rather than re-clustering every graph render into compressed rows/columns. Keep useful current label derivation, update node size geometry for ports/status, and transform pointer deltas by camera zoom so moves and minimap/fit remain consistent.",
+      "reason": "Current fitGraphLayout rewrites displayed x/y from coordinate clusters while drag deltas use node.position; a real zoom/pan canvas cannot treat those as the same coordinate system."
+    },
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "symbol": "AutomationGraph; AutomationGraphNodeBase; AutomationGraphEdge; AutomationGraphNodeKind; AutomationsConfig",
+      "change": "Define GraphRevision/config schemaVersion, stable node/edge/port IDs and typed graph operations, diagnostics, capability availability, WorkflowDraft/WorkflowPublishedRevision and typed saveDraft/publish/compare results in this existing domain seam. Define mutating command envelopes with operationId and expectedRevision and no trusted renderer actor/policy fields. Keep existing decision metadata semantics explicit; do not enable unsupported kinds. Represent published lineage/validated checksum separately from camera userprefs and draft state.",
+      "reason": "Graph v1 currently has only positions, flow/metadata endpoints and seven kinds; authoring metadata comments and config fields reflect direct compile-to-live-save, not draft/published authority."
+    },
+    {
+      "path": "packages/shared/src/automations/schemas.ts",
+      "symbol": "AutomationGraphNodeSchema; AutomationGraphEdgeSchema; AutomationGraphSchema; SaveAutomationGraphPayloadSchema; AutomationsConfigSchema",
+      "change": "Validate the new revisioned operations and draft/publish/compare contracts, explicit port compatibility and config schemaVersion. Migrate existing version-1 graphs deterministically without weakening strict rejection of unsupported executable kinds. Replace the obsolete baseRevision-only save contract with typed expectedRevision/operationId commands; validate publish projection/checksum and keep draft parsing distinct from runtime config parsing.",
+      "reason": "Strict v1 schemas would reject new fields; blindly relaxing them or accepting metadata execution would violate exact diagnostics and non-execution guarantees."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.ts",
+      "symbol": "projectionNodeId; graphFromRuntimeConfig; ensureUniqueIds; detectCycles; compileGraph; AutomationGraphError; buildAutomationGraphSave; automationGraphRevision",
+      "change": "Reuse the compiler/validator as pure functions; return structured nodeId/edgeId/port diagnostic codes with i18n mapping. Add pure graph operations with stable IDs and selected-automation projection/merge preserving supported legacy fields and unrelated matchers. Split the obsolete live-save builder into non-executing draft validation and publish projection construction; CAS is checked in the authority transaction. Keep the FNV revision as an optimistic token only, not a security/validated publish checksum. Use the lead-approved checksum primitive for immutable published projection identity.",
+      "reason": "Current builder overwrites automations, positional IDs change on reorder, diagnostics are string-only and FNV explicitly is not a security token. Preserve existing cycle/type/reference validation rather than introducing another compiler."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "symbol": "registerAutomationsHandlers; HANDLED_CHANNELS; withConfigMutex; withAutomationMatcher; GET/GET_GRAPH/SAVE_GRAPH/SET_ENABLED/DUPLICATE/UPDATE/CREATE/DELETE/TEST/REPLAY handlers",
+      "change": "Register workflow.saveDraft, workflow.publish and workflow.compareRevision in the same accepted command gateway, with server-derived context/grants and typed results. Persist drafts only in the accepted authority's draft records; publish validates, checks expectedRevision/policy/checksum and atomically commits immutable revision plus active projection/fence under the existing serialized domain boundary. Migrate/fence every legacy mutator and seed read path; post-fence no handler may write live config except the published-projection activation path. GET/GET_GRAPH resolve the shared identity; preview never calls TEST/REPLAY. Emit accepted shared activity/outbox events and revoke-aware subscriptions rather than a separate notification engine.",
+      "reason": "This is the existing gateway and direct writer authority. Merely changing the canvas callback would leave legacy RPC, seed and execution bypasses active."
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "symbol": "AutomationSystem.readAndValidateConfig; loadConfig; reloadConfig; backfillIds; getMatchersForEvent; startScheduler",
+      "change": "After cutover, obtain configured matchers only from a validated active published projection through the accepted authority binding; reject draft/live-file tampering and stale projection lineage. Move backfill IDs into serialized migration so runtime load/reload never writes past the fence. Keep existing event bus/scheduler and synthetic page-refresh/meeting matchers, but reconcile in-flight configured effects during activation and never auto-enable disabled legacy matchers.",
+      "reason": "Runtime currently reads arbitrary valid automations.json and writes missing IDs itself. Without changing this path an accidental draft write is executable under an active scheduler."
+    },
+    {
+      "path": "packages/shared/src/automations/default-seeds.ts",
+      "symbol": "ensureDefaultAutomations",
+      "change": "Honor the migration fence and route any post-cutover initialization through the one published authority. Preserve intentional empty/seeded/invalid legacy handling and do not let GET recreate a live editable config alongside published state.",
+      "reason": "The seed helper is a direct writer invoked by automation GET, so the current RPC mutex alone does not establish single published authority."
+    },
+    {
+      "path": "packages/server-core/src/handlers/handler-deps.ts",
+      "symbol": "HandlerDeps.commandGateway",
+      "change": "Have the lead expose the accepted wave0 workflow authority/session-policy/transaction bindings via the existing dependency composition. commandGateway currently refers to PendingCommandsStore; do not pretend it already implements workflow persistence or actor policy. Final exact dependency type/name must follow the accepted wave0 contract rather than defining a parallel service/store here.",
+      "reason": "Automation handlers need real server actor/grants and durable draft/publish operations; neither is supplied by the inspected dependency bag."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.automations",
+      "change": "Cut over SAVE_GRAPH to the registered workflow.saveDraft command contract and add publish/compareRevision query transport bindings using the lead's accepted registry names; remove the obsolete activating graph-save contract once every caller has migrated. Do not treat PROPOSED names in the spec as existing endpoints.",
+      "reason": "Current registry exposes only GET_GRAPH/SAVE_GRAPH and legacy mutations; no workflow command is present in this namespace."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "symbol": "automation GET_GRAPH/SAVE_GRAPH routed-channel entries",
+      "change": "Update the existing routing entries with the accepted saveDraft/publish/compareRevision transport contract and permission boundary at the same time as registry cutover; remove obsolete SAVE_GRAPH routing after caller migration.",
+      "reason": "Known automation channels are explicitly listed in routing.ts:841-849; a server-only command addition would not complete transport integration. Only matching entries were inspected."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI.getAutomationGraph/saveAutomationGraph and automation mutation declarations",
+      "change": "Expose the registered draft/publish/compare typed results and operationId/expectedRevision envelopes, selected automation identity and typed conflicts; migrate old mutation declarations in lockstep with the legacy writer fence. Remove obsolete activating saveAutomationGraph types, without leaving an alias bypass.",
+      "reason": "Current renderer API describes a workspace graph and SavedAutomationGraph.config/live-save result, not the requested workflow commands."
+    },
+    {
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "symbol": "getAutomationGraph/saveAutomationGraph and onAutomationsChanged mappings",
+      "change": "Map the accepted workflow commands through the existing invoke/listener mechanism; migrate the obsolete save mapping and expose revision-aware draft/published/revoke events without a second transport. Ensure UI consumers preserve dirty drafts on a remote revision change.",
+      "reason": "Current direct mapping sends graph-save calls to the live-config writer."
+    },
+    {
+      "path": "packages/shared/src/automations/index.ts",
+      "symbol": "graph authoring exports including SaveAutomationGraphPayload/buildAutomationGraphSave",
+      "change": "Export the new shared draft/published/diagnostic/operation types and pure projection functions; remove obsolete save-builder/payload exports after migrating all callers. Keep the existing package export convention.",
+      "reason": "Renderer API types import this barrel; leaving old exports encourages bypass or incompatible contract use. Matching export symbols were inspected by search."
+    },
+    {
+      "path": "packages/shared/src/automations/graph.test.ts",
+      "symbol": "automation graph compiler describe block",
+      "change": "Extend behavior coverage for lossless disabled/conditions/action-option roundtrip, stable IDs through reorder/event moves, precise port/type/cycle/orphan errors, unsupported executable-kind rejection and pointer/keyboard operation equivalence. Preserve meaningful existing compiler tests, not string checks.",
+      "reason": "Existing tests cover basic roundtrip and metadata/custom/dangling/cycle rejection but not revisioned operations or migration identity."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations-graph.test.ts",
+      "symbol": "automation graph save RPC describe block; createHarness",
+      "change": "Migrate the existing live-save contract test to real authority draft persistence/readback and explicit publish: saveDraft keeps runtime projection byte/semantic-equivalent; published revision remains immutable; duplicate operationId is idempotent; stale CAS/conflicting legacy writer/cross-workspace/denied/revoked writes fail without effects. Exercise restart recovery and compare/rebase, plus a seeded broken control that routes a draft to live config and is detected through an active scheduler/effect observer.",
+      "reason": "Current test positively requires SAVE_GRAPH to overwrite live config; that old contract must change, not be used as draft-safety evidence."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/__tests__/automation-graph-workspace-editor.test.ts",
+      "symbol": "Automation graph workspace presentation source-string tests",
+      "change": "Delete the existing incidental source-text/wiring assertions rather than re-pin them to new names. Put consumer-visible route/keyboard/dirty-conflict/no-effect behavior in the normative canvas.spec.ts and existing behavioral harnesses.",
+      "reason": "Current assertions only inspect strings and enforce no workspace graph import in the selected route; they do not prove actual UI safety or persistence."
+    }
+  ],
+  "integrationRequests": [
+    {
+      "owner": "lead/shared i18n owner",
+      "paths": ["packages/shared/src/i18n/locales/de.json", "packages/shared/src/i18n/locales/en.json", "packages/shared/src/i18n/locales/es.json", "packages/shared/src/i18n/locales/fr.json", "packages/shared/src/i18n/locales/hu.json", "packages/shared/src/i18n/locales/ja.json", "packages/shared/src/i18n/locales/pl.json", "packages/shared/src/i18n/locales/ru.json", "packages/shared/src/i18n/locales/zh-Hans.json", "packages/shared/src/i18n/locales/zh-Hant.json"],
+      "symbol": "new automations.canvas.* t() keys",
+      "change": "Integrate Russian-default palette/port/status/help/diagnostic/unavailable/draft/publish/conflict/retry/denied copy with 10-locale parity and ASCII key ordering. This is a shared patch request, not worker ownership or inspected locale-content evidence.",
+      "reason": "Published spec:41 and loaded repo rules require all user-facing labels/help/errors through i18n; current string-only English compiler diagnostics need code-to-translation mapping."
+    },
+    {
+      "owner": "lead/wave0 foundation owners",
+      "symbol": "accepted registry + session-policy + entity index + outbox + userprefs + revision persistence bindings",
+      "change": "Return accepted interface paths/symbols and receipts before RS-AUT-01 implementation. Register workflow identity and commands once, supply revoke invalidation and deduped notification integration, and enumerate remaining legacy scheduler/writer/watch/provider callers. Do not add a second editable workflow store or alternate canvas route.",
+      "reason": "The normative specification requires these foundations despite dependencies=[]; package direct imports do not prove they exist."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "AC1",
+      "criterion": "Load legacygraph → addannotation/move → save/reload remains equivalent runtime config.",
+      "currentEvidence": "projectAutomationsToGraph/compileGraph preserve graph metadata when it compiles equivalently; RPC regression test asserts matcher-label save leaves initial automations equal. Annotation schema and pointer move exist, but there is no add UI and existing save writes live config (graph.ts:501-562; AutomationGraphEditor:109-131; automations-graph.test.ts:88-148).",
+      "requiredChange": "Import the selected legacy graph into a migrated draft, add annotation using stable IDs, preserve supported matcher/action/root fields and disabled state, move in world coordinates, persist/reload draft independently and keep published runtime projection unchanged. Switch simple/canvas panes over the same identity/projection.",
+      "verification": "After authorized implementation: seed enabled/disabled legacy matchers with conditions, timezone, permissionMode, labels, telegramTopic and supported action options; add annotation/move via real canvas; save/reload/restart and compare graph IDs/config plus published runtime semantics. Include unrelated unsupported legacy entries so selected edits cannot drop them.",
+      "missingPrerequisite": "F1/F2/F5 and accepted wave0 authority; selected-automation projection is not implemented.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED"
+    },
+    {
+      "id": "AC2",
+      "criterion": "Invalid edge/cycle/type blocked with precise diagnostic; keyboard produces same validgraph as pointer.",
+      "currentEvidence": "ensureUniqueIds/compileGraph/detectCycles reject duplicate/dangling IDs, bad flow kinds, wrong arity and cycles (graph.ts:330-489). Errors contain only string issues; edges have no ports and editor has no graph keyboard reducer.",
+      "requiredChange": "Preserve current compiler rules, add typed port compatibility and diagnostic node/edge locations, and use one operation reducer for pointer/keyboard insert/reorder/connect/disconnect/delete/move/undo/redo. Prevent invalid commit/publish without obscuring diagnostic draft states.",
+      "verification": "Compare canonical graph results from equivalent pointer/keyboard sequences; assert exact diagnostic code and affected node/edge for wrong port type, missing endpoint, cycle, orphan and unsupported execution; verify the invalid graph cannot become the published runtime projection.",
+      "missingPrerequisite": "GraphRevision/operation/schema/diagnostic contract and supported runtime capability mapping.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED"
+    },
+    {
+      "id": "AC3",
+      "criterion": "Unimplemented executable nodes marked unavailable; click/hover/debug/saveDraft sends no effects. Negative: seed draft write to live automations.json → assertion catches scheduler invocation. Active legacy scheduler cannot read drafts; stale publish/conflicting writer rejected.",
+      "currentEvidence": "decision is metadata-only and executable metadata/custom nodes are rejected. However SAVE_GRAPH writes the scheduler-read file, AutomationSystem loads that file, and testAutomation performs effects; stale checks only protect old config-save revision (types.ts:379-405; graph.ts:216-218,538-546; automations.ts:216-268; automation-system.ts:128-190,383-397).",
+      "requiredChange": "Unavailable palette kinds stay non-executable and are not annotations in disguise. Pure debug/hover/click and saveDraft never emit effects. Make runtime read only published lineage and fence legacy writers. Publish rejects stale expectedRevision/policy/checksum; explicit compare/rebase cannot auto-activate.",
+      "verification": "Keep an active legacy scheduler with an effect observer in an isolated seeded workspace. Verify zero draft-origin actions during click/hover/debug/saveDraft/reload. Intentionally mutate the implementation/control to write draft projection into the live file and demonstrate the oracle catches scheduler invocation; a surviving control is failure. Then prove stale publish and unfenced/conflicting legacy mutations are rejected and published disabled matchers stay disabled.",
+      "missingPrerequisite": "F1/F2/F3/F4/F6 plus an active-scheduler/effect-observing negative-control harness. RS-AUT-03 receipt is required only if enabling new execution.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD1",
+      "criterion": "UI/routing/input/output/help/keyboard/state contracts реализованы; loading/empty/error/denied/retry доступны и проверены.",
+      "currentEvidence": "Selected automation route mounts AutomationEditor with automation.id/workspaceId; graph editor has node selection/basic text inspector/empty/save error, container has loading and generic load error. No current Graph tab is present in the inspected selected editor; no palette/ports/zoom/undo/typed denied/retry/conflict states exist (MainContentPanel:284-319; AutomationEditor:598-650; GraphEditor:153-304; WorkspaceEditor:82-111).",
+      "requiredChange": "Extend this same selected editor with canvas and simple projection, explicit name/draft/debug/publish header, palette/ports/inspector/camera, structured graph operations, diagnostics, no-focus-trap navigation, all specified loading/empty/error/denied/retry states and accessible i18n help. Preserve current themes/font; <=160ms opacity/transform motion with reduced-motion off. Implement <1100px drawer and <800px single-pane/back-navigation.",
+      "verification": "Exercise real selected route, same ID/workspace, pointer/focus/hover/double-click and all keyboard actions; resize across 1100/800 thresholds; inspect edge captions/hitboxes, selection retention, minimap and actual viewport fit. Reach each state through real valid/absent/failed/denied/retry responses; verify no effects. Native font/theme/ARIA proof is also required under DOD5.",
+      "missingPrerequisite": "F1/F3/F7; NodePalette/NodeInspector and transport state contracts are missing.",
+      "state": "PARTIAL_SOURCE_ONLY_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD2",
+      "criterion": "Persistence и reload; meaningful negative case; concurrency/reconnect где применимо; N/A обоснован в receipt.",
+      "currentEvidence": "Per-workspace RPC mutex plus old baseRevision guard and atomic write exist. The container auto-refreshes on CHANGED and string-matched stale errors, which does not provide dirty-draft conflict recovery. No draft/published persistence or operationId replay/reconnect contract is present.",
+      "requiredChange": "Durably save/reload Draft and immutable PublishedRevision through one authority; expectedRevision+operationId command semantics, typed conflict compare/reload/rebase, revision-aware reconnect and revoke invalidation. Preserve dirty edits on remote changes; finish crash/migration/fence recovery and reconciliation.",
+      "verification": "Two clients race the same expectedRevision; exactly one accepted mutation and deterministic typed conflict, no lost dirty graph. Retry the same operationId after disconnect/restart without duplicate publish/notifications; reload draft/published state and immutable prior revision. Crash around migration/activation and verify recovery/rollback. Run the AC3 broken control. Concurrency and reconnect are applicable here and cannot be marked N/A.",
+      "missingPrerequisite": "F1/F2/F7; durable receipt/idempotency and atomic authority transaction binding.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD3",
+      "criterion": "Общие grants, links, search, mentions, activity, notification и agent policy интегрированы для новой domain entity.",
+      "currentEvidence": "Shared Rox2EntityRef and authorizeRox2Action are available in imported core contract; automation RPC uses native-live helpers rather than actor authorization. Current handler context has client/workspace IDs and automation helpers ignore it. No package integration for shared search/mentions/outbox or revoke is evidenced.",
+      "requiredChange": "Register draft/published workflow entity under the shared identity and command registry. Derive actor/workspace/policy on server; enforce common read/write/share/publish grants consistently through UI/RPC/IPC/MCP/provider/agents. Use shared links/index and activity/outbox notification dedupe; revocation terminates writes/subscriptions and invalidates forbidden caches. Preview remains pure.",
+      "verification": "Check allowed and denied/cross-workspace/forged-actor reads and writes across actual mounted access paths; revoke while editing/subscribed and verify subsequent writes fail and cached data/search/mentions disappear. Resolve existing links to the same workflow identity. Replay an operation and observe one activity/notification via shared outbox. Agent draft preview must produce no runtime effect. Do not substitute the native-live helper unit tests for policy proof.",
+      "missingPrerequisite": "F3 and accepted wave0 registry/policy/index/outbox/provider/agent interfaces. Full domain DoD applies; the UI-only N/A clause does not apply to this persistence slice.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DOD4",
+      "criterion": "Targeted tests + seeded broken control действительно отклоняется; regression existing route/authority пройдена.",
+      "currentEvidence": "graph.test.ts has meaningful compiler tests and automations-graph.test.ts covers old live-file save/CAS. Workspace presentation test only scans source strings. No tests were executed in this preflight.",
+      "requiredChange": "Update obsolete save contract tests; add consumer-visible canvas behavior in normative canvas.spec.ts and targeted migration/authority/runtime negative tests using existing harnesses. Delete incidental source-text/wiring assertions, not re-pin them. Include AC3 broken control and selected route/simple-editor/legacy authority regression.",
+      "verification": "During authorized implementation run targeted graph/compiler, RPC/domain/runtime and real canvas scenarios once integrated; capture actual results and the deliberately broken control's rejection. Prove selected simple route still preserves supported legacy configuration and all post-fence calls use the one published authority. A test-source presence claim is not a PASS.",
+      "missingPrerequisite": "Lead wave0 commit and implemented contracts; executable effect oracle and runnable canvas/domain test lane.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DOD5",
+      "criterion": "Linux domain/renderer evidence; реальные Electron screenshots/ARIA/theme/font после UI changes; provider lane только для реальных external effects.",
+      "currentEvidence": "React implementation uses shared tokens and t(), but current GraphEditor transition-shadow is not the requested opacity/transform motion. No renderer/Linux/native/provider verification was performed; computed font was not observed.",
+      "requiredChange": "Supply separate actual Linux domain/renderer receipts and real Electron screenshots/ARIA/theme/computed Rox font evidence for integrated canvas. Verify reduced motion, compact Russian default layout and responsive/focus behavior. Use a provider lane only for real external effects exercised by activation/regression, never for pure preview.",
+      "verification": "Exercise domain invariants in Linux and interactive renderer scenarios; capture native Electron selected workflow states and computed font plus accessible names/focus/hit targets at specified viewport sizes. If real external effects are exercised, independently record provider response/readback; document the exact effect-free canvas boundary rather than declaring full-feature verification N/A.",
+      "missingPrerequisite": "Authorized Linux renderer/domain and native Electron execution lanes; real provider credentials/lane only if actual effects are exercised. This worker is expressly prohibited from running them.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DOD6",
+      "criterion": "Source commit, exact diff, logs/hashes, expected/observed, миграция/rollback и независимое review приложены. Нельзя принимать экран без механизма.",
+      "currentEvidence": "This report records dispatch revision and concrete whole-file hashes; spec/manifest hashes match packet. No implementation commit/diff, runtime logs, migration/rollback execution or independent feature review exists from this worker.",
+      "requiredChange": "Lead commits wave0, integrates dependency-ordered implementation, records delivered source commit/exact diff and revision-bound expected/observed receipts for each DoD. Include migration snapshot/readback/fence and rollback proof plus independent review of policy/draft safety/legacy preservation, not only canvas appearance.",
+      "verification": "Rehash/re-read changed seams on integrated revision; bind logs/screenshots/test/control/provider receipts to that revision; independently review exact integrated diff and perform migration/rollback readback. This preflight must never be relabelled as a feature-completion receipt.",
+      "missingPrerequisite": "Lead-owned implementation/integration commit, acceptance evidence collection and independent review. No Git operation is authorized for this preflight.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-AUT-01.md","symbol":"Normative UI/domain/commands/Acceptance/DoD/dependencies","lineStart":19,"lineEnd":109,"sha256":"2e5fccefa265389b9d927ed9779f5e2641ae1e10346ebd914326b54912208f3b"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-AUT-01 normative record","lineStart":201,"lineEnd":224,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx","symbol":"AutomationGraphEditor/save/dragState/rendered edges/nodes/inspector","lineStart":9,"lineEnd":304,"sha256":"a4323fc00bd9bb5548f94c88c35900c0755b090dcd2b54790c6ab826e3471d94"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationGraphWorkspaceEditor.tsx","symbol":"AutomationGraphWorkspaceEditor/refresh/saveGraph","lineStart":8,"lineEnd":114,"sha256":"f862058a2d6bcb3c1dd6b0dfe76b1ac98f8894a40b45c9243b92eeb2694a94e5"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"AutomationEditor/save/runNow/dirty draft refresh","lineStart":435,"lineEnd":562,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"apps/electron/src/renderer/components/automations/AutomationEditor.tsx","symbol":"draftFrom/buildActions/buildMatcher","lineStart":49,"lineEnd":124,"sha256":"299dda071efd6e066007e6974a816461e0de5fe45da4182bd9ec07ef7e5c6911"},
+    {"path":"apps/electron/src/renderer/components/automations/graph-fit-layout.ts","symbol":"fitGraphLayout","lineStart":63,"lineEnd":89,"sha256":"395a36ce3816e96eed57287b161508c859af555e639f4e680c371fa411f550f5"},
+    {"path":"apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx","symbol":"isAutomationsNavigation selected automation route","lineStart":284,"lineEnd":319,"sha256":"22fc3c593f73a9bfce5327ca5c536fef89b42e4d1a270428ee31221bd9ed670a"},
+    {"path":"apps/electron/src/renderer/context/AppShellContext.tsx","symbol":"AppShellContextType automation management callbacks","lineStart":184,"lineEnd":198,"sha256":"da1e2e5c44019fa50072109eebf93b8cd6cfbf672ed03df74bf12d0c17a35fe3"},
+    {"path":"packages/shared/src/automations/types.ts","symbol":"AutomationGraphNodeKind/AutomationGraphDecisionNode/AutomationGraph/AutomationsConfig","lineStart":314,"lineEnd":432,"sha256":"c338cad64d6b2296ac171b14e0957f66d364e557a5c82aca85ffadfe9f186691"},
+    {"path":"packages/shared/src/automations/schemas.ts","symbol":"AutomationMatcherSchema and graph/save/runtime schemas","lineStart":235,"lineEnd":390,"sha256":"232547920900c0fb134ade7e7cdd7bdd793cde4901f230c04048011802511530"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"projectionNodeId/graphFromRuntimeConfig/compileGraph","lineStart":230,"lineEnd":489,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/graph.ts","symbol":"projectAutomationsToGraph/getAutomationGraphProjection/buildAutomationGraphSave","lineStart":501,"lineEnd":562,"sha256":"976ab215417dd951156b1bd6e17751ef904a507a0c409ac29a6adbfedefc4875"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem config load/reload and runtime ID writer","lineStart":128,"lineEnd":223,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/automation-system.ts","symbol":"AutomationSystem.startScheduler","lineStart":383,"lineEnd":397,"sha256":"94916c06594a1e93daa0370c76d628ff7f6bbf8d0cabb2f3ee0eb0c31838e5ed"},
+    {"path":"packages/shared/src/automations/default-seeds.ts","symbol":"ensureDefaultAutomations","lineStart":500,"lineEnd":554,"sha256":"74ca648834aba086fa5ef0d4e0d6abc75d1d981e1710492eeed899cb475f0bbb"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"withConfigMutex/withAutomationMatcher/live graph save authority","lineStart":25,"lineEnd":252,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/server-core/src/handlers/rpc/automations.ts","symbol":"Legacy UPDATE/CREATE/DELETE and REPLAY writers/effects","lineStart":438,"lineEnd":578,"sha256":"aba4af4d3a034a4829c255670bf0f6fcfe82c494bcef981c9fd32781a3a23162"},
+    {"path":"packages/server-core/src/handlers/handler-deps.ts","symbol":"HandlerDeps.commandGateway","lineStart":56,"lineEnd":72,"sha256":"501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path":"packages/server-core/src/transport/types.ts","symbol":"RequestContext/RpcServer","lineStart":7,"lineEnd":34,"sha256":"844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path":"packages/core/src/rox2/rpc-native-actions.ts","symbol":"rpcNativeActResult/rpcAutomationsActResult","lineStart":463,"lineEnd":528,"sha256":"692630527926522d5a3989a2650a595e5f04a932dcc1ab821bc28cc801482d6a"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":232,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"requiresExplicitGrant/authorizeRox2Action","lineStart":579,"lineEnd":609,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/shared/src/protocol/channels.ts","symbol":"RPC_CHANNELS.automations","lineStart":810,"lineEnd":824,"sha256":"c9650a40deb3ea770eb908e529d2894ca03b8ce7ff41647d51055878681a29f0"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI automation graph/mutation methods","lineStart":2164,"lineEnd":2186,"sha256":"3c864407da637347a5359d39bbe30f211dd9d43812ce624edfcfb34438b3858c"},
+    {"path":"apps/electron/src/transport/channel-map.ts","symbol":"automation invoke/listener mappings","lineStart":866,"lineEnd":879,"sha256":"d55b0ff6d993fe9a5a10c6c9c1ed0fe0657ef5a2154ddb514525e09e585baaf8"},
+    {"path":"packages/shared/src/automations/graph.test.ts","symbol":"Existing compiler roundtrip and unsupported/dangling/cycle tests","lineStart":31,"lineEnd":141,"sha256":"62f28211cd8b9518209cdbf8a84ec7f62909876924f203d54bcd2cd999114f6d"},
+    {"path":"packages/server-core/src/handlers/rpc/automations-graph.test.ts","symbol":"Existing no-seed read and activating graph-save/CAS regression","lineStart":73,"lineEnd":150,"sha256":"792dafc5fca1817b8adcdfa6f5f16d41e7bb873c744708d8ebb3e4c3e1b817be"},
+    {"path":"apps/electron/src/renderer/components/automations/__tests__/automation-graph-workspace-editor.test.ts","symbol":"Incidental source-string workspace presentation tests","lineStart":11,"lineEnd":43,"sha256":"868c4dc0835e18db56547660d32993c25231b72937cacf067989a8afdbd45177"}
+  ],
+  "nextExecutableAction": {
+    "owner": "lead",
+    "action": "Accept this preflight report and commit wave0; obtain accepted registry/policy/revision-persistence/userprefs and cutover/reconciliation interface receipts. Recheck the inspected file hashes against that committed integration state, reread changed seams, then allocate the three normative new files and one owner per shared patch. Begin RS-AUT-01 with typed non-executing draft/published/CAS contracts and legacy writer/scheduler fence before connecting canvas save/publish. dependencies remains [].",
+    "workerResumeBoundary": "This worker has no authority to implement, run product verification, change Git or shared progress. A new dependency-ordered implementation packet is required."
+  },
+  "risks": [
+    {"severity":"critical","risk":"Calling existing onSave/saveAutomationGraph for a draft activates its graph by writing the file read by the active scheduler.","mitigation":"Draft persistence and runtime-published-only read fence before UI save wiring; active-scheduler broken control."},
+    {"severity":"critical","risk":"RPC mutex excludes runtime ID backfill/seed helpers and other host writers; keeping a writable live file plus published records creates dual authority.","mitigation":"Serialized migration/readback and cross-writer fence, then one activation path and verified rollback."},
+    {"severity":"high","risk":"dependencies=[] can be mistaken for a UI-only task. Draft/PublishedRevision, minimum publish, permissions and migration are explicitly required now, not deferred to RS-AUT-05.","mitigation":"Keep F1-F8 separate from DAG edges and reject UI-only feature completion."},
+    {"severity":"high","risk":"Selected canvas writes workspace-wide graph projection, so one edit may drop or reject unrelated legacy matchers/actions; positional IDs are unstable across reorder/event changes.","mitigation":"Stable migration identity and selected projection/merge, supported-field roundtrip plus unrelated legacy negative fixtures."},
+    {"severity":"high","risk":"Native-live helper is mistaken for server policy; arbitrary renderer workspace/actor claims bypass grants.","mitigation":"Resolve policy from authenticated client/session context, shared EntityRef and grants; deny forged/cross-workspace/revoked calls at every real transport."},
+    {"severity":"high","risk":"Existing runNow/testAutomation/REPLAY is reused for draft debug and executes external effects.","mitigation":"Pure debug result separated from explicit policy-controlled published-run actions and effect-observing negative tests."},
+    {"severity":"high","risk":"New palette kinds visually imply executable branching despite metadata-only decision/runtime limitations.","mitigation":"Accurate unavailable capabilities and compiler rejection until RS-AUT-03 accepted runtime receipt."},
+    {"severity":"high","risk":"Automatic refresh on remote changes or stale error erases the user's unsaved graph.","mitigation":"Dirty revision tracking and explicit compare/reload/rebase without auto-publish."},
+    {"severity":"medium","risk":"Current clustered fit layout and unscaled drag deltas conflict with persisted world positions and zoom camera.","mitigation":"Actual viewport camera transform with shared pointer/keyboard operation semantics and resize/reload verification."},
+    {"severity":"medium","risk":"Source-string tests, native-live receipts or screenshots are treated as full functional proof.","mitigation":"Behavioral domain/canvas tests, rejected seeded broken control and independent revision-bound Linux/native/effect lanes."},
+    {"severity":"high","risk":"Concurrent lead wave0 integration makes inspected source hashes and seam assumptions stale.","mitigation":"Lead verifies whole-file hashes and rereads changed sources after wave0 commit; this report does not claim HEAD-bound runtime evidence."}
+  ],
+  "delivery": {
+    "reportPath": "plans/compound-implementation/worker-reviews/RS-AUT-01.json",
+    "productSourceChanges": false,
+    "featureImplementation": false,
+    "runtimeVerification": "NOT_RUN_BY_AUTHORIZATION",
+    "verificationArgvDisposition": "Dispatch verifier reserved for the lead; no builds/tests/native UI/network operations or shared-state mutations were run. Artifact JSON readback is the worker's delivery check, not feature verification."
+  }
+}

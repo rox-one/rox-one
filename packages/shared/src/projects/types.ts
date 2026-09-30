@@ -7,6 +7,8 @@
  * File structure:
  * {workspaceRootPath}/projects/{projectSlug}/
  *   ├── config.json   - Project settings
+ *   ├── roadmap.json  - Goal, definition of done, milestones, requirements, inputs (see roadmap.ts)
+ *   ├── roadmap.md    - Human-readable mirror of roadmap.json
  *   └── assets/       - Uploaded files (PDFs, images, text)
  */
 
@@ -33,6 +35,10 @@ export interface KanbanColumnDef {
  * Main project configuration (stored in config.json)
  */
 export interface ProjectConfig {
+  /** Active bounded local repository authorization; absent on legacy projects. */
+  repositoryConnection?: import('../code-intelligence/repository-connection.ts').RepositoryConnection;
+  /** Repository identities preserve historical policy receipts. */
+  repositoryBindings?: import('../code-intelligence/refs.ts').RepositoryBinding[];
   id: string;
   slug: string;
   name: string;
@@ -192,4 +198,6 @@ export interface ProjectPromptContext {
   memoryPath: string;
   /** MEMORY.md content, already capped by loadProjectMemory. */
   memoryContent?: string;
+  /** Compact roadmap (goal, definition of done, milestones, requirements) from roadmap.json. */
+  roadmapContent?: string;
 }

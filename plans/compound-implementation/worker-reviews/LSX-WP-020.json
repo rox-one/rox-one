@@ -1,0 +1,330 @@
+{
+  "task_id": "LSX-WP-020-preflight",
+  "attempt_id": "506297aa84119ac5b65f51bcb1142c06",
+  "packet_hash": "8f94b46a294f2fbae4529e964ffa3da6daa86e1d952a90e87d0615eb062ac60f",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-020",
+  "featureComplete": false,
+  "reportKind": "SOURCE_BACKED_PREFLIGHT_NOT_IMPLEMENTATION",
+  "dependencies": ["LSX-WP-011", "LSX-WP-012", "LSX-WP-010"],
+  "inspection": {
+    "mode": "inspect; write owned artifact only",
+    "tier": "bounded-workflow",
+    "repository": ".",
+    "inputRevisionBasis": "Supplied dispatch revision, not independently asserted as current HEAD. No Git commands performed.",
+    "evidenceScope": "Working-tree file snapshots, including lead-owned uncommitted wave0 work; not evidence of implementation at input_revision or of runtime acceptance.",
+    "baselineDrift": "notes.ts, NotesViewHost.tsx and TiptapMarkdownEditor.tsx whole-file SHA256 differ from historical blobs in the normative package; surface-context.ts and note-views.ts match their historical specification hashes. Current content.ts and markdown-commit.ts expose the native commit mechanism already being integrated. No assumption that wave0 is committed or accepted.",
+    "freshness": "Hashes bind inspected working-tree versions. Integration can change these files at any time: rehash and reread affected ranges after the lead's wave0 commit before implementing. No immutable snapshot or runtime proof was created.",
+    "discoveryLimits": "Codegraph reported no project index. Descriptive find failed with its backing service reporting 402; scoped literal grep/read/glob supplied all source evidence. No index creation, installs, product execution, builds, tests, native UI, explicit network command, or Git mutation.",
+    "manifestHashes": {
+      "plans/lark-suite-reference/work-packages.json": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952",
+      "plans/lark-suite-reference/execution-packages.json": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    "verificationPolicy": "All feature verification below is proposed and NOT_RUN. The dispatch verification_argv is recorded but not executed under this preflight's read/write-artifact-only restriction; lead retains receipt acceptance. Artifact JSON readback is not feature proof."
+  },
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-011",
+      "requiredContribution": "Accepted Image/Audio/Video descriptors within the existing 18-type field registry, stable field IDs, validation/format/import/export capabilities and null/empty/error/redacted/unsupported states; reuse, do not build a second field registry.",
+      "specEvidence": "work-packages.json:4813-4819,4855-4900; proposed packages/core/src/bases/field-registry.ts; base.previewFieldDefinition/base.addField",
+      "readiness": "Dependency implementation and acceptance receipt not established by this inspection."
+    },
+    {
+      "packageId": "LSX-WP-012",
+      "requiredContribution": "Accepted base.previewCellEdit/base.applyCellEdit owner command, expectedRevision/operationId handling, draft preservation and normalized native readback. Media editor extends this path; base.previewMediaFieldEdit does not create another writer.",
+      "specEvidence": "work-packages.json:5162-5168,5190-5235; proposed ScalarCellEditor.tsx and packages/core/src/bases/cell-edit-command.ts",
+      "readiness": "Dependency implementation and acceptance receipt not established; LSX-WP-012 itself depends on LSX-WP-004/005/010/011."
+    },
+    {
+      "packageId": "LSX-WP-010",
+      "requiredContribution": "Accepted base.query snapshot, row/field authorization before computation, queryRevision/permissionEpoch/freshness, cursor and watermark invalidation. Gallery must consume precisely the same filtered snapshot as Table.",
+      "specEvidence": "work-packages.json:4503-4507,4542-4586; proposed query-service.ts/query-contract.ts",
+      "readiness": "Dependency implementation and acceptance receipt not established; current note-views projections are not this contract."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "EG-FILES",
+      "classification": "EXPLICIT_EXTERNAL_PREREQUISITE_NOT_LSX_DAG_EDGE",
+      "evidence": "work-packages.json:7527-7529 and external_prerequisite_gates:108-113; RS-DRV-01.md:29,36-38,55,73",
+      "required": "Accepted common FileRef/assets export and revocation owner, File identity independent of mutable local path, upload/checksum/scanning/ready state, policy-controlled derivatives/download and authoritative attachment binding receipt. Native Notes asset owner is preserved; do not implement a media-owned blob store or simulate a ready File service.",
+      "currentGap": "NoteAsset is a path/relativePath/MIME record, not a revisioned FileRef with asset policy; importAsset trusts attachment MIME and returns original paths. No readiness receipt inspected.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "RS-DRV-01_COMMON_AUTHORITY",
+      "classification": "HIDDEN_PUBLISHED_FOUNDATION_GATE",
+      "evidence": "RS-BASE-01.md:98 names RS-DRV-01; RS-DRV-01.md:62 explicitly requires common identity/ACL/command authority despite declaring no draft dependency among the seven specs; RS-BASE-01.md:52,56; bases-design.md:31",
+      "required": "Authenticated principal/workspace from transport, current independent asset and row/field grants at preview/apply/read/export, read-time revoke and common effect authority. A row Doc read grant is insufficient to issue an asset token. Reuse accepted EG-IDENTITY/EG-EFFECTS receipts from prerequisites when they actually cover these assets.",
+      "currentGap": "content.ts localContentPrincipal is local-device/window scoped and its policy checks filesystem Note access; it is not shared File ACL. IMPORT_ASSET/LIST_ASSETS/DELETE_ASSET ignore _ctx and DELETE_ASSET passes granted:true.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "COMMON_FILE_INVALIDATION_OUTBOX",
+      "classification": "HIDDEN_MECHANISM_GATE_NOT_NEW_STORE",
+      "evidence": "work-packages.json:7707-7724; RS-DRV-01.md:38,73; RS-BASE-01.md:50,56; notes.ts:910-911; markdown-commit.ts:34-39",
+      "required": "Verify attachment.bound and media.capabilityChanged aliases against the accepted shared event/outbox mechanism and its complete normative envelope. The file owner must revoke already-issued derivative tokens/streams; renderer removes playback, URLs, excerpts and cached metadata on policy change. Do not create a second event engine or equate generic notes.CHANGED with a proved grant-revocation event.",
+      "currentGap": "Existing note event envelope exposes eventId/workspaceId/noteId/reason; the two named media event families and asset token invalidation were not established.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "CANONICAL_SCHEMA_AUTHORITY_RECONCILIATION",
+      "classification": "PUBLISHED_SPEC_CONFLICT_REQUIRING_LEAD_RECONCILIATION",
+      "evidence": "RS-BASE-01.md:46,50 proposes new registered CustomRecord and Postgres payload; bases-design.md:41,47-52 defines page/contentKind=record until separate migration; work-packages.json:7705 keeps existing File/Notes owner",
+      "required": "Lead resolves the accepted registry/schema/owner contract supplied by prerequisites, without adding a new entity kind or Postgres store in LSX-WP-020. Gallery/media operate over accepted canonical refs and descriptors, never copy Tasks/Notes into independent records.",
+      "currentGap": "Different historical specifications describe different foundation shapes. Neither publication nor this preflight establishes which implemented schema was accepted.",
+      "state": "CONTRACT_RECEIPT_REQUIRED"
+    },
+    {
+      "id": "REACHABLE_UI_AND_COMPILED_TRANSPORT_SCOPE",
+      "classification": "HIDDEN_INTEGRATION_SCOPE_GATE",
+      "evidence": "NotesViewHost.tsx:71,90-116; note-views.ts:5,24-34; work-packages.json:7688-7701,7719,7847; repository AGENTS i18n rule",
+      "required": "Accepted navigation/view configuration and typed RPC registration must expose Gallery and media preview through the existing surface. If those prerequisites do not provide routing, shared schemas/channels, locale keys and transport methods, acquire a reviewed expanded packet and serial leases; the five new files plus two allowed seams cannot authorize changes to arbitrary callers, protocol registry or locale JSON.",
+      "currentGap": "NotesViewHost view union excludes gallery; NoteBaseView only supports table/base; no bases directory found in renderer/server scope. The normative API contract_file points at a TSX renderer file, so a server must not import renderer runtime code to share schemas.",
+      "state": "INTEGRATION_OWNER_ACTION_REQUIRED"
+    },
+    {
+      "id": "REFERENCE_AND_IMPLEMENTATION_LAUNCH_RECEIPTS",
+      "classification": "EXPLICIT_LAUNCH_GATE_NOT_DEPENDENCY_EDGE",
+      "evidence": "execution-packages.json:1708-1711,1741-1751; work-packages.json:7837-7847; dispatch worker instructions",
+      "required": "Lead's wave0 commit followed by artifact/readback-accepted dependencies in topological order, resolved delivery-manifest reference revision/digest and verified spec_ref hashes, reviewed product-baseline-versus-dispatch revision reconciliation, exclusive shared-file leases, integrated exact-revision verification.",
+      "currentGap": "Reference revision/digest remain RESOLVE_FROM_DELIVERY_MANIFEST in the inspected records; prescribed historical product baseline differs from dispatch input_revision. Acceptance receipts were not inspected and must not be assumed.",
+      "state": "NOT_ESTABLISHED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/BaseGallery.tsx",
+    "apps/electron/src/renderer/pages/bases/MediaCellEditor.tsx",
+    "packages/server-core/src/bases/media-projection.ts",
+    "tests/lark-suite-extension/lsx-wp-020.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-020.spec.ts"
+  ],
+  "ownershipNote": "ownedNewFiles are the normative proposed implementation files only, not permission to create them in this preflight. No matching files were found by scoped glob; actual preflight ownership is solely this JSON report.",
+  "proposedContributions": [
+    {
+      "path": "apps/electron/src/renderer/pages/bases/BaseGallery.tsx",
+      "symbols": ["BaseGallery", "GalleryConfig"],
+      "change": "New renderer consumes accepted query snapshot/row refs and permission-filtered fields, cover field ID and token-based card config. Key lazy cards and selection/focus by canonical EntityRef, cancel metadata requests on unmount/policy changes, use roving focus with Arrow/Home/End/Enter and keyboard menu. Render no-cover/loading/broken/denied/unsupported distinctly. Only display authorized derivative outputs; never parse raw markdown for private cover/excerpt fallback. Support bounded Dynamic Views cover placement/title wrapping/excerpt/carousel/property arrangement options using authorized data; deterministic shuffle if configured, no custom shared CSS or external scraping. Audio/video never autoplay or prefetch originals.",
+      "prerequisites": ["Accepted LSX-WP-010 snapshot and revocation contract", "Accepted persisted shared view/personal focus configuration", "Accepted File derivative owner", "Integration host routing and locale keys"]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/MediaCellEditor.tsx",
+      "symbols": ["MediaCellEditor", "MediaCellValue"],
+      "change": "New image/audio/video editor binds FileRefs, alt/caption, verified dimensions/duration/poster/caption/transcript refs as applicable to registry descriptors. Use server-supplied MIME/size/codec capabilities, never trust extension or input MIME alone. Preview with base.previewMediaFieldEdit and apply through LSX-WP-012 base.applyCellEdit using stable operationId/CAS; preserve draft on validation/conflict/unknown outcome. Controls play/pause/seek/captions and authorized transcript/open links are explicitly requested, with external-source disclosure. Persist metadata/FileRefs, not URLs or data URIs.",
+      "prerequisites": ["Accepted LSX-WP-011 descriptors", "Accepted LSX-WP-012 writer/draft/receipt path", "EG-FILES ready identity and binding owner"]
+    },
+    {
+      "path": "packages/server-core/src/bases/media-projection.ts",
+      "symbols": ["resolveMediaPreview (proposed)", "previewMediaFieldEdit (proposed)", "AttachmentBinding (proposed)"],
+      "change": "Thin projection over the accepted File/Notes owner and query/schema contracts, not a new authority or store. Recheck transport-bound row/field and independent asset grant at requested revision, validate type/MIME/content policy/size/dimensions/codec, project only allowed derivative metadata. Keep cache keys revision/permission-epoch scoped; deny results contain no original URL/path/title/excerpt. Preview is side-effect free. Delegate durable binding changes to the accepted native cell command; publish only through the accepted outbox. Reuse dependency-owned serializable schema for both boundaries; transport registration is integration-owner work.",
+      "prerequisites": ["Accepted common File resolver/export/revoke ports", "Accepted query/field/cell contracts", "Accepted common policy/event authority"]
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-020.test.ts",
+      "symbols": ["LSX-WP-020 domain acceptance cases (proposed)"],
+      "change": "Deterministic isolated owner fixtures test all media types, ACL and typed boundaries, snapshot row-ref equality with Table, CAS/idempotency/restart recovery and typed export roundtrip; retain reproduction seed and exact input hash. Negative controls deliberately issue unauthorized original URL or autoplay and must fail semantic assertions. Real native owner/readback lanes remain mandatory beyond fixtures."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-020.spec.ts",
+      "symbols": ["LSX-WP-020 actual Electron scenarios (proposed)"],
+      "change": "Use discovered supported Electron runner against integrated existing Notes/Base route. Assert lazy focus/selection, permitted property list, player interaction and revoke removal; capture network/DOM forbidden-data absence plus pointer/keyboard/IME/help/reduced-motion/zoom/theme/locale/font evidence. No invented UI passing command or isolated-gallery fixture acceptance."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers (nativeContent setup and media operation registration)",
+      "lineStart": 909,
+      "lineEnd": 930,
+      "change": "After accepted dependency integration, wire the new media-projection resolve/preview operations into the existing typed Base transport using ctx-bound actor/workspace and accepted File owner; use nativeContent.assertScope only for its local scope semantics, not as asset ACL. Map all eight required error discriminants explicitly. Registration/channel names must be supplied by accepted schema/transport owner; do not invent string channels in this file.",
+      "reason": "Normative shared integration seam; File grant and typed preview path are absent in inspected registerNotesHandlers. Preserve registerContentHandlers and native store.",
+      "prerequisite": "Lead lease, accepted dependency contracts, EG-FILES and revised packet if registration spans other transport/schema files."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers / RPC_CHANNELS.notes.UPDATE_PROPERTIES (replacement seam for absent updateNoteProperties)",
+      "lineStart": 1131,
+      "lineEnd": 1144,
+      "change": "Route media field preview/apply through accepted cell-edit command and previewPropertyDictionary/nativeContent.commit rather than adding a saveNote/updateNoteProperties function. Check asset binding/current policy before apply, preserve sourceStoreId and expectedRevision, pass the command's stable operationId and return durable native receipt plus normalized authorized readback for media apply. Do not rely on legacy UPDATE_PROPERTIES generating crypto.randomUUID and returning only note as an idempotent media receipt. Keep the existing dictionary conversion review mechanism.",
+      "reason": "Existing wrapper already uses native commit but discards its receipt and generates a new ID per invocation. Reuse core authority rather than creating a second metadata writer; spec symbol references are stale.",
+      "prerequisite": "LSX-WP-012 contract acceptance and lead approval of narrowed actual-symbol patch; no generic property API rewrite authorized by this request."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers / IMPORT_ASSET, LIST_ASSETS, DELETE_ASSET, RENAME_ASSET",
+      "lineStart": 1102,
+      "lineEnd": 1129,
+      "change": "For Gallery/media use the accepted File owner to wrap existing Notes asset operations with trusted ctx/workspace and independent asset/read/bind/delete grants, policy validation and authorized redacted results. Do not forward raw path/relativePath or private referencedBy labels as media preview results. Remove reliance on granted:true for this media path. Keep existing Notes as asset owner and avoid another upload/store; wider legacy asset migration requires separately reviewed scope.",
+      "reason": "Current import/list/delete ignore _ctx; MIME comes from payload/name and results expose native paths. Neither Notes row grant nor lexical attachment path checks meet asset ACL or derivative requirements.",
+      "prerequisite": "Accepted EG-FILES implementation/receipts, integration-owner policy decision and exclusive notes.ts lease."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "lineStart": 58,
+      "lineEnd": 116,
+      "change": "Add a gallery dispatch branch backed by the dependency-owned typed query/view configuration and import BaseGallery/MediaCellEditor only once. Handle it before projectNoteRows/parseNoteDocument so Gallery never reads full raw markdown or constructs its own client-side query. Supply authorized row refs, selected ref, cover/property IDs, media resolver and native cell command callbacks. Preserve table/canvas/outline/graph behavior and existing onOpenNote navigation mapping.",
+      "reason": "Current host supports table/canvas/graph/outline only and derives rows from entire markdown. Gallery must be reachable in the same surface without a new library or store.",
+      "prerequisite": "Accepted query/config/navigation contracts and caller integration; if the view selector/caller remains outside packet, lead must expand reviewed scope before declaring UI complete."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "lineStart": 48,
+      "lineEnd": 56,
+      "change": "At the host boundary use dependency-owned discriminated props for Gallery's canonical rowRef/revision/allowed fields/capabilities and authorized media projection rather than treating optional properties:Record<string,unknown> or markdown as trusted media data. Retain legacy note props for unchanged views; no new persistence model or duplicate rows.",
+      "reason": "NotesViewNote contains raw note ID/content and lacks canonical revision/grant/typed media context required by Gallery.",
+      "prerequisite": "Accepted BaseRowProjection schema and lead approval of host prop/caller migration."
+    }
+  ],
+  "additionalIntegrationScopeRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteViewKind / NoteBaseView",
+      "change": "If dependency-owned canonical view registry does not replace this selector contract, reconcile Gallery routing with current kind unions and shared BaseDefinition configuration under an expanded reviewed packet. Do not store new media records in localStorage views.",
+      "reason": "Direct import currently excludes gallery; not a sharedPatchPath for LSX-WP-020. No edit authorized."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "symbol": "FileAttachment / NoteAsset / NoteDocument",
+      "change": "File/transport owner supplies accepted FileRef/media result/error schema and registration, reconciling video capability without pretending FileAttachment's current type union includes video. Prefer accepted common File contract over expanding this legacy DTO as a second asset authority.",
+      "reason": "Directly imported legacy DTO has no stable FileRef, media revision or asset grant; protocol changes are outside package write scope."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "New Gallery/media help, control, state and error translation keys",
+      "change": "Integration owner adds required keys to all 10 existing locales using t(), Russian default and ASCII sorting; labels/help cannot be literals. Exact key names follow accepted dependency conventions.",
+      "reason": "Mandatory repository/UI contract, but locale files are outside normative write scope. No locale contents inspected or changed."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "all3 media types usable with explicit unsupported states",
+      "currentEvidence": "TiptapMarkdownEditor.tsx:181-199 ingests images as data URLs and otherwise only Mermaid; :269-281 allows base64 image nodes. notes.ts:678-723 returns Markdown/image-or-link asset imports. dto.ts:625-634 has audio but no video discriminant and NoteAsset lacks codec/duration/FileRef. This does not establish typed Base media capability.",
+      "actualSymbolOrSeam": "TiptapMarkdownEditor.handleDroppedOrPastedFiles (read-only evidence); registerNotesHandlers asset/cell seams; proposed MediaCellEditor and media-projection",
+      "requiredChange": "Implement Image/Audio/Video descriptor-bound FileRef editors and explicit no-cover/empty/loading/denied/deleted/broken/unsupported codec/format states; validate content MIME, size, image dimensions and playback codec through owner policy. Support image alt/caption, audio play/pause/seek/transcript links and video poster/duration/captions with lazy cancellable metadata. No autoplay or undeclared external source; persist typed values not data URLs.",
+      "verification": "Source-schema compile; real-owner happy-path image/audio/video bind and play/open; invalid MIME/size/dimension/codec, missing, denied and unknown-format assertions; exported typed audio/video FileRef+metadata survives reload and restart; explicit unsupported output contains no playable original URL.",
+      "missingPrerequisite": "Accepted LSX-WP-011/012 contracts, EG-FILES MIME/codec/derivative policy and durable binding receipt; media platform runtime proof.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "lazy cards retain stable selection and permitted property list",
+      "currentEvidence": "NotesViewHost.tsx:79-88 builds all note rows from markdown; :71 excludes Gallery. note-views.ts:73-83 uses note IDs/untyped properties; :160-169 locally filters/sorts. bases-design.md:187,193 specifies stable ref selection and same authorized snapshot.",
+      "actualSymbolOrSeam": "NotesViewHost, NotesViewNote, projectNoteRows/applyNoteBaseView (legacy evidence); proposed BaseGallery",
+      "requiredChange": "Use LSX-WP-010 snapshot/queryRevision/permissionEpoch for exactly the Table row refs and field list. Lazy-window cards keyed by canonical EntityRef preserve selected/focused row through scrolling/window replacement; filtered or revoked rows clear action targets. Cover/property IDs must be permitted before metadata requests, excerpt access or rendering; token presentation only.",
+      "verification": "Compare canonical Gallery/Table row-ref sets for identical source/filter/snapshot across pages. Scroll selected card out/in, Arrow/Home/End/Enter navigate, refresh/reorder/filter/revoke, assert focus restoration or explicit cleared selection and no action on hidden ref. Inspect DOM/responses/network for denied property/cover/excerpt absence.",
+      "missingPrerequisite": "LSX-WP-010 accepted query and invalidation contract; accepted shared view config/navigation, schema IDs and host integration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "content.ts:27-31 derives local device principal from ctx/window/workspace; :201 validates command and :212-215 maps six native errors. notes.ts:1102-1122 ignores asset ctx. Work package requires base.resolveMediaPreview(ref,revision), base.previewMediaFieldEdit(input) and eight error discriminants, with contract_file set to BaseGallery.tsx.",
+      "actualSymbolOrSeam": "registerNotesHandlers, localContentPrincipal/registerContentHandlers; proposed resolveMediaPreview/previewMediaFieldEdit",
+      "requiredChange": "Use accepted serializable dependency-owned request/result/error validators at both boundaries; include validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat and preserve unknown durable outcome recovery. Transport supplies current actor/workspace; never use renderer actor/owner/workspace as grant. Server independently checks row/field plus File ACL/revision. Avoid importing TSX component code into server to share schema.",
+      "verification": "Compile actual server and renderer consumers after dependency integration, validate malformed payload and every error variant, forged actor/workspace and readable-row/denied-asset cases at transport boundary; assert denied response has no asset URL or source metadata.",
+      "missingPrerequisite": "Accepted LSX-WP-010/011/012 schema contracts, common File policy and transport registration; lead-approved expanded scope if shared contracts/channels require changes.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "MarkdownCommitReceipt at markdown-commit.ts:10-22 and MarkdownCommitStore.commitLocked:118-162 supply source binding, operation ID, revision and durable journal. content.ts:196-225 returns note+receipt or DOCUMENT_RESULT_UNAVAILABLE, :253-258 recovers receipt. notes.ts:1139-1143 discards receipt and returns note, with fresh random operationId per call.",
+      "actualSymbolOrSeam": "registerNotesHandlers UPDATE_PROPERTIES/nativeContent.commit; registerContentHandlers commit/GET_COMMIT_RECEIPT; MarkdownCommitStore",
+      "requiredChange": "Use accepted native applyCellEdit receipt and File binding receipt, stable caller operationId, expectedRevision/sourceStoreId/authority epoch; preserve drafts for pending invalidation or readback failure and recover existing receipt rather than generating another write. Read back normalized typed FileRefs and metadata from canonical owner; SHA256 content revision must match receipt. No Base media mirror or success toast as ACK.",
+      "verification": "Bind each type through real native owner; read exact canonical ref/revision/hash and binding; restart service/app and reread same typed value. Simulate unknown outcome, recover same receipt, prove one write/event. Changed sourceStoreId, authority epoch and stale revision are rejected without clobber.",
+      "missingPrerequisite": "Lead wave0 accepted native authority and LSX-WP-012 receipt path; EG-FILES binding/export owner accepted and restart-readback support.",
+      "state": "MECHANISM_SOURCE_PRESENT_MEDIA_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:7732-7746 lists row-ref parity, bad MIME/codec/missing/denied, live revoke and export reload plus six proof lanes. MarkdownCommitStore:135-145 handles identical replay, reused-ID/different-payload validation and CAS conflict; media integration remains unimplemented.",
+      "actualSymbolOrSeam": "MarkdownCommitStore.commitLocked/getReceipt; registerNotesHandlers; proposed domain and UI test files",
+      "requiredChange": "Add deterministic tests against real dependency contracts and execute actual native transport scenario as separate lane. Cover allowed row with denied File, denied field, stale asset/schema/row revision, same-ID replay and different-input replay rejection, interrupted commit/reload/reconnect and source/authority changes. Retain failed attempts, inputs and seeds, not only final green output.",
+      "verification": "After implementation run bun test tests/lark-suite-extension/lsx-wp-020.test.ts; actual native owner negative/happy/restart lanes record expected/observed refs, revision/hash and receipt with seed+input SHA. Inspect no denied DOM/response/export fields. UI runner must be discovered, not guessed.",
+      "missingPrerequisite": "All three accepted dependencies, EG-FILES synthetic owner fixtures and real native transport lane; builds/tests/runtime prohibited during this preflight.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:7748-7756 names returning original asset URL without own ACL or autoplaying gallery videos, and requires denied derivative URL absent DOM/response, revoked preview removed, unrequested autoplay/network activity absent.",
+      "actualSymbolOrSeam": "Proposed media-projection resolver and BaseGallery player/card creation; proposed lsx-wp-020.test.ts and ui/lsx-wp-020.spec.ts",
+      "requiredChange": "Use an isolated deterministic owner/source fixture with authorized row but denied asset and open authorized media then revoke. Retain seed/input hash and exact baseline/mutant artifact hashes. Inject unauthorized original URL and autoplay behavior separately so consumer-visible assertions, not source-text checks, prove sensitivity.",
+      "verification": "Green baseline and URL mutant fails forbidden DOM/response assertion; revoke mutant fails preview/player removal assertion; autoplay mutant fails play/network observation before user activation. Preserve semantic assertion message; timeout, unsupported runner or compilation failure is separately infrastructure failure, never a caught mutant.",
+      "missingPrerequisite": "Implemented media resolver/cards, accepted owner fixtures and actual supported Electron/network observation lane.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesViewHost uses useTranslation and existing UI components, but no Gallery/media branch. bases-design.md:187 defines card keys/focus; RS-BASE-01.md:39-42 defines editor keyboard, theme/help/motion and responsive behavior; repo AGENTS mandates all 10 locales.",
+      "actualSymbolOrSeam": "NotesViewHost integration; proposed BaseGallery/MediaCellEditor",
+      "requiredChange": "Ship reachable existing-surface Gallery and inspector with pointer controls, Arrow/Home/End/Enter card nav, player keys and menu focus return, IME-safe caption/alt editing, hover/focus/click help, reduced motion, zoom-safe layout and preserved theme. Russian default with complete 10-locale keys, semantic font inheritance and actual loaded Rox Mono proof; no new shell/font CDN.",
+      "verification": "Actual integrated Electron screenshots/ARIA/current font loading and computed font with Cyrillic; exercise hover/focus/click, card virtualization, play/pause/seek/captions, IME composition Enter, Escape draft/menu focus, reduced motion, 200% zoom, light/dark, RU and locale parity. Capture viewport and exact tested commit. Isolated fixture screenshots do not satisfy this criterion.",
+      "missingPrerequisite": "Accepted routing/host props and locale integration, supported actual Electron runner, integrated revision and current UI/font surface. No native UI run allowed now.",
+      "state": "NOT_RENDERED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:7739-7746 requires SOURCE_SCHEMA/UNIT_PROPERTY/NATIVE_DOMAIN_READBACK/RESTART_RECOVERY/ACL_NEGATIVE/ACTUAL_ELECTRON_UI and :7827-7847 requires integrated receipts. This report is source inspection only.",
+      "actualSymbolOrSeam": "Existing native commit/receipt/read path and existing NotesViewHost route; both proposed acceptance files",
+      "requiredChange": "Lead collects independently verifiable lane receipts bound to exact implementation and integrated revision, source/schema/report/diff/input hashes, commands/results/seeds, authoritative restart readback and actual UI evidence; conditional provider/collaboration proofs only when genuinely exercised. No completion flag from this report or queued receipt.",
+      "verification": "Review each criterion and six independent proof lanes against actual outputs; rerun affected authoritative readback after integration changes, redacting outputs per actor. Require implementation/readback receipts rather than worker final text.",
+      "missingPrerequisite": "Feature implementation and integrated revision; independent accepted dependency and lane receipts. Dispatch verification does not replace feature proof.",
+      "state": "FEATURE_COMPLETE_FALSE_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "Asset policy independently checked beyond row Doc grant; revoked URL/token removed; external sources declared.",
+      "currentEvidence": "work-packages.json:7712-7724 is normative. content.ts:66-79 checks local Note filesystem policy only; notes.ts:1102-1122 exposes existing asset functions without ctx-based asset checks. surface-context.ts:51-55 filters ref IDs but cannot authorize File derivatives.",
+      "actualSymbolOrSeam": "registerNotesHandlers asset handlers; visibleContextEntityRefs (read-only display helper); proposed media-projection/BaseGallery",
+      "requiredChange": "Resolve each derivative via accepted asset owner with independent File grant; deny without original path/URL or hidden note excerpt. Revoke server token and active stream, stop playback, clear src/poster/caption/transcript URLs/excerpts, abort pending metadata and evict protected previews on current epoch. Gate external requests with explicit declared source capability; no auto scraping.",
+      "verification": "Allowed row + denied asset returns redacted/denied result with no URL/path in DOM/response/export; revoke while playing removes media immediately on accepted event and subsequent old-token fetch/seek cannot retrieve content. Out-of-order old preview response must not restore revoked src. Observe no unsolicited external request/autoplay.",
+      "missingPrerequisite": "EG-FILES revoke/token owner and common policy epoch/event authority; cannot meet this with renderer cleanup alone.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Native media metadata ownership, authorized export and realtime event contract preserve canonical identity.",
+      "currentEvidence": "work-packages.json:7705,7707-7710 keeps existing File/Notes ownership and requires named common event envelope; bases-design.md:128-130 and docs-design.md:94 require portable authorized media manifest; RS-DRV-01.md:38 defines common file/outbox ownership.",
+      "actualSymbolOrSeam": "registerNotesHandlers/nativeContent.commit; MarkdownCommitReceipt/MarkdownChangedEvent; proposed MediaCellValue/AttachmentBinding",
+      "requiredChange": "Store typed FileRefs/alt/caption/duration/poster metadata through native owner and registry import/export codec; derivative cache is disposable and revision/ACL scoped. Authorized export includes FileRef/assets/fallback warnings but never runtime private URL tokens or hidden assets. Verify event aliases and full normative envelope via accepted shared outbox, not a new event store.",
+      "verification": "Export/import or export-readback all three typed values at same authorized revision; restart leaves same native refs/metadata; revoked assets absent export with explicit permitted warning; consume binding/capability event once by eventId and assert canonical binding readback. Do not claim recall of already-downloaded authorized media.",
+      "missingPrerequisite": "EG-FILES authorized manifest/export and event authority; LSX-WP-011 portable codecs and LSX-WP-012 native command receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/server-core/src/handlers/rpc/notes.ts", "symbol": "registerNotesHandlers/nativeContent and SAVE", "lineStart": 909, "lineEnd": 965, "sha256": "6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path": "packages/server-core/src/handlers/rpc/notes.ts", "symbol": "registerNotesHandlers asset RPCs and UPDATE_PROPERTIES", "lineStart": 1102, "lineEnd": 1144, "sha256": "6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path": "packages/server-core/src/handlers/rpc/notes.ts", "symbol": "importAsset", "lineStart": 678, "lineEnd": 723, "sha256": "6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx", "symbol": "NotesViewNote/NotesViewHost", "lineStart": 48, "lineEnd": 116, "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "handleDroppedOrPastedFiles/TiptapMarkdownEditorProps", "lineStart": 181, "lineEnd": 224, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "TiptapMarkdownEditor Image/FileHandler configuration", "lineStart": 269, "lineEnd": 281, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "packages/core/src/rox2/surface-context.ts", "symbol": "bindSurfaceContext/visibleContextEntityRefs", "lineStart": 31, "lineEnd": 55, "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path": "packages/server-core/src/handlers/rpc/content.ts", "symbol": "localContentPrincipal", "lineStart": 27, "lineEnd": 31, "sha256": "d5189c2e79c4f479b8b907177e1b6a8f560e054dc1efd26f371198d6b7680acd"},
+    {"path": "packages/server-core/src/handlers/rpc/content.ts", "symbol": "registerContentHandlers commit/getReceipt", "lineStart": 196, "lineEnd": 228, "sha256": "d5189c2e79c4f479b8b907177e1b6a8f560e054dc1efd26f371198d6b7680acd"},
+    {"path": "packages/server-core/src/docs/markdown-commit.ts", "symbol": "MarkdownCommitReceipt", "lineStart": 10, "lineEnd": 22, "sha256": "0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path": "packages/server-core/src/docs/markdown-commit.ts", "symbol": "MarkdownCommitStore.commitLocked", "lineStart": 118, "lineEnd": 162, "sha256": "0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "NoteBaseView", "lineStart": 24, "lineEnd": 34, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "apps/electron/src/renderer/pages/notes/note-views.ts", "symbol": "projectNoteRows/applyNoteBaseView", "lineStart": 133, "lineEnd": 169, "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path": "packages/shared/src/protocol/dto.ts", "symbol": "FileAttachment", "lineStart": 625, "lineEnd": 634, "sha256": "b4c6e49e9135b778456f769133ce822dab433e9ca7238a06b8c4dafded3c3e57"},
+    {"path": "packages/shared/src/protocol/dto.ts", "symbol": "NoteAsset/NoteDocument", "lineStart": 669, "lineEnd": 699, "sha256": "b4c6e49e9135b778456f769133ce822dab433e9ca7238a06b8c4dafded3c3e57"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[19] LSX-WP-020 acceptance/DoD", "lineStart": 7758, "lineEnd": 7770, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-020 execution ownership and launch gates", "lineStart": 1663, "lineEnd": 1751, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "Section 5 Image/Audio/Video registry entries", "lineStart": 128, "lineEnd": 132, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "Section 8 Gallery/virtualization", "lineStart": 179, "lineEnd": 193, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "Block inventory and Dynamic Views", "lineStart": 88, "lineEnd": 100, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path": "docs/rox-suite/published/RS-BASE-01.md", "symbol": "Domain authority/transport/permissions", "lineStart": 44, "lineEnd": 56, "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path": "docs/rox-suite/published/RS-DRV-01.md", "symbol": "Dependencies and common foundation gate", "lineStart": 60, "lineEnd": 65, "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"}
+  ],
+  "nextExecutableAction": "Lead accepts this preflight, completes and commits wave0, resolves reference-package delivery revision/digest and current baseline, obtains artifact plus readback-accepted dependency receipts in topological order (including LSX-WP-010/011 before LSX-WP-012), and verifies EG-FILES/common authority readiness. Then rehash/reread changed seams, acquire notes.ts/NotesViewHost.tsx leases, reconcile stale saveNote/updateNoteProperties references to current registerNotesHandlers nativeContent seams, and approve any missing routing/schema/i18n scope before dispatching implementation of the five normative new files. No feature implementation should begin from this report alone.",
+  "risks": [
+    "Root-owned wave0 can change inspected files; hashes identify source snapshots, not accepted commits. Historical line numbers/symbols are already stale.",
+    "Existing local Note authority is not independent shared File ACL; reusing granted:true or a renderer readable-ref set would leak derivatives/private excerpts.",
+    "Import MIME is payload/name derived, image ingestion uses base64, legacy NoteAsset exposes filesystem paths and FileAttachment has no video discriminant; none supplies normative typed FileRef/media validation.",
+    "Generic property wrapper discards native receipt and randomizes operationId; blind retry could create a new operation instead of recovering the original durable outcome.",
+    "Server revoke of issued stream/token and renderer cleanup must be integrated; delayed metadata responses must not resurrect revoked previews. Authorized downloaded exports cannot be recalled, and disconnected-device erasure must not be promised.",
+    "Spec contract_file is a renderer TSX file; avoid server dependency on UI runtime and a second divergent request/error schema.",
+    "Gallery is absent from current host and direct-import view unions. UI caller/selector was not broadly inspected because package-only scope forbids it; lead must prove actual reachability and approve extra seams if dependencies do not cover them.",
+    "Required locale keys and typed transport registrations may lie outside allowed write paths. Do not weaken UI/compile acceptance or edit them without a reviewed packet expansion.",
+    "Published RS-BASE-01 new-kind/Postgres proposal differs from newer page/contentKind proposal; accepted foundation contract must govern, not a media-specific schema/store invention.",
+    "Spec reference revision/digest unresolved; published issue links/status and proposed event aliases are not readiness receipts. Six proof lanes remain mandatory and NOT_RUN in preflight."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

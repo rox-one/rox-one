@@ -6183,6 +6183,107 @@ export class SessionManager implements ISessionManager {
   }
 
   /**
+   * Which connection/model a sessionless one-shot on this workspace would use —
+   * the same resolution new sessions get (workspace default connection →
+   * global default, workspace default model → connection default). Used by
+   * the Project screen to show an honest disabled state when nothing is set up.
+   */
+  describeWorkspaceLlm(workspaceId: string): { available: boolean; connectionName?: string; model?: string; reason?: string } {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return { available: false, reason: 'workspace-not-found' }
+    try {
+      const wsConfig = loadWorkspaceConfig(workspace.rootPath)
+      const backendContext = resolveBackendContext({
+        sessionConnectionSlug: undefined,
+        workspaceDefaultConnectionSlug: wsConfig?.defaults?.defaultLlmConnection,
+        managedModel: wsConfig?.defaults?.model,
+      })
+      const connection = backendContext.connection
+      if (!connection) return { available: false, reason: 'no-connection' }
+      const model = wsConfig?.defaults?.model || backendContext.resolvedModel || connection.defaultModel
+      return { available: true, connectionName: connection.name ?? connection.slug, model: model || undefined }
+    } catch (error) {
+      return { available: false, reason: error instanceof Error ? error.message : String(error) }
+    }
+  }
+
+  /**
+   * One-shot LLM query without a session, on the model a new session in this
+   * workspace would get (same resolution as describeWorkspaceLlm). Mirrors
+   * querySessionLlm: scratch backend, postInit auth check, queryLlm, destroy.
+   * Errors are thrown with their real message.
+   */
+  async queryWorkspaceLlm(
+    workspaceId: string,
+    request: SessionLlmQueryRequest,
+    options: { timeoutMs?: number } = {},
+  ): Promise<SessionLlmQueryResult> {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
+    const workspaceRootPath = workspace.rootPath
+    const wsConfig = loadWorkspaceConfig(workspaceRootPath)
+    const backendContext = resolveBackendContext({
+      sessionConnectionSlug: undefined,
+      workspaceDefaultConnectionSlug: wsConfig?.defaults?.defaultLlmConnection,
+      managedModel: wsConfig?.defaults?.model,
+    })
+    const connection = backendContext.connection
+    if (!connection) throw new Error('No LLM connection is configured')
+    const miniModel = getMiniModel(connection) ?? connection.defaultModel ?? getDefaultSummarizationModel()
+    const model: string | undefined = wsConfig?.defaults?.model || backendContext.resolvedModel || connection.defaultModel
+
+    const agent = createBackendFromResolvedContext({
+      context: backendContext,
+      hostRuntime: buildBackendHostRuntimeContext(),
+      coreConfig: {
+        workspace: workspace as Workspace,
+        session: {
+          id: `workspace-oneshot-${Date.now().toString(36)}`,
+          workspaceRootPath,
+          createdAt: Date.now(),
+          lastUsedAt: Date.now(),
+          workingDirectory: workspaceRootPath,
+          model,
+          permissionMode: 'safe',
+        },
+        miniModel,
+        envOverrides: {
+          CRAFT_WORKSPACE_PATH: workspaceRootPath,
+          ...(miniModel ? { ANTHROPIC_DEFAULT_HAIKU_MODEL: miniModel } : {}),
+        },
+        isHeadless: true,
+      },
+      providerOptions: { piAuthProvider: connection.piAuthProvider },
+    }) as AgentInstance
+
+    const timeoutMs = options.timeoutMs ?? 180_000
+    try {
+      const init = await agent.postInit()
+      if (init && init.authInjected === false && init.authWarningLevel === 'error') {
+        throw new Error(init.authWarning || `Connection "${connection.name ?? connection.slug}" is not signed in`)
+      }
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`The model did not answer in time (${Math.round(timeoutMs / 1000)} s)`)), timeoutMs)
+      })
+      try {
+        const queryable = agent as AgentInstance & {
+          queryLlm?: (req: SessionLlmQueryRequest & { model?: string }) => Promise<{ text: string; model?: string; warning?: string }>
+        }
+        if (typeof queryable.queryLlm !== 'function') {
+          throw new Error('This connection does not support one-shot LLM queries')
+        }
+        const result = await Promise.race([queryable.queryLlm({ ...request, model }), timeout])
+        return { text: result.text ?? '', model: result.model ?? model, warning: result.warning }
+      } finally {
+        if (timer) clearTimeout(timer)
+      }
+    } finally {
+      agent.destroy()
+    }
+  }
+
+  /**
    * Rewrite a user draft prompt with the session's connection and model.
    * Does not persist; the renderer replaces the composer text.
    * Real provider errors are returned so the renderer can show them.

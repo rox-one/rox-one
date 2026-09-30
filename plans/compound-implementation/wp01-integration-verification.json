@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 2,
+  "packageId": "WP-01",
+  "scope": "Canonical identity/private Project bootstrap recovery checkpoint, not package completion",
+  "observedAt": "2026-09-30T13:05:35.224257+00:00",
+  "parentRevision": "b9b8aa7197f5d25304ec377a049a8f375eccf3e5",
+  "mechanism": "SCOPED_VERIFIED",
+  "interface": "NATIVE_GATES_REMAIN_OPEN",
+  "fullDoD": "NOT_VERIFIED",
+  "sourceSha256": {
+    "apps/electron/src/main/index.ts": "59e83da201dd22471da7178c108a8f8e89ba30501ebccb22842c3d6f3fd74049",
+    "apps/electron/src/main/project-authority-journal.ts": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960",
+    "apps/electron/src/main/project-authority.ts": "6f35b1b5bd76b7c8fecff5107e6bab72ad428f6858f6da0803e3c0d2b4f03540",
+    "apps/electron/src/preload/bootstrap.ts": "62b2315268218b0f86ba32eeab645e066badefca5930ea844e8d357941de8aad",
+    "apps/electron/src/renderer/atoms/projects.ts": "ba95a7423af6dcfc02cd4a946eca4e545a57eb07f03fcf8f0b7a5fea36dc86dd",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "dc43ed8a7643d810a5c6a007bebdf1417724d247933c015c002ffb4b82a30a78",
+    "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx": "f325bd0cd983421915b5aeb251e9d90c92ed76e7cf523e85c3c66078bb9e93b1",
+    "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx": "80037fd112ce8aac79f11eb75b1da1cb5c4718f2d9f7db7a2212eed3c68a140b",
+    "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx": "edb2961d13d94aaa9a591ed3ae71c1d6512d8b1c941af3770d4b439b19c7ec24",
+    "apps/electron/src/renderer/pages/ConnectionsPage.tsx": "7e14c84fec3e229f88d62506fc8a3503dc320d7a6db5129c67f58544f940d402",
+    "apps/electron/src/renderer/pages/ProjectInfoPage.tsx": "9df69f7d6205d0ca12c7cc35e4a8fce74733a65519f0cb98d26f32863ea76278",
+    "apps/electron/src/shared/project-authority.ts": "3d597c53babe44264cd5722cbbbd74ae09de25c388a916a1211e3aa6166ef12e",
+    "apps/electron/src/shared/types.ts": "81b3f6f59614deb95705e570335e7f4ecc27dcffe5d6f5ed086b3707ca5ae95a",
+    "apps/electron/src/transport/__tests__/channel-map-parity.test.ts": "c7738ab9944905750cb4b6f8f690893fce21f8dddd823a8a261c0746221ac52f",
+    "apps/electron/src/transport/channel-map.ts": "ffcc506c73a74d3133432a2f9b943edb06f78852edb8b04fa63b84a636ce71f0",
+    "apps/electron/src/transport/project-authority-connection.ts": "daaa05c5c1323ab86f44bd308f70b9a56f47a587b930db5cfd962ed98d57983e",
+    "apps/electron/src/transport/routed-client.ts": "033aece0e542d9f5462fd0258901b23748a34018a2bb005a8a8fd6b05d6641c3",
+    "apps/workspace-service/migrations/01-domain-contract.sql": "1e98bc23bdbf921f8e72e67194544666ffb33911f577b7581fa32ea9deeda900",
+    "apps/workspace-service/migrations/01-local-auth-bootstrap.sql": "2412ea8aa4f763d5bb9680f344276a9ed6bcf89486629a4fe9e3d23282cba9bc",
+    "apps/workspace-service/package.json": "2ef3565e748c3f3917d4df258cc3c0da6dde1bda0769e1af122488f2eab92985",
+    "apps/workspace-service/src/auth/local-issuer.ts": "d980080e13524136bac06ba211218f1c009c158728d84e3d0888457f91385768",
+    "apps/workspace-service/src/auth/postgres-identity.ts": "8b8124e55e98d9ef29617e06b107db3643cca205e6af48f9c16cae95f9b2d146",
+    "apps/workspace-service/src/auth/verified-actor.ts": "637174c864da1e69732d3f33170f63054619721fd91a87a422f7b19f60f62cf4",
+    "apps/workspace-service/src/configuration.ts": "fc39c9f4404fbf3b485c47f177a6e3b551933331dc940b73c8d70cc5206a181d",
+    "apps/workspace-service/src/database/migrations.ts": "4970d00faab5c59246fb9a3f81a988b547a1ce4739f21574e95a5c6b97632de6",
+    "apps/workspace-service/src/http.ts": "5ec7953dc652bba0cd0119922a38f039ed5554ccb391e795c24e87868cd9cd2c",
+    "apps/workspace-service/src/index.ts": "bf390e866e143827ca9e2e67a2e9cf2e514d982e00f3d1d8ddf8a5cdf87b2b96",
+    "apps/workspace-service/src/modules/identity/commands.ts": "992990c86d31b84cf32ee6b226b7b7b8a052485445622c51f2e5e6828cc718f4",
+    "apps/workspace-service/src/modules/identity/observability.ts": "ab061455e681deda09948d2752982901691c72feb75d84773af52df129b2c590",
+    "apps/workspace-service/src/modules/identity/repository.ts": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+    "apps/workspace-service/src/server.ts": "b44b1de53867b6d46312e3f350b142ebaa5d1700cc6f7fce3d2e53c875c75621",
+    "apps/workspace-service/tsconfig.json": "d83e32325e8aeee3cb0fe0828ce450e5a962098d788175ae6f61d452e15ba826",
+    "bun.lock": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+    "notices/THIRD-PARTY-NOTICES.txt": "53b7930876b314d8b444e4db64f9d9f3960092de504f14ac870135c4fc6b49ef",
+    "package.json": "19d87bd05284457f64319bcef6fd3eec987648a67e51b17e3b3b6d89d4444858",
+    "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts": "6f05fb9338c94e9b52d99a8cbc3c871d258ef1deb7738104ef4637344a03a2b2",
+    "packages/core/src/rox2/meeting-conation-shell.ts": "f2d628e81cc06d722efbc044a10d3b99549c6d9d34fb9cac7e84632c913ad815",
+    "packages/core/src/rox2/platform-contract.ts": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4",
+    "packages/core/src/types/workspace.ts": "d0e1a02d1db706a3469a4428b956c35533a2f3c0333ff554d4e38e3dd9098b6d",
+    "packages/server-core/src/transport/server.ts": "f61389662c1b10024bb8773aaa09b2b6c78c21c3bb136f6b7ed05ffc47e14ea8",
+    "packages/server-core/src/transport/types.ts": "2c9542094dcb2a8fb4664edf6a597a1e3d7e80eed6a9a84be07671e03c5ec99a",
+    "packages/shared/src/config/storage.ts": "2e49b5c3050b0093fa063630a115632c33b9d4d2e787f2d2d51dcb049530030c",
+    "packages/shared/src/credentials/backends/secure-storage.ts": "bda4d5b6f94753850322b379460a3a01595703624ab2f2eda7b637ad73a724b7",
+    "packages/shared/src/i18n/locales/ar.json": "83989a84565b4aba18593f3f3cbd5c68dd7592b8d730e0b924e9bdf100bea81c",
+    "packages/shared/src/i18n/locales/de.json": "c8d2afc5f70102bf58da9fa24ed751fe18b71ce75240b8f86320da939c57e061",
+    "packages/shared/src/i18n/locales/en.json": "fef557e97dc86a9d720b990d92ae7aa16f7e39a95faa4f8fb44c3ae5498fec7d",
+    "packages/shared/src/i18n/locales/es.json": "c34e68c3eaada09599a1f389bc1a5ed97be438c68ac46c20d97fcd04c53aad7c",
+    "packages/shared/src/i18n/locales/fr.json": "0f4b589565fb9e92ae901d5d56bf7834d60a602f476a4b140c6d6b736f846710",
+    "packages/shared/src/i18n/locales/hu.json": "9ca1052cc270b694ea3464b025b95d32d010f80db422802de110fb2a980d65d1",
+    "packages/shared/src/i18n/locales/ja.json": "ce15a32978d955e77905aa2473d3c01ca2ee095800fa4c1cbd3be5c7a926bc5e",
+    "packages/shared/src/i18n/locales/ko.json": "ef8be25f88d3833af0febbab4c9ccf4cac580220f3b51c32f255dd3ba1d7941b",
+    "packages/shared/src/i18n/locales/pl.json": "2de4235db0649c6cdeb6fd6172d3bf55bab2ce8282edd5febcda71239de00974",
+    "packages/shared/src/i18n/locales/ru.json": "78d9c7e93f76646958f916689536bee60fddbcbf10185957db0bd16f2da384ad",
+    "packages/shared/src/i18n/locales/zh-Hans.json": "21c05b7fb8b0118684718520e2022d8ec5889628fc08f08a62b79e7f5072bb32",
+    "packages/shared/src/i18n/locales/zh-Hant.json": "80134d7faebc0ec58b0014bdd423a2b1d890536af8845fad52d45ff863e96e91",
+    "packages/shared/src/protocol/types.ts": "e52e69e77edbbfd483922c9541afa2614f597ddf218dd100f3a744e51b97a5a0",
+    "packages/shared/src/utils/files.ts": "b396ae85a2910df6e776b0cec11f1868bb20b1bd153a8b77d6e7b8d8e584a62c",
+    "packages/shared/src/workspace-domain/identity/contracts.ts": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265",
+    "tests/macro-integration/ui/wp-01-electron.test.ts": "b6489291bd615f5b86e495445caa05ba65be9ac4cd653dc5cd729c7754a49955",
+    "tests/macro-integration/wp-01-auth-postgres.test.ts": "6207cbc95efe27759133160edb8f01e4d001c32a7000da018331aa497a063706",
+    "tests/macro-integration/wp-01-auth.test.ts": "13b383f192e974ec799ce2a9a10f1f853eaa4819b3db8f48858804532eb113b1",
+    "tests/macro-integration/wp-01-authority-crash-child.ts": "9109cbf7ad317432277acf2a1494041770e8523f617ded6cf134a46eac281482",
+    "tests/macro-integration/wp-01-authority-crash.test.ts": "b1791d90e32ebce8deb10033b2107bad954fd62624d24d9ab2b728b67fcb9e6f",
+    "tests/macro-integration/wp-01-http.test.ts": "e5b4154f75813c33dafa9d168f2adc487df8064148919c35f9ab40601e0b5d47",
+    "tests/macro-integration/wp-01-migrations.test.ts": "925917228bc25ab5d1f612dcacd6dec770bcd9bb4a10705571e0cf501395276e",
+    "tests/macro-integration/wp-01-native-routing.test.ts": "409ebfc4fcc2b230ef30c6fddb41058bda4e2f11a15304b655fc0923757baabb",
+    "tests/macro-integration/wp-01-observability.test.ts": "e63eecb4be67c165d061a3d57134b8464632b268deedf08e0daf6ab72c676c26",
+    "tests/macro-integration/wp-01-runtime.test.ts": "9551b09e41ef400ef18d2a2acb815133e4c16f524d82565fe03e2ecfd632ee7c",
+    "tests/macro-integration/wp-01-server.test.ts": "987ea7808844cf414ada0c3f78ac71eaf14dde2413b53c5cb719b05f6d769519",
+    "tests/macro-integration/wp-01-service-crash-child.ts": "6d79c4a483519a30dadabdb463da059a769203648046eff1fe5c70f25345c211",
+    "tests/macro-integration/wp-01-service-crash.test.ts": "88775ff80f721d1becf24f8edf89c103ead84f9eb319c9c3417816bd7db065c6",
+    "tests/macro-integration/wp-01-transport.test.ts": "cf91993e197f24ac4caec2693a7fe243a89e2e1e4c23e4ca871071733b798fcd",
+    "tests/macro-integration/wp-01.test.ts": "14ea28d854f0c916ab74822cc6a5a41ec5bf3cdb2b36cdb3b0bf322555b5ba54"
+  },
+  "historicalVerification": "evidence/wp01/integration-20260930T115407.json",
+  "latestScopedRuns": [
+    {
+      "command": "bun test tests/macro-integration/wp-01-observability.test.ts tests/macro-integration/wp-01-server.test.ts tests/macro-integration/wp-01.test.ts",
+      "files": 3,
+      "passed": 27,
+      "failed": 0,
+      "assertions": 465,
+      "seconds": 18.09,
+      "log": "/tmp/rox-wp01-observability-root-tests.log",
+      "logSha256": "fd0747677b06b71d609a4949be88fb1b99ef47fef3c56d66fbd9afeda5834dff"
+    },
+    {
+      "command": "bun test main journal + native routing + transport parity",
+      "files": 4,
+      "passed": 47,
+      "failed": 0,
+      "assertions": 3478,
+      "seconds": 46.66,
+      "log": "/tmp/rox-wp01-final-native-mechanism.log",
+      "logSha256": "29f6f0409dcf4b79b0ea32e2a40840366c03f28490c94aa2f3c3df7e41af461c"
+    },
+    {
+      "command": "bun test main crash + service crash + CLI runtime",
+      "files": 3,
+      "passed": 28,
+      "failed": 0,
+      "assertions": 693,
+      "seconds": 36.05,
+      "log": "/tmp/rox-wp01-root-real-crashes-final.log",
+      "logSha256": "2f42e35826d3ae980b1ec2fd3bf73e3ccde953831618aaf173aaae429a2c13c2"
+    },
+    {
+      "command": "bun test encrypted credential neighbors",
+      "files": 3,
+      "passed": 13,
+      "failed": 0,
+      "assertions": 44,
+      "log": "/tmp/rox-wp01-durable-credentials-root.log",
+      "logSha256": "64f136b2d5bf805f9fc552dd990815292aa6e042232d31281a4a7e7d60b5a943"
+    }
+  ],
+  "builds": {
+    "main": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-final-main-build.log"
+    },
+    "preload": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-final-preload-build.log"
+    },
+    "renderer": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-max-input-renderer-build.log"
+    },
+    "workspaceService": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-observability-root-build.log"
+    }
+  },
+  "typecheck": {
+    "electron": {
+      "baselineUnique": 46,
+      "currentUnique": 43,
+      "new": [],
+      "log": "/tmp/rox-wp01-max-input-electron-ts.log",
+      "comparison": "evidence/wp01/max-input-typecheck-comparison.json"
+    },
+    "server": {
+      "baselineUnique": 25,
+      "currentUnique": 24,
+      "new": [],
+      "log": "/tmp/rox-wp01-journal-server-ts.log"
+    },
+    "workspaceService": {
+      "exitCode": 0,
+      "log": "/tmp/rox-wp01-observability-root-ts.log"
+    }
+  },
+  "nativeRun": {
+    "state": "AWAITING_OFFLINE_QUEUE_INTEGRATION_BEFORE_NEXT_RUN",
+    "latestFailure": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790771776871/result.json",
+    "reason": "Actual DOM Input maxLength absent; root corrected three inputs and rebuilt renderer; no current native PASS yet",
+    "evidencePreserved": true,
+    "rootViewed": [
+      "failure-profile-0.png"
+    ]
+  },
+  "implementedRecovery": [
+    "Strict durable encrypted credential/config journal; real process SIGKILL/restart and no resurrection after prepared disconnect",
+    "Service postcommit/pre-reply SIGKILL; canonical receipt/event/consumer recovery",
+    "Connection fields match actual service limits: workspaceName10000/login320/password4096",
+    "Fixed-label transaction/consumer counters after commit; no public private-total endpoint"
+  ],
+  "remainingGates": [
+    "Native two-profile UI acceptance, exact DOM/IME boundaries, restart/revoke/themes/200-percent/narrow and viewed screenshots",
+    "Durable offline create intent with principal/session/workspace fencing and native queue/retry/cancel",
+    "Independent second-variant holdout result and provenance",
+    "Current cold artifact byte readback and source-bound Git delivery",
+    "Every WP01 normative criterion independently verified"
+  ],
+  "separateProgramGate": "Full final 143-package acceptance remains mandatory after dependent packages; not a circular WP01 bootstrap prerequisite",
+  "honestLimits": [
+    "No completed WP01/full compound feature claimed",
+    "No cloud deployment; real protected local PostgreSQL only",
+    "Generic grants/search/mentions/notifications/agents/outbox remain their dependent packages",
+    "Current baseline-notice archive is not full WP48 license-cleared release",
+    "Metrics are bounded process diagnostics, not durable inbox or DLQ authority"
+  ]
+}

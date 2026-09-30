@@ -1,0 +1,376 @@
+{
+  "task_id": "RS-BASE-01-preflight",
+  "attempt_id": "3ba3890133ee931159f2f86295c51c5e",
+  "packet_hash": "3c19a729a565caaa09a95c0e0642a871efb2eba4e29c740c5ddd55283cdefe98",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "RS-BASE-01",
+  "featureComplete": false,
+  "dependencies": ["RS-DRV-01"],
+  "inspection": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "ownership": "Only this report is worker-owned; root owns all integration and shared patches.",
+    "revisionQualification": "input_revision is the assigned packet revision, not a claim that inspected working-tree files are committed at that revision. Root-owned uncommitted wave0 may be present. Whole-file hashes bind observations to the inspected working tree.",
+    "manifestStatus": "Both inspected input files match their packet SHA-256 values.",
+    "productVerification": "NOT_RUN: no builds, product tests, native UI, network operations, or Git commands performed.",
+    "scope": "Published Base specification and normative issue record; dependency/Forms specifications needed to identify gates; Notes view seams, platform contract, existing Drive creation seam and its direct navigation imports; existing Notes source-assertion test and locale targets.",
+    "validationHistory": [
+      {
+        "result": "REJECTED_STALE_SOURCE",
+        "operation": "Packet --verify report validation only, with PYTHONDONTWRITEBYTECODE=1",
+        "observed": "ValueError: Source changed after inspection: apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+        "originalHostSha256": "2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358",
+        "originalLocaleSha256": "00f1c379fb222ea3cb0c4408c561ab44b2bf2c20e58bd0454f413d63e59dd496",
+        "recovery": "Re-read current NotesViewHost lines 1-310 and re-searched actual locale keys before updating evidence. Host now imports ListTreeProjection/ListNode and forwards optional blockTree/onOpenBlock to NotesOutlineView; those existing mechanisms must survive Base integration. Notes table persistence remains layout-only. Locale keys moved to lines 3617-3618. Other recorded file digests remained unchanged in the recovery hash check."
+      }
+    ],
+    "toolLimitations": [
+      "Codegraph reported no .codegraph index for this checkout; used local reads and literal searches without indexing.",
+      "Descriptive Notes routing search failed with judge-provider 402; literal NotesViewHost search was used instead. No absence conclusion is based on the failed semantic search.",
+      "Proposed apps/workspace-service/src was not found. No alternative server authority location was guessed or surveyed outside package scope."
+    ],
+    "promptEvolution": "No prompt/skill mutation: exclusive artifact ownership forbids it; this bounded preflight does not establish a general workflow change."
+  },
+  "foundationGates": [
+    {
+      "id": "WAVE0-AUTHORITY-RECEIPT",
+      "explicitDagEdge": false,
+      "evidence": "Base spec lines 44-56 requires canonical entity registration, common authority, authenticated actor/workspace, operationId/expectedRevision, policy and outbox. platform-contract.ts supplies identity/envelope helpers, not I/O; authorizeRox2Action checks actor grants only.",
+      "requiredPrerequisite": "Lead's committed wave0 and accepted, revision-bound authority/registry/policy receipts with concrete command registration, authenticated transport, entity-specific ACL, idempotency and atomic revision-write interfaces.",
+      "state": "MISSING_ACCEPTED_RECEIPT",
+      "integrationRequest": "Bind base.createSchema/patchSchema/createRecord/updateRecord/queryView to existing authority handlers. Do not implement a Base-local actor/grant registry or trust renderer actorId. Exact authority registration file/symbol must be supplied by lead after wave0; it was not established in this scoped inspection."
+    },
+    {
+      "id": "SERVER-POSTGRES-OUTBOX-MIGRATION",
+      "explicitDagEdge": false,
+      "evidence": "Base spec line 50 requires Postgres schemaVersion validation, serial migrations/backfills with shadow verification, and shared outbox. Lookup of apps/workspace-service/src returned Path not found; the normative record-service.ts cannot yet attach to a server here.",
+      "requiredPrerequisite": "Accepted server package/runtime path, Postgres transaction/migration API, schema-container storage ownership and common outbox interfaces from foundation owner; approved migration and reversible backfill design.",
+      "state": "MISSING_SERVER_ATTACHMENT",
+      "integrationRequest": "Reserve the normative record-service.ts path, but do not create a parallel service, manifest or standalone database to fill the missing parent. Root must establish the host and shared transaction seam first."
+    },
+    {
+      "id": "FORMS-SCHEMA-INVERSION",
+      "explicitDagEdge": false,
+      "evidence": "Base spec line 22 says Form view reuses Rox Forms schema. Forms spec lines 27-29 requires stable immutable field IDs, validation/conditional AST and mapping to CustomRecord; Forms explicit dependencies at lines 98 and 109-110 include RS-BASE-01. issues.json lines 172-175 confirms that direction.",
+      "requiredPrerequisite": "Lead-approved shared field/schema and renderer/submit contract agreed with Forms owner before Base Form implementation; no requirement to wait for the entire RS-FORM-01 package.",
+      "state": "CONTRACT_HANDSHAKE_REQUIRED",
+      "integrationRequest": "Use Base fieldId/schemaVersion definitions in the agreed Forms schema mapping and consume the shared form renderer/submit boundary. RS-FORM-01 is not added to dependencies; doing so creates a cycle. Full Base Form acceptance remains open until the reusable contract/renderer is available; it is not N/A."
+    },
+    {
+      "id": "CANONICAL-NATIVE-PROJECTIONS",
+      "explicitDagEdge": false,
+      "evidence": "Base spec lines 5, 11, 28, 34 and 46 requires Project Views, CRM Board shared primitives, native Task/Company/Contact references and existing email/task context. platform-contract.ts has task, project, crm-company and person kinds but no CustomRecord; NoteProjectionRow provenance is only noteId.",
+      "requiredPrerequisite": "Accepted canonical Task/Company/Contact projection and authorized-command adapters, including the precise existing Contact identity mapping and CRM/email/task drawer context interface.",
+      "state": "NATIVE_ADAPTER_HANDSHAKE_REQUIRED",
+      "integrationRequest": "Keep crm-company/task/person identity unchanged. Do not invent a crm-contact kind, copy native values into CustomRecord persistence, or implement a second CRM store. Lead supplies concrete CRM/Project adapter files outside this scoped read set."
+    },
+    {
+      "id": "ACL-DERIVED-DATA-AND-REVOKE",
+      "explicitDagEdge": false,
+      "evidence": "Base spec lines 34 and 56 mandates linked-record ACL, non-leaking rollups/counts, ACL-filtered search/mentions/links, cache/subscription revocation, notification dedupe and agent preview without effects. Rox2Event has correlation/causation/revision fields, but platform contract performs no persistence or subscription work.",
+      "requiredPrerequisite": "Accepted shared linked-read policy, ACL-aware indexing/export/query interfaces, revocation/cache invalidation, activity/outbox notification consumer and common agent command dispatch.",
+      "state": "MISSING_INTEGRATION_RECEIPTS",
+      "integrationRequest": "Authorize linked values before projection, aggregation, facets or export and key caches by effective policy/revision. Reuse common event and notification paths rather than a Base-local event bus or notifier. Exact owner patches await lead's wave0 interfaces."
+    },
+    {
+      "id": "EVIDENCE-AND-LOCALE-LANES",
+      "explicitDagEdge": false,
+      "evidence": "Base spec lines 42 and 84-89 requires real Electron computed-font/ARIA/theme, Linux renderer/domain, seeded broken control, rollback and independent review. Current locale directory contains 12 JSON files, including ar.json and ko.json in addition to the ten listed in repository guidance.",
+      "requiredPrerequisite": "Accepted Linux/domain and native Electron execution lanes plus current locale-parity convention; lead resolves the 12-file live set rather than silently applying a stale ten-file list.",
+      "state": "IMPLEMENTATION_VERIFICATION_PENDING",
+      "integrationRequest": "Retain separate domain, renderer, Electron and external-provider evidence. No UI-only exclusion can discharge this full domain package. Provider readback is conditional on actual external effects, not a substitute for domain proof."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/shared/src/base/contracts.ts",
+    "apps/workspace-service/src/modules/base/record-service.ts",
+    "apps/electron/src/renderer/components/base/BaseEditor.tsx",
+    "tests/rox-suite/base/records.spec.ts"
+  ],
+  "ownedNewFilesQualification": "These are exactly the four proposed normative implementation paths in Base spec lines 64-67, not permission to create them during preflight. Their parent directories were not found by the scoped existence lookup. Root must approve writers and server attachment after wave0/dependency receipts. No additional new files or manifests are proposed as worker-owned.",
+  "proposedNewFileContributions": [
+    {
+      "path": "packages/shared/src/base/contracts.ts",
+      "change": "Define schema/container/view/custom-record contracts using Rox2EntityRef. Stable fieldId/name/type/required/options/default; all nine specified types text/decimal/date/boolean/enum/entityRef/attachment/formula; schemaVersion-bound values and validationErrors; explicit native projection provenance; saved predicate AST, sort/group/visible field IDs, owner/workspace/revision. Define typed command inputs/results with operationId and expectedRevision, validation/conflict/reconcile outcomes, and an allowlisted formula/rollup evaluation contract with per-linked-read authorization. Agree reusable Form field mapping with Forms owner; no SQL/eval strings or renderer actor authority."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/base/record-service.ts",
+      "change": "Attach the five proposed commands to the committed shared authority. Derive actor/workspace from transport, use registry refs, validate typed values against pinned schemaVersion, authorize native field updates through canonical commands, CAS both schema and record revisions, and atomically persist payload plus auditable outbox. Preserve operation receipts on replay, reconcile stale schemas without dropping drafts, and query/aggregate/export only authorized linked values. Use foundation migration/backfill/shadow APIs, not a private database."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/base/BaseEditor.tsx",
+      "change": "Consume authoritative schema/query/command results; implement one editor with table/view navigation, virtualized Table, enum/status Board counts and CAS drag, shared Form renderer, contextual cell editors and canonical record drawer. Implement filter/sort/group/columns and share controls through common commands, explicit read-only/denied/error/retry states, draft-preserving conflict reconciliation and revision-safe undo. Preserve semantic theme/font; Russian t() copy; hover/focus/click help, keyboard editing/navigation, responsive drawer/back-navigation and 120-160ms opacity/transform motion with reduced-motion bypass."
+    },
+    {
+      "path": "tests/rox-suite/base/records.spec.ts",
+      "change": "Behavioral scenarios: create typed schema and exactly three records, compare ID sets across Table/filtered Board/Form and persisted reload; status CAS drag; canonical Company/email/task resolution; conflicting schema owners; stale-schema draft recovery; denied viewer RPC and agent mutation; hidden linked values/counts/search/export; operation replay/outbox dedupe; revoke clearing subscriptions/caches; shared Form validation; migration rollback. Deliberately break ACL or CAS under an isolated seeded control and require the consumer-visible invariant to fail, not merely a runner error. Exercise existing Notes/Page/authority routes without source-text assertions."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / isRox2EntityKind / formatRox2EntityId / parseRox2EntityId / Rox2TypedRecord / Rox2Event",
+      "change": "Register the proposed custom-record kind in the existing entity-kind catalog, retaining native task/crm-company/person kinds and common ref formatting. Base/Table/View remain workspace-scoped schema containers under the accepted registry contract, not independent CRM/user stores. Base schema validation lives in shared Base contracts/service; do not treat parseRox2TypedRecord's Record<string, unknown> property acceptance as field-level validation or increment the global envelope version without a real envelope migration. Emit shared events with causationId, correlationId and aggregateRevision.",
+      "reason": "The catalog lacks CustomRecord; existing identity helpers reject unknown kinds. Existing typed parse only validates envelope/system fields, and isAuditableRox2Event demands common provenance fields. Root owns this shared registry seam."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView / NoteProjectionRow / applyNoteBaseView / groupNoteRows / formulaValue / loadSavedViews",
+      "change": "If Notes joins the shared view primitives, adapt existing NoteBaseView filters/sorts/groups and NoteProjectionRow through the agreed shared projection/query contract while preserving note IDs, noteId provenance and the four existing allowlisted Notes formulas. Keep legacy Notes layout decoding for actual Notes layouts; do not widen localStorage layouts into authoritative Base schema/records. Move reusable view evaluation to the agreed shared implementation instead of maintaining a second predicate/group engine. Change only the adapter seams required for this integration.",
+      "reason": "Current types are note-only, string-field/local-layout projections, not versioned Base records. Existing Notes behavior must survive; native identities cannot be converted into duplicate custom records."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost / NotesTableView / persistViews / patchView",
+      "change": "Reuse the approved shared Table/projection presentation boundary where Notes integration needs it, preserving existing note open/conversion callbacks and canvas/outline/graph dispatch, including newly observed optional blockTree/onOpenBlock forwarding to NotesOutlineView. New Base actions must receive server-backed query/command and capability results, not extend persistViews/patchView localStorage into record/schema writes. Keep Notes-only layout storage scoped to Notes, with any intended migration reviewed separately.",
+      "reason": "NotesTableView currently renders an ordinary table of note projections and writes only saved layouts locally; it has no schema CAS or policy-backed record editing."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "PagesHome / handleCreatePage / openPage",
+      "change": "After accepted RS-DRV-01 receipt, have the Drive creation owner register Rox Base in its existing Create dispatch. Base selection must call authoritative base.createSchema and navigate to the returned canonical container/ref; preserve existing interactive Page creation, Page slug opening and project-filter binding. Do not repurpose kind=interactive Page creation to fake Base persistence or add a second library screen.",
+      "reason": "The current concrete creation action calls electronAPI.createPage with kind interactive; the spec requires Drive Create Rox Base through the same library and Project binding. This seam may be replaced by the dependency implementation and must be rebound then."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.projects / routes.view.pages / ViewRoute",
+      "change": "The route owner must add the approved canonical Base container/view destination to the existing typed routes.view contract or its accepted Drive successor, with Base view IDs and Project binding preserved; leave pages/page/{slug} and projects/project/{slug} unchanged. Bind route parsing/render dispatch through the existing navigation owner, whose implementation is not established by this scoped read. Do not fabricate an arbitrary browser URL or duplicate Pages destination.",
+      "reason": "The inspected route helpers cover Projects and Pages; Base editor navigation must be registered in the existing router and survive deep link/reload. ViewRoute is derived from routes.view, so no separate route union/store is needed."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "flat notes.views.* keys and proposed base.* keys",
+      "companionPaths": [
+        "packages/shared/src/i18n/locales/ar.json",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/ko.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json"
+      ],
+      "change": "Locale owner adds ASCII-sorted flat base.* keys for all labels, field-type examples, errors, validation/conflict/denied/retry copy, help and keyboard announcements used by BaseEditor and registered commands. Apply current locale parity and Russian plural conventions; confirm inclusion of ar/ko from the live 12-file directory. Do not introduce hard-coded Russian UI strings or nested JSON that conflicts with existing flat keys.",
+      "reason": "Existing host uses t() and ru.json has flat notes.views.savedLayout/tableEmpty keys. The live locale count differs from the ten-file guidance, requiring lead coordination rather than silent key omission."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/__tests__/notes-views-wiring.test.ts",
+      "symbol": "it('hosts table, canvas, outline and graph views without replacing Map')",
+      "change": "If the integration changes this test's covered implementation, delete the source-text assertion test at lines 46-74 rather than repinning names/classes/data-testid/source fragments. Verify Notes route, note opening, formula/filter behavior and adjacent views through actual behavior in the accepted regression lane. Do not rewrite unrelated wiring tests during this package.",
+      "reason": "This test reads source files and asserts literal strings; it cannot establish persistence, permissions, routing behavior or shared record identity, and should not constrain the cutover to incidental implementation text."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "AC1: Create typed table → 3 records → filtered Board → update status → reload; same record IDs in all views (spec line 78).",
+      "currentEvidence": "projectNoteRows lines 133-158 preserves note.id; applyNoteBaseView/groupNoteRows filters/groups note projections. Current NotesTableView lines 133-159 persists layout only. No normative Base directories/server host were found.",
+      "requiredChange": "contracts.ts typed table/record/view contracts; record-service.ts authoritative create/query/update and persisted CAS; BaseEditor.tsx Table/Board/Form consume identical canonical record refs and server views. Implement status drag as updateRecord, not a local card move.",
+      "verification": "Create one schema and exactly three records with explicit IDs; compare Table IDs, filtered Board predicate result IDs and Form/drawer refs before/after status mutation; restart/reload client and query from persisted service to assert same identities, field values and saved view revision.",
+      "missingPrerequisite": "Committed wave0 authority/Postgres/outbox host and accepted RS-DRV-01 create/open registration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "AC2: Company viewed in Base still resolves CRM canonical ref and email/task context; two owners cannot overwrite schema concurrently (spec line 79).",
+      "currentEvidence": "platform-contract.ts includes crm-company/task/person and workspace-scoped Rox2EntityRef; no native Company projection or server CAS was established in this bounded read. Notes provenance is noteId only.",
+      "requiredChange": "Native projections retain canonical entity refs and authorized field-command adapters; drawer resolves original CRM/email/task context. patchSchema requires expectedRevision and shared transactional CAS; conflict returns current schema revision without overwriting either user's draft.",
+      "verification": "Open the same Company from CRM and Base and assert equal canonical workspace/entity refs plus existing email/task context; race two owner patches at one revision and assert exactly one committed revision, one typed conflict, no lost fields and successful draft reconcile.",
+      "missingPrerequisite": "Lead-provided canonical CRM/Contact/Task adapters and shared schema revision authority.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "AC3: Viewer cannot mutate records via RPC/tool; private linked value/aggregation absent from search/export (spec line 80).",
+      "currentEvidence": "authorizeRox2Action lines 597-610 denies absent actor/grant but is not resource-scoped persistence policy. Base spec requires linked-record ACL at lines 34/56. No Base transport/export/index handlers were observed.",
+      "requiredChange": "Enforce shared resource read/write/share policy on every command entry; resolve linked fields only after ACL; exclude denied values and revealing counts from view/search/facets/export. Renderer capability disabling is supplemental, never the authority check.",
+      "verification": "Authenticated viewer directly calls mutation RPC and agent tool with guessed record/schema IDs and spoofed actor fields: denied and persisted revision/outbox unchanged. Private linked value and count fixtures remain absent in Board rollups, index results/facets and export for viewer; authorized owner sees expected values.",
+      "missingPrerequisite": "Shared authenticated transport, resource-policy, ACL-aware index/export and agent authority interfaces with accepted receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD1: UI/routing/input/output/help/keyboard/state contracts implemented; loading/empty/error/denied/retry reachable and verified (spec line 84).",
+      "currentEvidence": "Current NotesViewHost dispatches table/canvas/outline/graph and forwards optional blockTree/onOpenBlock to Outline; NotesTableView lines 234-301 renders a non-virtualized note table with empty state. PagesHome.handleCreatePage creates interactive Pages. Base spec lines 19-42 specifies distinct Base UX not implemented by those seams.",
+      "requiredChange": "Implement BaseEditor with Drive Create and Project Views registration, shared CRM Board primitives, left table/view navigation and Add, title/share/type header, filter/sort/group/columns toolbar, virtualized grid/drawer, type-aware editors, enum Board counts/CAS drag and shared Form view. Add explicit skeleton/empty/read-only/error/denied/retry states, type/examples help on hover/focus/click, Enter commit/Esc cancel/Tab grid navigation/dropdown keyboard and CAS-safe undo. Responsive <1100 drawer and <800 single-pane/back; 120-160ms opacity/transform motion, reduced-motion and non-color status; semantic font/theme and t() copy.",
+      "verification": "Exercise all entry routes and reload/deep link, each field editor and menu via keyboard, cancellation and commit, focus return and undo after another user's write. Capture loading/empty/error/denied/retry without sample records. Inspect virtualized scroll, Board drag denied for viewer, Form submit/preview, viewport breakpoints, reduced motion, ARIA and computed font in real Electron.",
+      "missingPrerequisite": "RS-DRV-01 accepted routing receipt; Forms shared renderer contract; canonical Project/CRM adapters; actual native Electron and renderer verification lanes.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD2: Persistence/reload, meaningful negative case and applicable concurrency/reconnect, with justified N/A receipts (spec line 85).",
+      "currentEvidence": "Notes saved views use localStorage with ignored quota exceptions; Rox2TypedRecord preserves unknown envelopes but supplies no I/O, schema migration or server write concurrency.",
+      "requiredChange": "Postgres persists schemaVersion-bound records/views with typed validation errors, transactional schema/record CAS, operationId replay and retained receipts; stale-schema refresh/reconcile preserves allowed draft; reconnect restores authoritative revisions without losing or duplicating commits. Serial migration/backfill/shadow verification must preserve fields and support rollback; no implicit destructive drops.",
+      "verification": "Service/client restart and view reload; invalid decimal/date/enum/ref payload is rejected; unknown/stale schema retains draft and reconciles; race schema and record updates; lose connection after commit then retry same operationId and assert one effect/outbox event; reconnect after revoke denies further write. Apply/rollback migration on populated data and compare retained values/refs/hashes.",
+      "missingPrerequisite": "Accepted Postgres transaction/migration/outbox and transport replay/reconnect interfaces. Full domain package cannot mark persistence/concurrency N/A.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD3: Common grants, links, search, mentions, activity, notification and agent policy integrated for new domain entity (spec line 86).",
+      "currentEvidence": "ROX2_ENTITY_KINDS lacks CustomRecord; shared relation kinds include mentions/derived-from/attached-to. Rox2Event carries shared audit metadata and isAuditableRox2Event checks it. These are typed seams, not evidence of integrated Base indexing/notifications.",
+      "requiredChange": "Register custom-record in canonical graph, use EntityRef links and existing relation validation, shared resource grants/read/write/share checks across UI/RPC/IPC/MCP/provider, shared ACL index/mentions, and atomic record.created/updated/schema.changed outbox events to activity and deduplicated notifications. Agents use identical commands and preview is effect-free; revoke ends writes/subscriptions and clears prohibited caches.",
+      "verification": "Record refs resolve through common link/mention/search surfaces for allowed actor; denied actor cannot observe linked fields/counts. Commit/replay produces one activity/notification with causation/correlation/revision; agent preview changes neither persisted revisions nor outbox. Revoke while connected removes restricted caches/subscriptions and rejects RPC/tool writes.",
+      "missingPrerequisite": "Accepted common registry/policy/index/activity/notification/revoke/agent integration receipts and concrete shared registration paths from lead.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD4: Targeted tests plus seeded broken control are actually rejected; regression existing route/authority passes (spec line 87).",
+      "currentEvidence": "Existing notes-views-wiring.test.ts lines 46-74 reads source text and asserts implementation strings, not consumer behavior. No Base tests exist at the normative new test directory. Tests were deliberately not run during preflight.",
+      "requiredChange": "Add behavioral records.spec.ts covering three-record flow, typed validation boundaries, canonical native identity, CAS, private rollups/search/export, viewer tool/RPC denial, stale drafts, revoke and replay. Remove affected source-text assertion test rather than repin it. Lead supplies isolated seeded ACL/CAS mutation/control and actual Notes/Page/authority regression lanes.",
+      "verification": "Run targeted tests after integration; deliberately allow one forbidden linked read or omit expectedRevision in isolated control and observe the corresponding assertion fail for wrong data/revision, not timeout/infra failure. Restore exact implementation and observe passing tests plus actual existing Notes/Page route/authority behavior.",
+      "missingPrerequisite": "Implementation commit, runnable server/renderer fixtures and approved test runner/negative-control mechanism.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD5: Linux domain/renderer evidence; real Electron screenshots/ARIA/theme/font after UI changes; provider lane only for real external effects (spec line 88).",
+      "currentEvidence": "Base spec line 42 mandates inherited theme/font, responsive motion and native computed-font proof. No runtime/UI/provider execution was authorized or performed here.",
+      "requiredChange": "Lead schedules separate Linux domain and renderer runs and native Electron interaction/capture on the integrated revision. Validate real semantic font, light/theme and dark regression, focus/hover/click/keyboard, error states, motion/reduced-motion and viewport breakpoints. If an accepted implementation invokes external attachment/provider effects, add provider receipt/readback; do not label fixtures live.",
+      "verification": "Revision-bound Linux command/query/domain logs and renderer assertions plus actual Electron screenshots, ARIA and computed style/font values for Table/Board/Form and responsive drawer. Compare expected/observed interactions. External effect, if present, needs receipt plus actual remote readback; otherwise document absence of external effects in the final receipt while retaining all domain/native gates.",
+      "missingPrerequisite": "Available Linux/native execution lanes, integrated runnable artifact and any actual external-provider authorization if effects are introduced. No present runtime PASS evidence.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "DoD6: Source commit, exact diff, logs/hashes, expected/observed, migration/rollback and independent review attached; no screen-only acceptance (spec line 89).",
+      "currentEvidence": "This report records packet lineage and whole-file inspection hashes only. Assigned input HEAD is not an implementation commit; spec itself references older baseline 249b3b44220bcfbd7d467de9cfc18f76e1c37807. Root wave0 is not accepted implementation evidence.",
+      "requiredChange": "Root integrates accepted dependency-ordered patches with one writer per shared file, commits exact source/diff, binds evidence logs/hashes and expected/observed to that revision, records migration/backfill/shadow results and rollback/data review, and obtains independent review of implementation and authority. Reinspect changed source after wave0 before implementation.",
+      "verification": "Independent reviewer follows every acceptance row to concrete revision-bound behavior proof, checks migration rollback and source/artifact hashes, and rejects screen-only or unverified provider receipts. Lead records final commit/diff and observed results; this worker does not touch Git or claim feature completion.",
+      "missingPrerequisite": "Lead's wave0 commit, accepted RS-DRV-01/foundation receipts, completed implementation revision and independent reviewer/evidence delivery.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Detailed Inputs/Outputs/domain contract: all field types, stable IDs, versioned schema and views, validationErrors, projections and policy-safe links (spec lines 25-34,44-52).",
+      "currentEvidence": "NoteBaseView has string fields and v=1 layout; NoteProjectionRow.properties and Rox2TypedRecord.properties are Record<string, unknown>. parseRox2TypedRecord checks envelope/system fields, not Base type/required/options/default/schema rules.",
+      "requiredChange": "Shared Base contracts validate all nine field types, stable field IDs and default/required/options semantics, including decimal representation, date units, enum validity, authorized entityRef/attachment and bounded formula types. Version each schema and record payload; saved predicate AST/sort/groups/visible columns carry owner/workspace/revision. Preserve native canonical refs and authorized native field commands rather than copied payloads.",
+      "verification": "Deterministic boundary fixtures for each field type, defaults/required/options, deleted/renamed fields and formula/rollup constraints; unauthorized linked refs/attachments and raw SQL/formula script input rejected; persisted reload retains schema/view versions, validation errors, provenance and same IDs.",
+      "missingPrerequisite": "Lead-approved field representation and formula semantics with shared Forms mapping, canonical registry, attachment capability and migration contracts. Exact representation decisions must be agreed, not inferred from unknown-typed envelopes.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView / NoteProjectionRow / projectNoteRows / applyNoteBaseView / groupNoteRows",
+      "lineStart": 5,
+      "lineEnd": 218,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "DEFAULT_VAULT_TABLE_VIEW / loadSavedViews / withTagFilter",
+      "lineStart": 459,
+      "lineEnd": 487,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost / NotesTableView / persistViews / patchView",
+      "lineStart": 58,
+      "lineEnd": 164,
+      "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesTableView table rendering / canonical note open / tableEmpty",
+      "lineStart": 234,
+      "lineEnd": 301,
+      "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / ROX2_RELATION_KINDS / Rox2Entity / Rox2Event / Rox2EntityRef",
+      "lineStart": 17,
+      "lineEnd": 239,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "authorizeRox2Action / isAuditableRox2Event / Rox2TypedRecord / parseRox2TypedRecord",
+      "lineStart": 592,
+      "lineEnd": 690,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "PagesHome / visiblePages / openPage / handleCreatePage",
+      "lineStart": 25,
+      "lineEnd": 101,
+      "sha256": "3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/navigate.ts",
+      "symbol": "routes re-export / navigate",
+      "lineStart": 15,
+      "lineEnd": 50,
+      "sha256": "fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.projects / routes.view.pages",
+      "lineStart": 213,
+      "lineEnd": 223,
+      "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "ActionRoute / ViewRoute / Route",
+      "lineStart": 300,
+      "lineEnd": 302,
+      "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/__tests__/notes-views-wiring.test.ts",
+      "symbol": "hosts table, canvas, outline and graph views without replacing Map",
+      "lineStart": 46,
+      "lineEnd": 74,
+      "sha256": "85b66aa272a37f946b442ef9e70e84c4a82dca3416875e0e93fb81dbc8018211"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "notes.views.savedLayout / notes.views.tableEmpty",
+      "lineStart": 3617,
+      "lineEnd": 3618,
+      "sha256": "b86080eb92eea97bca6f14acb6910e41a3a6651581b91e4327e87f8cedb86d3c"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "RS-BASE-01 requirements / acceptance / DoD / dependencies",
+      "lineStart": 19,
+      "lineEnd": 109,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    },
+    {
+      "path": "plans/rox-suite/issues.json",
+      "symbol": "issues record RS-BASE-01 and Forms dependency array",
+      "lineStart": 136,
+      "lineEnd": 175,
+      "sha256": "5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-DRV-01.md",
+      "symbol": "Drive creation / domain API / foundation gate / quality gates",
+      "lineStart": 25,
+      "lineEnd": 75,
+      "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-FORM-01.md",
+      "symbol": "Forms Inputs / Base mapping / explicit Base dependency",
+      "lineStart": 25,
+      "lineEnd": 110,
+      "sha256": "c30ab28cf3014ed22e6e7c80bbba47fb7cbddbc3e5f3b5361dc48a360a2515d8"
+    }
+  ],
+  "nextExecutableAction": "Lead validates this report against packet and current whole-file hashes, then records the committed wave0 revision and accepts the RS-DRV-01 receipt. Before assigning Base implementation, bind authority/Postgres/outbox/ACL/index/native projection interfaces and agree Forms schema/renderer handshake without a reverse DAG edge. Re-read/re-hash any changed seam, approve the four normative file writers and exact shared patches, then implement contracts → authoritative persistence/commands → Base UI and shared projections → complete acceptance/evidence lanes. This worker has no authorized source implementation action.",
+  "risks": [
+    "Only explicit package edge is RS-DRV-01; dispatch packet depends_on=[] means this preflight is runnable, not that product implementation has no dependencies.",
+    "Base Form reuse plus Forms→Base ordering can deadlock if treated as a full reverse dependency instead of early shared-contract agreement; Form behavior cannot be omitted to bypass it.",
+    "The normative server module's parent is absent; a standalone Base server/store would violate the shared-authority requirement.",
+    "Registering custom-record only in an enum does not register schema, grants, persistence, search, event consumers or tools; typed helpers are not feature proof.",
+    "Copying canonical Company/Task/Contact values into CustomRecord would split identity and hide existing email/task context. Contact's exact canonical adapter remains a prerequisite, not an invented kind.",
+    "Hidden linked records can leak through formula results, rollup counts, grouping facets, search snippets and exports even when drawers conceal raw values.",
+    "SchemaVersion and record/view revision are separate clocks. Renames/deletions, two-owner CAS, stale draft reconcile and undo must not discard another actor's writes or implicitly drop stored data.",
+    "Local Notes layouts are not authoritative Base persistence and existing source-text wiring tests are not runtime regression evidence.",
+    "Live locale directory has twelve files while guidance names ten; shared locale owner must resolve actual parity before adding keys.",
+    "Root integration may change every inspected shared seam after this report. The verifier must reject changed whole-file hashes; reinspection, not mechanical rehashing of unseen edits, is required before reuse.",
+    "No source commit, domain run, renderer run, native screenshot, migration exercise, provider readback or independent implementation review is claimed by this report."
+  ]
+}

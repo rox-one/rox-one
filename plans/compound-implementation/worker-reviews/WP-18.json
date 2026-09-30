@@ -1,0 +1,477 @@
+{
+  "task_id": "WP-18-preflight",
+  "attempt_id": "9b8905a2d02a6734343cd54ffa284170",
+  "packet_hash": "c623891fa1860812aaa6caf9992cec6399d1e89a3d9da1fa4234a1438c791459",
+  "input_revision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
+  "packageId": "WP-18",
+  "featureComplete": false,
+  "mode": "inspect; owned preflight artifact only",
+  "workTier": "bounded-workflow; one package with three existing entry points and prerequisite-owned shared modules",
+  "dependencies": ["WP-17", "WP-05"],
+  "inspectionBoundary": {
+    "source": "Existing WP-18 affected paths and direct imports only; related normative package records and published implementation/test specifications inspected for integration contracts.",
+    "revisionMeaning": "input_revision is the supplied dispatch revision, not a claim that working-tree bytes equal that commit. Source references fingerprint inspected working-tree files including any lead-owned uncommitted changes.",
+    "freshness": "Whole-file hashes obtained after source inspection. Any subsequent wave0/dependency integration invalidates affected references; re-read and rehash before preparing an implementation patch.",
+    "noExecutionClaim": "No product implementation, build, tests, native UI, provider calls, migration execution or Git operations performed. All verification below is proposed, not observed.",
+    "discovery": "Codegraph reports no index for this project; scoped find failed its judgment requests and its no-hit result was not treated as absence. Explicit-path reads and scoped glob supplied actual evidence.",
+    "observedMissingDirectories": ["apps/workspace-service/", "packages/shared/src/workspace-domain/", "tests/macro-integration/"],
+    "inputManifestVerified": "plans/macro-integration/work-packages.json whole-file SHA-256 equals packet input manifest: 79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"
+  },
+  "foundationGates": [
+    {
+      "gate": "Committed wave0 and accepted dependency receipts",
+      "kind": "dispatch prerequisite, not an added DAG edge",
+      "evidence": "User packet requires implementation after lead wave0 commit; WP-18 inputs at work-packages.json:15315-15331 require accepted typed interface, applied migration or justified N/A receipt, and scenario verification from WP-17 and WP-05.",
+      "required": "Lead supplies committed integration revision and both accepted receipts; reconcile source hashes and ownership before implementation.",
+      "state": "not supplied in this preflight"
+    },
+    {
+      "gate": "Common identity, registry, resource policy, command transaction and projection",
+      "kind": "transitive foundations through WP-17/WP-05, not additional direct dependencies",
+      "evidence": "WP-17 depends on WP-04/WP-03/WP-06 at work-packages.json:14095-14099; WP-05 depends on WP-04 at 3463-3465. Published WP-01..04 define injected principal, alias identity, grants/epochs and atomic receipt/outbox at 21-implementation-plan.md:9-82.",
+      "required": "Accepted entity/alias, account authorization, transaction/outbox, command receipt and authorized SyncSince interfaces. Use their storage and authority, not mail-local replacement foundations.",
+      "state": "interfaces absent from inspected working tree"
+    },
+    {
+      "gate": "Single writer and revoke fence (WP-51)",
+      "kind": "hidden behavioral gate; WP-51 is not an explicit WP-18 edge",
+      "evidence": "WP-18 requires revoked account not to resurrect, REVOKE_FENCE_PENDING and shared writer authority; 22-test-plan.md:9,197-222 and 21-implementation-plan.md:1020-1036 require writer mode and bounded revoke enforcement.",
+      "required": "ResolveWriterMode/current policy epoch plus commit-time connection-generation fencing, including old push callbacks and claimed jobs. Lead must provide accepted guard or incorporate equivalent accepted foundation before shared cutover.",
+      "state": "not verified; no second local writer permitted"
+    },
+    {
+      "gate": "Workspace runtime, migrator, job host and isolated provider (WP-52)",
+      "kind": "hidden runtime/acceptance gate; not an explicit WP-18 edge",
+      "evidence": "apps/workspace-service is absent in scoped listing; 21-implementation-plan.md:1038-1055 defines actual secured service/provider capabilities; 22-test-plan.md:7 requires real isolated account and independent provider read-back.",
+      "required": "Lead selects actual migrator and exposes database transaction, HTTP/RPC registration, secret references and durable worker registration. Provider sandbox health alone cannot prove WP-18 acceptance.",
+      "state": "runtime prerequisites not supplied"
+    },
+    {
+      "gate": "Mandatory webhook authentication versus downstream adapter ownership",
+      "kind": "hidden contract/scheduling gate, not a dependency on all downstream adapter implementations",
+      "evidence": "WP-18 acceptance at work-packages.json:15266 mandates unconditional webhook authentication. Gmail/Microsoft auth and watch lifecycle are assigned to downstream WP-20 at 21-implementation-plan.md:381-400; IMAP identity resets belong to WP-21 at 402-421.",
+      "required": "Accept provider-specific verification and connection-binding ports now; fail closed when unavailable. Do not introduce a compile flag or trust body actor/connection/cursor. Obtain real configured verification evidence for supported webhook providers; missing adapters remain missing, never N/A or a circular DAG rewrite.",
+      "state": "published ownership seam requires lead integration decision"
+    },
+    {
+      "gate": "Attention, mention, agent and canonical routing adapters",
+      "kind": "hidden full-feature gates, not explicit WP-18 dependencies",
+      "evidence": "22-test-plan.md:197-222 requires notifications/activity, mentions, agent/MCP and canonical routing for every capability. Their published ports are WP-07 ListNotifications/SubscribeActivity, WP-09 ResolveMention, WP-36 agent.invokeDomain and WP-40 ResolveDeepLink (21-implementation-plan.md:123-140,161-178,736-753,810-826).",
+      "required": "Lead provides common per-kind adapter registrations and receipts or keeps these checklist rows missing. Search is already a transitive WP-06 requirement; no mail-only search, notification or context store.",
+      "state": "not evidenced in this package's inspected paths"
+    },
+    {
+      "gate": "License and artifact gate (WP-48)",
+      "kind": "hidden release gate, not explicit WP-18 edge",
+      "evidence": "WP-18 licensePolicy is BEHAVIOR_REIMPLEMENTATION at work-packages.json:15313; 21-implementation-plan.md:965-982 requires exact lock-pinned origin/SBOM and notices.",
+      "required": "Implement behavior from contracts with existing target code; no upstream copying. Exact dependency license decision required if introducing any upstream dependency.",
+      "state": "no upstream code copied or dependency proposed by this preflight"
+    }
+  ],
+  "ownedNewFiles": [
+    "tests/macro-integration/wp-18.test.ts",
+    "apps/workspace-service/src/modules/mail/sync.ts",
+    "apps/workspace-service/src/modules/mail/webhooks.ts",
+    "apps/workspace-service/src/jobs/mail-sync.ts",
+    "apps/workspace-service/migrations/018_mail_cursors_ingestion_tombstones.sql",
+    "tests/macro-integration/mail-cursor-tombstone-recovery.test.ts",
+    "apps/workspace-service/migrations/18-domain-contract.sql"
+  ],
+  "normativeFileDisposition": {
+    "meaning": "ownedNewFiles describes proposed implementation ownership, not permission to create these files during preflight. This worker writes only its JSON report.",
+    "sharedWithWP17": [
+      "packages/shared/src/workspace-domain/mail/contracts.ts",
+      "apps/workspace-service/src/modules/mail/commands.ts",
+      "apps/workspace-service/src/modules/mail/repository.ts"
+    ],
+    "sharedFileRule": "All three appear in both WP-17 and WP-18 normative newFiles. After WP-17 acceptance they must be extended by the single mail-area integration owner, never recreated by WP-18.",
+    "migrationRule": "Both migration names are normative proposals. 18-domain-contract.sql is explicitly a proposed identifier at work-packages.json:15734-15735 and is omitted from newArtifacts while remaining in newFiles. Lead/migrator must allocate final names and distribute DDL without applying duplicate table definitions; do not invent timestamps or drop either normative requirement silently. Retain requested provenance/constraints even if migrator merges the two proposals."
+  },
+  "sharedPatchRequests": [
+    {
+      "path": "packages/shared/src/mail/jmap-client.ts",
+      "symbol": "JmapError; JmapClient.call; JmapClient.queryEmails; JmapClient.getEmail; JmapClient.subscribe",
+      "change": "Preserve a structured JMAP method error type separately from transport code so cannotCalculateChanges selects rebuild. Add typed Email/changes and bounded Email/get batch/state result operations through existing call()/same-origin request path; distinguish Email/get state from queryState and preserve hasMoreChanges/newState. For rebuild expose bounded account-wide query pages and consistent checkpoint/change catch-up, not only the current inbox/top 100. Keep subscribe's account/type state map intact, and use its open transition as catch-up signal without treating push as a durable mutation or ordering opaque state tokens lexically.",
+      "reason": "call currently collapses method types into message text (194-209), queryEmails returns only queryState (224-237), getEmail strips state (240-246), and subscribe already provides state maps/reconnect (373-425). No second HTTP/JMAP client; preserve origin and secret guards (111-173)."
+    },
+    {
+      "path": "apps/electron/src/main/mail/mail-service.ts",
+      "symbol": "MailServiceDeps; MailService.jmap; MailService.startPush; MailService.resetClient; MailService.list; MailService.emitSoon",
+      "change": "Extend the dependency-owned authority adapter to resolve accountRef/workspace/connection generation explicitly. Shared mode routes state hints and initial/reopened push through authenticated account-scoped SyncMail/mail.ingestDelta scheduling, and emits authorized verified projection invalidation only after committed receipt/watermark. Recheck callback generation after awaits and cancel/fence jobs on disconnect/revoke. Shared list/get consume the accepted canonical projection/query, while explicit standalone mode retains existing JMAP provision/list/draft/send behavior. Do not store shared cursors/messages in this service's JSON files. Preserve 250ms UI coalescing but never let it serve as ingestion dedup or acknowledgement.",
+      "reason": "startPush ignores changed tokens at 302-307, jmap starts push once (289-299), resetClient only cancels in-memory client (163-169), list discards queryState (347-354), and MailServiceDeps has no authenticated workspace actor (48-61)."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/useMail.ts",
+      "symbol": "api; unwrap; useMail.refresh; useMail.refreshStatus; onChanged effect; ready",
+      "change": "Use the WP-17 authority-aware bridge with WP-05 durable queue/receipt metadata. Surface loading, truly empty, denied, offline_queued, retryable_error and applied_verified distinctly. Refresh canonical list/detail after authorized watermark, retain error codes, clear cached private detail/list on revoke, and fence async completions by account/authority generation so old requests cannot refill revoked state. Keep standalone autoEnsure only for explicit local authority and existing Inbox/Mail surface; no renderer-owned ingestion/cursor store.",
+      "reason": "refresh performs three direct reads and stores only error text (49-73), onChanged only refreshes (84-96), ready only tests MailStatus.state, and local auto-provision uses process-global autoEnsureTried (98-104)."
+    },
+    {
+      "path": "apps/electron/src/shared/mail-local.ts",
+      "symbol": "MailStatus; MailResult; MailLocalApi.onChanged; MailLocalApi.list/get",
+      "change": "Extend the accepted WP-17 authority-aware IPC contract with typed sync receipt/status and projection watermark/account generation on authorized change events; preserve standalone DTOs and never expose credential/provider auth values. Carry canonical entity identity and typed denied/queued/reconciling/retry states through the existing bridge. Lead must update the already-owned WP-17 IPC/preload bindings in the same integration, whose implementations were not inspected here.",
+      "reason": "Directly imported contract presently exposes only push open/retry/off and onChanged {at,status?}, no receipt or watermark (32-44,126-142); hook cannot infer verified synchronization from this shape."
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/mail/contracts.ts",
+      "symbol": "WP-17-owned contracts; proposed SyncMail/IngestProviderChange/mail.ingestDelta types",
+      "change": "Extend the accepted WP-17 file, currently absent, with strict mail.ingestDelta {account,providerCursor,changeBatchKey} schema under common RoxCommand v2, typed canonical result/error union, IngestProviderChange and SyncMail exact published DTOs. Keep provider hints separate from persisted accepted checkpoint. Specify discriminated provider cursor, connection generation, job lease/backfill generation and authorization context. Reconcile overview names HandleProviderChange/ResumeBackfill with IngestProviderChange/SyncMail: expose one canonical operation mapping and persist resumable backfill state, not duplicate commands or invented wire schema.",
+      "reason": "The file is shared in both normative packages. Overview and detailed API names differ (15217,16017-16042); request rejects unknown fields and identity comes from transport, not DTO actor."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/mail/commands.ts",
+      "symbol": "WP-17-owned mail command handlers; proposed mail.ingestDelta/SyncMail/IngestProviderChange registration",
+      "change": "After acceptance extend the one command module with strict validation, injected principal, account owner/delegated inbox policy, workspace match, expectedRevision/idempotency request-hash conflict handling and queued canonical receipts. Resolve verified inbound changeBatchKey from durable inbox rather than accepting provider data from actor payload; register HTTP and domain.mail.ingestDelta through the accepted common gateway. Job reconciliation publishes applied/readback result only after durable transaction and authorized read-back. Root integrates the actual gateway registries selected by wave0; no guessed route files.",
+      "reason": "Absent today; normative operations at 15333-15579 require transport-derived identity, all documented errors and canonical receipt; one command authority must survive persisted-command/reply crash."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/mail/repository.ts",
+      "symbol": "WP-17-owned mail repository; proposed ingest transaction and sync job lease methods",
+      "change": "Extend accepted storage with UNIQUE(connection_id,delivery_id), account-scoped provider aliases, persisted opaque checkpoints, retained deletion fences and per-account CAS/lease generation. In one database transaction write normalized WP-17 message mutations, tombstones, durable processed inbox, cursor, receipt/revision and outbox. Persist rebuild generation/checkpoint/page progress; only reconcile snapshot absence after successful completion plus catch-up, never purge for a partial page. Commit must reject stale worker generation, stale expected cursor, tombstone/policy/connection fence or revoked account. Claiming inbox/job is not processing it.",
+      "reason": "Published constraints at 15750-15780 and 16045-16048 require atomic durable ingest and lease fencing; WP-17 already owns messages/aliases, so creating another mail_message table/store would violate one authority."
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "symbol": "WP-18 section",
+      "change": "After implementation record actual contract names, final migration identifiers, account authority routing, provider cursor-specific reset semantics, tombstone/backfill fence and recovery procedure; preserve explicit versus hidden gate distinction and live evidence links.",
+      "reason": "Normative documentation requirement; current section 336-357 is only a future plan, not a runtime receipt."
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "symbol": "General acceptance boundary; JMAP Mail regression; feature completeness; receipt record",
+      "change": "Add integrated WP-18 scenario mapping and revision-bound results for duplicate/inverse replay, expire/rebuild, interrupted transaction, worker fencing, disconnect/revoke and unconditional webhook auth, including all feature-completeness adapters and independent provider read-back. Keep baseline failures separate from caught mutants.",
+      "reason": "Published acceptance at 7-9,179-222,224-247 requires more than fixtures and forbids deferring search/permissions/agent verification to final release."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Duplicate/out-of-order webhook imports message once",
+      "seam": "JmapClient.subscribe -> MailService.startPush; proposed webhooks.ts, sync.ts and WP-17 repository",
+      "currentEvidence": "subscribe emits state hints (373-408); startPush only emits refresh (302-307); no durable provider inbox in inspected paths.",
+      "requiredChange": "Authenticate and bind delivery; durably dedup connection/delivery; schedule leased account sync from persisted checkpoint; normalize by account/provider alias with monotonic revision fences.",
+      "verification": "Deliver same event and reordered distinct events through real ingestion endpoint, read canonical API/DB alias counts, assert one normalized message and newest provider state.",
+      "missingPrerequisite": "Accepted WP-17 message/alias repository, WP-04 transaction and configured provider verifier/runtime.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "expired cursor rebuilds without loss",
+      "seam": "JmapClient.call/queryEmails; proposed sync.ts rebuild generation",
+      "currentEvidence": "call throws text-only method errors; queryEmails exposes queryState but no Email/changes wrapper (194-237).",
+      "requiredChange": "Typed cursor-invalid result -> bounded persisted account-wide rebuild with checkpoint/catch-up; preserve existing rows until snapshot is complete.",
+      "verification": "Expire sandbox checkpoint, import more messages than a page, interrupt/resume rebuild and independently compare all provider IDs including mail outside inbox.",
+      "missingPrerequisite": "Provider changes/snapshot port and persisted rebuild transaction/lease host.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "disconnect reconnect resumes",
+      "seam": "JmapClient.subscribe onStatus; MailService.resetClient/startPush; WP-05 replay",
+      "currentEvidence": "SSE has backoff/retry (373-425) but reopening only sets push=open; no checkpoint catch-up scheduling (302-307).",
+      "requiredChange": "Resume durable account job from last committed checkpoint on reconnect/service restart; fence stale callback generations, distinguish network retry from account disconnect/revocation.",
+      "verification": "Disconnect stream and client, mutate provider, restart worker/app and reconnect; assert no gaps, stable IDs, one receipt/effect and updated Inbox projection.",
+      "missingPrerequisite": "WP-05 accepted queue/projection, WP-17 account lifecycle and writer-mode guard.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "deletion replay does not resurrect",
+      "seam": "MailService.remove; proposed repository tombstone enforcement",
+      "currentEvidence": "remove moves to trash or calls destroy (378-396); no durable local tombstone. Trash move must remain distinct from destruction.",
+      "requiredChange": "Persist destroyed-message tombstone with accepted account generation/provider ordering proof; reject stale creates/updates and late snapshot rows against it in transaction and projections.",
+      "verification": "Ingest creation then provider destruction then old create/update and rebuild replay; API/detail/search remain deleted, alias ID stable, tombstone retained.",
+      "missingPrerequisite": "WP-17 canonical message model and WP-06 fenced projection delete.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "Replay same webhook 10 times and in inverse order yields one normalized message and monotonic latest state.",
+      "seam": "proposed webhooks.ts; repository inbound uniqueness and per-account CAS",
+      "currentEvidence": "Current 250ms emitSoon coalescing is transient UI debounce (310-316), not durable dedup or state order.",
+      "requiredChange": "Persist delivery inbox and provider remote alias uniqueness; serialize checkpoint ancestry/connection generation and reject stale worker commits. Treat webhook cursor as hint, never globally sortable state.",
+      "verification": "10 exact repeats plus inverse delivery order and concurrent worker claims; count one message/alias, one delivery effect per key and assert final independent provider state/revision; test same remote ID in two accounts/workspaces.",
+      "missingPrerequisite": "Accepted alias constraints and provider-specific change ordering port.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "Provider cursor expired/invalid -> bounded rebuild; crash after rows but before cursor does not lose message.",
+      "seam": "proposed sync.ts, repository transaction and mail-sync job",
+      "currentEvidence": "Normative cursor transaction at work-packages.json:15769-15771; current MailService.list queries live provider and discards state (347-354).",
+      "requiredChange": "Per-page durable batch writes mutation/tombstone/outbox/cursor/receipt atomically; persist resumable bounded backfill and generation. A crash mid-transaction rolls back rows and cursor together; after commit a retry dedups rather than skips.",
+      "verification": "Kill process at row-write/before cursor/before commit and commit-before-reply boundaries; restart and compare complete canonical IDs to provider. Seed advance-cursor-before-ingest mutation and require data-loss assertion to fail.",
+      "missingPrerequisite": "Real transactional DB, selected migrator and crash-capable runner.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "Delete then replay older create keeps tombstone; reconnect does not resurrect revoked account.",
+      "seam": "MailService.resetClient/ensureMailbox; repository commit-time policy and connection generation",
+      "currentEvidence": "resetClient only stops client; ensureMailbox may provision local account; hook autoEnsure depends on local/reachable/no-mailbox (163-169,243-284; useMail:98-104).",
+      "requiredChange": "Retain message/account revocation fence; increment connection generation and cancel pending jobs on revoke; recheck policy/connection at commit and filter caches; prevent shared revoked account from entering standalone auto-provision.",
+      "verification": "Revoke during claimed sync, complete stale provider response, replay old create, restart and reconnect app; account remains revoked, no body/title/projection/notification leak, stale job returns disconnected/stale_binding or pending fence.",
+      "missingPrerequisite": "WP-03 current policy, WP-17 lifecycle and accepted WP-51-equivalent fence.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "Authenticate webhooks always in target; Macro gmail_webhook_auth compile feature is not acceptable default.",
+      "seam": "proposed webhooks.ts IngestProviderChange verification boundary",
+      "currentEvidence": "Existing subscribe is outbound same-origin authenticated SSE (381-386), not inbound webhook verification. No workspace webhook handler exists in inspected tree.",
+      "requiredChange": "Always validate supported provider delivery authentication, binding and replay scope before enqueue. Verifier derives trusted provider/connection context; reject missing/invalid/expired/wrong audience or tenant credentials and disconnected/stale bindings. No compile/runtime opt-out or trust based on delivery ID alone.",
+      "verification": "Default target configuration rejects unauthenticated/tampered/wrong-binding webhook and accepts independently authenticated sandbox delivery; verify zero inbox/job/body side effects on denial and no secrets in logs.",
+      "missingPrerequisite": "Actual provider-specific verifier, configured sandbox keys/account and accepted connection port; generic mock auth cannot satisfy live criterion.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "UI",
+      "seam": "existing useMail and Inbox/Mail surface",
+      "currentEvidence": "Hook already supplies status/list/detail/loading/error (27-39,49-73,140-144); no applied receipt state.",
+      "requiredChange": "Expose sync progress/receipt through existing surface and clear revoked cached data without adding another inbox.",
+      "verification": "Actual Electron interaction and visual evidence for sync success, interruption, restart and denied account; match displayed receipt/revision to API.",
+      "missingPrerequisite": "Accepted WP-17 bridge, WP-05 projection and runnable integrated Electron build.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "routing",
+      "seam": "useMail.open(id); toSummary raw provider id; WP-17 canonical ref adapter",
+      "currentEvidence": "useMail.open uses id (110-130), toSummary keeps e.id/threadId (25-29); no canonical route evidence inspected.",
+      "requiredChange": "Retain provider IDs as scoped aliases; integrate accepted canonical account/thread/message navigation with existing Inbox, history and panels.",
+      "verification": "Open imported canonical ref after rebuild/rename/restart, back/forward; revoked/missing ref exposes no private title and does not open a different account's same remote ID.",
+      "missingPrerequisite": "WP-17 canonical navigation adapter and common ResolveDeepLink contract (WP-40 gate).",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "entity model",
+      "seam": "mail-model.toSummary/toMessage; WP-17 account/message/alias repository",
+      "currentEvidence": "Current DTO mapping uses provider id/threadId, not scoped entity identity (25-74).",
+      "requiredChange": "Reuse canonical WP-17 mail entities/aliases; add provider_cursor and sync_job typed state without duplicating mail_message or merging accounts by address/title.",
+      "verification": "Schema validation and same remote ID across two accounts/workspaces; canonical ref/revision stable across delta and rebuild.",
+      "missingPrerequisite": "Accepted WP-17 schema and common entity registry.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "persistence",
+      "seam": "repository transaction; migrations 018 and proposed 18-domain-contract",
+      "currentEvidence": "MailService persists config/owner/mailbox JSON only (128-175,269-270); workspace-service path absent.",
+      "requiredChange": "Add cursor/inbox/job/tombstone persistence through selected migrator, composite entity FK, unique delivery/alias keys, revisions and lease generation; local shared state remains projection/outbox only.",
+      "verification": "Fresh apply and upgrade from accepted WP-17 DB, restart/cutoff at each commit boundary, verify row/receipt/ref invariants and incomplete snapshot retention; recovery uses forward repair after shared writes.",
+      "missingPrerequisite": "Selected migrator/database and applied dependency migrations.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "commands",
+      "seam": "proposed mail.ingestDelta/SyncMail/IngestProviderChange in shared command module",
+      "currentEvidence": "Current MailLocalApi contains direct provider operations (126-142); normative v2 command contract at 15333-15579 is unimplemented here.",
+      "requiredChange": "Register strict schemas under injected authority, expectedRevision, workspace/idempotency key/request hash; persist queued/unknown until provider reconciliation and verified result.",
+      "verification": "Same key/same payload reuses receipt; changed payload conflict; stale revision conflict; forged actor/unknown fields/oversized cursor denied; exercise all ten documented error codes and result status transitions.",
+      "missingPrerequisite": "Common WP-04 gateway and accepted WP-17 typed contracts.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "queries",
+      "seam": "MailService.list/get and accepted WP-17 query adapter",
+      "currentEvidence": "list caps results and get returns provider body (347-360); no workspace/current-resource ACL in these methods.",
+      "requiredChange": "Shared queries read canonical authorized state with bounded stable pagination and receipt/projection freshness; no hidden count/title/body serialization.",
+      "verification": "Page through larger-than-limit import, inspect owner/delegate/outsider responses, deny cross-account cursor reuse and ensure no private totals/snippets.",
+      "missingPrerequisite": "WP-17 canonical queries and WP-05 projection/authorized cursor.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "realtime where needed",
+      "seam": "JmapClient.subscribe; MailService.emitSoon; MailLocalApi.onChanged",
+      "currentEvidence": "Lossy refresh emission has no event ID/revision/watermark (startPush 302-307; onChanged contract 141).",
+      "requiredChange": "Commit mail.sync_advanced/provider.sync_failed through common transaction outbox, deliver policy-filtered invalidation and replay/gap catch-up; provider SSE remains an ingestion hint.",
+      "verification": "Drop/duplicate/reorder delivery, reconnect and compare watermark to canonical API; revoked subscriber receives neither body nor identifying metadata.",
+      "missingPrerequisite": "WP-04 outbox, WP-05 SyncSince and current subscriber authorization.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "permissions",
+      "seam": "MailServiceDeps.identity versus target authenticated account/resource policy",
+      "currentEvidence": "identity supplies ownerUuid/handles for local provisioning, not authenticated workspace actor (48-61).",
+      "requiredChange": "Require transport principal plus workspace/account owner or delegated inbox grants; worker uses bounded trusted connection authority; agent allow-all never bypasses ACL; recheck at mutation/read/delivery.",
+      "verification": "Owner A, delegated B, viewer/outsider C and allow-all agent exercise HTTP/native/job; reject body actor/workspace forgery and revoked in-flight work, using PRIVATE_WP-18 marker leakage oracle.",
+      "missingPrerequisite": "Accepted identity/resource policy and connection-bound worker principal.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "sharing",
+      "seam": "WP-17 mail account/body policy and common grants",
+      "currentEvidence": "WP-18 explicitly says links never grant email-body access (15223-15227); no sharing enforcement shown in inspected local bridge.",
+      "requiredChange": "Reuse explicit delegated-inbox/resource grants and link expiry policy; synchronization/linking must not expand personal mail visibility.",
+      "verification": "Member sees permitted shared account but not personal mail via relation/deep link/search; expiry/revoke takes effect on current read and queued delivery.",
+      "missingPrerequisite": "WP-03 grant/expiry adapters accepted through WP-17.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "search",
+      "seam": "MailService.list text filter; accepted WP-06 mail search consumer",
+      "currentEvidence": "Current list delegates provider text query (351); this does not prove canonical shared search or deletion fencing.",
+      "requiredChange": "Emit normalized message revision/tombstone events into one common search/memory projection; enforce latest policy at search and watermark read-back.",
+      "verification": "Imported thread searchable after watermark; stale replay after tombstone/revoke never restores hit/snippet; unauthorized known private query yields no metadata.",
+      "missingPrerequisite": "WP-06 accepted mail extractor/upsert/delete registration from WP-17.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "mentions",
+      "seam": "WP-17 canonical mail refs and common WP-09 ResolveMention/source-revision port",
+      "currentEvidence": "No mention adapter demonstrated by inspected mail DTOs; global checklist requires it (22-test-plan.md:211).",
+      "requiredChange": "Integrate existing/common mention targets with canonical imported mail refs, revision/deletion behavior and target policy; mentioning mail does not grant body access.",
+      "verification": "Resolve authorized mail mention after sync/rebuild; denied target hides title/body; deleted source/target resolves retained tombstone rather than recreated entity.",
+      "missingPrerequisite": "Lead-owned common mention registration and accepted WP-17 refs; do not mark N/A because missing.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "notifications",
+      "seam": "mail sync outbox -> common WP-07 attention consumer",
+      "currentEvidence": "useMail maintains unread list only (54-62); no durable notification receipt shown.",
+      "requiredChange": "Use one attention adapter for imported canonical mail event/recipient policy; dedup delivery/event reasons, retain seen/done/mute/snooze semantics and avoid replay/backfill notification storms.",
+      "verification": "Repeated/reordered webhook and worker restart create one expected notification per accepted recipient/reason; unauthorized recipient sees no private payload; state persists across devices.",
+      "missingPrerequisite": "Accepted common attention policy/consumer and explicit backfill notification policy from lead.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "activity",
+      "seam": "transaction outbox/common SubscribeActivity",
+      "currentEvidence": "MailService logs/emits transient status (273-281,310-316), not durable actor/cause/revision audit.",
+      "requiredChange": "Record accepted ingestion/rebuild/failure with principal/cause, command/correlation IDs and aggregate revision; events carry safe canonical refs not raw bodies.",
+      "verification": "Read authorized activity after duplicate/restart; one effect chain, correct actor/cause/revision, no private MIME/body/token in evidence/logs.",
+      "missingPrerequisite": "Common outbox/activity consumer contract.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "agent access",
+      "seam": "shared domain mail command/query adapter and WP-36 agent.invokeDomain port",
+      "currentEvidence": "No agent-domain sync registration demonstrated in inspected paths; published checklist requires common acting-user tools/provenance.",
+      "requiredChange": "Expose accepted mail sync/read/status domain actions through common dispatcher with acting user, current ACL and canonical freshness; no raw-store/provider credential bypass.",
+      "verification": "Native agent tool sync/read yields same receipt/ref as UI API; outsider/allow-all viewer denied; revoked cached source is not delivered to context.",
+      "missingPrerequisite": "Accepted common agent adapter and delegated principal contract; remains missing until integrated.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "API/MCP where applicable",
+      "seam": "POST /v1/workspaces/{workspaceId}/commands/mail.ingestDelta and domain.mail.ingestDelta",
+      "currentEvidence": "These exact transports are specified at work-packages.json:15337-15341; current hook uses only mailLocal API.",
+      "requiredChange": "Both transports and applicable common MCP registration use identical validated command/auth/result semantics, reject body actor and cross-workspace refs.",
+      "verification": "Exercise HTTP, native RPC and common agent/MCP path with same key, policy denial and malformed DTO; compare canonical receipt/status/hash/revision, not mock echoes.",
+      "missingPrerequisite": "Wave0 route/dispatcher registration and accepted contracts.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "observability",
+      "seam": "MailServiceDeps.log; proposed sync/webhook/job and common instrumentation",
+      "currentEvidence": "Existing log lacks required command/causation/correlation/revision/policy/watermark/retry-DLQ fields (48-61; 273-276).",
+      "requiredChange": "Instrument durable transition chain with all seven normative fields/counters; provider-unavailable, cursor-reset and lease loss are explicit; scrub email/body/transcript/tokens from logs including error text.",
+      "verification": "Assert trace correlates webhook-command-job-transaction-projection and queue/DLQ counters; inject PRIVATE_WP-18 body/token sentinel and verify absent from logs/evidence.",
+      "missingPrerequisite": "Common runtime telemetry and privacy policy adapter.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "tests",
+      "seam": "normative wp-18.test.ts and mail-cursor-tombstone-recovery.test.ts",
+      "currentEvidence": "Both proposed files and macro-integration test directory are absent in scoped listing; test plan declares no PASS.",
+      "requiredChange": "Implement acceptance suites against real command/DB/provider boundaries; include unauthorized actor, dropped/duplicated event, restart before reply, inverse replay, transaction cutoff and stale generation cases. Preserve relevant JMAP/standalone regression.",
+      "verification": "Later run bun test tests/macro-integration/wp-18.test.ts and recovery suite plus existing relevant package tests; actual Electron/provider scenario with seed 20260948. Baseline must pass; advance-cursor-before-ingest mutant must fail precise loss assertion and independent second variant must be caught.",
+      "missingPrerequisite": "Implemented package, runnable dependency-accepted runtime and independent evaluator; no tests run in preflight.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "documentation",
+      "seam": "21-implementation-plan.md#wp-18 and 22-test-plan.md",
+      "currentEvidence": "Published plan lists intended behavior/verification, not integrated limits or recovery receipts.",
+      "requiredChange": "Lead applies requested documentation patches with actual provider capabilities/authentication, state token semantics, migration allocation, disconnect/revoke and rebuild/DLQ recovery instructions.",
+      "verification": "Review docs against accepted schemas and exercised recovery, record actual revision/image/schema and evidence rather than fixture success.",
+      "missingPrerequisite": "Observed implementation and lead ownership of shared docs.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "failure states",
+      "seam": "MailStatus/MailResult; useMail.unwrap/refresh; proposed canonical job results",
+      "currentEvidence": "MailState has coarse error/unreachable states; hook discards code on refresh (mail-local:30-44; useMail:68-69).",
+      "requiredChange": "Carry typed denied, conflict, cursor-reset/rebuild, retryable rate-limit/network, terminal reauth/quarantine, stale binding, ambiguous and pending-fence state; retry only through accepted durable job policy.",
+      "verification": "Inject each relevant provider/auth/revision/fence failure and observe precise UI/API status without success receipt; recover reauth/network/rebuild through reload.",
+      "missingPrerequisite": "Accepted provider error union and bridge status DTO.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "loading states",
+      "seam": "useMail.refresh/loading/status",
+      "currentEvidence": "A single loading boolean wraps local reads (49-72), without queued/rebuild freshness.",
+      "requiredChange": "Represent background rebuild/refresh and stale projection separately; retain authorized prior data during refresh, but clear on revoke; avoid reporting partial snapshot as complete.",
+      "verification": "Slow provider and multi-page rebuild UI shows loading/progress/freshness, not empty/applied_verified; inspect reload while job still leased.",
+      "missingPrerequisite": "Durable sync status/query and UI integration.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "empty states",
+      "seam": "useMail.items/ready/error and MailStatus",
+      "currentEvidence": "items initialize empty; ready only matches state='ready' (28-39), no verified empty marker.",
+      "requiredChange": "Distinguish truly empty authorized completed account from unconfigured, denied, unavailable, offline or partial backfill states in existing surface.",
+      "verification": "Exercise zero-message account, unconfigured account, revoked account, offline provider and pending first sync; only first yields genuine empty with verified watermark.",
+      "missingPrerequisite": "Canonical sync completion/freshness status and changed UI.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "offline/reconnect where applicable",
+      "seam": "WP-05 durable projection/outbox; useMail.refresh and JmapClient.subscribe retry",
+      "currentEvidence": "Current hook reads provider immediately and only captures string errors; SSE retry is in-memory (useMail:49-73; JmapClient:373-425).",
+      "requiredChange": "Reuse accepted persistent command queue, canonical authorized projection and receipt polling; restart restores pending sync and reconnect rechecks policy before applying once; quarantine rejected/revoked work.",
+      "verification": "Queue offline, restart desktop and worker, reconnect twice; accepted work applies once, revoked pending work rejects with no revived cached body or automatic local mailbox creation.",
+      "missingPrerequisite": "Accepted WP-05 queue/replay plus account lifecycle and current policy fence.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "Database domain constraints and recovery leases",
+      "seam": "repository and proposed cursor/inbox/job migrations",
+      "currentEvidence": "Normative constraints explicitly require unique delivery, generation-fenced leases, atomic cursor/mutation/tombstone/outbox and incomplete snapshot preservation (15750-15780).",
+      "requiredChange": "Add authoritative account checkpoint, inbox status separate from lease claim, persisted backfill generation/page/checkpoint, retained tombstones and CAS commit. Apply aggregate revision and policy/tombstone fences in downstream consumers as well.",
+      "verification": "Two workers claim same job across lease expiry, old worker returns after new generation commits; stale commit rejected, one effect. Kill mid-snapshot: old rows retained and job resumes bounded; schema unique/FK violations reject cross-workspace writes.",
+      "missingPrerequisite": "WP-17 table design, transaction/outbox API and final migrator filenames.",
+      "state": "missing_not_verified"
+    },
+    {
+      "criterion": "Behavior reimplementation, artifact provenance and live verification gate",
+      "seam": "WP-18 licensePolicy/verificationGate and common release receipt",
+      "currentEvidence": "Normative record forbids completion without real surface/failure/reload evidence and permits upstream only as exact audited dependency (15313-15314).",
+      "requiredChange": "Use target mechanisms without upstream source copying; retain origin decisions and exact artifact versions. Bind proof to integrated implementation SHA/schema/image, not dispatch HEAD or fixture.",
+      "verification": "Independent evaluator reviews exact origin/dependency receipt plus actual Electron/API/provider read-back and caught controls; state implemented/verified/delivered separately.",
+      "missingPrerequisite": "Accepted integrated implementation, sandbox and lead release/evidence collector; no implementation claim in this report.",
+      "state": "missing_not_verified"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/shared/src/mail/jmap-client.ts","symbol":"JmapError; JmapClient.call/queryEmails/getEmail","lineStart":194,"lineEnd":246,"sha256":"31a2c26b3499532894b71b0492dcb9b6b4372009915fffcd50398b236bc83028"},
+    {"path":"packages/shared/src/mail/jmap-client.ts","symbol":"JmapClient.subscribe","lineStart":373,"lineEnd":425,"sha256":"31a2c26b3499532894b71b0492dcb9b6b4372009915fffcd50398b236bc83028"},
+    {"path":"packages/shared/src/mail/jmap-client.ts","symbol":"normalizeBaseUrl; resolveSameOrigin; JmapClient.request","lineStart":111,"lineEnd":173,"sha256":"31a2c26b3499532894b71b0492dcb9b6b4372009915fffcd50398b236bc83028"},
+    {"path":"apps/electron/src/main/mail/mail-service.ts","symbol":"MailServiceDeps","lineStart":48,"lineEnd":61,"sha256":"7322905a2f22660bbb04eb9084a2a16677a0c7c2f1ec2530b2c939997e60c36d"},
+    {"path":"apps/electron/src/main/mail/mail-service.ts","symbol":"MailService.jmap/startPush/emitSoon","lineStart":289,"lineEnd":316,"sha256":"7322905a2f22660bbb04eb9084a2a16677a0c7c2f1ec2530b2c939997e60c36d"},
+    {"path":"apps/electron/src/main/mail/mail-service.ts","symbol":"MailService.list/get/remove","lineStart":347,"lineEnd":396,"sha256":"7322905a2f22660bbb04eb9084a2a16677a0c7c2f1ec2530b2c939997e60c36d"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/useMail.ts","symbol":"useMail.refresh/onChanged/autoEnsure","lineStart":49,"lineEnd":108,"sha256":"552929f76ee0f841414061a364914fd08fbba67b8c637ac9ff9d36a21aa7a6a9"},
+    {"path":"apps/electron/src/shared/mail-local.ts","symbol":"MailLocalApi","lineStart":126,"lineEnd":142,"sha256":"65689fe50e18d5c8a9e7bb0032ce6e0db65d5cb6ce42f40d4bea19e04c41c3d2"},
+    {"path":"apps/electron/src/main/mail/mail-model.ts","symbol":"toSummary/toMessage","lineStart":25,"lineEnd":74,"sha256":"75af3dfc936f3a47c7baeec8c67ebac0bee4a263cc0583eaeff56f2ca7a2ab4d"},
+    {"path":"packages/shared/src/mail/index.ts","symbol":"JMAP/provisioning package exports","lineStart":1,"lineEnd":4,"sha256":"74a96dec3af3d9b27179d9d4ac8a0e210354698b6c627818b4d9e98cfbf9f28c"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-18 dependencies/DoD/operations/migrations","lineStart":15169,"lineEnd":16051,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-17 shared mail ownership and prerequisites","lineStart":14089,"lineEnd":14269,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"plans/macro-integration/work-packages.json","symbol":"WP-05 durable client replay prerequisites","lineStart":3457,"lineEnd":3605,"sha256":"79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-18 published acceptance","lineStart":336,"lineEnd":357,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/21-implementation-plan.md","symbol":"WP-51/WP-52 hidden writer/runtime gates","lineStart":1020,"lineEnd":1055,"sha256":"b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"},
+    {"path":"docs/macro-integration/22-test-plan.md","symbol":"Mandatory feature completeness checklist","lineStart":197,"lineEnd":222,"sha256":"55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"}
+  ],
+  "nextExecutableAction": {
+    "preflight": "Lead consumes this report and reconciles hidden gate contracts/overlapping file ownership. No product execution is authorized for this worker.",
+    "implementationStartCondition": "Lead's wave0 is committed and WP-17 plus WP-05 accepted typed interface, migration and scenario receipts are available.",
+    "firstImplementationStep": "Re-read/re-hash three entry points and accepted WP-17 mail contracts/provider port/repository plus WP-05 queue/gateway interface at delivered revision; assign one owner for overlapping files, allocate final migration identities, then implement repository atomic ingestion/lease/tombstone methods before sync orchestration, authenticated webhook scheduling, job registration and existing UI/bridge integration.",
+    "verificationOrder": "After integration, apply actual migrations in isolated runtime, exercise JMAP regressions and command/provider sync/rebuild/revoke crash scenarios, run specified suites and seeded/holdout controls, then actual Electron/agent/HTTP read-back. Completion remains blocked for every missing checklist row."
+  },
+  "risks": [
+    "Email/query queryState is not Email/get/Email/changes state; opaque JMAP states cannot be sorted lexicographically or treated like Gmail history numbers.",
+    "SSE coalescing/retry does not guarantee catch-up; silently dropping push type/account states currently hides durable ingest requirements.",
+    "A paginated rebuild racing provider writes is not a completed snapshot; require provider checkpoint/change catch-up before absence-based deletion.",
+    "Cursor transaction and processed inbox must not commit ahead of normalized rows/tombstones/outbox; claim acknowledgement is not processed acknowledgement.",
+    "Old worker or async renderer completion can return after reconnect/revoke; generation/lease/policy checks must be repeated at commit/delivery/cache update.",
+    "Current bridge identifies local mailbox by record/address and profile hints; neither is authenticated shared principal or unique workspace account identity.",
+    "WP-17/WP-18 share three proposed files and all existing entry points; uncoordinated independent creation would introduce a second store/writer or overwrite lead integration.",
+    "Both migration proposals are listed but only one carries explicit migration table record; duplicate DDL and fabricated migrator identifiers must be resolved by root, not silently guessed.",
+    "Overview API names HandleProviderChange/ResumeBackfill differ from detailed IngestProviderChange/SyncMail; clarify one canonical mapping rather than adding duplicate surfaces.",
+    "Full feature DoD introduces notification/mention/agent/routing and writer/runtime gates not represented by WP-18's direct DAG edges. These cannot be deferred to WP-41 or marked N/A solely because absent.",
+    "Mandatory webhook authentication is required before downstream Gmail/Microsoft adapters exist; retain fail-closed typed port and obtain actual supported-provider auth evidence rather than enabling optional auth or asserting fixtures are live.",
+    "Gmail history, Microsoft delta and IMAP UIDVALIDITY need provider-specific checkpoint/reset identity semantics; do not weaken WP-18 to JMAP-only acceptance or assume downstream live implementations now exist.",
+    "Trash move is not message destruction; tombstone semantics must follow normalized provider lifecycle without breaking current local remove/draft/send behavior.",
+    "Existing logs can include address or provider description; new trace fields must not leak raw email/body/transcript/tokens or PRIVATE_WP-18 payload.",
+    "Inspected bytes may change during wave0 integration. This report is fingerprinted evidence, not an implementation receipt tied to future HEAD."
+  ]
+}

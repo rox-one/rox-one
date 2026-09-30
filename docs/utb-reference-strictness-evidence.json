@@ -1,0 +1,227 @@
+{
+  "parentRevision": "a428eb42c5681adb15d97dcacc88ce45cef7e7a4",
+  "branch": "fix/utb-reference-strictness-20260930",
+  "stackBase": "feat/unified-tables-baserow-20260930",
+  "sourceTreeSha256": "c45ecf487a2e2e5998e211de83f8fa9cc68952beb6f952e8172595c4d5274401",
+  "files": [
+    {
+      "path": "packages/core/src/bases/table-surface.ts",
+      "sha256": "c168ff3086c9655fb3cbef671c1228c17974eb6a7304a10ee690562ab5b473ad"
+    },
+    {
+      "path": "packages/core/src/bases/surface-capabilities.ts",
+      "sha256": "b39394e48e09675f61ffc9bd0f075c14bcef16a373a2e31d9a1524d5c44bf982"
+    },
+    {
+      "path": "packages/core/src/bases/__tests__/programmatic-boundary.test.ts",
+      "sha256": "3656336f4eee8af3b9ca41a7a5b978d4997f86fdcc429f56f102c5dbad3432d2"
+    }
+  ],
+  "ownedDiffSha256": "e596d208b82239f4d5aaff6466d089d98683f11c701fbcfd42611145e6824905",
+  "environment": {
+    "platform": "macOS arm64",
+    "bun": "1.3.14",
+    "node": "22.23.2",
+    "typescript": "5.9.3",
+    "installPerformed": false,
+    "externalDependencies": "existing frozen install; workspace sources remapped to this checkout",
+    "lockfileSha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+  },
+  "gates": {
+    "red": {
+      "pass": 54,
+      "fail": 18
+    },
+    "bun": {
+      "pass": 72,
+      "fail": 0
+    },
+    "node22": {
+      "pass": 72,
+      "fail": 0,
+      "skip": 0
+    },
+    "mutation": {
+      "pass": 58,
+      "fail": 14
+    },
+    "canonicalTypeClosureExit": 0,
+    "fullCoreExit": 2,
+    "baselineCoreDiagnostics": 13
+  },
+  "packageExport": {
+    "oldTargetsUnchanged": 25,
+    "soleAddition": "./bases",
+    "otherMetadataUnchanged": true,
+    "lockUnchanged": true,
+    "actualLocalResolution": true,
+    "typedConsumerDiagnostics": 0,
+    "realCanonicalReferenceSha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+  },
+  "globalBaseline": {
+    "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "coreDiagnostics": 13,
+    "sharedDiagnostics": 17,
+    "electronDiagnostics": 51,
+    "newDiagnostics": 0,
+    "coreByteIdentical": true,
+    "sharedByteIdentical": true,
+    "electronNormalizedRecordsEqual": true,
+    "allFullTypechecksExit": 2
+  },
+  "gateStates": {
+    "implementation": "implemented",
+    "runtime": "verified72/0 on two pinned runtimes",
+    "globalTypes": "baseline failures retained",
+    "nativeProduct": "not run",
+    "independentReview": "accepted exact repair by independent Spec+Standards; actual Bun72/0",
+    "publication": "source4ba5f6d2 delivered as draft1318; separate publication receipt records exact remote/source/body gate"
+  },
+  "remaining": {
+    "issue1296": "open; full integration/native/owner authorization gates remain",
+    "issue1297Dependencies": [
+      1296,
+      1231,
+      1235,
+      1243,
+      1249,
+      1279,
+      1283
+    ],
+    "laterUTBWorkPackagesStartedByThisRepair": 0
+  },
+  "artifacts": [
+    {
+      "name": "rox-utb01-bun-tests-20260930.log",
+      "sha256": "220902a4bbdc0ed25a6dd74966a3f433c28e2572883eae149cb8f08d058cb82a"
+    },
+    {
+      "name": "rox-utb01-node22-tests-20260930.log",
+      "sha256": "536003fe80d8fed2552bfb17b758cd44205b4698d7b289e85c1ffb99461a7771"
+    },
+    {
+      "name": "rox-utb01-strict-red-20260930.log",
+      "sha256": "06312d75c1afd5fa581bc01e6c78dbb69e92cac1378d7bc0d51d5cba2cee458a"
+    },
+    {
+      "name": "rox-utb01-strict-bun-green-20260930.log",
+      "sha256": "f549e6f7a470b977ebd54d150c7c0c29836ac28cf73c139be9dd57076233f273"
+    },
+    {
+      "name": "rox-utb01-strict-node22-green-20260930.log",
+      "sha256": "14ef9e8fc3f86e63d6fe7c08f0effe7e3777803b70aaf2a8de3b5e351ab914d9"
+    },
+    {
+      "name": "rox-utb01-strict-mutation-20260930.log",
+      "sha256": "24a1cddedb675f9dd3fd2b499422bd218ffe02ac0002983c521fd30157940fbc"
+    },
+    {
+      "name": "rox-utb01-strict-mutation-manifest-20260930.json",
+      "sha256": "351783c17df4f6a536ffdd4b6c7721d6b9235f441a1d8306dc5bbf81cfbc17df"
+    },
+    {
+      "name": "rox-utb01-strict-focused-typecheck-20260930.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "rox-utb01-focused-typecheck-20260930.json",
+      "sha256": "41b26aa26cc7e100c7835e9a019ffeb82ffe62bce1456b5e1414da4e2e822d61"
+    },
+    {
+      "name": "rox-utb01-focused-typecheck-first-20260930.log",
+      "sha256": "d5f6c9f4f7321147be2d3269ef47bf1842920afd26f67bd65760724488176735"
+    },
+    {
+      "name": "rox-utb01-strict-full-core-typecheck-20260930.log",
+      "sha256": "32402709672da79627884ec7bbb6a0dc7ce4c0e6e1445e977d987a270ec3aff4"
+    },
+    {
+      "name": "rox-utb01-baseline-core-typecheck-20260930.log",
+      "sha256": "32402709672da79627884ec7bbb6a0dc7ce4c0e6e1445e977d987a270ec3aff4"
+    },
+    {
+      "name": "rox-utb01-shared-typecheck-20260930.log",
+      "sha256": "58f8c89435560851c4ab2469b9b178647cd46196deff6a68bd9dfacae65932eb"
+    },
+    {
+      "name": "rox-utb01-electron-typecheck-20260930.log",
+      "sha256": "ff25e83e38972cd9bc742002ad32c8b6d82e95b28534b927907f6a229c4f0338"
+    },
+    {
+      "name": "rox-utb01-baseline-shared-typecheck-20260930.log",
+      "sha256": "58f8c89435560851c4ab2469b9b178647cd46196deff6a68bd9dfacae65932eb"
+    },
+    {
+      "name": "rox-utb01-baseline-electron-typecheck-20260930.log",
+      "sha256": "7c86bd6d9c77bc1d6dcbd9321bcd5e6eb90199e1492347633f36c682268caa0d"
+    },
+    {
+      "name": "rox-utb01-baseline-shared-typecheck-first-20260930.log",
+      "sha256": "3ece96608a94287df90ee48a34f2ce5f504f0259c501c4023f6f3ba29017c1e5"
+    },
+    {
+      "name": "rox-utb01-baseline-electron-typecheck-first-20260930.log",
+      "sha256": "03b780658bca2e396ab599431459d782e21bb798692d042c40dd2fd03de4c466"
+    },
+    {
+      "name": "rox-utb01-baseline-diagnostic-proof-20260930.json",
+      "sha256": "234d88c42dac200a691ccf75bf8c6b134c3c921cd942dd353143e4e3da95fb49"
+    },
+    {
+      "name": "rox-utb01-baseline-diagnostic-proof-20260930.ts",
+      "sha256": "0999b6f717e5a8216afd803b43d1b0f913b97c8df0015a04778fd80b1a05f8eb"
+    },
+    {
+      "name": "rox-utb01-export-metadata-20260930.json",
+      "sha256": "ed61a149cb42ee29baed477716b6f9c4612e17f98f8befee878aa47419a590af"
+    },
+    {
+      "name": "rox-utb01-strict-export-type-proof-20260930.json",
+      "sha256": "61199c8ad9f13b864038304b14604aa196d271b9fd61abb3f5b545dcb6058e93"
+    },
+    {
+      "name": "rox-utb01-strict-export-type-proof-20260930.log",
+      "sha256": "61199c8ad9f13b864038304b14604aa196d271b9fd61abb3f5b545dcb6058e93"
+    },
+    {
+      "name": "rox-utb01-strict-export-type-proof-first-20260930.log",
+      "sha256": "4131da2672469a956f6d6083ae0ea511bf81a240bd10dbb30c72bf50af899b4e"
+    },
+    {
+      "name": "rox-utb01-export-type-proof-20260930.ts",
+      "sha256": "5a1688695f4ce66baee029bef167ea6906b78afc363e9facfaf67cecd5b83b2d"
+    },
+    {
+      "name": "rox-utb01-strict-owned-review-20260930.json",
+      "sha256": "f452d12c30a8df5a81c71054d16867fcf666863884ae09dbeb84e0df4de20c7f"
+    },
+    {
+      "name": "rox-utb01-strict-owned-review-20260930.diff",
+      "sha256": "e596d208b82239f4d5aaff6466d089d98683f11c701fbcfd42611145e6824905"
+    },
+    {
+      "name": "rox-utb01-dependency-binding-20260930.json",
+      "sha256": "6eedf8ced91380b9f7f4984f5f38534896a32d397ff79c5bb685106838424bf1"
+    },
+    {
+      "name": "rox-utb01-baseline-dependency-binding-20260930.json",
+      "sha256": "a8733a57d212320568d083af5061a7f8cfb9583809cad2dcb6e20d600da8f692"
+    },
+    {
+      "name": "rox-utb01-standards-review-20260930.md",
+      "sha256": "67b2d42ee2f093b14248c9e03c37bea84eed74b82d457a6cee691d99f24bb06d"
+    },
+    {
+      "name": "rox-utb01-standards-snapshot-20260930.diff",
+      "sha256": "f5d765c53b2b4aafbc25b3d1aa65722c9bc561e15612338afdc4eab9842bee62"
+    },
+    {
+      "name": "rox-utb01-strict-independent-review-20260930.md",
+      "sha256": "3e8dc9bdbd2cbe0412fa2f77d28a464a9d5f1882c84c22f0d998775ed3971021"
+    },
+    {
+      "name": "rox-utb01-strict-independent-review-20260930.json",
+      "sha256": "90ce7300d61a282cbea92136692b37a49ca8d9271b53cd615e085db271bb6be8"
+    }
+  ]
+}

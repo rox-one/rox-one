@@ -14,6 +14,15 @@
 
 import type { SoupEntityConcreteType } from '../conation/soup/types.ts'
 
+/** Server-owned identity. Never deserialize this type from command/query bodies. */
+export interface AuthenticatedActor {
+  readonly principalId: string
+  readonly deviceId: string
+  readonly sessionId: string
+  readonly authenticatedWorkspaceIds: readonly string[]
+  readonly expiresAt: number
+}
+
 export const ROX2_ENTITY_KINDS = [
   'session',
   'note',

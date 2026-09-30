@@ -1,0 +1,235 @@
+{
+  "task_id": "CI-003-preflight",
+  "attempt_id": "9555ea25d5fe3802a89cf62e6df9a756",
+  "packet_hash": "736397e669caee91c1d4c25edbc30b19cff62db3620dd0a3d933ff3cb084ff5e",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-003",
+  "featureComplete": false,
+  "mode": "inspect-and-write-owned-preflight-only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["CI-001", "CI-002"],
+  "evidenceStatus": {
+    "basis": "Actual working-tree source inspection and whole-file SHA-256, not a committed implementation receipt.",
+    "specManifestMatched": true,
+    "dependencyAcceptance": "NOT_OBSERVED; refs.ts and provider.ts exist in the working tree but do not establish accepted CI-001/CI-002 implementations.",
+    "revisionCaveat": "input_revision is dispatch lineage. Root-owned uncommitted wave0 work was not modified or audited through Git. Inspected hashes must be rechecked against the lead's committed handoff; changed hashes invalidate the affected evidence.",
+    "runtimeEvidence": "NONE. No builds, tests, rg probes, UI or network operations were performed.",
+    "inspectionFallback": "Codegraph reported no index. Scoped find failed with judge-provider 402; that result is not evidence of missing source. Inspection continued with exact specification paths and direct imports using read/grep/glob."
+  },
+  "ownedNewFiles": [
+    "packages/server-core/src/code-intelligence/local-search.ts",
+    "packages/server-core/src/code-intelligence/index-status.ts",
+    "packages/server-core/src/code-intelligence/__tests__/local-search.test.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/server-core/src/code-intelligence/local-search.ts",
+      "proposedSymbols": ["createLocalCodeSearchProvider", "buildRgSearchArgv", "parseRgSearchOutput"],
+      "change": "Implement the CI-001-approved CodeSearchProvider search/read/status/reindex contract. Obtain current CI-002 caller authorization and immutable snapshot before selecting a backend. Text mode calls source-index-facade.searchSourceIndex; literal/regex modes use a capability-pinned rg executable via spawn(executable, argv, { shell: false }) with bounded stdout/stderr and cancellation. Build spans from verified snapshot file bytes, never from normalized FTS snippets. Read resolves the same immutable span with current policy and reports freshness separately. Status and reindex delegate to index-status.ts and the existing facade; do not open another index or execute repository hooks.",
+      "interfacePrerequisite": "Exact request/result/error schemas and rg capability injection contract require accepted CI-001/CI-002 receipts. Proposed names here are contributions, not claims of existing symbols."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/index-status.ts",
+      "proposedSymbols": ["getLocalCodeIndexStatus", "reindexLocalCodeSnapshot"],
+      "change": "Project facade-owned index metadata into SearchIndex: binding/snapshot identity, policy fingerprint, actual backend/version, indexed/skipped counts, per-file and aggregate coverage, limits, build time, stale/unavailable reason and index revision. Reindex authorized immutable snapshot content through the facade under the existing workspace index writer; never clear unrelated source rows. Read durable coverage from the same facade-owned DB after restart. A missing metadata receipt is unknown coverage, not complete coverage."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/local-search.test.ts",
+      "change": "Use deterministic temporary corpora and the real provider path for positive/absent matches, injection-like and dash-prefixed literals, rg invalid regex, result/output/time limits, actual process cancellation, SQLite unavailable versus true zero matches, exact SHA-256 and 1-based spans including Unicode/CRLF, stale source and current-policy denial, shared-index preservation and coverage readback after reopen. Follow the existing bun:test and closeAllSourceIndexes cleanup pattern. Do not claim existing source tests cover new behavior."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0-LINEAGE",
+      "kind": "implementation-launch-gate-not-DAG-edge",
+      "source": "execution-packages.json:4296-4326 and dispatch instructions",
+      "gate": "Lead wave0 commit, accepted dependency artifact plus authoritative readback receipts, assigned implementation owner and exclusive leases for all shared paths. Resolve reference package revision/digest from delivery manifest; reconcile historical product_baseline_sha e953786ba7e30fb5da5dca7e88e20e324d5aebab with approved prerequisite commits rather than silently using dirty a21aeab input.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-IDENTITY-LIVE-AUTHORIZATION",
+      "kind": "published-external-foundation",
+      "source": "execution-packages.json:4336-4340; code-intelligence.json:146,152,2591-2597; refs.ts:570-596",
+      "gate": "EG-IDENTITY and CI scoped repository/egress policy need real actor/workspace readiness receipts. Existing immutable scope checks are not live actor lookup or offline lease enforcement. The accepted CI-002 shared resolver must authorize before rg/FTS and again on read; remote-private offline is denied by default, expiry/reconnect invalidate access, and any signed lease records the disconnected revocation exposure window.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-PROVIDER-CONTRACT",
+      "kind": "hidden-contract-gap-within-explicit-dependency",
+      "source": "code-intelligence.json:2582-2584; provider.ts:19-38,60-109; types.ts:38-42",
+      "gate": "The inspected CodeIntelligenceProvider describes operations and registry metadata but defines no search/read/status/reindex methods or search error schemas; CodeIntelAdapter is still synchronous symbols-only. Request precise canonical contract additions from CI-001 before implementation; do not establish a parallel provider interface in CI-003. indexVerifiedSnapshotFiles currently excludes dirty files without commitSha, so dirty search and symbol provenance must not silently disappear or cite a parent commit.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-RG-SNAPSHOT-RUNTIME",
+      "kind": "published-input-and-runtime-foundation",
+      "source": "code-intelligence.json:2540-2543,2564,2573; execution-packages.json:4339; refs.ts:72-107",
+      "gate": "Verify actual rg executable/version/license/readiness and a read-only exact-snapshot execution strategy. Running rg on a mutable canonicalRoot alone cannot search historical snapshot bytes. Use the accepted snapshot materialization mechanism if available; otherwise implement bounded request-local materialization of approved snapshot files under the existing temporary-artifact policy, removed on completion/cancel, not a persistent second store. Do not install/probe rg during preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-FTS-CANCELLATION-AND-NATIVE-PARITY",
+      "kind": "hidden-runtime-foundation",
+      "source": "source-index-facade.ts:72-83,114-143,184-208; source-index.ts:440-525; code-intelligence.json:2583",
+      "gate": "The facade has no AbortSignal/deadline option; TS SQLite queries are synchronous and a Promise wrapper is not preemptive cancellation. Native calls also lack cancellation parameters at this seam. Integration owner must supply a demonstrably bounded facade execution/cancellation path and preserve native-primary/TS-fallback/shadow behavior. SQL LIMIT alone is not a query-time bound. Do not fake cancelled after an uncontrolled scan or add a second SQLite owner.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-DURABLE-COVERAGE-AND-ONE-WRITER",
+      "kind": "hidden-persistence-foundation",
+      "source": "code-intelligence.json:2613-2617; source-index.ts:182-189,290-294,341-344,362-400; source-index-watch.ts:117-142",
+      "gate": "Existing DB stores slug-prefixed file rows without snapshot identity; hash is 32 hex characters over possibly clipped text, coverage is not durable, and workspace reindex clears every row. Snapshot-aware metadata, atomic scoped reindex and serialized watch/manual writers require integration-owner patches in the same DB and a native parity decision before index status can claim exact coverage or restart-safe freshness.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-RPC-EVENTS-AND-SURFACE",
+      "kind": "parallel-package-integration-foundation-not-added-dependency",
+      "source": "code-intelligence.json:2585-2597,2619-2624,2731-2783; 14-code-intelligence-ui.md:50-59,103,107",
+      "gate": "CI-004 owns typed RPC/events/jobs and explicitly depends on CI-001/CI-002, not CI-003. Coordinate canonical search/read/cancel payloads and repository.index.changed/search.completed/search.cancelled events without inventing a new DAG edge. Headless CI-003 work can begin after its explicit dependencies, but production RC-07/RC-09 and authoritative UI/runtime receipts need the shared RPC/surface integration. Screenshots/ARIA/font proof remain required if the actual surface changes; do not mark UI acceptance N/A solely because the owned files are headless. Native agent transport readiness is additionally required when agent tools are exercised.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/sources/source-index-facade.ts",
+      "symbol": "searchSourceIndex; reindexWorkspaceSources; SourceIndexStatus; statusWorkspaceSources",
+      "change": "Accept the canonical authorized snapshot scope and bounded query controls; carry backend/error/truncation/coverage/index-revision receipts across TS and native branches. Route snapshot search/reindex through this sole production seam. Return explicit unavailable/degraded outcomes for CI callers while updating existing consumers through the integration owner. Expose metadata readback and scoped atomic reindex rather than importing storage internals from local-search.ts. Add native parity/cancellation only with a verified transport contract; otherwise report unsupported/unavailable explicitly, not a success simulation.",
+      "reason": "Existing facade preserves primary/shadow/fallback semantics but accepts only workspaceRoot/query/limit, drops rich status, and cannot bind queries to a snapshot or cancellation budget."
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index.ts",
+      "symbol": "SourceIndexFileRow; SourceSearchHit; SourceSearchResult; hashText; walkSourceTree; indexSourceTree; reindexWorkspaceSources; searchSourceIndex; openDb",
+      "change": "Extend facade-owned persistence with snapshot/coverage/index revision metadata and exact full-file contentHash separately from the existing clipped index-body hash. Preserve readable current file rows and migrate deliberately. Index only CI-002-approved snapshot content; implement scoped transactional replacement rather than DELETE FROM files for a repository-specific reindex. Persist skipped counts and body clipping as partial coverage. Add SQL scope restrictions before ranking/count/snippet retrieval, query limit+1 for observable truncation, and structured missing-index/SQLite-unavailable/FTS-unavailable/SQL-error outcomes. Return verified offsets or file candidates sufficient for local-search to construct true spans from snapshot content. Keep literal/regex semantics on rg; FTS tokenization is not regex search.",
+      "reason": "Current search conflates unavailable/error/empty, total equals limited hit count, body clipping is silent, stored hashes cover clipped text and are shortened, hits omit hash/spans, and index rows are workspace-wide rather than snapshot-bound. Hidden-file branch at 253-255 has no continue, so existing traversal alone is not an exclusion guarantee."
+    },
+    {
+      "path": "packages/server-core/src/sources/source-index-watch.ts",
+      "symbol": "SourceIndexChangedPayload; SourceIndexWatchDeps; startSourceIndexWatch.flush; startSourceIndexWatch.schedule",
+      "change": "Reuse the existing live watcher registry and opt-in feature flag. Invalidate repository snapshot-derived index freshness on eligible change before the debounced rebuild; resolve current policy again before rebuilding. Serialize/coalesce rebuilds with manual reindex through the same facade writer, guard late completions after close/rebind, report failed/unwatchable/limited-root coverage, and publish the canonical monotonic revision/snapshot payload through the agreed event adapter. Watcher-off status must remain explicit and per-read hash/freshness checks mandatory.",
+      "reason": "Watcher defaults off, caps roots at 32, silently skips watch failures and can overlap async flushes; push currently includes only indexed/written/unchanged/truncated without snapshot or revision. A successful debounce cannot be the sole stale-hit detector."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/local-adapter.ts",
+      "symbol": "isSafeToIngest; indexSourceFiles; localFsSymbolsAdapter",
+      "change": "Retain localFsSymbolsAdapter id, synchronous index compatibility and alwaysOn:false. Expose approved capability/coverage metadata identifying named declaration regexes, file-to-symbol contains edges only and the 262144 UTF-16-code-unit ingestion guard; do not relabel that guard as bytes. Extend symbols/citations with the CI-001-approved sourceVersion/contentHash mechanism where exact snapshot files are supplied, without presenting dirty content as parent-commit code. CI-002 remains the authoritative secret/path policy; existing regex hints are only an additional ingestion heuristic.",
+      "reason": "DoD explicitly requires reuse and honest limitations. Adapter detects declarations even in comments/strings, lacks resolved call/import edges and trusts caller commit; implementing another parser or silently dropping dirty files would violate requested behavior."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/explainer.ts",
+      "symbol": "ExplainerNode; explainWithProvenance; materializeArchitectureNote; assertEveryNodeHasProvenance",
+      "change": "Use canonical verified snapshot/span refs and sourceVersion where provided, distinguish dirty working-copy receipts from exact Git citations, and propagate adapter limitations/coverage for consumers instead of implying compiler/callgraph completeness. Preserve existing helper and architecture-note entry points. Strengthen validation for the new canonical evidence while not confusing mere path/commit presence with semantic verification; coordinate output shape with CI-001 and the surface owner.",
+      "reason": "Current explanation emits path:line@callerCommit and validation checks only nonempty commit/path and citation membership. This cannot establish content hash, dirty-byte provenance or analysis completeness."
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/provider.ts",
+      "symbol": "CodeIntelligenceProvider; ProviderRequestContext; CodeIntelligenceProviderRegistry; indexVerifiedSnapshotFiles",
+      "change": "Dependency integration request to CI-001 owner, not a CI-003 leased write: publish canonical CodeSearchProvider search/read/status/reindex request/result/error and bounded cancellation schemas through the existing provider module; include snapshot spans, explicit backend coverage, current-authority resolver contract and dirty-source handling. Keep existing off-by-default registration and rejected-tool decisions. Agree provider ID/version and readiness policy rather than registering a guessed new id.",
+      "reason": "Published CI-003 apiChanges require this contract but inspected wave0 registry contains only metadata operations, and its symbol bridge filters out files without commitSha. This path is outside CI-003 normative sharedPatchPaths and requires an explicit dependency-owner handoff/ownership amendment, never unilateral edit."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "CI-003-AC-1: Use facade for FTS retrieval",
+      "currentEvidence": "source-index-facade.searchSourceIndex (114-143) selects native primary or TS and shadows appropriately; source-index.searchSourceIndex (440-525) supplies FTS/LIKE. No CI-003 local-search.ts exists in inspected directory listing. Existing source-index test (64-112) characterizes facade search but not authorized snapshot retrieval.",
+      "requiredChange": "Implement text mode in createLocalCodeSearchProvider through facade.searchSourceIndex with approved snapshot scope and explicit FTS/LIKE coverage. Never open another SQLite DB or call source-index.ts directly. Bind every returned candidate to an allowed snapshot file before producing a hit.",
+      "verification": ["Known-match corpus returns exact expected file/span; absent-match produces true successful zero matches, not unavailable", "Search corpus contains a foreign source and excluded sentinel; neither content nor metadata/count leaks", "Repeat under TS/native primary/fallback where those runtimes are affected; record backend and no fabricated FTS readiness"],
+      "missingPrerequisite": "Accepted CI-001 schemas, CI-002 authorization resolver and integration-owner scoped facade/native parity patch; runtime readiness not observed.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003-AC-2: rg argv avoids shell interpolation",
+      "currentEvidence": "No rg implementation in normative CI-003 new paths. localFsSymbolsAdapter is in-process declaration regex indexing, not literal/regex code search. Specification declares rg executable capability as an input (2540-2543).",
+      "requiredChange": "Use node:child_process spawn with shell:false, executable supplied by verified capability, argv including --json/--line-number, fixed-string mode only for literal queries, -e as a distinct pattern argument, and -- before authorized snapshot paths. Validate canonical filters and bound matches/output/time. Search exact snapshot files, not unverified mutable root contents.",
+      "verification": ["Literal corpus containing spaces, quotes, semicolons, command-substitution text and a dash-prefixed pattern returns the literal matches without executing a side effect", "Known/absent regex matches use rg's regex semantics; malformed regex becomes invalid-regex", "Observe real process cancel and timeout, bounded stderr/stdout, and no child or temporary snapshot artifact surviving termination"],
+      "missingPrerequisite": "Pinned rg capability/runtime receipt, CI-001 mode/error schema and exact snapshot execution mechanism approved by CI-002.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003-AC-3: limits/invalid regex/SQLite unavailable return explicit outcomes",
+      "currentEvidence": "source-index.ts 445 clamps limit to 1..100, 447-454 and 522-523 return the same empty result for unavailable/error cases, and 483/521 report total as limited hits.length. Body truncation at 290-291 is not marked in coverage. facade status reports constructor availability, not necessarily actual DB FTS5 availability (201-206).",
+      "requiredChange": "Expose canonical distinct success-empty, invalid-regex, unavailable/missing-index, degraded LIKE, truncated, timed-out, cancelled and failed outcomes with applied limits and known/unknown counts. Use limit+1 and bounded parsing rather than false total counts; record snapshot/index/body/skipped coverage and persist it in the facade-owned DB. Index-status must report actual selected backend capability and fallback cause.",
+      "verification": ["Boundary corpus returns more than requested limit and proves truncated=true and correct applied limit; exactly-at-limit corpus is not falsely truncated", "Oversized file and aggregate/file-count caps preserve partial-coverage reasons after close/reopen", "Real malformed regex, missing rg, unsupported SQLite runtime, unavailable FTS5 and missing DB are distinct from valid absent-match", "Long-running query cancel/timeout is observed, not merely an aborted flag checked after return"],
+      "missingPrerequisite": "Canonical error schemas, bounded facade/native execution, durable metadata migration and actual rg/SQLite runtime lanes.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003-AC-4: hits pin file contentHash and 1-based span",
+      "currentEvidence": "SourceSearchHit (96-104) has no hash or lines. hashText (155-157) shortens SHA-256 to 32 hex characters; indexSourceTree hashes potentially clipped body (290-294,341). Working-tree refs.ts SnapshotSourceFile/FileSpan (72-85,125-135) already carry full contentHash, snapshotId and sourceVersion; readFileSpan (504-518) validates 1-based bounded ranges.",
+      "requiredChange": "Map FTS/rg candidates to CI-001 snapshot files and derive FileSpan from exact verified bytes; rg line/byte offsets must be mapped without treating byte columns as UTF-16 columns. Keep contentHash separate from index-body hash, include snapshot/sourceVersion in hits, reauthorize read through CI-002 and assess freshness independently. Changed content marks old hits stale, never silently retargets their spans or links dirty bytes to parent commit.",
+      "verification": ["Known corpus verifies full SHA-256 against expected file bytes and exact 1-based line range/excerpt", "Unicode, CRLF, final-line/no-final-newline and boundary spans prove offsets/ranges against expected content", "Edit source after query, including same-length/same-mtime replacement: old hit is stale and read still identifies its exact snapshot or explicitly unavailable", "Current exclusion/access revocation after query denies read even if old snapshot was authorized"],
+      "missingPrerequisite": "Accepted immutable snapshot/span receipts, current read resolver, snapshot-aware FTS metadata and column convention from CI-001.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003-AC-5: Reuse existing localFsSymbolsAdapter; report declaration-regex limitations, contains-only graph and character-count guard without claiming compiler/callgraph completeness",
+      "currentEvidence": "local-adapter.ts 7-11 checks content.length against 256*1024, 14-16 regex-match named functions/classes/types, 62-64 emits only contains edges, and 80-84 exposes localFsSymbolsAdapter alwaysOn:false. explainer.ts 13-22 copies caller commit into citation; types.ts declares imports edges but adapter does not resolve them. Existing adapter test titled oversized files (50-57) has no oversized assertion.",
+      "requiredChange": "Reuse this exact adapter for permitted symbol analysis; expose declaration-regex/contains-only/UTF-16-character-guard limitations and skipped coverage in canonical result/explainer metadata. Do not call this a compiler or callgraph, conflate enum with implementation, or use the hint regex as scope authorization. Integrate verified dirty/clean provenance via the dependency's canonical contract and keep sync/off-by-default behavior.",
+      "verification": ["Corpus includes a named declaration, arrow function and declaration-looking comment/string; output and limitations accurately distinguish heuristic matches from compiler semantics", "Graph from this adapter has only contains edges and makes no resolved-call/import claim", "UTF-16-length boundary and multibyte corpus prove documented guard units and skipped status separately from CI-002 byte limits", "Dirty-source corpus is either supported with exact working-copy evidence or explicitly reported unsupported, never parent-commit asserted or silently dropped"],
+      "missingPrerequisite": "CI-001 metadata/provenance schema, integration-owner local-adapter/explainer patches and production consumer agreement for limitations.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003 contract: local search/read/status/reindex with bounded cancellation and coverage/truncation",
+      "currentEvidence": "code-intelligence.json 2545-2548,2582-2584 requires these outputs/methods; current provider.ts operations registry and CodeIntelAdapter have no executable code-search interface. Facade exposes workspace search/status/reindex but no query cancellation.",
+      "requiredChange": "Implement all four canonical methods in the owned new files after dependency contracts are accepted. Status exposes backend readiness and exact coverage; reindex is snapshot-scoped and single-writer; cancellation uses a real bounded execution mechanism for rg and facade FTS. A cancelled/failed operation cannot publish completed results.",
+      "verification": ["Run the actual provider search/read/status/reindex sequence on a fixture snapshot; known and absent matches, failure and cancellation are semantically asserted", "Cancel before/during/after process execution and repeat cancel; inspect child exit and final state", "Concurrent reindex/watch and unrelated source fixture prove coherent revision and preserved unrelated rows"],
+      "missingPrerequisite": "Canonical provider contract, shared writer/facade patches and executable runtime capability receipts.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003 permissions/offline: roots/exclusions before rg and FTS; hits rechecked on read",
+      "currentEvidence": "code-intelligence.json 2591-2597 and 146 require shared authority. refs.ts 575-596 rechecks separately supplied current binding but comments explicitly do not discover actors/renew leases. Existing source walker accepts root strings and hidden branch has no continue; local adapter is only heuristic filtering.",
+      "requiredChange": "Require CI-002 shared resolver at each search/read/status/reindex boundary. Reject unauthorized roots before process launch/SQL, constrain SQL and rg candidates before excerpts/counts, and recheck current authority on read. Keep owned-local policy separate from remote-private offline leases and report stale authorization/exposure windows explicitly.",
+      "verification": ["Foreign workspace/root, ../, symlink escape, secret and build/binary sentinels never return or log content", "Change current policy after query and verify read denial", "Owned-local offline permitted by policy; remote-private default denial, expired lease and reconnect revocation deny cached read/search"],
+      "missingPrerequisite": "EG-IDENTITY readiness and accepted CI-002 live policy/offline resolver; immutable snapshot helpers alone are insufficient.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003 persistence/events: reuse facade DB, snapshot/coverage metadata and repository index/search terminal events",
+      "currentEvidence": "code-intelligence.json 2585-2588,2613-2617 defines events and metadata reuse. Existing watcher push (63-68,117-125) has no snapshot/index revision and default watch is off. DB contains only file rows/FTS and full-workspace reindex deletion.",
+      "requiredChange": "Persist scoped index coverage/snapshot revision in existing DB with migration/readback; emit authorized monotonic canonical events via CI-004 integration. No separate watcher/store/event protocol. Watch/manual rebuild serialize and late completion cannot overwrite a newer revision or a closed/rebound source.",
+      "verification": ["Reopen authoritative DB/status after restart and compare snapshot/hash/coverage revision", "Change corpus while watch is on and off; observe invalidation and freshness without relying only on watcher", "Concurrent/delayed rebuild negative control prevents stale publish; event receiver sees no foreign IDs and cancelled query emits no completed success"],
+      "missingPrerequisite": "Integration-owner migration/native parity and CI-004 event/job seam agreement; lead authoritative restart readback.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "criterion": "CI-003 RC-07/RC-09 consumer proof and publication gates",
+      "currentEvidence": "code-intelligence.json 2593-2597,2619-2624 references RC-07/RC-09; UI design lines 50-59 specifies capped counts, budgets and rechecked reads. execution-packages.json 4319-4334 requires runtime/negative/schema/readback and actual UI evidence if surface changes. No UI was run or implementation claimed.",
+      "requiredChange": "Deliver headless adapter and shared patches to root integration; consume them through canonical RPC/search/source-viewer surfaces rather than a second surface. Coordinate snapshot-safe previews, denied/stale/unavailable/partial states, cancellation and limits. Preserve provider license/version/selection readiness, actor-redacted outputs and exact integrated revision receipts.",
+      "verification": ["Lead exercises actual project search known/absent/invalid/limited/cancelled states and opens same-snapshot source range; exclusion/revocation and stale-content negative controls", "If changed surface: visual screenshot plus keyboard/ARIA/computed font evidence on the actual RC-07/RC-09 host", "Integrated commit readback before/after restart records artifact SHA256 and exact corpus/seed; provider/agent/collaboration lanes when exercised"],
+      "missingPrerequisite": "CI-004 RPC/events and actual surface-owner integration, accepted runtime/external receipts and authoritative integrated commit. These are integration gates, not rewritten explicit dependencies.",
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "workPackages[2] / CI-003", "lineStart": 2530, "lineEnd": 2729, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "CI-003 normative ownership and cloudPacket", "lineStart": 4256, "lineEnd": 4342, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "packages/server-core/src/sources/source-index-facade.ts", "symbol": "searchSourceIndex; SourceIndexStatus; statusWorkspaceSources", "lineStart": 114, "lineEnd": 208, "sha256": "0eb4d8dea566a86c97f3a3ea2b610c4ac15b61803ee1a0b1de0ec5a3da37bbc2"},
+    {"path": "packages/server-core/src/sources/source-index.ts", "symbol": "searchSourceIndex", "lineStart": 440, "lineEnd": 525, "sha256": "abc66d7199da6f3e23566de07188dd8c0f99da438dda8c63d192e1cf55f0c288"},
+    {"path": "packages/server-core/src/sources/source-index.ts", "symbol": "walkSourceTree; indexSourceTree; reindexWorkspaceSources", "lineStart": 230, "lineEnd": 400, "sha256": "abc66d7199da6f3e23566de07188dd8c0f99da438dda8c63d192e1cf55f0c288"},
+    {"path": "packages/server-core/src/sources/source-index-watch.ts", "symbol": "SourceIndexChangedPayload; startSourceIndexWatch", "lineStart": 63, "lineEnd": 170, "sha256": "9aa0f2e0310618d0568e93899449472d1ac0fe3fbe2f694243196577dc9b886e"},
+    {"path": "packages/shared/src/code-intelligence/local-adapter.ts", "symbol": "isSafeToIngest; indexSourceFiles; localFsSymbolsAdapter", "lineStart": 3, "lineEnd": 84, "sha256": "9d805685a6fc19e2487ed57e28550d4211339326157ef871febe2d7dd1b2fb35"},
+    {"path": "packages/shared/src/code-intelligence/explainer.ts", "symbol": "explainWithProvenance; materializeArchitectureNote; assertEveryNodeHasProvenance", "lineStart": 13, "lineEnd": 49, "sha256": "d2d53f67c406be50c258396e392a77ef5a844ff98b744dd3c81aefa1a01eaeed"},
+    {"path": "packages/shared/src/code-intelligence/types.ts", "symbol": "CodeGraph; CodeIntelAdapter; CODE_INTEL_PACK", "lineStart": 25, "lineEnd": 58, "sha256": "48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "readFileSpan; assessSnapshotFreshness", "lineStart": 494, "lineEnd": 530, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "assertRepositoryCurrentReadPolicy; resolveRepositoryRefWithCurrentPolicy", "lineStart": 570, "lineEnd": 596, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/provider.ts", "symbol": "CodeIntelligenceProviderRegistry; indexVerifiedSnapshotFiles", "lineStart": 60, "lineEnd": 109, "sha256": "df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path": "packages/server-core/src/sources/__tests__/source-index.test.ts", "symbol": "source index FTS/LIKE characterization", "lineStart": 63, "lineEnd": 112, "sha256": "f167d7af611c3faa5b5cafe431cff7f31080c7e6bd0a300d20cfad3fc87912b6"},
+    {"path": "packages/shared/src/code-intelligence/__tests__/adapter.test.ts", "symbol": "local repository index characterization", "lineStart": 28, "lineEnd": 57, "sha256": "38d3c94c95a523cd6f9831306b5653038e368f471e8463609e81c41586365297"},
+    {"path": "docs/lark-suite-reference/14-code-intelligence-ui.md", "symbol": "RC-07; RC-09; offline access policy", "lineStart": 50, "lineEnd": 59, "sha256": "2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75"}
+  ],
+  "nextExecutableAction": "Lead first commits wave0 and accepts CI-001/CI-002 artifact plus readback receipts. Then rehash inspected source on the approved committed handoff, resolve manifest lineage and shared-file leases, obtain canonical CodeSearchProvider/scope/error/cancellation schemas, and agree facade snapshot/coverage/native-parity patches. Implement only the three normative CI-003 new files in dependency order; integration owner applies shared requests and performs the exact runtime, negative-control, restart and relevant surface proof. This preflight is not a prerequisite implementation receipt.",
+  "risks": [
+    "Root integration may change working-tree refs/provider/source seams; these hashes describe inspected bytes only and must be revalidated at implementation handoff.",
+    "Synchronous SQLite plus facade-native fallback means cancellation and actual backend errors cannot be solved by an AbortSignal check around a Promise alone.",
+    "Workspace-wide FTS rows, pre-ranking scope filtering and full-index deletion can leak metadata or erase unrelated sources unless the shared index integration is snapshot-aware and scoped.",
+    "Existing per-root file/byte limits, silent body clipping, shortened body hash and limited-hit totals can falsely imply complete repository coverage or exact source hashes.",
+    "Watcher-off, root-cap/watch failure and overlapping flushes leave stale/racing indexes; per-read current policy and exact content receipts remain mandatory.",
+    "rg JSON byte offsets, Unicode, CRLF and trailing newline require explicit span/column semantics; rg zero-match exit must not be confused with malformed regex/process failure.",
+    "Running rg against live mutable roots breaks immutable dirty/historical snapshot semantics; temporary materialization must contain only approved bytes and be cleaned on cancellation.",
+    "The inspected symbol bridge drops dirty files lacking commitSha; adapter/explainer changes need canonical working-copy provenance rather than invented commit aliases.",
+    "The requested CodeSearchProvider methods are not defined in the inspected provider module; unilateral interfaces or provider registration would create a second convention.",
+    "CI-003 full contract includes permissions, persistence, events and RC-07/RC-09 receipts beyond its five literal DoD strings. Headless implementation alone cannot close production integration acceptance.",
+    "Existing tests were inspected, not executed; test titles and source manifests are not runtime/provider readiness evidence."
+  ]
+}

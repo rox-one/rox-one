@@ -1,0 +1,1744 @@
+{
+  "schemaVersion": 1,
+  "architectureRevision": 2,
+  "baseline": {
+    "repository": "rox-one/rox-one",
+    "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+  },
+  "reviewMode": "READ_ONLY_PROPOSED_AMENDMENTS",
+  "scope": "WP-17..WP-35, WP-47",
+  "patchSemantics": {
+    "existingCodeTouchpoints": "merge into affectedFiles, preserving existing precise relevant paths",
+    "replaceGeneratedNewFiles": "replace title-slug placeholder list; paths are proposals, not existing files",
+    "typedApi": "merge concrete contracts into apiChanges; route through common authenticated command/query layer",
+    "dbConstraints": "merge with dbChanges; migration filenames proposals, sequence assigned by implementation",
+    "sourceSpecificFailureAcceptance": "add measurable negative/regression gates, replace conflicting broad acceptance",
+    "dependencyAmendments": "lead resolves graph and split prerequisites before editing dependencies",
+    "extendExistingTests": "merge exact regression test paths, preserve existing tests rather than replace with superficial new suite",
+    "addIntegrationTestFiles": "proposed named integration suites exercise sourceSpecificFailureAcceptance with real assertions and seeded failures"
+  },
+  "commonConstraints": [
+    "Do not copy AGPL Macro files into Apache ROX without separate exact-artifact licensing approval; behavior reimplementation default.",
+    "Domain modules share workspace authority and transactional outbox; jobs are independently scheduled workers, not per-surface authorities.",
+    "Actual runtime behavior was not exercised in this read-only review; evidence is source inspection at baseline commit.",
+    "Every provider write includes authenticated actor, workspace authorization, policy revision/baseRevision, idempotency key and durable receipt through common gateway."
+  ],
+  "workPackageAmendments": [
+    {
+      "id": "WP-17",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/main/mail/local-ipc.ts",
+          "symbol": "registerMailIpc",
+          "reason": "Добавить account/workspace context каждому IPC и фильтровать broadcast по получателю; сохранить existing MailLocalApi compatibility.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 91
+        },
+        {
+          "path": "apps/electron/src/main/mail/local-ipc.ts",
+          "symbol": "credentialManagerSecrets",
+          "reason": "Миграция global rox-mail.<address> secret lookup в scoped account token reference с совместимым чтением старого keychain.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 26
+        },
+        {
+          "path": "apps/electron/src/shared/mail-local.ts",
+          "symbol": "MailLocalApi / MailMessage / MailSummary / MailListQuery",
+          "reason": "Сейчас single-mailbox IPC; нейтральные идентификаторы и provider aliases должны попасть в contract.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 126
+        },
+        {
+          "path": "apps/electron/src/main/mail/mail-model.ts",
+          "symbol": "toSummary / toMessage / threadHeaders",
+          "reason": "Адаптация JMAP id, Message-ID, References; не приравнивать provider id и canonical id.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 25
+        },
+        {
+          "path": "apps/electron/src/preload/bootstrap.ts",
+          "symbol": "mailLocal",
+          "reason": "Обновить IPC arguments и expose bindings вместе с shared MailLocalApi.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 582
+        },
+        {
+          "path": "packages/shared/src/mail/provisioning.ts",
+          "symbol": "provisionMailbox / MailboxSecretStore",
+          "reason": "Сохранить Stalwart/JMAP provisioning и ранее выданные credentials.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 75
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "packages/shared/src/workspace-domain/mail/types.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/mail/provider-contract.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/mail/commands.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/service.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/repository.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/adapters/jmap-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/017_mail_accounts_entities_aliases.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "GetMailThread",
+          "input": "{accountRef:EntityRef,threadRef:EntityRef,cursor?:string}",
+          "output": "{thread:MailThread,messages:MailMessage[],nextCursor?:string}",
+          "errors": "not_found|denied|account_disconnected"
+        },
+        {
+          "name": "QueryInbox",
+          "input": "{accountRef:EntityRef,labelRef?:EntityRef,cursor?:string,limit:number}",
+          "output": "{items:MailThreadSummary[],nextCursor?:string}",
+          "errors": "denied|unsupported_capability"
+        }
+      ],
+      "dbConstraints": [
+        "UNIQUE(workspace_id,provider,provider_account_id); account owner/connection grants separate from entity sharing.",
+        "UNIQUE(account_id,remote_entity_type,remote_id) aliases; Message-ID nonunique across mailbox copies.",
+        "Body blobs and attachments inherit source-mail read policy; token reference only, no OAuth secret in entity/event/search document."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Existing JMAP mailbox provisioning, push, inbox, draft, move/flag/send pass without connecting Gmail.",
+        "Two workspaces with same email address cannot see each other’s metadata via IPC broadcast or attachment retrieval.",
+        "Remote submission rejected in loopback environment remains explicit unsupported path; do not turn fixture success into production receipt."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [
+        "MailLocalApi is real local capability; server meetings conation/mail-channels.liveMailEnabled=false is a separate blocked adapter, not proof mail absent."
+      ],
+      "extendExistingTests": [
+        "packages/shared/src/mail/__tests__/mail.test.ts",
+        "apps/electron/src/main/mail/__tests__/mail-model.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/mail-domain-jmap-regression.test.ts"
+      ]
+    },
+    {
+      "id": "WP-18",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/main/mail/mail-service.ts",
+          "symbol": "startPush / list",
+          "reason": "Push EventSource triggers ingestion through account-scoped sync, reconnect/full refresh receipt.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 298
+        },
+        {
+          "path": "packages/shared/src/mail/jmap-client.ts",
+          "symbol": "JmapClient",
+          "reason": "Use provider state tokens; retain same-origin protection and query/change semantics.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 140
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/mail/sync.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/webhooks.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/mail-sync.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/018_mail_cursors_ingestion_tombstones.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "IngestProviderChange",
+          "input": "{connectionId:string,deliveryId:string,cursorHint?:string}",
+          "output": "{accepted:boolean,jobId:string}",
+          "errors": "invalid_signature|disconnected|stale_binding"
+        },
+        {
+          "name": "SyncMail",
+          "input": "{accountRef:EntityRef,expectedCursor?:string,mode:\"delta\"|\"rebuild\"}",
+          "output": "{cursor:string,applied:number,deleted:number,receiptId:string}",
+          "errors": "cursor_expired|rate_limited|provider_unavailable"
+        }
+      ],
+      "dbConstraints": [
+        "UNIQUE(connection_id,delivery_id) inbound receipts; lease generation fences competing workers.",
+        "Cursor advances only in same transaction as normalized mutation + tombstones + outbox.",
+        "Backfill generation with provider checkpoint; do not delete rows from incomplete snapshot."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Replay same webhook 10 times and in inverse order yields one normalized message and monotonic latest state.",
+        "Provider cursor expired/invalid -> bounded rebuild; crash after rows but before cursor does not lose message.",
+        "Delete then replay older create keeps tombstone; reconnect does not resurrect revoked account.",
+        "Authenticate webhooks always in target; Macro gmail_webhook_auth compile feature is not acceptable default."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/mail-cursor-tombstone-recovery.test.ts"
+      ]
+    },
+    {
+      "id": "WP-19",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/main/mail/mail-service.ts",
+          "symbol": "prepare / send / saveDraft / download",
+          "reason": "Preserve 25MB attachment boundary and safe file loading; send results must distinguish provider acceptance and transport ambiguity.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 399
+        },
+        {
+          "path": "apps/electron/src/main/mail/local-ipc.ts",
+          "symbol": "registerMailIpc: SAVE_ATTACHMENT",
+          "reason": "Currently handler ignores supplied emailId; validate account/message/blob relation before downloading.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 91
+        },
+        {
+          "path": "apps/electron/src/shared/mail-local.ts",
+          "symbol": "MailComposeInput / MailAttachment",
+          "reason": "Add accountRef/draftRef/baseRevision and attachment object refs, preserving reply threading.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 107
+        },
+        {
+          "path": "packages/shared/src/mail/jmap-client.ts",
+          "symbol": "compose / resolveSameOrigin",
+          "reason": "JMAP create draft and submission share method call; submission may fail after draft exists.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 318
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/inbox/mail/mail-view.ts",
+          "symbol": "draftFromMessage / buildDraft",
+          "reason": "Preserve reply/forward recipient and thread-header semantics.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 101
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+          "symbol": "MailCompose / MailReader / MailStatusBlock",
+          "reason": "Render ambiguous send, validation and recoverable retained draft states.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 420
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/mail/drafts.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/send.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/attachments.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/mail/send-receipt.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/019_mail_draft_revisions_submissions.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "SendDraft",
+          "input": "{draftRef:EntityRef,baseRevision:number,idempotencyKey:string}",
+          "output": "{status:\"accepted\"|\"pending\"|\"ambiguous\",submissionRef:EntityRef,providerMessageId?:string}",
+          "errors": "conflict|invalid_recipient|attachment_unavailable|denied"
+        },
+        {
+          "name": "SaveDraft",
+          "input": "{draftRef?:EntityRef,accountRef:EntityRef,baseRevision?:number,body:DraftBody,attachments:EntityRef[]}",
+          "output": "{draftRef:EntityRef,revision:number}",
+          "errors": "conflict|oversize|unsafe_attachment"
+        }
+      ],
+      "dbConstraints": [
+        "Draft CAS revision; one submission per (account_id,idempotency_key); provider acceptance is separate status from command queued.",
+        "Attachment FK to same account/workspace and finalized immutable object; enforce total upload limits and MIME boundary.",
+        "Persist payload fingerprint and stable Message-ID before send, retaining encrypted retry payload until terminal receipt."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Inject provider success then lost response: submission is ambiguous and reconciles by provider evidence; never blind automatic resend promising exactly-once remote delivery.",
+        "Inject JMAP submission rejection after draft creation: preserve/edit draft and show error; no false sent badge.",
+        "Pass attachment from other message/account: denied; attacker URL cannot bypass JmapClient.resolveSameOrigin.",
+        "Reply/forward retains original Message-ID/References and correct external recipients; sanitized incoming HTML cannot execute."
+      ],
+      "dependencyAmendments": [
+        "Add WP-39 dependency for finalized object attachment contract; if cyclic, WP-39 base object slice precedes WP-19 advanced preview."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "apps/electron/src/renderer/pages/inbox/mail/__tests__/mail-view.test.ts",
+        "packages/shared/src/mail/__tests__/mail.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/mail-submission-ambiguity.test.ts"
+      ]
+    },
+    {
+      "id": "WP-20",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/shared/src/mail/provisioning.ts",
+          "symbol": "MailboxSecretStore",
+          "reason": "Add provider credential adapter without replacing selfhost JMAP flow.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 40
+        },
+        {
+          "path": "apps/electron/src/main/mail/local-ipc.ts",
+          "symbol": "credentialManagerSecrets",
+          "reason": "Account-scoped credential references and reconnect credential migration.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 26
+        },
+        {
+          "path": "apps/electron/src/shared/mail-local.ts",
+          "symbol": "MailStatus",
+          "reason": "Connected/scopes/capability status per account, not global success.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 32
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/mail/adapters/gmail-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/adapters/microsoft-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/connections/oauth-callback.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/mail/provider-capabilities.ts",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "ConnectMailProvider",
+          "input": "{provider:\"gmail\"|\"microsoft\",workspaceId:string,returnUri:string,requestedCapabilities:MailCapability[]}",
+          "output": "{authorizationUrl:string,stateId:string}",
+          "errors": "denied|unsupported_scope"
+        },
+        {
+          "name": "CompleteMailOAuth",
+          "input": "{stateId:string,code:string}",
+          "output": "{accountRef:EntityRef,grantedCapabilities:MailCapability[]}",
+          "errors": "invalid_state|tenant_mismatch|missing_scope"
+        }
+      ],
+      "dbConstraints": [
+        "Single-use hashed OAuth state bound actor/workspace/provider with expiry and PKCE; encrypted secret reference external to domain DB.",
+        "Provider account immutable subject/tenant binding; refreshing token uses per-account lock and preserves newer token generation."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Tampered state, wrong tenant, reused callback and revoked refresh token produce typed errors without token logs.",
+        "Gmail watch expiration renewed; Microsoft subscription validation/lifecycle renewed; rate-limit backoff bounded.",
+        "Least-scope account can read but cannot send; UI/tool contract capability mismatch is rejected server-side."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [
+        "Macro runtime UserProvider only Gmail; Microsoft adapter is ROX new implementation, never claim sourced tested Microsoft support."
+      ],
+      "extendExistingTests": [],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/oauth-provider-bindings.test.ts"
+      ]
+    },
+    {
+      "id": "WP-21",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/shared/src/mail/jmap-client.ts",
+          "symbol": "JmapClient",
+          "reason": "JMAP remains first adapter; IMAP and SMTP are additional providers, not replacement protocol.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 140
+        },
+        {
+          "path": "apps/electron/src/shared/mail-local.ts",
+          "symbol": "MailComposeInput",
+          "reason": "Scheduled time and sender account become command metadata, not embedded UI timer.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 107
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/mail/adapters/imap-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/adapters/smtp-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/mail/schedules.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/mail-scheduled-send.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/021_mail_imap_identity_schedules.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "ScheduleSend",
+          "input": "{draftRef:EntityRef,baseRevision:number,sendAt:string,idempotencyKey:string}",
+          "output": "{scheduleId:string,state:\"scheduled\",revision:number}",
+          "errors": "past_time|denied|unsupported"
+        },
+        {
+          "name": "CancelScheduledSend",
+          "input": "{scheduleId:string,baseRevision:number}",
+          "output": "{state:\"cancelled\"|\"already_claimed\"|\"sent\"|\"ambiguous\"}",
+          "errors": "conflict|denied"
+        }
+      ],
+      "dbConstraints": [
+        "IMAP unique account+mailbox+UIDVALIDITY+UID; Message-ID auxiliary correlation only.",
+        "Schedule lease fencing/generation, draft revision and state CAS; cancel cannot falsely override in-flight SMTP acceptance.",
+        "SMTP payload stable Message-ID, ambiguity receipt, retention; JMAP labels vs IMAP folders capability distinction."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "UIDVALIDITY reset rebuilds mapping and preserves canonical references without linking old UID to new message.",
+        "Schedule worker killed after SMTP DATA accepted but before ACK persists ambiguous outcome; do not blindly duplicate send.",
+        "Cancel vs claim race deterministically returns already_claimed or cancelled with one terminal receipt; timezone scheduling uses persisted UTC instant."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/scheduled-send-uidvalidity.test.ts"
+      ]
+    },
+    {
+      "id": "WP-22",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+          "symbol": "DossierEntity / buildDossierSummary",
+          "reason": "Current string matching is presentation hint, not authoritative Company/Contact/email identity.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 19
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+          "symbol": "DossierPage",
+          "reason": "Replace heuristic read-side joins with canonical CRM query while preserving cards.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 94
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/crm/ingestion.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/crm/domain-policy.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/crm/repository.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/crm-enrichment.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/crm/types.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/022_crm_contacts_companies_provenance.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "IngestExternalParticipant",
+          "input": "{mailMessageRef:EntityRef,participant:{email:string,name?:string,role:\"from\"|\"to\"|\"cc\"},sourceRevision:string}",
+          "output": "{contactRef?:EntityRef,companyRef?:EntityRef,decision:\"created\"|\"updated\"|\"suppressed\",reason?:string}",
+          "errors": "source_denied|invalid_address|source_revoked"
+        }
+      ],
+      "dbConstraints": [
+        "Normalize email with explicit case policy; unique workspace/visibility_scope+normalized_email; domain UNIQUE(workspace_id,visibility_scope,ascii_domain).",
+        "ContactSource unique(contact_id,mail_message_id,participant_role); interaction unique(source_entity_id,source_revision,event_kind); first LEAST and last GREATEST.",
+        "Group/company resolution lock by normalized domain; provenance holds source ACL, not automatic team-public mail access."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Receive first external inbound email unknown to DB -> contact/company created in ROX; this explicitly exceeds Macro sent-only creation behavior.",
+        "gmail.com/disposable/alias/local/internal domain creates permitted contact but no inferred company; policy is versioned.",
+        "Concurrent 2 messages from same domain create one company; deletion/source revocation updates authorized context and search.",
+        "Apollo unavailable yields unknown metadata, never blocks mail receipt or fabricates revenue; enrichment retried bounded."
+      ],
+      "dependencyAmendments": [
+        "Add WP-18 for durable normalized source event and WP-03 for independent mail source ACL."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/crm-inbound-provenance.test.ts"
+      ]
+    },
+    {
+      "id": "WP-23",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+          "symbol": "normalizeDossierData / DossierPromise / DossierEntity",
+          "reason": "Preserve notes/promises/aliases/briefSessionId/createdAt; org free text is not verified company link.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 118
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+          "symbol": "NS=\"dossier\" / loadWorkspaceJson / saveWorkspaceJson",
+          "reason": "Versioned import from actual per-workspace persisted namespace.",
+          "classification": "EXISTING_VERIFIED"
+        },
+        {
+          "path": "apps/electron/src/renderer/lib/extra-screens/storage.ts",
+          "symbol": "loadWorkspaceJson / saveWorkspaceJson / subscribeWorkspaceJson",
+          "reason": "Snapshot source and import receipt, continue reversible source read during migration.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 20
+        },
+        {
+          "path": "packages/server-core/src/meetings/conation/crm.ts",
+          "symbol": "resolveCrmTarget",
+          "reason": "Use accountId+remoteType+remoteId identity, not displayName; adapter mutations currently blocked.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 17
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "packages/shared/src/workspace-domain/crm/dossier-import.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/crm/merge.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/crm/aliases.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/023_crm_dossier_alias_merge_journal.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "ImportDossier",
+          "input": "{workspaceId:string,snapshotHash:string,schemaVersion:number,records:unknown}",
+          "output": "{receiptId:string,imported:number,quarantined:number,aliasMap:Record<string,EntityRef>}",
+          "errors": "invalid_snapshot|denied"
+        },
+        {
+          "name": "MergeCrmEntities",
+          "input": "{winner:EntityRef,loser:EntityRef,baseRevisions:[number,number],idempotencyKey:string}",
+          "output": "{mergeId:string,revision:number}",
+          "errors": "conflict|cross_scope|incompatible_kind"
+        }
+      ],
+      "dbConstraints": [
+        "Alias unique(workspace_id,source_namespace,legacy_id), collision quarantined; import snapshot hash unique.",
+        "Merge journal immutable predecessor state+edge rewrites+source receipts; cannot widen source permissions; redirects versioned.",
+        "Undo inverse applies only if downstream dependent changes reconcile; otherwise typed conflict with compensating proposal."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Two people same display name never auto merge; org text alone never grants company membership.",
+        "Import twice produces same alias cardinality; rollback restores source snapshot and notes/promises.",
+        "Merge across private/public contexts does not leak private email; undo after later task link returns conflict or preserves link explicitly."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "apps/electron/src/renderer/pages/extra-screens/__tests__/dossier-model.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/dossier-identity-merge-rollback.test.ts"
+      ]
+    },
+    {
+      "id": "WP-24",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+          "symbol": "DossierPage",
+          "reason": "Reuse Dossier native destination; add board/list and property queries rather than Macro CRM app.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 94
+        },
+        {
+          "path": "packages/server-core/src/meetings/conation/crm.ts",
+          "symbol": "proposeCrmEdit / sendCrm",
+          "reason": "Existing blocked live adapter must remain blocked until actual authorized command integration verified.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 29
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/crm/pipeline.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/crm/queries.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/crm/property-schema.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/CrmBoard.tsx",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/CrmFilters.tsx",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/024_crm_stages_properties.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "UpdateCompanyPipeline",
+          "input": "{companyRef:EntityRef,baseRevision:number,stageId:string,ownerRef?:EntityRef,revenue?:{amountMinor:string,currency:string}}",
+          "output": "{revision:number,receiptId:string}",
+          "errors": "unknown_stage|invalid_currency|denied|conflict"
+        },
+        {
+          "name": "QueryCrm",
+          "input": "{workspaceId:string,kind:\"company\"|\"contact\",filters:CrmFilter[],groupBy?:\"stage\"|\"owner\",cursor?:string}",
+          "output": "{items:CrmCard[],nextCursor?:string}",
+          "errors": "invalid_filter|denied"
+        }
+      ],
+      "dbConstraints": [
+        "Stage stable ID scoped pipeline/workspace, FK stage properties; order rank and stage revision.",
+        "Revenue integer minor units/numeric finite exact amount + ISO currency; no float aggregate across currencies.",
+        "Business owner principal membership validated but does not become ACL owner; admin stage change audit through common grants."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Concurrent drag/drop against same base revision returns conflict and refetch; no duplicate board state.",
+        "Deleted stage cannot orphan records; replacement stage migration explicit.",
+        "Non-admin cannot change team pipeline catalog; owner reassignment does not expose private source email."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/crm-stage-revision-money.test.ts"
+      ]
+    },
+    {
+      "id": "WP-25",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+          "symbol": "DossierPage",
+          "reason": "Company/contact context opens common discussion UI.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 94
+        },
+        {
+          "path": "packages/server-core/src/meetings/conation/crm.ts",
+          "symbol": "resolveCrmTarget",
+          "reason": "Resolve external aliases to canonical parent before context query.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 17
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/crm/discussion-context.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/CrmDiscussion.tsx",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/crm/context-query.ts",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "PostEntityDiscussion",
+          "input": "{parent:EntityRef,body:RichText,attachmentRefs:EntityRef[],idempotencyKey:string}",
+          "output": "{messageRef:EntityRef,revision:number}",
+          "errors": "parent_denied|unsafe_mention|attachment_denied"
+        }
+      ],
+      "dbConstraints": [
+        "Use WP-08 message/discussion tables; NO crm_comments or independent CRM notification table.",
+        "Parent EntityRef FK registry; message visibility intersection discussion and source policies; mentions do not silently grant CRM/mail read."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Company discussion teammate mention yields one durable notification after outbox replay; unauthorized target no leaked title/snippet.",
+        "Search/agent context includes permitted CRM message; private source thread absent from shared company discussion.",
+        "Edit/delete updates search and mention recipient deltas without repeat notification explosion."
+      ],
+      "dependencyAmendments": [
+        "Add WP-08, WP-09 and WP-07; no new CRM message storage migration."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/crm-discussion-mention-acl.test.ts"
+      ]
+    },
+    {
+      "id": "WP-26",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+          "symbol": "DossierPage",
+          "reason": "Hidden and source email visibility explicit filters with empty/unavailable states.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 94
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+          "symbol": "DossierSources / buildDossierSummary",
+          "reason": "Do not treat unavailable feed/source as empty authorization granted context.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 71
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/crm/visibility.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/crm/context-policy.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/026_crm_visibility_preferences.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "SetCrmVisibility",
+          "input": "{entityRef:EntityRef,scope:\"personal\"|\"team\",hidden:boolean,emailContextEnabled?:boolean,baseRevision:number}",
+          "output": "{revision:number}",
+          "errors": "denied|conflict"
+        },
+        {
+          "name": "GetCompanyContext",
+          "input": "{companyRef:EntityRef,kinds:EntityType[],cursor?:string}",
+          "output": "{authorizedLinks:ContextLink[],unavailableKinds:EntityType[]}",
+          "errors": "denied|not_found"
+        }
+      ],
+      "dbConstraints": [
+        "Separate hidden UI preferences, email-context visibility policy, connection ingest switch and source grants.",
+        "Hidden company cascade/contact policy explicit; unhide never automatically re-enables previously disabled email visibility.",
+        "Revocation recomputes authorized interaction projection/search without deleting shared unrelated CRM identity."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Toggle email-context off while sync receives message: ingestion/provenance continues as authorized but visible context excluded.",
+        "Unhide company does not restore disabled email-context or revoked OAuth grant.",
+        "Actor filtering cannot be bypassed by agent aggregated query or search index cached snippets."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/crm-context-visibility.test.ts"
+      ]
+    },
+    {
+      "id": "WP-27",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/core/src/calendar/adapters.ts",
+          "symbol": "createProductionAdapter / UnavailableCalendarAdapter",
+          "reason": "Replace unavailable production Google adapter; fixture never substitutes connectivity receipt.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 112
+        },
+        {
+          "path": "packages/core/src/calendar/store.ts",
+          "symbol": "CalendarStore",
+          "reason": "Preserve cursor/etag/localDirty conflict semantics and local projection.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 31
+        },
+        {
+          "path": "packages/core/src/calendar/types.ts",
+          "symbol": "CalendarEvent / calendarEventIdentity",
+          "reason": "Provider IDs and canonical occurrence identity mapped explicitly.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 22
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/calendar/adapters/google-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calendar/sync.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calendar/webhooks.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/calendar-sync.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/calendar/provider-contract.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/027_calendar_accounts_sources_occurrences.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "SyncCalendar",
+          "input": "{connectionId:string,calendarId:string,cursor?:string}",
+          "output": "{cursor:string,changed:number,receiptId:string}",
+          "errors": "cursor_expired|scope_missing|provider_unavailable"
+        },
+        {
+          "name": "ConnectCalendar",
+          "input": "{workspaceId:string,provider:\"google\",calendarIds:string[]}",
+          "output": "{connectionRef:EntityRef,capabilities:CalendarCapability[]}",
+          "errors": "denied|invalid_binding"
+        }
+      ],
+      "dbConstraints": [
+        "UNIQUE(connection_id,provider_calendar_id,provider_event_id); canonical source identity retains provider/iCal UID and recurrence occurrence.",
+        "Cursor/watch channel/resource IDs+expiry, per-calendar sync generation; tombstones durable.",
+        "Avoid Macro cross-inbox search dedup becoming identity merge; same iCalUID alone does not erase provider/calendar ownership."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Real Google fixture-free readback establishes live capability; OAuth revoked makes adapter unavailable not connected green.",
+        "syncToken410 requires complete rebuild with no resurrection; watch forged delivery rejected; renewal crash retried.",
+        "Mailbox ICS not mistaken for authoritative Google event or new auto-calendar ingestion (Macro email ICS tables removed)."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/core/src/calendar/calendar.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/google-calendar-sync-recovery.test.ts"
+      ]
+    },
+    {
+      "id": "WP-28",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/core/src/calendar/store.ts",
+          "symbol": "CalendarStore.markLocalDirty / CalendarStore.sync",
+          "reason": "Route writes through command receipt, provider normalized read-back then local projection.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 31
+        },
+        {
+          "path": "packages/core/src/calendar/merge.ts",
+          "symbol": "mergeTodayUpcoming / timezoneWarnings",
+          "reason": "Сохранить объединение temporal view и предупреждения timezone; dirty/etag conflicts находятся в CalendarStore.sync, не в merge.ts.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 22
+        },
+        {
+          "path": "packages/core/src/calendar/types.ts",
+          "symbol": "CalendarEvent",
+          "reason": "Time zone and all-day civil dates distinguished.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 22
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/calendar/commands.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calendar/write-reconciliation.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/calendar/CalendarWorkspace.tsx",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/calendar/EventEditor.tsx",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/028_calendar_write_receipts.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "UpdateCalendarEvent",
+          "input": "{eventRef:EntityRef,baseRevision:number,providerEtag:string,patch:CalendarPatch,idempotencyKey:string}",
+          "output": "{state:\"committed\"|\"reconciling\",revision?:number,receiptId:string}",
+          "errors": "provider_conflict|invalid_interval|denied"
+        },
+        {
+          "name": "RsvpCalendarEvent",
+          "input": "{eventRef:EntityRef,response:\"accepted\"|\"tentative\"|\"declined\",baseRevision:number}",
+          "output": "{receiptId:string}",
+          "errors": "attendee_mismatch|denied"
+        }
+      ],
+      "dbConstraints": [
+        "end > start timed event; all-day uses local date and exclusive end date; valid IANA zone.",
+        "Provider ETag conditional write; receipt stores provider object ID, normalized echo and local apply state.",
+        "Provider success/local persistence failure yields reconciling receipt; never unconditional second remote creation."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Inject Google success followed DB outage: readback reconciles one event; UI shows pending/reconciling, retry does not duplicate invitation.",
+        "Drag across DST keeps intended wall-time semantics; resize min interval validated; cancel optimistic edit on ETag412.",
+        "Organizer vs attendee RSVP permissions enforced; attendee list privacy and send-update provider options explicit."
+      ],
+      "dependencyAmendments": [
+        "Requires WP-27 live provider; calendar UI route registration existing destination decision in parent."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/core/src/calendar/calendar.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/calendar-provider-write-reconcile.test.ts"
+      ]
+    },
+    {
+      "id": "WP-29",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/core/src/calendar/occurrences.ts",
+          "symbol": "TemporalOccurrence / occurrenceKey / occurrenceFromCalendarEvent / dedupeOccurrences",
+          "reason": "Recurrence projection and editability derived from actual provider/grant, not fixed permission write.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 2
+        },
+        {
+          "path": "packages/core/src/calendar/types.ts",
+          "symbol": "CalendarEvent",
+          "reason": "Add explicit master/instance/originalStart identity; recurrence string alone insufficient.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 22
+        },
+        {
+          "path": "packages/core/src/calendar/store.ts",
+          "symbol": "CalendarStore",
+          "reason": "Per-calendar queries and exception tombstones.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 31
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "packages/shared/src/workspace-domain/calendar/recurrence.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calendar/recurrence-commands.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calendar/availability.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/calendar/CalendarPreferences.tsx",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/029_calendar_recurrence_working_hours.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "ChangeCalendarOccurrence",
+          "input": "{eventRef:EntityRef,scope:\"instance\"|\"following\"|\"series\",originalStart?:string,patch:CalendarPatch,baseRevision:number}",
+          "output": "{receiptId:string,affectedRefs:EntityRef[]}",
+          "errors": "unsupported_scope|conflict|denied"
+        },
+        {
+          "name": "GetAvailability",
+          "input": "{calendarRefs:EntityRef[],range:{start:string,end:string},timeZone:string,workingHours:WorkingHours}",
+          "output": "{busy:TimeInterval[],free:TimeInterval[],unavailableSources:EntityRef[]}",
+          "errors": "range_too_large|denied"
+        }
+      ],
+      "dbConstraints": [
+        "Occurrence identity master+originalStart with timezone; exceptions retain cancelled occurrences and provider ID.",
+        "Bounded RRULE expansion; workingHours version per user zone; freebusy result source revision/expiry.",
+        "Privacy: provider busy intervals need not expose private titles; all-day/canceled/declined/transparent policy explicit."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Instance cancel survives sync; following edit either provider-supported split or typed unsupported, never silently changes entire series.",
+        "DST gap/overlap, overnight working hours, all-day events and two calendars union tested.",
+        "Unavailable calendar makes availability partial/unavailable, not false fully-free; read-only occurrence rejects drag."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/core/src/calendar/__tests__/occurrences.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/calendar-recurrence-dst-availability.test.ts"
+      ]
+    },
+    {
+      "id": "WP-30",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/server-core/src/meetings/conation/calendar-calls.ts",
+          "symbol": "occurrenceKey / applyCalendarWrite / bindCall",
+          "reason": "Replace blocked conation path with actual canonical binding and provider receipts; remote call ID separate alias.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 20
+        },
+        {
+          "path": "packages/core/src/meetings/model.ts",
+          "symbol": "Meeting / EvidenceSpan",
+          "reason": "Meeting specialization/context links; no independent calendar-meeting copy.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 2
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-model.ts",
+          "symbol": "normalizeMeeting",
+          "reason": "Local UUID mapped through alias, not regenerated for planned event.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 64
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/meetings/MeetingsPage.tsx",
+          "symbol": "MeetingsPage",
+          "reason": "Existing native surface reads projected planned/local call context.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 11
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/meetings/context.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/meetings/calendar-binding.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/meetings/context-types.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/030_meeting_calendar_context_links.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "LinkCalendarMeeting",
+          "input": "{eventRef:EntityRef,occurrenceKey:string,meetingRef?:EntityRef,linkedRefs:EntityRef[],baseRevision:number}",
+          "output": "{meetingRef:EntityRef,receiptId:string}",
+          "errors": "source_denied|occurrence_conflict|incompatible_kind"
+        }
+      ],
+      "dbConstraints": [
+        "UNIQUE(workspace_id,event_id,occurrence_key,meeting_binding_kind); recurrence instance ≠ master meeting.",
+        "Context edges retain individual source authorization; attendee email to Contact resolution provenance cannot silently add user account.",
+        "One canonical call/meeting ID; local UUID and provider room/event remote IDs aliases."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Move event updates planned meeting time; completed call actual timestamps remain immutable.",
+        "Attendee email maps contact without creating alternate identity; repeated event sync keeps one meeting.",
+        "Deleting calendar event leaves completed recording/transcript under independent retention permissions."
+      ],
+      "dependencyAmendments": [
+        "WP-35 local identity adapter can be developed independently; avoid forcing local recording migration to wait on live Google."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/server-core/src/meetings/conation/__tests__/calendar-calls.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/calendar-meeting-identity.test.ts"
+      ]
+    },
+    {
+      "id": "WP-31",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/server-core/src/meetings/rooms.ts",
+          "symbol": "ROOM_PROVIDER_DECISION / joinRoom / roomCapabilityEnabled",
+          "reason": "Currently null provider and capability false; enable only after real LiveKit provisioning/token integration.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 12
+        },
+        {
+          "path": "packages/server-core/src/meetings/repository.ts",
+          "symbol": "MeetingRepository",
+          "reason": "Existing journal model adapter must share canonical authority/aliases.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 4
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/meetings.ts",
+          "symbol": "meeting RPC handler registrations",
+          "reason": "Authenticate caller and gate join/end against same ACL, not caller body actor.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 20
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/calls/service.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calls/livekit-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calls/room-tokens.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/calls/types.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/031_call_rooms_participation.sql",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/meetings/LiveCallPanel.tsx",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "StartCall",
+          "input": "{channelRef:EntityRef,idempotencyKey:string}",
+          "output": "{callRef:EntityRef,roomName:string,receiptId:string}",
+          "errors": "channel_denied|already_active|media_unavailable"
+        },
+        {
+          "name": "JoinCall",
+          "input": "{callRef:EntityRef,deviceId:string}",
+          "output": "{endpoint:string,token:string,expiresAt:string,participantRef:EntityRef}",
+          "errors": "denied|ended|revoked"
+        }
+      ],
+      "dbConstraints": [
+        "Unique room mapping per canonical call; partial unique active call participation per principal if adopting Macro one-call rule (decision explicit).",
+        "Room token subject canonical user/device and least room grants, short TTL; no separate LiveKit user identity database.",
+        "Room provisioning external idempotency key; call state revision outbox after provider receipt/reconciliation."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Join UI not enabled with unavailable room provider; actual two-device audio/video test and provider room evidence required.",
+        "Revoke channel access while connected -> service ejection plus token renewal denied; existing token TTL alone insufficient.",
+        "Concurrent StartCall produces one call/room; failed provider provisioning leaves retryable typed state."
+      ],
+      "dependencyAmendments": [
+        "Add WP-08 human Channel membership and WP-12 Project context; infrastructure provision/media prerequisites in WP-47 split boot slice to avoid cycle."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/server-core/src/meetings/__tests__/rooms.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/livekit-room-channel-acl.test.ts"
+      ]
+    },
+    {
+      "id": "WP-32",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/server-core/src/meetings/rooms.ts",
+          "symbol": "RoomJoinRequest / joinRoom",
+          "reason": "Explicit guest principal token path alongside authenticated members.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 18
+        },
+        {
+          "path": "packages/server-core/src/meetings/sharing.ts",
+          "symbol": "MeetingShareRecord / revokeMember / audienceRecap",
+          "reason": "Apply same entity authorization before guest link creation; do not inherit public access accidentally.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 9
+        },
+        {
+          "path": "packages/core/src/meetings/model.ts",
+          "symbol": "Meeting",
+          "reason": "Participant/guest history references canonical call.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 2
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/calls/guests.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calls/participants.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calls/webhooks.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/032_call_guest_tokens_media_receipts.sql",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/meetings/CallParticipants.tsx",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "InviteCallGuest",
+          "input": "{callRef:EntityRef,expiresAt:string,allowedMedia:MediaPermission[],idempotencyKey:string}",
+          "output": "{inviteId:string,bearerUrl:string}",
+          "errors": "guests_disallowed|denied"
+        },
+        {
+          "name": "HandleLivekitEvent",
+          "input": "{signedBody:Uint8Array,deliveryId:string}",
+          "output": "{accepted:boolean}",
+          "errors": "invalid_signature|unknown_room"
+        }
+      ],
+      "dbConstraints": [
+        "Store hashed bearer token only; guest expiry/revocation version; guest session ID scoped call, not universal User account.",
+        "Participant uniqueness call+principal+joinSession; timestamps event sequence idempotent and bounded delayed exit semantics.",
+        "Screen-share publication permission distinct microphone/camera; media device capability projection."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Macro channel guests explicitly forbidden; ROX channel guest support requires named product-policy decision, not accidental reuse meeting link.",
+        "Revoked invite cannot rejoin; active guest ejected; forged LiveKit webhook rejected without state mutation.",
+        "Duplicate join/leave/out-of-order events preserve correct participant interval; screen-share track stops on end."
+      ],
+      "dependencyAmendments": [],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/call-guest-revoke-webhook.test.ts"
+      ]
+    },
+    {
+      "id": "WP-33",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/server-core/src/meetings/security-policy.ts",
+          "symbol": "staleConsent / approveThenRevoke",
+          "reason": "Replace illustrative decisions with persisted recording consent checks in actual command/provider flow.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 41
+        },
+        {
+          "path": "packages/server-core/src/meetings/retention.ts",
+          "symbol": "deleteOwnedCopies / nativeDeleteAvailable",
+          "reason": "Current native deletion unavailable flag cannot stand in for live artifact deletion receipt.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 29
+        },
+        {
+          "path": "apps/electron/src/shared/meetings-local.ts",
+          "symbol": "LocalMeeting / MeetingsLocalApi",
+          "reason": "Show local-recording consent and upload consent as separate capabilities.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 84
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/calls/recording.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calls/egress-reconciliation.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/call-recording-preview.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "services/rox-media-worker/src/preview.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/033_call_recording_consent_artifacts.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "StartCallRecording",
+          "input": "{callRef:EntityRef,consentRevision:number,idempotencyKey:string}",
+          "output": "{recordingRef:EntityRef,state:\"starting\"|\"active\",receiptId:string}",
+          "errors": "consent_missing|consent_stale|denied|egress_unavailable"
+        },
+        {
+          "name": "FinalizeCallRecording",
+          "input": "{egressId:string,objectKey:string,checksum:string,sizeBytes:string}",
+          "output": "{artifactRef:EntityRef,state:\"ready\"|\"quarantined\"}",
+          "errors": "invalid_webhook|checksum_mismatch|unknown_egress"
+        }
+      ],
+      "dbConstraints": [
+        "Unique egress session ID/provider event receipt; consent revision and participant consent evidence immutable.",
+        "Artifact object checksum/size/media codec/retention label; private object storage, signed access checked on read.",
+        "Job unique(recording_id,artifact_kind,input_checksum,processor_version); bounded ffmpeg CPU/time/container egress."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Duplicate egress webhook and worker crash after object write produces one finalized artifact.",
+        "Participant revoke before capture start rejects; revoke while recording triggers defined stop/redaction behavior with receipt.",
+        "Truncated/hostile media times out/quarantines; ffmpeg preview retry never marks raw media/transcript ready.",
+        "Object or key deleted on retention -> signed URL fails and search/summary source removed within defined SLA."
+      ],
+      "dependencyAmendments": [
+        "Add WP-39 finalized object/storage contract."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+        "packages/server-core/src/meetings/__tests__/security.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/call-recording-artifact-recovery.test.ts"
+      ]
+    },
+    {
+      "id": "WP-34",
+      "existingCodeTouchpoints": [
+        {
+          "path": "packages/core/src/meetings/model.ts",
+          "symbol": "TranscriptSegment / EvidenceSpan",
+          "reason": "Preserve immutable raw segment IDs and input revision; display coalescing is separate projection.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 79
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+          "symbol": "generateSummary",
+          "reason": "Current summary uses startAgentRun; integrate common source evidence/job receipts without pretending offline model exists.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 212
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-model.ts",
+          "symbol": "parseWhisperJson / transcriptMarkdown",
+          "reason": "Whisper segment parsing maps same artifact model, not LiveKit display-only timeline.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 203
+        },
+        {
+          "path": "packages/server-core/src/meetings/finalize.ts",
+          "symbol": "applyNativeFinalizeIntent",
+          "reason": "Local completion and hosted archive share input-hash/revision checks.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 22
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "apps/workspace-service/src/modules/calls/transcripts.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/calls/summaries.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/call-transcription.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/call-summary.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "services/rox-media-worker/src/transcribe.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "packages/shared/src/workspace-domain/meetings/evidence.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/034_transcript_revisions_summary_jobs.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "CorrectTranscriptSpeaker",
+          "input": "{transcriptRef:EntityRef,baseRevision:number,segmentIds:string[],speakerRef:EntityRef}",
+          "output": "{revision:number,receiptId:string}",
+          "errors": "conflict|segment_not_found|denied"
+        },
+        {
+          "name": "GenerateCallSummary",
+          "input": "{callRef:EntityRef,transcriptRevision:number,idempotencyKey:string}",
+          "output": "{jobId:string,state:\"queued\"|\"unavailable\"}",
+          "errors": "no_transcript|denied|budget_exceeded"
+        }
+      ],
+      "dbConstraints": [
+        "UNIQUE(transcript_id,revision,segment_id); times nonnegative end>=start and bounded audio duration; speaker assignments revisioned.",
+        "Summary stores transcript revision/input hash/model/prompt version/evidence spans; re-transcription invalidates stale quote anchors explicitly.",
+        "Durable claim/retry/backoff/deadletter, not Macro tokio::spawn best-effort; title-only call index exists without transcript."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Archive same call ID; Macro adjacent-segment STRING_AGG/MIN(segment_id) display rollup must not delete ROX raw evidence identity.",
+        "Fail STT/summary job mid-run -> retry same input; no duplicate summary notification.",
+        "Zero transcript call still searchable by permitted title/participants metadata; audio remains playable if recording ready.",
+        "Transcript correction makes old summary stale and evidence revision explicit; guest name/speaker mapping privacy persists."
+      ],
+      "dependencyAmendments": [
+        "Add WP-06 search/memory projection and WP-39 artifact ACL; WP-50 transcript mixed-audience policy before shared publication."
+      ],
+      "reviewNotes": [],
+      "extendExistingTests": [
+        "packages/server-core/src/meetings/__tests__/finalize.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/transcript-evidence-summary-jobs.test.ts"
+      ]
+    },
+    {
+      "id": "WP-35",
+      "existingCodeTouchpoints": [
+        {
+          "path": "apps/electron/src/main/meetings/local-store.ts",
+          "symbol": "LocalMeetingStore: recStart / recChunk / recState / recStop / finalizeRecording / recover / stopOwnedBy",
+          "reason": "This is actual filesystem recording lifecycle with owner webContents, heartbeat, atomic metadata and audio.part recovery.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 65
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-store.ts",
+          "symbol": "importAudio / transcribe / resumePending / runTranscription / attach",
+          "reason": "Preserve current 2GB import limit, queued ASR and document persistence; reconcile server native import 512MB policy explicitly.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 266
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-ipc.ts",
+          "symbol": "registerLocalMeetingsIpc",
+          "reason": "Existing permissions/file dialogs/capture ownership and startup recovery must remain authoritative local adapter.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 67
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-model.ts",
+          "symbol": "normalizeMeeting / applyPatch / parseWhisperJson / pickWhisperModel",
+          "reason": "Version local persisted model carefully; no lossy canonical rewrite.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 64
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-asr.ts",
+          "symbol": "detectEngine / remuxAudio / decodeToWav / runWhisper",
+          "reason": "Actual ffmpeg/Whisper probes, timeout/errors and model selection; binary availability is capability gate.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 36
+        },
+        {
+          "path": "apps/electron/src/renderer/lib/meetings/recorder.ts",
+          "symbol": "startRecording / stopRecording / pauseRecording / resumeRecording",
+          "reason": "Appwide MediaRecorder singleton, sequential chunks and failure counters survive surface navigation.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 126
+        },
+        {
+          "path": "apps/electron/src/shared/meetings-local.ts",
+          "symbol": "MeetingsLocalApi / LocalMeeting / TranscriptStatus",
+          "reason": "Retain complete local IPC contract and typed unavailable ASR status.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 140
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx",
+          "symbol": "LocalMeetingDetail / generateSummary / RecordingPanel",
+          "reason": "Current local recording/transcript documents/actions UI; summary agent availability separate offline capture.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 74
+        },
+        {
+          "path": "apps/electron/src/preload/bootstrap.ts",
+          "symbol": "meetingsLocal",
+          "reason": "Expose updated alias/revision IPC without breaking existing desktop recording.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 548
+        },
+        {
+          "path": "packages/server-core/src/meetings/capture.ts",
+          "symbol": "applyNativeCaptureIntent",
+          "reason": "Server intent journal must never be confused with device media evidence.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 57
+        },
+        {
+          "path": "packages/server-core/src/meetings/import.ts",
+          "symbol": "applyNativeImportIntent / IMPORT_INTENT_MAX_BYTES",
+          "reason": "Native import intent and local actual import have distinct max size; adapter policy must resolve.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 80
+        },
+        {
+          "path": "packages/server-core/src/meetings/finalize.ts",
+          "symbol": "applyNativeFinalizeIntent",
+          "reason": "Native finalize claims require actual finalized local bytes/hash/transcript evidence.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 22
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "packages/shared/src/workspace-domain/meetings/local-alias.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-domain-adapter.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/electron/src/main/meetings/local-upload-consent.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/modules/meetings/local-import.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/035_local_meeting_alias_device_receipts.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "RegisterLocalMeeting",
+          "input": "{workspaceId:string,deviceId:string,localMeetingId:string,snapshotHash:string,artifactManifest:LocalArtifactManifest}",
+          "output": "{meetingRef:EntityRef,receiptId:string}",
+          "errors": "invalid_manifest|denied|alias_conflict"
+        },
+        {
+          "name": "PublishLocalArtifact",
+          "input": "{meetingRef:EntityRef,artifactId:string,checksum:string,uploadConsentRevision:number,idempotencyKey:string}",
+          "output": "{state:\"pending\"|\"ready\",receiptId:string}",
+          "errors": "consent_missing|oversize|denied"
+        }
+      ],
+      "dbConstraints": [
+        "Unique(workspace_id,device_id,local_meeting_id) alias; canonical event/calendar alias never replaces local filesystem UUID.",
+        "Local recording stays local by default; upload consent independent recording consent, bound artifact+version+workspace.",
+        "Local projection CAS and outbox receipts prevent server update overwriting current recording state; authorized replay rejection preserves unshared local artifact."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Network disabled: mic start/pause/resume/stop, navigation during recording, import, playback, local Whisper if installed and persistence/relaunch pass.",
+        "Summary unavailable agent/network yields typed unavailable/pending; offline summary is NOT an existing capability and requires separate local-model choice.",
+        "Kill renderer/app with audio.part then restart: owner heartbeat recovery finalizes or preserves recoverable bytes; lost chunk explicit, never silently ready.",
+        "Mic unplug, ffmpeg missing, whisper missing/model absent, bad codec and full disk show typed errors and keep evidence retryable.",
+        "Observe network to confirm zero audio upload until consent command; revoke upload before queued retry prevents object send."
+      ],
+      "dependencyAmendments": [
+        "Remove calendar prerequisite as hard local baseline preservation gate: WP-30 contextual links can follow independently.",
+        "Depends foundational identity/aliases, local receipt/outbox and artifact schema; hosted transcription WP-34 is not prerequisite for installed Whisper."
+      ],
+      "reviewNotes": [
+        "Extend existing local-store/IPC/ASR/recorder tests, not only new generic tests/macro-integration/wp-35.test.ts."
+      ],
+      "extendExistingTests": [
+        "apps/electron/src/main/meetings/__tests__/capture.test.ts",
+        "apps/electron/src/main/meetings/__tests__/local-store.test.ts",
+        "apps/electron/src/main/meetings/__tests__/overlay.test.ts",
+        "packages/server-core/src/meetings/__tests__/import-intent.test.ts",
+        "packages/server-core/src/meetings/__tests__/finalize.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/local-recording-offline-recovery.test.ts"
+      ]
+    },
+    {
+      "id": "WP-47",
+      "existingCodeTouchpoints": [
+        {
+          "path": "Dockerfile.server",
+          "symbol": "server runtime container",
+          "reason": "Existing build/server baseline; proposed workspace authority/media artifacts require explicit new deploy containers.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 5
+        },
+        {
+          "path": "packages/server-core/src/meetings/retention.ts",
+          "symbol": "nativeDeleteAvailable / deleteOwnedCopies",
+          "reason": "Currently native evidence cannot prove deletion; retention integration needs actual object/index/local-adapter receipts.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 21
+        },
+        {
+          "path": "packages/server-core/src/meetings/observability.ts",
+          "symbol": "MeetingBudgetLedger / reserve / settle",
+          "reason": "Reuse ledger semantics for hosted processing but add durable budget/job metrics.",
+          "classification": "EXISTING_VERIFIED",
+          "lineStart": 69
+        },
+        {
+          "path": "ops/fleet-infra/inventory/group_vars/all/versions.yml",
+          "symbol": "version pins",
+          "reason": "Integrate user-owned fleet deployment version pin conventions without modifying production inventory in audit.",
+          "classification": "EXISTING_VERIFIED"
+        }
+      ],
+      "replaceGeneratedNewFiles": [
+        {
+          "path": "ops/macro-integration/compose.yaml",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "ops/macro-integration/env.example",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "ops/macro-integration/livekit.yaml",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "ops/macro-integration/prometheus-rules.yaml",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "ops/macro-integration/backup-restore.sh",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/jobs/retention-sweep.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/src/health.ts",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "services/rox-media-worker/Dockerfile",
+          "classification": "PROPOSED_NEW"
+        },
+        {
+          "path": "apps/workspace-service/migrations/047_retention_job_leases_delete_receipts.sql",
+          "classification": "PROPOSED_NEW"
+        }
+      ],
+      "typedApi": [
+        {
+          "name": "GetSystemReadiness",
+          "input": "{requiredCapabilities:RuntimeCapability[]}",
+          "output": "{status:\"ready\"|\"degraded\"|\"unavailable\",checks:CapabilityReadiness[]}",
+          "errors": "unauthorized_diagnostics"
+        },
+        {
+          "name": "SweepRetention",
+          "input": "{workspaceId:string,policyRevision:number,before:string,dryRun:boolean}",
+          "output": "{jobId:string,planned:number,receipts:DeletionReceipt[]}",
+          "errors": "legal_hold|denied|policy_conflict"
+        }
+      ],
+      "dbConstraints": [
+        "Deletion manifest per canonical entity/object/search projection/transcript/summary references, policy revision, hold and retry receipt.",
+        "Outbox and job leases restored with DB; object inventory/checksum linkage restored consistently; reconciliation generation fenced after restore.",
+        "Secrets via references/env injection; logs/metrics contain opaque IDs and error class, never body, transcript, private snippets, token or bearer URL."
+      ],
+      "sourceSpecificFailureAcceptance": [
+        "Cold selfhost setup authenticates two users, real page edit and call audio/video+recording archive, JMAP delivery/readback; dependencies explicitly unavailable rather than fake success.",
+        "Restore PostgreSQL+objects then replay outbox -> one notification/job/object linkage and no stale private search snippets.",
+        "Retention dry-run reports planned copies; execute proves object deleted and authorized search/assets revoked within SLA; legal hold blocks.",
+        "Kill media worker/provider and observe backlog, bounded retry, deadletter and alert; readiness reflects unavailable recording/transcription separately."
+      ],
+      "dependencyAmendments": [
+        "Split preflight deployment/provider bootstrap ahead of WP-31/33 to avoid dependency cycle; final readiness/restore slice follows WP-10,17,18,31,33,34,35,39."
+      ],
+      "reviewNotes": [
+        "All deploy files proposed; audit does not operate fleet inventory or infer services from documentation."
+      ],
+      "extendExistingTests": [
+        "ops/fleet-infra/control-plane.test.ts",
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts"
+      ],
+      "addIntegrationTestFiles": [
+        "tests/macro-integration/selfhost-restore-retention.test.ts"
+      ]
+    }
+  ]
+}

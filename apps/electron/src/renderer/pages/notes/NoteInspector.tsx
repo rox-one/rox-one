@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
+import type { FrontmatterProjection, PropertyBinding, PropertyValue } from '@craft-agent/core/docs'
 import { Check, CheckSquare2, ChevronLeft, ChevronRight, FileText, Link2, ListChecks, Paperclip, Plus, Tag, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { NoteAsset, NoteDocument, NoteEntityMerge, NoteFootnoteChrome, NoteIndexHealth, NoteInsights, NoteLinkSuggestion, NoteSummary } from '../../../shared/types'
@@ -76,6 +77,9 @@ export interface NoteInspectorProps {
   selectedTag: string | null
   tagDraft: string
   propertyEntries: [string, unknown][]
+  propertyProjection: FrontmatterProjection
+  propertiesWritable: boolean
+  onUpdateScalarProperty(path: string[], value: PropertyValue): Promise<boolean>
   newPropertyKey: string
   newPropertyValue: string
   currentNoteAssets: NoteAsset[]
@@ -116,14 +120,69 @@ function propertyToInput(value: unknown): string {
   return Array.isArray(value) ? value.map(String).join(', ') : String(value ?? '')
 }
 
-function inputToProperty(value: string): unknown {
-  const trimmed = value.trim()
-  if (trimmed.includes(',')) return trimmed.split(',').map(part => part.trim()).filter(Boolean)
-  if (!trimmed) return ''
-  if (trimmed === 'true') return true
-  if (trimmed === 'false') return false
-  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed)
-  return trimmed.replace(/^['"]|['"]$/g, '')
+function ScalarPropertyField({ binding, writable, onSave }: {
+  binding: PropertyBinding
+  writable: boolean
+  onSave(path: string[], value: PropertyValue): Promise<boolean>
+}) {
+  const { t } = useTranslation()
+  const labelId = React.useId()
+  const helpId = React.useId()
+  const original = binding.value === null ? 'null' : String(binding.value ?? '')
+  const [draft, setDraft] = React.useState(original)
+  const [pending, setPending] = React.useState(false)
+  const [invalid, setInvalid] = React.useState(false)
+  const originalType = binding.value === null ? 'null' : typeof binding.value
+  const [type, setType] = React.useState(originalType)
+  const readOnly = !writable || Boolean(binding.readOnly) || !binding.range
+  const save = async () => {
+    if (readOnly || pending || (draft === original && type === originalType)) return
+    let value: PropertyValue
+    if (type === 'string') value = draft
+    else if (type === 'number' && draft.trim() && Number.isFinite(Number(draft))) value = Number(draft)
+    else if (type === 'boolean' && (draft === 'true' || draft === 'false')) value = draft === 'true'
+    else if (type === 'null' && draft === 'null') value = null
+    else { setInvalid(true); return }
+    setPending(true)
+    try { setInvalid(!await onSave(binding.keyPath, value)) }
+    finally { setPending(false) }
+  }
+  return (
+    <div className="space-y-1" data-note-property={binding.keyPath.join('.')}>
+      <label id={labelId} className="block truncate text-[11px] text-muted-foreground">{binding.keyPath.join('.')}</label>
+      <select
+        value={type}
+        disabled={readOnly || pending}
+        aria-label={t('notes.content.propertyTypeLabel', { key: binding.keyPath.join('.') })}
+        onChange={event => {
+          setType(event.target.value)
+          if (event.target.value === 'null') setDraft('null')
+          setInvalid(false)
+        }}
+        className="h-6 rounded-[4px] border border-border/50 bg-background px-1 text-[10px]"
+      >
+        {['string', 'number', 'boolean', 'null'].map(kind => <option key={kind} value={kind}>{t(`notes.content.propertyTypes.${kind}`)}</option>)}
+        {originalType === 'undefined' && <option value="undefined">{t('notes.content.propertyReadOnly.unsupportedValue')}</option>}
+      </select>
+      <input
+        value={draft}
+        onChange={event => { setDraft(event.target.value); setInvalid(false) }}
+        onBlur={() => { void save() }}
+        onKeyDown={event => { if (event.key === 'Enter' && !event.nativeEvent.isComposing) event.currentTarget.blur() }}
+        readOnly={readOnly || pending}
+        aria-labelledby={labelId}
+        aria-describedby={helpId}
+        aria-invalid={invalid || undefined}
+        aria-busy={pending || undefined}
+        className="h-7 w-full rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30 read-only:text-muted-foreground"
+      />
+      <p id={helpId} className={cn('text-[10px] leading-4 text-muted-foreground', invalid && 'text-destructive')}>
+        {invalid ? t('notes.content.propertyTypeInvalid', { type }) : binding.readOnly
+          ? t(`notes.content.propertyReadOnly.${binding.readOnly}`)
+          : t('notes.content.propertyTypeHelp', { type })}
+      </p>
+    </div>
+  )
 }
 
 export function NoteInspector({
@@ -132,6 +191,9 @@ export function NoteInspector({
   selectedTag,
   tagDraft,
   propertyEntries,
+  propertyProjection,
+  propertiesWritable,
+  onUpdateScalarProperty,
   newPropertyKey,
   newPropertyValue,
   currentNoteAssets,
@@ -324,12 +386,24 @@ export function NoteInspector({
           <span className="text-[11px] text-muted-foreground">{t('notes.inspector.frontmatter')}</span>
         </div>
         <div className="space-y-1.5">
-          {propertyEntries.length > 0 ? propertyEntries.map(([key, value]) => (
+          {propertyProjection.status === 'readOnly' && <p role="status" className="text-xs text-muted-foreground">{t('notes.content.propertySourceReadOnly')}</p>}
+          {propertyProjection.status === 'ok' && propertyProjection.properties.filter(binding => binding.keyPath[0] !== 'tags').map(binding => (
+            <div key={`${activeNote.id}:${JSON.stringify(binding.keyPath)}:${typeof binding.value}:${String(binding.value)}`} className="rounded-[6px] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
+              <ScalarPropertyField binding={binding} writable={propertiesWritable} onSave={onUpdateScalarProperty} />
+              {binding.keyPath.length === 1 && !binding.readOnly && propertiesWritable && <button
+                type="button"
+                className="mt-1 text-[10px] text-muted-foreground hover:text-destructive"
+                onClick={() => onUpdateProperty(binding.keyPath[0] ?? '', undefined)}
+              >{t('notes.inspector.removeProperty', { key: binding.keyPath[0] })}</button>}
+            </div>
+          ))}
+          {propertyEntries.filter(([key]) => propertyProjection.status === 'ok' && !propertyProjection.properties.some(binding => binding.keyPath[0] === key)).map(([key, value]) => (
             <div key={key} className="rounded-[6px] bg-background/80 px-2 py-1.5 ring-1 ring-border/50">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <div className="truncate text-[11px] text-muted-foreground">{key}</div>
                 <button
                   className="grid h-5 w-5 place-items-center rounded-[4px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  disabled={!propertiesWritable}
                   onClick={() => onUpdateProperty(key, undefined)}
                   title={t('notes.inspector.removeProperty', { key })}
                 >
@@ -339,12 +413,14 @@ export function NoteInspector({
               <input
                 key={`${activeNote.id}:${key}:${propertyToInput(value)}`}
                 defaultValue={propertyToInput(value)}
-                onBlur={(e) => onUpdateProperty(key, inputToProperty(e.target.value))}
-                onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                readOnly
+                aria-label={key}
+                title={t('notes.content.propertyReadOnly.unsupportedValue')}
                 className="h-7 w-full rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
               />
             </div>
-          )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.none')}</span>}
+          ))}
+          {propertyEntries.length === 0 && propertyProjection.status === 'ok' && propertyProjection.properties.length === 0 && <span className="text-xs text-muted-foreground">{t('notes.inspector.none')}</span>}
         </div>
         <div className="mt-2 rounded-[6px] border border-dashed border-border/70 bg-background/50 p-2">
           <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -354,18 +430,22 @@ export function NoteInspector({
           <div className="flex gap-1.5">
             <input
               value={newPropertyKey}
+              disabled={!propertiesWritable || propertyProjection.status === 'readOnly'}
+              aria-label={t('notes.inspector.propertyKey')}
               onChange={(e) => onNewPropertyKeyChange(e.target.value)}
               placeholder={t('notes.inspector.propertyKey')}
               className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
             />
             <input
               value={newPropertyValue}
+              disabled={!propertiesWritable || propertyProjection.status === 'readOnly'}
+              aria-label={t('notes.inspector.propertyValue')}
               onChange={(e) => onNewPropertyValueChange(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') onAddProperty() }}
               placeholder={t('notes.inspector.propertyValue')}
               className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
             />
-            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={onAddProperty} title={t('notes.inspector.addProperty')}>
+            <button disabled={!propertiesWritable || propertyProjection.status === 'readOnly'} className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={onAddProperty} title={t('notes.inspector.addProperty')}>
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>

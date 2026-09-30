@@ -31,7 +31,58 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.projects.DELETE_ASSET,
   RPC_CHANNELS.projects.GET_OKR,
   RPC_CHANNELS.projects.SAVE_OKR,
+  RPC_CHANNELS.projects.GET_ROADMAP,
+  RPC_CHANNELS.projects.SAVE_ROADMAP,
+  RPC_CHANNELS.projects.AI_STATUS,
+  RPC_CHANNELS.projects.AI_ROADMAP,
 ] as const
+
+const TEXT_ASSET_RE = /\.(md|markdown|txt|csv|tsv|json|ya?ml|html?|xml|log)$/i
+const TEXT_ASSET_MAX_BYTES = 64 * 1024
+const TEXT_EXCERPT_CHARS = 1500
+
+/** Short context lines about a project's inputs for the roadmap AI (names + small text excerpts). */
+async function projectInputLines(
+  workspaceRootPath: string,
+  projectSlug: string,
+  roadmap: import('@craft-agent/shared/projects').ProjectRoadmap,
+  iconFilename?: string,
+): Promise<string[]> {
+  const { listProjectAssets, getProjectAssetsPath } = await import('@craft-agent/shared/projects')
+  const { readFileSync, realpathSync, existsSync } = await import('fs')
+  const { relative, isAbsolute } = await import('node:path')
+  const workspaceRoot = realpathSync(workspaceRootPath)
+  const assetsPath = getProjectAssetsPath(workspaceRootPath, projectSlug)
+  const inside = (base: string, path: string) => { const rel = relative(base, path); return rel === '' || (rel !== '..' && !rel.startsWith('../') && !rel.startsWith('..\\') && !isAbsolute(rel)) }
+  const assetsRoot = existsSync(assetsPath) ? realpathSync(assetsPath) : assetsPath
+  if (!inside(workspaceRoot, assetsRoot)) throw new CodedError('AUTH_FAILED', 'Project input scope denied')
+  const lines: string[] = []
+  for (const asset of listProjectAssets(workspaceRootPath, projectSlug)) {
+    if (asset.filename === iconFilename) continue
+    if (!inside(assetsRoot, realpathSync(asset.absolutePath))) throw new CodedError('AUTH_FAILED', 'Project input scope denied')
+    let line = `file: ${asset.filename} (${asset.mimeType})`
+    if (TEXT_ASSET_RE.test(asset.filename) && asset.sizeBytes <= TEXT_ASSET_MAX_BYTES) {
+      try {
+        const text = readFileSync(asset.absolutePath, 'utf-8').replace(/\s+/g, ' ').trim()
+        if (text) line += ` — ${text.slice(0, TEXT_EXCERPT_CHARS)}`
+      } catch {
+        // unreadable asset: name only
+      }
+    }
+    lines.push(line)
+  }
+  for (const input of roadmap.inputs) {
+    const title = input.title || input.value.slice(0, 120)
+    switch (input.kind) {
+      case 'link': lines.push(`link: ${title}${input.title ? ` — ${input.value}` : ''}`); break
+      case 'text': lines.push(`note: ${input.title ? `${input.title} — ` : ''}${input.value.replace(/\s+/g, ' ').slice(0, TEXT_EXCERPT_CHARS)}`); break
+      case 'note': lines.push(`Rox note: ${title}`); break
+      case 'session': lines.push(`session: ${title}`); break
+      case 'source': lines.push(`data source: ${title}`); break
+    }
+  }
+  return lines
+}
 
 export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
@@ -178,6 +229,105 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     deleteProjectAsset(workspace.rootPath, projectSlug, filename)
     await broadcastChanged(workspaceId, workspace.rootPath)
   })
+
+  // Roadmap (roadmap.json next to config.json). Missing file → empty roadmap.
+  server.handle(RPC_CHANNELS.projects.GET_ROADMAP, async (ctx, workspaceId: string, projectSlug: string) => {
+    const read = rpcProjectsReadResult({ source: 'native', nativeId: projectSlug })
+    if (!isClaimableLive(read.result)) return null
+    const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
+    if (!workspace || !projectSlug) return null
+    const { loadProjectConfig, loadProjectRoadmap } = await import('@craft-agent/shared/projects')
+    if (!loadProjectConfig(workspace.rootPath, projectSlug)) return null
+    return loadProjectRoadmap(workspace.rootPath, projectSlug)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.projects.SAVE_ROADMAP, async (ctx, workspaceId: string, projectSlug: string, roadmap: unknown) => {
+    const act = rpcProjectsActResult({ source: 'native', action: 'write', nativeId: projectSlug || 'project' })
+    if (!isClaimableLive(act)) throw new Error('project roadmap save is not live')
+    const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
+    if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
+    if (!projectSlug) throw new Error('projectSlug is required')
+    const { saveProjectRoadmap, isRoadmapRevision } = await import('@craft-agent/shared/projects')
+    const revision = roadmap && typeof roadmap === 'object' ? (roadmap as { revision?: unknown }).revision : undefined
+    if (!isRoadmapRevision(revision)) throw new Error('PROJECT_ROADMAP_INVALID_REVISION')
+    return saveProjectRoadmap(workspace.rootPath, projectSlug, roadmap, { expectedRevision: revision })
+  }, { nativeAction: 'write' })
+
+  // Which model the Project screen AI would use (honest disabled state when none).
+  server.handle(RPC_CHANNELS.projects.AI_STATUS, async (ctx, workspaceId: string) => {
+    requireCallerWorkspace(ctx, deps, workspaceId)
+    const describe = deps.sessionManager?.describeWorkspaceLlm
+    if (typeof describe !== 'function') return { available: false, reason: 'unsupported' }
+    return describe.call(deps.sessionManager, workspaceId)
+  }, { nativeAction: 'read' })
+
+  // Roadmap AI: clarifying questions → spec proposal → improve text. Never writes;
+  // the renderer shows a proposal and applies only the items the user accepts.
+  server.handle(RPC_CHANNELS.projects.AI_ROADMAP, async (
+    ctx,
+    workspaceId: string,
+    projectSlug: string,
+    request: import('@craft-agent/shared/projects').RoadmapAiRequest & { language?: string; today?: string; inputs?: string[] },
+  ): Promise<import('@craft-agent/shared/projects').RoadmapAiResponse> => {
+    const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
+    if (!workspace) return { ok: false, error: `Workspace not found: ${workspaceId}` }
+    const text = typeof request?.text === 'string' ? request.text.trim() : ''
+    if (!text) return { ok: false, error: 'empty' }
+    if (!['clarify', 'spec', 'improve'].includes(request.mode) || text.length > 20_000) throw new Error('PROJECT_ROADMAP_INVALID_AI_REQUEST')
+    const query = deps.sessionManager?.queryWorkspaceLlm
+    const describe = deps.sessionManager?.describeWorkspaceLlm
+    if (typeof query !== 'function') return { ok: false, error: 'unsupported', unavailable: true }
+    const status = typeof describe === 'function' ? describe.call(deps.sessionManager, workspaceId) : { available: true }
+    if (!status.available) return { ok: false, error: status.reason ?? 'no-connection', unavailable: true }
+
+    const shared = await import('@craft-agent/shared/projects')
+    const project = shared.loadProject(workspace.rootPath, projectSlug)
+    if (!project) return { ok: false, error: `Project not found: ${projectSlug}` }
+    const { roadmap } = shared.loadProjectRoadmap(workspace.rootPath, projectSlug)
+    if (!shared.isRoadmapRevision(request.roadmapRevision) || request.roadmapRevision !== roadmap.revision) throw new Error('PROJECT_ROADMAP_CONFLICT')
+    const extra = Array.isArray(request.inputs) ? request.inputs.filter((l): l is string => typeof l === 'string').slice(0, 32).map(line => line.slice(0, TEXT_EXCERPT_CHARS)) : []
+    const aiContext = {
+      projectName: project.config.name,
+      projectDescription: project.config.description,
+      roadmap,
+      inputs: [...(await projectInputLines(workspace.rootPath, projectSlug, roadmap, project.config.icon)), ...extra],
+      today: typeof request.today === 'string' ? request.today : undefined,
+      language: typeof request.language === 'string' ? request.language : undefined,
+    }
+    const mode = request.mode
+    const prompt = mode === 'clarify'
+      ? shared.buildClarifyPrompt(aiContext, text)
+      : mode === 'improve'
+        ? shared.buildImprovePrompt(aiContext, text)
+        : shared.buildSpecPrompt(aiContext, text, Array.isArray(request.answers) ? request.answers : [])
+    try {
+      requireCallerWorkspace(ctx, deps, workspaceId)
+      const result = await query.call(deps.sessionManager, workspaceId, {
+        systemPrompt: prompt.systemPrompt,
+        prompt: prompt.prompt,
+        temperature: mode === 'improve' ? 0.3 : 0.2,
+        maxTokens: mode === 'spec' ? 8000 : 2000,
+      })
+      log.info(`PROJECTS_AI_ROADMAP: ${mode} for ${projectSlug} answered by ${result.model ?? 'unknown model'} (${result.text.length} chars)`)
+      if (mode === 'clarify') {
+        const questions = shared.parseClarifyResponse(result.text)
+        if (!questions.length) return { ok: false, error: 'unparseable', raw: result.text.slice(0, 2000) }
+        return { ok: true, mode, questions, model: result.model, roadmapRevision: roadmap.revision }
+      }
+      if (mode === 'improve') {
+        const improved = shared.stripImprovedText(result.text)
+        if (!improved) return { ok: false, error: 'empty-answer' }
+        return { ok: true, mode, text: improved, model: result.model, roadmapRevision: roadmap.revision }
+      }
+      const proposal = shared.parseSpecResponse(result.text)
+      if (!proposal) return { ok: false, error: 'unparseable', raw: result.text.slice(0, 2000) }
+      return { ok: true, mode: 'spec', proposal, model: result.model, roadmapRevision: roadmap.revision }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      log.warn(`PROJECTS_AI_ROADMAP failed for ${projectSlug}: ${message}`)
+      return { ok: false, error: message }
+    }
+  }, { nativeAction: 'write' })
 
   // Project OKR data has the same workspace boundary as project metadata.
   server.handle(RPC_CHANNELS.projects.GET_OKR, async (ctx, workspaceId: string, projectSlug: string) => {

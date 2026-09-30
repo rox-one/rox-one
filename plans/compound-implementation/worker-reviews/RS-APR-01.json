@@ -1,0 +1,436 @@
+{
+  "task_id": "RS-APR-01-preflight",
+  "attempt_id": "1ea04d9f055f25d21127d29323b5e0db",
+  "packet_hash": "fa5742289468e3dc281e02a72212bfcf0b7b195c00dd89f791b770e2d6ba5baf",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-APR-01",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "scope": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/RS-APR-01.json",
+    "productChanges": false,
+    "runtimeVerification": "NOT_RUN_BY_DISPATCH_CONTRACT",
+    "inspectionBoundary": "Published package specification and its existing target paths/direct imports; designated report verifier inspected only to establish its read-only verification branch.",
+    "sourceBinding": "Whole-file SHA256 of inspected working-tree bytes, not an assertion that these bytes equal input HEAD. Root-owned wave0 work may change them. Rebind to the committed implementation input and reject stale evidence before applying any requested patch.",
+    "toolLimitations": [
+      "Codegraph reported no index for this repository; no index initialized.",
+      "Semantic find searches failed with judge account 402, so their no-hits output is not absence evidence. Continued with literal searches, exact path presence checks and reads. No product/network/UI/test commands were run."
+    ]
+  },
+  "dependencies": ["RS-ADM-01"],
+  "dependencyEvidence": {
+    "spec": "docs/rox-suite/published/RS-APR-01.md:11,140-146",
+    "record": "plans/rox-suite/issues.json:827-853",
+    "distinction": "Dispatch depends_on=[] schedules this independent preflight only; it does not replace the implementation dependency [RS-ADM-01]. RS-APR-02 and RS-MCP-01 are related requirements, not additional explicit DAG edges."
+  },
+  "foundationGates": [
+    {
+      "ids": ["WP-01", "WP-02", "WP-03", "WP-04", "WP-06", "WP-07", "WP-36"],
+      "kind": "PUBLISHED_ARCHITECTURE_PREREQUISITES_OUTSIDE_EXPLICIT_DAG",
+      "source": "docs/rox-suite/published/RS-APR-01.md:13,70,96",
+      "gate": "Obtain accepted revision-bound receipts for these seven published architecture prerequisites. RS-APR-01 requires the common authenticated authority, canonical identity/persistence, commands/receipts, events/outbox and projections they expose; it must consume them rather than build another foundation.",
+      "missingPrerequisite": "Accepted WP receipts and concrete shared APIs/migration registration/transaction and generated transport seams. Individual WP titles or scope-to-ID mappings are not given by this package record and were not inferred or inspected outside the allowed boundary.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "LEAD_WAVE0_COMMIT_AND_ACCEPTED_DEPENDENCY_RECEIPTS",
+      "kind": "IMPLEMENTATION_START_GATE",
+      "source": "Worker dispatch instructions; exact progress dependency entry supplied with packet",
+      "gate": "No implementation until the lead commits wave0 and accepts the RS-ADM-01 dependency receipt. Then replace working-tree assumptions with the lead's bound input revision and rehash these references.",
+      "missingPrerequisite": "Lead's wave0 commit and accepted RS-ADM-01 receipt; neither is established by this preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "WORKSPACE_AUTHORITY_SERVICE_AND_TYPED_CLIENT",
+      "kind": "HIDDEN_RUNTIME_FOUNDATION",
+      "source": "docs/rox-suite/published/RS-APR-01.md:51-57,74-78,96; packages/core/src/rox2/platform-contract.ts:592-610; packages/shared/src/orgs/types.ts:2-8,20-29",
+      "gate": "Require workspace-scoped Actor/Principal/Group and resource grant checks, authenticated command/query gateway, durable migration runner, policy revisions and current-policy replay. Rox2ActorGrant currently has only actorId/permission and the inspected org types describe local orgs.json bookkeeping; neither proves that service authority exists.",
+      "missingPrerequisite": "packages/shared/src/workspace-domain/ and apps/workspace-service/ were missing in exact path checks. Accept the foundation implementation and its actual interfaces before importing or registering approvals. Do not implement a parallel org/process Permission table or renderer authorization.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "BOUNDED_DSL_AND_IMMUTABLE_VERSION_PROOF",
+      "kind": "PACKAGE_LOCAL_GATE_BEFORE_INSTANCES",
+      "source": "docs/rox-suite/published/RS-APR-01.md:13,39-43,55,108-113",
+      "gate": "Prove typed bounded deterministic expressions and route validation on the server, plus storage-level published-version immutability and canonical hash/revision receipts, before starting instances. Existing generic relation cycle detection is not a route DSL validator.",
+      "missingPrerequisite": "NEW definition-validator.ts, definition-commands.ts, approval-definitions.sql and negative-control evidence are absent.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "RS-APR-02_INSTANCE_PINNING_ACCEPTANCE",
+      "kind": "RELATED_ISSUE_FULL_DOD_GATE_NOT_DAG_EDGE",
+      "source": "docs/rox-suite/published/RS-APR-01.md:55,110,115; plans/rox-suite/issues.json:856-862",
+      "gate": "The full published user scenario requires creating a request through RS-APR-02 and proving v1 instances survive v2 publication and v1 retirement. RS-APR-02 itself depends on RS-APR-01 and RS-MCP-01, so do not add it as a start dependency and create a cycle; keep final acceptance open until integrated instance execution exists.",
+      "missingPrerequisite": "Accepted RS-APR-02 runtime/FK and start/continue contracts with persistence/reload evidence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "MCP_AND_AGENT_COMMON_GATEWAY",
+      "kind": "RELATED_REQUIREMENT_INTEGRATION_GATE",
+      "source": "docs/rox-suite/published/RS-APR-01.md:12,57,76-78,111,117,124-125",
+      "gate": "The same authorization/validator/publish policy must apply to agent and MCP commands, including direct tool denial and actor-spoof rejection. Catalogue/tool schema refresh must remain policy filtered. Related RS-MCP-01 is not a new explicit RS-APR-01 dependency.",
+      "missingPrerequisite": "Lead-owned actual MCP/agent registration, common authenticated command routing and capability/projection invalidation interfaces; not established by current permission prompt callbacks.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "SHARED_PROJECTIONS_REPLAY_AND_VERIFICATION_LANES",
+      "kind": "FULL_FEATURE_ACCEPTANCE_GATE",
+      "source": "docs/rox-suite/published/RS-APR-01.md:57,70,76-78,102-104,125-131",
+      "gate": "Commit-bound outbox, authorized search/activity/notification/agent-memory projections with dedup/retraction, policyEpoch invalidation, reconnect/replay and exact-revision Linux/macOS proof are required. A schema validator or screen-only implementation is insufficient.",
+      "missingPrerequisite": "Shared dispatcher/projection/replay contracts, lane runners, accepted evidence and root integration ownership. Actual external adapters, if integrated, require provider-live proof; simulation must not invent provider effects.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/settings/ApprovalDesignerPage.tsx",
+    "packages/shared/src/workspace-domain/approvals/contracts.ts",
+    "apps/workspace-service/src/modules/approvals/definition-validator.ts",
+    "apps/workspace-service/src/modules/approvals/definition-commands.ts",
+    "apps/workspace-service/migrations/approval-definitions.sql",
+    "tests/rox-suite/approval-designer.spec.ts"
+  ],
+  "ownedNewFilesEvidence": "Exactly the six normative NEW paths in docs/rox-suite/published/RS-APR-01.md:88-94; all six were absent in the inspected working tree. These are future implementation targets, not files created or current source evidence. Shared contracts and migration integration still have one lead-designated integration owner.",
+  "proposedContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/approvals/contracts.ts",
+      "symbols": "NEW ApprovalDefinition, DefinitionVersion, FieldSchema, RouteNode, ApprovalInstanceRef, PolicyBinding, EntityLink; approvals.definitionList/read/createDraft/updateDraft/validate/simulate/publish/retire/clone contracts",
+      "change": "Define workspace-scoped refs using Rox2EntityRef and foundation Principal/Group types; typed form fields/validation/visibility, typed bounded expression AST and linear/branch route with sequence/any/all quorum, self-approval/delegation/fallback/timeout policy. Carry baseRevision, schemaHash, routeHash, commandId, version evidence, policyRevision and rule reasons. Actor is supplied by authenticated transport, not trusted payload. Keep domain draft/invalid/simulated/publish_pending/published/retired separate from Rox2Status enums.",
+      "prerequisite": "Actual foundation types, authority contracts and canonical hashing conventions; no duplicate Actor/Permission store."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/approvals/definition-validator.ts",
+      "symbols": "NEW server definition validator and pure deterministic simulator",
+      "change": "Validate field types, references and visibility; forbid secret credential values/private derived defaults; type-check expressions without eval/JS/network/implicit time. Bound expression/route work; reject cycles/unbounded paths, unresolved or unavailable/cross-org principals, empty/invalid quorum and unintended self-approval. Resolve recipients/effective scopes from shared current grants and explicit synthetic inputs. Return actionable invariant errors/path/rule reasons and policyRevision. Simulator has no write/dispatch capabilities.",
+      "prerequisite": "Foundation identity and read-only policy resolution APIs; explicit DSL bounds chosen and documented before implementation."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/approvals/definition-commands.ts",
+      "symbols": "NEW authenticated approvals query/command handlers and publish/retire/clone transaction",
+      "change": "Expose all nine specified operations through the common gateway. Revalidate current delegated definition.read/manage/publish grants and draft/version inputs on every entry route. Optimistically compare baseRevision/hash, deduplicate commandId using the common command mechanism, atomically insert immutable published definition version and publish outbox event and return durable revision/hash receipt. Retire blocks future starts only; clone creates a draft; material edits create another version. Read/simulate never create instances, decisions, effects or outbox entries. Register projection updates and policyEpoch preview invalidation via the shared outbox consumer, not a new dispatcher.",
+      "prerequisite": "Canonical DB transaction/outbox/receipt/idempotency and module registration APIs; integration contract for instance starts from RS-APR-02."
+    },
+    {
+      "path": "apps/workspace-service/migrations/approval-definitions.sql",
+      "symbols": "NEW approval_definitions, approval_definition_versions and process aliases",
+      "change": "Add workspace-scoped definition/draft records and immutable versions with formSchema, routeDsl, decisionPolicy, hash, publishedBy, revision and unique(definitionId,version). Enforce published payload immutability in storage, not just UI; keep lifecycle retirement separate from immutable content. Reuse canonical entity/alias identity and specify instance-version FK for RS-APR-02's canonical instance table. Publish data and common outbox record share a transaction; no external provider transaction. Do not invent or create a placeholder instance store in this package.",
+      "prerequisite": "Canonical entity/alias/outbox schema, database dialect and migration runner; RS-APR-02 instance table name/FK migration ordering must be agreed by integration owner."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/ApprovalDesignerPage.tsx",
+      "symbols": "NEW default page component and settings metadata",
+      "change": "Implement existing settings-shell catalogue and versioned form/outline designer with field palette, node policy, synthetic simulator and recipient/effect/audience reasons. Native tokens/preferences/i18n, no canvas-only route editor or second skin. Accessible keyboard creation/reordering, draft-safe conflicts/navigation, explicit publish receipt before success, retire/clone confirmation, authorized version/history/context deep links, policyEpoch invalidation and capability-accurate states/help. Load common generated authenticated client; never treat renderer grant checks as enforcement.",
+      "prerequisite": "Accepted RS-ADM-01 admin-hub entry/context, shared registry/routes/client patches and implemented durable approvals API."
+    },
+    {
+      "path": "tests/rox-suite/approval-designer.spec.ts",
+      "symbols": "NEW persisted UI/API/tool approval designer acceptance scenarios",
+      "change": "Implement all six specification tests and full synthetic expense-like scenario with persisted reload/hash/version oracles, current-policy denials and meaningful seeded mutants. Cover neighboring tool permission/install flows without treating them as process decisions. Run against actual registered service/renderer; no schema-only or mocked echo proof.",
+      "prerequisite": "Real lane/test harness and fixtures, integrated identity/gateway/DB, RS-APR-02 instance path, MCP tool registration and native lane."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/shared/settings-registry.ts",
+      "symbol": "SETTINGS_PAGES / SettingsSubpage / isValidSettingsSubpage",
+      "change": "Add one approvals page entry with id 'approvals', labelKey 'settings.approvals.title' and descriptionKey 'settings.approvals.description'. Let SettingsSubpage and validation derive from this canonical list; do not introduce another page catalog. Link from the accepted RS-ADM-01 admin hub to this existing settings subview.",
+      "reason": "The current registry has no approvals entry; specified Admin hub -> Approvals/Processes must integrate into existing native settings."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/settings-pages.ts",
+      "symbol": "SETTINGS_PAGE_COMPONENTS",
+      "change": "Add lazy(() => import('./ApprovalDesignerPage')) and approvals mapping to the existing exhaustive Record<SettingsSubpage, LazyExoticComponent<ComponentType>>. Preserve caller Suspense convention.",
+      "reason": "Adding only the shared page id leaves the component map incomplete and does not mount the designer."
+    },
+    {
+      "path": "apps/electron/src/shared/settings-presentation.ts",
+      "symbol": "SETTINGS_GROUPS / GROUP_BY_PAGE_ID",
+      "change": "Assign 'approvals' exactly once to the workspace group's pageIds, keeping it visible and retaining the existing grouping/filtering mechanism. Coordinate the admin-hub link with RS-ADM-01 rather than moving execution permissions into this group.",
+      "reason": "GROUP_BY_PAGE_ID initialization explicitly throws when any registered page lacks a group (lines 89-93); normative path list omits this mandatory integration patch."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/icons/SettingsIcons.tsx",
+      "symbol": "SETTINGS_ICONS",
+      "change": "Add approvals icon mapping to an existing icon component (for example ShieldCheck), keeping the exhaustive Record<SettingsSubpage,...> and current icon system.",
+      "reason": "SettingsNavigator reads SETTINGS_ICONS[item.id]; the new registry id requires this mapping."
+    },
+    {
+      "path": "apps/electron/src/shared/menu-schema.ts",
+      "symbol": "SETTINGS_ICONS / SETTINGS_ITEMS",
+      "change": "Add approvals: 'ShieldCheck' to the existing string icon Record. Keep SETTINGS_ITEMS derived from SETTINGS_PAGES and existing feature/hidden-page filters; do not duplicate labels or create a second approvals navigation surface.",
+      "reason": "There are two exhaustive icon maps; changing only the renderer icon registry misses the shared menu map."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.settings",
+      "change": "Extend the existing typed settings route builder with a definition/version/context selection contract for approvals, carrying canonical encoded refs and distinguishing draft/published version. Coordinate matching parse/serialize/history handling with the navigation owner; retain routes.view.settings('approvals') for catalogue and existing settings calls unchanged.",
+      "reason": "Current builder encodes only subpage; full DoD requires typed routes/history/contextual deep links, not component-local selection alone."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "SettingsNavigationState; settings navigation serialization/deserialization; ElectronAPI",
+      "change": "Add typed approval selection using shared definition/version/source refs to existing SettingsNavigationState and paired route/state persistence. If the accepted foundation uses native transport, add typed approvals query/command/receipt and change subscription declarations to ElectronAPI and have the transport owner update actual preload/RPC registrations to call the same authenticated gateway. If foundation supplies generated authenticated API client instead, use it and avoid a duplicate ElectronAPI business API.",
+      "reason": "Current SettingsNavigationState has only subpage/rightSidebar and inspected transport declarations expose local org methods, not approvals. Exact runtime registration path must come from accepted foundation; it was not guessed."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / ROX2_RELATION_RULES / Rox2Status",
+      "change": "Register canonical approval-definition and approval-instance kinds with the identity owner (proposed names; verify canonical naming on foundation receipt); retain workspace/revision-bearing Rox2EntityRef and existing relation validation. Evaluate required process links/mentions against existing generic relations, extending allowed kind constraints only when needed. Keep process lifecycle in approvals contracts; do not add draft/published/retired to Rox2Status lifecycle or infer authorization from entity.permissions.",
+      "reason": "Current kind list has workflow/person but no approval definition/instance; spec explicitly requires registry extension, common links and unchanged status triad semantics."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "flattened settings.approvals.* and approval designer help/state/action keys",
+      "change": "Add Russian title/description, typed field/route/policy/help/error and disabled-reason strings through t(). Mirror the same keys with ASCII ordering across every active locale, including all ten mandated locales and the additional ar/ko files present in this checkout; defer exact active-locale parity enforcement to the shared i18n owner. Use no user-facing hardcoded designer labels.",
+      "additionalPaths": [
+        "packages/shared/src/i18n/locales/en.json",
+        "packages/shared/src/i18n/locales/de.json",
+        "packages/shared/src/i18n/locales/es.json",
+        "packages/shared/src/i18n/locales/fr.json",
+        "packages/shared/src/i18n/locales/hu.json",
+        "packages/shared/src/i18n/locales/ja.json",
+        "packages/shared/src/i18n/locales/pl.json",
+        "packages/shared/src/i18n/locales/zh-Hans.json",
+        "packages/shared/src/i18n/locales/zh-Hant.json",
+        "packages/shared/src/i18n/locales/ar.json",
+        "packages/shared/src/i18n/locales/ko.json"
+      ],
+      "reason": "Existing settings registry uses flattened translation keys; inspected ru/en have org/permissions keys but no approvals keys. Twelve locale files are present although loaded repository guidance enumerates ten."
+    }
+  ],
+  "sharedIntegrationRequestsWithoutInventedPaths": [
+    {
+      "owner": "Lead/shared workspace authority, migrations and generated client owner",
+      "request": "Provide exact accepted paths/symbols for module registration, transaction/outbox/command idempotency, canonical aliases/FKs, read/manage/publish policy operations, authenticated actor injection and replay policy checks; register all nine approvals operations and three draft_changed/published/retired events there.",
+      "reason": "The normative workspace-service and workspace-domain roots are absent. Their shared integration paths cannot honestly be named as existing evidence."
+    },
+    {
+      "owner": "Lead/shared projections and RS-MCP-01 owner",
+      "request": "Register policy-filtered versioned definition search/mentions/activity/agent-readable schema plus actionable invalid-route/review notifications; propagate policyEpoch, retract on revoke and deduplicate commit events. MCP and jobs invoke the same validated authenticated operations; agent publish never bypasses command policy.",
+      "reason": "Spec requires these projections/gateways, but no existing implementing symbol was established within package/direct-import scope."
+    },
+    {
+      "owner": "RS-ADM-01 and navigation integration owner",
+      "request": "Expose the catalogue/designer from the accepted admin hub with delegated manage/publish capabilities, and integrate contextual Page/Ticket/Task -> published-template request navigation without inventing a standalone approvals shell.",
+      "reason": "Admin hub is the explicit upstream dependency; contextual request execution is the related RS-APR-02 consumer."
+    },
+    {
+      "owner": "RS-APR-02 instance persistence owner",
+      "request": "Agree the exact immutable definition-version reference/FK and start-time retired-version guard; verify existing pinned instances continue after v2 publication/v1 retirement. This package owns definition storage, not a second instance/decision/effect store.",
+      "reason": "Test 3 and the full user scenario cross the related issue boundary without creating a circular implementation dependency."
+    }
+  ],
+  "preservedExistingMechanisms": [
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx",
+      "symbol": "PermissionRequest / handleAllow / handleAlwaysAllow / handleDeny",
+      "decision": "Intentionally unchanged in this proposal despite being listed as an EXTEND candidate. Actual callbacks emit execution permission {allowed,alwaysAllow}; they have no definition/version/instance receipt. Do not repurpose them as business decisions or add AlwaysAllow to process policy. Neighboring flow regression verification remains required. Any necessary later contextual link requires a concrete accepted host-tool/navigation contract first."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx",
+      "symbol": "AdminApprovalRequest / AdminApprovalRequestData",
+      "decision": "Retain Mac elevation/install confirmation with rememberForMinutes; it is not a route designer or process approval decision."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/settings-rox2-surface.ts",
+      "symbol": "settingsPageActionResult",
+      "decision": "Do not implement definition authorization by adding a granted boolean here. Current helper is a settings result/capability seam, not an authenticated delegated resource-policy gateway. Use shared durable command receipts for success and current server policy for enforcement."
+    },
+    {
+      "path": "packages/shared/src/orgs/types.ts",
+      "symbol": "OrgMember / OrgsStoreFile",
+      "decision": "Reuse existing canonical identities through accepted foundation resolution. Do not treat local org role/display labels as automatic approver grants and do not create an approvals identity/permission store."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: UI и typed routes/history/contextual deep links работают в существующем ROX.",
+      "currentEvidence": "SETTINGS_PAGES lines 37-60 and lazy SETTINGS_PAGE_COMPONENTS lines 48-74 are existing native registration seams. routes.view.settings lines 207-211 encodes only subpage; SettingsNavigationState lines 2416-2420 has no definition/version. NEW ApprovalDesignerPage is absent.",
+      "requiredChange": "Register one approvals settings page and admin-hub link; implement catalogue/typed form/accessible route outline/policy inspector/simulator; add canonical definition/version/context route state, parse/serialize/history and published-template contextual entry via existing navigation.",
+      "verification": "After implementation, keyboard navigate Admin hub -> catalogue -> draft -> specific published version; open contextual links, back/forward and reload. Assert selected workspace/definition/version/hashes persist and neighboring settings/permission flows work, through real service and actual renderer.",
+      "missingPrerequisites": ["Accepted RS-ADM-01", "Foundation generated client/navigation integration", "Durable approvals handlers"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 2: Entity model, persistence/migration aliases, queries/commands/receipts и required background processing реализованы.",
+      "currentEvidence": "Rox2EntityRef lines 233-239 and event/result types lines 131-141,158-167 are reusable contracts, not persistence. Specification lines 51-57 defines new tables/commands/events; workspace-domain/workspace-service and all normative approvals source files are absent.",
+      "requiredChange": "Implement six normative targets; register canonical process/instance refs and aliases, immutable versions and uniqueness/FK; all nine operations with validated hashes/optimistic revisions/commandId; atomic publish plus common outbox and durable receipt. Use shared workers for authorized catalogue/schema/index updates and reconciliation; no provider call in DB transaction.",
+      "verification": "Real authenticated create/update/validate/publish/read/retire/clone round trips with restart/reload; compare exact form/route/decisionPolicy/hash/version/revision/publishedBy. Duplicate command returns original effect/receipt, stale publish conflicts preserve draft, rollback leaves neither version nor event, crash recovery projects one publish.",
+      "missingPrerequisites": ["Accepted DB/entity/alias/outbox/receipt authority APIs", "Migration runner and instance FK sequencing"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 3: Source/entity links и mentions используют общие IDs; source audience не расширяется автоматически.",
+      "currentEvidence": "Rox2EntityRef lines 233-239 is workspace/revision scoped; ROX2_RELATION_RULES lines 380-389 provides generic mentions/derived-from/attached-to relations. Neither is an audience authorization implementation.",
+      "requiredChange": "ApprovalDefinition/InstanceRef/EntityLink use canonical refs and shared links/mentions. Check source and target grants independently when resolving links, recipients and previews; do not materialize denied source body/private derived text in fields or projections.",
+      "verification": "Synthetic cross-workspace/cross-org and narrower-source-audience links through UI/API/tool; unauthorized actor sees neither title/count/body nor recipient disclosure. Authorized reload preserves identical canonical ref/revision; adding link never grants source or target action rights.",
+      "missingPrerequisites": ["Common link/mention and source audience policy service", "Canonical new-kind registration"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Shared authorization/sharing/revoke покрывают UI/API/MCP/jobs/offline replay.",
+      "currentEvidence": "authorizeRox2Action lines 601-610 rejects missing actor but checks only actorId/permission; OrgMember is local org/user/role data. settingsPageActionResult and UI role labels cannot satisfy resource scoped service policy. Specification lines 74-78 explicitly requires the same gateway.",
+      "requiredChange": "Consume shared delegated definition.read/manage/publish and target/source grants, authenticated actor transport and policyRevision. Recheck current grants on every command/query/job/MCP entry and replay; invalidate preview/caches/draft retention on revoke. Agent read/simulate/propose does not confer publish.",
+      "verification": "Admin role with definition.manage/publish denied fails direct API and MCP publish; spoofed body actor rejected. Revoke while designer open and during queued replay denies current-policy mutation and retracts sensitive projections/memory. Verify disabled button is not the sole enforcement and no unauthorized outbox/effect is produced.",
+      "missingPrerequisites": ["Accepted authenticated resource policy gateway", "MCP/jobs/replay and revoke integration"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Search/notification/activity/agent/memory projections сохраняют policy и provenance; dedup/retraction проверены.",
+      "currentEvidence": "Rox2Event lines 131-141 and isAuditableRox2Event lines 617-619 require causation/correlation/revision but provide no dispatch/projection store. New approval events and policyEpoch invalidation are normative at specification lines 57,76-78.",
+      "requiredChange": "Publish committed events with entity/workspace/command/receipt/policy/version provenance through shared outbox. Update authorized catalogue/search/tool schema/index/activity, emit only actionable invalid-route/review notifications, deduplicate event replay and retract search/push/agent memory after grant loss; policy change invalidates simulation results.",
+      "verification": "Consume duplicate/out-of-order committed events and restart consumer; assert one authorized publication/activity projection with exact version provenance, not duplicate rows. Revoke then inspect search title/count/body, notifications/push and agent memory for absence; verify lag/denied/retry metrics have source/denominator and logs lack secret/body.",
+      "missingPrerequisites": ["Shared outbox consumers and search/notification/agent-memory APIs", "PolicyEpoch/retraction contracts"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 6: Required realtime/reconnect/persistence concurrency сценарии из tests пройдены; unavailable capability честно disabled.",
+      "currentEvidence": "Spec publish control uses expectedRevision/versionHash (lines 42,54), failures preserve drafts (line 47) and unavailable/stale/conflict/offline states are distinct (lines 100-104). No approval backend/subscriptions or runtime evidence was established.",
+      "requiredChange": "Optimistic draft/publish concurrency, immutable active references, current-policy reconnect/replay, preview invalidation on definition/policy changes and durable event recovery. Capability-disabled simulation/publish/start must explain unavailable authority, not show empty/success. Keep drafts scoped to purpose/current grants.",
+      "verification": "Two clients edit/publish same base -> exactly one valid version with conflict and retained losing draft. Disconnect/reconnect, provider timeout, failed query, navigation and service restart preserve permitted draft and reconcile receipts. Replay with revoked grants is denied. Retire/new start race respects pinned version/start guard and existing instances continue.",
+      "missingPrerequisites": ["Realtime/current-policy replay foundation", "Durable command receipts and RS-APR-02 instance behavior"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 7: Hover/focus/click help, keyboard, loading/empty/error/offline, narrow390px, zoom200%, reduced-motion verified.",
+      "currentEvidence": "Existing Popover/PopoverTrigger/PopoverContent lines 6-39 provides reusable Radix controls and style tokens; NEW designer is absent. Specification lines 30-47 defines outline keyboard/help/draft and responsive rules.",
+      "requiredChange": "Native form/outline controls: Tab add/remove, arrow outline, AltUp/Down reorder, Enter inspector/preview and Esc close/return focus. Non-obvious controls have 500ms hover and focus definitions plus separate What is this popover with meaning, units/formula or not-applicable, source/asOf/example/policy/disabled reason. Visible focus, instructions, all domain/common states, one main drilldown/sheets at 390px/200%, reduced spatial motion and stable selection/scroll keys; inherit selected typography/theme.",
+      "verification": "Actual keyboard-only create any/all route and publish; focus/hover/click help never mutates, Escape restores trigger, Tab/ShiftTab remain usable. Visual/ARIA evidence for loading/genuine empty/filtered empty/forbidden/unsupported/degraded/stale/retryable/conflict/offline/cancelled/unknown and process states; 390px, 200% zoom, reduced-motion with no shell horizontal overflow or inaccessible drag-only interactions.",
+      "missingPrerequisites": ["Implemented native designer and API", "Actual renderer/native verification lane"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 8: Linux domain/renderer lane; source-pinned macOS native для IPC/font/device; provider-live где actual adapter действует. Pending required lane оставляет feature incomplete.",
+      "currentEvidence": "Specification line 128 is mandatory; this preflight dispatch forbids builds/tests/native/network operations. Inspected files provide code-level seams only, no lane proof.",
+      "requiredChange": "Lead schedules real Linux domain/renderer and revision-pinned macOS IPC/font/device verification after integration. For any actual external adapter in the final path retain provider accepted/readback outcome proof; do not fabricate adapter/live evidence or effects from simulation. Pending required lanes remain gates.",
+      "verification": "Run implemented acceptance scenarios on registered actual service and renderer Linux lane, then exact-source macOS native route/IPC, selected font and device-sensitive controls. Exercise any integrated real provider adapter and distinguish local_durable/provider_accepted/readback in evidence. Record actual adapter applicability from delivered code, not blanket N/A.",
+      "missingPrerequisites": ["Integrated tested commit", "Linux/macOS runners", "Actual adapter/account only if implemented path uses one"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 9: Screenshots/ARIA и logs/hash/expected-observed предоставлены с synthetic data и exact tested commit.",
+      "currentEvidence": "Specification lines 7-9,117,129 disallow private screenshot data/assets and require exact commit/evidence. This report binds source inspection hashes only; it is not screenshot or runtime evidence.",
+      "requiredChange": "Capture real catalogue/form/outline/simulator/publish/history and failure state screenshots/ARIA, persisted form/route/version hashes, receipt/event correlation logs and expected-observed assertions using synthetic names/expense data only. Bind artifacts to tested commit/environment with no secret/body logging.",
+      "verification": "Evidence reader independently follows input/actions to persisted reloaded outputs and checks artifact digests, commit, environment, ARIA and logs. Distinguish code-read facts, runtime passes and unavailable lanes; reject unrelated screen or stale screenshot as proof.",
+      "missingPrerequisites": ["Implemented integrated revision and running UI/service", "Lead-owned evidence bundle"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 10: Independent review, meaningful negative controls, runbook, source licensing/dependencies и user docs готовы.",
+      "currentEvidence": "Specification lines 104,113,117,130 mandates reconciliation/runbook and seeded mutant proof; lines 7,96 prohibits copying source UI assets. No implemented tests/docs/licensing review was inspected or claimed.",
+      "requiredChange": "Independent domain/security/accessibility review of full integrated feature; storage-mutable-version and renderer-only-validator mutants, documented green baseline and intended failures. User docs explain any/all quorum, self-approval/delegation/fallback/timeout, simulation versus effect, publication/version pinning/retire, policy and recovery. Runbook covers unknown receipt reconciliation, stale permission/search/cache cleanup and projection lag; audit actual dependencies/licenses without Lark copying.",
+      "verification": "Negative controls fail intended persistence/server assertions on green baseline, not environment errors. Review signs off on source-linked findings and fixes; exercise reconciliation/recovery procedure against synthetic failure and verify docs match real control semantics and licensed dependency inventory.",
+      "missingPrerequisites": ["Implemented feature/tests", "Independent reviewer", "Shared docs/runbook ownership and actual dependency inventory"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 11: GitHub completion связывает implementation commit/PR и доказательства, а не только rendered screen.",
+      "currentEvidence": "Normative record issue 1117 is OPEN and PLANNED_NOT_IMPLEMENTED (issues.json lines 840-850); spec lines 131,137 forbids screen-only closure. No Git/GitHub state was mutated or live queried.",
+      "requiredChange": "Lead links actual implementation commit/PR and complete independent acceptance bundle to issue #1117 only when every mandatory gate passes. Keep featureComplete=false and pending lanes/dependencies explicit until then; preflight is not implementation or closure.",
+      "verification": "Authorized lead verifies delivered commit/PR matches tested source, all DoD rows have real evidence and required lanes/dependency receipts are accepted; read back GitHub references before claiming completion.",
+      "missingPrerequisites": ["Completed integrated feature and all mandatory evidence", "Lead-authorized GitHub delivery"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Specification test 1: Keyboard creates form and any/all route, publishes, reload reads same hashes/version.",
+      "currentEvidence": "Existing registry/lazy-page/native controls are extension points, not this scenario; all normative approvals targets absent. Spec line 108.",
+      "requiredChange": "NEW ApprovalDesignerPage keyboard editing plus typed validator and receipt-backed immutable publish/read handlers.",
+      "verification": "Fill synthetic typed form and any/all route by keyboard, publish explicit v1 and reload actual persistence; compare exact schemaHash/routeHash/version/fields/principals/policy and receipt, then check equivalent API/tool and denied variant.",
+      "missingPrerequisites": ["Designer/API/DB", "Actual UI lane and tool gateway"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Specification test 2: Restricted expression types, cyclic/unbounded routes, missing principal/quorum fail server validation.",
+      "currentEvidence": "wouldCreateRelationCycle lines 404-429 is a generic relation graph helper, not a bounded typed route parser. NEW definition-validator absent; spec line 109.",
+      "requiredChange": "Server typed AST/reference/route bounds and current scoped principal/quorum/self-approval validator used by validate/update/publish and direct tools.",
+      "verification": "Send type mismatch, arbitrary JS/network/implicit-time expression, cycle, unbounded path, absent/unavailable/cross-org principal, empty quorum and unintended self-approval through direct API/tool. Assert specific rejected invariant, unchanged persisted version/outbox and actionable UI errors; valid synthetic control succeeds.",
+      "missingPrerequisites": ["Bounded DSL specification and server module", "Current policy/identity resolver"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Specification test 3: Instance on v1 remains v1 after publish v2; retire v1 blocks new start but existing continues.",
+      "currentEvidence": "Spec lines 43,55,110,115 require version FK and related RS-APR-02 runtime; there is no instance evidence in inspected package paths.",
+      "requiredChange": "Immutable definition version refs; retirement future-start guard consumed by RS-APR-02 without rewriting active instance version or auto-migrating it.",
+      "verification": "Publish v1/create real request, publish changed v2 and reload both definitions/instance; compare instance v1 FK/hash/route. Retire v1 then reject new v1 start while advancing existing v1 instance successfully; same behavior on API/tool with current permissions.",
+      "missingPrerequisites": ["RS-APR-02 canonical instance runtime/FK", "Definition publish/retire handlers"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Specification test 4: Admin denied process manage direct API/tool cannot publish; actor spoof rejected.",
+      "currentEvidence": "OrgRole labels and simple authorizeRox2Action are not authenticated delegated process authority; spec lines 74,78,111.",
+      "requiredChange": "Authenticated actor injection, delegated definition policy and server validation common to direct API, IPC/MCP, jobs and human UI; reject or ignore untrusted body actor in accordance with shared gateway contract.",
+      "verification": "Use actor holding admin role but no process manage/publish grant; direct API/tool publish returns actionable denial with no version/event mutation. Supply authorized actor ID in untrusted payload while transport actor denied and prove rejection/no effect. Current-authorized actor succeeds as negative control baseline.",
+      "missingPrerequisites": ["Real common authority and direct tool transport"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Specification test 5: Simulate causes no instance/decision/effect/outbox mutation.",
+      "currentEvidence": "simulatedResult status helper is not simulation execution; spec lines 53,112 requires recipient/rule plan and no dispatch. NEW simulator/server handlers absent.",
+      "requiredChange": "Pure deterministic simulator consuming typed synthetic inputs and read-only current policy resolver, returning route/recipient/effect/audience summary and policyRevision without mutating persistent definition or instance/effect state.",
+      "verification": "Take canonical DB/outbox/effect state snapshot, call actual simulate via UI/API/tool, compare route/recipients/reasons with typed expected plan and identical persisted state including no instance/decision/effect/outbox writes. Repeat same explicit input/policy produces same plan; revoked policy changes invalidate old preview.",
+      "missingPrerequisites": ["Pure simulator + real store instrumentation", "Common current policy resolver and tool gateway"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Specification test 6: Seed published row mutable or renderer-only route validation must fail.",
+      "currentEvidence": "Spec lines 55,113,117 requires immutable storage/server validator and intended seeded assertions. No product tests were permitted during this preflight.",
+      "requiredChange": "DB-enforced published payload immutability and server validator plus meaningful integration regression oracles; do not merely assert source text or renderer error labels.",
+      "verification": "First record green real persisted baseline. Mutant A permits changing published form/route/policy/hash; a direct mutation/reload immutability assertion must fail. Mutant B removes server route validation while renderer validates; direct API/tool invalid-route persistence rejection must fail intended assertion. Record seed/mutant/test/commit, distinguish baseline/environment failures and restore test sources by lead-owned process.",
+      "missingPrerequisites": ["Actual migration/server implementation", "Green integration baseline and mutation runner"],
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Full user acceptance: Admin designs expense-like synthetic process, validates typed fields/recipients, publishes v1 -> creates request through RS-APR-02; v2 edits leave existing instance unchanged; route/policy reasons inspectable.",
+      "currentEvidence": "Spec line 115 explicitly crosses definition and instance packages; issues.json RS-APR-02 dependsOn RS-APR-01/RS-MCP-01. Current execution PermissionRequest and Mac AdminApprovalRequest have different response types/semantics.",
+      "requiredChange": "Integrate actual admin designer, immutable definitions and RS-APR-02 request entry/instance behavior with current grants, provenance, route/policy reasons and existing contextual entity/navigation surfaces.",
+      "verification": "Run the full keyboard synthetic expense flow, current-policy denied branch, equivalent API/tool, reload/restart and v1/v2/retire invariants against actual canonical persisted instances. Inspect route and policy reasons and retain exact expected-observed hashes/receipts. Verify neighboring tool execution permission and Mac elevation prompts retain existing semantics.",
+      "missingPrerequisites": ["Accepted RS-ADM-01 and architecture foundations", "Integrated RS-APR-02 and RS-MCP-01", "All mandatory UI/domain/native evidence lanes"],
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-APR-01.md","symbol":"Architecture prerequisites, normative new paths, Tests and Definition of Done","lineStart":11,"lineEnd":131,"sha256":"031077b67e4e89ba3d317a4f67933c064e508b7dcf2e7fef377da800f1b6e14c"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues[id=RS-APR-01] and RS-APR-02 dependsOn","lineStart":827,"lineEnd":862,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/shared/settings-registry.ts","symbol":"SettingsPageDefinition / SETTINGS_PAGES / SettingsSubpage / isValidSettingsSubpage","lineStart":19,"lineEnd":80,"sha256":"be5ff42801376dc2eca2b23ed3fe5d3fd0544862e38a97698c3bfeefd955bf25"},
+    {"path":"apps/electron/src/renderer/pages/settings/settings-pages.ts","symbol":"SETTINGS_PAGE_COMPONENTS / getSettingsPageComponent","lineStart":48,"lineEnd":81,"sha256":"4d5b0724a91560c84ffcfcd4fc134793d4818f49ff96c8c50952b20980406bd1"},
+    {"path":"apps/electron/src/shared/settings-presentation.ts","symbol":"SETTINGS_GROUPS / GROUP_BY_PAGE_ID","lineStart":33,"lineEnd":95,"sha256":"d5c1dfa0cb34ab84fcc26025d4215e0b4ad389b783ca06bae6db40fc350eeb67"},
+    {"path":"apps/electron/src/shared/menu-schema.ts","symbol":"SETTINGS_ICONS / SETTINGS_ITEMS","lineStart":382,"lineEnd":420,"sha256":"6d45130b2d8f97e9587bff69aef5f643298b19eed7a217302f58043dd3add73f"},
+    {"path":"apps/electron/src/renderer/components/icons/SettingsIcons.tsx","symbol":"SETTINGS_ICONS","lineStart":62,"lineEnd":85,"sha256":"8f8d0e893b65dc4ef4b387e196f1fda2e2709771ceb6823168b3ac9f95cf2d02"},
+    {"path":"apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx","symbol":"PermissionRequest / handleAllow / handleAlwaysAllow / handleDeny","lineStart":28,"lineEnd":45,"sha256":"2fbd2cc78ce33d5b2e1ced7bdfe588ed3ca79c5794aaadea67c5df9c20889478"},
+    {"path":"apps/electron/src/renderer/components/app-shell/input/structured/types.ts","symbol":"StructuredInputType / PermissionResponse / AdminApprovalResponse","lineStart":12,"lineEnd":51,"sha256":"08352c6a3b1511b98679c6d3751f11556249a3cfdfea6e11b9677461c799f0e7"},
+    {"path":"apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx","symbol":"AdminApprovalRequestData / AdminApprovalRequest / handleApprove","lineStart":9,"lineEnd":44,"sha256":"837904c5125ce34088ab58be736eaeb6f36ac67d23f20ce87a9445f56e9dc3c1"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS / Rox2Status","lineStart":17,"lineEnd":111,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":232,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_RELATION_RULES / wouldCreateRelationCycle","lineStart":380,"lineEnd":429,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2ActorGrant / authorizeRox2Action / isAuditableRox2Event","lineStart":592,"lineEnd":619,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"apps/electron/src/renderer/pages/settings/OrganizationsSettingsPage.tsx","symbol":"refresh / handleCreate / handleInvite","lineStart":73,"lineEnd":150,"sha256":"8d0028f00cb4afcd723a46a24527b061ef12705ebb5d207296b2b7fe4563e318"},
+    {"path":"apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx","symbol":"SettingsItemRow.handleOpenInNewWindow / settingsItems","lineStart":63,"lineEnd":168,"sha256":"6494919f5a42a1645265376d536db97c518f9aac7a3616c89decec6befd1eb4b"},
+    {"path":"apps/electron/src/renderer/pages/settings/settings-rox2-surface.ts","symbol":"Rox2SettingsPageId / settingsHubActionResult / settingsPageActionResult","lineStart":131,"lineEnd":180,"sha256":"18b77d3e127321e9abcae8e04bb773b06fa06bfedcf33923089f119b10f98ec4"},
+    {"path":"packages/shared/src/orgs/types.ts","symbol":"OrgRole / OrgMember / OrgsStoreFile","lineStart":2,"lineEnd":52,"sha256":"87613c82032323bb03ea31e11cc71b05bcc55d4e22c7bdbc125f4ab29cd42ae2"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"SettingsNavigationState","lineStart":2410,"lineEnd":2420,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI organization/identity declarations","lineStart":1883,"lineEnd":1894,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.settings","lineStart":207,"lineEnd":211,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/renderer/components/ui/popover.tsx","symbol":"Popover / PopoverTrigger / PopoverContent","lineStart":6,"lineEnd":39,"sha256":"1b63c42191ebfd393d1db758191edfd27ebf909261ce41b4f49d0f18f8237c06"},
+    {"path":"packages/shared/src/i18n/locales/ru.json","symbol":"settings.orgs.title / settings.permissions.title flattened keys","lineStart":5338,"lineEnd":5376,"sha256":"f3d844c79849812f08a1ec87f80d88c8e0a7b078d86dc6b6d46223a0e0336e9d"},
+    {"path":"packages/shared/src/i18n/locales/en.json","symbol":"settings.orgs.title / settings.permissions.title flattened keys","lineStart":5318,"lineEnd":5356,"sha256":"80c051ec475acc53c9b42aebd15a876441c3304bcfd27567176328a0a7432e23"}
+  ],
+  "nextExecutableAction": "Lead accepts this preflight only as a source-bound planning artifact. After the lead's wave0 commit and accepted RS-ADM-01 receipt, verify the seven architecture prerequisite receipts, rebind/reinspect any changed source hashes, and obtain concrete common authority/DB/outbox/generated-client interfaces. Then begin the first vertical slice in dependency order: typed contracts -> bounded server validator/pure simulator -> immutable version migration and validated command transaction -> registered catalogue/designer with root-owned shared patches -> persisted keyboard publish/reload and direct denied API/tool proof. Do not start instances until immutable version/DSL evidence is accepted; retain full acceptance open for RS-APR-02 integration and all required lanes.",
+  "risks": [
+    "Published hidden WP prerequisites are not represented by the single explicit DAG edge; foundation receipts are required, not optional follow-up.",
+    "RS-APR-02 acceptance is downstream of this issue; adding it as a start dependency creates a cycle, while ignoring it silently weakens version/retirement DoD.",
+    "Absent workspace-service/workspace-domain roots must not be replaced with a renderer mock, new local JSON store, duplicate identity/permission tables or invented imports.",
+    "A business process decision must remain distinct from execution PermissionResponse.allowed/alwaysAllow and Mac elevation rememberForMinutes.",
+    "Published version payload immutability versus mutable retirement/alias metadata needs explicit storage design; modifying route/policy in place breaks active-instance pinning.",
+    "Generic relation cycles and flat actor grants are insufficient for bounded route DSL, delegated resource scope, recipient availability, self-approval and cross-org isolation.",
+    "Definition/route/schema hashes need canonicalization and optimistic publication identity consistent with foundation conventions; commandId replay must not create a second version/event.",
+    "Common simulator policy reads may change during evaluation; policyRevision/epoch must bind reasons and invalidate stale previews, not silently keep old recipients.",
+    "Catalogue/navigation snapshots and failed-query drafts may leak revoked titles/count/body/private source text; retention and projections must obey current grants on reopen/replay.",
+    "Adding the page only to the two normative registry paths fails hidden exhaustive icon/group requirements; settings-presentation throws for an ungrouped page.",
+    "Full definition/version/context deep links require coordinated shared navigation parse/serialize/history and real transport integration; exact runtime registration paths are foundation-owned and not established here.",
+    "Twelve locale files exist in this checkout versus ten enumerated in loaded guidance; shared owner must use actual parity conventions instead of skipping ar/ko.",
+    "Server validation/immutability mutants, Linux and source-pinned native lanes, projection retraction and full request flow remain NOT_VERIFIED; planning verification cannot satisfy feature acceptance.",
+    "Root integration may change inspected working-tree bytes. These SHA256 values bind inspection only; stale references must be reported/reinspected, never silently treated as current committed code.",
+    "No test/build/UI/provider operations were authorized for this worker. All verification strings above are future precise acceptance procedures, not claims of executed passing checks."
+  ]
+}

@@ -80,6 +80,8 @@ export interface AppShellContextType {
   onSessionLabelsChange?: (sessionId: string, labels: string[]) => void
   /** Workspace projects for session project picker */
   projects?: Array<{ id: string; slug: string; name: string; color?: string }>
+  /** Native records for project surfaces; picker options omit config and paths. */
+  loadedProjects?: import('@craft-agent/shared/projects/types').LoadedProject[]
   /** Bind/unbind a session to a project (null clears) */
   onSetProjectId?: (sessionId: string, projectId: string | null) => void
   /**
