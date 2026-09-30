@@ -5145,7 +5145,25 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "revision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "pullRequestHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "observedAt": "2026-09-30T16:05:17.838Z",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "sourceCount": 4851,
+          "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+          "committedSourceMatchesTestedManifest": true,
+          "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -8100,7 +8118,25 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "revision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "pullRequestHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "observedAt": "2026-09-30T16:05:17.838Z",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "sourceCount": 4851,
+          "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+          "committedSourceMatchesTestedManifest": true,
+          "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -9928,20 +9964,20 @@
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
         "sourcePublication": {
           "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-          "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
-          "revision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+          "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "revision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
           "branch": "feat/september-program-20260930",
           "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
           "isDraft": true,
-          "remoteHeadReadback": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
-          "pullRequestHeadReadback": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
-          "observedAt": "2026-09-30T15:13:57.841Z",
+          "remoteHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "pullRequestHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+          "observedAt": "2026-09-30T16:05:17.838Z",
           "fullProductDelivery": "PENDING",
           "originalCriteriaAcceptedByPublication": 0,
-          "sourceCount": 4849,
-          "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+          "sourceCount": 4851,
+          "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
           "committedSourceMatchesTestedManifest": true,
-          "bindingLimit": "Shared/server/Electron full unions and types bind to exact source. Exact validate:ci interrupted document dependencies and is incomplete. Actual native creation, providers, iOS/Windows and GitHub eligible-runner acceptance remain pending. Later docs-only commits have a different head.",
+          "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head.",
           "fullTaskAccepted": false
         }
       }
@@ -10135,10 +10171,10 @@
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
-      "observedAt": "2026-09-30T15:13:57.841Z",
-      "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
-      "sourceCount": 4849,
+      "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "observedAt": "2026-09-30T16:05:17.838Z",
+      "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+      "sourceCount": 4851,
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
@@ -10209,7 +10245,7 @@
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Explicit Electron/UI/core/shared-src/server-core-src package gate scope. Subsequent scheduler terminal recovery and OMP fixture are excluded. Runtime shared/server gates bind separately to c1c81e66; complete desktop/platform acceptance pending."
     },
-    "latestPublishedSourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+    "latestPublishedSourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
     "schedulerTerminalEvidence": "scheduler-terminal-20260930.json",
     "schedulerTerminalCandidate": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
@@ -10294,9 +10330,21 @@
     },
     "ownerStatusEvidence": "owner-status-20260930.json",
     "ownerStatusCandidate": {
-      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "revision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "pullRequestHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "observedAt": "2026-09-30T16:05:17.838Z",
       "fullProductDelivery": "PENDING",
-      "fullOriginalTasksAccepted": 0
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceCount": 4851,
+      "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
     },
     "statusReconciliation": {
       "observedAt": "2026-09-30T16:02:34.173Z",

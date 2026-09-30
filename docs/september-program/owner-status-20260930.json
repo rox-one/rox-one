@@ -4,9 +4,21 @@
   "observedAt": "2026-09-30T16:02:34.173Z",
   "inputSourceRevision": "7ae2828afd806d82a2537accfe1bd47b3d4cb4c3",
   "publication": {
-    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+    "revision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+    "pullRequestHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+    "observedAt": "2026-09-30T16:05:17.838Z",
     "fullProductDelivery": "PENDING",
-    "fullOriginalTasksAccepted": 0
+    "originalCriteriaAcceptedByPublication": 0,
+    "sourceCount": 4851,
+    "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+    "committedSourceMatchesTestedManifest": true,
+    "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
   },
   "sourceBinding": {
     "sourceCount": 4851,
@@ -17,7 +29,8 @@
       "apps/electron/.impeccable/hook.cache.json"
     ],
     "beforeAfterIdentical": true,
-    "committedSourceMatchesTestedManifest": false
+    "committedSourceMatchesTestedManifest": true,
+    "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e"
   },
   "sources": [
     {
