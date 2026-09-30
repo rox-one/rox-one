@@ -5,7 +5,7 @@
   "sourceBase": "b922e52ed96425732776ff771fdb4fec09fc99b6",
   "specRevision": "242492868a11b4d9af1c1011f20b31a346875f0a",
   "branch": "feat/rox-compound-workspace-20260930",
-  "updatedAt": "2026-09-30T09:49:16.324888+00:00",
+  "updatedAt": "2026-09-30T11:17:34.902413+00:00",
   "packageCount": 143,
   "packages": [
     {
@@ -14,22 +14,35 @@
       "program": "macro",
       "dependencies": [],
       "spec": "plans/macro-integration/work-packages.json",
-      "status": "NOT_STARTED",
+      "status": "IMPLEMENTATION_RUNNING",
       "runtimeEvidence": [
         {
           "kind": "DATABASE_ADAPTER_READINESS_ONLY",
           "artifact": "plans/compound-implementation/wp01-postgres-readiness.json",
           "featureImplemented": false
+        },
+        {
+          "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
+          "artifact": "plans/compound-implementation/implementation-workers.json",
+          "runId": "rox-compound-implementation-20260930T101129262210Z",
+          "sessionId": "01a0f1cc-4742-707a-9b18-6b4824c98065",
+          "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "NOT_VERIFIED",
+        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-01.json",
-      "preflightRunId": "rox-compound-20260930T083916Z"
+      "preflightRunId": "rox-compound-20260930T083916Z",
+      "remainingAcceptance": [
+        "Root source-generation/behavioral verification and shared-file integration",
+        "Native interface and all normative DoD criteria",
+        "Delivered revision and final full-program acceptance"
+      ]
     },
     {
       "id": "WP-02",
@@ -1008,16 +1021,30 @@
       "program": "macro",
       "dependencies": [],
       "spec": "plans/macro-integration/work-packages.json",
-      "status": "NOT_STARTED",
-      "runtimeEvidence": [],
+      "status": "IMPLEMENTATION_RUNNING",
+      "runtimeEvidence": [
+        {
+          "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
+          "artifact": "plans/compound-implementation/implementation-workers.json",
+          "runId": "rox-compound-implementation-20260930T101129262210Z",
+          "sessionId": "01a0f1cc-4ac4-7220-a5ca-095b8892a89b",
+          "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        }
+      ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "NOT_VERIFIED",
+        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-48.json",
-      "preflightRunId": "rox-compound-20260930T083916Z"
+      "preflightRunId": "rox-compound-20260930T083916Z",
+      "remainingAcceptance": [
+        "Root source-generation/behavioral verification and shared-file integration",
+        "Native interface and all normative DoD criteria",
+        "Delivered revision and final full-program acceptance"
+      ]
     },
     {
       "id": "WP-49",
@@ -1120,17 +1147,25 @@
           "assertions": 1780,
           "files": 13,
           "fullFeatureDoD": false
+        },
+        {
+          "scope": "WAVE0_NATIVE_EDITOR_CORRECTIONS",
+          "receipt": "plans/compound-implementation/wave0-native-corrections-verification.json",
+          "passed": 153,
+          "failed": 0,
+          "nativeAssertions": 204,
+          "fullFeatureDoD": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
-        "interface": "NOT_VERIFIED",
+        "mechanism": "SCOPED_INTEGRATION_VERIFIED",
+        "interface": "SCOPED_REAL_ELECTRON_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "remainingAcceptance": [
-        "Current editor/watcher fixes: fresh builds and native rerun",
-        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Remaining per-criterion gates in wave0-acceptance-review.json",
+        "Full theme/scale/accessibility/platform matrix where applicable",
         "Delivered revision and final full-program acceptance"
       ]
     },
@@ -1224,16 +1259,30 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-AUT-01.md",
       "issue": 1096,
-      "status": "NOT_STARTED",
-      "runtimeEvidence": [],
+      "status": "IMPLEMENTATION_RUNNING",
+      "runtimeEvidence": [
+        {
+          "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
+          "artifact": "plans/compound-implementation/implementation-workers.json",
+          "runId": "rox-compound-implementation-20260930T101129262210Z",
+          "sessionId": "01a0f1cc-49af-7415-8126-9930e2ced986",
+          "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        }
+      ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "NOT_VERIFIED",
+        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/RS-AUT-01.json",
-      "preflightRunId": "rox-compound-20260930T083916Z"
+      "preflightRunId": "rox-compound-20260930T083916Z",
+      "remainingAcceptance": [
+        "Root source-generation/behavioral verification and shared-file integration",
+        "Native interface and all normative DoD criteria",
+        "Delivered revision and final full-program acceptance"
+      ]
     },
     {
       "id": "RS-AUT-02",
@@ -1327,16 +1376,30 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-MTG-01.md",
       "issue": 1101,
-      "status": "NOT_STARTED",
-      "runtimeEvidence": [],
+      "status": "IMPLEMENTATION_RUNNING",
+      "runtimeEvidence": [
+        {
+          "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
+          "artifact": "plans/compound-implementation/implementation-workers.json",
+          "runId": "rox-compound-implementation-20260930T101129262210Z",
+          "sessionId": "01a0f1cc-494e-7689-903c-dcaef13a4c13",
+          "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        }
+      ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "NOT_VERIFIED",
+        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/RS-MTG-01.json",
-      "preflightRunId": "rox-compound-20260930T083916Z"
+      "preflightRunId": "rox-compound-20260930T083916Z",
+      "remainingAcceptance": [
+        "Root source-generation/behavioral verification and shared-file integration",
+        "Native interface and all normative DoD criteria",
+        "Delivered revision and final full-program acceptance"
+      ]
     },
     {
       "id": "RS-MTG-02",
@@ -1425,16 +1488,30 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-MSG-01.md",
       "issue": 1106,
-      "status": "NOT_STARTED",
-      "runtimeEvidence": [],
+      "status": "IMPLEMENTATION_RUNNING",
+      "runtimeEvidence": [
+        {
+          "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
+          "artifact": "plans/compound-implementation/implementation-workers.json",
+          "runId": "rox-compound-implementation-20260930T101129262210Z",
+          "sessionId": "01a0f1cc-4b93-758e-8a56-b51c2b60ed6d",
+          "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        }
+      ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "NOT_VERIFIED",
+        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/RS-MSG-01.json",
-      "preflightRunId": "rox-compound-20260930T083916Z"
+      "preflightRunId": "rox-compound-20260930T083916Z",
+      "remainingAcceptance": [
+        "Root source-generation/behavioral verification and shared-file integration",
+        "Native interface and all normative DoD criteria",
+        "Delivered revision and final full-program acceptance"
+      ]
     },
     {
       "id": "RS-MSG-02",
@@ -1482,16 +1559,30 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-DRV-01.md",
       "issue": 1109,
-      "status": "NOT_STARTED",
-      "runtimeEvidence": [],
+      "status": "IMPLEMENTATION_RUNNING",
+      "runtimeEvidence": [
+        {
+          "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
+          "artifact": "plans/compound-implementation/implementation-workers.json",
+          "runId": "rox-compound-implementation-20260930T101129262210Z",
+          "sessionId": "01a0f1cc-49a4-73b2-9b1f-f3e33b22bd80",
+          "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        }
+      ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "NOT_VERIFIED",
+        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/RS-DRV-01.json",
-      "preflightRunId": "rox-compound-20260930T083916Z"
+      "preflightRunId": "rox-compound-20260930T083916Z",
+      "remainingAcceptance": [
+        "Root source-generation/behavioral verification and shared-file integration",
+        "Native interface and all normative DoD criteria",
+        "Delivered revision and final full-program acceptance"
+      ]
     },
     {
       "id": "RS-DOC-01",
@@ -1575,16 +1666,30 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-ADM-01.md",
       "issue": 1114,
-      "status": "NOT_STARTED",
-      "runtimeEvidence": [],
+      "status": "IMPLEMENTATION_RUNNING",
+      "runtimeEvidence": [
+        {
+          "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
+          "artifact": "plans/compound-implementation/implementation-workers.json",
+          "runId": "rox-compound-implementation-20260930T101129262210Z",
+          "sessionId": "01a0f1cc-49d9-7546-b98f-ea893a3e6009",
+          "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
+          "featureImplemented": false
+        }
+      ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "NOT_VERIFIED",
+        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/RS-ADM-01.json",
-      "preflightRunId": "rox-compound-20260930T083916Z"
+      "preflightRunId": "rox-compound-20260930T083916Z",
+      "remainingAcceptance": [
+        "Root source-generation/behavioral verification and shared-file integration",
+        "Native interface and all normative DoD criteria",
+        "Delivered revision and final full-program acceptance"
+      ]
     },
     {
       "id": "RS-HD-01",
@@ -1716,17 +1821,25 @@
           "assertions": 1780,
           "files": 13,
           "fullFeatureDoD": false
+        },
+        {
+          "scope": "WAVE0_NATIVE_EDITOR_CORRECTIONS",
+          "receipt": "plans/compound-implementation/wave0-native-corrections-verification.json",
+          "passed": 153,
+          "failed": 0,
+          "nativeAssertions": 204,
+          "fullFeatureDoD": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
-        "interface": "NOT_VERIFIED",
+        "mechanism": "SCOPED_INTEGRATION_VERIFIED",
+        "interface": "SCOPED_REAL_ELECTRON_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "remainingAcceptance": [
-        "Current editor/watcher fixes: fresh builds and native rerun",
-        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Remaining per-criterion gates in wave0-acceptance-review.json",
+        "Full theme/scale/accessibility/platform matrix where applicable",
         "Delivered revision and final full-program acceptance"
       ]
     },
@@ -1766,17 +1879,25 @@
           "assertions": 1780,
           "files": 13,
           "fullFeatureDoD": false
+        },
+        {
+          "scope": "WAVE0_NATIVE_EDITOR_CORRECTIONS",
+          "receipt": "plans/compound-implementation/wave0-native-corrections-verification.json",
+          "passed": 153,
+          "failed": 0,
+          "nativeAssertions": 204,
+          "fullFeatureDoD": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
-        "interface": "NOT_VERIFIED",
+        "mechanism": "SCOPED_INTEGRATION_VERIFIED",
+        "interface": "SCOPED_REAL_ELECTRON_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "remainingAcceptance": [
-        "Current editor/watcher fixes: fresh builds and native rerun",
-        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Remaining per-criterion gates in wave0-acceptance-review.json",
+        "Full theme/scale/accessibility/platform matrix where applicable",
         "Delivered revision and final full-program acceptance"
       ]
     },
@@ -1816,17 +1937,25 @@
           "assertions": 1780,
           "files": 13,
           "fullFeatureDoD": false
+        },
+        {
+          "scope": "WAVE0_NATIVE_EDITOR_CORRECTIONS",
+          "receipt": "plans/compound-implementation/wave0-native-corrections-verification.json",
+          "passed": 153,
+          "failed": 0,
+          "nativeAssertions": 204,
+          "fullFeatureDoD": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
-        "interface": "NOT_VERIFIED",
+        "mechanism": "SCOPED_INTEGRATION_VERIFIED",
+        "interface": "SCOPED_REAL_ELECTRON_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "remainingAcceptance": [
-        "Current editor/watcher fixes: fresh builds and native rerun",
-        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Remaining per-criterion gates in wave0-acceptance-review.json",
+        "Full theme/scale/accessibility/platform matrix where applicable",
         "Delivered revision and final full-program acceptance"
       ]
     },
@@ -1849,17 +1978,25 @@
           "assertions": 1780,
           "files": 13,
           "fullFeatureDoD": false
+        },
+        {
+          "scope": "WAVE0_NATIVE_EDITOR_CORRECTIONS",
+          "receipt": "plans/compound-implementation/wave0-native-corrections-verification.json",
+          "passed": 153,
+          "failed": 0,
+          "nativeAssertions": 204,
+          "fullFeatureDoD": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
-        "interface": "NOT_VERIFIED",
+        "mechanism": "SCOPED_INTEGRATION_VERIFIED",
+        "interface": "SCOPED_REAL_ELECTRON_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "remainingAcceptance": [
-        "Current editor/watcher fixes: fresh builds and native rerun",
-        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Remaining per-criterion gates in wave0-acceptance-review.json",
+        "Full theme/scale/accessibility/platform matrix where applicable",
         "Delivered revision and final full-program acceptance"
       ]
     },
@@ -2631,17 +2768,25 @@
           "assertions": 1780,
           "files": 13,
           "fullFeatureDoD": false
+        },
+        {
+          "scope": "WAVE0_NATIVE_EDITOR_CORRECTIONS",
+          "receipt": "plans/compound-implementation/wave0-native-corrections-verification.json",
+          "passed": 153,
+          "failed": 0,
+          "nativeAssertions": 204,
+          "fullFeatureDoD": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "SCOPED_TESTS_VERIFIED_NATIVE_INTEGRATION_IN_PROGRESS",
-        "interface": "NOT_VERIFIED",
+        "mechanism": "SCOPED_INTEGRATION_VERIFIED",
+        "interface": "SCOPED_REAL_ELECTRON_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "remainingAcceptance": [
-        "Current editor/watcher fixes: fresh builds and native rerun",
-        "All normative per-criterion DoD gates from wave0-acceptance-review.json",
+        "Remaining per-criterion gates in wave0-acceptance-review.json",
+        "Full theme/scale/accessibility/platform matrix where applicable",
         "Delivered revision and final full-program acceptance"
       ]
     },
@@ -2921,7 +3066,7 @@
       "implement_repo_binding",
       "implementation_runtime_scout"
     ],
-    "durableRunner": "LOCAL_OMP_EXTERNAL_70_PREFLIGHT",
+    "durableRunner": "LOCAL_OMP_IMPLEMENTATION_AND_PREFLIGHT",
     "cloudCodingRunner": "UNPROVISIONED",
     "noFeatureClosed": true,
     "externalWorkersReceipt": "plans/compound-implementation/external-workers.json",
@@ -2937,9 +3082,13 @@
         "RS-MSG-01",
         "RS-MTG-01"
       ],
-      "nativeDefectBeingFixed": "Tiptap authority/content echo marked unchanged Markdown dirty; duplicate own-write watch events reopened the note",
+      "nativeDefectBeingFixed": null,
       "lastNativeFailure": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790761388388/result.json",
-      "lastNativeFailureSha256": "6fbbfccd44b1d682bde8f9844b728f2bbcd2eb68d0badb6039de5308f35dd8bc"
-    }
+      "lastNativeFailureSha256": "6fbbfccd44b1d682bde8f9844b728f2bbcd2eb68d0badb6039de5308f35dd8bc",
+      "lastNativePass": "/Users/t/Pictures/Shots/Agents/rox-product-electron-1790766123173/result.json",
+      "lastNativePassSha256": "f1e68c77e58dc0f8a2ede1a1cc7c156277a3e764f2c05dbdf3a29c31df313388",
+      "nativeScopedAssertions": 204
+    },
+    "implementationWorkersReceipt": "plans/compound-implementation/implementation-workers.json"
   }
 }

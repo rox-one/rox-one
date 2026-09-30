@@ -7,7 +7,6 @@ import { _electron } from 'playwright'
 import { WebSocket, WebSocketServer, type RawData } from 'ws'
 
 const root = resolve(import.meta.dir, '../../..')
-const documentEndKey = process.platform === 'darwin' ? 'Meta+ArrowDown' : 'Control+End'
 let app: Awaited<ReturnType<typeof _electron.launch>> | null = null
 let profile = ''
 
@@ -43,7 +42,8 @@ async function nativeTransportTap(nativePort: number) {
       } else if (envelope.type === 'request' && envelope.channel === 'content:commitMarkdown') {
         requests.set(envelope.id, { markdownNote: envelope.args[0].noteId, documentChannel: envelope.channel })
         state.documentTrace.push({ at: Date.now(), direction: 'request', requestId: envelope.id, channel: envelope.channel, args: envelope.args })
-      } else if (envelope.type === 'request' && envelope.channel === 'notes:read') {
+      } else if (envelope.type === 'request' && ['notes:read', 'content:resolve', 'content:getBlockTree',
+        'content:previewMarkerMapping', 'content:applyMarkerMapping'].includes(envelope.channel)) {
         requests.set(envelope.id, { documentChannel: envelope.channel })
         state.documentTrace.push({ at: Date.now(), direction: 'request', requestId: envelope.id, channel: envelope.channel, args: envelope.args })
       }
@@ -105,11 +105,18 @@ async function sourceHashes() {
     'apps/electron/src/renderer/pages/notes/NoteInspector.tsx',
     'apps/electron/src/renderer/pages/notes/NotesViewHost.tsx',
     'packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx',
+    'packages/ui/src/components/markdown/legacy-mixed-task-lists.ts',
+    'packages/ui/src/components/markdown/retained-trailing-node.ts',
+    'packages/ui/src/components/markdown/TiptapCodeBlockView.tsx',
+    'packages/ui/src/components/markdown/extensions/AnimatedTaskItem.ts',
+    'packages/ui/src/components/markdown/extensions/RichBlockInteractions.ts',
     'apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx',
     'apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx',
     'apps/electron/src/renderer/components/app-shell/AppShell.tsx',
     'apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx',
+    'apps/electron/src/renderer/components/app-shell/EntityViewTabs.tsx',
     'apps/electron/src/renderer/context/AppShellContext.tsx',
+    'apps/electron/src/renderer/contexts/NavigationContext.tsx',
     'apps/electron/src/renderer/pages/ProjectInfoPage.tsx',
     'apps/electron/src/renderer/platform/home/QuickTaskInput.tsx',
     'apps/electron/src/renderer/platform/home/quick-task-input.css',
@@ -449,10 +456,56 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await page.getByTestId('notes-content-authority').waitFor()
     expect(await page.getByTestId('notes-content-authority').innerText()).toBe('Markdown')
     const editor = page.locator('.notes-editor .ProseMirror')
-    await editor.locator('p').last().click()
-    await editor.press(documentEndKey)
-    await editor.press('Enter')
-    await editor.pressSequentially('Сохранено через реальный RPC.')
+    const saveStatus = page.locator('main.notes-content-surface span[title="Заметки сохраняются автоматически"]')
+    const observeSavedStatus = async (label: string) => {
+      await until(async () => await saveStatus.innerText() === 'Сохранено', label + ' saved status after actual native ACK')
+      const text = await saveStatus.innerText()
+      expect(text).toBe('Сохранено')
+      ;((observed.saveStatuses ??= []) as unknown[]).push({ label, text })
+      return text
+    }
+    const appendParagraph = async (text: string, label: string) => {
+      // Collapse the real editor's Select All at its end. Platform End keys
+      // can leave the caret at a visual line boundary on macOS; read the DOM
+      // selection before typing so a harness mistake cannot split prior text.
+      await editor.locator('p').last().click()
+      await editor.press('ControlOrMeta+a')
+      await editor.press('ArrowRight')
+      const selection = await editor.evaluate(host => {
+        const actual = window.getSelection()
+        if (!actual?.anchorNode || !host.contains(actual.anchorNode)) return { inside: false, collapsed: actual?.isCollapsed === true, remaining: null }
+        const tail = document.createRange()
+        tail.selectNodeContents(host)
+        tail.setStart(actual.anchorNode, actual.anchorOffset)
+        return { inside: true, collapsed: actual.isCollapsed, remaining: tail.toString() }
+      })
+      const selections = (observed.documentEndSelections ??= []) as unknown[]
+      selections.push({ label, selection })
+      expect(selection).toEqual({ inside: true, collapsed: true, remaining: '' })
+      await editor.press('Enter')
+      const listContext = await editor.evaluate(host => {
+        const anchor = window.getSelection()?.anchorNode
+        const element = anchor?.nodeType === Node.ELEMENT_NODE ? anchor as Element : anchor?.parentElement
+        return { inside: !!anchor && host.contains(anchor), inList: !!element?.closest('li'), paragraph: element?.closest('p')?.textContent ?? null }
+      })
+      selections.push({ label, afterEnter: listContext })
+      if (listContext.inList) {
+        // Enter at a task-list end creates an empty item. A second real Enter
+        // exits that empty item before typing the intended prose paragraph.
+        expect(listContext.paragraph).toBe('')
+        await editor.press('Enter')
+      }
+      const proseSelection = await editor.evaluate(host => {
+        const anchor = window.getSelection()?.anchorNode
+        const element = anchor?.nodeType === Node.ELEMENT_NODE ? anchor as Element : anchor?.parentElement
+        return { inside: !!anchor && host.contains(anchor), inList: !!element?.closest('li'), paragraph: element?.closest('p')?.textContent ?? null }
+      })
+      selections.push({ label, proseSelection })
+      expect(proseSelection).toEqual({ inside: true, inList: false, paragraph: '' })
+      await editor.pressSequentially(text)
+      expect(await editor.locator(':scope > p').filter({ hasText: text }).count()).toBe(1)
+    }
+    await appendParagraph('Сохранено через реальный RPC.', 'initial-native-save')
     await page.waitForFunction(() => document.querySelector('.notes-editor .ProseMirror')?.textContent?.includes('Сохранено через реальный RPC.'))
     await until(async () => (await readFile(join(seeded.notesRoot, 'acceptance.md'), 'utf8')).includes('Сохранено через реальный RPC.'), 'native first save')
     await capture('save-readback')
@@ -564,10 +617,7 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     const editorTask = editor.locator('li[data-checked]').filter({ hasText: 'Задача приёмки' })
     await until(async () => await editorTask.getAttribute('data-checked') === 'true', 'active editor checkbox reflects native saved toggle')
     expect(await editorTask.locator('input[type="checkbox"]').isChecked()).toBe(true)
-    await editor.locator('p').last().click()
-    await editor.press(documentEndKey)
-    await editor.press('Enter')
-    await editor.pressSequentially('Текст после переключения задачи.')
+    await appendParagraph('Текст после переключения задачи.', 'after-checkbox-native-save')
     await until(async () => (await readFile(join(seeded.notesRoot, 'acceptance.md'), 'utf8')).includes('Текст после переключения задачи.'), 'text save after checkbox')
     expect(await page.getByTestId('notes-save-recovery').count()).toBe(0)
     expect(await readFile(join(seeded.notesRoot, 'acceptance.md'), 'utf8')).toContain('[x] Задача приёмки')
@@ -582,15 +632,34 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     // native file. The actual watcher and authority CAS handle this race.
     const localDraft = 'Мой несохранённый конфликтный черновик.'
     stage('external-conflict-recovery')
-    await editor.locator('p').last().click()
-    await editor.press(documentEndKey)
-    await editor.press('Enter')
-    await editor.pressSequentially(localDraft)
+    await appendParagraph(localDraft, 'local-conflict-draft')
     const external = (await readFile(join(seeded.notesRoot, 'acceptance.md'), 'utf8')) + '\nИзменено внешним процессом.\n'
     await writeFile(join(seeded.notesRoot, 'acceptance.md'), external)
     const recovery = page.getByTestId('notes-save-recovery')
     await recovery.waitFor({ timeout: 20_000 })
     expect(await recovery.innerText()).toContain('Документ изменён вне этого редактора')
+    const recoveryGeometry = await recovery.evaluate(alert => {
+      const message = alert.querySelector('[data-testid="notes-save-recovery-message"]') as HTMLElement
+      const alertRect = alert.getBoundingClientRect()
+      const messageRect = message.getBoundingClientRect()
+      const font = getComputedStyle(message)
+      return { alertWidth: alertRect.width, messageWidth: messageRect.width, messageHeight: messageRect.height,
+        messageBottom: messageRect.bottom, lineHeight: Number.parseFloat(font.lineHeight), text: message.textContent,
+        clippedHorizontally: message.scrollWidth > message.clientWidth,
+        clippedVertically: message.scrollHeight > message.clientHeight,
+        actions: Array.from(alert.querySelectorAll('button')).map(button => {
+          const rect = button.getBoundingClientRect()
+          return { text: button.textContent, x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+        }) }
+    })
+    observed.recoveryGeometry = recoveryGeometry
+    await capture('native-conflict-recovery-readable-message')
+    expect(recoveryGeometry.messageWidth).toBeGreaterThanOrEqual(recoveryGeometry.alertWidth * 0.8)
+    expect(recoveryGeometry.messageHeight / recoveryGeometry.lineHeight).toBeLessThanOrEqual(6)
+    expect(recoveryGeometry.text).toBe('Документ изменён вне этого редактора. Ваш черновик сохранён в редакторе. Скопируйте изменения и перечитайте исходный файл.')
+    expect(recoveryGeometry.clippedHorizontally).toBe(false)
+    expect(recoveryGeometry.clippedVertically).toBe(false)
+    expect(recoveryGeometry.actions.every(action => action.y >= recoveryGeometry.messageBottom)).toBe(true)
     expect(await editor.innerText()).toContain(localDraft)
     expect(await editor.innerText()).toContain('Текст после переключения задачи.')
     expect(await editor.innerText()).toContain('Сохранено через реальный RPC.')
@@ -633,9 +702,9 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await writeFile(join(evidence, 'document-confirmed-external-source.md'), await readFile(join(seeded.notesRoot, 'acceptance.md')))
     await capture('confirmed-reload-native-source')
 
-    // If the bridge's global property is configurable, hold ONLY the resolution
-    // of a completed real commit. The original native method performs the write
-    // and returns the actual receipt; no data/error implementation is mocked.
+    // Hold only a completed real commit's response frame at the owned transport.
+    // The immutable bridge and original native method perform the write and
+    // return the actual receipt; no data/error implementation is mocked.
     await page.locator('.notes-list-item').filter({ hasText: 'Навигационная заметка' }).first().click()
     stage('real-native-ack-navigation')
     await page.waitForFunction(() => document.querySelector('.notes-editor .ProseMirror')?.textContent?.includes('Текст второго документа.'))
@@ -653,10 +722,7 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     let finalMarker = 'Изменено внешним процессом.'
     if (ackCapability.supported) {
       const lateMarker = 'Реальная запись с удержанным подтверждением.'
-      await editor.locator('p').last().click()
-      await editor.press(documentEndKey)
-      await editor.press('Enter')
-      await editor.pressSequentially(lateMarker)
+      await appendParagraph(lateMarker, 'held-native-ack-source-draft')
       await until(async () => tap!.state.heldMarkdown !== null, 'completed native Markdown response at owned transport')
       expect(await readFile(join(seeded.notesRoot, 'acceptance.md'), 'utf8')).toContain(lateMarker)
       await page.locator('.notes-list-item').filter({ hasText: 'Навигационная заметка' }).first().click()
@@ -669,11 +735,9 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
       // changes generation while the earlier commit's result is still held.
       await page.goBack()
       await page.waitForFunction(() => document.querySelector('.notes-editor .ProseMirror')?.textContent?.includes('Текст второго документа.'))
+      await observeSavedStatus('B-loaded-while-A-real-ACK-held')
       finalMarker = 'Черновик второго документа до подтверждения первого.'
-      await editor.locator('p').last().click()
-      await editor.press(documentEndKey)
-      await editor.press('Enter')
-      await editor.pressSequentially(finalMarker)
+      await appendParagraph(finalMarker, 'foreign-draft-before-old-ack')
       await capture('new-document-draft-before-old-ack')
       const foreignBufferBefore = { text: await editor.innerText(), pixels: await editorPixels('foreign-buffer-before-old-ack') }
       const receipt = tap.state.heldMarkdown!.result.receipt
@@ -686,8 +750,10 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
       const foreignBufferAfter = { text: await editor.innerText(), pixels: await editorPixels('foreign-buffer-after-old-ack') }
       expect(foreignBufferAfter.text).toBe(foreignBufferBefore.text)
       expect(foreignBufferAfter.pixels).toEqual(foreignBufferBefore.pixels)
+      const activeSaveStatus = await observeSavedStatus('B-after-both-real-ACKs')
+      await capture('old-ack-keeps-active-document-saved-status')
       observed.heldAck = { receipt, realNativeWriteObservedBeforeAck: true, normalNoteNavigationBlocked: true, browserHistoryNavigation: true,
-        newDraftPreserved: true, foreignBufferBefore, foreignBufferAfter, semanticAndDecodedPixelsUnchanged: true }
+        newDraftPreserved: true, foreignBufferBefore, foreignBufferAfter, semanticAndDecodedPixelsUnchanged: true, activeSaveStatus }
       await capture('old-ack-preserves-new-document-draft')
     } else {
       observed.heldAck = { status: 'NOT_RUN', reason: 'Actual contextBridge global is immutable; no fake commit implementation substituted.' }
@@ -799,14 +865,82 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await capture('malformed-yaml-properties-disabled')
 
     stage('native-map-outline-markers')
+    const readOnlyStructureTraceStart = tap.state.documentTrace.length
+    await page.evaluate(() => {
+      // Observe the genuine editor's transactions from its first rendered DOM.
+      // This listener never dispatches a transaction or changes a callback.
+      const probes: { editor: any; listeners: [string, (event: any) => void][] }[] = []
+      const events: unknown[] = []
+      const attach = () => {
+        let host = document.querySelector('.notes-editor .ProseMirror')
+        let fiberKey: string | undefined
+        while (host && !(fiberKey = Object.keys(host).find(key => key.startsWith('__reactFiber$')))) host = host.parentElement
+        if (!host || !fiberKey) return
+        let fiber = (host as unknown as Record<string, any>)[fiberKey]
+        while (fiber) {
+          let hook = fiber.memoizedState
+          for (let index = 0; hook && typeof hook === 'object' && 'memoizedState' in hook && index < 250; index++) {
+            const candidate = hook.memoizedState?.current
+            if (typeof candidate?.getJSON === 'function' && typeof candidate?.on === 'function' && !candidate.isDestroyed
+              && !probes.some(probe => probe.editor === candidate)) {
+              const record = (kind: string, event: any) => {
+                const transactions = [event.transaction, ...(event.appendedTransactions ?? [])].filter(Boolean)
+                events.push({ at: Date.now(), kind, focused: candidate.isFocused,
+                  title: (document.querySelector('[data-note-property="title"] input') as HTMLInputElement | null)?.value,
+                  transactions: transactions.map(transaction => ({ docChanged: transaction.docChanged,
+                    steps: transaction.steps.map((step: any) => step.toJSON()),
+                    appendedTransaction: !!transaction.getMeta('appendedTransaction'),
+                    meta: Object.fromEntries(['preventUpdate', 'uiEvent', 'paste', 'pointer', 'shikiPluginForceDecoration']
+                      .map(key => [key, transaction.getMeta(key)])),
+                    before: transaction.before.toJSON(), after: transaction.doc.toJSON() })),
+                  editorMarkdown: candidate.storage.markdown?.getMarkdown?.(),
+                  stack: new Error('Read-only rich editor transaction observation').stack })
+              }
+              const listeners: [string, (event: any) => void][] = ['beforeTransaction', 'transaction', 'update']
+                .map(kind => [kind, event => record(kind, event)])
+              for (const [kind, listener] of listeners) candidate.on(kind, listener)
+              probes.push({ editor: candidate, listeners })
+              events.push({ at: Date.now(), kind: 'attached', initialDoc: candidate.getJSON(),
+                initialMarkdown: candidate.storage.markdown?.getMarkdown?.() })
+            }
+            hook = hook.next
+          }
+          fiber = fiber.return
+        }
+      }
+      const observer = new MutationObserver(attach)
+      observer.observe(document.body, { childList: true, subtree: true })
+      attach()
+      ;(window as unknown as { __roxStructureEditorTrace: { events: unknown[]; cleanup(): void } }).__roxStructureEditorTrace = {
+        events, cleanup: () => { observer.disconnect(); for (const { editor, listeners } of probes) for (const [kind, listener] of listeners) editor.off(kind, listener) },
+      }
+    })
     await page.locator('.notes-list-item').filter({ hasText: 'Структура документа' }).first().click()
     const structureFile = join(seeded.notesRoot, 'structure.md')
+    await page.waitForFunction(() => (document.querySelector('[data-note-property="title"] input') as HTMLInputElement | null)?.value === 'Структура документа')
+    await page.waitForFunction(() => document.querySelector('.notes-editor .ProseMirror')?.textContent?.includes('Дочерний блок'))
+    expect(await editor.locator('li[data-checked]').count()).toBe(1)
+    expect(await editor.locator('li[data-checked]').innerText()).toContain('Новый блок без маркера')
+    expect(await editor.locator('li:not([data-checked])').count()).toBe(2)
+    observed.structureRichRender = { taskItems: 1, ordinaryItems: 2, noSyntheticEmptyTask: true }
+    await capture('mixed-list-native-editor-no-synthetic-task')
+    const structureOpenSource = await readFile(structureFile, 'utf8')
+    const structureOpenWrites = tap.state.documentTrace.slice(readOnlyStructureTraceStart).filter(event => event.direction === 'request'
+      && event.channel === 'content:commitMarkdown' && (event.args?.[0] as { noteId?: string })?.noteId === seeded.structureNoteId)
+    observed.structureOpenAuthority = { source: structureOpenSource, nativeCommits: structureOpenWrites }
+    expect(structureOpenSource).toBe(seeded.structureSource)
+    expect(structureOpenWrites).toEqual([])
     const blockSource = page.getByTestId('notes-stable-block-source')
     const getNativeTree = () => page.evaluate(async ({ workspaceId, structureNoteId }) => {
       const resolution = await window.electronAPI.resolveContent({ workspaceId, entityId: 'note:' + structureNoteId })
       if (resolution.status === 'error') throw new Error('Native block authority unavailable: ' + resolution.code)
-      return window.electronAPI.getBlockTree({ ref: resolution.canonicalRef, revision: resolution.revision,
-        authorityEpoch: resolution.origin.authorityEpoch, sourceStoreId: resolution.origin.sourceStoreId })
+      try {
+        return await window.electronAPI.getBlockTree({ ref: resolution.canonicalRef, revision: resolution.revision,
+          authorityEpoch: resolution.origin.authorityEpoch, sourceStoreId: resolution.origin.sourceStoreId })
+      } catch (caught) {
+        const actual = caught as { code?: string; message?: string }
+        throw new Error(`Actual native getBlockTree rejection: ${JSON.stringify({ code: actual?.code, message: actual?.message })}`)
+      }
     }, seeded)
     const initialTree = await getNativeTree()
     expect(initialTree.identity.status).toBe('ok')
@@ -816,16 +950,51 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await page.getByRole('tab', { name: 'Оглавление', exact: true }).click()
     const outline = page.getByTestId('notes-outline-view')
     await outline.waitFor()
+    await until(async () => {
+      if (await readFile(structureFile, 'utf8') !== seeded.structureSource) throw new Error('Native structure bytes changed during read-only Outline opening')
+      const attemptedWrite = tap!.state.documentTrace.slice(readOnlyStructureTraceStart).find(event => event.direction === 'request'
+        && event.channel === 'content:commitMarkdown' && (event.args?.[0] as { noteId?: string })?.noteId === seeded.structureNoteId)
+      if (attemptedWrite) throw new Error('Native structure commit attempted during read-only Outline opening')
+      return await outline.locator('[data-block-id="existing-child"]').count() === 1
+    }, 'native Outline anchored projection without write')
     const initialOutlineIds = await outline.locator('[data-block-id]').evaluateAll(elements => elements.map(element => element.getAttribute('data-block-id')).sort())
     expect(initialOutlineIds).toEqual(['existing-child', 'existing-parent'])
     expect(await readFile(structureFile, 'utf8')).toBe(seeded.structureSource)
+    observed.blockStructure = { initialTree, initialOutlineIds, readsNeverStampedSource: true }
     await capture('native-outline-existing-ids-read-only')
+    const viewTabGeometry = await page.getByRole('tab', { name: 'Карта', exact: true }).evaluate(button => {
+      const tabs = button.closest('[role="tablist"]')!
+      const parent = tabs.getBoundingClientRect()
+      const main = tabs.closest('main')!
+      const mainRect = main.getBoundingClientRect()
+      const items = Array.from(tabs.querySelectorAll<HTMLButtonElement>('[role="tab"]')).map(tab => {
+        const rect = tab.getBoundingClientRect()
+        const target = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)
+        return { label: tab.getAttribute('aria-label'), x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+          withinStrip: rect.left >= parent.left && rect.right <= parent.right && rect.top >= parent.top && rect.bottom <= parent.bottom,
+          withinMain: rect.left >= mainRect.left && rect.right <= mainRect.right && rect.top >= mainRect.top && rect.bottom <= mainRect.bottom,
+          pointerTargetIsTab: !!target && (target === tab || tab.contains(target)),
+          interceptingTag: target?.tagName, interceptingText: target?.textContent?.slice(0, 120) }
+      })
+      return { mainWidth: mainRect.width, stripWidth: parent.width, stripClientWidth: tabs.clientWidth,
+        stripScrollWidth: tabs.scrollWidth, tabs: items }
+    })
+    observed.viewTabGeometry = viewTabGeometry
+    expect(viewTabGeometry.tabs).toHaveLength(6)
+    expect(viewTabGeometry.tabs.every(tab => tab.withinStrip && tab.withinMain)).toBe(true)
+    expect(viewTabGeometry.tabs.every(tab => tab.pointerTargetIsTab)).toBe(true)
+    expect(viewTabGeometry.stripScrollWidth).toBeLessThanOrEqual(viewTabGeometry.stripClientWidth)
+    stage('native-map-read-only')
     await page.getByRole('tab', { name: 'Карта', exact: true }).click()
     await page.locator('[data-mindmap-node="block:existing-child"]').waitFor()
     const initialMapIds = await page.locator('[data-mindmap-node^="block:"]').evaluateAll(elements => elements.map(element => element.getAttribute('data-mindmap-node')!.slice(6)).sort())
     expect(initialMapIds).toEqual(initialOutlineIds)
     expect(await readFile(structureFile, 'utf8')).toBe(seeded.structureSource)
+    expect(tap.state.documentTrace.slice(readOnlyStructureTraceStart).filter(event => event.direction === 'request'
+      && event.channel === 'content:commitMarkdown' && (event.args?.[0] as { noteId?: string })?.noteId === seeded.structureNoteId)).toEqual([])
+    Object.assign(observed.blockStructure as object, { initialMapIds, readOnlyMapAndOutlineNativeCommits: 0 })
     await capture('native-map-same-block-ids')
+    stage('stable-marker-reviewed-cancel-apply')
     await page.getByRole('button', { name: 'Назначить стабильные ID блоков', exact: true }).click()
     const markerDialog = page.getByRole('dialog', { name: 'Проверка стабильных ID блоков' })
     await markerDialog.waitFor()
@@ -838,11 +1007,14 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await markerDialog.waitFor({ state: 'hidden' })
     expect(await readFile(structureFile, 'utf8')).toBe(seeded.structureSource)
     await capture('stable-marker-cancel-source-unchanged')
+    Object.assign(observed.blockStructure as object, { canceledPreviewPreservedSource: true })
     await page.getByRole('button', { name: 'Назначить стабильные ID блоков', exact: true }).click()
     await markerDialog.waitFor()
     const reviewedMarkerSource = (await markerDialog.locator('pre').nth(1).textContent())!
     await markerDialog.getByRole('button', { name: 'Применить проверенные маркеры', exact: true }).click()
     await until(async () => await readFile(structureFile, 'utf8') === reviewedMarkerSource, 'native reviewed marker exact bytes')
+    await writeFile(join(evidence, 'structure-before.md'), seeded.structureSource)
+    await writeFile(join(evidence, 'structure-after-reviewed-markers.md'), await readFile(structureFile))
     const finalTree = await getNativeTree()
     const finalNativeIds = [finalTree.listTree.root?.nodeId, ...finalTree.listTree.nodes.map(node => node.nodeId)].filter(Boolean).sort()
     const finalListIds = finalTree.listTree.nodes.map(node => node.nodeId).filter(Boolean).sort()
@@ -850,27 +1022,42 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     expect(finalNativeIds).toContain('existing-parent')
     expect(finalNativeIds).toContain('existing-child')
     expect(reviewedMarkerSource.replace(/^[ \t]*<!-- block:[A-Za-z0-9_-]+ -->\n/gm, '')).toBe(seeded.structureSource)
+    Object.assign(observed.blockStructure as object, { finalTree, finalNativeIds, finalListIds,
+      reviewedSourceSha256: digest(reviewedMarkerSource), nativeAppliedExactReviewedBytes: true })
     await until(async () => (await page.locator('[data-mindmap-node^="block:"]').count()) === finalListIds.length, 'map refresh from native marker ACK')
     const finalMapIds = await page.locator('[data-mindmap-node^="block:"]').evaluateAll(elements => elements.map(element => element.getAttribute('data-mindmap-node')!.slice(6)).sort())
     expect(finalMapIds).toEqual(finalListIds)
+    Object.assign(observed.blockStructure as object, { finalMapIds })
+    const markerSaveStatus = await observeSavedStatus('structure-after-real-marker-ACK')
+    Object.assign(observed.blockStructure as object, { markerSaveStatus })
     await capture('stable-marker-applied-map-native-ids')
+    stage('native-map-outline-block-deeplink')
     // The map canvas names its root display object "root". Its actual source
     // navigation must resolve to the same native root ID shown in Outline.
     await page.locator('[data-mindmap-node="root"]').dblclick()
     await blockSource.waitFor()
     expect(await blockSource.getAttribute('data-block-id')).toBe(finalTree.listTree.root!.nodeId!)
     expect(await blockSource.innerText()).toContain('# Структура документа')
+    Object.assign(observed.blockStructure as object, { mapRootResolvedNativeId: finalTree.listTree.root!.nodeId })
     await capture('map-root-resolves-native-outline-root-id')
     await page.keyboard.press('Escape')
     await page.getByRole('tab', { name: 'Оглавление', exact: true }).click()
+    await until(async () => {
+      if (await readFile(structureFile, 'utf8') !== reviewedMarkerSource) throw new Error('Native reviewed marker bytes changed during Outline projection')
+      const ids = await outline.locator('[data-block-id]').evaluateAll(elements => elements.map(element => element.getAttribute('data-block-id')).sort())
+      return JSON.stringify(ids) === JSON.stringify(finalNativeIds)
+    }, 'Outline exact reviewed native block IDs')
     const finalOutlineIds = await outline.locator('[data-block-id]').evaluateAll(elements => elements.map(element => element.getAttribute('data-block-id')).sort())
     expect(finalOutlineIds).toEqual(finalNativeIds)
+    Object.assign(observed.blockStructure as object, { finalOutlineIds })
     await capture('stable-marker-outline-same-native-ids')
     await outline.locator('[data-block-id="existing-child"]').click()
     await blockSource.waitFor()
     expect(await blockSource.getAttribute('data-block-id')).toBe('existing-child')
     expect(await blockSource.innerText()).toContain('Дочерний блок ^existing-child')
     expect(await page.getByRole('dialog').innerText()).toContain('[[structure#^existing-child]]')
+    const outlineBlockSource = await blockSource.innerText()
+    Object.assign(observed.blockStructure as object, { outlineBlockSource })
     await capture('outline-native-block-deeplink')
     await page.keyboard.press('Escape')
     await page.getByRole('tab', { name: 'Карта', exact: true }).click()
@@ -878,6 +1065,9 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     await blockSource.waitFor()
     expect(await blockSource.getAttribute('data-block-id')).toBe('existing-child')
     expect(await blockSource.innerText()).toContain('Дочерний блок ^existing-child')
+    const mapBlockSource = await blockSource.innerText()
+    expect(mapBlockSource).toBe(outlineBlockSource)
+    Object.assign(observed.blockStructure as object, { mapBlockSource })
     await capture('map-native-block-deeplink-same-source')
     await page.keyboard.press('Escape')
     await page.evaluate((noteAddress) => window.dispatchEvent(new CustomEvent('craft-agent-navigate', {
@@ -885,13 +1075,29 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
     })), seeded.structureNoteId + '#^existing-child')
     await blockSource.waitFor()
     expect(await blockSource.getAttribute('data-block-id')).toBe('existing-child')
+    expect(await blockSource.innerText()).toBe(outlineBlockSource)
     await capture('registered-native-block-address')
-    await writeFile(join(evidence, 'structure-before.md'), seeded.structureSource)
-    await writeFile(join(evidence, 'structure-after-reviewed-markers.md'), reviewedMarkerSource)
+    Object.assign(observed.blockStructure as object, { sameCurrentAddressReplayOpenedBlock: true })
+    await page.keyboard.press('Escape')
+    await blockSource.waitFor({ state: 'hidden' })
+    await page.locator('.notes-list-item').filter({ hasText: 'Навигационная заметка' }).first().click()
+    await page.waitForFunction(() => (document.querySelector('[data-note-property="title"] input') as HTMLInputElement | null)?.value === 'Навигационная заметка')
+    expect(await editor.innerText()).toContain(finalMarker)
+    await capture('fresh-block-address-origin-other-note')
+    await page.evaluate((noteAddress) => window.dispatchEvent(new CustomEvent('craft-agent-navigate', {
+      detail: { route: 'notes/note/' + encodeURIComponent(noteAddress) }, bubbles: true,
+    })), seeded.structureNoteId + '#^existing-child')
+    await blockSource.waitFor()
+    expect(await blockSource.getAttribute('data-block-id')).toBe('existing-child')
+    expect(await blockSource.innerText()).toBe(outlineBlockSource)
+    expect(await readFile(structureFile, 'utf8')).toBe(reviewedMarkerSource)
+    await capture('fresh-inbound-native-block-address')
     observed.blockStructure = { initialTree, finalTree, initialOutlineIds, initialMapIds, finalNativeIds, finalListIds, finalOutlineIds, finalMapIds,
       readsNeverStampedSource: true, canceledPreviewPreservedSource: true, reviewedSourceSha256: digest(reviewedMarkerSource),
       nativeAppliedExactReviewedBytes: true, mapRootResolvedNativeId: finalTree.listTree.root!.nodeId,
-      mapOutlineAndAddressResolveSameBlock: 'existing-child' }
+      mapOutlineAndAddressResolveSameBlock: 'existing-child', outlineBlockSource, mapBlockSource,
+      registeredAddressBlockSource: await blockSource.innerText(), sameCurrentAddressReplayOpenedBlock: true,
+      freshInboundFromOtherNoteOpenedSameBlock: true, markerSaveStatus }
     observed.seeded = seeded
     observed.errors = errors
     expect(await sourceHashes()).toEqual(sourceSha256)
@@ -921,6 +1127,12 @@ describe.skipIf(process.env.ROX_COMPOUND_PRODUCT_E2E !== '1')('Real Electron →
       await capture('failure').catch(() => {})
       throw error
     } finally {
+      observed.structureEditorTrace = await page.evaluate(() => {
+        const trace = (window as unknown as { __roxStructureEditorTrace?: { events: unknown[]; cleanup(): void } }).__roxStructureEditorTrace
+        if (!trace) return []
+        trace.cleanup()
+        return trace.events
+      }).catch(caught => ({ diagnosticError: String(caught) }))
       await app.evaluate(({ ipcMain }) => {
         const stored = (globalThis as unknown as { __roxAcceptancePort?: { originals: Function[]; replacement: (...args: any[]) => void } }).__roxAcceptancePort
         if (!stored) return

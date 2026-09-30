@@ -27,6 +27,18 @@ Producer поддерживает 7 implementation workers и последующ
 
 ## Следующие действия
 
+### Актуальное продолжение после native PASS
+
+- Session93289: настоящий Electron, 1pass/0fail/204assertions,127.93s;43source и1074build hashes equality gates прошли. Scoped tests153pass/0fail/1914assertions/15files. `wave0-native-corrections-verification.json` содержит оригинальные receipts и ограничения. Screenshots `/Users/t/Pictures/Shots/Agents/rox-product-electron-1790766123173/`; root просмотрел recovery, Home focus, Map, Outline, repeated block address. Все шесть пакетов имеют scoped mechanism/interface verification; fullDoD остаётся открытым.
+- Parser mixed list и retained trailing node больше не изменяют документ при чтении. Recovery читаемый;6tabs не перекрываются inspector. Повтор текущего block address после Escape работает. Поздний ACK не меняет чужой editor и не оставляет новый документ в Saving.
+- WP01 externalhandoff подтверждён `/tmp/rox-wp01-handoff-verification.json`. Root интегрирует canonicalActor `/tmp/rox-wp01-auth-patches/canonical-actor.patch`,3transport patches `/tmp/rox-wp01-transport-patches/patch-manifest.json`, refreshed persisted session gate `/tmp/rox-wp01-server-verification/domain-session-gate-refreshed.patch` (base repository d55f05e...). Isolated actual service6tests/100assertions passed; обязательно повторить integrated checkout. Existing root auth/HTTP/server.ts — единая authority; не применять альтернативные duplicate issuer/HTTP/bootstrap external drafts.
+- Review воспроизвёл повреждённый retained receipt JSON и event sequence-before-commit race. Исправления `/tmp/rox-wp01-review-patches/` применяются ПОСЛЕ sessiongate; нельзя считать recovery/event DoD закрытым до exact review и integrated tests.
+- Producer готовит реальный Connections sign-in/configuration и Projects create/list/detail через dedicated domain-only authority routing, существующее encrypted CredentialManager storage. Никаких fake folder paths или domain fallback на local host. Native scout готовит два настоящих Electron profiles и actual PG/service acceptance. Только root применяет existing-file patches; worker NEW paths проверять перед созданием.
+-7actual implementation workers и63+4preflight workers GPT6.1Sol/high имеют receipts в `implementation-workers.json`; localOMP, не cloud deployment. Предыдущие70preflights сохранены в external-workers.json. Report/launch не означает featureDoD.
+- Electron44existing diagnostics vs46baseline,0new: `/tmp/rox-wave0-navigation-replay-electron-ts.log`; renderer PASS59.65s `/tmp/rox-wave0-navigation-replay-renderer.log`. После WP01 transport/native integration собрать main/preload/renderer заново и выполнить actual2profile UI suite.
+
+Этот раздел актуальнее старой истории отказов ниже. Не стирать историю или переписывать исходные receipt hashes. После текущего checkpoint push+remote readback, затем продолжить WP01 critical path и оставшиеся normative gates всех143.
+
 1. Проверить `git status`, native worker state и новые логи. Не стирать dirty работу.
 2. Завершить scoped native writer/source-boundary/current-policy проверки. Свежие main/preload/renderer.
 3. Передать `implementation_runtime_scout` GO на native Electron acceptance. Просмотреть полученные изображения и transcript/hash evidence; исправить реальные failures.

@@ -9,7 +9,7 @@
       "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[]' is not assignable to type 'LoadedProject[]'."
     ],
     "baselineLog": "/tmp/rox-compound-baseline-typecheck.txt",
-    "currentLog": "/tmp/rox-wave0-bridge-electron-ts.log"
+    "currentLog": "/tmp/rox-wave0-navigation-replay-electron-ts.log"
   },
   "server": {
     "baselineUnique": 25,

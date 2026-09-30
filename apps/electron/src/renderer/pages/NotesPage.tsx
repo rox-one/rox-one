@@ -14,6 +14,7 @@ import { contentHash as blockContentHash } from '@craft-agent/core/rox2'
 import { parseNoteBlockAddress, resolveNoteBlockId } from '@craft-agent/core/mindmap/derive-note.ts'
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
+import { NavigationContext } from '@/contexts/NavigationContext'
 import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
 import {
   bindRightSessionContext,
@@ -562,6 +563,7 @@ function countFolderNotes(node: FolderTreeNode): number {
 
 export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const { t } = useTranslation()
+  const navigationRevision = React.useContext(NavigationContext)?.navigationRevision
   const {
     activeWorkspaceId,
     onCreateSession,
@@ -706,7 +708,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     const nodeId = resolveNoteBlockId(visibleBlockTree.listTree, address.blockId)
     setSelectedBlockId(nodeId)
     if (!nodeId) toast.error(t('notes.blocks.notFound'))
-  }, [selectedNoteId, visibleBlockTree, activeNote?.id, t])
+  }, [selectedNoteId, visibleBlockTree, activeNote?.id, navigationRevision, t])
   const prepareMarkers = async () => {
     if (!visibleBlockTree || !activeWorkspaceId || !activeNote || dirty || markerBusy) return
     const revision = visibleBlockTree.revision
@@ -914,6 +916,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setActiveNote(note)
       setContent(note.content)
       setDirty(false)
+      setSaving(false)
       setSaveError(null)
       saveBlockedRef.current = false
       setSaveNeedsReload(false)
@@ -925,6 +928,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setActiveNote(null)
       setContent('')
       setDirty(false)
+      setSaving(false)
     } finally {
       if (request === openRequestRef.current && workspaceIdRef.current === activeWorkspaceId) setLoading(false)
     }
@@ -2291,8 +2295,9 @@ h1,h2,h3{margin-top:1.5em}
         </div>
 
         {activeNote && saveError && (
-          <div role="alert" data-testid="notes-save-recovery" className="mx-3 mb-2 flex flex-wrap items-center gap-2 rounded-md bg-destructive/5 px-3 py-2 text-xs">
-            <span className="min-w-0 flex-1 text-destructive">{saveError}</span>
+          <div role="alert" data-testid="notes-save-recovery" className="mx-3 mb-2 grid min-w-0 gap-2 rounded-md bg-destructive/5 px-3 py-2 text-xs">
+            <p className="min-w-0 break-words text-destructive" data-testid="notes-save-recovery-message">{saveError}</p>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Button variant="ghost" size="sm" onClick={async () => {
               try { await navigator.clipboard.writeText(contentRef.current); toast.success(t('notes.content.draftCopied')) }
               catch { toast.error(t('notes.content.copyFailed')) }
@@ -2300,6 +2305,7 @@ h1,h2,h3{margin-top:1.5em}
             <Button variant="ghost" size="sm" onClick={() => saveNeedsReload ? setSaveRecoveryOpen(true) : void saveCurrentNote()}>
               {saveNeedsReload ? t('notes.content.reloadSource') : t('notes.content.retrySave')}
             </Button>
+            </div>
           </div>
         )}
 
@@ -2345,6 +2351,7 @@ h1,h2,h3{margin-top:1.5em}
             value={noteView}
             onChange={setNoteView}
             capabilities={noteViewCapabilities}
+            className="min-w-0 flex-wrap"
           />
         ) : null}
 

@@ -118,6 +118,8 @@ interface NavigationContextValue {
   isReady: boolean
   /** Unified navigation state — derived from focused panel + right sidebar */
   navigationState: NavigationState
+  /** Accepted navigation requests include reopening the current entity address. */
+  navigationRevision: number
   /** Whether we can go back in history */
   canGoBack: boolean
   /** Whether we can go forward in history */
@@ -195,6 +197,7 @@ export function NavigationProvider({
   // =========================================================================
 
   const focusedRoute = useAtomValue(focusedPanelRouteAtom)
+  const [navigationRevision, setNavigationRevision] = useState(0)
 
   // Right sidebar is independent of panels (not per-panel state)
   const [rightSidebar, setRightSidebar] = useState<RightSidebarPanel | undefined>()
@@ -897,6 +900,7 @@ export function NavigationProvider({
         // Update the focused panel's route (atom update is synchronous)
         // The panelStack atom subscription detects the route change and calls syncUrl(true)
         store.set(updateFocusedPanelRouteAtom, finalRoute)
+        setNavigationRevision(revision => revision + 1)
       }
     },
     [isReady, handleActionNavigation, resolveAutoSelection, store, pushPanel, workspaceId]
@@ -1247,6 +1251,7 @@ export function NavigationProvider({
         navigate,
         isReady,
         navigationState,
+        navigationRevision,
         canGoBack,
         canGoForward,
         goBack,

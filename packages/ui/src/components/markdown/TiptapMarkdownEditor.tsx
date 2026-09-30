@@ -11,6 +11,8 @@ import Image from '@tiptap/extension-image'
 import FileHandler from '@tiptap/extension-file-handler'
 import { Markdown as OfficialMarkdown } from '@tiptap/markdown'
 import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
+import { LegacyMixedTaskLists } from './legacy-mixed-task-lists'
+import { RetainedTrailingNode } from './retained-trailing-node'
 import { tiptapCodeBlock } from './TiptapCodeBlockView'
 import { TiptapBubbleMenus, INLINE_MATH_EDIT_EVENT } from './TiptapBubbleMenus'
 import { TiptapSlashMenu } from './TiptapSlashMenu'
@@ -254,8 +256,10 @@ export function TiptapMarkdownEditor({
     const base = [
       StarterKit.configure({
         codeBlock: false,
+        trailingNode: false,
         heading: { levels: [1, 2, 3] },
       }),
+      RetainedTrailingNode,
       TaskList,
       TaskItem.configure({
         nested: true,
@@ -326,6 +330,7 @@ export function TiptapMarkdownEditor({
 
     return [
       ...base,
+      LegacyMixedTaskLists,
       MarkdownComment,
       LegacyMarkdown.configure({
         html: false,
