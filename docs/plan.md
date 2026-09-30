@@ -66,3 +66,5 @@ The workflow proposal and local runtime proof are complete. Remote execution and
 | Verify combined built runtime | cloud_recovery / terminal_history | Three real builds | Rebuilt combined bundle; built smoke2/2; focused server175/175 and memory6/6 | Complete locally |
 | Review and record evidence | repo_audit / root | Frozen bounded diff and final logs | Independent review; tracked hash-bound receipt | In progress |
 | Deliver new draft PR | terminal_history / root | Root selected separate combined branch | Push, draft PR main, remote readback and hosted gate status | Pending |
+
+- Spec review correction: the candidate Pi reasoning deletion regressed existing main Responses support because its local API union was stale. Reused the canonical type, restored registration behavior and added actual-callback tests. The reviewer independently reproduced main=true, preliminary candidate=false and corrected=true for Responses, with Completions unchanged.
