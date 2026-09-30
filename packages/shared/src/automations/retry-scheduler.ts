@@ -8,8 +8,8 @@
  *   - 2nd deferred: 30 minutes
  *   - 3rd deferred: 1 hour
  *
- * After all deferred attempts fail, the entry is removed and a final history
- * entry is written. Queue entries survive app restarts.
+ * Terminal outcomes retain an exact history intent until its append is
+ * confirmed, then remove the queue entry. Queue entries survive app restarts.
  *
  * Queue mutations are serialized so enqueue during an in-flight tick cannot
  * be overwritten. HTTP runs outside the lock; the rewrite re-reads the file
@@ -18,10 +18,10 @@
  * Single-process invariant: one RetryScheduler owns AUTOMATIONS_RETRY_QUEUE_FILE
  * for a workspace. Multi-worker / multi-process leases and DLQ are unsupported.
  * Each due row is durably marked in-flight before its HTTP effect. Known results
- * are acknowledged by an atomic JSONL rewrite; history is written only after
- * ack succeeds. On process restart, any in-flight row is recorded as an unknown
- * external outcome and removed without automatic resend. Only acknowledged,
- * known failures become eligible for the next deferred attempt.
+ * first persist a terminal_pending intent for exact history recovery before
+ * queue removal. On restart, in-flight rows become unknown terminal outcomes;
+ * terminal_pending history is recovered without automatic resend. Only
+ * acknowledged known failures become eligible for the next deferred attempt.
  */
 
 import { readFile, writeFile, appendFile, rename } from 'fs/promises';

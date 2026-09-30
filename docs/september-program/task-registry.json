@@ -4633,7 +4633,7 @@
       "title": "[Sep-memory] Разделить личную и общую память с происхождением, правами и восстановлением",
       "area": "memory",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerMemory",
       "dependsOn": [
         "RECON-01",
@@ -4723,7 +4723,7 @@
       "title": "[Sep-memory] Довести трёхколоночную память: поиск, происхождение и безопасная ротация lessons",
       "area": "memory",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerMemory",
       "dependsOn": [
         "RECON-01",
@@ -4973,7 +4973,7 @@
       "title": "[Sep-marketplace] Довести поиск каталога и групповой install/update/uninstall",
       "area": "marketplace",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerMarketplace",
       "dependsOn": [
         "RECON-01",
@@ -5063,7 +5063,7 @@
       "title": "[Sep-imports] Проверить реальные локальные источники, учётные записи, согласие и неполный импорт",
       "area": "imports",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerImports",
       "dependsOn": [
         "RECON-01",
@@ -5122,16 +5122,18 @@
           "status": "IN_PROGRESS",
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
-            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+            "RUNTIME-ACCEPTANCE-WAVE-20260930",
+            "BUDGET-OWNER-SOURCE-STATUS-20260930"
           ],
-          "summary": "Bounded Darwin protected cookie-key deletion retry verified after lost phase write; Linux, actual import UI and full source/account criteria remain pending."
+          "summary": "Existing source-status RPC registration and connection-owned workspace fence verified through actual indexed-source WebSocket control. Full source discovery/install/import/consent/UI criteria remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
           "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
-            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+            "RUNTIME-ACCEPTANCE-WAVE-20260930",
+            "BUDGET-OWNER-SOURCE-STATUS-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -8074,9 +8076,10 @@
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
-            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+            "RUNTIME-ACCEPTANCE-WAVE-20260930",
+            "BUDGET-OWNER-SOURCE-STATUS-20260930"
           ],
-          "summary": "Actual SIGKILL/new-process ledger recovery and idempotent reconciliation verified; actual paid-provider/background cancellation and platform criteria remain pending."
+          "summary": "Local ledger owner isolation, contention, actual process-loss recovery and native Electron/Node constructor cleanup verified; paid-provider/background and full platform acceptance remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -8084,7 +8087,8 @@
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
-            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+            "RUNTIME-ACCEPTANCE-WAVE-20260930",
+            "BUDGET-OWNER-SOURCE-STATUS-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -9872,9 +9876,10 @@
             "NATIVE-NOTES-CREATE-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
-            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
+            "BUDGET-OWNER-SOURCE-STATUS-20260930"
           ],
-          "summary": "Same-version terminal history recovery, exact append and retained queue intent have real process-loss evidence. Full original UI/provider/schedule/DST criteria remain pending."
+          "summary": "Root serially integrated four reviewed production/test paths and one scheduler comment correction; complete package unions, exact local CI and standard Electron build pass on an unchanged manifest. Full program integration and product acceptance remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -9907,7 +9912,8 @@
             "NATIVE-NOTES-CREATE-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
-            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
+            "BUDGET-OWNER-SOURCE-STATUS-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10097,7 +10103,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T15:10:46.564Z",
+    "asOf": "2026-09-30T16:02:34.173Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10123,7 +10129,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "dataContractFreeze": "NOT_ACCEPTED",
     "sharedContractFreeze": "NOT_ACCEPTED",
-    "build": "COMPLETE_STARTUP_BUILD_PASSED; LATER_MAIN_RENDERER_AND_NATIVE_CREATE_MAIN_PRELOAD_REFRESH_PASSED",
+    "build": "STANDARD_ROOT_ELECTRON_BUILD_PASSED_ON_FROZEN_4851_SOURCE_OWNER_STATUS_CANDIDATE; PACKAGING_SIGNING_NATIVE_UI_PENDING",
     "fullPlatformMatrix": "PENDING",
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
@@ -10140,7 +10146,7 @@
       ],
       "committedSourceMatchesTestedManifest": true
     },
-    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_AND_TYPECHECK_ALL_LOCAL_VALIDATE_CI_PASS_AT_8DAE0422; REMOTE_PLATFORM_PRODUCT_GATES_PENDING",
+    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_VALIDATE_CI_AND_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_OWNER_STATUS_CANDIDATE; REMOTE_PLATFORM_PRODUCT_GATES_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
       "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
@@ -10285,6 +10291,23 @@
         "Full platform/provider/native UI/receipt custody and original task criteria remain pending."
       ],
       "fullOriginalTasksAccepted": 0
+    },
+    "ownerStatusEvidence": "owner-status-20260930.json",
+    "ownerStatusCandidate": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "fullOriginalTasksAccepted": 0
+    },
+    "statusReconciliation": {
+      "observedAt": "2026-09-30T16:02:34.173Z",
+      "correctedTasks": [
+        "MEMORY-01",
+        "MEMORY-02",
+        "MARKETPLACE-01",
+        "IMPORTS-01"
+      ],
+      "rule": "NOT_RUN top-level status aligned to existing IN_PROGRESS additive implementation/verification facets; original acceptance untouched.",
+      "newlyAcceptedTasks": 0
     }
   }
 }

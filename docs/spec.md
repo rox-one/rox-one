@@ -180,6 +180,12 @@ Only confirmed local authority may read legacy host session inventory, messages 
 
 Acceptance combines actual helper callback/race behavior, independent App boundary review, Electron source/UI/core union, TypeScript and renderer rebuild. Native desktop creation/banner readback, private receipt custody and original platform criteria remain separate pending gates. A later scheduler terminal-history candidate is outside this source publication.
 
+## Budget ownership and source index status (2026-09-30)
+
+A new ledger opener must not declare a living reservation owner dead. Persist per-instance ownership with each reservation; process liveness is only a conservative recovery signal, never release or dispatch authority. Ordinary lifecycle changes require the reservation owner. Foreign active usage/reconciliation must fail; exact trusted reconciliation for unresolved work retains its separate boundary. Missing/dead/explicitly closed owners preserve unresolved quota. Unknown live PID, PID reuse and module/worker ambiguity must retain quota rather than infer permission. SQLite contention is bounded, and initialization errors close the opened database before preserving the original error. Same-host/same-version behavior, real provider receipt fidelity and platform/runtime resource limits remain separately measured.
+
+Restore the existing source index STATUS route only for a current local Electron binding and its server-owned workspace. Project only the existing facade's indexed count and primary engine. Native, unbound, stale and foreign-workspace callers remain denied; no new native grant or channel classification is implied. Warmed config preservation and actual TS index readback are separate from cold migration, native-sidecar and whole Sources UI acceptance.
+
 ## Scheduler terminal recovery and OMP evidence (2026-09-30)
 
 After a webhook effect, persist an exact terminal history intent in the durable queue before history append. Append by exact entry/attempt key and payload, rejecting conflicts or corruption; remove the intent only after acknowledgement. Same-version restart must recover history without executing the action again. Preserve run, matcher and action identity and block retention while terminal intent, corruption or unreadable queue state could remove recovery evidence.

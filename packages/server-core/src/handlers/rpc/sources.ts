@@ -28,6 +28,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.GET_MCP_TOOLS,
   RPC_CHANNELS.sources.REINDEX,
   RPC_CHANNELS.sources.SEARCH,
+  RPC_CHANNELS.sources.STATUS,
 ] as const
 
 function ensureWorkspaceSourceDefaults(workspaceRoot: string): void {
@@ -39,6 +40,14 @@ function ensureWorkspaceSourceDefaults(workspaceRoot: string): void {
 
 export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
+
+  server.handle(RPC_CHANNELS.sources.STATUS, async (ctx, workspaceId: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace || workspace.id !== ctx.workspaceId) throw new Error('Source status workspace is not authorized')
+    const { statusWorkspaceSources } = await import('../../sources/source-index-facade')
+    const status = await statusWorkspaceSources(workspace.rootPath)
+    return { indexed: status.indexed, primary: status.primary }
+  }, { access: 'localElectron' })
 
   // Get all sources for a workspace
   server.handle(RPC_CHANNELS.sources.GET, async (_ctx, workspaceId: string) => {

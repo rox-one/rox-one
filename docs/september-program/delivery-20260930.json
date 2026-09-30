@@ -485,5 +485,10 @@
       "Full platform/provider/native UI/receipt custody and original task criteria remain pending."
     ],
     "fullOriginalTasksAccepted": 0
+  },
+  "ownerStatusFollowupPublication": {
+    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING",
+    "fullOriginalTasksAccepted": 0
   }
 }

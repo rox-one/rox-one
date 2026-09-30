@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-09-30T15:10:46.564Z",
+  "asOf": "2026-09-30T16:02:34.173Z",
   "purpose": "Sanitized bounded implementation/verification reconciliation; no complete task, requirement, contract freeze or code delivery accepted.",
   "sourceState": {
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -1905,6 +1905,127 @@
           "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
         }
       ]
+    },
+    {
+      "id": "BUDGET-OWNER-SOURCE-STATUS-20260930",
+      "basis": "Independent actual process/SQLite/WebSocket review plus frozen complete package unions, exact local CI and standard Electron build",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "packages/shared/src/agent/core/agent-budget.ts",
+          "sha256": "b45ace4b13eb60b1c2be3ffa31e1ac0680beca604b7edded326080caa8eb7888",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts",
+          "sha256": "62ed16f6746e41ebc056a89b56cb0dc558ff2600b9d0422b4c8ab4e256991690",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/sources.ts",
+          "sha256": "d336ff7e6eb320abbaedfc46fdabc4a2818dbb152d325ad8e80afb07f8349a3b",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts",
+          "sha256": "b1f13979eed92e2ff9bb0a39b9f8a57e335ffad024390fb44559d0a4b1ea8a2b",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/shared/src/automations/retry-scheduler.ts",
+          "sha256": "bd61d9601d0cfc5ba74804d00ed6a91f50a952633306b95214df93658682cbcf",
+          "change": "Comment-only correction to reflect existing terminal_pending flow"
+        }
+      ],
+      "limits": [
+        "Budget acceptance is native Electron/Node local-ledger ownership on this host and same version. Real paid-provider/background cancellation, actual receipt authenticity, Windows and other platforms remain pending.",
+        "Old binaries retain the former startup logic and must not run concurrently on this ledger. PID reuse or unknown liveness conservatively retains quota and can delay recovery; this is not a distributed cross-host lock.",
+        "Bun repeated-constructor-fault descriptor lifetime remains an explicit runtime resource limitation; full backend/platform resource acceptance is pending.",
+        "Source status uses a real primary-ts fixture. Native sidecar primary/fallback and a new delayed-sidecar revocation fixture were not exercised; existing post-await transport fence was inspected.",
+        "Source status config immutability was measured after warm workspace lookup, not cold migration. Sources UI, global-search routes and complete import/provider behavior remain pending.",
+        "Exact local CI uses a prepared private offline dependency cache; it does not establish fresh ephemeral network or remote required-runner acceptance.",
+        "Successful Electron build does not establish packaged upgrade, signing, actual native creation UI, provider readback, Windows or genuine Conation iOS acceptance."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "budget-owner-final-independent-review.md",
+          "sha256": "98e69a0d3f59112d0a15398bdb91995a15aa16468397b13b1e6fc01d17942a2b",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-final-independent-focused.txt",
+          "sha256": "3fc4d8667bf90dbc2f58285466972de152b58ebed8912ab32b6b06f2f2ad4470",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-final-independent-probe.txt",
+          "sha256": "eb7a157883feccb814830c1c7f45f53ec7db702d36bb1da61932186a1e120303",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-electron-long-control.txt",
+          "sha256": "b5411c3b0e9d458f218b0ef64ea0750ab41cb8f61d44d2fc386c9bd398584368",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-node22-long-control.txt",
+          "sha256": "c5928726254a256f7195bc4e66150eb1cc67ed35156ac89b0c0db963ebfd0715",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-bun-long-control.txt",
+          "sha256": "cc82d9933ab7f7fe164369541551733293c27312feeffb56c78829811ce6712d",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "source-status-independent-review.json",
+          "sha256": "0a6d42c0cf8f92172739d527d931b9a922864f52f818d0a8457f0ae7163dd393",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "source-status-independent-review.md",
+          "sha256": "71834e90b1a2870e32c1e6e19434af8fd82089a21bf309c0a7d971c180f637da",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.gates.json",
+          "sha256": "de24a8033e0f98e2bcda1d460a5ca1a11b9329ed5cab1da9ce11181c31cc1369",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.dist-manifest.json",
+          "sha256": "1695e5366bee50effe282001eaec50c26dbdeecc2c98eec1cd2faa23d46e2879",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.shared.txt",
+          "sha256": "27ac61f926032cc0424e80a1ceb202ccd133dcad2be84f80aab27e889074bc11",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.server.txt",
+          "sha256": "551985db8b83c4c436cae4bcf3920fcb292356e6d407c6936c8da98e0553f90e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.electron-ui-core.txt",
+          "sha256": "2ead0f3150217075a21c74fdb9894848424114e52a005fec4da2deed03b6f3bc",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.validate.txt",
+          "sha256": "4969f94a9a357ab3158e2ec4a9661f9f1edd8f8384951d4de3dcaaf761ad3626",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.build.txt",
+          "sha256": "46a5bead44b26c1bc0f5af3310102aa2c767999679bdf5a2167fead8ae6a9834",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        }
+      ]
     }
   ],
   "taskEvidence": [
@@ -3187,6 +3308,232 @@
       "Prepared-host exact CI acceptance, not clean ephemeral runner connectivity or remote GitHub required-check completion.",
       "Original interrupted17pass/2controlledSIGTERM history remains unchanged.",
       "Full platform/provider/native UI/receipt custody and original task criteria remain pending."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "ownerStatusFollowup": {
+    "schemaVersion": 1,
+    "id": "BUDGET-OWNER-SOURCE-STATUS-20260930",
+    "observedAt": "2026-09-30T16:02:34.173Z",
+    "inputSourceRevision": "7ae2828afd806d82a2537accfe1bd47b3d4cb4c3",
+    "publication": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "fullOriginalTasksAccepted": 0
+    },
+    "sourceBinding": {
+      "sourceCount": 4851,
+      "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": false
+    },
+    "sources": [
+      {
+        "path": "packages/shared/src/agent/core/agent-budget.ts",
+        "sha256": "b45ace4b13eb60b1c2be3ffa31e1ac0680beca604b7edded326080caa8eb7888",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts",
+        "sha256": "62ed16f6746e41ebc056a89b56cb0dc558ff2600b9d0422b4c8ab4e256991690",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/sources.ts",
+        "sha256": "d336ff7e6eb320abbaedfc46fdabc4a2818dbb152d325ad8e80afb07f8349a3b",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts",
+        "sha256": "b1f13979eed92e2ff9bb0a39b9f8a57e335ffad024390fb44559d0a4b1ea8a2b",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/shared/src/automations/retry-scheduler.ts",
+        "sha256": "bd61d9601d0cfc5ba74804d00ed6a91f50a952633306b95214df93658682cbcf",
+        "change": "Comment-only correction to reflect existing terminal_pending flow"
+      }
+    ],
+    "ownership": {
+      "budget": "Runtime owner; isolated worktree based on ea083e387e170552ee6102e29c2cf31adc8b6973",
+      "sourceStatus": "Source handler owner; isolated worktree based on 8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+      "review": "Independent actual subprocess, SQLite and authenticated WebSocket probes",
+      "integration": "Root serial integration, five whole-repository gates and exact publication readback"
+    },
+    "dependencies": "Original DATA/SHARED contract acceptance, provider receipt validation and full platform gates remain required. This additive evidence does not freeze shared contracts or satisfy original predecessors.",
+    "behavior": {
+      "budget": "Persist PID and per-instance random owner token; retain live/unknown owner reservations during startup. Ordinary complete, unresolved, release, settle and reconcile cannot mutate a foreign active reservation. Same-owner transitions remain usable; trusted exact unresolved receipt reconciliation remains idempotent. Explicit successful close persists own reservations as unresolved; failed close preserves owner state for retry. SQLite busy_timeout=5000 and BEGIN IMMEDIATE retain atomic quota decisions. Constructor closes a newly opened database after post-open initialization failure and rethrows the original error.",
+      "sourceStatus": "Register the existing sources:status channel. Resolve workspace and require its ID to match server-owned connection workspace context; call the existing index-status facade with localElectron access. Return indexed/status metadata through the existing transport response fence without changing grants, nativeAction enrollment or source data."
+    },
+    "reviews": {
+      "budget": {
+        "pass": 14,
+        "fail": 0,
+        "assertions": 92,
+        "files": 3,
+        "controls": "Live second process, actual SIGKILL and fresh-process recovery, same-PID separate module, legacy rows, five foreign lifecycle transitions, exact receipt replay/cost conflict, two-process quota contention, close obstruction and constructor recovery fault."
+      },
+      "sourceStatus": {
+        "pass": 1,
+        "fail": 0,
+        "outerAssertions": 2,
+        "strictChildChecks": 9,
+        "controls": "Actual authenticated WebSocket, indexed primary-ts source, warmed-config immutability, foreign/missing/unbound/stale workspace denials and native enrolled/revoked authority denials."
+      },
+      "resourceLifetimes": {
+        "officialElectron": "Electron 39.2.7 / Node 22.21.1: 20 constructor faults retain at most one additional database FD while fixture seed connection is open; zero after seed close.",
+        "nativeNode": "Node 22.23.3: same bounded 20-fault result and zero after seed close.",
+        "bun": "Bun 1.4.2 node:sqlite shim: 20 faults temporarily retain 20 extra descriptors while seed is open; release after seed closure/final fixture GC. Immediate-flat Bun FD acceptance is NOT established; no production GC or undocumented close API added.",
+        "evidenceInterpretation": "Native controls supersede the earlier descriptor-only interpretation of a persistent native connection leak. Constructor logical cleanup is required; runtime resource lifetime is measured separately."
+      }
+    },
+    "gates": {
+      "shared": {
+        "pass": 4920,
+        "skip": 12,
+        "fail": 0,
+        "assertions": 21599,
+        "files": 472
+      },
+      "serverCore": {
+        "pass": 1505,
+        "skip": 8,
+        "fail": 0,
+        "assertions": 6135,
+        "files": 237
+      },
+      "electronUiCore": {
+        "pass": 4203,
+        "fail": 0,
+        "assertions": 20022,
+        "files": 609
+      },
+      "validateCi": {
+        "command": "bun run validate:ci",
+        "exitCode": 0,
+        "seconds": 88.819524375,
+        "typechecks": "allpassed",
+        "selectedBunPass": 242,
+        "selectedBunAssertions": 687,
+        "documentsPass": 19,
+        "i18n": "parity/sorted/coveragepassed",
+        "environment": "Task-private verified offline UV cache; standard repository scripts and dependency declarations unchanged."
+      },
+      "electronBuild": {
+        "command": "bun run electron:build",
+        "exitCode": 0,
+        "seconds": 47.244655167,
+        "scope": "Standard root main/preload/renderer/resources/subprocess-workers/assets build",
+        "manifest": "owner-status-wave.dist-manifest.json",
+        "manifestSha256": "1695e5366bee50effe282001eaec50c26dbdeecc2c98eec1cd2faa23d46e2879",
+        "fileCount": 1612,
+        "totalBytes": 201541229,
+        "resourceCount": 715,
+        "versions": {
+          "electron": "39.2.7",
+          "electron-builder": "26.4.0",
+          "vite": "6.4.1",
+          "typescript": "5.9.3",
+          "esbuild": "0.25.12"
+        },
+        "lock": {
+          "path": "bun.lock",
+          "bytes": 605640,
+          "sha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+        },
+        "limitation": "Actual output byte inventory may include retained files from previous builds. Build log identifies rebuilt stages. Not clean release packaging, signing, SBOM or a byte-budget acceptance claim."
+      }
+    },
+    "artifacts": [
+      {
+        "id": "budget-owner-final-independent-review.md",
+        "sha256": "98e69a0d3f59112d0a15398bdb91995a15aa16468397b13b1e6fc01d17942a2b",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-final-independent-focused.txt",
+        "sha256": "3fc4d8667bf90dbc2f58285466972de152b58ebed8912ab32b6b06f2f2ad4470",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-final-independent-probe.txt",
+        "sha256": "eb7a157883feccb814830c1c7f45f53ec7db702d36bb1da61932186a1e120303",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-electron-long-control.txt",
+        "sha256": "b5411c3b0e9d458f218b0ef64ea0750ab41cb8f61d44d2fc386c9bd398584368",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-node22-long-control.txt",
+        "sha256": "c5928726254a256f7195bc4e66150eb1cc67ed35156ac89b0c0db963ebfd0715",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-bun-long-control.txt",
+        "sha256": "cc82d9933ab7f7fe164369541551733293c27312feeffb56c78829811ce6712d",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "source-status-independent-review.json",
+        "sha256": "0a6d42c0cf8f92172739d527d931b9a922864f52f818d0a8457f0ae7163dd393",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "source-status-independent-review.md",
+        "sha256": "71834e90b1a2870e32c1e6e19434af8fd82089a21bf309c0a7d971c180f637da",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.gates.json",
+        "sha256": "de24a8033e0f98e2bcda1d460a5ca1a11b9329ed5cab1da9ce11181c31cc1369",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.dist-manifest.json",
+        "sha256": "1695e5366bee50effe282001eaec50c26dbdeecc2c98eec1cd2faa23d46e2879",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.shared.txt",
+        "sha256": "27ac61f926032cc0424e80a1ceb202ccd133dcad2be84f80aab27e889074bc11",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.server.txt",
+        "sha256": "551985db8b83c4c436cae4bcf3920fcb292356e6d407c6936c8da98e0553f90e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.electron-ui-core.txt",
+        "sha256": "2ead0f3150217075a21c74fdb9894848424114e52a005fec4da2deed03b6f3bc",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.validate.txt",
+        "sha256": "4969f94a9a357ab3158e2ec4a9661f9f1edd8f8384951d4de3dcaaf761ad3626",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.build.txt",
+        "sha256": "46a5bead44b26c1bc0f5af3310102aa2c767999679bdf5a2167fead8ae6a9834",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      }
+    ],
+    "limits": [
+      "Budget acceptance is native Electron/Node local-ledger ownership on this host and same version. Real paid-provider/background cancellation, actual receipt authenticity, Windows and other platforms remain pending.",
+      "Old binaries retain the former startup logic and must not run concurrently on this ledger. PID reuse or unknown liveness conservatively retains quota and can delay recovery; this is not a distributed cross-host lock.",
+      "Bun repeated-constructor-fault descriptor lifetime remains an explicit runtime resource limitation; full backend/platform resource acceptance is pending.",
+      "Source status uses a real primary-ts fixture. Native sidecar primary/fallback and a new delayed-sidecar revocation fixture were not exercised; existing post-await transport fence was inspected.",
+      "Source status config immutability was measured after warm workspace lookup, not cold migration. Sources UI, global-search routes and complete import/provider behavior remain pending.",
+      "Exact local CI uses a prepared private offline dependency cache; it does not establish fresh ephemeral network or remote required-runner acceptance.",
+      "Successful Electron build does not establish packaged upgrade, signing, actual native creation UI, provider readback, Windows or genuine Conation iOS acceptance."
     ],
     "fullOriginalTasksAccepted": 0
   }
