@@ -60,3 +60,7 @@ The first source smoke correctly exposed that normal startup adds migration rece
 ## Delivery boundary
 
 This receipt proves a local real-runtime gate on the stated base and proposed workflow configuration. It does not prove that an unpushed workflow ran on GitHub or that the separate September bridge snapshot can load under Bun1.3.14. Root owns compatibility repair, integration, final checks and hosted execution readback. Merge the core and CI sections of `docs/spec.md` and `docs/plan.md` when integrating their independent main-based branches.
+
+## Current combined main-based result
+
+The sections above are the original isolated CI-baseline evidence and preserve its historical core/server diagnostics. In the final main-based integration, those concrete diagnostics and subsequent gate failures are repaired: unchanged validate:ci exits0, eight packages actually compile, supplementary WebUI typecheck exits0, all three builds succeed, and the strict built lifecycle passes4/4 with37 assertions. See [cloud-core-ci-validation.md](cloud-core-ci-validation.md) for exact source/artifact/log hashes, review corrections, the preserved absent pages-worker skip and the separate hosted-delivery status.

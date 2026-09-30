@@ -54,18 +54,19 @@
 | Root review and integration | root / terminal_history | Local receipt commit; core/bridge/typecheck fixes | Original code reviewed; documentation combined; integrated built gate verified | Complete locally |
 | Hosted delivery receipt | root | Authorized push/PR after review | Actual hosted run starts and all required checks finish; no placeholder status | Pending |
 
-The workflow proposal and local runtime proof are complete. Remote execution and full integrated validation remain separate delivery gates. No remote mutation occurred in this worktree.
+The original isolated workflow proposal and local runtime proof are complete. Its historical baseline diagnostics remain in the original receipt; the current combined integration result is recorded below. Hosted execution remains a separate delivery gate.
 
 ## Combined main-based integration
 
 | Task | Owner | Dependencies | Verification | State |
 |---|---|---|---|---|
 | Integrate core and CI | terminal_history | Reviewed f8982a04,01889b4a,da74aa13 | Main base; preserve both docs sections; no application merge conflict | Complete |
-| Run actual comprehensive gate | terminal_history | Frozen Bun1.3.14 install | First failure retained; full second run exit0; final pinned source receipt | In progress |
+| Run actual comprehensive gate | terminal_history | Frozen Bun1.3.14 install | First failure retained; full final run exit0; unchanged inputs bound to final source | Complete |
 | Repair observed baseline gate failures | terminal_history / cloud_recovery | Exact failing diagnostics/tests/lint | Narrow main-compatible repairs, focused tests, unchanged locale values; no suppressions/gate removal | Complete |
-| Verify combined built runtime | cloud_recovery / terminal_history | Three real builds | Rebuilt combined bundle; built smoke2/2; focused server175/175 and memory6/6 | Complete locally |
-| Review and record evidence | repo_audit / root | Frozen bounded diff and final logs | Independent review; tracked hash-bound receipt | In progress |
+| Verify combined built runtime | cloud_recovery / terminal_history | Three real builds | Rebuilt combined bundle; strict built smoke4/4; focused server175/175 and memory6/6 | Complete locally |
+| Review and record evidence | repo_audit / root | Frozen bounded diff and final logs | Independent Standards and Spec/runtime acceptance; tracked hash-bound receipt | Complete locally |
 | Deliver new draft PR | terminal_history / root | Root selected separate combined branch | Push, draft PR main, remote readback and hosted gate status | Pending |
 
 - Spec review correction: the candidate Pi reasoning deletion regressed existing main Responses support because its local API union was stale. Reused the canonical type, restored registration behavior and added actual-callback tests. The reviewer independently reproduced main=true, preliminary candidate=false and corrected=true for Responses, with Completions unchanged.
 - Lifecycle review correction: explicit graceful shutdown now rejects a child that had already exited before the request, including exit zero. Separate cleanup retains rejected-startup support. Both original built-runtime cases and actual already-exited zero/17 controls pass; reintroducing the old early return fails both controls. Product runtime is unchanged.
+- The final zero/17 child fixtures use both fresh config aliases, so Bun preload cannot reach the user's config. A reproduced hosted macOS Vite heap failure is addressed only with a4096MiB compiler/build heap in the WebUI build step. No source, assertion or command is disabled.

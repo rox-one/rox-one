@@ -1,0 +1,260 @@
+{
+  "base": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+  "revision": "2f3d685d5937ef79471fba894134af9b870b95fb",
+  "algorithm": "SHA256(JSON.stringify(sorted rows of path and raw-byte SHA256))",
+  "sourceTreeSha256": "117c14ac5ebdcddd14a9b8e0825ef8df0e5066f11a3a9a46f600c183747d3868",
+  "rows": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "08b6777776b7b5ca4d91f4cd5c2965d22f2002c4bca978c26ea7f642514b2ca2"
+    },
+    {
+      "path": ".github/workflows/validate-server.yml",
+      "sha256": "96d9a80393461b6e0288bebdbd9de9435ee578780427d8c309f9b8588f8999a9"
+    },
+    {
+      "path": "apps/electron/src/preload/openclaw-host-control.ts",
+      "sha256": "bdb51dbc1b385e948fbbf10dde5035c340345eeb30b667921fa7cb7cf2e33bfb"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "sha256": "a879d1d0aed10623b05ea3d1138590a591e25999e883f686e48d37a58a5aa726"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "sha256": "9847895b898da067692ee674afd8297e1e167b8c68ce23a3813f072c77054651"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx",
+      "sha256": "15b115c01a7cf42af0f3f063fb2c67c8c65ebea45d9ce253b3bc71be88346b6e"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/projects-home-loaded.test.ts",
+      "sha256": "b8c4548baed1f7a215445624b9c27e0cf2f45c699b92a23f5027cba9e830851a"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "sha256": "060c91cefc20559ff96ffa0db82732e799ca3962956d41dbc2456238128468c8"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/graph-fit-layout.ts",
+      "sha256": "b57e8fefc0c8c065f1804256f134d068d23dcbccfe5b05f1aadfa8865e651ca2"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/__tests__/rox2-native-surfaces.test.ts",
+      "sha256": "8ed3035a293a573c010785e69c2cee5ac6fa08e5d23158dba2a56eaad45615eb"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/capture-rpc.ts",
+      "sha256": "152116d3fcf14251ad6d312ac887bf68b719173b488fe8b08ab16caa66f99b87"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/import-rpc.ts",
+      "sha256": "6528e480740e12d8bcf822d6f7bcc5610ee0633c57390cd3817d5e404a3dffbc"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/manual-rpc.ts",
+      "sha256": "099e765387da4e915ffab1244ab48f1a43f10f53f10bb54f9301bca7922be2ef"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/meetings/start-rpc.ts",
+      "sha256": "1de18e7af9bf1b115ce57ae731a7da6c9f76e2017403303c6a1dd3bc93071c1a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-041-043-settings-pages.test.ts",
+      "sha256": "88deb9ae374ec75df3afab20c97ab3417c53ef22e4b7f6f1a751d39b8d34c0dd"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-044-046-settings-pages.test.ts",
+      "sha256": "7941e547584278f0ddd4ed7209b8c84e6bc8f4a54eec149b2a982bc8e9344287"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-047-049-settings-pages.test.ts",
+      "sha256": "9d0511bdd21691def5138882d11e2073544ac8594d83ccf61513d7e95f4bd7dc"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-050-052-settings-pages.test.ts",
+      "sha256": "2c20aa53aaef4d908bef6bc9062a3b289edfdc49f43b61fa34cc51a234e2e793"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-053-055-settings-pages.test.ts",
+      "sha256": "14154087593e8e413b3efee982f451f16f6ba8eb9473c459dde1873c4ebcdbeb"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-056-058-settings-pages.test.ts",
+      "sha256": "c336aeb06d7d934a8dadb38e2a6b86678cb66f6ee86923e8a1ff8e9f982334a2"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-059-061-settings-pages.test.ts",
+      "sha256": "608fac285b25eae127f795da4aea3f015b09bf8be1d53c06018b154913a05999"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/rox2-062-shortcuts-settings-page.test.ts",
+      "sha256": "b508d36fe2e8b60e1626621167be6f3c92ad18226798abb05a5b3e1f7cb4b010"
+    },
+    {
+      "path": "apps/electron/src/shared/openclaw-host-control.ts",
+      "sha256": "da6ccc903936abe0097872d68b3000abc63f1d8eea9656d572ce9b39f4a4e2cb"
+    },
+    {
+      "path": "packages/core/src/calendar/calendar.test.ts",
+      "sha256": "9ebeb0ae43b51b86c353669cccab5c5fcf585b11396cab1a8fa0389278ba2b67"
+    },
+    {
+      "path": "packages/core/src/platform/identity/credential-types.test.ts",
+      "sha256": "9cb0c987bb7f712d049d19342a45dd2179cd5efeeb21a1c1880b14231bddd94c"
+    },
+    {
+      "path": "packages/core/src/platform/identity/credential-types.ts",
+      "sha256": "2f2e6ccd038e9d01961316650ba30bf533d8d6a84a961252f46f207cbec256cf"
+    },
+    {
+      "path": "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+      "sha256": "85c61271631cdaf8579509b9640b37cc0ba1e73095d4a6da3d935fb3e600e512"
+    },
+    {
+      "path": "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+      "sha256": "e02c8fe55eea185a199e55cb6f6ab642c55dd623417c0f02709df8871cb24fb9"
+    },
+    {
+      "path": "packages/core/src/rox2/meeting-conation-shell.ts",
+      "sha256": "f2d628e81cc06d722efbc044a10d3b99549c6d9d34fb9cac7e84632c913ad815"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/store.ts",
+      "sha256": "8778151de654ca416591f18f069c760f4b8a4f1bd36d157f91bfcd14f43fb8aa"
+    },
+    {
+      "path": "packages/core/src/tasks/personal/things.test.ts",
+      "sha256": "41574e8f5f5c6a6dc3eb3b32455d5f809bb6f3e88a0f4a4d6b3729a31c8f2e4c"
+    },
+    {
+      "path": "packages/pi-agent-server/src/custom-endpoint-models.ts",
+      "sha256": "09687ccb7b81e59d2ffae2e7381898aec1761cc1ec8c62450753449e3c5e9cbf"
+    },
+    {
+      "path": "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+      "sha256": "01920a53e0c6ca4be75cff4408411ede511dd44af63ccf0a6bf34a868081228f"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/__tests__/label-messaging-scope.test.ts",
+      "sha256": "1669fb7be4acb433370873e721f8772bd3d2c3dd10ab5e324fad33d500e0bd81"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/labels.ts",
+      "sha256": "85747db9206e86727d3f6d49601f8db7186499a7ae3b3c9da609ec07ae248c6e"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/memory-proposals.test.ts",
+      "sha256": "c0582384e9a8a2bcb521791e5d60b62457605b8390b70fe3691e8a317d8d741d"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/messaging.ts",
+      "sha256": "5da444f2f66e7d92bfd863bb783f63d182a6ad3b31c81a7327a90764b344ebc5"
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/budgets.test.ts",
+      "sha256": "a6c72f6084569d5eb506baa738ab7b03f6125c71673f67b98c578815223bfb06"
+    },
+    {
+      "path": "packages/server-core/src/meetings/__tests__/followup.test.ts",
+      "sha256": "78e5c8e324ad4631c6f5b3c8388176658e2bec6059e5b1c4464b7c4eda54ebbd"
+    },
+    {
+      "path": "packages/server-core/src/meetings/manual.ts",
+      "sha256": "7c5cc1f43ae3bdf81456b295f62081b5bcca9b48b02f825916621b171e2c1562"
+    },
+    {
+      "path": "packages/server-core/src/meetings/rooms.ts",
+      "sha256": "b370ccbb7ffe8d4fa6240183575417cacc8c2c323e2563614e8f5c66618afa44"
+    },
+    {
+      "path": "packages/server-core/src/meetings/tracker-actions.ts",
+      "sha256": "38e40828c6ac1a8977b9c8f0ab0e32de5b4887dd98337dbf48d162f895c1637c"
+    },
+    {
+      "path": "packages/server-core/src/meetings/types.ts",
+      "sha256": "be00a98cb37cbbc249f57b43074099986912238f952d8530617666355348f167"
+    },
+    {
+      "path": "packages/server/src/__tests__/smoke.test.ts",
+      "sha256": "c02452b78951a13e58e0279191d2be895c7220ce62ab91cf4c8e28b6f9b75e68"
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/context-budget.test.ts",
+      "sha256": "49697c4e6a5a6293d00fb23b3186dde0eafcea4345bbf76d17574f6960b94818"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ar.json",
+      "sha256": "e6222e84cb2fd0a6f45a00df61ded66ca1469a4bcdb974d8493c621b31208e5c"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "sha256": "61c6acafff97d74b20b9ce912ae8059f0d37b9553e817b05023392bc1a46adc6"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "sha256": "005e350e1e3c8dd5e3dd05486dcdf060a994766eee16e318240667deabf47ecc"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "sha256": "bc3d73bee23227af4d8b41c2ba49627968676b58ff7bf960de8d054e9497310e"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/fr.json",
+      "sha256": "70be807f3b91be221388832570d999975d27f3552814fa856ce4e5f9fb731449"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "sha256": "4983ac46d386c1b6e3668e5a29b7796139a6b302db494752d07ecff353159034"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "sha256": "78fb59229f1253b9f70efdde4f73ab29832b14dff7dfd5ffe0e4adb65fb1406f"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ko.json",
+      "sha256": "6d7fe231619615a63332063cdae2b00aa002720194a773efdb3c7061cfa82214"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "sha256": "636c60f6f832707c6f24264639de69c585ec4036c557f88a4d7124da59126bbc"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "sha256": "ae0b5adc195a7dc4d2a68cfc74f28ee7abf5530e2ac88533cf5b3ac28062b31b"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "sha256": "2280cd3644f4a3a7b402bd52c54fbbb5994ce9f6a575c08f1579d67f2a50f7e3"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "sha256": "373c51bbd75fba669e20ff04a2c09c104499e61d614ab3b8c22234748b8bbdb3"
+    },
+    {
+      "path": "packages/shared/src/meeting-agents/__tests__/extraction.test.ts",
+      "sha256": "ced8dce6920d2c8f14ef55df1fa8ca88fc017fb1a85689b678f0044ff8e7d5e8"
+    },
+    {
+      "path": "packages/shared/src/meeting-agents/__tests__/recipes.test.ts",
+      "sha256": "d7ead0740c98b03317fe2968582eac065d0e531c06dea9f61989337bb6418855"
+    },
+    {
+      "path": "packages/shared/src/meeting-agents/recipes.ts",
+      "sha256": "8b2bef39c898037a455df11f95a7ae0606e324b167b3a4461dbd660dd6fac8c3"
+    },
+    {
+      "path": "packages/shared/src/voice/adapters/rox-transcription.ts",
+      "sha256": "e97cd3abc846dcfe5f1c97b6d1bd8826f5838e4b9dafdb23f351a56f92876e41"
+    },
+    {
+      "path": "packages/shared/src/voice/runtime.ts",
+      "sha256": "4bec191c6b319d80224f9c46fbbf2ed7a3e157d5465542dea182f433e2c6605a"
+    },
+    {
+      "path": "packages/shared/src/workflows/__tests__/canvas-spec.test.ts",
+      "sha256": "4566011b345aa6c0ce47f78dcc88da7cf21b170abfda8e8f6332b78b08434d7f"
+    }
+  ]
+}
