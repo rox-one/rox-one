@@ -1,0 +1,1037 @@
+{
+  "schemaVersion": 1,
+  "status": "PROPOSED_ROX_NOT_LARK_DATABASE",
+  "sourceSha": "e953786ba7e30fb5da5dca7e88e20e324d5aebab",
+  "refContract": {
+    "extends": "Rox2EntityRef",
+    "fields": [
+      "workspaceId",
+      "entityId",
+      "revisionId?",
+      "accountNamespace?"
+    ],
+    "initialSubtypes": "page + proposed contentKind; existing note IDs preserved through alias resolution"
+  },
+  "entities": [
+    {
+      "id": "Principal",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Workspace",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Membership",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "EntityHeader",
+      "status": "PROPOSED",
+      "authoritative": false
+    },
+    {
+      "id": "EntityOrigin",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "PermissionGrant",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "EntityLink",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "DocumentDescriptor",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "DocumentRevision",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "BlockAnchor",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Base",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "TableDefinition",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "FieldDefinition",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "ViewDefinition",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "SourceBinding",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "RowProjection",
+      "status": "PROPOSED",
+      "authoritative": false
+    },
+    {
+      "id": "CustomRecord",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "FieldValue",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Discussion",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Message",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Mention",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "AttachmentBinding",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "ActivityEvent",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Notification",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "SearchProjection",
+      "status": "PROPOSED",
+      "authoritative": false
+    },
+    {
+      "id": "ProviderConnection",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "ProviderLink",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "WorkflowDefinition",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "WorkflowVersion",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "WorkflowRun",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "StepReceipt",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "NativeTask",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Project",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Company",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Contact",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "MailThread",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "CalendarEvent",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Meeting",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "Call",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "AgentSession",
+      "status": "PROPOSED",
+      "authoritative": true
+    },
+    {
+      "id": "RepositoryBinding",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-01",
+      "fields": [
+        "id",
+        "workspaceId",
+        "projectId",
+        "sourceId",
+        "canonicalRoot",
+        "remoteUrl?",
+        "providerPolicyId",
+        "createdAt"
+      ],
+      "semantics": "Project identity is distinct from repository/path; one project may bind several repos."
+    },
+    {
+      "id": "RepositorySnapshot",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-02",
+      "fields": [
+        "id",
+        "bindingId",
+        "parentCommitSha",
+        "treeSha?",
+        "dirtyWorkingCopyDigest?",
+        "capturedAt",
+        "includedPathsHash",
+        "policyHash"
+      ],
+      "semantics": "Clean snapshot can use commit-pinned remote source. Dirty working-copy bytes have a separate digest and local receipt; parent commit URL is not an exact citation for changed bytes."
+    },
+    {
+      "id": "SourceFile",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-03",
+      "fields": [
+        "id",
+        "snapshotId",
+        "path",
+        "blobSha?",
+        "contentHash",
+        "bytes",
+        "language",
+        "included",
+        "skipReason?"
+      ],
+      "semantics": "Repository-relative normalized path; immutable content version."
+    },
+    {
+      "id": "FileSpan",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-04",
+      "fields": [
+        "id",
+        "fileId",
+        "startLine",
+        "endLine",
+        "symbol?",
+        "contentHash",
+        "excerpt"
+      ],
+      "semantics": "Inclusive 1-based lines; verify current hash before opening/applying."
+    },
+    {
+      "id": "CodeSymbol",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-05",
+      "fields": [
+        "id",
+        "fileId",
+        "name",
+        "kind",
+        "language",
+        "spanId",
+        "resolverVersion"
+      ],
+      "semantics": "Deterministic scanner result; absence of scanner support is explicit."
+    },
+    {
+      "id": "DependencyEvidence",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-06",
+      "fields": [
+        "id",
+        "snapshotId",
+        "fromRef",
+        "toRef",
+        "kind",
+        "spanId",
+        "resolver",
+        "unresolved"
+      ],
+      "semantics": "Import/call/HTTP evidence is typed; unresolved edges remain unresolved."
+    },
+    {
+      "id": "SearchIndex",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-07",
+      "fields": [
+        "id",
+        "bindingId",
+        "snapshotId",
+        "provider",
+        "providerVersion",
+        "limits",
+        "indexedCount",
+        "skippedCount",
+        "truncated",
+        "builtAt"
+      ],
+      "semantics": "No implicit guarantee that content index equals full source coverage."
+    },
+    {
+      "id": "SearchQuery",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-08",
+      "fields": [
+        "id",
+        "scope",
+        "snapshotId",
+        "query",
+        "mode",
+        "filters",
+        "limit",
+        "cursor?"
+      ],
+      "semantics": "Scope assigned from caller authority; mode literal/regex/text/symbol declares semantics."
+    },
+    {
+      "id": "SearchHit",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-09",
+      "fields": [
+        "id",
+        "queryId",
+        "spanId",
+        "score?",
+        "matchKind",
+        "provider",
+        "stale"
+      ],
+      "semantics": "Hit with evidence ref, not a model assertion."
+    },
+    {
+      "id": "IntelligenceRun",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-10",
+      "fields": [
+        "id",
+        "bindingId",
+        "snapshotId",
+        "kind",
+        "provider",
+        "providerVersion",
+        "status",
+        "actor",
+        "budget",
+        "checkpoint",
+        "error?"
+      ],
+      "semantics": "Queued/running/cancelling/cancelled/failed/completed/stale states are separate from artifact review."
+    },
+    {
+      "id": "GeneratedArtifact",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-11",
+      "fields": [
+        "id",
+        "runId",
+        "kind",
+        "formatVersion",
+        "path",
+        "contentHash",
+        "reviewStatus",
+        "sourceFingerprint",
+        "idempotencyKey",
+        "createdAt"
+      ],
+      "semantics": "Key = source connection + canonical repository + exact snapshot + tool version + artifact digest; aliases or repeated runs do not duplicate the same wiki artifact. One writer per output namespace."
+    },
+    {
+      "id": "GraphNode",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-12",
+      "fields": [
+        "id",
+        "artifactId",
+        "kind",
+        "label",
+        "sourceRefs",
+        "providerNodeId?"
+      ],
+      "semantics": "Kinds separate source symbol/file from AI summary and C4 concept."
+    },
+    {
+      "id": "GraphEdge",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-13",
+      "fields": [
+        "id",
+        "artifactId",
+        "fromNodeId",
+        "toNodeId",
+        "kind",
+        "evidenceRefs",
+        "trust",
+        "providerEdgeId?"
+      ],
+      "semantics": "Trust deterministic-supported/authored/model-proposed/unsupported; not Groma stable/draft."
+    },
+    {
+      "id": "WikiPage",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-14",
+      "fields": [
+        "id",
+        "artifactId",
+        "repositoryId",
+        "path",
+        "title",
+        "pageKind",
+        "contentHash"
+      ],
+      "semantics": "Generated repo wiki and user-authored knowledge page have separate ownership."
+    },
+    {
+      "id": "WikiSection",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-15",
+      "fields": [
+        "id",
+        "pageId",
+        "anchor",
+        "title",
+        "contentHash",
+        "claimIds"
+      ],
+      "semantics": "Section reference returns complete bounded context or explicit limit error."
+    },
+    {
+      "id": "Claim",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-16",
+      "fields": [
+        "id",
+        "pageId",
+        "statement",
+        "status",
+        "providerClaimId?"
+      ],
+      "semantics": "Atomic statement; current/stale/missing/retracted assessment derives from evidence versions."
+    },
+    {
+      "id": "EvidenceRef",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-17",
+      "fields": [
+        "id",
+        "resource",
+        "version",
+        "snapshotId",
+        "spanId?",
+        "resolver",
+        "checkedAt",
+        "supportAssessment",
+        "verificationReceiptId?"
+      ],
+      "semantics": "Resolver verifies source version, then semantic support assessment records supported/partial/contradicted/unresolved with a receipt. File or URL existence alone does not verify the claim."
+    },
+    {
+      "id": "C4Element",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-18",
+      "fields": [
+        "id",
+        "artifactId",
+        "kind",
+        "parentId?",
+        "external",
+        "codeRefs",
+        "lifecycle",
+        "providerElementId"
+      ],
+      "semantics": "Groma C4 actor/system/container/component; source ownership and lifecycle retain provider semantics."
+    },
+    {
+      "id": "ReviewProposal",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-19",
+      "fields": [
+        "id",
+        "artifactId",
+        "baseHash",
+        "changes",
+        "affectedFiles",
+        "actor",
+        "status",
+        "appliedAt?"
+      ],
+      "semantics": "Human/navigator apply boundary and source fingerprint validation remain explicit."
+    },
+    {
+      "id": "ProviderPolicy",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-20",
+      "fields": [
+        "id",
+        "workspaceId",
+        "allowedRoots",
+        "excludes",
+        "dataEgress",
+        "credentialRef",
+        "maxBytes",
+        "telemetry",
+        "retention",
+        "offlineContentPolicy",
+        "authorizationLease?"
+      ],
+      "semantics": "Owned local repositories follow local policy. Remote-private default denies offline content; optional actor/workspace-scoped signed lease expires fail-closed. Reconnect invalidates cached authorization."
+    },
+    {
+      "id": "InstructionPatch",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-21",
+      "fields": [
+        "id",
+        "bindingId",
+        "targetPath",
+        "baseHash",
+        "markerNamespace",
+        "diff",
+        "reviewStatus"
+      ],
+      "semantics": "Managed-marker-only instructions update; preserve unrelated bytes and authoritative policy."
+    },
+    {
+      "id": "VerificationReceipt",
+      "status": "PROPOSED",
+      "sourceRecord": "CI-E-22",
+      "fields": [
+        "id",
+        "claimId?",
+        "evidenceRefIds",
+        "snapshotId",
+        "assessor",
+        "method",
+        "supportAssessment",
+        "rationale",
+        "checkedAt"
+      ],
+      "semantics": "Receipt proves what source was read and how it supports, partially supports or contradicts the proposition; unresolved is allowed. URL/path availability alone is not semantic verification."
+    }
+  ],
+  "relations": [
+    {
+      "id": "LER-001",
+      "from": "Workspace",
+      "to": "Membership",
+      "type": "contains"
+    },
+    {
+      "id": "LER-002",
+      "from": "Principal",
+      "to": "Membership",
+      "type": "holds"
+    },
+    {
+      "id": "LER-003",
+      "from": "Workspace",
+      "to": "EntityHeader",
+      "type": "scopes"
+    },
+    {
+      "id": "LER-004",
+      "from": "EntityHeader",
+      "to": "PermissionGrant",
+      "type": "governedBy"
+    },
+    {
+      "id": "LER-005",
+      "from": "EntityHeader",
+      "to": "EntityLink",
+      "type": "links"
+    },
+    {
+      "id": "LER-006",
+      "from": "EntityHeader",
+      "to": "DocumentDescriptor",
+      "type": "describedBy"
+    },
+    {
+      "id": "LER-007",
+      "from": "DocumentDescriptor",
+      "to": "DocumentRevision",
+      "type": "versions"
+    },
+    {
+      "id": "LER-008",
+      "from": "DocumentDescriptor",
+      "to": "BlockAnchor",
+      "type": "anchors"
+    },
+    {
+      "id": "LER-009",
+      "from": "Base",
+      "to": "TableDefinition",
+      "type": "contains"
+    },
+    {
+      "id": "LER-010",
+      "from": "TableDefinition",
+      "to": "FieldDefinition",
+      "type": "defines"
+    },
+    {
+      "id": "LER-011",
+      "from": "TableDefinition",
+      "to": "ViewDefinition",
+      "type": "presents"
+    },
+    {
+      "id": "LER-012",
+      "from": "TableDefinition",
+      "to": "SourceBinding",
+      "type": "reads"
+    },
+    {
+      "id": "LER-013",
+      "from": "SourceBinding",
+      "to": "RowProjection",
+      "type": "projects"
+    },
+    {
+      "id": "LER-014",
+      "from": "RowProjection",
+      "to": "NativeTask",
+      "type": "nativeAuthority"
+    },
+    {
+      "id": "LER-015",
+      "from": "RowProjection",
+      "to": "Company",
+      "type": "nativeAuthority"
+    },
+    {
+      "id": "LER-016",
+      "from": "RowProjection",
+      "to": "CustomRecord",
+      "type": "customAuthority"
+    },
+    {
+      "id": "LER-017",
+      "from": "CustomRecord",
+      "to": "FieldValue",
+      "type": "stores"
+    },
+    {
+      "id": "LER-018",
+      "from": "EntityHeader",
+      "to": "Discussion",
+      "type": "discussedIn"
+    },
+    {
+      "id": "LER-019",
+      "from": "Discussion",
+      "to": "Message",
+      "type": "contains"
+    },
+    {
+      "id": "LER-020",
+      "from": "Message",
+      "to": "Mention",
+      "type": "mentions"
+    },
+    {
+      "id": "LER-021",
+      "from": "EntityHeader",
+      "to": "AttachmentBinding",
+      "type": "uses"
+    },
+    {
+      "id": "LER-022",
+      "from": "EntityHeader",
+      "to": "ActivityEvent",
+      "type": "changes"
+    },
+    {
+      "id": "LER-023",
+      "from": "Principal",
+      "to": "Notification",
+      "type": "receives"
+    },
+    {
+      "id": "LER-024",
+      "from": "EntityHeader",
+      "to": "SearchProjection",
+      "type": "indexedBy"
+    },
+    {
+      "id": "LER-025",
+      "from": "ProviderConnection",
+      "to": "ProviderLink",
+      "type": "owns"
+    },
+    {
+      "id": "LER-026",
+      "from": "WorkflowDefinition",
+      "to": "WorkflowVersion",
+      "type": "publishes"
+    },
+    {
+      "id": "LER-027",
+      "from": "WorkflowVersion",
+      "to": "WorkflowRun",
+      "type": "executes"
+    },
+    {
+      "id": "LER-028",
+      "from": "WorkflowRun",
+      "to": "StepReceipt",
+      "type": "records"
+    },
+    {
+      "id": "LER-029",
+      "from": "Project",
+      "to": "NativeTask",
+      "type": "contains"
+    },
+    {
+      "id": "LER-030",
+      "from": "Company",
+      "to": "Contact",
+      "type": "contacts"
+    },
+    {
+      "id": "LER-031",
+      "from": "Contact",
+      "to": "MailThread",
+      "type": "interacts"
+    },
+    {
+      "id": "LER-032",
+      "from": "Meeting",
+      "to": "CalendarEvent",
+      "type": "scheduledBy"
+    },
+    {
+      "id": "LER-033",
+      "from": "Meeting",
+      "to": "Call",
+      "type": "conductedBy"
+    },
+    {
+      "id": "LER-034",
+      "from": "AgentSession",
+      "to": "EntityHeader",
+      "type": "authorizedContext"
+    },
+    {
+      "id": "CI-REL-01",
+      "from": "RepositoryBinding",
+      "to": "RepositorySnapshot",
+      "cardinality": "1:N",
+      "meaning": "captures",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "captures",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-02",
+      "from": "RepositorySnapshot",
+      "to": "SourceFile",
+      "cardinality": "1:N",
+      "meaning": "contains exact versions",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "contains exact versions",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-03",
+      "from": "SourceFile",
+      "to": "FileSpan",
+      "cardinality": "1:N",
+      "meaning": "locates",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "locates",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-04",
+      "from": "SourceFile",
+      "to": "CodeSymbol",
+      "cardinality": "1:N",
+      "meaning": "declares",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "declares",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-05",
+      "from": "RepositorySnapshot",
+      "to": "DependencyEvidence",
+      "cardinality": "1:N",
+      "meaning": "supports",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "supports",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-06",
+      "from": "RepositoryBinding",
+      "to": "SearchIndex",
+      "cardinality": "1:N",
+      "meaning": "indexes snapshots",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "indexes snapshots",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-07",
+      "from": "SearchQuery",
+      "to": "SearchHit",
+      "cardinality": "1:N",
+      "meaning": "returns",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "returns",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-08",
+      "from": "SearchHit",
+      "to": "FileSpan",
+      "cardinality": "N:1",
+      "meaning": "cites",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "cites",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-09",
+      "from": "RepositorySnapshot",
+      "to": "IntelligenceRun",
+      "cardinality": "1:N",
+      "meaning": "input",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "input",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-10",
+      "from": "IntelligenceRun",
+      "to": "GeneratedArtifact",
+      "cardinality": "1:N",
+      "meaning": "produces",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "produces",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-11",
+      "from": "GeneratedArtifact",
+      "to": "GraphNode",
+      "cardinality": "1:N",
+      "meaning": "owns",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "owns",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-12",
+      "from": "GraphNode",
+      "to": "GraphEdge",
+      "cardinality": "N:M",
+      "meaning": "typed connections within artifact",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "typed connections within artifact",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-13",
+      "from": "GeneratedArtifact",
+      "to": "WikiPage",
+      "cardinality": "1:N",
+      "meaning": "owns generated pages",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "owns generated pages",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-14",
+      "from": "WikiPage",
+      "to": "WikiSection",
+      "cardinality": "1:N",
+      "meaning": "contains",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "contains",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-15",
+      "from": "WikiPage",
+      "to": "Claim",
+      "cardinality": "1:N",
+      "meaning": "states",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "states",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-16",
+      "from": "Claim",
+      "to": "EvidenceRef",
+      "cardinality": "N:M",
+      "meaning": "jointly supports",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "jointly supports",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-17",
+      "from": "EvidenceRef",
+      "to": "FileSpan",
+      "cardinality": "N:1?",
+      "meaning": "resolves code evidence",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "resolves code evidence",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-18",
+      "from": "GeneratedArtifact",
+      "to": "C4Element",
+      "cardinality": "1:N",
+      "meaning": "represents architecture",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "represents architecture",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-19",
+      "from": "C4Element",
+      "to": "SourceFile",
+      "cardinality": "N:M",
+      "meaning": "code ownership with provider invariants",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "code ownership with provider invariants",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-20",
+      "from": "GeneratedArtifact",
+      "to": "ReviewProposal",
+      "cardinality": "1:N",
+      "meaning": "reviewed mutations",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "reviewed mutations",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-21",
+      "from": "RepositoryBinding",
+      "to": "ProviderPolicy",
+      "cardinality": "N:1",
+      "meaning": "governs",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "governs",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "CI-REL-22",
+      "from": "RepositoryBinding",
+      "to": "InstructionPatch",
+      "cardinality": "1:N",
+      "meaning": "stages instructions",
+      "classification": "CONCEPTUAL_ROX",
+      "type": "stages instructions",
+      "status": "PROPOSED"
+    },
+    {
+      "id": "LCI-01",
+      "from": "Project",
+      "to": "RepositoryBinding",
+      "type": "binds"
+    },
+    {
+      "id": "LCI-02",
+      "from": "SourceBinding",
+      "to": "RepositoryBinding",
+      "type": "reads"
+    },
+    {
+      "id": "LCI-03",
+      "from": "GeneratedArtifact",
+      "to": "DocumentDescriptor",
+      "type": "adoptsWithSameIdentityAndCAS"
+    },
+    {
+      "id": "LCI-04",
+      "from": "AgentSession",
+      "to": "FileSpan",
+      "type": "authorizedSnapshotContext"
+    },
+    {
+      "id": "LCI-05",
+      "from": "Claim",
+      "to": "VerificationReceipt",
+      "type": "semanticallyAssessedBy"
+    }
+  ],
+  "invariants": [
+    "NativeTask owner/source scoped; no duplicate Base task store",
+    "One document authority epoch",
+    "No implicit ACL grant from link/mention",
+    "Derived aggregate respects querying actor policy",
+    "Single aggregate CAS covering document text/tree",
+    "Private existing comments not automatically shared",
+    "Remote-private offline default denied; optional bounded lease expires fail-closed",
+    "Generated wiki/diagram is derived; exact source snapshot remains authority",
+    "Dirty source bytes never cited as unchanged parent commit"
+  ]
+}

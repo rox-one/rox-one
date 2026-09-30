@@ -1,5 +1,15 @@
 # Macro → ROX: спецификация архитектурного исследования
 
+## Новое уточнение: Lark Suite + переносимые Docs/Bases
+
+Цель: через Codex Computer Use исследовать доступные живые Lark screens и дополнить их официальными источниками; разобрать все названные пользователем Suite/third-party areas; проверить 11 Obsidian references по текущим исходникам и лицензиям; выпустить подробные Rox Docs/Bases PRD, UX contracts, target ERD, automation contracts и independently verifiable implementation plans. Это подготовка продукта, без запуска реализации или cloud jobs.
+
+Acceptance: каждый названный раздел имеет классификацию, evidence status, screens/actions/inputs/outputs/entities/dependencies и ограничения; live capture IDs и hashes локально сохранены; текущие ROX seams имеют SHA/path/symbol; Docs, Markdown/Map/Outline, Comments, Tabs/Columns, Tasks, Bases views, formulas/relations и automations имеют single-authority model, permissions/failure/recovery/agent contracts; machine-readable packages и ациклический DAG проверены; независимая критика закрыта; commit/push/readback документации. Private screenshots/AX/customer identifiers не публикуются. Недоступный экран не называется проверенным; proprietary Lark database неизвестна, reference ERD является conceptual inference.
+
+Latest steering adds OpenWiki + GitDiagram + repogrep.com alternative + MrLesk/groma.md to this architecture packet. Acceptance: actual source SHAs/licenses/pipelines/ROX seams, repository snapshots/claims/provenance/ACL/durable jobs contracts,12 concrete Code Intelligence screens, additional independently verifiable work packages and combined DAG. Extend the existing `packages/shared/src/code-intelligence` capability pack; its types are existing shared files, not proposed new worker paths. No installation, cloud launch or source transmission claimed from planning artifacts.
+
+Delivery also includes separate new GitHub issues for the 46 granular Docs/Bases/automation slices and 15 Code Intelligence slices. They link earlier Suite issues as related broader scope, preserve explicit source/spec revision separation, and receive exact body readback. Their publication prepares implementation work; it does not launch coding agents or satisfy product DoD.
+
 ## Новое уточнение: ROX Suite issues по восьми screenshots
 
 Создать 30 отдельных новых GitHub issues в rox-one/rox-one: focus input; Messenger/контакты; Meetings; Drive/Notes/Docs/Wiki/Sheets/Slides/Base/Forms; MCP/admin/Help Desk/Approval/Signature; пять slices Automations. Каждая задача содержит source SHA/path/symbol, concrete UI/input/output/hover/focus/keyboard, механизм/persistence/API/ACL/events, tests/DoD, dependencies и cloud handoff. Частные данные изображений не публикуются. Существующие общие issues связать, не закрывать и не переименовывать. Acceptance: все новые issue IDs/URLs сохранены, dependencies превращены в реальные ссылки, точные body bytes прочитаны обратно с GitHub.
