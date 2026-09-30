@@ -4,8 +4,21 @@
   "observedAt": "2026-09-30T16:17:33.654Z",
   "inputSourceRevision": "f3987fd7ffcb7f3d582f09d9a8d8a04669877d13",
   "publication": {
-    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
-    "fullProductDelivery": "PENDING"
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+    "revision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+    "pullRequestHeadReadback": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+    "observedAt": "2026-09-30T16:18:32.688Z",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "sourceCount": 4851,
+    "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
+    "committedSourceMatchesTestedManifest": true,
+    "bindingLimit": "Affected Electron/UI/core union, production renderer build and actual hidden media runtime bind to these source blobs. Earlier complete Shared/server/exact local CI/main/preload proof remains at121ebea with only renderer index changed, and is not a new complete CI run. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
   },
   "sourceBinding": {
     "sourceCount": 4851,
@@ -16,7 +29,8 @@
       "apps/electron/.impeccable/hook.cache.json"
     ],
     "beforeAfterIdentical": true,
-    "committedSourceMatchesTestedManifest": false
+    "committedSourceMatchesTestedManifest": true,
+    "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc"
   },
   "sources": [
     {
