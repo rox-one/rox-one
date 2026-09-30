@@ -191,3 +191,19 @@ test('active native authority denies missing-principal legacy requests before an
   expect(readFileSync(note.path, 'utf8')).toBe(note.content)
   expect(existsSync(join(f.root, 'notes', '.rox-docs'))).toBe(false)
 })
+
+
+test('native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback', async () => {
+  const f = await fixture()
+  const client = f.connect()
+  const note = await create(f, client)
+  const operation = { operationId: 'wrong-position', expectedRevision: note.nativeRevision!, schemaVersion: 1 }
+  await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'wrong string writer', note.revision, note.sourceStoreId)).rejects.toThrow('native notes operation metadata is required')
+  await expect(client.invoke(RPC_CHANNELS.notes.SAVE, workspaceId, note.id, 'shifted writer', operation)).rejects.toThrow('native notes operation metadata is required')
+  const unchanged = await client.invoke(RPC_CHANNELS.notes.READ, workspaceId, note.id) as NoteDocument
+  expect(unchanged.nativeId).toBe(note.nativeId)
+  expect(unchanged.nativeRevision).toBe(note.nativeRevision)
+  expect(unchanged.content).toBe(note.content)
+  expect(readFileSync(note.path, 'utf8')).toBe(note.content)
+  expect(existsSync(join(f.root, 'notes', '.rox-docs'))).toBe(false)
+})

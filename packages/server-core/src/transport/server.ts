@@ -1127,14 +1127,18 @@ export class WsRpcServer implements RpcServer {
       const outbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : null
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       if (registration.beforeResponse) {
-        await registration.beforeResponse({ ...ctx, ...(outbound ? { actor: outbound.actor } : {}) }, args ?? [], result)
+        // Complete identity admission before the Resource guard. A later await
+        // would let Resource permission change after its final read check.
+        const guardedOutbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : outbound
+        if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+        await registration.beforeResponse({ ...ctx, ...(guardedOutbound ? { actor: guardedOutbound.actor } : {}) }, args ?? [], result)
         // A trusted asynchronous Resource guard is another admission boundary:
         // NativePrincipal grant generations and the current caller binding must
         // still match after it settles, before any result is serialized.
         if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       }
       const data = serializeEnvelope(response)
-      if (this.workspaceAuthority) await this.refreshWorkspaceClient(client)
+      if (this.workspaceAuthority && !registration.beforeResponse) await this.refreshWorkspaceClient(client)
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       this.safeSend(client.ws, data)
     } catch (err) {
