@@ -5,6 +5,7 @@
  * v1 scope only — no memory tab, no provider selection, no plugin marketplace.
  */
 
+import ProjectRoadmapPage from './ProjectRoadmapPage'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState, useCallback, useMemo } from 'react'
@@ -46,7 +47,7 @@ interface ProjectInfoPageProps {
   projectSlug: string
 }
 
-type TabKey = 'sessions' | 'tasks' | 'assets' | 'settings' | 'okr'
+type TabKey = 'roadmap' | 'sessions' | 'tasks' | 'assets' | 'settings' | 'okr'
 
 export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { t } = useTranslation()
@@ -500,6 +501,9 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
           {/* Tab bar */}
           <div className="flex items-center gap-1 border-b border-border/50 px-2 mb-4">
+            <TabButton active={tab === 'roadmap'} onClick={() => setTab('roadmap')}>
+              {t('projectRoadmap.title')}
+            </TabButton>
             <TabButton active={tab === 'sessions'} onClick={() => setTab('sessions')}>
               {t('projectInfo.tabSessions')}
             </TabButton>
@@ -516,6 +520,8 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
               {t('projectInfo.tabSettings')}
             </TabButton>
           </div>
+
+          {tab === 'roadmap' && <ProjectRoadmapPage projectSlug={projectSlug} />}
 
           {/* Sessions tab */}
           {tab === 'sessions' && (

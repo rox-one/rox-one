@@ -258,6 +258,14 @@ export interface ISessionManager {
   runDistillOneShot(workspaceId: string, prompt: string): Promise<string>
   refreshTitle(sessionId: string): Promise<{ success: boolean; title?: string; error?: string }>
   improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }>
+  /** Connection/model a sessionless one-shot on this workspace would use (Project screen AI). */
+  describeWorkspaceLlm?(workspaceId: string): { available: boolean; connectionName?: string; model?: string; reason?: string }
+  /** Sessionless one-shot on the workspace's default connection/model; throws the real provider error. */
+  queryWorkspaceLlm?(
+    workspaceId: string,
+    request: { prompt: string; systemPrompt?: string; maxTokens?: number; temperature?: number },
+    options?: { timeoutMs?: number },
+  ): Promise<{ text: string; model?: string; requestedModel?: string; effectiveModel?: string | null; warning?: string }>
   /** One-shot LLM query on the session's connection/model; throws the real provider error. */
   querySessionLlm?(
     sessionId: string,

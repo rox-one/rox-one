@@ -2142,6 +2142,10 @@ export interface ElectronAPI {
   listProjectAssets(workspaceId: string, projectSlug: string): Promise<unknown>
   uploadProjectAsset(workspaceId: string, projectSlug: string, input: { filename: string; base64?: string; text?: string; sourcePath?: string }): Promise<import('@craft-agent/shared/projects/types').ProjectAsset>
   deleteProjectAsset(workspaceId: string, projectSlug: string, filename: string): Promise<void>
+  getProjectRoadmap(workspaceId: string, projectSlug: string): Promise<{ roadmap: import('@craft-agent/shared/projects/roadmap').ProjectRoadmap; exists: boolean; corrupt: boolean } | null>
+  saveProjectRoadmap(workspaceId: string, projectSlug: string, roadmap: import('@craft-agent/shared/projects/roadmap').ProjectRoadmap): Promise<import('@craft-agent/shared/projects/roadmap').ProjectRoadmap>
+  getProjectAiStatus(workspaceId: string): Promise<{ available: boolean; connectionName?: string; model?: string; reason?: string }>
+  runProjectRoadmapAi(workspaceId: string, projectSlug: string, request: import('@craft-agent/shared/projects/roadmap-ai').RoadmapAiRequest & { language?: string; today?: string; inputs?: string[] }): Promise<import('@craft-agent/shared/projects/roadmap-ai').RoadmapAiResponse>
   onProjectsChanged(callback: (workspaceId: string, projects: unknown) => void): () => void
 
   // Pages (workspace-scoped mini dashboards)

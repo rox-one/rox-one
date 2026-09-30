@@ -519,5 +519,10 @@
     "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
     "committedSourceMatchesTestedManifest": true,
     "bindingLimit": "Affected Electron/UI/core union, production renderer build and actual hidden media runtime bind to these source blobs. Earlier complete Shared/server/exact local CI/main/preload proof remains at121ebea with only renderer index changed, and is not a new complete CI run. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
+  },
+  "roadmapSqlitePublication": {
+    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING",
+    "fullOriginalTasksAccepted": 0
   }
 }

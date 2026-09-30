@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { chmodSync, closeSync, lstatSync, mkdirSync, openSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
+import { DatabaseSync } from '../utils/sqlite-runtime.ts'
 
 export type AutomationOccurrenceState = 'claimed' | 'succeeded' | 'failed' | 'unknown_external_outcome'
 export type AutomationOccurrenceOutcome = Exclude<AutomationOccurrenceState, 'claimed'>

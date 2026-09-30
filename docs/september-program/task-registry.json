@@ -6532,7 +6532,7 @@
       "title": "[Sep-projects] Довести проекты и встроенную AI-roadmap до проверяемого источника работы",
       "area": "projects",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerProjects",
       "dependsOn": [
         "RECON-01",
@@ -6603,16 +6603,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "ROADMAP-SQLITE-JOINT-20260930"
+          ],
+          "summary": "Additive Roadmap tab, canonical storage/CAS, ordered save/readback, local caller workspace isolation and honest effective-model provenance are independently verified. Full AI/native UI/provider/product criteria remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "ROADMAP-SQLITE-JOINT-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -8117,9 +8121,10 @@
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
-            "BUDGET-OWNER-SOURCE-STATUS-20260930"
+            "BUDGET-OWNER-SOURCE-STATUS-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930"
           ],
-          "summary": "Local ledger owner isolation, contention, actual process-loss recovery and native Electron/Node constructor cleanup verified; paid-provider/background and full platform acceptance remain pending."
+          "summary": "Current owner-fenced ledger retained. Workspace query reserves before backend auth and holds unknown dispatched usage; real process/storage controls plus built-in runtime cleanup pass. Paid provider/cancellation/full platform acceptance remains pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -8128,7 +8133,8 @@
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
-            "BUDGET-OWNER-SOURCE-STATUS-20260930"
+            "BUDGET-OWNER-SOURCE-STATUS-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -9936,9 +9942,10 @@
             "NATIVE-CALLER-INVENTORY-20260930",
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
-            "LOCAL-MEETING-BLOB-MEDIA-20260930"
+            "LOCAL-MEETING-BLOB-MEDIA-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930"
           ],
-          "summary": "Root serially integrated four reviewed production/test paths and one scheduler comment correction; complete package unions, exact local CI and standard Electron build pass on an unchanged manifest. Full program integration and product acceptance remain pending."
+          "summary": "Reviewed additive Roadmap and import-only SQLite adaptation integrated without replacing existing authority, budget ownership, OKR or CSP. Five whole union/CI/build gates pass on identical source manifest. Full program predecessors and product/platform acceptance remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -9973,7 +9980,8 @@
             "NATIVE-CALLER-INVENTORY-20260930",
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
-            "LOCAL-MEETING-BLOB-MEDIA-20260930"
+            "LOCAL-MEETING-BLOB-MEDIA-20260930",
+            "ROADMAP-SQLITE-JOINT-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10163,7 +10171,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T16:17:33.654Z",
+    "asOf": "2026-09-30T17:26:06.713Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10206,7 +10214,7 @@
       ],
       "committedSourceMatchesTestedManifest": true
     },
-    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_VALIDATE_CI_AND_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_OWNER_STATUS_CANDIDATE; REMOTE_PLATFORM_PRODUCT_GATES_PENDING",
+    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_CI_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4870_ROADMAP_SQLITE_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
       "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
@@ -10242,12 +10250,12 @@
     },
     "facetCounts": {
       "implementation": {
-        "IN_PROGRESS": 27,
-        "NOT_RUN": 82
+        "IN_PROGRESS": 28,
+        "NOT_RUN": 81
       },
       "verification": {
-        "IN_PROGRESS": 25,
-        "NOT_RUN": 84
+        "IN_PROGRESS": 26,
+        "NOT_RUN": 83
       },
       "fullAccepted": 0
     },
@@ -10398,6 +10406,12 @@
       "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Affected Electron/UI/core union, production renderer build and actual hidden media runtime bind to these source blobs. Earlier complete Shared/server/exact local CI/main/preload proof remains at121ebea with only renderer index changed, and is not a new complete CI run. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
+    },
+    "roadmapSqliteEvidence": "roadmap-sqlite-20260930.json",
+    "roadmapSqliteCandidate": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "fullOriginalTasksAccepted": 0
     }
   }
 }

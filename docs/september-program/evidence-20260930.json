@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-09-30T16:17:33.654Z",
+  "asOf": "2026-09-30T17:26:06.713Z",
   "purpose": "Sanitized bounded implementation/verification reconciliation; no complete task, requirement, contract freeze or code delivery accepted.",
   "sourceState": {
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -2094,6 +2094,346 @@
           "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
         }
       ]
+    },
+    {
+      "id": "ROADMAP-SQLITE-JOINT-20260930",
+      "basis": "Independent actual WS/native/method/SQLite/CJS review and unchanged whole-repository union/CI/build gates",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+          "sha256": "8c1a989852c05ff321f389a37016977c7e928ee0c903a37ce74390028cf05715"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx",
+          "sha256": "2014b2883d772adf509e348148405d5ce2543d6fa29f71951ce26b95852c212c"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectAiPanel.tsx",
+          "sha256": "1711f5ee0c6a128388a5f04f5cacfab6af6ce1ac8ede3d0778d522e702cdd7c1"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectInputs.tsx",
+          "sha256": "7faeda6e08b7fae4f02dee5794d172085d8047cf44bb986fc87dbbfc22e141b4"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectRequirements.tsx",
+          "sha256": "04901ce0824911acc6bff845ad11b6ac74a4fb52de399f6b30c1a72e95b654d6"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/ProjectTimeline.tsx",
+          "sha256": "3f06a8427adedc271ba468db83b5f8eee1fa528db0b098be1a8c30eca7da0f1e"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/RoadmapModelResult.tsx",
+          "sha256": "fa21426e1218819c2002a467581e3f13ce08ad098cb112ec6fc2217fe4d97e9d"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/__tests__/roadmap-model-result.test.tsx",
+          "sha256": "77d4f30404a3a1fd51bdc34b2784ad9f68f503c3749dadb46f49d86f1394c11f"
+        },
+        {
+          "path": "apps/electron/src/renderer/pages/project/roadmap-ui.tsx",
+          "sha256": "bceecb200dda178c4e3c18d9122f93ae0b9e3f1da1dbb08044927da3ac68fd7e"
+        },
+        {
+          "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+          "sha256": "00dfaba79eafd01eb7389c9b5cf172f3869f7f725ae20caf5f6bad0870e3269e"
+        },
+        {
+          "path": "apps/electron/src/shared/types.ts",
+          "sha256": "54e41efcad47209813c77b710cfe02188a36c5e22c30d02d5be82cfb17232485"
+        },
+        {
+          "path": "apps/electron/src/transport/channel-map.ts",
+          "sha256": "9f51506f65cf275f5d6f9fc11ead4fb478b12d9e542d956badd6fea24251b752"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts",
+          "sha256": "42dc3f259d51ce302d10985f4c07ea51856ff820d963a0d1c73476a9374a00e6"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts",
+          "sha256": "3410ff5e97a9846f8ea81df7424ba38cfd52bdaa280d729bea5efa6beff65a64"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/projects.ts",
+          "sha256": "a9eaeb0f4b3f1ec98bd8301885784c08b7f891870359424358a97c64943d7849"
+        },
+        {
+          "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+          "sha256": "753ad2ebfce2c1ed4e7821aa4487099367ffdc6b35365655eeda74391e8cf925"
+        },
+        {
+          "path": "packages/server-core/src/sessions/SessionManager.ts",
+          "sha256": "e306a725ac4099709ed86420deb8026fc0216ca4313d1eef336f941220fdc76d"
+        },
+        {
+          "path": "packages/shared/package.json",
+          "sha256": "1bc44bc1c9e6fdc348c000ff53fb4bdf884393f39e25b035e576a59a32c45e67"
+        },
+        {
+          "path": "packages/shared/src/agent/claude-agent.ts",
+          "sha256": "4f55936cd90345136f746ee6e7909b10dc34a98c2cc085b745a6e1788b02aba6"
+        },
+        {
+          "path": "packages/shared/src/agent/omp-agent.ts",
+          "sha256": "0735a7b92cc25237c3daa94891655023e00d49c6ff01b7ddd664e6e6e2017ca6"
+        },
+        {
+          "path": "packages/shared/src/agent/pi-agent.ts",
+          "sha256": "322f7c35ed63e174aaef6ba543710d3278965d47293e609f469d9f02b9a4c707"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ar.json",
+          "sha256": "82ea5eb28511b28c802643169a6d92e71cfedf7b958e5073ac3b745def17d464"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/de.json",
+          "sha256": "8f529edb7fc3fa3ad354f5665a3e930e3a789a10d1e9e378b4350878fc7aeae8"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/en.json",
+          "sha256": "a50831c12c60252b26cfc723914966746dbfb19bf8ebdf5692644f88f614a26d"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/es.json",
+          "sha256": "403cb420571ed3f64a1ae194271d472520202f24f57435164b1dbd33c0df75a6"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/fr.json",
+          "sha256": "12cd7fd891f1fdec9d6da5824c8004b08d97e7d4ab01157a79449a88813b092c"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/hu.json",
+          "sha256": "adb6163915b43a8f927a33eac3dee5a56a1f1801682b99e637593059eb94e847"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ja.json",
+          "sha256": "2ed4ae4dcbb6bd0483f0d523ef2b48e32ea16f4341121f130b740613e8c3e5bb"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ko.json",
+          "sha256": "5e938150ac3121b9ebeaf7e5f0f3484d0740e9b594bde2b5aa699d2e9842e0ff"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/pl.json",
+          "sha256": "1fbf4cfe7a80f4adf63565d31d9a3059bddd9421a20102410c4f8d57c922b898"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/ru.json",
+          "sha256": "c9b9f4215cd7a15d60048baeff4ca51e06698e07ae10045bfc1ed7c90ea2cb38"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+          "sha256": "f67c0097e54a6bf7867af7933cc17496123dc9b91448ded8953fdd65a07ac9a0"
+        },
+        {
+          "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+          "sha256": "cb233d96bf75dc18d50e644dce6177d05c1830bc8ee3f496368db98ed36f3270"
+        },
+        {
+          "path": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+          "sha256": "8031cccab1c5b3ef7d66d8ee13b619841fe791820a7926430285030d145b67d1"
+        },
+        {
+          "path": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+          "sha256": "b3370522dabdac5bf62c8a08368719343e31bb2d98e57eddcb65563830403f61"
+        },
+        {
+          "path": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+          "sha256": "db7adafe9d8346a09d3b37dd239f92d3f95bcfa681c9bc595cdbf32ee5bb8d1f"
+        },
+        {
+          "path": "packages/shared/src/projects/index.ts",
+          "sha256": "92e65add7579aa2b8a086aea15d79dbf86e63cbe630e50cebbd415d99a8daffd"
+        },
+        {
+          "path": "packages/shared/src/projects/roadmap-ai.ts",
+          "sha256": "293f5bf0fe18eda7af4928c2e89f8dfd260969aa4a877d2ca6e7588b252c0352"
+        },
+        {
+          "path": "packages/shared/src/projects/roadmap-storage.ts",
+          "sha256": "64f2efb5ea594942ed1fe3c45dbd02afea7f7b294c1e73e192d19f3f83f91b2c"
+        },
+        {
+          "path": "packages/shared/src/projects/roadmap.ts",
+          "sha256": "5f5600df01c60d4198b77fb755cd19942e1521dec71f7d2bfe9215caaf25e59a"
+        },
+        {
+          "path": "packages/shared/src/projects/types.ts",
+          "sha256": "45e6b15b90b60d52447d0d966ece6d1a0be9d64b50f5fa6d12a24b6a3e10188e"
+        },
+        {
+          "path": "packages/shared/src/prompts/system.ts",
+          "sha256": "db32086d243aca882764e331d93d9e35a680ff222b8eaf7dc5d1f16177da0660"
+        },
+        {
+          "path": "packages/shared/src/protocol/channels.ts",
+          "sha256": "c85ca7a093b73a8eb55646ed9dc560f72f06b890e644ce370475a7095e6bdd1e"
+        },
+        {
+          "path": "packages/shared/src/protocol/routing.ts",
+          "sha256": "cac503e3142ef269299e8b8451e6c1707506467d7d4aa446370885c37c054c3b"
+        },
+        {
+          "path": "packages/server-core/src/authority/__tests__/native-authority.test.ts",
+          "sha256": "4ffaa60ffdceca9f47ae8fffebaa49a425bca840d80e72a7356212414a584e6d"
+        },
+        {
+          "path": "packages/server-core/src/authority/__tests__/native-journal.test.ts",
+          "sha256": "b2c14eff6253b6ff8adddeefc0d9442d2e8763cb022b5aee6bf0158b2f70f36b"
+        },
+        {
+          "path": "packages/server-core/src/authority/native-authority.ts",
+          "sha256": "fbba32295c512debc2aa791bccbf5cacbcd2eff72924f22ad3ac6d1291d2a806"
+        },
+        {
+          "path": "packages/server-core/src/authority/native-journal.ts",
+          "sha256": "4371389616fbdf0f9ee498bc74f6f5681445d46fffe2130df7e2628e77412d52"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
+          "sha256": "3131144c297f0c1ecd6f1ddb7251bfd6d0e3ca2d44e612f2385635cf93604feb"
+        },
+        {
+          "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+          "sha256": "bd6c807d3c8ed310478ed409085a08a4f88e79c52a24afe43635c4d0d4539608"
+        },
+        {
+          "path": "packages/shared/src/account-replica/outbox.ts",
+          "sha256": "adab9de3803d365ac40819cb74d5b89cf46893189d93afbcd52e3976061f129e"
+        },
+        {
+          "path": "packages/shared/src/agent/core/agent-budget.ts",
+          "sha256": "b5744fcb7adc758f5e5474c0cfa58c5048f8ba67be4692ebd37e2e8513f3ac25"
+        },
+        {
+          "path": "packages/shared/src/automations/occurrence-ledger.ts",
+          "sha256": "24e09244699e41442971b5a6e20fb9e72bf5811ff1bcd3333d3594e6ab3114ec"
+        },
+        {
+          "path": "packages/shared/src/utils/__tests__/sqlite-runtime.fixture.ts",
+          "sha256": "de751a01d860050a26d4c1a3d07f72204caec24930753679f7079e49eff5af37"
+        },
+        {
+          "path": "packages/shared/src/utils/__tests__/sqlite-runtime.test.ts",
+          "sha256": "91e43dde056419aca1ad0975fdf5d40ed79f8d32ebb8155fe26c7dbdc8bc0b2f"
+        },
+        {
+          "path": "packages/shared/src/utils/sqlite-runtime.ts",
+          "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+        }
+      ],
+      "limits": [
+        "All original 109 tasks, 489 requirements, 464 edges and original 297-row scope remain. Zero complete original tasks are accepted by this wave.",
+        "Roadmap local filesystem CAS is not NativeJournal/team/multi-device acceptance. Derived Markdown and JSON are not one transaction; crashed locks, external writers/symlink races, legacy unversioned input and power loss retain their limits.",
+        "Controlled query backend and settlement costs are synthetic. Real provider cost/cancellation/cap enforcement, complete lifecycle and full AI roadmap acceptance remain pending; timeout starts after backend postInit.",
+        "Node CommonJS is mandatory. Electron binary absence is an explicit skip for an installed package whose download is omitted, not a runtime pass or a claim that an absent declared dependency works.",
+        "Prepared task-private UV cache proves exact local CI on this host; required remote CI, fresh network dependency transfer and trusted toolchain runner remain separate.",
+        "Standard build output inventory may include retained earlier files; packaging, signing, actual application UI/private OS custody, Windows, genuine Conation iOS and full provider/recipient acceptance remain pending.",
+        "Portable Electron bridge harness is a separate candidate and is not part of this source freeze or acceptance."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "roadmap-september-integration-20260930/independent-review.md",
+          "sha256": "a5a8401b03bda7c84a60b92b3daa83ff057e4d3704a9237cad2def7df55107f5",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-september-integration-20260930/source-manifest.json",
+          "sha256": "f0f2718c6caec04418d08f8c0ee12ed25587db1d06fff1768a9247d4879f8a9a",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-september-integration-20260930/root-transfer.json",
+          "sha256": "238b72ed21b0bac4439c7dab37f079570e911f41323c36a0dfa842674c052b6a",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-final-independent-review.md",
+          "sha256": "b01718255e10f8f522503ece4fc63b484f607c912e8d7e21d875bd6689c38425",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-final-independent-review.json",
+          "sha256": "10b08196e96581abb323e6e528426fa58bf5c8b47874c994e0bc3fb656f77144",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-fixed-candidate-frozen.json",
+          "sha256": "27dc09549e2231ee449b9b1bc0b097a6892508f9a4b16826ddb3134cb476c5b5",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/cjs-final-independent-review.md",
+          "sha256": "de7b20b46697484d0453dc9168a9b49133ce4c3282677fbb7663824b23312e8c",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/headless-portability-review.md",
+          "sha256": "744d22d1927d30881b27c27aa167529c48c84597e2c71c5f7bfb08eebc00aa2f",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "sqlite-independent-20260930/root-transfer.json",
+          "sha256": "5ff1298a6b11a18c103a68483a7d317c07f6ab8c4bc82c07be968a6ffb47dccb",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/shared.txt",
+          "sha256": "d6e3c10bff3115f0b5a49763fa3e7027676430ea0a3e7e9eb87d7d948509cdfd",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/shared.json",
+          "sha256": "033cf6258af096370326147711afe088542cf5dd54091e41436395a164033295",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/locale-order-repair.json",
+          "sha256": "54cac1b493605680fa3ba84db1f1e281019a72c5b778d74078a63a2b96f2e219",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/gates.json",
+          "sha256": "4c5f202809075bbb7540ecb6e1a702808180fbbfb465b7ae41ea655d90e5b88d",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/dist-manifest.json",
+          "sha256": "66e634a55c29252118c3a7d38feab02ca988a42e66aeabc31cf335abe4068945",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/shared.txt",
+          "sha256": "6351d8b8a4ff000cd8f2a67f0fa7b4af63bac47666c7a97f39487ae18a245674",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/server.txt",
+          "sha256": "8c6b81a251378ae0b465f16e0ed5aa3a3e9d219bf7224ca122fbd4050a409e27",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/electron-ui-core.txt",
+          "sha256": "3180f914fdf7b47f8d3a8a8bd2e8833098745a9b63204823e94521d3495f716c",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/validate.txt",
+          "sha256": "c2767a458fd60ff5d9319b7f676895737984eab66d2e1d5689834a97b2cc65bd",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "roadmap-sqlite-20260930/corrected/build.txt",
+          "sha256": "4d2dffffdfa16295e6f19359b0c309e32a47a84e7bf044cea85ccee042dc5203",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        }
+      ]
     }
   ],
   "taskEvidence": [
@@ -3757,6 +4097,555 @@
       "Current TTS uses native/WebSpeech and is not accepted by this media CSP change.",
       "Full package/CI gates bind to earlier owner/status source; new complete CI was not rerun for one HTML directive. New affected Electron/UI/core and renderer gates bind separately.",
       "Packaging, signing, upgrade, Windows, genuine Conation iOS and remote required runners remain pending."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "roadmapSqliteFollowup": {
+    "schemaVersion": 1,
+    "id": "ROADMAP-SQLITE-JOINT-20260930",
+    "observedAt": "2026-09-30T17:26:06.713Z",
+    "inputSourceRevision": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "publication": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "fullOriginalTasksAccepted": 0
+    },
+    "sourceBinding": {
+      "sourceCount": 4870,
+      "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": false
+    },
+    "lineage": {
+      "roadmap": {
+        "pullRequest": "https://github.com/rox-one/rox-one/pull/1313",
+        "head": "5a9bf9cafd7df367f6ac32102b80e777377da162",
+        "integrationBase": "f3987fd7ffcb7f3d582f09d9a8d8a04669877d13"
+      },
+      "sqlite": {
+        "pullRequest": "https://github.com/rox-one/rox-one/pull/1319",
+        "head": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed",
+        "integrationBase": "bac082301aed341fe078cb5bd539c4ba074560eb",
+        "importOnlyCurrentBodies": 9
+      }
+    },
+    "sources": [
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "sha256": "8c1a989852c05ff321f389a37016977c7e928ee0c903a37ce74390028cf05715"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/ProjectRoadmapPage.tsx",
+        "sha256": "2014b2883d772adf509e348148405d5ce2543d6fa29f71951ce26b95852c212c"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectAiPanel.tsx",
+        "sha256": "1711f5ee0c6a128388a5f04f5cacfab6af6ce1ac8ede3d0778d522e702cdd7c1"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectInputs.tsx",
+        "sha256": "7faeda6e08b7fae4f02dee5794d172085d8047cf44bb986fc87dbbfc22e141b4"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectRequirements.tsx",
+        "sha256": "04901ce0824911acc6bff845ad11b6ac74a4fb52de399f6b30c1a72e95b654d6"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/ProjectTimeline.tsx",
+        "sha256": "3f06a8427adedc271ba468db83b5f8eee1fa528db0b098be1a8c30eca7da0f1e"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/RoadmapModelResult.tsx",
+        "sha256": "fa21426e1218819c2002a467581e3f13ce08ad098cb112ec6fc2217fe4d97e9d"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/__tests__/roadmap-model-result.test.tsx",
+        "sha256": "77d4f30404a3a1fd51bdc34b2784ad9f68f503c3749dadb46f49d86f1394c11f"
+      },
+      {
+        "path": "apps/electron/src/renderer/pages/project/roadmap-ui.tsx",
+        "sha256": "bceecb200dda178c4e3c18d9122f93ae0b9e3f1da1dbb08044927da3ac68fd7e"
+      },
+      {
+        "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+        "sha256": "00dfaba79eafd01eb7389c9b5cf172f3869f7f725ae20caf5f6bad0870e3269e"
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "sha256": "54e41efcad47209813c77b710cfe02188a36c5e22c30d02d5be82cfb17232485"
+      },
+      {
+        "path": "apps/electron/src/transport/channel-map.ts",
+        "sha256": "9f51506f65cf275f5d6f9fc11ead4fb478b12d9e542d956badd6fea24251b752"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-boundary-runtime.test.ts",
+        "sha256": "42dc3f259d51ce302d10985f4c07ea51856ff820d963a0d1c73476a9374a00e6"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts",
+        "sha256": "3410ff5e97a9846f8ea81df7424ba38cfd52bdaa280d729bea5efa6beff65a64"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/projects.ts",
+        "sha256": "a9eaeb0f4b3f1ec98bd8301885784c08b7f891870359424358a97c64943d7849"
+      },
+      {
+        "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+        "sha256": "753ad2ebfce2c1ed4e7821aa4487099367ffdc6b35365655eeda74391e8cf925"
+      },
+      {
+        "path": "packages/server-core/src/sessions/SessionManager.ts",
+        "sha256": "e306a725ac4099709ed86420deb8026fc0216ca4313d1eef336f941220fdc76d"
+      },
+      {
+        "path": "packages/shared/package.json",
+        "sha256": "1bc44bc1c9e6fdc348c000ff53fb4bdf884393f39e25b035e576a59a32c45e67"
+      },
+      {
+        "path": "packages/shared/src/agent/claude-agent.ts",
+        "sha256": "4f55936cd90345136f746ee6e7909b10dc34a98c2cc085b745a6e1788b02aba6"
+      },
+      {
+        "path": "packages/shared/src/agent/omp-agent.ts",
+        "sha256": "0735a7b92cc25237c3daa94891655023e00d49c6ff01b7ddd664e6e6e2017ca6"
+      },
+      {
+        "path": "packages/shared/src/agent/pi-agent.ts",
+        "sha256": "322f7c35ed63e174aaef6ba543710d3278965d47293e609f469d9f02b9a4c707"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ar.json",
+        "sha256": "82ea5eb28511b28c802643169a6d92e71cfedf7b958e5073ac3b745def17d464"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/de.json",
+        "sha256": "8f529edb7fc3fa3ad354f5665a3e930e3a789a10d1e9e378b4350878fc7aeae8"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/en.json",
+        "sha256": "a50831c12c60252b26cfc723914966746dbfb19bf8ebdf5692644f88f614a26d"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/es.json",
+        "sha256": "403cb420571ed3f64a1ae194271d472520202f24f57435164b1dbd33c0df75a6"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/fr.json",
+        "sha256": "12cd7fd891f1fdec9d6da5824c8004b08d97e7d4ab01157a79449a88813b092c"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/hu.json",
+        "sha256": "adb6163915b43a8f927a33eac3dee5a56a1f1801682b99e637593059eb94e847"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ja.json",
+        "sha256": "2ed4ae4dcbb6bd0483f0d523ef2b48e32ea16f4341121f130b740613e8c3e5bb"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ko.json",
+        "sha256": "5e938150ac3121b9ebeaf7e5f0f3484d0740e9b594bde2b5aa699d2e9842e0ff"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/pl.json",
+        "sha256": "1fbf4cfe7a80f4adf63565d31d9a3059bddd9421a20102410c4f8d57c922b898"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/ru.json",
+        "sha256": "c9b9f4215cd7a15d60048baeff4ca51e06698e07ae10045bfc1ed7c90ea2cb38"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+        "sha256": "f67c0097e54a6bf7867af7933cc17496123dc9b91448ded8953fdd65a07ac9a0"
+      },
+      {
+        "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+        "sha256": "cb233d96bf75dc18d50e644dce6177d05c1830bc8ee3f496368db98ed36f3270"
+      },
+      {
+        "path": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+        "sha256": "8031cccab1c5b3ef7d66d8ee13b619841fe791820a7926430285030d145b67d1"
+      },
+      {
+        "path": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+        "sha256": "b3370522dabdac5bf62c8a08368719343e31bb2d98e57eddcb65563830403f61"
+      },
+      {
+        "path": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+        "sha256": "db7adafe9d8346a09d3b37dd239f92d3f95bcfa681c9bc595cdbf32ee5bb8d1f"
+      },
+      {
+        "path": "packages/shared/src/projects/index.ts",
+        "sha256": "92e65add7579aa2b8a086aea15d79dbf86e63cbe630e50cebbd415d99a8daffd"
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap-ai.ts",
+        "sha256": "293f5bf0fe18eda7af4928c2e89f8dfd260969aa4a877d2ca6e7588b252c0352"
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap-storage.ts",
+        "sha256": "64f2efb5ea594942ed1fe3c45dbd02afea7f7b294c1e73e192d19f3f83f91b2c"
+      },
+      {
+        "path": "packages/shared/src/projects/roadmap.ts",
+        "sha256": "5f5600df01c60d4198b77fb755cd19942e1521dec71f7d2bfe9215caaf25e59a"
+      },
+      {
+        "path": "packages/shared/src/projects/types.ts",
+        "sha256": "45e6b15b90b60d52447d0d966ece6d1a0be9d64b50f5fa6d12a24b6a3e10188e"
+      },
+      {
+        "path": "packages/shared/src/prompts/system.ts",
+        "sha256": "db32086d243aca882764e331d93d9e35a680ff222b8eaf7dc5d1f16177da0660"
+      },
+      {
+        "path": "packages/shared/src/protocol/channels.ts",
+        "sha256": "c85ca7a093b73a8eb55646ed9dc560f72f06b890e644ce370475a7095e6bdd1e"
+      },
+      {
+        "path": "packages/shared/src/protocol/routing.ts",
+        "sha256": "cac503e3142ef269299e8b8451e6c1707506467d7d4aa446370885c37c054c3b"
+      },
+      {
+        "path": "packages/server-core/src/authority/__tests__/native-authority.test.ts",
+        "sha256": "4ffaa60ffdceca9f47ae8fffebaa49a425bca840d80e72a7356212414a584e6d"
+      },
+      {
+        "path": "packages/server-core/src/authority/__tests__/native-journal.test.ts",
+        "sha256": "b2c14eff6253b6ff8adddeefc0d9442d2e8763cb022b5aee6bf0158b2f70f36b"
+      },
+      {
+        "path": "packages/server-core/src/authority/native-authority.ts",
+        "sha256": "fbba32295c512debc2aa791bccbf5cacbcd2eff72924f22ad3ac6d1291d2a806"
+      },
+      {
+        "path": "packages/server-core/src/authority/native-journal.ts",
+        "sha256": "4371389616fbdf0f9ee498bc74f6f5681445d46fffe2130df7e2628e77412d52"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
+        "sha256": "3131144c297f0c1ecd6f1ddb7251bfd6d0e3ca2d44e612f2385635cf93604feb"
+      },
+      {
+        "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+        "sha256": "bd6c807d3c8ed310478ed409085a08a4f88e79c52a24afe43635c4d0d4539608"
+      },
+      {
+        "path": "packages/shared/src/account-replica/outbox.ts",
+        "sha256": "adab9de3803d365ac40819cb74d5b89cf46893189d93afbcd52e3976061f129e"
+      },
+      {
+        "path": "packages/shared/src/agent/core/agent-budget.ts",
+        "sha256": "b5744fcb7adc758f5e5474c0cfa58c5048f8ba67be4692ebd37e2e8513f3ac25"
+      },
+      {
+        "path": "packages/shared/src/automations/occurrence-ledger.ts",
+        "sha256": "24e09244699e41442971b5a6e20fb9e72bf5811ff1bcd3333d3594e6ab3114ec"
+      },
+      {
+        "path": "packages/shared/src/utils/__tests__/sqlite-runtime.fixture.ts",
+        "sha256": "de751a01d860050a26d4c1a3d07f72204caec24930753679f7079e49eff5af37"
+      },
+      {
+        "path": "packages/shared/src/utils/__tests__/sqlite-runtime.test.ts",
+        "sha256": "91e43dde056419aca1ad0975fdf5d40ed79f8d32ebb8155fe26c7dbdc8bc0b2f"
+      },
+      {
+        "path": "packages/shared/src/utils/sqlite-runtime.ts",
+        "sha256": "0d6e80c66b3e4147a37a1a669a21f6ff2230cb459d61ee8d18d7857153bc48ab"
+      }
+    ],
+    "owners": {
+      "roadmap": "/root/native_boundary isolated additive port",
+      "sqlite": "/root/recovery_scout isolated import-only adaptation",
+      "reviewAndGates": "/root/september_gates",
+      "integrationAndDelivery": "/root"
+    },
+    "behavior": {
+      "roadmap": "Add a separate Roadmap tab while preserving OKR. Persist canonical storage/CAS/read receipts and ordered saves. Four actual local-Electron RPCs bind caller workspace and reject native/foreign/stale/unbound callers. Requested model is separate from nullable backend-effective provenance; warnings and late-response scope fences remain visible.",
+      "budget": "Existing selected daily budget reserves the full remaining allowance before backend creation; only predispatch failure releases it. Every dispatched success/error/timeout retains unknown-cost unresolved quota until the existing exact trusted receipt reconciles it. Current per-instance owner fencing remains intact.",
+      "sqlite": "Use runtime built-in Bun or Node SQLite through a bounded synchronous interface. Bun operations finalize statements in finally; readonly, closed-statement and integer-range controls remain. Real Node/Electron ESM and CommonJS operations run; the original CommonJS createRequire(undefined) failure is retained and fixed by actual filename/module-URL resolution."
+    },
+    "reviews": {
+      "roadmap": {
+        "focusedPass": 136,
+        "fail": 0,
+        "assertions": 1339,
+        "files": 14,
+        "actualWsNativeStrictChildChecks": 27,
+        "actualMethodBudgetStrictChildChecks": 22
+      },
+      "sqlite": {
+        "finalProducerFocusedPass": 63,
+        "fail": 0,
+        "assertions": 611,
+        "files": 8,
+        "independentInstalled": {
+          "pass": 4,
+          "fail": 0,
+          "assertions": 19
+        },
+        "independentBinaryAbsent": {
+          "pass": 3,
+          "skip": 1,
+          "fail": 0,
+          "assertions": 15
+        },
+        "commonJsProductionConsumers": "Freshly bundled Authority enrollment/authentication, Journal mutation/replay and exact canonical bytes, Budget foreign-owner denial on native Node22 and Electron39 embedded Node22."
+      },
+      "resource": "Exact adapter, 20 constructor faults: Bun1.4.2, Node22 and Electron39 plateau at one additional descriptor while the seed connection stays open; zero immediately after seed closure. 100 throwing/retained statement controls release on DB close. This supersedes the earlier linear Bun node:sqlite-shim growth for these exact consumers; no immediate-flat-live-seed or universal allocator claim."
+    },
+    "gates": {
+      "HEAD": "bac082301aed341fe078cb5bd539c4ba074560eb",
+      "sourceCount": 4870,
+      "sourceBeforeHash": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "sourceAfterHash": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "stages": [
+        {
+          "stage": "shared",
+          "command": [
+            "bun",
+            "test",
+            "./packages/shared"
+          ],
+          "pid": 61004,
+          "exit": 0,
+          "seconds": 108.889457208,
+          "timeoutSeconds": 300,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/shared.txt",
+          "logSha256": "6351d8b8a4ff000cd8f2a67f0fa7b4af63bac47666c7a97f39487ae18a245674"
+        },
+        {
+          "stage": "server",
+          "command": [
+            "bun",
+            "test",
+            "./packages/server-core"
+          ],
+          "pid": 62952,
+          "exit": 0,
+          "seconds": 38.199777083,
+          "timeoutSeconds": 300,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/server.txt",
+          "logSha256": "8c6b81a251378ae0b465f16e0ed5aa3a3e9d219bf7224ca122fbd4050a409e27"
+        },
+        {
+          "stage": "electron-ui-core",
+          "command": [
+            "bun",
+            "test",
+            "./apps/electron/src",
+            "./packages/ui",
+            "./packages/core"
+          ],
+          "pid": 63710,
+          "exit": 0,
+          "seconds": 32.479285250000004,
+          "timeoutSeconds": 300,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/electron-ui-core.txt",
+          "logSha256": "3180f914fdf7b47f8d3a8a8bd2e8833098745a9b63204823e94521d3495f716c"
+        },
+        {
+          "stage": "validate",
+          "command": [
+            "bun",
+            "run",
+            "validate:ci"
+          ],
+          "pid": 66255,
+          "exit": 0,
+          "seconds": 140.574401792,
+          "timeoutSeconds": 480,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/validate.txt",
+          "logSha256": "c2767a458fd60ff5d9319b7f676895737984eab66d2e1d5689834a97b2cc65bd"
+        },
+        {
+          "stage": "build",
+          "command": [
+            "bun",
+            "run",
+            "electron:build"
+          ],
+          "pid": 69143,
+          "exit": 0,
+          "seconds": 59.849788167,
+          "timeoutSeconds": 600,
+          "interrupted": false,
+          "log": "roadmap-sqlite-20260930/corrected/build.txt",
+          "logSha256": "4d2dffffdfa16295e6f19359b0c309e32a47a84e7bf044cea85ccee042dc5203"
+        }
+      ],
+      "counts": {
+        "shared": {
+          "pass": 4944,
+          "skip": 12,
+          "fail": 0,
+          "assertions": 21730,
+          "files": 476
+        },
+        "server": {
+          "pass": 1508,
+          "skip": 8,
+          "fail": 0,
+          "assertions": 6149,
+          "files": 239
+        },
+        "electronUiCore": {
+          "pass": 4205,
+          "fail": 0,
+          "assertions": 20047,
+          "files": 610
+        },
+        "validate": {
+          "typechecks": "allpassed",
+          "selectedBunPass": 242,
+          "selectedBunAssertions": 687,
+          "documentsPass": 19,
+          "i18n": "parity/sorted/coveragepassed"
+        }
+      },
+      "dist": {
+        "manifest": "roadmap-sqlite-20260930/corrected/dist-manifest.json",
+        "manifestSha256": "66e634a55c29252118c3a7d38feab02ca988a42e66aeabc31cf335abe4068945",
+        "fileCount": 1614,
+        "totalBytes": 202477837,
+        "resourceCount": 715,
+        "versions": {
+          "electron": "39.2.7",
+          "electron-builder": "26.4.0",
+          "vite": "6.4.1",
+          "typescript": "5.9.3",
+          "esbuild": "0.25.12"
+        },
+        "lock": {
+          "path": "bun.lock",
+          "bytes": 605640,
+          "sha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+        }
+      },
+      "limitations": [
+        "Initial shared failure retained separately; locale-only order correction canonical keys/values unchanged",
+        "Frozen working source overlay; root binds publication",
+        "No release packaging/signing/native UI/full task matrix acceptance",
+        "Actual artifact byte inventory, not release byte budget acceptance",
+        "Verified task-private offline UV cache, not fresh network CI runner"
+      ]
+    },
+    "artifacts": [
+      {
+        "id": "roadmap-september-integration-20260930/independent-review.md",
+        "sha256": "a5a8401b03bda7c84a60b92b3daa83ff057e4d3704a9237cad2def7df55107f5",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-september-integration-20260930/source-manifest.json",
+        "sha256": "f0f2718c6caec04418d08f8c0ee12ed25587db1d06fff1768a9247d4879f8a9a",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-september-integration-20260930/root-transfer.json",
+        "sha256": "238b72ed21b0bac4439c7dab37f079570e911f41323c36a0dfa842674c052b6a",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-final-independent-review.md",
+        "sha256": "b01718255e10f8f522503ece4fc63b484f607c912e8d7e21d875bd6689c38425",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-final-independent-review.json",
+        "sha256": "10b08196e96581abb323e6e528426fa58bf5c8b47874c994e0bc3fb656f77144",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-fixed-candidate-frozen.json",
+        "sha256": "27dc09549e2231ee449b9b1bc0b097a6892508f9a4b16826ddb3134cb476c5b5",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/cjs-final-independent-review.md",
+        "sha256": "de7b20b46697484d0453dc9168a9b49133ce4c3282677fbb7663824b23312e8c",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/headless-portability-review.md",
+        "sha256": "744d22d1927d30881b27c27aa167529c48c84597e2c71c5f7bfb08eebc00aa2f",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "sqlite-independent-20260930/root-transfer.json",
+        "sha256": "5ff1298a6b11a18c103a68483a7d317c07f6ab8c4bc82c07be968a6ffb47dccb",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/shared.txt",
+        "sha256": "d6e3c10bff3115f0b5a49763fa3e7027676430ea0a3e7e9eb87d7d948509cdfd",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/shared.json",
+        "sha256": "033cf6258af096370326147711afe088542cf5dd54091e41436395a164033295",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/locale-order-repair.json",
+        "sha256": "54cac1b493605680fa3ba84db1f1e281019a72c5b778d74078a63a2b96f2e219",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/gates.json",
+        "sha256": "4c5f202809075bbb7540ecb6e1a702808180fbbfb465b7ae41ea655d90e5b88d",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/dist-manifest.json",
+        "sha256": "66e634a55c29252118c3a7d38feab02ca988a42e66aeabc31cf335abe4068945",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/shared.txt",
+        "sha256": "6351d8b8a4ff000cd8f2a67f0fa7b4af63bac47666c7a97f39487ae18a245674",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/server.txt",
+        "sha256": "8c6b81a251378ae0b465f16e0ed5aa3a3e9d219bf7224ca122fbd4050a409e27",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/electron-ui-core.txt",
+        "sha256": "3180f914fdf7b47f8d3a8a8bd2e8833098745a9b63204823e94521d3495f716c",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/validate.txt",
+        "sha256": "c2767a458fd60ff5d9319b7f676895737984eab66d2e1d5689834a97b2cc65bd",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "roadmap-sqlite-20260930/corrected/build.txt",
+        "sha256": "4d2dffffdfa16295e6f19359b0c309e32a47a84e7bf044cea85ccee042dc5203",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      }
+    ],
+    "retainedFailureHistory": "Initial unchanged source Shared run: 4931 passed, 12 skipped, 13 failed, all failures locale sort assertions. Existing repository sorter changed only key order in twelve locales; exact keys and values unchanged. Corrected full chain uses a new source digest and retains the failed attempt.",
+    "limits": [
+      "All original 109 tasks, 489 requirements, 464 edges and original 297-row scope remain. Zero complete original tasks are accepted by this wave.",
+      "Roadmap local filesystem CAS is not NativeJournal/team/multi-device acceptance. Derived Markdown and JSON are not one transaction; crashed locks, external writers/symlink races, legacy unversioned input and power loss retain their limits.",
+      "Controlled query backend and settlement costs are synthetic. Real provider cost/cancellation/cap enforcement, complete lifecycle and full AI roadmap acceptance remain pending; timeout starts after backend postInit.",
+      "Node CommonJS is mandatory. Electron binary absence is an explicit skip for an installed package whose download is omitted, not a runtime pass or a claim that an absent declared dependency works.",
+      "Prepared task-private UV cache proves exact local CI on this host; required remote CI, fresh network dependency transfer and trusted toolchain runner remain separate.",
+      "Standard build output inventory may include retained earlier files; packaging, signing, actual application UI/private OS custody, Windows, genuine Conation iOS and full provider/recipient acceptance remain pending.",
+      "Portable Electron bridge harness is a separate candidate and is not part of this source freeze or acceptance."
     ],
     "fullOriginalTasksAccepted": 0
   }

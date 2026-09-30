@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { chmodSync, mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
+import { DatabaseSync } from '../../utils/sqlite-runtime.ts'
 
 export type AgentBudgetRunState = 'reserved' | 'unresolved' | 'settled' | 'released'
 
