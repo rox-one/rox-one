@@ -14,6 +14,7 @@ import { WhisperLargeV3TurboAdapter } from './local/whisper-adapter.ts'
 import type { LocalAsrAdapter } from './local/adapter.ts'
 import type { SttEngine, TranscribeAdapter, VoicePrefs } from './types.ts'
 import { VOICE_GATEWAY_BASE_URL } from './contracts.ts'
+import type { TranscriptionHttp } from './adapters/rox-transcription.ts'
 
 export const VOICE_CREDENTIAL_KEYS = [
   'CRAFT_VOICE_ACCESS_TOKEN',
@@ -171,7 +172,7 @@ export function createProductionLocalTranscribeAdapter(
 }
 
 /** Production HTTP. Never returns fixture ASR JSON. */
-export function createProductionVoiceHttp(env: VoiceEnv = process.env): { fetch: typeof fetch } {
+export function createProductionVoiceHttp(env: VoiceEnv = process.env): TranscriptionHttp {
   if (resolveVoiceGatewayMode(env) !== 'live') {
     return {
       async fetch() {

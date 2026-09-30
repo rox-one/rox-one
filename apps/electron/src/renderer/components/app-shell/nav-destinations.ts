@@ -55,6 +55,7 @@ export type AppNavDestinationId =
   | 'skills'
   | 'memory'
   | 'tasks'
+  | 'meetings'
   | 'projects'
   | 'pages'
   | 'automations'

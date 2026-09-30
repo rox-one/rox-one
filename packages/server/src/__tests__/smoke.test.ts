@@ -112,7 +112,10 @@ async function spawnTestServer(profile: ReturnType<typeof createProfile>, token:
       if (proc.exitCode !== null) { await drains; return }
       proc.kill('SIGTERM')
       try {
-        expect(await within(proc.exited, 10_000, 'Server did not stop on SIGTERM')).toBe(0)
+        const code = await within(proc.exited, 10_000, 'Server did not stop on SIGTERM')
+        await drains
+        if (code !== 0) throw new Error(`Server exited ${code} after SIGTERM\n${server.logs()}`)
+        expect(code).toBe(0)
       } catch (error) {
         proc.kill('SIGKILL')
         await proc.exited

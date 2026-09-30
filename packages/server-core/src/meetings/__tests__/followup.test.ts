@@ -10,6 +10,7 @@ import {
   runFollowup,
   upsertSchedule,
   type FollowupSchedule,
+  type FollowupRuntime,
 } from '../followup.ts'
 import { dispatchOutbox } from '../outbox.ts'
 import { isLiveVerified } from '../types.ts'
@@ -86,10 +87,9 @@ describe('followup schedules (#374)', () => {
 
   it('refuses simulator executor and send without a fresh grant check', () => {
     const runtime = createFollowupRuntime()
-    runtime.executor = 'simulator'
+    const simulator: FollowupRuntime = { ...runtime, executor: 'simulator' }
     upsertSchedule(runtime, schedule())
-    expect(runFollowup(runtime, 'sched-1', 'prepare').reason).toBe('simulator-not-production')
-    runtime.executor = 'production'
+    expect(runFollowup(simulator, 'sched-1', 'prepare').reason).toBe('simulator-not-production')
     expect(runFollowup(runtime, 'sched-1', 'send').reason).toBe('send-requires-fresh-grant')
   })
 

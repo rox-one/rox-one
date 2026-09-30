@@ -38,7 +38,7 @@
 - CT1/CT2 complete: lead assigned independent port into this isolated main baseline; active September union remains owned by its native-boundary worker. Guard regression failed for `receipt_verified` and `readback_verified` as expected.
 - CT3 implemented: only the 13 selected candidate hunks and related queue regression were ported. No unrelated candidate features or suppressions.
 - CT3 verified: focused calendar/platform/meeting tests 218/218, full core suite 817/817, and core typecheck exit 0 with zero diagnostics.
-- CT4 ready: local follow-up commit for lead review; the active September candidate worktree remains unchanged.
+- CT4 complete: follow-up `01889b4a43a2ce4f730d3109b49750a0fbde4db8` reviewed and integrated into this main-based branch; the active September candidate worktree remains unchanged.
 
 ---
 
@@ -51,7 +51,18 @@
 | Repair runner and version configuration | cloud_recovery | Evidence above | Both YAML files parse; `validate:ci` and job identities retained; frozen Bun1.3.14 | Complete |
 | Replace placeholder with built runtime proof | cloud_recovery | Own dependencies and three real builds | Built lifecycle2/2; related source/WebUI/transport23/23; missing-artifact negative controls fail | Complete |
 | Typecheck and baseline comparison | cloud_recovery | Installed TypeScript5.9.3 | Same eight existing server diagnostics; no new test diagnostics; plain baseline `validate:ci` stops on13known core errors | Complete |
-| Root review and integration | root | Local receipt commit; core/bridge/typecheck fixes | Review source and docs; merge documentation sections; rerun integrated built gate | Pending |
+| Root review and integration | root / terminal_history | Local receipt commit; core/bridge/typecheck fixes | Original code reviewed; documentation combined; integrated built gate verified | Complete locally |
 | Hosted delivery receipt | root | Authorized push/PR after review | Actual hosted run starts and all required checks finish; no placeholder status | Pending |
 
 The workflow proposal and local runtime proof are complete. Remote execution and full integrated validation remain separate delivery gates. No remote mutation occurred in this worktree.
+
+## Combined main-based integration
+
+| Task | Owner | Dependencies | Verification | State |
+|---|---|---|---|---|
+| Integrate core and CI | terminal_history | Reviewed f8982a04,01889b4a,da74aa13 | Main base; preserve both docs sections; no application merge conflict | Complete |
+| Run actual comprehensive gate | terminal_history | Frozen Bun1.3.14 install | First failure retained; full second run exit0; final pinned source receipt | In progress |
+| Repair observed baseline gate failures | terminal_history / cloud_recovery | Exact failing diagnostics/tests/lint | Narrow main-compatible repairs, focused tests, unchanged locale values; no suppressions/gate removal | Complete |
+| Verify combined built runtime | cloud_recovery / terminal_history | Three real builds | Rebuilt combined bundle; built smoke2/2; focused server175/175 and memory6/6 | Complete locally |
+| Review and record evidence | repo_audit / root | Frozen bounded diff and final logs | Independent review; tracked hash-bound receipt | In progress |
+| Deliver new draft PR | terminal_history / root | Root selected separate combined branch | Push, draft PR main, remote readback and hosted gate status | Pending |

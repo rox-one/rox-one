@@ -16,13 +16,23 @@ describe('meeting extraction (RMA-I008)', () => {
   for (const item of corpus.cases) {
     test(item.id, () => {
       const result = extractMeetingCandidates({ text: item.text, participants: item.participants })
-      if ('taskCount' in item.expected) expect(result.taskCount).toBe(item.expected.taskCount)
-      if ('dueDate' in item.expected) expect(result.candidates[0]?.dueDate).toBe(item.expected.dueDate)
+      if ('taskCount' in item.expected) {
+        if (typeof item.expected.taskCount !== 'number') throw new Error('Fixture taskCount must be numeric')
+        expect(result.taskCount).toBe(item.expected.taskCount)
+      }
+      if ('dueDate' in item.expected) {
+        if (typeof item.expected.dueDate !== 'string') throw new Error('Fixture dueDate must be a string')
+        expect(result.candidates[0]?.dueDate).toBe(item.expected.dueDate)
+      }
       if ('ownerResolution' in item.expected) {
         const resolution = result.candidates[0]?.ownerResolution ?? 'none'
+        if (item.expected.ownerResolution !== 'none' && item.expected.ownerResolution !== 'unresolved' && item.expected.ownerResolution !== 'unique-member') throw new Error('Invalid fixture owner resolution')
         expect(resolution).toBe(item.expected.ownerResolution)
       }
-      if ('executableTaskCount' in item.expected) expect(result.executableTaskCount).toBe(item.expected.executableTaskCount)
+      if ('executableTaskCount' in item.expected) {
+        if (typeof item.expected.executableTaskCount !== 'number') throw new Error('Fixture executableTaskCount must be numeric')
+        expect(result.executableTaskCount).toBe(item.expected.executableTaskCount)
+      }
       if ('conditionRequired' in item.expected) expect(result.candidates[0]?.conditionRequired).toBe(true)
       if ('prototypeProposal' in item.expected) expect(result.prototypeProposal).toBe('stale')
       if ('externalWrites' in item.expected) expect(result.externalWrites).toBe(0)

@@ -28,28 +28,28 @@ export type MeetingOpResult<TReason extends string = string, TPayload = unknown>
 export function unsupported<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpResult<T, never> {
   return { status: 'unsupported', reason, live: false, evidenceLevel }
 }
 
 export function blocked<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpResult<T, never> {
   return { status: 'blocked', reason, live: false, evidenceLevel }
 }
 
 export function denied<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpResult<T, never> {
   return { status: 'denied', reason, live: false, evidenceLevel }
 }
 
 export function unknownEffect<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpResult<T, never> {
   return { status: 'unknown', reason, live: false, evidenceLevel }
 }
 

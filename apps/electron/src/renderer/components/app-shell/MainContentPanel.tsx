@@ -345,7 +345,7 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <ProjectsHomeInMain projects={projects} workspaceId={activeWorkspaceId || ''} />
+        <ProjectsHomeInMain workspaceId={activeWorkspaceId || ''} />
       </Panel>
     )
   }
