@@ -29,7 +29,7 @@ Port only the 13 narrow typecheck repairs already present as candidate hunks in 
 
 # CI runner and server lifecycle recovery
 
-Baseline: `f63294ba4fffa7238b46b24e918925a313ad0b12`. Owner: `/root/cloud_recovery`; root owns integration, review and remote delivery. This branch owns `.github/workflows/ci.yml`, `.github/workflows/validate-server.yml`, the existing standalone server smoke test and this documentation. It changes no application runtime, active program worktree, runner registration, permissions or secrets.
+Baseline: `f63294ba4fffa7238b46b24e918925a313ad0b12`. Owner: `/root/cloud_recovery`; root owns integration, review and remote delivery. This branch owns `.github/workflows/ci.yml`, `.github/workflows/validate-server.yml`, the existing standalone server smoke test and this documentation. It changes no application runtime, active program worktree, runner registration or secrets. A subsequent concrete CodeQL review restricts both workflows' inherited token permissions explicitly to `contents: read`; install token references remain ephemeral and unchanged.
 
 ## Acceptance
 

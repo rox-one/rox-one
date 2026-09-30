@@ -1,16 +1,16 @@
 {
   "base": "f63294ba4fffa7238b46b24e918925a313ad0b12",
-  "revision": "9d13fbf2270651deffbb3a1194c1cdf80729159a",
+  "revision": "a7a2505c19327c7f9cb09ae8893dbbca76afe355",
   "algorithm": "SHA256(JSON.stringify(sorted rows of path and raw-byte SHA256))",
-  "sourceTreeSha256": "009bd6c40ea12328dd0a87b1dce8c213c248f40191282903c6a4bfb136b88b06",
+  "sourceTreeSha256": "66ac2a8543684f10a59252db735cb5f2891f4fb4665e8a2b3f273250db667b04",
   "rows": [
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "99971857d3294fc6b9b2a72d9a97366531c82089e3e2e4965706923e12d72c91"
+      "sha256": "9e03e76ce2ab497cdc6e3d2ee19a752d49540851c17424d7d7d47b1154c701cd"
     },
     {
       "path": ".github/workflows/validate-server.yml",
-      "sha256": "96d9a80393461b6e0288bebdbd9de9435ee578780427d8c309f9b8588f8999a9"
+      "sha256": "e1d7f5e80633eb7cb2e354b47b101c64a72f85d7aecdcec33497f837345f62ae"
     },
     {
       "path": "apps/electron/src/preload/openclaw-host-control.ts",

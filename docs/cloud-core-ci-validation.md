@@ -3,15 +3,15 @@
 ## Revision and scope
 
 - Main base: `f63294ba4fffa7238b46b24e918925a313ad0b12`.
-- Final source revision: `9d13fbf2270651deffbb3a1194c1cdf80729159a`; branch `fix/cloud-core-ci-recovery-20260930`.
-- Changed non-document source manifest: [cloud-core-ci-source-manifest.json](cloud-core-ci-source-manifest.json), 63 files, digest `009bd6c40ea12328dd0a87b1dce8c213c248f40191282903c6a4bfb136b88b06`. The digest excludes documentation and binds sorted relative paths plus raw file hashes.
+- Final source revision: `a7a2505c19327c7f9cb09ae8893dbbca76afe355`; branch `fix/cloud-core-ci-recovery-20260930`.
+- Changed non-document source manifest: [cloud-core-ci-source-manifest.json](cloud-core-ci-source-manifest.json), 63 files, digest `66ac2a8543684f10a59252db735cb5f2891f4fb4665e8a2b3f273250db667b04`. The digest excludes documentation and binds sorted relative paths plus raw file hashes.
 - Dependencies: frozen existing lockfile, Bun1.3.14 (0d9b296a), TypeScript5.9.3. No manifest or lockfile change.
 
 The branch combines the two reviewed core repairs with the CI runner/lifecycle repair, then fixes concrete main-baseline compilation, rendering and locale-order failures exposed by the unchanged gate. Active native worktrees and the September feature union are not part of this source. The native host-control declaration remains optional and type-only on the browser side.
 
 ## Verification binding
 
-The unchanged comprehensive `bun run validate:ci` completed with exit0 at `f9b018a890947dc8b1762d848fc817f51da79287`. The final amendments change only two negative test-child configuration environments and scoped hosted compiler/build heap settings; the gate command, product runtime and all assertions remain unchanged. The actual hosted compiler environment is separately validated by its Actions run. The original three builds were rerun after the Pi reasoning correction at `57edae5306ce8dbcd552c21fb1ec53016a99bab3`; product runtime source is byte-identical through the final revision. The final lifecycle test was executed against those same hashed built artifacts and its final source below. Documentation changes after this receipt do not change those inputs.
+The unchanged comprehensive `bun run validate:ci` completed with exit0 at `f9b018a890947dc8b1762d848fc817f51da79287`. The final amendments change only two negative test-child configuration environments, scoped hosted compiler/build heap settings and explicit read-only workflow token permissions; the gate command, product runtime and all assertions remain unchanged. The actual hosted compiler environment is separately validated by its Actions run. The original three builds were rerun after the Pi reasoning correction at `57edae5306ce8dbcd552c21fb1ec53016a99bab3`; product runtime source is byte-identical through the final revision. The final lifecycle test was executed against those same hashed built artifacts and its final source below. Documentation changes after this receipt do not change those inputs.
 
 | Check | Observed result |
 |---|---|
@@ -96,3 +96,9 @@ Its [first comprehensive hosted run36725535782](https://github.com/rox-one/rox-o
 Independent bounded Spec review accepts the exact three-line validation environment amendment at `9d13fbf2`, with the command, frozen install, assertions, job identity, permissions and secret references unchanged. Review Markdown SHA256: `785959adde7818562cfa9106946246ffb190028b968d4935f5a59711975fc6db`. Product/runtime/helper acceptance remains bound to the byte-identical source above.
 
 Hosted direct full lifecycle log SHA256: `8763813729815fe2d6af93b9b06c9627f97ae32bbcddc5f03b4e08bad2abc9af`; hosted first failure full log SHA256: `b86104f0807607c4f196b3e268a970ee7dd8fac984064c09a29f2055b79580e4`. Partial cached CLI logs are retained only as history; the complete direct job logs supply the assertions and OOM evidence.
+
+### Comprehensive hosted recovery and final token boundary
+
+The [amended comprehensive run36726660448](https://github.com/rox-one/rox-one/actions/runs/36726660448) succeeded at exact `c648c88577082ca511335457db1da26d514e7d94`: all eight compiler contexts,248Bun tests,19Python document tests and all i18n gates passed. The direct full job log confirms the4096MiB Node heap and the preserved absent pages-worker skip; SHA256 `759145917a6ac602d00cf5e4d57666858d0c50502544d6e820b77035aba4a6e7`. The [same-head lifecycle run36726660644](https://github.com/rox-one/rox-one/actions/runs/36726660644) also succeeded.
+
+Concrete CodeQL review alerts477/478 identified missing explicit token permissions in the two changed workflows. Final source `a7a2505c19327c7f9cb09ae8893dbbca76afe355` adds only workflow-level `permissions: {contents: read}` in each file. It narrows inherited authority, preserves masked ephemeral install-token references and changes no runner, environment, command or assertion. Earlier shorthand that the workflows already declared read-only permissions was inaccurate and is superseded by this explicit final state. Independent Standards accepts this isolated delta; final bounded Spec receipt and the exact read-only hosted head are recorded in the delivery receipt.
