@@ -52,7 +52,7 @@
 | Replace placeholder with built runtime proof | cloud_recovery | Own dependencies and three real builds | Built lifecycle2/2; related source/WebUI/transport23/23; missing-artifact negative controls fail | Complete |
 | Typecheck and baseline comparison | cloud_recovery | Installed TypeScript5.9.3 | Same eight existing server diagnostics; no new test diagnostics; plain baseline `validate:ci` stops on13known core errors | Complete |
 | Root review and integration | root / terminal_history | Local receipt commit; core/bridge/typecheck fixes | Original code reviewed; documentation combined; integrated built gate verified | Complete locally |
-| Hosted delivery receipt | root | Authorized push/PR after review | Actual hosted run starts and all required checks finish; no placeholder status | Pending |
+| Hosted delivery receipt | root / terminal_history | Authorized push/PR after review | Owned CI alias and lifecycle jobs pass at6cf191dd; CodeQL Actions0findings; unrelated checks remain separate | Complete for scoped jobs |
 
 The original isolated workflow proposal and local runtime proof are complete. Its historical baseline diagnostics remain in the original receipt; the current combined integration result is recorded below. Hosted execution remains a separate delivery gate.
 
@@ -65,7 +65,7 @@ The original isolated workflow proposal and local runtime proof are complete. It
 | Repair observed baseline gate failures | terminal_history / cloud_recovery | Exact failing diagnostics/tests/lint | Narrow main-compatible repairs, focused tests, unchanged locale values; no suppressions/gate removal | Complete |
 | Verify combined built runtime | cloud_recovery / terminal_history | Three real builds | Rebuilt combined bundle; strict built smoke4/4; focused server175/175 and memory6/6 | Complete locally |
 | Review and record evidence | repo_audit / root | Frozen bounded diff and final logs | Independent Standards and Spec/runtime acceptance; tracked hash-bound receipt | Complete locally |
-| Deliver new draft PR | terminal_history / root | Root selected separate combined branch | PR#1317 published; remote head verified; actual hosted lifecycle passes; comprehensive compiler OOM amendment awaiting hosted readback | In progress |
+| Deliver new draft PR | terminal_history / root | Root selected separate combined branch | PR#1317 published; remote6cf191dd verified; final read-only CI alias and PR/push lifecycle jobs pass | Complete |
 
 - Spec review correction: the candidate Pi reasoning deletion regressed existing main Responses support because its local API union was stale. Reused the canonical type, restored registration behavior and added actual-callback tests. The reviewer independently reproduced main=true, preliminary candidate=false and corrected=true for Responses, with Completions unchanged.
 - Lifecycle review correction: explicit graceful shutdown now rejects a child that had already exited before the request, including exit zero. Separate cleanup retains rejected-startup support. Both original built-runtime cases and actual already-exited zero/17 controls pass; reintroducing the old early return fails both controls. Product runtime is unchanged.
