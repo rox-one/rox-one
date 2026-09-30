@@ -25,6 +25,9 @@ on:
       - .github/workflows/validate-server.yml
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: validate-server-${{ github.ref }}
 
