@@ -10105,10 +10105,22 @@
     },
     "rendererCallerEvidence": "renderer-caller-20260930.json",
     "rendererCallerCandidate": {
-      "status": "VERIFIED_CANDIDATE; SOURCE_PUSH_READBACK_PENDING",
-      "manifestFileSha256": "706d82787a44bc9b31ee489aa0bd40cc6ba05721a557bb5fe5bad7caa81e2843",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "07907f909838253eb011e4e27a510c4ba5b5a9df",
+      "revision": "07907f909838253eb011e4e27a510c4ba5b5a9df",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "07907f909838253eb011e4e27a510c4ba5b5a9df",
+      "pullRequestHeadReadback": "07907f909838253eb011e4e27a510c4ba5b5a9df",
+      "observedAt": "2026-09-30T14:46:39.686Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
       "sourceCount": 3588,
-      "fullTasksAccepted": 0
-    }
+      "manifestFileSha256": "706d82787a44bc9b31ee489aa0bd40cc6ba05721a557bb5fe5bad7caa81e2843",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Explicit Electron/UI/core/shared-src/server-core-src package gate scope. Subsequent scheduler terminal recovery and OMP fixture are excluded. Runtime shared/server gates bind separately to c1c81e66; complete desktop/platform acceptance pending."
+    },
+    "latestPublishedSourceRevision": "07907f909838253eb011e4e27a510c4ba5b5a9df"
   }
 }
