@@ -13,6 +13,10 @@ Repair the three core test failures reproduced during the `rox-one` Codex Cloud 
 5. The focused regression tests and all `packages/core` tests pass with Bun 1.3.14. Package typecheck failures, if present outside these files, are reported with their baseline comparison.
 6. The lead receives a local commit, evidence, and a checkpoint for review before push or PR.
 
+## Authorized follow-up: core TypeScript baseline
+
+Port only the 13 narrow typecheck repairs already present as candidate hunks in the active September union: one calendar assertion, eleven canonical result reads through the existing normalization boundary, and the queued meeting verification guard. Add a regression for both canonical verified states on queued results. Preserve all unrelated calendar, envelope, credential, and task changes in that union. Acceptance is a green core package typecheck and core suite, without assertions being disabled or types being suppressed.
+
 ## Ownership and constraints
 
 - Worker: `cloud_recovery`; lead: `/root`, responsible for integration and Cloud UI.
