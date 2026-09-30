@@ -3,15 +3,15 @@
 ## Revision and scope
 
 - Main base: `f63294ba4fffa7238b46b24e918925a313ad0b12`.
-- Final source revision: `2f3d685d5937ef79471fba894134af9b870b95fb`; branch `fix/cloud-core-ci-recovery-20260930`.
-- Changed non-document source manifest: [cloud-core-ci-source-manifest.json](cloud-core-ci-source-manifest.json), 63 files, digest `117c14ac5ebdcddd14a9b8e0825ef8df0e5066f11a3a9a46f600c183747d3868`. The digest excludes documentation and binds sorted relative paths plus raw file hashes.
+- Final source revision: `9d13fbf2270651deffbb3a1194c1cdf80729159a`; branch `fix/cloud-core-ci-recovery-20260930`.
+- Changed non-document source manifest: [cloud-core-ci-source-manifest.json](cloud-core-ci-source-manifest.json), 63 files, digest `009bd6c40ea12328dd0a87b1dce8c213c248f40191282903c6a4bfb136b88b06`. The digest excludes documentation and binds sorted relative paths plus raw file hashes.
 - Dependencies: frozen existing lockfile, Bun1.3.14 (0d9b296a), TypeScript5.9.3. No manifest or lockfile change.
 
 The branch combines the two reviewed core repairs with the CI runner/lifecycle repair, then fixes concrete main-baseline compilation, rendering and locale-order failures exposed by the unchanged gate. Active native worktrees and the September feature union are not part of this source. The native host-control declaration remains optional and type-only on the browser side.
 
 ## Verification binding
 
-The unchanged comprehensive `bun run validate:ci` completed with exit0 at `f9b018a890947dc8b1762d848fc817f51da79287`. The final amendment changes only two negative test-child configuration environments and the hosted WebUI build heap; neither is an input to that command. The original three builds were rerun after the Pi reasoning correction at `57edae5306ce8dbcd552c21fb1ec53016a99bab3`; product runtime source is byte-identical through the final revision. The final lifecycle test was executed against those same hashed built artifacts and its final source below. Documentation changes after this receipt do not change those inputs.
+The unchanged comprehensive `bun run validate:ci` completed with exit0 at `f9b018a890947dc8b1762d848fc817f51da79287`. The final amendments change only two negative test-child configuration environments and scoped hosted compiler/build heap settings; the gate command, product runtime and all assertions remain unchanged. The actual hosted compiler environment is separately validated by its Actions run. The original three builds were rerun after the Pi reasoning correction at `57edae5306ce8dbcd552c21fb1ec53016a99bab3`; product runtime source is byte-identical through the final revision. The final lifecycle test was executed against those same hashed built artifacts and its final source below. Documentation changes after this receipt do not change those inputs.
 
 | Check | Observed result |
 |---|---|
@@ -48,7 +48,7 @@ ROX_SERVER_SMOKE_ENTRY=dist-server/index.js ROX_SERVER_SMOKE_WEBUI_DIR=apps/webu
 2. The existing sorter initially rejected all twelve locale files. Semantic maps were compared independently after sorting; translations and duplicate-key state did not change.
 3. A preliminary Pi edit removed Responses reasoning because a local protocol type was stale. Independent execution of the actual registration callback reproduced that regression. The canonical shared type and byte-identical main reasoning expression are restored; the final subprocess was rebuilt after the correction.
 4. The initial combined shutdown run once returned exit1 after31 assertions without captured child output. Its cause is unestablished; history is retained. Later strict shutdown reports redacted child output, keeps the zero-exit assertion and passes. A separate review found that an already-exited child could previously satisfy graceful-stop proof; the explicit graceful/cleanup modes and actual0/17 controls now prevent that false positive.
-5. A real hosted macOS WebUI Vite build on the separately owned SQLite integration exceeded Node's default approximately2GiB heap. This branch sets `NODE_OPTIONS=--max-old-space-size=4096` only on that same WebUI build step. All source and gate commands remain intact. The validation step has no speculative heap amendment.
+5. A real hosted macOS WebUI Vite build on the separately owned SQLite integration exceeded Node's default approximately2GiB heap. This branch sets `NODE_OPTIONS=--max-old-space-size=4096` only on that same WebUI build step. The first main-based hosted CI run `36725535782` then independently reproduced Electron TypeScript heap exhaustion under Node22 at approximately2042MiB (SIGABRT134); the unchanged `validate:ci` step receives the same scoped4096MiB heap amendment. All source, assertions and gate commands remain intact. The failed run and full direct job log are retained.
 
 ## Built artifact hashes
 
@@ -83,6 +83,16 @@ Final smoke source raw SHA256: `c02452b78951a13e58e0279191d2be895c7220ce62ab91cf
 
 ## Review and delivery
 
-Independent Standards and Spec/runtime reviews accept final source revision `2f3d685d5937ef79471fba894134af9b870b95fb` and source digest `117c14ac5ebdcddd14a9b8e0825ef8df0e5066f11a3a9a46f600c183747d3868`, with zero open findings. The Spec reviewer independently reproduced the final built4/4 lifecycle, zero-diagnostic server compiler and the same source digest. Both actionable findings (Responses reasoning and already-exited graceful stop) were resolved. Independent review Markdown SHA256: `ddd3437510e3c6c03e6d8ac8c1556602d2feb0bc57242630b101543b52262ef5`; its raw report and machine receipt remain in the private archive. A documentation-only delivery commit preserves the63-file source digest.
+Independent Standards and Spec/runtime reviews accept final source revision `2f3d685d5937ef79471fba894134af9b870b95fb` and source digest `117c14ac5ebdcddd14a9b8e0825ef8df0e5066f11a3a9a46f600c183747d3868`, with zero open findings. The Spec reviewer independently reproduced the final built4/4 lifecycle, zero-diagnostic server compiler and the same source digest. Both actionable findings (Responses reasoning and already-exited graceful stop) were resolved. Independent review Markdown SHA256: `ddd3437510e3c6c03e6d8ac8c1556602d2feb0bc57242630b101543b52262ef5`; its raw report and machine receipt remain in the private archive. The subsequently observed hosted Electron compiler OOM requires only a three-line CI step environment amendment. Product runtime and helper source remain byte-identical to this reviewed revision; the final manifest records the resulting workflow hash separately.
 
 This local proof does not claim native UI acceptance, provider integrations, the September program's full completion, or success of unrelated self-hosted native/performance/toolchain jobs. Their existing path filters do not match this repair. The existing optional pages-worker skip is explicitly retained. Push, new draft PR to main and actual hosted check readback are separate delivery steps; core-only PR#1292 remains unchanged.
+
+## Hosted delivery observations
+
+[Draft PR#1317](https://github.com/rox-one/rox-one/pull/1317) is open to main. Initial delivery revision `6e33d03853f5d34cb584e917a64be788640dde7a` was verified by remote readback. Its [PR lifecycle run36725535781](https://github.com/rox-one/rox-one/actions/runs/36725535781) and [push lifecycle run36725473082](https://github.com/rox-one/rox-one/actions/runs/36725473082) both succeeded; the full direct job log confirms frozen Bun1.3.14, all builds and strict4pass/0fail/37assertions on the hosted runner.
+
+Its [first comprehensive hosted run36725535782](https://github.com/rox-one/rox-one/actions/runs/36725535782) failed at Electron TypeScript heap exhaustion before the test stages. This actual failure motivated the bounded compiler-heap amendment in `9d13fbf2270651deffbb3a1194c1cdf80729159a`; success of the amended comprehensive run must be read back independently. Prior local full-gate success does not substitute for that hosted result. Existing Vercel blocked-account deployment status is an external check; it is outside this recovery and does not establish source failure.
+
+Independent bounded Spec review accepts the exact three-line validation environment amendment at `9d13fbf2`, with the command, frozen install, assertions, job identity, permissions and secret references unchanged. Review Markdown SHA256: `785959adde7818562cfa9106946246ffb190028b968d4935f5a59711975fc6db`. Product/runtime/helper acceptance remains bound to the byte-identical source above.
+
+Hosted direct full lifecycle log SHA256: `8763813729815fe2d6af93b9b06c9627f97ae32bbcddc5f03b4e08bad2abc9af`; hosted first failure full log SHA256: `b86104f0807607c4f196b3e268a970ee7dd8fac984064c09a29f2055b79580e4`. Partial cached CLI logs are retained only as history; the complete direct job logs supply the assertions and OOM evidence.
