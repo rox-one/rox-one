@@ -1,14 +1,13 @@
-/**
- * Project roadmap disk IO: roadmap.json (canonical) + roadmap.md (mirror)
- * next to the project's config.json.
- */
+/** Project roadmap canonical JSON and derived Markdown persistence. */
 
-import { copyFileSync, existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { closeSync, existsSync, openSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'fs';
+import { createHash } from 'node:crypto';
+import { isAbsolute, join, relative, resolve } from 'path';
 import { atomicWriteFileSync } from '../utils/files.ts';
 import { debug } from '../utils/debug.ts';
 import { getProjectPath, listProjectAssets, loadProjectConfig } from './storage.ts';
 import {
+  isRoadmapRevision,
   normalizeRoadmap,
   ROADMAP_FILENAME,
   ROADMAP_MARKDOWN_FILENAME,
@@ -19,81 +18,142 @@ import {
 
 export interface LoadedRoadmap {
   roadmap: ProjectRoadmap;
-  /** roadmap.json exists on disk. */
   exists: boolean;
-  /** roadmap.json exists but could not be parsed; it is backed up before the next save. */
   corrupt: boolean;
+  /** Hash of the exact file bytes, or "missing" before the first save. */
+  revision: string;
+}
+
+export interface SaveRoadmapOptions {
+  /** Omit only for compatibility with existing unversioned local callers. */
+  expectedRevision?: string;
+}
+
+function inside(base: string, candidate: string): boolean {
+  const path = relative(base, candidate);
+  return path === '' || (path !== '..' && !path.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) && !isAbsolute(path));
+}
+
+function projectPath(workspaceRootPath: string, projectSlug: string): string {
+  if (!projectSlug || projectSlug === '.' || projectSlug === '..' || /[/\\\0]/.test(projectSlug)) {
+    throw new Error('PROJECT_ROADMAP_PATH: invalid project slug');
+  }
+  const base = resolve(workspaceRootPath, 'projects');
+  if (existsSync(base) && !inside(realpathSync(workspaceRootPath), realpathSync(base))) {
+    throw new Error('PROJECT_ROADMAP_PATH: projects directory escapes workspace');
+  }
+  const path = resolve(getProjectPath(workspaceRootPath, projectSlug));
+  if (!inside(base, path)) throw new Error('PROJECT_ROADMAP_PATH: project escapes workspace');
+  if (existsSync(path) && !inside(realpathSync(base), realpathSync(path))) {
+    throw new Error('PROJECT_ROADMAP_PATH: project symlink escapes workspace');
+  }
+  return path;
 }
 
 export function getProjectRoadmapPath(workspaceRootPath: string, projectSlug: string): string {
-  return join(getProjectPath(workspaceRootPath, projectSlug), ROADMAP_FILENAME);
+  const dir = projectPath(workspaceRootPath, projectSlug);
+  const path = join(dir, ROADMAP_FILENAME);
+  if (existsSync(path) && !inside(realpathSync(dir), realpathSync(path))) {
+    throw new Error('PROJECT_ROADMAP_PATH: roadmap symlink escapes project');
+  }
+  return path;
 }
 
 export function getProjectRoadmapMarkdownPath(workspaceRootPath: string, projectSlug: string): string {
-  return join(getProjectPath(workspaceRootPath, projectSlug), ROADMAP_MARKDOWN_FILENAME);
+  return join(projectPath(workspaceRootPath, projectSlug), ROADMAP_MARKDOWN_FILENAME);
 }
 
-function readRaw(path: string): { ok: true; value: unknown } | { ok: false } {
-  try {
-    const text = readFileSync(path, 'utf-8').replace(/^\uFEFF/, '');
-    return { ok: true, value: JSON.parse(text) };
-  } catch (error) {
-    debug('[roadmap] failed to parse', path, error);
-    return { ok: false };
+function digest(bytes: Buffer): string {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+function snapshot(path: string): { bytes: Buffer | null; value?: unknown; corrupt: boolean; revision: string } {
+  let bytes: Buffer;
+  try { bytes = readFileSync(path); }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return { bytes: null, corrupt: false, revision: 'missing' };
+    }
+    // Unreadable files are not empty/corrupt drafts that a caller can replace.
+    throw error;
   }
+  const revision = digest(bytes);
+  try { return { bytes, value: JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/, '')), corrupt: false, revision }; }
+  catch { return { bytes, corrupt: true, revision }; }
 }
 
-/**
- * Load a project's roadmap. Projects created before roadmaps existed have no
- * roadmap.json → an empty roadmap (config.json is never touched).
- */
 export function loadProjectRoadmap(workspaceRootPath: string, projectSlug: string): LoadedRoadmap {
-  const path = getProjectRoadmapPath(workspaceRootPath, projectSlug);
-  if (!existsSync(path)) return { roadmap: normalizeRoadmap(undefined), exists: false, corrupt: false };
-  const raw = readRaw(path);
-  if (!raw.ok) return { roadmap: normalizeRoadmap(undefined), exists: true, corrupt: true };
-  return { roadmap: normalizeRoadmap(raw.value), exists: true, corrupt: false };
+  const current = snapshot(getProjectRoadmapPath(workspaceRootPath, projectSlug));
+  return {
+    roadmap: { ...normalizeRoadmap(current.value), revision: current.revision },
+    exists: current.bytes !== null,
+    corrupt: current.corrupt,
+    revision: current.revision,
+  };
 }
 
 /**
- * Save roadmap.json (atomic) and regenerate roadmap.md. An unparseable
- * existing roadmap.json is copied to roadmap.corrupt-<ts>.json first so a bad
- * edit by hand is never silently lost.
+ * Compare and replace under an exclusive lock shared by cooperating processes.
+ * Unversioned callers remain compatible; every new read/save caller carries
+ * the exact observed token. A failed corrupt-file backup stops before commit.
  */
-export function saveProjectRoadmap(workspaceRootPath: string, projectSlug: string, input: unknown): ProjectRoadmap {
+export function saveProjectRoadmap(
+  workspaceRootPath: string,
+  projectSlug: string,
+  input: unknown,
+  options: SaveRoadmapOptions = {},
+): ProjectRoadmap {
+  const path = getProjectRoadmapPath(workspaceRootPath, projectSlug);
+  const inputRevision = input && typeof input === 'object' ? (input as { revision?: unknown }).revision : undefined;
+  const expectedRevision = options.expectedRevision ?? inputRevision;
+  if (expectedRevision !== undefined && !isRoadmapRevision(expectedRevision)) {
+    throw new Error('PROJECT_ROADMAP_INVALID_REVISION: invalid expected revision');
+  }
   const config = loadProjectConfig(workspaceRootPath, projectSlug);
   if (!config) throw new Error(`Project not found: ${projectSlug}`);
-  const path = getProjectRoadmapPath(workspaceRootPath, projectSlug);
-  if (existsSync(path) && !readRaw(path).ok) {
-    try {
-      copyFileSync(path, join(getProjectPath(workspaceRootPath, projectSlug), `roadmap.corrupt-${Date.now()}.json`));
-    } catch (error) {
-      debug('[roadmap] failed to back up corrupt roadmap', error);
+  const lockPath = `${path}.lock`;
+  let lock: number;
+  try { lock = openSync(lockPath, 'wx', 0o600); }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+      throw new Error('PROJECT_ROADMAP_BUSY: another writer holds the roadmap lock');
     }
+    throw error;
   }
-  const roadmap: ProjectRoadmap = { ...normalizeRoadmap(input), updatedAt: Date.now() };
-  atomicWriteFileSync(path, JSON.stringify(roadmap, null, 2) + '\n');
   try {
-    const files = listProjectAssets(workspaceRootPath, projectSlug)
-      .map((a) => a.filename)
-      .filter((f) => f !== config.icon);
-    atomicWriteFileSync(
-      getProjectRoadmapMarkdownPath(workspaceRootPath, projectSlug),
-      roadmapToMarkdown(roadmap, config.name, undefined, { includeGeneratedNote: true, files }),
-    );
-  } catch (error) {
-    debug('[roadmap] failed to write roadmap.md', error);
+    writeFileSync(lock, JSON.stringify({ pid: process.pid, acquiredAt: Date.now() }));
+    const current = snapshot(path);
+    if (expectedRevision !== undefined && expectedRevision !== current.revision) {
+      throw new Error('PROJECT_ROADMAP_CONFLICT: roadmap changed; reload before saving');
+    }
+    if (current.corrupt && current.bytes) {
+      const backup = join(projectPath(workspaceRootPath, projectSlug), `roadmap.corrupt-${Date.now()}.json`);
+      // Exclusive creation preserves an earlier backup. Failure is deliberately
+      // propagated; canonical bytes must never be replaced without this copy.
+      writeFileSync(backup, current.bytes, { flag: 'wx', mode: 0o600 });
+    }
+    const { revision: _inputRevision, ...normalized } = normalizeRoadmap(input);
+    const roadmap: ProjectRoadmap = { ...normalized, updatedAt: Date.now() };
+    const bytes = Buffer.from(JSON.stringify(roadmap, null, 2) + '\n');
+    atomicWriteFileSync(path, bytes.toString('utf8'));
+    try {
+      const files = listProjectAssets(workspaceRootPath, projectSlug)
+        .map((a) => a.filename).filter((f) => f !== config.icon);
+      atomicWriteFileSync(getProjectRoadmapMarkdownPath(workspaceRootPath, projectSlug),
+        roadmapToMarkdown(roadmap, config.name, undefined, { includeGeneratedNote: true, files }));
+    } catch (error) {
+      debug('[roadmap] failed to write roadmap.md', error);
+    }
+    return { ...roadmap, revision: digest(bytes) };
+  } finally {
+    try { closeSync(lock); }
+    finally { unlinkSync(lockPath); }
   }
-  return roadmap;
 }
 
-/** Roadmap text for system-prompt injection, or undefined when empty/missing. */
 export function loadProjectRoadmapPromptText(workspaceRootPath: string, projectSlug: string): string | undefined {
   try {
     const { roadmap, exists } = loadProjectRoadmap(workspaceRootPath, projectSlug);
-    if (!exists) return undefined;
-    return roadmapToPromptText(roadmap) ?? undefined;
-  } catch {
-    return undefined;
-  }
+    return exists ? roadmapToPromptText(roadmap) ?? undefined : undefined;
+  } catch { return undefined; }
 }

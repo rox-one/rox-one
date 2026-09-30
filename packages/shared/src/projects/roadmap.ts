@@ -102,6 +102,43 @@ export interface ProjectRoadmap {
   risks: RoadmapItem[];
   openQuestions: RoadmapItem[];
   updatedAt: number;
+  /** Opaque read/save receipt token; not persisted as roadmap content. */
+  revision?: string;
+}
+
+export function isRoadmapRevision(value: unknown): value is string {
+  return typeof value === 'string' && (value === 'missing' || /^[a-f0-9]{64}$/.test(value));
+}
+
+export interface RoadmapSaveQueue {
+  save(draft: ProjectRoadmap): Promise<ProjectRoadmap>;
+}
+
+/** One read scope, ordered commits and revisions advanced only by an ACK. */
+export function createRoadmapSaveQueue(
+  initialRevision: string,
+  commit: (draft: ProjectRoadmap) => Promise<ProjectRoadmap>,
+): RoadmapSaveQueue {
+  if (!isRoadmapRevision(initialRevision)) throw new Error('PROJECT_ROADMAP_INVALID_REVISION');
+  let revision = initialRevision;
+  let tail: Promise<void> = Promise.resolve();
+  return {
+    save(draft) {
+      // Freeze the user's intent before an earlier asynchronous save completes.
+      const snapshot = structuredClone(draft);
+      const pending = tail.then(async () => {
+        const saved = await commit({ ...snapshot, revision });
+        if (!isRoadmapRevision(saved.revision) || saved.revision === 'missing') {
+          throw new Error('PROJECT_ROADMAP_MISSING_RECEIPT');
+        }
+        revision = saved.revision;
+        return saved;
+      });
+      // Failure retains the observed token; a retry cannot overwrite a winner.
+      tail = pending.then(() => {}, () => {});
+      return pending;
+    },
+  };
 }
 
 // ============================================================
@@ -243,6 +280,7 @@ export function normalizeRoadmap(raw: unknown): ProjectRoadmap {
     risks: arr(o.risks).map((r) => normalizeItem(r, 'rk')).filter((r): r is RoadmapItem => r !== null),
     openQuestions: arr(o.openQuestions).map((r) => normalizeItem(r, 'oq')).filter((r): r is RoadmapItem => r !== null),
     updatedAt: typeof o.updatedAt === 'number' && Number.isFinite(o.updatedAt) ? o.updatedAt : 0,
+    ...(isRoadmapRevision(o.revision) ? { revision: o.revision } : {}),
   };
 }
 

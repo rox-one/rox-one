@@ -63,6 +63,8 @@ import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
 import type { LoadedProject, ProjectAsset } from '@craft-agent/shared/projects/types'
 import {
+  createRoadmapSaveQueue,
+  isRoadmapRevision,
   emptyRoadmap,
   milestoneProgress,
   normalizeRoadmap,
@@ -132,6 +134,8 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const roadmapRef = useRef<ProjectRoadmap>(roadmap)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const roadmapSaverRef = useRef<ReturnType<typeof createRoadmapSaveQueue> | null>(null)
+  const saveAttemptRef = useRef(0)
   const loadedOnce = useRef(false)
 
   // ── Load project (first load shows the spinner; broadcasts reload silently) ──
@@ -197,19 +201,45 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   useEffect(() => {
     if (!workspaceId || !projectSlug) return
     let cancelled = false
+    let saver: ReturnType<typeof createRoadmapSaveQueue> | null = null
+    roadmapSaverRef.current = null
+    roadmapRef.current = emptyRoadmap()
+    setRoadmap(roadmapRef.current)
+    setRoadmapLoaded(false)
+    setRoadmapCorrupt(false)
+    setSaveState('idle')
     void window.electronAPI.getProjectRoadmap(workspaceId, projectSlug).then((res) => {
       if (cancelled) return
       const next = normalizeRoadmap(res?.roadmap)
+      if (!res || !isRoadmapRevision(next.revision)) throw new Error('PROJECT_ROADMAP_MISSING_READ_RECEIPT')
+      saver = createRoadmapSaveQueue(next.revision, (draft) =>
+        window.electronAPI.saveProjectRoadmap(workspaceId, projectSlug, draft))
+      roadmapSaverRef.current = saver
       roadmapRef.current = next
       setRoadmap(next)
       setRoadmapCorrupt(res?.corrupt === true)
       setRoadmapLoaded(true)
     }).catch((err) => {
       console.error('[ProjectInfoPage] Failed to load roadmap:', err)
-      if (!cancelled) setRoadmapLoaded(true)
+      if (!cancelled) {
+        setSaveState('error')
+        setRoadmapLoaded(true)
+      }
     })
     return () => {
       cancelled = true
+      if (roadmapSaverRef.current === saver) {
+        if (saveTimer.current) {
+          clearTimeout(saveTimer.current)
+          saveTimer.current = null
+          // The captured writer keeps the old project/workspace scope.
+          const act = soupProjectActResult({ source: 'native', action: 'write', nativeId: projectSlug })
+          if (isClaimableLive(act)) {
+            void saver?.save(roadmapRef.current).catch((err) => console.error('[ProjectInfoPage] Final roadmap save failed:', err))
+          }
+        }
+        roadmapSaverRef.current = null
+      }
     }
   }, [workspaceId, projectSlug])
 
@@ -218,31 +248,47 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
       clearTimeout(saveTimer.current)
       saveTimer.current = null
     }
-    if (!workspaceId) return
+    const saver = roadmapSaverRef.current
+    if (!workspaceId || !saver) {
+      setSaveState('error')
+      return
+    }
     const act = soupProjectActResult({ source: 'native', action: 'write', nativeId: projectSlug })
     if (!isClaimableLive(act)) return
+    const draft = roadmapRef.current
+    const attempt = ++saveAttemptRef.current
     setSaveState('saving')
     try {
-      await window.electronAPI.saveProjectRoadmap(workspaceId, projectSlug, roadmapRef.current)
+      const saved = await saver.save(draft)
+      if (roadmapSaverRef.current !== saver || saveAttemptRef.current !== attempt) return
       setRoadmapCorrupt(false)
-      setSaveState('saved')
+      if (roadmapRef.current === draft) {
+        const next = normalizeRoadmap(saved)
+        roadmapRef.current = next
+        setRoadmap(next)
+        setSaveState('saved')
+      } else {
+        setSaveState('saving')
+      }
     } catch (err) {
+      if (roadmapSaverRef.current !== saver || saveAttemptRef.current !== attempt) return
       console.error('[ProjectInfoPage] Roadmap save failed:', err)
       setSaveState('error')
-      toast.error(t('projectRoadmap.saveFailed'), { description: err instanceof Error ? err.message : undefined })
+      toast.error(t('projectRoadmap.saveFailed'))
     }
   }, [workspaceId, projectSlug, t])
 
   const flushRef = useRef(flushSave)
   flushRef.current = flushSave
-  useEffect(() => () => {
-    if (saveTimer.current) void flushRef.current()
-  }, [])
 
   const updateRoadmap = useCallback((mutate: (current: ProjectRoadmap) => ProjectRoadmap) => {
     const next = mutate(roadmapRef.current)
     roadmapRef.current = next
     setRoadmap(next)
+    if (!roadmapSaverRef.current) {
+      setSaveState('error')
+      return
+    }
     setSaveState('saving')
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => void flushRef.current(), SAVE_DEBOUNCE_MS)

@@ -54,4 +54,4 @@ export {
   saveProjectRoadmap,
   loadProjectRoadmapPromptText,
 } from './roadmap-storage.ts';
-export type { LoadedRoadmap } from './roadmap-storage.ts';
+export type { LoadedRoadmap, SaveRoadmapOptions } from './roadmap-storage.ts';
