@@ -5,7 +5,7 @@
   "sourceBase": "b922e52ed96425732776ff771fdb4fec09fc99b6",
   "specRevision": "242492868a11b4d9af1c1011f20b31a346875f0a",
   "branch": "feat/rox-compound-workspace-20260930",
-  "updatedAt": "2026-09-30T15:12:47.524353+00:00",
+  "updatedAt": "2026-09-30T15:54:58.431692+00:00",
   "packageCount": 143,
   "packages": [
     {
@@ -260,7 +260,7 @@
     },
     {
       "id": "WP-11",
-      "title": "Chat → RoxTask with backlink, assignment and Project membership",
+      "title": "Chat \u2192 RoxTask with backlink, assignment and Project membership",
       "program": "macro",
       "dependencies": [
         "WP-08",
@@ -1053,7 +1053,7 @@
       "program": "macro",
       "dependencies": [],
       "spec": "plans/macro-integration/work-packages.json",
-      "status": "IMPLEMENTATION_RUNNING",
+      "status": "ROOT_INTEGRATION",
       "runtimeEvidence": [
         {
           "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
@@ -1067,20 +1067,26 @@
           "kind": "ROOT_CLI_SOURCE_BOUND_VERIFICATION",
           "artifact": "plans/compound-implementation/wp48-integration-verification.json",
           "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_PG_HTTP_WS17_146_AND_INDEPENDENT_ADVERSE3_51",
+          "artifact": "plans/compound-implementation/evidence/wp48/backend-v3-root-applied.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "CLI_SCOPED_VERIFIED_DOMAIN_INTEGRATION_OPEN",
+        "mechanism": "CLI_AND_CANONICAL_DOMAIN_SCOPED_VERIFIED_NATIVE_OPEN",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-48.json",
       "preflightRunId": "rox-compound-20260930T083916Z",
       "remainingAcceptance": [
-        "Canonical audit.releaseLicense authority/policy/CAS/receipt/outbox and native normative UI",
-        "Accepted applicable dependency/runtime notice bytes in final artifact",
-        "Protected trusted checker/reviewer and actual publisher digest readback"
+        "Native-v2 receipt hash/current-policy/matching-event/privacy-fence corrections and actual Settings UI acceptance",
+        "Final source-bound archive/migrations including optional48 migration; fresh final artifact SBOM/linkage/notices and scoped publisher proof",
+        "Protected trusted reviewer legal decisions remain review_required; no fabricated approval",
+        "Generic durable DLQ and full cross-capability feature completion remain declared program gates"
       ],
       "sourceFiles": [
         "scripts/compliance/generate-sbom.ts",
@@ -1097,7 +1103,23 @@
         "tests/macro-integration/wp-48-runtime.test.ts",
         "tests/macro-integration/wp-48-runtime-archives.test.ts",
         "tests/macro-integration/wp-48-bundle-linkage.test.ts",
-        "docs/macro-integration/wp-48-bundle-linkage.md"
+        "docs/macro-integration/wp-48-bundle-linkage.md",
+        "apps/workspace-service/migrations/48-license-audit.sql",
+        "apps/workspace-service/src/configuration.ts",
+        "apps/workspace-service/src/http.ts",
+        "apps/workspace-service/src/index.ts",
+        "apps/workspace-service/src/modules/identity/repository.ts",
+        "apps/workspace-service/src/modules/licenses/commands.ts",
+        "apps/workspace-service/src/modules/licenses/registry.ts",
+        "apps/workspace-service/src/modules/licenses/repository.ts",
+        "apps/workspace-service/src/server.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/transport/server.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/package.json",
+        "packages/shared/src/workspace-domain/identity/contracts.ts",
+        "packages/shared/src/workspace-domain/licenses/contracts.ts",
+        "tests/macro-integration/wp-48-domain.test.ts"
       ]
     },
     {
@@ -1185,7 +1207,7 @@
     },
     {
       "id": "RS-FOCUS-01",
-      "title": "Главная: заменить толстую рамку быстрого ввода задачи на спокойный доступный focus-индикатор",
+      "title": "\u0413\u043b\u0430\u0432\u043d\u0430\u044f: \u0437\u0430\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u043e\u043b\u0441\u0442\u0443\u044e \u0440\u0430\u043c\u043a\u0443 \u0431\u044b\u0441\u0442\u0440\u043e\u0433\u043e \u0432\u0432\u043e\u0434\u0430 \u0437\u0430\u0434\u0430\u0447\u0438 \u043d\u0430 \u0441\u043f\u043e\u043a\u043e\u0439\u043d\u044b\u0439 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b\u0439 focus-\u0438\u043d\u0434\u0438\u043a\u0430\u0442\u043e\u0440",
       "program": "suite",
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-FOCUS-01.md",
@@ -1225,7 +1247,7 @@
     },
     {
       "id": "RS-SHEET-01",
-      "title": "Rox Sheets: сохраняемая таблица с формулами, совместным редактированием и связями с сущностями",
+      "title": "Rox Sheets: \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u0435\u043c\u0430\u044f \u0442\u0430\u0431\u043b\u0438\u0446\u0430 \u0441 \u0444\u043e\u0440\u043c\u0443\u043b\u0430\u043c\u0438, \u0441\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u044b\u043c \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435\u043c \u0438 \u0441\u0432\u044f\u0437\u044f\u043c\u0438 \u0441 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044f\u043c\u0438",
       "program": "suite",
       "dependencies": [
         "RS-DRV-01",
@@ -1246,7 +1268,7 @@
     },
     {
       "id": "RS-SLIDE-01",
-      "title": "Rox Slides: редактор презентаций, показ, комментарии и экспорт как общая Document entity",
+      "title": "Rox Slides: \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u043f\u0440\u0435\u0437\u0435\u043d\u0442\u0430\u0446\u0438\u0439, \u043f\u043e\u043a\u0430\u0437, \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0438 \u0438 \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u0430\u043a \u043e\u0431\u0449\u0430\u044f Document entity",
       "program": "suite",
       "dependencies": [
         "RS-DRV-01",
@@ -1267,7 +1289,7 @@
     },
     {
       "id": "RS-BASE-01",
-      "title": "Rox Base: типизированные записи и views Table/Board/Form поверх единого entity graph",
+      "title": "Rox Base: \u0442\u0438\u043f\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0435 \u0437\u0430\u043f\u0438\u0441\u0438 \u0438 views Table/Board/Form \u043f\u043e\u0432\u0435\u0440\u0445 \u0435\u0434\u0438\u043d\u043e\u0433\u043e entity graph",
       "program": "suite",
       "dependencies": [
         "RS-DRV-01"
@@ -1287,7 +1309,7 @@
     },
     {
       "id": "RS-FORM-01",
-      "title": "Rox Forms: form builder, безопасная публикация и response-to-entity workflows",
+      "title": "Rox Forms: form builder, \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u0430\u044f \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u044f \u0438 response-to-entity workflows",
       "program": "suite",
       "dependencies": [
         "RS-DRV-01",
@@ -1308,7 +1330,7 @@
     },
     {
       "id": "RS-AUT-01",
-      "title": "Automations: расширить текущий граф до визуального canvas с palette, ports и inspector",
+      "title": "Automations: \u0440\u0430\u0441\u0448\u0438\u0440\u0438\u0442\u044c \u0442\u0435\u043a\u0443\u0449\u0438\u0439 \u0433\u0440\u0430\u0444 \u0434\u043e \u0432\u0438\u0437\u0443\u0430\u043b\u044c\u043d\u043e\u0433\u043e canvas \u0441 palette, ports \u0438 inspector",
       "program": "suite",
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-AUT-01.md",
@@ -1340,7 +1362,7 @@
     },
     {
       "id": "RS-AUT-02",
-      "title": "Automations: каталог connector actions, Auth и типизированные Input/Output/Error mappings",
+      "title": "Automations: \u043a\u0430\u0442\u0430\u043b\u043e\u0433 connector actions, Auth \u0438 \u0442\u0438\u043f\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0435 Input/Output/Error mappings",
       "program": "suite",
       "dependencies": [
         "RS-AUT-01",
@@ -1361,7 +1383,7 @@
     },
     {
       "id": "RS-AUT-03",
-      "title": "Automations: durable event workflow runtime с Scheduler, DateTime, ветвлениями и возобновлением",
+      "title": "Automations: durable event workflow runtime \u0441 Scheduler, DateTime, \u0432\u0435\u0442\u0432\u043b\u0435\u043d\u0438\u044f\u043c\u0438 \u0438 \u0432\u043e\u0437\u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435\u043c",
       "program": "suite",
       "dependencies": [
         "RS-AUT-01",
@@ -1382,7 +1404,7 @@
     },
     {
       "id": "RS-AUT-04",
-      "title": "Automations: Debug, журнал узлов, ошибки, конфигурация и проверяемые результаты запусков",
+      "title": "Automations: Debug, \u0436\u0443\u0440\u043d\u0430\u043b \u0443\u0437\u043b\u043e\u0432, \u043e\u0448\u0438\u0431\u043a\u0438, \u043a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f \u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c\u044b\u0435 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u044b \u0437\u0430\u043f\u0443\u0441\u043a\u043e\u0432",
       "program": "suite",
       "dependencies": [
         "RS-AUT-03"
@@ -1402,7 +1424,7 @@
     },
     {
       "id": "RS-AUT-05",
-      "title": "Automations: draft/publish versioning, guided tutorial и шаблон Scheduler → DateTime → Connector",
+      "title": "Automations: draft/publish versioning, guided tutorial \u0438 \u0448\u0430\u0431\u043b\u043e\u043d Scheduler \u2192 DateTime \u2192 Connector",
       "program": "suite",
       "dependencies": [
         "RS-AUT-01",
@@ -1425,7 +1447,7 @@
     },
     {
       "id": "RS-MTG-01",
-      "title": "[ROX Suite][Meetings] Landing: действия, история и сохранение локальной записи",
+      "title": "[ROX Suite][Meetings] Landing: \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f, \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u0438 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u0435 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0439 \u0437\u0430\u043f\u0438\u0441\u0438",
       "program": "suite",
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-MTG-01.md",
@@ -1457,7 +1479,7 @@
     },
     {
       "id": "RS-MTG-02",
-      "title": "[ROX Suite][Meetings] Join и preflight: реальные комнаты, устройства и scoped guests",
+      "title": "[ROX Suite][Meetings] Join \u0438 preflight: \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0435 \u043a\u043e\u043c\u043d\u0430\u0442\u044b, \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430 \u0438 scoped guests",
       "program": "suite",
       "dependencies": [
         "RS-MTG-01"
@@ -1477,7 +1499,7 @@
     },
     {
       "id": "RS-MTG-03",
-      "title": "[ROX Suite][Meetings] Планирование: форма события, availability, recurrence и Calendar sync",
+      "title": "[ROX Suite][Meetings] \u041f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435: \u0444\u043e\u0440\u043c\u0430 \u0441\u043e\u0431\u044b\u0442\u0438\u044f, availability, recurrence \u0438 Calendar sync",
       "program": "suite",
       "dependencies": [
         "RS-MTG-01"
@@ -1497,7 +1519,7 @@
     },
     {
       "id": "RS-MTG-04",
-      "title": "[ROX Suite][Meetings] История: detail drawer, участие, lifecycle и verified readback",
+      "title": "[ROX Suite][Meetings] \u0418\u0441\u0442\u043e\u0440\u0438\u044f: detail drawer, \u0443\u0447\u0430\u0441\u0442\u0438\u0435, lifecycle \u0438 verified readback",
       "program": "suite",
       "dependencies": [
         "RS-MTG-01"
@@ -1517,7 +1539,7 @@
     },
     {
       "id": "RS-MTG-05",
-      "title": "[ROX Suite][Meetings] Записи и протоколы: consent, transcript, summary и связанные действия",
+      "title": "[ROX Suite][Meetings] \u0417\u0430\u043f\u0438\u0441\u0438 \u0438 \u043f\u0440\u043e\u0442\u043e\u043a\u043e\u043b\u044b: consent, transcript, summary \u0438 \u0441\u0432\u044f\u0437\u0430\u043d\u043d\u044b\u0435 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f",
       "program": "suite",
       "dependencies": [
         "RS-MTG-01"
@@ -1537,7 +1559,7 @@
     },
     {
       "id": "RS-MSG-01",
-      "title": "Messenger: трёхпанельная human collaboration surface в ROX",
+      "title": "Messenger: \u0442\u0440\u0451\u0445\u043f\u0430\u043d\u0435\u043b\u044c\u043d\u0430\u044f human collaboration surface \u0432 ROX",
       "program": "suite",
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-MSG-01.md",
@@ -1569,7 +1591,7 @@
     },
     {
       "id": "RS-MSG-02",
-      "title": "Human channels, DM, group threads: composer и durable read state",
+      "title": "Human channels, DM, group threads: composer \u0438 durable read state",
       "program": "suite",
       "dependencies": [
         "RS-MSG-01"
@@ -1589,7 +1611,7 @@
     },
     {
       "id": "RS-MSG-03",
-      "title": "Contacts: каталог, профиль и общая CRM identity",
+      "title": "Contacts: \u043a\u0430\u0442\u0430\u043b\u043e\u0433, \u043f\u0440\u043e\u0444\u0438\u043b\u044c \u0438 \u043e\u0431\u0449\u0430\u044f CRM identity",
       "program": "suite",
       "dependencies": [
         "RS-MSG-01",
@@ -1608,7 +1630,7 @@
     },
     {
       "id": "RS-DRV-01",
-      "title": "Docs / Drive: единая библиотека Recent, Owned, Shared, Favorites и table/grid",
+      "title": "Docs / Drive: \u0435\u0434\u0438\u043d\u0430\u044f \u0431\u0438\u0431\u043b\u0438\u043e\u0442\u0435\u043a\u0430 Recent, Owned, Shared, Favorites \u0438 table/grid",
       "program": "suite",
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-DRV-01.md",
@@ -1640,7 +1662,7 @@
     },
     {
       "id": "RS-DOC-01",
-      "title": "Rox Docs: collaborative editor, comments, entity mentions и export",
+      "title": "Rox Docs: collaborative editor, comments, entity mentions \u0438 export",
       "program": "suite",
       "dependencies": [
         "RS-DRV-01",
@@ -1659,7 +1681,7 @@
     },
     {
       "id": "RS-WIKI-01",
-      "title": "Rox Wiki: spaces, hierarchy, access и history над общими Docs",
+      "title": "Rox Wiki: spaces, hierarchy, access \u0438 history \u043d\u0430\u0434 \u043e\u0431\u0449\u0438\u043c\u0438 Docs",
       "program": "suite",
       "dependencies": [
         "RS-DRV-01",
@@ -1678,7 +1700,7 @@
     },
     {
       "id": "RS-NOTE-01",
-      "title": "Notes ↔ Drive: personal Markdown и явная миграция в shared Docs",
+      "title": "Notes \u2194 Drive: personal Markdown \u0438 \u044f\u0432\u043d\u0430\u044f \u043c\u0438\u0433\u0440\u0430\u0446\u0438\u044f \u0432 shared Docs",
       "program": "suite",
       "dependencies": [
         "RS-DRV-01",
@@ -1697,7 +1719,7 @@
     },
     {
       "id": "RS-MCP-01",
-      "title": "Каталог MCP capabilities, scopes и доступ инструментов агентам",
+      "title": "\u041a\u0430\u0442\u0430\u043b\u043e\u0433 MCP capabilities, scopes \u0438 \u0434\u043e\u0441\u0442\u0443\u043f \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u043e\u0432 \u0430\u0433\u0435\u043d\u0442\u0430\u043c",
       "program": "suite",
       "dependencies": [
         "RS-ADM-01"
@@ -1715,7 +1737,7 @@
     },
     {
       "id": "RS-ADM-01",
-      "title": "Organization и capability Admin Hub в существующих Settings",
+      "title": "Organization \u0438 capability Admin Hub \u0432 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0445 Settings",
       "program": "suite",
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-ADM-01.md",
@@ -1747,7 +1769,7 @@
     },
     {
       "id": "RS-HD-01",
-      "title": "Help Desk: tickets, очереди и idempotent intake",
+      "title": "Help Desk: tickets, \u043e\u0447\u0435\u0440\u0435\u0434\u0438 \u0438 idempotent intake",
       "program": "suite",
       "dependencies": [
         "RS-ADM-01",
@@ -1766,7 +1788,7 @@
     },
     {
       "id": "RS-HD-02",
-      "title": "Help Desk: triage, SLA calendar, knowledge и agent-assisted ответ",
+      "title": "Help Desk: triage, SLA calendar, knowledge \u0438 agent-assisted \u043e\u0442\u0432\u0435\u0442",
       "program": "suite",
       "dependencies": [
         "RS-HD-01",
@@ -1785,7 +1807,7 @@
     },
     {
       "id": "RS-APR-01",
-      "title": "Approval designer: versioned forms, routes и decision policy",
+      "title": "Approval designer: versioned forms, routes \u0438 decision policy",
       "program": "suite",
       "dependencies": [
         "RS-ADM-01"
@@ -1803,7 +1825,7 @@
     },
     {
       "id": "RS-APR-02",
-      "title": "Approval Inbox: решения, execution receipts и неизменяемый audit",
+      "title": "Approval Inbox: \u0440\u0435\u0448\u0435\u043d\u0438\u044f, execution receipts \u0438 \u043d\u0435\u0438\u0437\u043c\u0435\u043d\u044f\u0435\u043c\u044b\u0439 audit",
       "program": "suite",
       "dependencies": [
         "RS-APR-01",
@@ -1822,7 +1844,7 @@
     },
     {
       "id": "RS-SIG-01",
-      "title": "Secure Document Viewer: file versions, sharing и revocation",
+      "title": "Secure Document Viewer: file versions, sharing \u0438 revocation",
       "program": "suite",
       "dependencies": [
         "RS-ADM-01",
@@ -1841,7 +1863,7 @@
     },
     {
       "id": "RS-SIG-02",
-      "title": "Document signing: immutable sessions, signer intent и evidence lifecycle",
+      "title": "Document signing: immutable sessions, signer intent \u0438 evidence lifecycle",
       "program": "suite",
       "dependencies": [
         "RS-SIG-01",
@@ -1860,7 +1882,7 @@
     },
     {
       "id": "LSX-WP-001",
-      "title": "Page content descriptor и совместимое открытие Notes",
+      "title": "Page content descriptor \u0438 \u0441\u043e\u0432\u043c\u0435\u0441\u0442\u0438\u043c\u043e\u0435 \u043e\u0442\u043a\u0440\u044b\u0442\u0438\u0435 Notes",
       "program": "lark-extension",
       "dependencies": [],
       "spec": "plans/lark-suite-reference/work-packages.json",
@@ -1899,7 +1921,7 @@
     },
     {
       "id": "LSX-WP-002",
-      "title": "Личные Task source bindings и изолированный picker",
+      "title": "\u041b\u0438\u0447\u043d\u044b\u0435 Task source bindings \u0438 \u0438\u0437\u043e\u043b\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 picker",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-001"
@@ -1916,7 +1938,7 @@
     },
     {
       "id": "LSX-WP-003",
-      "title": "Атомарная запись Markdown с CAS/epoch/receipt",
+      "title": "\u0410\u0442\u043e\u043c\u0430\u0440\u043d\u0430\u044f \u0437\u0430\u043f\u0438\u0441\u044c Markdown \u0441 CAS/epoch/receipt",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-001"
@@ -1957,7 +1979,7 @@
     },
     {
       "id": "LSX-WP-004",
-      "title": "Canonical Task field command с revision и partial receipts",
+      "title": "Canonical Task field command \u0441 revision \u0438 partial receipts",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-002"
@@ -1974,7 +1996,7 @@
     },
     {
       "id": "LSX-WP-005",
-      "title": "Lossless Markdown/YAML raw-span patch и field readback",
+      "title": "Lossless Markdown/YAML raw-span patch \u0438 field readback",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-003"
@@ -2015,7 +2037,7 @@
     },
     {
       "id": "LSX-WP-006",
-      "title": "Stable block/node anchors без переписывания prose",
+      "title": "Stable block/node anchors \u0431\u0435\u0437 \u043f\u0435\u0440\u0435\u043f\u0438\u0441\u044b\u0432\u0430\u043d\u0438\u044f prose",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-005"
@@ -2056,7 +2078,7 @@
     },
     {
       "id": "LSX-WP-007",
-      "title": "Сохраняемая BaseDefinition и private/shared views",
+      "title": "\u0421\u043e\u0445\u0440\u0430\u043d\u044f\u0435\u043c\u0430\u044f BaseDefinition \u0438 private/shared views",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-001"
@@ -2073,7 +2095,7 @@
     },
     {
       "id": "LSX-WP-008",
-      "title": "Миграция NoteBaseView v1 с неизменными legacy formulas",
+      "title": "\u041c\u0438\u0433\u0440\u0430\u0446\u0438\u044f NoteBaseView v1 \u0441 \u043d\u0435\u0438\u0437\u043c\u0435\u043d\u043d\u044b\u043c\u0438 legacy formulas",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-006",
@@ -2111,7 +2133,7 @@
     },
     {
       "id": "LSX-WP-010",
-      "title": "Permission-aware query snapshot, cursor и totals",
+      "title": "Permission-aware query snapshot, cursor \u0438 totals",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-009"
@@ -2128,7 +2150,7 @@
     },
     {
       "id": "LSX-WP-011",
-      "title": "Реестр 18 typed fields и schema inspector",
+      "title": "\u0420\u0435\u0435\u0441\u0442\u0440 18 typed fields \u0438 schema inspector",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-007"
@@ -2145,7 +2167,7 @@
     },
     {
       "id": "LSX-WP-012",
-      "title": "Typed scalar cell editors с native write preview",
+      "title": "Typed scalar cell editors \u0441 native write preview",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-004",
@@ -2165,7 +2187,7 @@
     },
     {
       "id": "LSX-WP-013",
-      "title": "Bounded formula engine и legacy built-ins",
+      "title": "Bounded formula engine \u0438 legacy built-ins",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-008",
@@ -2184,7 +2206,7 @@
     },
     {
       "id": "LSX-WP-014",
-      "title": "Relations picker, cardinality и inverse recovery",
+      "title": "Relations picker, cardinality \u0438 inverse recovery",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-002",
@@ -2203,7 +2225,7 @@
     },
     {
       "id": "LSX-WP-015",
-      "title": "ACL-filtered Lookup/Rollup и actor-scoped cache",
+      "title": "ACL-filtered Lookup/Rollup \u0438 actor-scoped cache",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-013",
@@ -2240,7 +2262,7 @@
     },
     {
       "id": "LSX-WP-017",
-      "title": "Table grid: typed edits, rectangle paste и readback",
+      "title": "Table grid: typed edits, rectangle paste \u0438 readback",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-012",
@@ -2259,7 +2281,7 @@
     },
     {
       "id": "LSX-WP-018",
-      "title": "Board: native status transition и keyboard move",
+      "title": "Board: native status transition \u0438 keyboard move",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-012",
@@ -2277,7 +2299,7 @@
     },
     {
       "id": "LSX-WP-019",
-      "title": "List: native checkbox и eligible bulk actions",
+      "title": "List: native checkbox \u0438 eligible bulk actions",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-012",
@@ -2295,7 +2317,7 @@
     },
     {
       "id": "LSX-WP-020",
-      "title": "Gallery и typed Image/Audio/Video cells с asset ACL",
+      "title": "Gallery \u0438 typed Image/Audio/Video cells \u0441 asset ACL",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-011",
@@ -2314,7 +2336,7 @@
     },
     {
       "id": "LSX-WP-021",
-      "title": "Calendar Base date precision и native/provider capabilities",
+      "title": "Calendar Base date precision \u0438 native/provider capabilities",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-012",
@@ -2333,7 +2355,7 @@
     },
     {
       "id": "LSX-WP-022",
-      "title": "Timeline interval move/resize с native atomic bounds",
+      "title": "Timeline interval move/resize \u0441 native atomic bounds",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-021"
@@ -2350,7 +2372,7 @@
     },
     {
       "id": "LSX-WP-023",
-      "title": "Chart агрегаты и authorized drill-down",
+      "title": "Chart \u0430\u0433\u0440\u0435\u0433\u0430\u0442\u044b \u0438 authorized drill-down",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-015",
@@ -2368,7 +2390,7 @@
     },
     {
       "id": "LSX-WP-024",
-      "title": "Doc Base embed и actor-scoped range context",
+      "title": "Doc Base embed \u0438 actor-scoped range context",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-010",
@@ -2387,7 +2409,7 @@
     },
     {
       "id": "LSX-WP-025",
-      "title": "Docs library capability filter и same-ref navigation",
+      "title": "Docs library capability filter \u0438 same-ref navigation",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-001",
@@ -2405,7 +2427,7 @@
     },
     {
       "id": "LSX-WP-026",
-      "title": "Existing Tiptap binding, durable draft и history restore",
+      "title": "Existing Tiptap binding, durable draft \u0438 history restore",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-003",
@@ -2424,7 +2446,7 @@
     },
     {
       "id": "LSX-WP-027",
-      "title": "Discussion anchors, orphan state и private-comment migration",
+      "title": "Discussion anchors, orphan state \u0438 private-comment migration",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-006",
@@ -2442,7 +2464,7 @@
     },
     {
       "id": "LSX-WP-028",
-      "title": "Editable Outline structural commands с aggregate CAS",
+      "title": "Editable Outline structural commands \u0441 aggregate CAS",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-003",
@@ -2461,7 +2483,7 @@
     },
     {
       "id": "LSX-WP-029",
-      "title": "Mind map layout/viewport по тому же tree",
+      "title": "Mind map layout/viewport \u043f\u043e \u0442\u043e\u043c\u0443 \u0436\u0435 tree",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-028"
@@ -2478,7 +2500,7 @@
     },
     {
       "id": "LSX-WP-030",
-      "title": "Conversion preview copy/inPlace с CAS и rollback",
+      "title": "Conversion preview copy/inPlace \u0441 CAS \u0438 rollback",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-005",
@@ -2497,7 +2519,7 @@
     },
     {
       "id": "LSX-WP-031",
-      "title": "Semantic tabs/columns и safe basic Markdown fallback",
+      "title": "Semantic tabs/columns \u0438 safe basic Markdown fallback",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-006",
@@ -2515,7 +2537,7 @@
     },
     {
       "id": "LSX-WP-032",
-      "title": "Code/highlight presentation без исполнения или false redaction",
+      "title": "Code/highlight presentation \u0431\u0435\u0437 \u0438\u0441\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u0438\u043b\u0438 false redaction",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-026"
@@ -2532,7 +2554,7 @@
     },
     {
       "id": "LSX-WP-033",
-      "title": "Action Buttons typed registry и inert imports",
+      "title": "Action Buttons typed registry \u0438 inert imports",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-003",
@@ -2571,7 +2593,7 @@
     },
     {
       "id": "LSX-WP-035",
-      "title": "Base export/import .base/CSV/JSON с loss reports",
+      "title": "Base export/import .base/CSV/JSON \u0441 loss reports",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-013",
@@ -2610,7 +2632,7 @@
     },
     {
       "id": "LSX-WP-037",
-      "title": "Checkbox→native Task и TaskNotes origin mapping",
+      "title": "Checkbox\u2192native Task \u0438 TaskNotes origin mapping",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-004",
@@ -2629,7 +2651,7 @@
     },
     {
       "id": "LSX-WP-038",
-      "title": "Docs day-planner binding без нового timer/notification loop",
+      "title": "Docs day-planner binding \u0431\u0435\u0437 \u043d\u043e\u0432\u043e\u0433\u043e timer/notification loop",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-021",
@@ -2647,7 +2669,7 @@
     },
     {
       "id": "LSX-WP-039",
-      "title": "Offline structural intents, recovery и revoke fence",
+      "title": "Offline structural intents, recovery \u0438 revoke fence",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-028",
@@ -2665,7 +2687,7 @@
     },
     {
       "id": "LSX-WP-040",
-      "title": "Docs/Bases domain-outbox→existing automation aliases",
+      "title": "Docs/Bases domain-outbox\u2192existing automation aliases",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-003",
@@ -2684,7 +2706,7 @@
     },
     {
       "id": "LSX-WP-041",
-      "title": "Existing constructor typed Docs/Base nodes и field-ID mappings",
+      "title": "Existing constructor typed Docs/Base nodes \u0438 field-ID mappings",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-010",
@@ -2704,7 +2726,7 @@
     },
     {
       "id": "LSX-WP-042",
-      "title": "Revision-pinned artifact/approval nodes и safe retry receipts",
+      "title": "Revision-pinned artifact/approval nodes \u0438 safe retry receipts",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-033",
@@ -2724,7 +2746,7 @@
     },
     {
       "id": "LSX-WP-043",
-      "title": "Weekly Report workflow recipe с scoped draft/owner review",
+      "title": "Weekly Report workflow recipe \u0441 scoped draft/owner review",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-024",
@@ -2744,7 +2766,7 @@
     },
     {
       "id": "LSX-WP-044",
-      "title": "Form submission→native Task/Base recipe без второй task DB",
+      "title": "Form submission\u2192native Task/Base recipe \u0431\u0435\u0437 \u0432\u0442\u043e\u0440\u043e\u0439 task DB",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-004",
@@ -2764,7 +2786,7 @@
     },
     {
       "id": "LSX-WP-045",
-      "title": "Explicit CustomRecord page payload для нового типа данных",
+      "title": "Explicit CustomRecord page payload \u0434\u043b\u044f \u043d\u043e\u0432\u043e\u0433\u043e \u0442\u0438\u043f\u0430 \u0434\u0430\u043d\u043d\u044b\u0445",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-001",
@@ -2785,7 +2807,7 @@
     },
     {
       "id": "LSX-WP-046",
-      "title": "Versioned template gallery с inert actions и bounded creation",
+      "title": "Versioned template gallery \u0441 inert actions \u0438 bounded creation",
       "program": "lark-extension",
       "dependencies": [
         "LSX-WP-001",

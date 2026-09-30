@@ -40,6 +40,8 @@ export type HandlerFn = (ctx: RequestContext, ...args: any[]) => Promise<any> | 
  */
 export interface RpcHandlerOptions {
   readonly access?: 'localElectron' | 'authenticatedWorkspace'
+  /** Trusted composition-only Resource guard after fresh identity revalidation, before response serialization. */
+  readonly beforeResponse?: (context: RequestContext, arguments_: readonly unknown[], result: unknown) => Promise<void>
 }
 
 export interface RpcServer {

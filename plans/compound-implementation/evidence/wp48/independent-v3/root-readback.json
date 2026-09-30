@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "reportSha256": "587e03dba6a1ecc1540b787ec02c56265c8c1d9f0926859c47a9c7d54c1e8e11",
+  "artifacts": [
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/review-report.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/review-report.json",
+      "sha256": "587e03dba6a1ecc1540b787ec02c56265c8c1d9f0926859c47a9c7d54c1e8e11"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/integrated-source-review.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/integrated-source-review.json",
+      "sha256": "70ffd093ef8ef9939fda611a96fe49436d75682a85a3dbe060ef0e1221e5a8cb"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/input-receipt.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/input-receipt.json",
+      "sha256": "ce8eb2b6b18444a10973da977c21d7bead6fe456994f7950a3dcc992ff21d0bc"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/observations.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/observations.json",
+      "sha256": "713b2480ce52033b7512b0c3d1523b56c067145da156607b273be061432b8e19"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/projection-observations.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/projection-observations.json",
+      "sha256": "04942867833b6af8d0e421a9e6edbe247e0e0dc3c1eab38c663b94e059472fc8"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/resource-observations.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/resource-observations.json",
+      "sha256": "1b1bb51c029300c23873edf356836a0cfa524388f74c3d9c3b6a822dda1acb8f"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/resource-v2-negative-observations.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/resource-v2-negative-observations.json",
+      "sha256": "6909dd7f67986221095fda811347e0855dceba50a2c9e92aab2dada78c79d453"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/observations.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/observations.json",
+      "sha256": "b05223704c18773ad9ea6640127fdafa92ff2d8700bb3d097a4e6f4cb12fcf41"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/projection-observations.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/projection-observations.json",
+      "sha256": "b8895514760a78868fc7c1f8f151c9394342aafbfabab4b4c1de681dadf8a0d4"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v2-review-report.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v2-review-report.json",
+      "sha256": "13069b30bb973b67b6caeed39aba9c94320a4ca1cc0ff73ea3e3467617ed9fbc"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v2-projection-addendum.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v2-projection-addendum.json",
+      "sha256": "3459b90860d2bda3ac3cf7ffa09b92b0339a37771fae5c813207564dd2771dff"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v2-resource-revocation-addendum.json",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v2-resource-revocation-addendum.json",
+      "sha256": "c95db8e9ec907266dc581adf5f01e5a93f6d2ef899de40b33b5054e4f9849112"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/execution.log",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/execution.log",
+      "sha256": "c156fc4e517135e0f08fff48d1d6c50e9de7c62d294985891cc3ab8f98331d7e"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-independent-adversarial.test.ts",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/fixture/tests/macro-integration/wp-48-independent-adversarial.test.ts.source.txt",
+      "sha256": "9731a0f876f1cadb87e6c36095cc6544c12bdcebc469562f09074396171abd4f"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/projection-execution.log",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/projection-execution.log",
+      "sha256": "e83306d3489b042bdab119471b715b94fddd24f4dadbd17b286582e7572c5ed8"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-projection-adversarial.test.ts",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/fixture/tests/macro-integration/wp-48-projection-adversarial.test.ts.source.txt",
+      "sha256": "f7963765195a1b3a8dc9a602d93f7ff01de29b001a81d8cd78037643924ed2b6"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/resource-execution.log",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/resource-execution.log",
+      "sha256": "d527876c7e4d30d2b26ba4ca28433725c4e91dc65faf29c683caf47f89d0fbb8"
+    },
+    {
+      "original": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture/tests/macro-integration/wp-48-resource-independent.test.ts",
+      "copy": "plans/compound-implementation/evidence/wp48/independent-v3/v3/fixture/tests/macro-integration/wp-48-resource-independent.test.ts.source.txt",
+      "sha256": "ce8aa3fb035d6da1fa0dbecb3d1e5ee90d6724253f3e4c74a6d61a89d56106d3"
+    }
+  ],
+  "assertionsChanged": false,
+  "separateActualRuns": 3,
+  "fullDoD": false
+}

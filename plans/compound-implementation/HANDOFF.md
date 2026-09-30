@@ -60,3 +60,7 @@ git diff --check
 ```
 
 Кommit/push/revisionreadback каждогоacceptedpartial/package, полный143FullDoD/native/finalfullrepositorygate сохраняется. Checkpoint сохраняет context; действующие перечисленныеworkers исполняют задачи. Продолжать автономно.
+
+## Latest transition: canonical WP48 backend integrated, native held
+
+665ba43 checkpoint push/readback confirmed. Root exact16v3 applied; actualPGHTTPWS17/0/146 and WP01neighbors74/0/1093, serviceTS0/Electron43prior43current0new. Immutable independent3separateactualruns3/0/51 + unchangedv2race negative0/1/7 copied/hashchecked. Nativev1 PRODUCT held: newepoch/readback/hash/event/privacy defects, producer+Ultra preparev2 outside. Root owns actual primary native session47937 (`/tmp/rox-wp01-root-primary-responsive.log`), source/build frozen; responsive title/UUID repair + settled-scroll harness remain uncommitted until native evidence. Offline observer also remains dirty. No descendant dispatch until ownfoundationclosure. Current real core recoveryworker `/root/recovery_core_gate_ultra` validates exact1292 + scopedparentf898 on frozenoutsidearchive; no otheractivecheckouts used. 143/130NOT_STARTED/0FullDoD retained.

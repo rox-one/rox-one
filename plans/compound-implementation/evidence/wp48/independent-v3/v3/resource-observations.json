@@ -1,0 +1,45 @@
+{
+  "schema": "wp48_93c1d8cff4e7",
+  "root": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-n92Qab",
+  "port": 53860,
+  "transports": [
+    {
+      "transport": "HTTP",
+      "identityRevalidations": 2,
+      "httpStatus": 403,
+      "accepted": false,
+      "code": "FORBIDDEN",
+      "text": "{\"error\":{\"code\":\"FORBIDDEN\"}}",
+      "privateLabelExposed": false,
+      "evidenceExposed": false
+    },
+    {
+      "transport": "WS",
+      "identityRevalidations": 2,
+      "accepted": false,
+      "code": "FORBIDDEN",
+      "text": "FORBIDDEN",
+      "privateLabelExposed": false,
+      "evidenceExposed": false
+    }
+  ],
+  "baseline": {
+    "http": 200,
+    "evidenceState": "review_required",
+    "counts": {
+      "receipts": 1,
+      "events": 1,
+      "revision": "1"
+    }
+  },
+  "restored": {
+    "http": 200,
+    "originalHttpReceiptExact": true,
+    "originalWsReceiptExact": true,
+    "counts": {
+      "receipts": 1,
+      "events": 1,
+      "revision": "1"
+    }
+  }
+}

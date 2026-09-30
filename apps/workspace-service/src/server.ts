@@ -18,6 +18,11 @@ import { IdentityCommands, requireActor, requireUuid } from './modules/identity/
 import { IdentityObservability } from './modules/identity/observability.ts'
 import { IdentityRepository } from './modules/identity/repository.ts'
 
+import { DOMAIN_LICENSE_RPC, type LicenseAuthority } from '../../../packages/shared/src/workspace-domain/licenses/contracts.ts'
+import { LicenseCommands } from './modules/licenses/commands.ts'
+import { LicenseRepository } from './modules/licenses/repository.ts'
+import type { TrustedLicenseRegistry } from './modules/licenses/registry.ts'
+
 const BOOTSTRAP_MIGRATIONS = ['01-domain-contract.sql', '01-local-auth-bootstrap.sql'] as const
 const DEFAULT_SCHEMA = 'public'
 const DEFAULT_HOST = '127.0.0.1'
@@ -33,6 +38,7 @@ export interface WorkspaceRequestLifecycle {
 }
 
 export interface WorkspaceServerConfiguration {
+  readonly licenseRegistry?: TrustedLicenseRegistry
   readonly requestLifecycle?: WorkspaceRequestLifecycle
   readonly database: SQL
   readonly migrations: readonly WorkspaceMigration[]
@@ -44,8 +50,9 @@ export interface WorkspaceServerConfiguration {
   readonly serverId: string
 }
 
-export async function loadWorkspaceBootstrapMigrations(directory: string): Promise<readonly WorkspaceMigration[]> {
-  return Promise.all(BOOTSTRAP_MIGRATIONS.map(async name =>
+export async function loadWorkspaceBootstrapMigrations(directory: string, licenseAudit = false): Promise<readonly WorkspaceMigration[]> {
+  const names = licenseAudit ? [...BOOTSTRAP_MIGRATIONS, '48-license-audit.sql'] : BOOTSTRAP_MIGRATIONS
+  return Promise.all(names.map(async name =>
     migrationFromSource(name, await readFile(join(directory, name), 'utf8'))))
 }
 
@@ -80,6 +87,26 @@ export function registerSharedProjectHandlers(server: WsRpcServer, authority: Sh
   }
 }
 
+export function registerLicenseHandlers(server: WsRpcServer, authority: LicenseCommands, lifecycle?: WorkspaceRequestLifecycle): void {
+  const operations = [[DOMAIN_LICENSE_RPC.AUDIT, authority.auditReleaseLicense.bind(authority)], [DOMAIN_LICENSE_RPC.GET, authority.getLicenseComponent.bind(authority)], [DOMAIN_LICENSE_RPC.LIST, authority.listLicenseComponents.bind(authority)], [DOMAIN_LICENSE_RPC.EVENTS, authority.licenseEvents.bind(authority)]] as const
+  for (const [channel, operation] of operations) server.handle(channel, async (context: RequestContext, ...arguments_: unknown[]) => {
+    if (lifecycle && !lifecycle.begin()) throw new IdentityDomainError('PROVIDER_UNAVAILABLE')
+    try {
+      if (arguments_.length !== 2) throw new IdentityDomainError('INVALID_PAYLOAD')
+      const workspaceId = requireUuid(arguments_[0])
+      if (context.workspaceId !== workspaceId) throw new IdentityDomainError('WORKSPACE_MISMATCH')
+      return await operation(requireActor(context.actor, workspaceId), workspaceId, arguments_[1])
+    } finally { lifecycle?.end() }
+  }, { access: 'authenticatedWorkspace', beforeResponse: async (context, arguments_, result) => {
+    if (lifecycle && !lifecycle.begin()) throw new IdentityDomainError('PROVIDER_UNAVAILABLE')
+    try {
+      if(arguments_.length!==2)throw new IdentityDomainError('INVALID_PAYLOAD')
+      const workspaceId=requireUuid(arguments_[0]);if(context.workspaceId!==workspaceId)throw new IdentityDomainError('WORKSPACE_MISMATCH')
+      await authority.assertReadableResponse(requireActor(context.actor,workspaceId),workspaceId,channel===DOMAIN_LICENSE_RPC.AUDIT?'audit':channel===DOMAIN_LICENSE_RPC.GET?'get':channel===DOMAIN_LICENSE_RPC.EVENTS?'events':'list',arguments_[1],result)
+    }finally{lifecycle?.end()}
+  } })
+}
+
 /**
  * Reuses ROX's WS/HTTP listener and one PostgreSQL pool. Startup fails before a
  * listener is exposed when migration history or trusted authentication is invalid.
@@ -108,11 +135,16 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
       }
   const actorResolver = createVerifiedActorResolver(resolverConfiguration, identity, identity, canonicalActor)
   const observability = new IdentityObservability()
-  const repository = new IdentityRepository(configuration.database, schema, observability)
+  const licenseRepository = configuration.licenseRegistry ? new LicenseRepository(configuration.database, configuration.licenseRegistry, schema) : undefined
+  if (licenseRepository) await licenseRepository.registerTrustedResources()
+  const licenseAuthority = licenseRepository ? new LicenseCommands(licenseRepository) : undefined
+  const repository = new IdentityRepository(configuration.database, schema, observability, licenseRepository)
   const authority = new IdentityCommands(repository)
   const lifecycle = configuration.requestLifecycle
   const httpHandler = createWorkspaceHttpHandler({
     authority,
+    licenseAuthority,
+    ...(licenseAuthority ? { licenseResponseGuard: licenseAuthority.assertReadableResponse.bind(licenseAuthority) } : {}),
     actorResolver,
     ...(localIssuer ? { localIssuer, publicJwks: localIssuer.jwks() } : {}),
   })
@@ -141,7 +173,8 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     },
   })
   registerSharedProjectHandlers(server, authority, lifecycle)
-  return { server, authority, repository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
+  if (licenseAuthority) registerLicenseHandlers(server, licenseAuthority, lifecycle)
+  return { server, authority, repository, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
 }
 
 function requireLocalIssuer(value: Awaited<ReturnType<typeof createLocalIssuer>> | undefined) {

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "packageId": "WP-48",
-  "mechanism": "CLI_SCOPED_VERIFIED_DOMAIN_INTEGRATION_OPEN",
+  "mechanism": "CLI_AND_CANONICAL_DOMAIN_SCOPED_VERIFIED_NATIVE_OPEN",
   "interface": "NOT_VERIFIED",
   "fullDoD": "NOT_VERIFIED",
-  "observedAt": "2026-09-30T14:14:34.280640+00:00",
-  "sourceParentRevision": "51f0a0c7253823766a336653837b1c26050aa206",
+  "observedAt": "2026-09-30T15:54:58.431692+00:00",
+  "sourceParentRevision": "665ba43ac1f360b7753a0e939d06794a956f4969",
   "sourceSha256": {
     "scripts/compliance/generate-sbom.ts": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
     ".github/workflows/license-gate.yml": "ed86d03a915a92bbc5b9a082830ac0160167aae2c15204c8ea108d5a64be1cb2",
@@ -21,7 +21,23 @@
     "tests/macro-integration/wp-48-runtime.test.ts": "82977926d1db8afd61d4fba845cc10135e43c7a8c0520ca6cea80da7816220d8",
     "tests/macro-integration/wp-48-runtime-archives.test.ts": "43746c74f7696e67459fb83738ca5a30cb8922ef85a24c47a505616ddefbbec2",
     "tests/macro-integration/wp-48-bundle-linkage.test.ts": "74e83101997795e01be1708ab8a031c0a54cef2abe0143e76303a32968f0cb54",
-    "docs/macro-integration/wp-48-bundle-linkage.md": "19fc289bc28785ee6c821a8e146806ddfa41cbacba8fb8d3e6c7fdba3f0a37a5"
+    "docs/macro-integration/wp-48-bundle-linkage.md": "19fc289bc28785ee6c821a8e146806ddfa41cbacba8fb8d3e6c7fdba3f0a37a5",
+    "apps/workspace-service/migrations/48-license-audit.sql": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+    "apps/workspace-service/src/configuration.ts": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+    "apps/workspace-service/src/http.ts": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+    "apps/workspace-service/src/index.ts": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+    "apps/workspace-service/src/modules/identity/repository.ts": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+    "apps/workspace-service/src/modules/licenses/commands.ts": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+    "apps/workspace-service/src/modules/licenses/registry.ts": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+    "apps/workspace-service/src/modules/licenses/repository.ts": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+    "apps/workspace-service/src/server.ts": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+    "packages/core/src/rox2/platform-contract.ts": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+    "packages/server-core/src/transport/server.ts": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+    "packages/server-core/src/transport/types.ts": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+    "packages/shared/package.json": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+    "packages/shared/src/workspace-domain/identity/contracts.ts": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+    "packages/shared/src/workspace-domain/licenses/contracts.ts": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+    "tests/macro-integration/wp-48-domain.test.ts": "3e3e65c75dffe74af561949ff69281c86b702274e171b2a0156c826d6f779279"
   },
   "checks": [
     {
@@ -55,17 +71,51 @@
       "exitCode": 0,
       "log": "/tmp/rox-wp48-bundle-root-ts.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "bun test tests/macro-integration/wp-48-domain.test.ts",
+      "passed": 17,
+      "failed": 0,
+      "assertions": 146,
+      "files": 1,
+      "log": "/tmp/rox-wp48-v3-root-domain-final.log",
+      "sha256": "ef2b5b94d29a4276e9280f8eb3237e04b50dabf842fec4ca2e4f44264c3c54f4"
+    },
+    {
+      "command": "bun test six WP01 neighbors unfiltered",
+      "passed": 74,
+      "failed": 0,
+      "assertions": 1093,
+      "files": 6,
+      "log": "/tmp/rox-wp48-v3-root-wp01-neighbors.log",
+      "sha256": "a65f98790b4d09b84a9768cd0b6c0e536e396c20e9cc526576d6331d9f61b62f"
+    },
+    {
+      "command": "bun run tsc --noEmit (workspace-service)",
+      "exitCode": 0,
+      "log": "/tmp/rox-wp48-v3-root-service-ts.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": "Electron strict differential",
+      "prior": 43,
+      "current": 43,
+      "new": 0,
+      "comparison": "/tmp/rox-wp48-v3-root-typecheck-comparison.json"
     }
   ],
   "evidence": [
     "evidence/wp48/lineage-root-applied.json",
     "evidence/wp48/runtime-lineage-independent-verification.json",
-    "evidence/wp48/bundle-root-applied.json"
+    "evidence/wp48/bundle-root-applied.json",
+    "evidence/wp48/backend-v3-root-applied.json",
+    "evidence/wp48/independent-v3/root-readback.json"
   ],
   "remaining": [
-    "Canonical audit.releaseLicense authority/policy/CAS/receipt/outbox and native normative UI",
-    "Accepted applicable dependency/runtime notice bytes in final artifact",
-    "Protected trusted checker/reviewer and actual publisher digest readback"
+    "Native-v2 receipt hash/current-policy/matching-event/privacy-fence corrections and actual Settings UI acceptance",
+    "Final source-bound archive/migrations including optional48 migration; fresh final artifact SBOM/linkage/notices and scoped publisher proof",
+    "Protected trusted reviewer legal decisions remain review_required; no fabricated approval",
+    "Generic durable DLQ and full cross-capability feature completion remain declared program gates"
   ],
   "legalApproval": false,
   "cloudDeployment": false,

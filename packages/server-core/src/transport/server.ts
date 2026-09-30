@@ -78,6 +78,7 @@ interface PendingInvoke {
 interface RegisteredHandler {
   readonly handler: HandlerFn
   readonly access: RpcHandlerOptions['access']
+  readonly beforeResponse?: RpcHandlerOptions['beforeResponse']
 }
 
 export interface LocalClientBindingCandidate {
@@ -260,7 +261,7 @@ export class WsRpcServer implements RpcServer {
       throw new Error(`Handler already registered for channel: ${channel}`)
     }
     const access = options?.access
-    this.handlers.set(channel, { handler, access })
+    this.handlers.set(channel, { handler, access, beforeResponse: options?.beforeResponse })
     if (access === 'localElectron') {
       this.localElectronChannels.add(channel)
     }
@@ -946,8 +947,9 @@ export class WsRpcServer implements RpcServer {
         channel,
         result,
       }
+      const outbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : null
+      if (registration.beforeResponse) await registration.beforeResponse({ ...ctx, ...(outbound ? { actor: outbound.actor } : {}) }, args ?? [], result)
       const data = serializeEnvelope(response)
-      if (this.workspaceAuthority) await this.refreshWorkspaceClient(client)
       this.safeSend(client.ws, data)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)

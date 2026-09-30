@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T15:35:37.959Z",
+  "evaluator": "independent GPT6.1Sol Ultra",
+  "proposal": {
+    "path": "/tmp/rox-wp48-domain/backend-v2/manifest.json",
+    "sha256": "9cacef3af110aede208e279c1e614d1fa52acb1e1b439db2d557ca8ee77f371d",
+    "bytes": 6186
+  },
+  "previousReports": [
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v2-review-report.json",
+      "sha256": "13069b30bb973b67b6caeed39aba9c94320a4ca1cc0ff73ea3e3467617ed9fbc",
+      "bytes": 17542
+    },
+    {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/v2-projection-addendum.json",
+      "sha256": "3459b90860d2bda3ac3cf7ffa09b92b0339a37771fae5c813207564dd2771dff",
+      "bytes": 3526
+    }
+  ],
+  "finding": {
+    "id": "F6",
+    "class": "RESOURCE_READ_REVOKED_DURING_FINAL_IDENTITY_AWAIT_DISCLOSES_PRIVATE_BYTES",
+    "severity": "HIGH",
+    "actual": [
+      {
+        "transport": "HTTP",
+        "identityRevalidations": 2,
+        "httpStatus": 200,
+        "accepted": true,
+        "code": null,
+        "privateLabelExposed": true,
+        "evidenceExposed": true
+      },
+      {
+        "transport": "WS",
+        "identityRevalidations": 2,
+        "accepted": true,
+        "code": null,
+        "privateLabelExposed": true,
+        "evidenceExposed": true
+      }
+    ],
+    "requiredFix": "Current specific Resource READ proof must run after the final awaited live identity query and immediately before HTTP/WS serialization."
+  },
+  "execution": {
+    "command": "bun test tests/macro-integration/wp-48-resource-independent.test.ts",
+    "cwd": "/tmp/rox-wp48-independent-ultra-20260930/fixture",
+    "actualExitCode": 1,
+    "passed": 0,
+    "failed": 1,
+    "assertions": 7,
+    "seconds": 1.53,
+    "failedAssertion": "expected accepted=false, received=true at line107 after positive baseline and original receipt restoration assertions",
+    "log": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/resource-v2-negative-execution.log",
+      "sha256": "8ed0afb19c5c66b278743b81406964ea5d897a4b649f9350fc8937411ab71a84",
+      "bytes": 1433
+    },
+    "oracle": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/tests/macro-integration/wp-48-resource-independent.test.ts",
+      "sha256": "ce8aa3fb035d6da1fa0dbecb3d1e5ee90d6724253f3e4c74a6d61a89d56106d3",
+      "bytes": 15316
+    }
+  },
+  "observations": {
+    "path": "/tmp/rox-wp48-independent-ultra-20260930/resource-v2-negative-observations.json",
+    "sha256": "6909dd7f67986221095fda811347e0855dceba50a2c9e92aab2dada78c79d453",
+    "bytes": 3877
+  },
+  "baseline": {
+    "http": 200,
+    "evidenceState": "review_required",
+    "counts": {
+      "receipts": 1,
+      "events": 1,
+      "revision": "1"
+    }
+  },
+  "restored": {
+    "http": 200,
+    "originalHttpReceiptExact": true,
+    "originalWsReceiptExact": true,
+    "counts": {
+      "receipts": 1,
+      "events": 1,
+      "revision": "1"
+    }
+  },
+  "cleanup": {
+    "recordedAt": "2026-09-30T15:35:37.957Z",
+    "schema": "wp48_93c1d8cff4e7",
+    "soleOwnedSchemaReusedSequentially": true,
+    "remainingOwnedSchemas": 0,
+    "listeners": [
+      {
+        "port": 52715,
+        "open": false
+      },
+      {
+        "port": 52734,
+        "open": false
+      },
+      {
+        "port": 52802,
+        "open": false
+      },
+      {
+        "port": 53860,
+        "open": false
+      },
+      {
+        "port": 53980,
+        "open": false
+      },
+      {
+        "port": 63909,
+        "open": false
+      },
+      {
+        "port": 63939,
+        "open": false
+      },
+      {
+        "port": 65134,
+        "open": false
+      }
+    ],
+    "privateDirectories": [
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/v3/observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-ZCE0dI",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/v3/projection-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-qyenqu",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/v3/resource-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-n92Qab",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/resource-v2-negative-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-bUkJ9z",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-O4TnXV",
+        "removed": true
+      },
+      {
+        "observation": "/tmp/rox-wp48-independent-ultra-20260930/projection-observations.json",
+        "path": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-OWEb7E",
+        "removed": true
+      }
+    ]
+  },
+  "originalV2ReportsRewritten": false,
+  "rootWrites": false,
+  "nativeExecution": false
+}
