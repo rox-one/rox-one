@@ -1,5 +1,7 @@
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
+Scoped compiler recovery: [optional native host-control type visibility](webui-bridge-recovery.md). This preserves the existing host-only runtime boundary and does not accept any additional product requirement.
+
 **Status:** implementation of the existing 109-task program is authorized and in progress; product acceptance remains NOT COMPLETE. This specification does not claim any feature accepted. See [`september-program/PRD.md`](september-program/PRD.md) for full domain catalog, all U01–U31 and the verbatim-scope 16-item U26 checklist; [`september-program/recon-evidence.json`](september-program/recon-evidence.json) and [`september-program/shared-contract-freeze.json`](september-program/shared-contract-freeze.json) for current discovery-only source evidence and open acceptance.
 
 The resumed overall scope retains the original 297 remaining rows, including the September program and the already counted compound packages. [The reconciled evidence packet](september-program/evidence-20260930.json) reports implementation, bounded verification and Git delivery independently. Passing package tests or an Electron build does not close a complete issue, accept DATA/SHARED, or substitute for the original native/platform/provider matrix.
