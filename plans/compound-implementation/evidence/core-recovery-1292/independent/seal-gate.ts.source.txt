@@ -1,0 +1,129 @@
+import { readFileSync, writeFileSync, readdirSync, lstatSync, mkdirSync, copyFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { dirname } from 'node:path'
+
+const fixtureRoot = '/tmp/rox-core-integration-gate-ultra-20260930'
+const sha256 = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex')
+const json = (path: string, value: unknown) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n')
+const inputReceipt = JSON.parse(readFileSync(`${fixtureRoot}/input/receipt.json`, 'utf8'))
+const parentPatch = readFileSync(`${fixtureRoot}/input/parent-f898-own.patch`)
+if (sha256(parentPatch) !== '4b7a7fd45d3d8a40742c4f74abc4342d031786454cac51bf68b3f13e97e51ec8') throw new Error('parent patch hash changed')
+
+function tree(root: string, relative = ''): { path: string; sha256: string; bytes: number }[] {
+  const result: { path: string; sha256: string; bytes: number }[] = []
+  for (const entry of readdirSync(`${root}/${relative}`, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === '.git') continue
+    const path = relative ? `${relative}/${entry.name}` : entry.name
+    if (entry.isSymbolicLink()) throw new Error(`unexpected source symlink ${path}`)
+    if (entry.isDirectory()) result.push(...tree(root, path))
+    else if (entry.isFile()) {
+      const bytes = readFileSync(`${root}/${path}`)
+      result.push({ path, sha256: sha256(bytes), bytes: bytes.length })
+    }
+  }
+  return result.sort((a, b) => a.path.localeCompare(b.path, 'en'))
+}
+
+const before = tree(`${fixtureRoot}/baseline`)
+const after = tree(`${fixtureRoot}/proposed`)
+const byBefore = new Map(before.map(item => [item.path, item]))
+const byAfter = new Map(after.map(item => [item.path, item]))
+const changed = after.filter(item => byBefore.get(item.path)?.sha256 !== item.sha256).map(item => item.path)
+if (before.length !== after.length || before.some(item => !byAfter.has(item.path))) throw new Error('source path inventory changed')
+const parentScope = [
+  'packages/core/src/platform/identity/credential-types.test.ts',
+  'packages/core/src/platform/identity/credential-types.ts',
+  'packages/core/src/tasks/personal/store.ts',
+  'packages/core/src/tasks/personal/things.test.ts',
+]
+const followupScope = [
+  'packages/core/src/calendar/calendar.test.ts',
+  'packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts',
+  'packages/core/src/rox2/__tests__/platform-contract.test.ts',
+]
+const expectedScope = [...parentScope, ...followupScope].sort()
+if (JSON.stringify(changed.sort()) !== JSON.stringify(expectedScope)) throw new Error('unexpected integration scope')
+
+const exactBefore = tree(`${fixtureRoot}/parent/packages/core`)
+const exactAfter = tree(`${fixtureRoot}/exact/packages/core`)
+const exactByBefore = new Map(exactBefore.map(item => [item.path, item]))
+const exactChanged = exactAfter.filter(item => exactByBefore.get(item.path)?.sha256 !== item.sha256).map(item => `packages/core/${item.path}`)
+const expectedExact = [
+  'packages/core/src/calendar/calendar.test.ts',
+  'packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts',
+  'packages/core/src/rox2/__tests__/platform-contract.test.ts',
+  'packages/core/src/rox2/meeting-conation-shell.ts',
+]
+if (JSON.stringify(exactChanged.sort()) !== JSON.stringify(expectedExact.sort())) throw new Error('exact own-parent scope differs from patch')
+for (const path of parentScope) {
+  if (sha256(readFileSync(`${fixtureRoot}/proposed/${path}`)) !== sha256(readFileSync(`${fixtureRoot}/parent/${path}`))) {
+    throw new Error(`scoped parent repair differs from exact source ${path}`)
+  }
+}
+const preservedPaths = [
+  'packages/core/src/rox2/platform-contract.ts',
+  'packages/core/src/rox2/meeting-conation-shell.ts',
+  'packages/core/src/rox2/notes-repository.ts',
+  'packages/core/src/rox2/project-membership.ts',
+  'packages/core/src/platform/identity/attach-credential-ref.ts',
+  'bun.lock',
+  'package.json',
+]
+for (const path of preservedPaths) if (byBefore.get(path)?.sha256 !== byAfter.get(path)?.sha256) throw new Error(`preserved source changed ${path}`)
+if (byAfter.get('packages/core/src/rox2/platform-contract.ts')?.sha256 !== '773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af') throw new Error('WP48 overlay changed')
+
+const patches: object[] = []
+let joined = ''
+for (const [index, path] of expectedScope.entries()) {
+  const result = Bun.spawnSync(['git', 'diff', '--no-index', '--', `${fixtureRoot}/baseline/${path}`, `${fixtureRoot}/proposed/${path}`])
+  if (result.exitCode !== 1) throw new Error(`expected own diff ${path}`)
+  const patch = result.stdout.toString().replaceAll(`a${fixtureRoot}/baseline/`, 'a/').replaceAll(`b${fixtureRoot}/proposed/`, 'b/')
+  const patchPath = `${fixtureRoot}/patches/${String(index + 1).padStart(2, '0')}-${path.replaceAll('/', '__')}.patch`
+  writeFileSync(patchPath, patch)
+  const added = patch.split('\n').filter(line => line.startsWith('+') && !line.startsWith('+++')).join('\n')
+  if (/\bany\b|@ts-ignore|@ts-expect-error|test\.skip|test\.todo|describe\.skip/.test(added)) throw new Error(`unsafe added line ${path}`)
+  patches.push({ path, patchPath, baseSha256: byBefore.get(path)!.sha256, resultSha256: byAfter.get(path)!.sha256, patchSha256: sha256(patch), patchBytes: Buffer.byteLength(patch), provenance: parentScope.includes(path) ? 'f8982a04-own-parent-repair' : '01889b4-own-parent-followup-compatible-port' })
+  joined += patch
+}
+const combinedPatch = `${fixtureRoot}/patches/core-1292-compatible.patch`
+writeFileSync(combinedPatch, joined)
+const check = Bun.spawnSync(['git', 'apply', '--check', combinedPatch], { cwd: `${fixtureRoot}/baseline` })
+if (check.exitCode !== 0) throw new Error(`reconstructed patch check failed ${check.stderr.toString()}`)
+const whitespace = Bun.spawnSync(['git', 'apply', '--check', '--whitespace=error-all', combinedPatch], { cwd: `${fixtureRoot}/baseline` })
+if (whitespace.exitCode !== 0) throw new Error(`whitespace check failed ${whitespace.stderr.toString()}`)
+
+const reconstructed = `${fixtureRoot}/apply-proof`
+mkdirSync(reconstructed, { recursive: true })
+for (const path of expectedScope) {
+  mkdirSync(dirname(`${reconstructed}/${path}`), { recursive: true })
+  copyFileSync(`${fixtureRoot}/baseline/${path}`, `${reconstructed}/${path}`)
+}
+const apply = Bun.spawnSync(['git', 'apply', combinedPatch], { cwd: reconstructed })
+if (apply.exitCode !== 0) throw new Error('independent patch reconstruction failed')
+for (const path of expectedScope) if (sha256(readFileSync(`${reconstructed}/${path}`)) !== byAfter.get(path)!.sha256) throw new Error(`apply result hash mismatch ${path}`)
+
+const dependencies = JSON.parse(readFileSync(`${fixtureRoot}/evidence/dependency-resolution.json`, 'utf8'))
+const manifest = {
+  schemaVersion: 1,
+  taskId: 'recovery-core-1292-integration-gate',
+  inputRevision: inputReceipt.inputHead,
+  exactRecoveryHead: inputReceipt.exactCoreCommit,
+  followupOwnParent: inputReceipt.exactCoreParent,
+  parentRepairOwnParent: 'f63294ba4fffa7238b46b24e918925a313ad0b12',
+  inputReceiptSha256: sha256(readFileSync(`${fixtureRoot}/input/receipt.json`)),
+  supplementalParentPatchSha256: sha256(parentPatch),
+  scope: { parentRepair: parentScope, followupCompatiblePort: followupScope, exactFollowupOwnParentScope: exactChanged },
+  preserved: preservedPaths.map(path => ({ path, sha256: byAfter.get(path)?.sha256 })),
+  sourceInventory: { beforeFiles: before.length, afterFiles: after.length, unchangedFiles: before.length - changed.length, changedFiles: changed.length, beforeSha256: sha256(JSON.stringify(before)), afterSha256: sha256(JSON.stringify(after)) },
+  dependencies,
+  currentRuntime: { executable: '/opt/homebrew/bin/bun', version: Bun.spawnSync(['/opt/homebrew/bin/bun', '--revision']).stdout.toString().trim() },
+  pinnedRuntime: { executable: `${fixtureRoot}/toolchain/package/bin/bun`, version: Bun.spawnSync([`${fixtureRoot}/toolchain/package/bin/bun`, '--revision']).stdout.toString().trim(), sha256: sha256(readFileSync(`${fixtureRoot}/toolchain/package/bin/bun`)) },
+  combinedPatch: { path: combinedPatch, sha256: sha256(joined), bytes: Buffer.byteLength(joined) },
+  artifacts: patches,
+  verification: { patchCheck: 'pass', whitespaceCheck: 'pass', independentApplyResultHashes: 'pass', sourceScope: 'exact-seven-files', rootApplicationSourceAccess: 'none', rootInstalledExternalDependencyAccess: 'six-authorized-readonly-links', rootGitMutations: 'none' },
+}
+json(`${fixtureRoot}/evidence/source-inventory-before.json`, before)
+json(`${fixtureRoot}/evidence/source-inventory-after.json`, after)
+json(`${fixtureRoot}/evidence/exact-followup-core-differential.json`, { before: exactBefore, after: exactAfter, changed: exactChanged })
+json(`${fixtureRoot}/manifest.json`, manifest)
+console.log(JSON.stringify({ manifest: `${fixtureRoot}/manifest.json`, manifestSha256: sha256(readFileSync(`${fixtureRoot}/manifest.json`)), patches: patches.length, changed, sourceFiles: before.length, combinedPatchSha256: sha256(joined) }, null, 2))
