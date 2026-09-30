@@ -4,9 +4,21 @@
   "observedAt": "2026-09-30T12:14:20.177Z",
   "inputRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
   "publication": {
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "revision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "branch": "feat/september-program-20260930",
     "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
-    "sourceStatus": "VERIFIED_FOLLOWUP_CANDIDATE; PUSH_READBACK_PENDING",
-    "fullProductDelivery": "PENDING"
+    "isDraft": true,
+    "remoteHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "pullRequestHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "observedAt": "2026-09-30T12:31:07.030Z",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+    "committedSourceMatchesTestedManifest": true,
+    "sourceCount": 4841,
+    "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending."
   },
   "implementation": "Canonical no-write server creation plan, private main-owned encrypted enqueue before mutation, authenticated exact receipt and ACK, stable replay; legacy explicit null plan remains compatible.",
   "independentReview": {
@@ -35,7 +47,9 @@
       "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
       "apps/electron/.impeccable/hook.cache.json"
     ],
-    "bindingLimit": "Pre-commit candidate. Root binds committed source after push readback; docs excluded from source manifest."
+    "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending.",
+    "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "committedSourceMatchesTestedManifest": true
   },
   "gates": [
     {

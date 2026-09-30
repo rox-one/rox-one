@@ -9987,10 +9987,10 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T11:25:02.924Z",
+    "asOf": "2026-09-30T12:31:07.030Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
-    "sourceState": "UNCOMMITTED_WORKING_UNION",
+    "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
     "deliveryRevision": null,
     "taskCount": 109,
     "dependencyEdges": 464,
@@ -10002,12 +10002,12 @@
       {
         "path": "docs/september-program/requirements-full.json",
         "sha256": "5e5f5834a8971d5d4ad79acd585e4932b2dc9a0991067738aa9867e9ff545ca3",
-        "binding": "CURRENT_UNCOMMITTED_SOURCE_OBSERVED_AT_RECONCILIATION"
+        "binding": "SOURCE_CONTRACT_PRESENT_AT_PUBLISHED_47f4e336aeb4c238b18871374d4101f4ada40bdb"
       },
       {
         "path": "docs/september-program/requirements-addendum.json",
         "sha256": "9d36876ba7e9a94ce856f3ec08dd3133c60f13f30e4e0bf74c63cfd7206cc776",
-        "binding": "CURRENT_UNCOMMITTED_SOURCE_OBSERVED_AT_RECONCILIATION"
+        "binding": "SOURCE_CONTRACT_PRESENT_AT_PUBLISHED_47f4e336aeb4c238b18871374d4101f4ada40bdb"
       }
     ],
     "fullTaskAcceptance": "NOT_ACCEPTED",
@@ -10018,20 +10018,43 @@
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
     "codeCurrent": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "observedAt": "2026-09-30T12:31:07.030Z",
+      "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+      "sourceCount": 4841,
+      "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "committedSourceMatchesTestedManifest": true
+    },
+    "finalFullGateRefresh": "PASSING_LOCAL_UNIONS; 4841_SELECTED_SOURCE_FILES_MATCH_PUBLISHED_47F4E336",
+    "gitPublication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "revision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "pullRequestHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "observedAt": "2026-09-30T12:31:07.030Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+      "committedSourceMatchesTestedManifest": true,
+      "sourceCount": 4841,
+      "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending."
+    },
+    "nativeCreationEvidence": "native-create-20260930.json",
+    "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
       "observedAt": "2026-09-30T11:25:02.924Z",
       "sourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
       "scope": "NAMED_SOURCE_PATHS_ONLY; NOT_ALL_REPOSITORY_FILES"
-    },
-    "finalFullGateRefresh": "LOCAL_NATIVE_CREATE_SOURCE_MANIFEST_UNCHANGED_ACROSS_PASSING_UNIONS; PUSH_READBACK_PENDING",
-    "gitPublication": {
-      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
-      "fullProductDelivery": "PENDING",
-      "originalCriteriaAcceptedByPublication": 0
-    },
-    "nativeCreationEvidence": "native-create-20260930.json"
+    }
   }
 }

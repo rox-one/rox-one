@@ -5,9 +5,24 @@
   "sourceState": {
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "branch": "feat/september-program-20260930",
-    "status": "BASELINE_PUBLISHED_FOR_REVIEW; ACTIVE_NATIVE_CREATE_FOLLOWUP",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_ACCEPTANCE_PENDING",
     "deliveredRevision": null,
     "codeCurrent": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "observedAt": "2026-09-30T12:31:07.030Z",
+      "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+      "sourceCount": 4841,
+      "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "committedSourceMatchesTestedManifest": true
+    },
+    "publishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "latestPublishedSourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
       "observedAt": "2026-09-30T11:25:02.924Z",
@@ -396,8 +411,7 @@
         }
       ],
       "doesNotBindPriorGateInvocations": true
-    },
-    "publishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0"
+    }
   },
   "environment": {
     "os": "macOS 27.0",
@@ -423,7 +437,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "requirementAcceptance": "NOT_ACCEPTED",
     "codeDelivery": "SOURCE_PUBLISHED_FOR_REVIEW; ORIGINAL_PRODUCT_DELIVERY_PENDING",
-    "finalFullGateRefresh": "LOCAL_NATIVE_CREATE_SOURCE_MANIFEST_UNCHANGED_ACROSS_PASSING_UNIONS; PUSH_READBACK_PENDING",
+    "finalFullGateRefresh": "PASSING_LOCAL_UNIONS; 4841_SELECTED_SOURCE_FILES_MATCH_PUBLISHED_47F4E336",
     "shutdownTimerDefect": "NOT_REPRODUCED; PRIOR_CAUSAL_ATTRIBUTION_WITHDRAWN",
     "durableOutboxAcknowledgementAudit": "BOUNDED_UI_EDIT_ACK_OUTBOX_AUDITED; EXACT_ENCRYPTED_RECEIPT_BODY_NOT_DECRYPTED",
     "nativeCreation": "BOUNDED_ACTUAL_WS_SQLITE_VERIFIED; NEW_UI_PENDING_SKY_UNRESPONSIVE"
@@ -2429,9 +2443,21 @@
     "observedAt": "2026-09-30T12:14:20.177Z",
     "inputRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
     "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "revision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "branch": "feat/september-program-20260930",
       "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
-      "sourceStatus": "VERIFIED_FOLLOWUP_CANDIDATE; PUSH_READBACK_PENDING",
-      "fullProductDelivery": "PENDING"
+      "isDraft": true,
+      "remoteHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "pullRequestHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "observedAt": "2026-09-30T12:31:07.030Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+      "committedSourceMatchesTestedManifest": true,
+      "sourceCount": 4841,
+      "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending."
     },
     "implementation": "Canonical no-write server creation plan, private main-owned encrypted enqueue before mutation, authenticated exact receipt and ACK, stable replay; legacy explicit null plan remains compatible.",
     "independentReview": {
@@ -2460,7 +2486,9 @@
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
         "apps/electron/.impeccable/hook.cache.json"
       ],
-      "bindingLimit": "Pre-commit candidate. Root binds committed source after push readback; docs excluded from source manifest."
+      "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending.",
+      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "committedSourceMatchesTestedManifest": true
     },
     "gates": [
       {

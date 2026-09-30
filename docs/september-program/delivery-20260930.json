@@ -353,5 +353,22 @@
       "macos-toolchain"
     ],
     "executedSteps": 0
+  },
+  "nativeCreationFollowupPublication": {
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "revision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "pullRequestHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "observedAt": "2026-09-30T12:31:07.030Z",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+    "committedSourceMatchesTestedManifest": true,
+    "sourceCount": 4841,
+    "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending."
   }
 }
