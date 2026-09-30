@@ -64,3 +64,11 @@ ROX_WP01_PRODUCT_E2E=1 bun test tests/macro-integration/ui/wp-01-electron.test.t
 python3 plans/compound-implementation/prepare-dispatch.py --self-test
 git diff --check
 ```
+
+## Координация recovery 2026-09-30
+
+Сообщение пользователя принято: `recovery-coordination-20260930.json`. Compound checkout остаётся у /root; cloud/core baseline и orphan roadmap принадлежат отдельным recovery workers, их active checkouts не читаем и не изменяем. 137 reported preflight запусков не являются completion; 7 implementation workers не закрывают 130 NOT_STARTED. Новые independent workers: GPT-6.1 Sol Ultra where supported. Внешние CI runner/Vercel gates записаны как reported, не как проверенные нами. Следующее действие: integrate exact WP01 queue → build → native primary/offline; WP48 canonical review independently.
+
+## WP48 CLI checkpoint
+
+Root reviewed/applied multi-component bundle linkage. Actual 63pass/0fail/157assertions/7files, strict focused TS0; original 50/124 proof retained separately. Canonical audit.releaseLicense/native/reviewer/publisher gates remain open, package is NOT full DoD. Pending implementation owned by legacy_mixed_list_fix outside proposal.

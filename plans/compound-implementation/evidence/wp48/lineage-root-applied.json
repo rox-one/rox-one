@@ -1,0 +1,78 @@
+{
+  "manifestSha256": "42a7b1b8635a25caa9993f682771056739f9dd9256f1976cbe7d82a4526e919f",
+  "paths": [
+    {
+      "path": "scripts/compliance/collect-build-attribution.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/scripts/compliance/collect-build-attribution.ts",
+      "resultSha256": "9b7af0e2de6e32ed18338481ea9c01988588c352cc3622a5371c5256975442c3",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/scripts__compliance__collect-build-attribution.ts.patch",
+      "patchSha256": "244eb6a4d899fcb48a6deb4d42ff9aa201d58a613ca379e5bc2d54f4a439b888"
+    },
+    {
+      "path": "scripts/compliance/verify-registry-attribution.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/scripts/compliance/verify-registry-attribution.ts",
+      "resultSha256": "47f70a4730281165310bbd2e2aff608ae31fcfd3f699f37a37cab475f2cc9618",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/scripts__compliance__verify-registry-attribution.ts.patch",
+      "patchSha256": "75b7da5fedde797a12e33adb82af9f0331fbe91027315552d1713b1eae22c0fd"
+    },
+    {
+      "path": "scripts/compliance/collect-git-lineage.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/scripts/compliance/collect-git-lineage.ts",
+      "resultSha256": "e194858fc7c3e4b79e98a74eb8cb2f755dfaf5a4209932c9bb23d7eb3381c5ec",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/scripts__compliance__collect-git-lineage.ts.patch",
+      "patchSha256": "5b27e0ae169518c9793acd13228ccf7b0a0e6519d75afa9a847a6ac3a298152d"
+    },
+    {
+      "path": "scripts/compliance/verify-bun-runtime.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/scripts/compliance/verify-bun-runtime.ts",
+      "resultSha256": "5a85cbb219cd7aa1ec34ad33f2b8f883855188c87dd683eefb30be58614fa638",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/scripts__compliance__verify-bun-runtime.ts.patch",
+      "patchSha256": "9fb36f6802bd1d1fe72bc7c8a33b28edfb5d3b34373eded8fba22d4f222e7c9d"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-build-attribution.test.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/tests/macro-integration/wp-48-build-attribution.test.ts",
+      "resultSha256": "918472a57215ab6425cbbcb05bdea6159ca161e4631b5119d731b00318f84443",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/tests__macro-integration__wp-48-build-attribution.test.ts.patch",
+      "patchSha256": "1c1a1a0241e09caf99b9f61f387a1844fe576c2aca9d7b3458c8fcb7898352cd"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-registry-attribution.test.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/tests/macro-integration/wp-48-registry-attribution.test.ts",
+      "resultSha256": "9d7dac5a29213c638a8a1bcc46098f59e7b20c3ee431ad50a49371d72df1b2ba",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/tests__macro-integration__wp-48-registry-attribution.test.ts.patch",
+      "patchSha256": "7c599d999e34627853fc28ff61695b6868b32f70cbd383a07d44e550e923e3af"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-git-lineage.test.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/tests/macro-integration/wp-48-git-lineage.test.ts",
+      "resultSha256": "bfa83b251e06ee380214e1f045c7031e862e2bbc10d943625b21fe2bc2bdd8fa",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/tests__macro-integration__wp-48-git-lineage.test.ts.patch",
+      "patchSha256": "53b23726028a937d09adff83c29952e1ede81b7e14bef57d456a31e4af5fc9c7"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-runtime.test.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/tests/macro-integration/wp-48-runtime.test.ts",
+      "resultSha256": "82977926d1db8afd61d4fba845cc10135e43c7a8c0520ca6cea80da7816220d8",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/tests__macro-integration__wp-48-runtime.test.ts.patch",
+      "patchSha256": "85441ae2ae3c1ca63946265763f3dc7a2b3274b1bc68053b23f9794027a7ffb9"
+    },
+    {
+      "path": "tests/macro-integration/wp-48-runtime-archives.test.ts",
+      "baseSha256": null,
+      "filePath": "/tmp/rox-wp48-runtime-lineage/proposals/files/tests/macro-integration/wp-48-runtime-archives.test.ts",
+      "resultSha256": "43746c74f7696e67459fb83738ca5a30cb8922ef85a24c47a505616ddefbbec2",
+      "patchPath": "/tmp/rox-wp48-runtime-lineage/proposals/tests__macro-integration__wp-48-runtime-archives.test.ts.patch",
+      "patchSha256": "84c8a1eb00a9b2eacff4433eae7785404546946e76af263db52d0625c2d62adb"
+    }
+  ],
+  "verifiedAppliedCount": 9
+}

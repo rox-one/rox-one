@@ -5,7 +5,7 @@
   "sourceBase": "b922e52ed96425732776ff771fdb4fec09fc99b6",
   "specRevision": "242492868a11b4d9af1c1011f20b31a346875f0a",
   "branch": "feat/rox-compound-workspace-20260930",
-  "updatedAt": "2026-09-30T13:05:35.224257+00:00",
+  "updatedAt": "2026-09-30T14:14:34.280640+00:00",
   "packageCount": 143,
   "packages": [
     {
@@ -1038,6 +1038,11 @@
           "sessionId": "01a0f1cc-4ac4-7220-a5ca-095b8892a89b",
           "sourceRevision": "a21aeab1da5a67e56788384ff930945b0f487879",
           "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_CLI_SOURCE_BOUND_VERIFICATION",
+          "artifact": "plans/compound-implementation/wp48-integration-verification.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
@@ -1049,9 +1054,26 @@
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-48.json",
       "preflightRunId": "rox-compound-20260930T083916Z",
       "remainingAcceptance": [
-        "Root source-generation/behavioral verification and shared-file integration",
-        "Native interface and all normative DoD criteria",
-        "Delivered revision and final full-program acceptance"
+        "Canonical audit.releaseLicense authority/policy/CAS/receipt/outbox and native normative UI",
+        "Accepted applicable dependency/runtime notice bytes in final artifact",
+        "Protected trusted checker/reviewer and actual publisher digest readback"
+      ],
+      "sourceFiles": [
+        "scripts/compliance/generate-sbom.ts",
+        ".github/workflows/license-gate.yml",
+        "plans/compliance/component-decisions.json",
+        "tests/macro-integration/wp-48.test.ts",
+        "scripts/compliance/collect-build-attribution.ts",
+        "scripts/compliance/verify-registry-attribution.ts",
+        "scripts/compliance/collect-git-lineage.ts",
+        "scripts/compliance/verify-bun-runtime.ts",
+        "tests/macro-integration/wp-48-build-attribution.test.ts",
+        "tests/macro-integration/wp-48-registry-attribution.test.ts",
+        "tests/macro-integration/wp-48-git-lineage.test.ts",
+        "tests/macro-integration/wp-48-runtime.test.ts",
+        "tests/macro-integration/wp-48-runtime-archives.test.ts",
+        "tests/macro-integration/wp-48-bundle-linkage.test.ts",
+        "docs/macro-integration/wp-48-bundle-linkage.md"
       ]
     },
     {
