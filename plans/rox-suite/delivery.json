@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-30T01:40:06.573Z",
+  "repository": "rox-one/rox-one",
+  "commit": "f0696199048eb640ed96fbff0851cfe391a4f16e",
+  "branch": "docs/macro-integration-20260930",
+  "status": "DELIVERED_AND_REMOTE_READBACK_VERIFIED",
+  "checks": [
+    {
+      "path": "docs/rox-suite/README.md",
+      "blobSha": "de33c869802aaa00f760a640ef1dd81368afa080",
+      "sha256": "b155439f1e12218220ce95cdceef42d150e817cb947f89effa81945a080372b1",
+      "bytes": 8536,
+      "verified": true
+    },
+    {
+      "path": "docs/rox-suite/PRD.md",
+      "blobSha": "d437e347318c9982f394ffe90419900cf408dce6",
+      "sha256": "74005d44d512bde5484542960c05805b73e24acb45b321521061a787b6027081",
+      "bytes": 9785,
+      "verified": true
+    },
+    {
+      "path": "plans/rox-suite/issues.json",
+      "blobSha": "18315df2f3a8b9bb7dff609ee17b5f103316d3bb",
+      "sha256": "5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c",
+      "bytes": 29791,
+      "verified": true
+    },
+    {
+      "path": "plans/rox-suite/publication.json",
+      "blobSha": "2e9d22ceffcd49d144564db4a7dc3a3a1c02ed56",
+      "sha256": "e0379229316663901690418fb52447e9ceae7744d62fa429dfc654876ba31cfa",
+      "bytes": 22561,
+      "verified": true
+    },
+    {
+      "path": "docs/rox-suite/published/RS-FOCUS-01.md",
+      "blobSha": "4034db4aa1a4de51222163eec709ef96e30dc778",
+      "sha256": "d7d78e5add70489d2c9e502a1938b9ea15ec7fabaa9a1af3c4d01e08480dbd04",
+      "bytes": 11243,
+      "verified": true
+    },
+    {
+      "path": "docs/macro-integration/product/collaboration-walkthroughs.md",
+      "blobSha": "07b6be43becb623288f36d4ef10f4477f0e18b58",
+      "sha256": "aab982d7b60f106692be5323fa982526823e71a51cb89bacf986d54d3050fffe",
+      "bytes": 71830,
+      "verified": true
+    },
+    {
+      "path": "docs/macro-integration/product/domain-forms.md",
+      "blobSha": "a5e510e7d5e20f55dafe3522aba3db8f69c7e32e",
+      "sha256": "40fc1504aeb18882a1c91ea6b2c17a3b3bd358877684a34dc969a7815ca15008",
+      "bytes": 129932,
+      "verified": true
+    },
+    {
+      "path": "plans/macro-integration/control-handoff.json",
+      "blobSha": "fef422c44c8200b878e532f83672a850d8d722f3",
+      "sha256": "4b90be16479699a99468f1e34db25d5fd2d2ade55f6ee080e667f47ace106465",
+      "bytes": 475078,
+      "verified": true
+    },
+    {
+      "path": "plans/macro-integration/cloud/manifest.json",
+      "blobSha": "db65afdafc2517d18b796076cd4172bcbd3ecfa2",
+      "sha256": "7425af0625873b55c552fc4280d7e2395311676fa68e5f3658eb93db9666b7a5",
+      "bytes": 113085,
+      "verified": true
+    },
+    {
+      "path": "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+      "blobSha": "7efe7981f8d26dc0c090357cc71eea2cf8f124ad",
+      "sha256": "f1efd9dc71858d12fce3e8813a7f40f006fd7300baaa23e84954c0b47c2524b4",
+      "bytes": 25323,
+      "verified": true
+    },
+    {
+      "path": "plans/macro-integration/cloud-validation-report.json",
+      "blobSha": "2fe2ab4e211aa1168cd6b7e0ffcbd2100ef97df9",
+      "sha256": "02e8fdbeea68637e5b71386cb2dfbdd89d598d5ef3b5679f899eeef08fc7f990",
+      "bytes": 17416,
+      "verified": true
+    },
+    {
+      "path": "plans/macro-integration/validation-report.json",
+      "blobSha": "611ad33c59c216b0108210d60b18bbb32a33503e",
+      "sha256": "9ada7ba85cb2d4df4dd1117e2ac6d63eaffeb261d611dc72f5d5844192cbfd4e",
+      "bytes": 44935,
+      "verified": true
+    }
+  ],
+  "issuePublication": {
+    "status": "PUBLISHED_AND_READBACK_VERIFIED",
+    "count": 30,
+    "issueNumbers": [
+      1091,
+      1120
+    ],
+    "bundleDigest": "eed3548755da34fb3da6450a81d5852024ea661b3e51d73e86e7f896f508697b"
+  },
+  "cloudExecution": "NOT_LAUNCHED",
+  "featureImplementation": "PLANNED_NOT_IMPLEMENTED",
+  "note": "Checks attest the published artifact revision. This receipt and final task-state bookkeeping are recorded in a later commit, avoiding a self-referential commit hash."
+}

@@ -10,7 +10,7 @@
 | suite-services | rox_audit | screenshot6/7 + source | 8 issue drafts | scopes/approvals/signature evidence | complete |
 | suite-review | lead/team | all30 drafts | machine manifest + corrections | DAG/schema/source/privacy checks | complete |
 | suite-publish | lead | reviewed drafts | 30 new GitHub issues | idempotent publish + exact readback | complete |
-| suite-delivery | lead | receipts/R4 | docs commit/push | remote blobs + preserved user edits | ready_for_delivery |
+| suite-delivery | lead | receipts/R4 | docs commit/push | remote blobs + preserved user edits | complete |
 
 ## Revision 4 execution graph
 
@@ -23,7 +23,7 @@
 | v4-control-handoff | lead | 219controls / shared authored labels | handoff index / interaction enrichment | exact coverage, Russian copy, negative controls | complete |
 | v4-contract-reconciliation | lead | forms / current schema gaps | compiled target amendments / packets | no untyped casts, examples, one dispatcher | complete |
 | v4-independent-review | team | all corrected bytes | review findings / resolutions | source/schema/ownership/gate checks | complete |
-| v4-delivery | lead | reviewed bundle | commit/push/readback | clean tree / remote blob hashes | ready_for_delivery |
+| v4-delivery | lead | reviewed bundle | commit/push/readback | clean tree / remote blob hashes | complete |
 
 No coding executor launched. Existing61screens/52WPs remain stable; enrichment adds implementation detail, not parallel product surfaces. New runtime observations must be separately measured; prior installed binary screenshots do not certify these specs.
 
