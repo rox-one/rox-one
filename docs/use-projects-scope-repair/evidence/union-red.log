@@ -1,0 +1,395 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:
+132 |     const h = harness()
+133 |     try {
+134 |       h.render('A'); h.requests[0].pending.resolve([project('A', 'a')]); await h.settle()
+135 |       expect(h.atom()).toEqual([project('A', 'a')])
+136 |       const switched = h.render('B')
+137 |       expect(switched.projects).toEqual([])
+                                      ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   {
++     "assetsPath": "/fixture/A/projects/a/assets",
++     "config": {
++       "createdAt": 1,
++       "id": "a",
++       "name": "a",
++       "slug": "a",
++       "updatedAt": 1,
++     },
++     "folderPath": "/fixture/A/projects/a",
++     "workspaceId": "A",
++     "workspaceRootPath": "/fixture/A",
++   },
++ ]
+
+- Expected  - 1
++ Received  + 15
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:137:33)
+(fail) useProjects workspace and load generations > clears A from the atom and returned view at B commit before B RPC completes [72.09ms]
+143 |     const h = harness()
+144 |     try {
+145 |       h.render('A'); h.render('B')
+146 |       h.requests[1].pending.resolve([project('B', 'b')]); await h.settle()
+147 |       h.requests[0].pending.resolve([project('A', 'a')]); await h.settle()
+148 |       expect(h.atom()).toEqual([project('B', 'b')])
+                             ^
+error: expect(received).toEqual(expected)
+
+  [
+    {
+-     "assetsPath": "/fixture/B/projects/b/assets",
++     "assetsPath": "/fixture/A/projects/a/assets",
+      "config": {
+        "createdAt": 1,
+-       "id": "b",
+-       "name": "b",
+-       "slug": "b",
++       "id": "a",
++       "name": "a",
++       "slug": "a",
+        "updatedAt": 1,
+      },
+-     "folderPath": "/fixture/B/projects/b",
+-     "workspaceId": "B",
+-     "workspaceRootPath": "/fixture/B",
++     "folderPath": "/fixture/A/projects/a",
++     "workspaceId": "A",
++     "workspaceRootPath": "/fixture/A",
+    },
+  ]
+
+- Expected  - 7
++ Received  + 7
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:148:24)
+(fail) useProjects workspace and load generations > late A success cannot overwrite an already loaded B [8.94ms]
+154 |     const h = harness()
+155 |     try {
+156 |       h.render('A'); h.render('B')
+157 |       h.requests[1].pending.resolve([project('B', 'b')]); await h.settle()
+158 |       h.requests[0].pending.reject(new Error('old A failure')); await h.settle()
+159 |       expect(h.atom()).toEqual([project('B', 'b')])
+                             ^
+error: expect(received).toEqual(expected)
+
+- [
+-   {
+-     "assetsPath": "/fixture/B/projects/b/assets",
+-     "config": {
+-       "createdAt": 1,
+-       "id": "b",
+-       "name": "b",
+-       "slug": "b",
+-       "updatedAt": 1,
+-     },
+-     "folderPath": "/fixture/B/projects/b",
+-     "workspaceId": "B",
+-     "workspaceRootPath": "/fixture/B",
+-   },
+- ]
++ []
+
+- Expected  - 15
++ Received  + 1
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:159:24)
+(fail) useProjects workspace and load generations > obsolete A failure neither clears B nor reports a current load error [11.20ms]
+165 |     const h = harness()
+166 |     try {
+167 |       h.render('A'); const refreshed = h.refresh()
+168 |       h.requests[1].pending.resolve([project('A', 'new')]); await refreshed
+169 |       h.requests[0].pending.resolve([project('A', 'old')]); await h.settle()
+170 |       expect(h.atom()).toEqual([project('A', 'new')])
+                             ^
+error: expect(received).toEqual(expected)
+
+  [
+    {
+-     "assetsPath": "/fixture/A/projects/new/assets",
++     "assetsPath": "/fixture/A/projects/old/assets",
+      "config": {
+        "createdAt": 1,
+-       "id": "new",
+-       "name": "new",
+-       "slug": "new",
++       "id": "old",
++       "name": "old",
++       "slug": "old",
+        "updatedAt": 1,
+      },
+-     "folderPath": "/fixture/A/projects/new",
++     "folderPath": "/fixture/A/projects/old",
+      "workspaceId": "A",
+      "workspaceRootPath": "/fixture/A",
+    },
+  ]
+
+- Expected  - 5
++ Received  + 5
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:170:24)
+(fail) useProjects workspace and load generations > the newest same-workspace refresh wins over an older load [10.54ms]
+175 |   test('same-workspace broadcast supersedes an older pending query', async () => {
+176 |     const h = harness()
+177 |     try {
+178 |       h.render('A'); h.listeners[0].callback('A', [project('A', 'broadcast')])
+179 |       h.requests[0].pending.resolve([project('A', 'old')]); await h.settle()
+180 |       expect(h.atom()).toEqual([project('A', 'broadcast')])
+                             ^
+error: expect(received).toEqual(expected)
+
+  [
+    {
+-     "assetsPath": "/fixture/A/projects/broadcast/assets",
++     "assetsPath": "/fixture/A/projects/old/assets",
+      "config": {
+        "createdAt": 1,
+-       "id": "broadcast",
+-       "name": "broadcast",
+-       "slug": "broadcast",
++       "id": "old",
++       "name": "old",
++       "slug": "old",
+        "updatedAt": 1,
+      },
+-     "folderPath": "/fixture/A/projects/broadcast",
++     "folderPath": "/fixture/A/projects/old",
+      "workspaceId": "A",
+      "workspaceRootPath": "/fixture/A",
+    },
+  ]
+
+- Expected  - 5
++ Received  + 5
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:180:24)
+(fail) useProjects workspace and load generations > same-workspace broadcast supersedes an older pending query [8.51ms]
+187 |     try {
+188 |       h.render('A'); const old = h.listeners[0]; h.render('B')
+189 |       h.requests[1].pending.resolve([project('B', 'b')]); await h.settle()
+190 |       old.callback('A', [project('A', 'queued')])
+191 |       expect(old.disposed).toBe(true)
+192 |       expect(h.atom()).toEqual([project('B', 'b')])
+                             ^
+error: expect(received).toEqual(expected)
+
+  [
+    {
+-     "assetsPath": "/fixture/B/projects/b/assets",
++     "assetsPath": "/fixture/A/projects/queued/assets",
+      "config": {
+        "createdAt": 1,
+-       "id": "b",
+-       "name": "b",
+-       "slug": "b",
++       "id": "queued",
++       "name": "queued",
++       "slug": "queued",
+        "updatedAt": 1,
+      },
+-     "folderPath": "/fixture/B/projects/b",
+-     "workspaceId": "B",
+-     "workspaceRootPath": "/fixture/B",
++     "folderPath": "/fixture/A/projects/queued",
++     "workspaceId": "A",
++     "workspaceRootPath": "/fixture/A",
+    },
+  ]
+
+- Expected  - 7
++ Received  + 7
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:192:24)
+(fail) useProjects workspace and load generations > queued callback from a disposed A subscription cannot alter B [7.72ms]
+195 | 
+196 |   test('an obsolete refresh closure cannot start a request for the old scope', () => {
+197 |     const h = harness()
+198 |     try {
+199 |       const old = h.render('A').refresh; h.render('B'); old()
+200 |       expect(h.requests.map(request => request.workspaceId)).toEqual(['A', 'B'])
+                                                                   ^
+error: expect(received).toEqual(expected)
+
+  [
+    "A",
+    "B",
++   "A",
+  ]
+
+- Expected  - 0
++ Received  + 1
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:200:62)
+(fail) useProjects workspace and load generations > an obsolete refresh closure cannot start a request for the old scope [5.01ms]
+205 |     const h = harness()
+206 |     try {
+207 |       h.render('A'); h.unmount(); const writes = h.writes.length
+208 |       h.requests[0].pending.resolve([project('A', 'late')]); await h.settle()
+209 |       h.listeners[0].callback('A', [project('A', 'queued')])
+210 |       expect(h.writes.length).toBe(writes)
+                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 2
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:210:31)
+(fail) useProjects workspace and load generations > unmount cancels late RPC and queued broadcasts without atom writes [6.30ms]
+216 |     const h = harness()
+217 |     try {
+218 |       h.render('A'); h.render('B'); h.render('A')
+219 |       h.requests[2].pending.resolve([project('A', 'current')]); await h.settle()
+220 |       h.requests[0].pending.resolve([project('A', 'first')]); await h.settle()
+221 |       expect(h.atom()).toEqual([project('A', 'current')])
+                             ^
+error: expect(received).toEqual(expected)
+
+  [
+    {
+-     "assetsPath": "/fixture/A/projects/current/assets",
++     "assetsPath": "/fixture/A/projects/first/assets",
+      "config": {
+        "createdAt": 1,
+-       "id": "current",
+-       "name": "current",
+-       "slug": "current",
++       "id": "first",
++       "name": "first",
++       "slug": "first",
+        "updatedAt": 1,
+      },
+-     "folderPath": "/fixture/A/projects/current",
++     "folderPath": "/fixture/A/projects/first",
+      "workspaceId": "A",
+      "workspaceRootPath": "/fixture/A",
+    },
+  ]
+
+- Expected  - 5
++ Received  + 5
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:221:24)
+(fail) useProjects workspace and load generations > A-to-B-to-A does not revive the first A lease [6.70ms]
+228 |       h.render('A'); const disposed = h.listeners[0]; h.replayEffects()
+229 |       h.requests[1].pending.resolve([project('A', 'current')]); await h.settle()
+230 |       disposed.callback('A', [project('A', 'disposed')])
+231 |       h.requests[0].pending.resolve([project('A', 'old-query')]); await h.settle()
+232 |       expect(disposed.disposed).toBe(true)
+233 |       expect(h.atom()).toEqual([project('A', 'current')])
+                             ^
+error: expect(received).toEqual(expected)
+
+  [
+    {
+-     "assetsPath": "/fixture/A/projects/current/assets",
++     "assetsPath": "/fixture/A/projects/old-query/assets",
+      "config": {
+        "createdAt": 1,
+-       "id": "current",
+-       "name": "current",
+-       "slug": "current",
++       "id": "old-query",
++       "name": "old-query",
++       "slug": "old-query",
+        "updatedAt": 1,
+      },
+-     "folderPath": "/fixture/A/projects/current",
++     "folderPath": "/fixture/A/projects/old-query",
+      "workspaceId": "A",
+      "workspaceRootPath": "/fixture/A",
+    },
+  ]
+
+- Expected  - 5
++ Received  + 5
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:233:24)
+(fail) useProjects workspace and load generations > effect replay does not revive callbacks from the disposed subscription [4.77ms]
+237 |   test('RPC and broadcast payloads retain only current-workspace LoadedProjects', async () => {
+238 |     const h = harness()
+239 |     try {
+240 |       h.render('B')
+241 |       h.requests[0].pending.resolve([project('A', 'foreign'), null, project('B', 'allowed')]); await h.settle()
+242 |       expect(h.atom()).toEqual([project('B', 'allowed')])
+                             ^
+error: expect(received).toEqual(expected)
+
+  [
+    {
++     "assetsPath": "/fixture/A/projects/foreign/assets",
++     "config": {
++       "createdAt": 1,
++       "id": "foreign",
++       "name": "foreign",
++       "slug": "foreign",
++       "updatedAt": 1,
++     },
++     "folderPath": "/fixture/A/projects/foreign",
++     "workspaceId": "A",
++     "workspaceRootPath": "/fixture/A",
++   },
++   null,
++   {
+      "assetsPath": "/fixture/B/projects/allowed/assets",
+      "config": {
+        "createdAt": 1,
+        "id": "allowed",
+        "name": "allowed",
+        "slug": "allowed",
+        "updatedAt": 1,
+      },
+      "folderPath": "/fixture/B/projects/allowed",
+      "workspaceId": "B",
+      "workspaceRootPath": "/fixture/B",
+    },
+  ]
+
+- Expected  - 0
++ Received  + 14
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:242:24)
+(fail) useProjects workspace and load generations > RPC and broadcast payloads retain only current-workspace LoadedProjects [5.51ms]
+249 |     const h = harness()
+250 |     try {
+251 |       h.render('A'); h.requests[0].pending.resolve([project('A', 'a')]); await h.settle()
+252 |       const pending = h.refresh(); h.render(null)
+253 |       h.requests[1].pending.resolve([project('A', 'late')]); await pending
+254 |       expect(h.atom()).toEqual([])
+                             ^
+error: expect(received).toEqual(expected)
+
+- []
++ [
++   {
++     "assetsPath": "/fixture/A/projects/late/assets",
++     "config": {
++       "createdAt": 1,
++       "id": "late",
++       "name": "late",
++       "slug": "late",
++       "updatedAt": 1,
++     },
++     "folderPath": "/fixture/A/projects/late",
++     "workspaceId": "A",
++     "workspaceRootPath": "/fixture/A",
++   },
++ ]
+
+- Expected  - 1
++ Received  + 15
+
+      at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:254:24)
+(fail) useProjects workspace and load generations > null scope clears previous projects and invalidates pending load [4.74ms]
+(pass) useProjects workspace and load generations > same-workspace success, broadcast and current failure retain their supported behavior [8.59ms]
+(pass) useProjects workspace and load generations > actual projectCatalogAtom wrapper preserves shared metadata during local clear and load [5.10ms]
+
+ 2 pass
+ 12 fail
+ 22 expect() calls
+Ran 14 tests across 1 file. [800.00ms]

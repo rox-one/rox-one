@@ -1,0 +1,21 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:
+(pass) useProjects workspace and load generations > clears A from the atom and returned view at B commit before B RPC completes [69.26ms]
+(pass) useProjects workspace and load generations > late A success cannot overwrite an already loaded B [10.44ms]
+(pass) useProjects workspace and load generations > obsolete A failure neither clears B nor reports a current load error [8.79ms]
+(pass) useProjects workspace and load generations > the newest same-workspace refresh wins over an older load [7.78ms]
+(pass) useProjects workspace and load generations > same-workspace broadcast supersedes an older pending query [6.59ms]
+(pass) useProjects workspace and load generations > queued callback from a disposed A subscription cannot alter B [7.07ms]
+(pass) useProjects workspace and load generations > an obsolete refresh closure cannot start a request for the old scope [5.33ms]
+(pass) useProjects workspace and load generations > unmount cancels late RPC and queued broadcasts without atom writes [5.28ms]
+(pass) useProjects workspace and load generations > A-to-B-to-A does not revive the first A lease [5.71ms]
+(pass) useProjects workspace and load generations > effect replay does not revive callbacks from the disposed subscription [4.88ms]
+(pass) useProjects workspace and load generations > RPC and broadcast payloads retain only current-workspace LoadedProjects [4.72ms]
+(pass) useProjects workspace and load generations > null scope clears previous projects and invalidates pending load [10.05ms]
+(pass) useProjects workspace and load generations > same-workspace success, broadcast and current failure retain their supported behavior [7.62ms]
+
+ 13 pass
+ 0 fail
+ 29 expect() calls
+Ran 13 tests across 1 file. [323.00ms]
