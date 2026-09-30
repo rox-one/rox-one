@@ -143,7 +143,10 @@ export default function MessagingSettingsPage() {
     }
   }, [workspaceId, setBindings])
 
-  if (!activeWorkspace) return null
+  if (!activeWorkspace) return <div className="flex h-full min-h-0 flex-col" data-testid="messaging-workspace-unavailable">
+    <PanelHeader title={t('settings.messaging.title')} />
+    <p role="status" className="p-6 text-sm text-muted-foreground">{t('common.unavailable')}</p>
+  </div>
 
   return (
     <div className="flex h-full min-h-0 flex-col">

@@ -1,3 +1,4 @@
+import { subscribeOptionalCapability } from '@/lib/scoped-capability-read'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -19,11 +20,16 @@ export function ProjectAuthorityConnectionPanel() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<{ code: string; status: number } | null>(null)
   const generation = useRef(0)
+  const supported = typeof window.electronAPI.getProjectAuthorityConfiguration === 'function'
+    && typeof window.electronAPI.getProjectAuthorityState === 'function'
+    && typeof window.electronAPI.connectProjectAuthority === 'function'
+    && typeof window.electronAPI.disconnectProjectAuthority === 'function'
 
   useEffect(() => {
     const current = ++generation.current
     setPassword(''); setError(null); setBusy(false)
     setServiceUrl(''); setWorkspaceId(''); setWorkspaceName(''); setLogin('')
+    if (!supported) { setState('unavailable'); return }
     if (!workspace) { setState('unconfigured'); return }
     void Promise.all([window.electronAPI.getProjectAuthorityConfiguration(workspace.id), window.electronAPI.getProjectAuthorityState()])
       .then(([configuration, currentState]) => {
@@ -35,16 +41,16 @@ export function ProjectAuthorityConnectionPanel() {
           setWorkspaceName(configuration.workspaceName ?? '')
         }
       }).catch(() => { if (generation.current === current) setState('unavailable') })
-    const unsubscribe = window.electronAPI.onProjectAuthorityChanged(() => {
+    const unsubscribe = subscribeOptionalCapability(window.electronAPI.onProjectAuthorityChanged?.bind(window.electronAPI), () => {
       void window.electronAPI.getProjectAuthorityState().then(next => {
         if (generation.current === current) setState(next)
       }).catch(() => { if (generation.current === current) setState('unavailable') })
-    })
+    }, () => { if (generation.current === current) setState('unavailable') })
     return () => { ++generation.current; unsubscribe() }
-  }, [workspace?.id])
+  }, [workspace?.id, supported])
 
   const connect = async () => {
-    if (!workspace || busy) return
+    if (!workspace || busy || !supported) return
     const current = generation.current
     setBusy(true); setError(null)
     try {
@@ -57,7 +63,7 @@ export function ProjectAuthorityConnectionPanel() {
     finally { if (generation.current === current) { setPassword(''); setBusy(false) } }
   }
   const disconnect = async () => {
-    if (!workspace || busy) return
+    if (!workspace || busy || !supported) return
     const current = generation.current
     setBusy(true); setError(null)
     try {
@@ -74,26 +80,26 @@ export function ProjectAuthorityConnectionPanel() {
     <p className="mt-1 text-xs text-muted-foreground">{t('projectAuthority.description')}</p>
     <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={event => { event.preventDefault(); void connect() }}>
       <label className="grid gap-1 text-xs" htmlFor="project-authority-url">{t('projectAuthority.serviceUrl')}
-        <Input id="project-authority-url" data-testid="project-authority-url" value={serviceUrl} onChange={event => setServiceUrl(event.target.value)} disabled={busy} required />
+        <Input id="project-authority-url" data-testid="project-authority-url" value={serviceUrl} onChange={event => setServiceUrl(event.target.value)} disabled={busy || !supported} required />
         <span className="text-xs text-muted-foreground">{t('projectAuthority.serviceUrlHelp')}</span>
       </label>
       <label className="grid gap-1 text-xs" htmlFor="project-authority-workspace">{t('projectAuthority.workspaceId')}
-        <Input id="project-authority-workspace" data-testid="project-authority-workspace" value={workspaceId} onChange={event => setWorkspaceId(event.target.value)} disabled={busy} required />
+        <Input id="project-authority-workspace" data-testid="project-authority-workspace" value={workspaceId} onChange={event => setWorkspaceId(event.target.value)} disabled={busy || !supported} required />
         <span className="text-xs text-muted-foreground">{t('projectAuthority.workspaceIdHelp')}</span>
       </label>
       <label className="grid gap-1 text-xs" htmlFor="project-authority-workspace-name">{t('projectAuthority.workspaceName')}
-        <Input id="project-authority-workspace-name" data-testid="project-authority-workspace-name" value={workspaceName} maxLength={PROJECT_AUTHORITY_NAME_MAX_LENGTH} onChange={event => setWorkspaceName(event.target.value)} disabled={busy} required />
+        <Input id="project-authority-workspace-name" data-testid="project-authority-workspace-name" value={workspaceName} maxLength={PROJECT_AUTHORITY_NAME_MAX_LENGTH} onChange={event => setWorkspaceName(event.target.value)} disabled={busy || !supported} required />
         <span className="text-xs text-muted-foreground">{t('projectAuthority.workspaceNameHelp')}</span>
       </label>
       <label className="grid gap-1 text-xs" htmlFor="project-authority-login">{t('projectAuthority.login')}
-        <Input id="project-authority-login" data-testid="project-authority-login" value={login} maxLength={PROJECT_AUTHORITY_LOGIN_MAX_LENGTH} onChange={event => setLogin(event.target.value)} autoComplete="username" disabled={busy} required />
+        <Input id="project-authority-login" data-testid="project-authority-login" value={login} maxLength={PROJECT_AUTHORITY_LOGIN_MAX_LENGTH} onChange={event => setLogin(event.target.value)} autoComplete="username" disabled={busy || !supported} required />
       </label>
       <label className="grid gap-1 text-xs" htmlFor="project-authority-password">{t('projectAuthority.password')}
-        <Input id="project-authority-password" data-testid="project-authority-password" type="password" value={password} maxLength={PROJECT_AUTHORITY_PASSWORD_MAX_LENGTH} onChange={event => setPassword(event.target.value)} autoComplete="off" disabled={busy} required />
+        <Input id="project-authority-password" data-testid="project-authority-password" type="password" value={password} maxLength={PROJECT_AUTHORITY_PASSWORD_MAX_LENGTH} onChange={event => setPassword(event.target.value)} autoComplete="off" disabled={busy || !supported} required />
       </label>
       <div className="flex items-end gap-2">
-        <Button type="submit" data-testid="project-authority-connect" disabled={busy || !workspace}>{t(busy ? 'projectAuthority.busy' : 'projectAuthority.connect')}</Button>
-        <Button type="button" data-testid="project-authority-disconnect" variant="outline" onClick={() => { void disconnect() }} disabled={busy || !workspace}>{t('projectAuthority.disconnect')}</Button>
+        <Button type="submit" data-testid="project-authority-connect" disabled={busy || !workspace || !supported}>{t(busy ? 'projectAuthority.busy' : 'projectAuthority.connect')}</Button>
+        <Button type="button" data-testid="project-authority-disconnect" variant="outline" onClick={() => { void disconnect() }} disabled={busy || !workspace || !supported}>{t('projectAuthority.disconnect')}</Button>
       </div>
     </form>
     <p className="mt-3 text-xs" role="status" data-testid="project-authority-status">{t(state === 'ready' ? 'projectAuthority.ready' : 'sharedProjects.' + state)}</p>

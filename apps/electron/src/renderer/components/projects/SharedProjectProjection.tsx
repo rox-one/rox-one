@@ -1,3 +1,4 @@
+import { subscribeOptionalCapability } from '@/lib/scoped-capability-read'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -86,11 +87,16 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
     ++scopeGeneration.current
     void refresh()
     setPendingIntent({ state: 'none', eligible: false }); setCreateOpen(false); setCreateError(null); setNewName(''); setCreating(false)
-    const unsubscribe = window.electronAPI.onProjectAuthorityChanged(() => {
+    const unsubscribe = subscribeOptionalCapability(window.electronAPI.onProjectAuthorityChanged?.bind(window.electronAPI), () => {
       ++scopeGeneration.current
       // A transport outage preserves the local draft; main independently hides a foreign/quiesced durable intent.
       setCreateError(null); setCreating(false)
       void refresh()
+    }, error => {
+      ++requestGeneration.current
+      setReadError(safeProjectAuthorityCode(error))
+      setVerifiedWorkspace(workspaceId)
+      setCatalog(previous => ({ ...previous, sharedWorkspaceId: workspaceId, shared: [], sharedState: 'unavailable' }))
     })
     return () => { ++requestGeneration.current; ++scopeGeneration.current; unsubscribe() }
   }, [refresh])
@@ -239,7 +245,10 @@ export function SharedProjectDetails({ entityId }: { entityId: string }) {
   }, [workspace?.id, entityId])
   useEffect(() => {
     void load()
-    const unsubscribe = window.electronAPI.onProjectAuthorityChanged(() => { void load() })
+    const unsubscribe = subscribeOptionalCapability(window.electronAPI.onProjectAuthorityChanged?.bind(window.electronAPI), () => { void load() }, error => {
+      ++generation.current
+      setProjection(null); setState('unavailable'); setErrorCode(safeProjectAuthorityCode(error))
+    })
     return () => { ++generation.current; unsubscribe() }
   }, [load])
   const project = projection?.localWorkspaceId === workspace?.id && projection?.project.entity.entityId === entityId

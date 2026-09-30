@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   SettingsCard,
@@ -17,42 +17,64 @@ import {
   type VoiceHealth,
   type VoicePrefs,
 } from '@craft-agent/shared/voice'
+import { createDesktopSettingsSession, readVoiceSettingsSnapshot, readVoiceSettingsHistory, type VoiceSettingsSnapshot, type VoiceSettingsHistory } from './desktop-settings-session'
 
 export function VoiceSettingsSection() {
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const [health, setHealth] = useState<VoiceHealth | null>(null)
-  const [history, setHistory] = useState<Array<{ id: string; favorite: boolean; state: string }>>([])
-  const [brand, setBrand] = useState('rocks transcription (rocks t1)')
-
-  const reload = useCallback(async () => {
-    if (!window.electronAPI.getVoicePrefs) return
-    const [nextPrefs, nextHealth] = await Promise.all([
-      window.electronAPI.getVoicePrefs(),
-      window.electronAPI.getVoiceHealth(),
-    ])
-    setPrefs(nextPrefs)
-    setHealth(nextHealth)
-    const caps = await window.electronAPI.getVoiceCapabilities?.().catch(() => null)
-    if (caps?.displayName) setBrand(caps.displayName)
-    const listed = await window.electronAPI.listVoiceHistory?.({ limit: 20 }).catch(() => null)
-    if (listed?.page) setHistory(listed.page as Array<{ id: string; favorite: boolean; state: string }>)
-  }, [])
+  const [history, setHistory] = useState<VoiceSettingsHistory>(null)
+  const [historyState, setHistoryState] = useState<'loading' | 'ready' | 'unavailable'>('loading')
+  const [state, setState] = useState<'loading' | 'ready' | 'unavailable' | 'error'>('loading')
+  const session = useRef<ReturnType<typeof createDesktopSettingsSession<VoiceSettingsSnapshot>> | null>(null)
+  const historySession = useRef<ReturnType<typeof createDesktopSettingsSession<VoiceSettingsHistory>> | null>(null)
 
   useEffect(() => {
-    void reload()
-    const off = window.electronAPI.onVoiceChanged?.(() => {
-      void reload()
-    })
-    return () => off?.()
-  }, [reload])
-
-  const save = useCallback(async (patch: Partial<VoicePrefs>) => {
-    const next = await window.electronAPI.saveVoicePrefs(patch)
-    setPrefs(next)
+    const current = createDesktopSettingsSession<VoiceSettingsSnapshot>(window.electronAPI,
+      value => { setPrefs(value.prefs); setHealth(value.health); setState('ready') },
+      error => { setState(error ? 'error' : 'unavailable') })
+    const currentHistory = createDesktopSettingsSession<VoiceSettingsHistory>(window.electronAPI,
+      value => { setHistory(value); setHistoryState(value === null ? 'unavailable' : 'ready') },
+      () => { setHistory(null); setHistoryState('unavailable') })
+    session.current = current
+    historySession.current = currentHistory
+    const reload = () => {
+      void current.run(() => readVoiceSettingsSnapshot(window.electronAPI))
+      setHistoryState('loading')
+      void currentHistory.run(() => readVoiceSettingsHistory(window.electronAPI))
+    }
+    reload()
+    current.subscribe(onChange => window.electronAPI.onVoiceChanged?.(onChange), reload)
+    return () => {
+      current.dispose(); currentHistory.dispose()
+      if (session.current === current) session.current = null
+      if (historySession.current === currentHistory) historySession.current = null
+    }
   }, [])
 
-  if (!prefs) return null
+  const save = useCallback(async (patch: Partial<VoicePrefs>) => {
+    if (state !== 'ready') return
+    await session.current?.run(async () => ({ prefs: await window.electronAPI.saveVoicePrefs(patch), health: health! }))
+  }, [state, health])
+
+  const favorite = useCallback(async (id: string, value: boolean) => {
+    if (state !== 'ready' || historyState !== 'ready' || !history) return
+    await historySession.current?.run(async isCurrent => {
+      await window.electronAPI.favoriteVoiceRecording({ id, favorite: value })
+      if (!isCurrent()) return null
+      return readVoiceSettingsHistory(window.electronAPI)
+    })
+  }, [state, historyState, history])
+
+  if (state !== 'ready' || !prefs) return (
+    <SettingsSection title={t('settings.input.voiceGroupGeneral')} description={t('settings.input.voiceDesc')}>
+      <SettingsCard>
+        <p role="status" className="px-4 py-3 text-sm text-muted-foreground">
+          {state === 'loading' ? t('common.loading') : state === 'error' ? t('common.errorLoadingContent') : t('common.unavailable')}
+        </p>
+      </SettingsCard>
+    </SettingsSection>
+  )
 
   const healthLabel = (() => {
     switch (health?.whisper) {
@@ -172,7 +194,11 @@ export function VoiceSettingsSection() {
 
       <SettingsSection title={t('settings.input.voiceGroupHistory')} description={t('settings.input.voiceHistoryDesc')}>
         <SettingsCard>
-          {history.length === 0 ? (
+          {historyState === 'loading' ? (
+            <p role="status" className="px-4 py-3 text-xs text-muted-foreground">{t('common.loading')}</p>
+          ) : history === null ? (
+            <p role="status" className="px-4 py-3 text-xs text-muted-foreground">{t('common.unavailable')}</p>
+          ) : history.length === 0 ? (
             <p className="px-4 py-3 text-xs text-muted-foreground">{t('settings.input.voiceHistoryEmpty')}</p>
           ) : history.map((item) => (
             <div key={item.id} className="flex items-center justify-between px-4 py-2 text-sm">
@@ -180,7 +206,7 @@ export function VoiceSettingsSection() {
               <button
                 type="button"
                 className="text-xs text-muted-foreground"
-                onClick={() => void window.electronAPI.favoriteVoiceRecording?.({ id: item.id, favorite: !item.favorite }).then(() => reload())}
+                onClick={() => void favorite(item.id, !item.favorite)}
               >
                 {item.favorite ? t('voice.history.unfavorite') : t('voice.history.favorite')}
               </button>

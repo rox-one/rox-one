@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
+import { hasNativeNotesTransport } from '@/lib/notes-capability'
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, SquarePen, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
@@ -568,7 +570,21 @@ function countFolderNotes(node: FolderTreeNode): number {
   return node.notes.length + node.children.reduce((sum, c) => sum + countFolderNotes(c), 0)
 }
 
-export default function NotesPage({ selectedNoteId }: NotesPageProps) {
+export default function NotesPage(props: NotesPageProps) {
+  const { t } = useTranslation()
+  const { activeWorkspaceId } = useAppShellContext()
+  if (!hasNativeNotesTransport(window.electronAPI)) {
+    return <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm text-muted-foreground"
+      data-testid="notes-authority-unavailable" data-state="unavailable" data-error-code="CAPABILITY_UNAVAILABLE">
+      <h1 className="font-medium">{t('workbench.home.notes.unavailable')}</h1>
+      <p role="status">{t(activeWorkspaceId ? 'common.unavailable' : 'notes.empty.selectWorkspace')}</p>
+      <Button disabled data-testid="notes-unavailable-new-note">{t('notes.toolbar.newNote')}</Button>
+    </div>
+  }
+  return <NativeNotesPage {...props} />
+}
+
+function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const { t } = useTranslation()
   const navigationRevision = React.useContext(NavigationContext)?.navigationRevision
   const {
@@ -675,6 +691,25 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const openNoteRequestRef = React.useRef(0)
   const searchRequestRef = React.useRef(0)
   const notesListRequestRef = React.useRef(0)
+  const assetsRequestRef = React.useRef(0)
+  const readsMountedRef = React.useRef(false)
+  const readWorkspaceRef = React.useRef(activeWorkspaceId)
+  const [notesReadError, setNotesReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
+  const [assetsReadError, setAssetsReadError] = React.useState<{ workspaceId: string; code: string } | null>(null)
+  const readUnavailable = notesReadError?.workspaceId === activeWorkspaceId ? notesReadError
+    : assetsReadError?.workspaceId === activeWorkspaceId ? assetsReadError : null
+  React.useLayoutEffect(() => {
+    // A committed workspace lease invalidates A requests even across A → B → A.
+    readWorkspaceRef.current = activeWorkspaceId
+    readsMountedRef.current = true
+    ++notesListRequestRef.current
+    ++assetsRequestRef.current
+    return () => {
+      readsMountedRef.current = false
+      ++notesListRequestRef.current
+      ++assetsRequestRef.current
+    }
+  }, [activeWorkspaceId])
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
@@ -816,7 +851,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       ))}
     </div>
   )
-  const canEditContent = contentResolution?.status === 'ok' && contentResolution.capabilities.write && !saveNeedsReload
+  const canEditContent = !readUnavailable && contentResolution?.status === 'ok' && contentResolution.capabilities.write && !saveNeedsReload
   React.useEffect(() => { workspaceIdRef.current = activeWorkspaceId }, [activeWorkspaceId])
   const noteViewCapabilities = React.useMemo(() => defaultNoteEntityCapabilities(), [])
   const [noteView, setNoteView] = useEntityView(
@@ -861,10 +896,17 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!activeWorkspaceId) return
     const listed = soupDocumentListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return
-    const next = await window.electronAPI.listNotes(activeWorkspaceId)
-    if (request !== notesListRequestRef.current) return
-    setNotes(next)
-    setSidebarOrder(next.map(n => n.id))
+    await readScopedCapability({
+      read: () => window.electronAPI.listNotes(activeWorkspaceId),
+      isCurrent: () => readsMountedRef.current && request === notesListRequestRef.current
+        && readWorkspaceRef.current === activeWorkspaceId,
+      onAvailable: next => {
+        setNotesReadError(null)
+        setNotes(next)
+        setSidebarOrder(next.map(n => n.id))
+      },
+      onUnavailable: error => setNotesReadError({ workspaceId: activeWorkspaceId, code: capabilityErrorCode(error) }),
+    })
   }, [activeWorkspaceId])
 
   const refreshIndexHealth = React.useCallback(async () => {
@@ -897,8 +939,14 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setAllAssets([])
       return
     }
-    const next = await window.electronAPI.listNoteAssets(activeWorkspaceId)
-    setAllAssets(next)
+    const request = ++assetsRequestRef.current
+    await readScopedCapability({
+      read: () => window.electronAPI.listNoteAssets(activeWorkspaceId),
+      isCurrent: () => readsMountedRef.current && request === assetsRequestRef.current
+        && readWorkspaceRef.current === activeWorkspaceId,
+      onAvailable: next => { setAssetsReadError(null); setAllAssets(next) },
+      onUnavailable: error => setAssetsReadError({ workspaceId: activeWorkspaceId, code: capabilityErrorCode(error) }),
+    })
   }, [activeWorkspaceId])
 
   const refreshTasks = React.useCallback(async (sourceNotes?: NoteSummary[]) => {
@@ -2298,6 +2346,16 @@ h1,h2,h3{margin-top:1.5em}
 
   if (!activeWorkspaceId) {
     return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('notes.empty.selectWorkspace')}</div>
+  }
+
+  if (readUnavailable) {
+    return <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm text-muted-foreground"
+      data-testid="notes-authority-unavailable" data-state="unavailable" data-error-code={readUnavailable.code}>
+      <h1 className="font-medium">{t('workbench.home.notes.unavailable')}</h1>
+      <p role="status">{t(readUnavailable.code === 'AUTH_FAILED' ? 'notes.content.denied' : 'common.unavailable')}</p>
+      <Button variant="outline" onClick={() => { void refreshNotes(); void refreshAssets() }}>{t('common.retry')}</Button>
+      <Button disabled data-testid="notes-unavailable-new-note">{t('notes.toolbar.newNote')}</Button>
+    </div>
   }
 
   // Display-only: rails the user left open auto-hide (comments first, then

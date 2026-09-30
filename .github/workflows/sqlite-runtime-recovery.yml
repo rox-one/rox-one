@@ -104,6 +104,9 @@ jobs:
             apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \
             apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \
             apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts \
+            apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts \
+            apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts \
+            apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts \
             apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts \
             packages/shared/src/projects/__tests__ \
             apps/webui/__tests__

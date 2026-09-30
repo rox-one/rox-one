@@ -884,6 +884,13 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     requestAnimationFrame(() => document.getElementById(`project-milestone-${id}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }))
   }
 
+  if (!workspaceId) {
+    return <div className="h-full p-6" data-testid="project-workspace-unavailable" data-state="unavailable">
+      <h1 className="text-lg font-semibold">{t('sharedProjects.heading')}</h1>
+      <p role="status" className="mt-4 text-sm text-muted-foreground">{t('common.unavailable')}</p>
+    </div>
+  }
+
   if (!project || loading || error) {
     return (
       <Info_Page
