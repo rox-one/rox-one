@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-09-30T11:25:02.924Z",
+  "asOf": "2026-09-30T16:17:33.654Z",
   "purpose": "Sanitized bounded implementation/verification reconciliation; no complete task, requirement, contract freeze or code delivery accepted.",
   "sourceState": {
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -9,10 +9,10 @@
     "deliveredRevision": null,
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
-      "observedAt": "2026-09-30T14:08:40.065Z",
-      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
-      "sourceCount": 4846,
+      "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+      "observedAt": "2026-09-30T16:18:32.688Z",
+      "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
+      "sourceCount": 4851,
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
@@ -21,7 +21,7 @@
       "committedSourceMatchesTestedManifest": true
     },
     "publishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "latestPublishedSourceRevision": "07907f909838253eb011e4e27a510c4ba5b5a9df",
+    "latestPublishedSourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
     "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -1813,6 +1813,287 @@
         "Independent Bun CredentialManager could not obtain the custody key; encrypted receipt presence is observed, but its body was not decrypted or independently matched to the exact server receipt.",
         "Actual offline/conflict/revocation/workspace-switch UI, complete Notes/editor and DATA/SHARED frozen criteria, recipient/platform matrix and delivery remain pending."
       ]
+    },
+    {
+      "id": "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
+      "basis": "Independent production-function, actual subprocess/SQLite/filesystem review and frozen full package gates",
+      "summary": "Bounded terminal history recovery and deterministic real-spawn OMP lifecycle acceptance; original criteria retained.",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "packages/shared/src/automations/retry-scheduler.ts",
+          "sha256": "4f22474e1db49f26fe147ea4a1355be0ad81934ad8bf003fea24044ab8192f47"
+        },
+        {
+          "path": "packages/shared/src/automations/history-store.ts",
+          "sha256": "7e45f72a2a40e406ca241556e3c433a422499ff8159c11e008f7759d468871f9"
+        },
+        {
+          "path": "packages/shared/src/automations/history-store.test.ts",
+          "sha256": "cf9b3e40af8932c2ec0212784e642892971dbfce3c326a403890ef534b0de748"
+        },
+        {
+          "path": "packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts",
+          "sha256": "1172a241652fe5369fc8bb9754bc550210977bbf60650bdc3c8772c0893270c5"
+        },
+        {
+          "path": "packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts",
+          "sha256": "a443344c3874fb153dfc9a40a47d2824bbf6e446bbfa74363e122cd95e99d41c"
+        }
+      ],
+      "limits": [
+        "Single-process scheduler ownership and same-version recovery only; the history mutex is not a cross-process lock.",
+        "Old binaries do not recognize terminal_pending and can dispatch its action again. Complete recovery with this version before downgrade, or preserve/isolate the private queue for explicit migration; automatic old-reader rollback is unsafe.",
+        "SIGKILL tests establish process-loss behavior, not power-loss durability. Existing macOS atomic helpers do not fsync file/directory.",
+        "Owned loopback network effects use the existing executeRequest injection; production SSRF/provider acceptance and recipient evidence remain pending.",
+        "OMP first PID reaping is asserted; second is cleaned through agent.destroy/fixture cleanup without a separate reaping assertion.",
+        "Full schedule/DST/UI/provider/reminder/platform acceptance remains pending. REMINDERS-01 is not accepted or newly executed by this wave.",
+        "Full native creation/banner/private custody UI remains pending; prior runtime and package gates retain their own source binding."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "scheduler-terminal-independent-review.md",
+          "sha256": "d246e0e1e872fadb687dcc5c5fe1125cfb7d6714df112b29f28deac4437213fe",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-terminal-independent.focused.txt",
+          "sha256": "693a71305f9f8f4559f58e5244a11ffc1444983a66e5a767aac22fb7fcef741b",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-terminal.final4.txt",
+          "sha256": "41eccbf0728f0ee30cdcf016a71556b4dbbdff3a2e1c0551be22d149acf1ebac",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "omp-hardening-independent-bound-final.txt",
+          "sha256": "bbffca0871b5d5b165b86c159020b4ccc5365be3870fa7db92f20c9b4d1cbd37",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "omp-a2-fixture-review.md",
+          "sha256": "69ce8247ec1bd60733b8c3c680c1a914cda20e84cea954b8c32ce9dd261a7c58",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "omp-a2-final-shared.txt",
+          "sha256": "25297b4ecd4506752f7d66af97cb21608255cdaa1e794d2905df393ee0247fcd",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-server-final.txt",
+          "sha256": "230f4f27fa82e83ed3574c12101f6778994c3b259f40e8cebff467a0579a08a6",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-electron-final.txt",
+          "sha256": "86757bb7dfb3eea5ab7664ab24608600d27a844105433279c4dd407994929462",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "validate-final-report.md",
+          "sha256": "51098708da5d5c63b16a444e00e1e85e7eb7c8b1bb8006291f031742ab239a67",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "validate-final-result.json",
+          "sha256": "ba1b5af726f865312a49d2df2821628e7e3a0d32552aa70d2778076a48ab2ed6",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        }
+      ]
+    },
+    {
+      "id": "BUDGET-OWNER-SOURCE-STATUS-20260930",
+      "basis": "Independent actual process/SQLite/WebSocket review plus frozen complete package unions, exact local CI and standard Electron build",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "packages/shared/src/agent/core/agent-budget.ts",
+          "sha256": "b45ace4b13eb60b1c2be3ffa31e1ac0680beca604b7edded326080caa8eb7888",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts",
+          "sha256": "62ed16f6746e41ebc056a89b56cb0dc558ff2600b9d0422b4c8ab4e256991690",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/sources.ts",
+          "sha256": "d336ff7e6eb320abbaedfc46fdabc4a2818dbb152d325ad8e80afb07f8349a3b",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts",
+          "sha256": "b1f13979eed92e2ff9bb0a39b9f8a57e335ffad024390fb44559d0a4b1ea8a2b",
+          "change": "Reviewed production or behavior test"
+        },
+        {
+          "path": "packages/shared/src/automations/retry-scheduler.ts",
+          "sha256": "bd61d9601d0cfc5ba74804d00ed6a91f50a952633306b95214df93658682cbcf",
+          "change": "Comment-only correction to reflect existing terminal_pending flow"
+        }
+      ],
+      "limits": [
+        "Budget acceptance is native Electron/Node local-ledger ownership on this host and same version. Real paid-provider/background cancellation, actual receipt authenticity, Windows and other platforms remain pending.",
+        "Old binaries retain the former startup logic and must not run concurrently on this ledger. PID reuse or unknown liveness conservatively retains quota and can delay recovery; this is not a distributed cross-host lock.",
+        "Bun repeated-constructor-fault descriptor lifetime remains an explicit runtime resource limitation; full backend/platform resource acceptance is pending.",
+        "Source status uses a real primary-ts fixture. Native sidecar primary/fallback and a new delayed-sidecar revocation fixture were not exercised; existing post-await transport fence was inspected.",
+        "Source status config immutability was measured after warm workspace lookup, not cold migration. Sources UI, global-search routes and complete import/provider behavior remain pending.",
+        "Exact local CI uses a prepared private offline dependency cache; it does not establish fresh ephemeral network or remote required-runner acceptance.",
+        "Successful Electron build does not establish packaged upgrade, signing, actual native creation UI, provider readback, Windows or genuine Conation iOS acceptance."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "budget-owner-final-independent-review.md",
+          "sha256": "98e69a0d3f59112d0a15398bdb91995a15aa16468397b13b1e6fc01d17942a2b",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-final-independent-focused.txt",
+          "sha256": "3fc4d8667bf90dbc2f58285466972de152b58ebed8912ab32b6b06f2f2ad4470",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-final-independent-probe.txt",
+          "sha256": "eb7a157883feccb814830c1c7f45f53ec7db702d36bb1da61932186a1e120303",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-electron-long-control.txt",
+          "sha256": "b5411c3b0e9d458f218b0ef64ea0750ab41cb8f61d44d2fc386c9bd398584368",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-node22-long-control.txt",
+          "sha256": "c5928726254a256f7195bc4e66150eb1cc67ed35156ac89b0c0db963ebfd0715",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "budget-owner-bun-long-control.txt",
+          "sha256": "cc82d9933ab7f7fe164369541551733293c27312feeffb56c78829811ce6712d",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "source-status-independent-review.json",
+          "sha256": "0a6d42c0cf8f92172739d527d931b9a922864f52f818d0a8457f0ae7163dd393",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "source-status-independent-review.md",
+          "sha256": "71834e90b1a2870e32c1e6e19434af8fd82089a21bf309c0a7d971c180f637da",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.gates.json",
+          "sha256": "de24a8033e0f98e2bcda1d460a5ca1a11b9329ed5cab1da9ce11181c31cc1369",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.dist-manifest.json",
+          "sha256": "1695e5366bee50effe282001eaec50c26dbdeecc2c98eec1cd2faa23d46e2879",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.shared.txt",
+          "sha256": "27ac61f926032cc0424e80a1ceb202ccd133dcad2be84f80aab27e889074bc11",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.server.txt",
+          "sha256": "551985db8b83c4c436cae4bcf3920fcb292356e6d407c6936c8da98e0553f90e",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.electron-ui-core.txt",
+          "sha256": "2ead0f3150217075a21c74fdb9894848424114e52a005fec4da2deed03b6f3bc",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.validate.txt",
+          "sha256": "4969f94a9a357ab3158e2ec4a9661f9f1edd8f8384951d4de3dcaaf761ad3626",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        },
+        {
+          "id": "owner-status-wave.build.txt",
+          "sha256": "46a5bead44b26c1bc0f5af3310102aa2c767999679bdf5a2167fead8ae6a9834",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+        }
+      ]
+    },
+    {
+      "id": "LOCAL-MEETING-BLOB-MEDIA-20260930",
+      "basis": "Independent actual Electron media/CSP controls plus frozen affected package union and production renderer build",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "apps/electron/src/renderer/index.html",
+          "sha256": "2a29a37b1cdfd664c7a51af25c4e91b90670602d6d4916fda0f8a36aa580170b"
+        }
+      ],
+      "limits": [
+        "Actual hidden media decoding and renderer build are bounded component acceptance, not visible LocalMeetingDetail navigation or complete native UI.",
+        "No recording/capture/speaker/transcription/summary/source-navigation/retention/provider acceptance; MEETINGS-02 remains unexecuted by this wave.",
+        "Current TTS uses native/WebSpeech and is not accepted by this media CSP change.",
+        "Full package/CI gates bind to earlier owner/status source; new complete CI was not rerun for one HTML directive. New affected Electron/UI/core and renderer gates bind separately.",
+        "Packaging, signing, upgrade, Windows, genuine Conation iOS and remote required runners remain pending."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "review-narrow.md",
+          "sha256": "29fd6ff234dff5f2149857b3ab123230cc3ded0f1893d311692a523d5e071292",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "verification-narrow.json",
+          "sha256": "60bded63bed6856a4694e2078169409d8f0db461796cfe077e63abcdfe53a140",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "after-narrow.json",
+          "sha256": "8d2cc8be4f5fb75dbb116faa505229f2a4944c58194aa98745dff1388e44aeea",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "probe-narrow.cjs",
+          "sha256": "fb383ad5aebb48b212a06ad3ff35fe5dbad9893125a5679798f579be6114a7af",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "independent/review.md",
+          "sha256": "b384a1396493270668c388dae4ef2229523a486ee703452ce9601cd1e054c74c",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "independent/narrow.json",
+          "sha256": "8d2cc8be4f5fb75dbb116faa505229f2a4944c58194aa98745dff1388e44aeea",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "independent/cleanup-verification.json",
+          "sha256": "10688de2185b8864563ca3f5f02da65354afc98fbdf34869b1e4e290f4913280",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "integrated.gate-proof.json",
+          "sha256": "53f6bdf5a798cd896829a1af76a12ffd6ab3f8caadbfc38850816cabe63a58e2",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        },
+        {
+          "id": "integrated.renderer-output-manifest.json",
+          "sha256": "6c264bae5ad6ab467b08e3e1c825f6512c5239ec702ebd07c48fbfe81c4f1e13",
+          "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+        }
+      ]
     }
   ],
   "taskEvidence": [
@@ -2802,5 +3083,681 @@
       "Complete native creation/private receipt UI, all providers/platforms and eligible self-hosted CI remain pending"
     ],
     "fullTasksAccepted": 0
+  },
+  "schedulerTerminalFollowup": {
+    "schemaVersion": 1,
+    "id": "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
+    "observedAt": "2026-09-30T15:10:46.564Z",
+    "inputSourceRevision": "ea083e387e170552ee6102e29c2cf31adc8b6973",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+      "revision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+      "pullRequestHeadReadback": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+      "observedAt": "2026-09-30T15:13:57.841Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceCount": 4849,
+      "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Shared/server/Electron full unions and types bind to exact source. Exact validate:ci interrupted document dependencies and is incomplete. Actual native creation, providers, iOS/Windows and GitHub eligible-runner acceptance remain pending. Later docs-only commits have a different head."
+    },
+    "sourceBinding": {
+      "sourceCount": 4849,
+      "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca"
+    },
+    "sources": [
+      {
+        "path": "packages/shared/src/automations/retry-scheduler.ts",
+        "sha256": "4f22474e1db49f26fe147ea4a1355be0ad81934ad8bf003fea24044ab8192f47"
+      },
+      {
+        "path": "packages/shared/src/automations/history-store.ts",
+        "sha256": "7e45f72a2a40e406ca241556e3c433a422499ff8159c11e008f7759d468871f9"
+      },
+      {
+        "path": "packages/shared/src/automations/history-store.test.ts",
+        "sha256": "cf9b3e40af8932c2ec0212784e642892971dbfce3c326a403890ef534b0de748"
+      },
+      {
+        "path": "packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts",
+        "sha256": "1172a241652fe5369fc8bb9754bc550210977bbf60650bdc3c8772c0893270c5"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts",
+        "sha256": "a443344c3874fb153dfc9a40a47d2824bbf6e446bbfa74363e122cd95e99d41c"
+      }
+    ],
+    "behavior": {
+      "metadata": "In-flight recovery preserves runId, matcherRevision and actionIndex after a real process kill.",
+      "terminal": "Persist exact terminal_pending history intent before append; append exact key/payload idempotently under existing workspace mutex; remove queue intent only after history confirmation. Failed append retains intent. Same-version restart performs no network action for terminal_pending.",
+      "retention": "Both retention entry points preserve pending, corrupt or unreadable terminal queues; resume compaction after acknowledgement.",
+      "failureControls": "Real SIGKILL after terminal persistence and after history persistence before queue removal; directory obstruction; conflicting/corrupt history; exact duplicate append; dispose fences; fresh-child recovery.",
+      "omp": "Fixture records real parent ChildProcess PID and waits for post-SIGTERM-handler marker before returning spawn; artificial handshake deadline remains 80ms, deterministic child cold-start lag 120ms. Production timeout/cancel/retry/escalation unchanged."
+    },
+    "reviews": {
+      "scheduler": "82 pass / 0 fail / 240 assertions; independent real subprocess and filesystem probes",
+      "omp": "4 pass / 0 fail / 23 assertions; independent production spawn/helper review"
+    },
+    "gates": {
+      "shared": {
+        "pass": 4914,
+        "skip": 12,
+        "fail": 0,
+        "assertions": 21547,
+        "files": 471,
+        "seconds": 110.24
+      },
+      "serverCore": {
+        "pass": 1504,
+        "fail": 0,
+        "skip": 8
+      },
+      "electronUiCore": {
+        "pass": 4203,
+        "fail": 0,
+        "skip": 0
+      },
+      "typecheckAll": "PASS on frozen five-path candidate",
+      "i18n": "Parity/sorted/coverage PASS independently; 11 locales/7097 keys",
+      "validateCi": {
+        "status": "LOCAL_EXACT_VALIDATION_PASSED",
+        "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+        "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+        "sourceCount": 4849,
+        "observedAt": "2026-09-30T15:26:18.258Z",
+        "command": "bun run validate:ci",
+        "exitCode": 0,
+        "seconds": 109.427146958,
+        "typecheckAll": "PASS",
+        "selectedBun": {
+          "pass": 242,
+          "fail": 0,
+          "assertions": 687
+        },
+        "documents": {
+          "pass": 19,
+          "fail": 0
+        },
+        "i18n": {
+          "parity": "PASS",
+          "sorted": "PASS",
+          "coverage": "PASS"
+        },
+        "dependencyPreparation": "Task-private offline UV cache; exact official PyPI cryptography50.0.2 wheel reconstructed through bounded ranges and verified against release SHA256; public document cache artifacts cloned independently using APFS. Normal scripts and dependency declarations unchanged; no new pins/global packages/private inputs.",
+        "wheel": {
+          "version": "50.0.2",
+          "bytes": 3914904,
+          "sha256": "fa8f5efb344d6908a1ce62f4a24e2e5780f825d6f53f5f50ec5ffacac72936cb"
+        },
+        "retainedEvidence": [
+          {
+            "id": "document-dependency-preparation-20260930/report.md",
+            "sha256": "8945ac070a64c3a59a8c889d70019ea64dda4360c0150322b6e8780ab0cff001",
+            "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+          },
+          {
+            "id": "document-dependency-preparation-20260930/validate-ci.txt",
+            "sha256": "4c26989a8a8e6ea8a440d85f524b464742126c70bb9c517c2835a5f179255804",
+            "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+          },
+          {
+            "id": "document-dependency-preparation-20260930/validate-ci-result.json",
+            "sha256": "a89ea0c7baa278a13d2ab371168cacc2ce7e96e5debb0218170cc227463e203e",
+            "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+          },
+          {
+            "id": "document-dependency-preparation-20260930/dependency-provenance.json",
+            "sha256": "8a027b52d2b346d78bacc9d229fa3d14d24bb48d0f3de28c12c068bad3e0aec9",
+            "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+          },
+          {
+            "id": "document-dependency-preparation-20260930/official-wheel-ranged-receipt.json",
+            "sha256": "1e1453b3fd7fc41fe4a856bc1863660342aa3eba9d7747aa609b6547ec1728cc",
+            "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+          }
+        ],
+        "limits": [
+          "Prepared-host exact CI acceptance, not clean ephemeral runner connectivity or remote GitHub required-check completion.",
+          "Original interrupted17pass/2controlledSIGTERM history remains unchanged.",
+          "Full platform/provider/native UI/receipt custody and original task criteria remain pending."
+        ],
+        "fullOriginalTasksAccepted": 0
+      },
+      "validateCiInterruptedHistory": {
+        "exitCode": 1,
+        "selectedBunPass": 242,
+        "selectedBunFail": 0,
+        "documentPass": 17,
+        "documentInterrupted": 2,
+        "status": "INCOMPLETE; owned uv dependency download stalled then controlled SIGTERM. Not confirmed product defects. Later recovery recorded separately."
+      }
+    },
+    "history": [
+      "Initial metadata repair retained terminal history-loss gap.",
+      "First shared union retained two 5s fixture timeouts; isolated controls passed.",
+      "Second shared union retained OMP A2 child-log race; focused controls passed.",
+      "Overload facade TypeScript failure retained before correction.",
+      "Final corrected shared union green; no production timeout widening."
+    ],
+    "artifacts": [
+      {
+        "id": "scheduler-terminal-independent-review.md",
+        "sha256": "d246e0e1e872fadb687dcc5c5fe1125cfb7d6714df112b29f28deac4437213fe",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-terminal-independent.focused.txt",
+        "sha256": "693a71305f9f8f4559f58e5244a11ffc1444983a66e5a767aac22fb7fcef741b",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-terminal.final4.txt",
+        "sha256": "41eccbf0728f0ee30cdcf016a71556b4dbbdff3a2e1c0551be22d149acf1ebac",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "omp-hardening-independent-bound-final.txt",
+        "sha256": "bbffca0871b5d5b165b86c159020b4ccc5365be3870fa7db92f20c9b4d1cbd37",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "omp-a2-fixture-review.md",
+        "sha256": "69ce8247ec1bd60733b8c3c680c1a914cda20e84cea954b8c32ce9dd261a7c58",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "omp-a2-final-shared.txt",
+        "sha256": "25297b4ecd4506752f7d66af97cb21608255cdaa1e794d2905df393ee0247fcd",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-server-final.txt",
+        "sha256": "230f4f27fa82e83ed3574c12101f6778994c3b259f40e8cebff467a0579a08a6",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-electron-final.txt",
+        "sha256": "86757bb7dfb3eea5ab7664ab24608600d27a844105433279c4dd407994929462",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "validate-final-report.md",
+        "sha256": "51098708da5d5c63b16a444e00e1e85e7eb7c8b1bb8006291f031742ab239a67",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "validate-final-result.json",
+        "sha256": "ba1b5af726f865312a49d2df2821628e7e3a0d32552aa70d2778076a48ab2ed6",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      }
+    ],
+    "limits": [
+      "Single-process scheduler ownership and same-version recovery only; the history mutex is not a cross-process lock.",
+      "Old binaries do not recognize terminal_pending and can dispatch its action again. Complete recovery with this version before downgrade, or preserve/isolate the private queue for explicit migration; automatic old-reader rollback is unsafe.",
+      "SIGKILL tests establish process-loss behavior, not power-loss durability. Existing macOS atomic helpers do not fsync file/directory.",
+      "Owned loopback network effects use the existing executeRequest injection; production SSRF/provider acceptance and recipient evidence remain pending.",
+      "OMP first PID reaping is asserted; second is cleaned through agent.destroy/fixture cleanup without a separate reaping assertion.",
+      "Full schedule/DST/UI/provider/reminder/platform acceptance remains pending. REMINDERS-01 is not accepted or newly executed by this wave.",
+      "Full native creation/banner/private custody UI remains pending; prior runtime and package gates retain their own source binding."
+    ],
+    "fullTasksAccepted": 0
+  },
+  "localCiRecovery": {
+    "status": "LOCAL_EXACT_VALIDATION_PASSED",
+    "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+    "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+    "sourceCount": 4849,
+    "observedAt": "2026-09-30T15:26:18.258Z",
+    "command": "bun run validate:ci",
+    "exitCode": 0,
+    "seconds": 109.427146958,
+    "typecheckAll": "PASS",
+    "selectedBun": {
+      "pass": 242,
+      "fail": 0,
+      "assertions": 687
+    },
+    "documents": {
+      "pass": 19,
+      "fail": 0
+    },
+    "i18n": {
+      "parity": "PASS",
+      "sorted": "PASS",
+      "coverage": "PASS"
+    },
+    "dependencyPreparation": "Task-private offline UV cache; exact official PyPI cryptography50.0.2 wheel reconstructed through bounded ranges and verified against release SHA256; public document cache artifacts cloned independently using APFS. Normal scripts and dependency declarations unchanged; no new pins/global packages/private inputs.",
+    "wheel": {
+      "version": "50.0.2",
+      "bytes": 3914904,
+      "sha256": "fa8f5efb344d6908a1ce62f4a24e2e5780f825d6f53f5f50ec5ffacac72936cb"
+    },
+    "retainedEvidence": [
+      {
+        "id": "document-dependency-preparation-20260930/report.md",
+        "sha256": "8945ac070a64c3a59a8c889d70019ea64dda4360c0150322b6e8780ab0cff001",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/validate-ci.txt",
+        "sha256": "4c26989a8a8e6ea8a440d85f524b464742126c70bb9c517c2835a5f179255804",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/validate-ci-result.json",
+        "sha256": "a89ea0c7baa278a13d2ab371168cacc2ce7e96e5debb0218170cc227463e203e",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/dependency-provenance.json",
+        "sha256": "8a027b52d2b346d78bacc9d229fa3d14d24bb48d0f3de28c12c068bad3e0aec9",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/official-wheel-ranged-receipt.json",
+        "sha256": "1e1453b3fd7fc41fe4a856bc1863660342aa3eba9d7747aa609b6547ec1728cc",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      }
+    ],
+    "limits": [
+      "Prepared-host exact CI acceptance, not clean ephemeral runner connectivity or remote GitHub required-check completion.",
+      "Original interrupted17pass/2controlledSIGTERM history remains unchanged.",
+      "Full platform/provider/native UI/receipt custody and original task criteria remain pending."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "ownerStatusFollowup": {
+    "schemaVersion": 1,
+    "id": "BUDGET-OWNER-SOURCE-STATUS-20260930",
+    "observedAt": "2026-09-30T16:02:34.173Z",
+    "inputSourceRevision": "7ae2828afd806d82a2537accfe1bd47b3d4cb4c3",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "revision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "pullRequestHeadReadback": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "observedAt": "2026-09-30T16:05:17.838Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceCount": 4851,
+      "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
+    },
+    "sourceBinding": {
+      "sourceCount": 4851,
+      "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e"
+    },
+    "sources": [
+      {
+        "path": "packages/shared/src/agent/core/agent-budget.ts",
+        "sha256": "b45ace4b13eb60b1c2be3ffa31e1ac0680beca604b7edded326080caa8eb7888",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts",
+        "sha256": "62ed16f6746e41ebc056a89b56cb0dc558ff2600b9d0422b4c8ab4e256991690",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/sources.ts",
+        "sha256": "d336ff7e6eb320abbaedfc46fdabc4a2818dbb152d325ad8e80afb07f8349a3b",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts",
+        "sha256": "b1f13979eed92e2ff9bb0a39b9f8a57e335ffad024390fb44559d0a4b1ea8a2b",
+        "change": "Reviewed production or behavior test"
+      },
+      {
+        "path": "packages/shared/src/automations/retry-scheduler.ts",
+        "sha256": "bd61d9601d0cfc5ba74804d00ed6a91f50a952633306b95214df93658682cbcf",
+        "change": "Comment-only correction to reflect existing terminal_pending flow"
+      }
+    ],
+    "ownership": {
+      "budget": "Runtime owner; isolated worktree based on ea083e387e170552ee6102e29c2cf31adc8b6973",
+      "sourceStatus": "Source handler owner; isolated worktree based on 8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+      "review": "Independent actual subprocess, SQLite and authenticated WebSocket probes",
+      "integration": "Root serial integration, five whole-repository gates and exact publication readback"
+    },
+    "dependencies": "Original DATA/SHARED contract acceptance, provider receipt validation and full platform gates remain required. This additive evidence does not freeze shared contracts or satisfy original predecessors.",
+    "behavior": {
+      "budget": "Persist PID and per-instance random owner token; retain live/unknown owner reservations during startup. Ordinary complete, unresolved, release, settle and reconcile cannot mutate a foreign active reservation. Same-owner transitions remain usable; trusted exact unresolved receipt reconciliation remains idempotent. Explicit successful close persists own reservations as unresolved; failed close preserves owner state for retry. SQLite busy_timeout=5000 and BEGIN IMMEDIATE retain atomic quota decisions. Constructor closes a newly opened database after post-open initialization failure and rethrows the original error.",
+      "sourceStatus": "Register the existing sources:status channel. Resolve workspace and require its ID to match server-owned connection workspace context; call the existing index-status facade with localElectron access. Return indexed/status metadata through the existing transport response fence without changing grants, nativeAction enrollment or source data."
+    },
+    "reviews": {
+      "budget": {
+        "pass": 14,
+        "fail": 0,
+        "assertions": 92,
+        "files": 3,
+        "controls": "Live second process, actual SIGKILL and fresh-process recovery, same-PID separate module, legacy rows, five foreign lifecycle transitions, exact receipt replay/cost conflict, two-process quota contention, close obstruction and constructor recovery fault."
+      },
+      "sourceStatus": {
+        "pass": 1,
+        "fail": 0,
+        "outerAssertions": 2,
+        "strictChildChecks": 9,
+        "controls": "Actual authenticated WebSocket, indexed primary-ts source, warmed-config immutability, foreign/missing/unbound/stale workspace denials and native enrolled/revoked authority denials."
+      },
+      "resourceLifetimes": {
+        "officialElectron": "Electron 39.2.7 / Node 22.21.1: 20 constructor faults retain at most one additional database FD while fixture seed connection is open; zero after seed close.",
+        "nativeNode": "Node 22.23.3: same bounded 20-fault result and zero after seed close.",
+        "bun": "Bun 1.4.2 node:sqlite shim: 20 faults temporarily retain 20 extra descriptors while seed is open; release after seed closure/final fixture GC. Immediate-flat Bun FD acceptance is NOT established; no production GC or undocumented close API added.",
+        "evidenceInterpretation": "Native controls supersede the earlier descriptor-only interpretation of a persistent native connection leak. Constructor logical cleanup is required; runtime resource lifetime is measured separately."
+      }
+    },
+    "gates": {
+      "shared": {
+        "pass": 4920,
+        "skip": 12,
+        "fail": 0,
+        "assertions": 21599,
+        "files": 472
+      },
+      "serverCore": {
+        "pass": 1505,
+        "skip": 8,
+        "fail": 0,
+        "assertions": 6135,
+        "files": 237
+      },
+      "electronUiCore": {
+        "pass": 4203,
+        "fail": 0,
+        "assertions": 20022,
+        "files": 609
+      },
+      "validateCi": {
+        "command": "bun run validate:ci",
+        "exitCode": 0,
+        "seconds": 88.819524375,
+        "typechecks": "allpassed",
+        "selectedBunPass": 242,
+        "selectedBunAssertions": 687,
+        "documentsPass": 19,
+        "i18n": "parity/sorted/coveragepassed",
+        "environment": "Task-private verified offline UV cache; standard repository scripts and dependency declarations unchanged."
+      },
+      "electronBuild": {
+        "command": "bun run electron:build",
+        "exitCode": 0,
+        "seconds": 47.244655167,
+        "scope": "Standard root main/preload/renderer/resources/subprocess-workers/assets build",
+        "manifest": "owner-status-wave.dist-manifest.json",
+        "manifestSha256": "1695e5366bee50effe282001eaec50c26dbdeecc2c98eec1cd2faa23d46e2879",
+        "fileCount": 1612,
+        "totalBytes": 201541229,
+        "resourceCount": 715,
+        "versions": {
+          "electron": "39.2.7",
+          "electron-builder": "26.4.0",
+          "vite": "6.4.1",
+          "typescript": "5.9.3",
+          "esbuild": "0.25.12"
+        },
+        "lock": {
+          "path": "bun.lock",
+          "bytes": 605640,
+          "sha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+        },
+        "limitation": "Actual output byte inventory may include retained files from previous builds. Build log identifies rebuilt stages. Not clean release packaging, signing, SBOM or a byte-budget acceptance claim."
+      }
+    },
+    "artifacts": [
+      {
+        "id": "budget-owner-final-independent-review.md",
+        "sha256": "98e69a0d3f59112d0a15398bdb91995a15aa16468397b13b1e6fc01d17942a2b",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-final-independent-focused.txt",
+        "sha256": "3fc4d8667bf90dbc2f58285466972de152b58ebed8912ab32b6b06f2f2ad4470",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-final-independent-probe.txt",
+        "sha256": "eb7a157883feccb814830c1c7f45f53ec7db702d36bb1da61932186a1e120303",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-electron-long-control.txt",
+        "sha256": "b5411c3b0e9d458f218b0ef64ea0750ab41cb8f61d44d2fc386c9bd398584368",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-node22-long-control.txt",
+        "sha256": "c5928726254a256f7195bc4e66150eb1cc67ed35156ac89b0c0db963ebfd0715",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "budget-owner-bun-long-control.txt",
+        "sha256": "cc82d9933ab7f7fe164369541551733293c27312feeffb56c78829811ce6712d",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "source-status-independent-review.json",
+        "sha256": "0a6d42c0cf8f92172739d527d931b9a922864f52f818d0a8457f0ae7163dd393",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "source-status-independent-review.md",
+        "sha256": "71834e90b1a2870e32c1e6e19434af8fd82089a21bf309c0a7d971c180f637da",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.gates.json",
+        "sha256": "de24a8033e0f98e2bcda1d460a5ca1a11b9329ed5cab1da9ce11181c31cc1369",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.dist-manifest.json",
+        "sha256": "1695e5366bee50effe282001eaec50c26dbdeecc2c98eec1cd2faa23d46e2879",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.shared.txt",
+        "sha256": "27ac61f926032cc0424e80a1ceb202ccd133dcad2be84f80aab27e889074bc11",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.server.txt",
+        "sha256": "551985db8b83c4c436cae4bcf3920fcb292356e6d407c6936c8da98e0553f90e",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.electron-ui-core.txt",
+        "sha256": "2ead0f3150217075a21c74fdb9894848424114e52a005fec4da2deed03b6f3bc",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.validate.txt",
+        "sha256": "4969f94a9a357ab3158e2ec4a9661f9f1edd8f8384951d4de3dcaaf761ad3626",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      },
+      {
+        "id": "owner-status-wave.build.txt",
+        "sha256": "46a5bead44b26c1bc0f5af3310102aa2c767999679bdf5a2167fead8ae6a9834",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized evidence summary only in public packet"
+      }
+    ],
+    "limits": [
+      "Budget acceptance is native Electron/Node local-ledger ownership on this host and same version. Real paid-provider/background cancellation, actual receipt authenticity, Windows and other platforms remain pending.",
+      "Old binaries retain the former startup logic and must not run concurrently on this ledger. PID reuse or unknown liveness conservatively retains quota and can delay recovery; this is not a distributed cross-host lock.",
+      "Bun repeated-constructor-fault descriptor lifetime remains an explicit runtime resource limitation; full backend/platform resource acceptance is pending.",
+      "Source status uses a real primary-ts fixture. Native sidecar primary/fallback and a new delayed-sidecar revocation fixture were not exercised; existing post-await transport fence was inspected.",
+      "Source status config immutability was measured after warm workspace lookup, not cold migration. Sources UI, global-search routes and complete import/provider behavior remain pending.",
+      "Exact local CI uses a prepared private offline dependency cache; it does not establish fresh ephemeral network or remote required-runner acceptance.",
+      "Successful Electron build does not establish packaged upgrade, signing, actual native creation UI, provider readback, Windows or genuine Conation iOS acceptance."
+    ],
+    "fullOriginalTasksAccepted": 0
+  },
+  "mediaCspFollowup": {
+    "schemaVersion": 1,
+    "id": "LOCAL-MEETING-BLOB-MEDIA-20260930",
+    "observedAt": "2026-09-30T16:17:33.654Z",
+    "inputSourceRevision": "f3987fd7ffcb7f3d582f09d9a8d8a04669877d13",
+    "publication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+      "revision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+      "pullRequestHeadReadback": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+      "observedAt": "2026-09-30T16:18:32.688Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceCount": 4851,
+      "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Affected Electron/UI/core union, production renderer build and actual hidden media runtime bind to these source blobs. Earlier complete Shared/server/exact local CI/main/preload proof remains at121ebea with only renderer index changed, and is not a new complete CI run. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
+    },
+    "sourceBinding": {
+      "sourceCount": 4851,
+      "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc"
+    },
+    "sources": [
+      {
+        "path": "apps/electron/src/renderer/index.html",
+        "sha256": "2a29a37b1cdfd664c7a51af25c4e91b90670602d6d4916fda0f8a36aa580170b"
+      }
+    ],
+    "ownerAndDependencies": "Isolated producer; independent actual Electron/CSP reviewer; root serial integration/publication. Existing LocalMeetingDetail audio bytes, Notes/native authority, capture consent and provider contracts remain unchanged. No old voice-overlay transplant.",
+    "behavior": "LocalMeetingDetail creates and revokes a Blob URL from authorized local recording bytes, assigning it to audio. Existing CSP default-src self blocked this actual consumer. Add only media-src self/blob. All other directives remain byte-identical; data and unallowed external-origin media remain denied. This does not change autoplay, grants, capture, provider consent or current native/WebSpeech TTS.",
+    "actualRuntime": {
+      "electron": "39.2.7",
+      "node": "22.21.1",
+      "chrome": "142",
+      "execution": "Task-owned hidden sandboxed muted window; silent synthetic WAV, load-only; no playback/speaker/foreground/provider/user-profile operations.",
+      "before": "Self WAV canplay; Blob/data denied with enforced media-src violation; external origin denied before network.",
+      "acceptedNarrowPolicy": "Self and Blob WAV canplay, readyState4, duration0.2; data and external origin denied; external server request count0.",
+      "independentReview": "Fresh baseline/candidate/narrow actual Electron controls, 26 broad before/after assertions plus narrow-policy and cleanup checks. Review rejected unnecessary data permission.",
+      "producerFinalVerification": "18 exact narrow-policy receipt assertions pass; explicit cleanup before success/error/timeout exit."
+    },
+    "gates": {
+      "electronUiCore": {
+        "exit": 0,
+        "pass": 4203,
+        "fail": 0,
+        "assertions": 20022,
+        "files": 609,
+        "seconds": 24.19,
+        "logSHA256": "5e01cf438a99534138e4d767b4bb3d4cb512b12eade57782a59ee09e4a87c9a0"
+      },
+      "rendererBuild": {
+        "exit": 0,
+        "command": "bun run electron:build:renderer",
+        "privateLogSHA256": "fdbf1805493a5eb047d43d355fb608d3009754a83c46066efcf3c240eae53bcd",
+        "builtIndex": {
+          "bytes": 2916,
+          "sha256": "be88a9d5f9d199e9dbc0b3061cdfeb6a73e7b1dcfda82324ec20a07909c0e417",
+          "exactSourceCSP": true
+        },
+        "outputs": {
+          "count": 892,
+          "bytes": 83697416,
+          "manifestSHA256": "6c264bae5ad6ab467b08e3e1c825f6512c5239ec702ebd07c48fbfe81c4f1e13"
+        },
+        "limitation": "Actual renderer output inventory; retained outputs may exist. Not release package/SBOM/signing/byte-budget acceptance."
+      },
+      "unchangedEarlierSourceProof": {
+        "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+        "changedPathsSinceWholeRepositoryGates": [
+          "apps/electron/src/renderer/index.html"
+        ],
+        "scope": "All other 4850 selected source blobs unchanged; Shared/server/exact local CI/main/preload whole gates retain this earlier revision, not relabeled as a new full CI run."
+      }
+    },
+    "artifacts": [
+      {
+        "id": "review-narrow.md",
+        "sha256": "29fd6ff234dff5f2149857b3ab123230cc3ded0f1893d311692a523d5e071292",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "verification-narrow.json",
+        "sha256": "60bded63bed6856a4694e2078169409d8f0db461796cfe077e63abcdfe53a140",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "after-narrow.json",
+        "sha256": "8d2cc8be4f5fb75dbb116faa505229f2a4944c58194aa98745dff1388e44aeea",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "probe-narrow.cjs",
+        "sha256": "fb383ad5aebb48b212a06ad3ff35fe5dbad9893125a5679798f579be6114a7af",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "independent/review.md",
+        "sha256": "b384a1396493270668c388dae4ef2229523a486ee703452ce9601cd1e054c74c",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "independent/narrow.json",
+        "sha256": "8d2cc8be4f5fb75dbb116faa505229f2a4944c58194aa98745dff1388e44aeea",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "independent/cleanup-verification.json",
+        "sha256": "10688de2185b8864563ca3f5f02da65354afc98fbdf34869b1e4e290f4913280",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "integrated.gate-proof.json",
+        "sha256": "53f6bdf5a798cd896829a1af76a12ffd6ab3f8caadbfc38850816cabe63a58e2",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "integrated.renderer-output-manifest.json",
+        "sha256": "6c264bae5ad6ab467b08e3e1c825f6512c5239ec702ebd07c48fbfe81c4f1e13",
+        "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+      }
+    ],
+    "limits": [
+      "Actual hidden media decoding and renderer build are bounded component acceptance, not visible LocalMeetingDetail navigation or complete native UI.",
+      "No recording/capture/speaker/transcription/summary/source-navigation/retention/provider acceptance; MEETINGS-02 remains unexecuted by this wave.",
+      "Current TTS uses native/WebSpeech and is not accepted by this media CSP change.",
+      "Full package/CI gates bind to earlier owner/status source; new complete CI was not rerun for one HTML directive. New affected Electron/UI/core and renderer gates bind separately.",
+      "Packaging, signing, upgrade, Windows, genuine Conation iOS and remote required runners remain pending."
+    ],
+    "fullOriginalTasksAccepted": 0
   }
 }

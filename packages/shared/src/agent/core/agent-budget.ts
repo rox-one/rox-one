@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { chmodSync, mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { DatabaseSync } from '../../utils/sqlite-runtime.ts'
@@ -25,42 +26,54 @@ export interface AgentBudgetReservation {
 export class AgentBudgetLedger {
   private readonly db: DatabaseSync
   private closed = false
+  private readonly ownerToken = randomUUID()
 
   constructor(databasePath: string) {
     mkdirSync(dirname(databasePath), { recursive: true, mode: 0o700 })
     this.db = new DatabaseSync(databasePath)
-    chmodSync(databasePath, 0o600)
-    this.db.exec(`
-      PRAGMA foreign_keys = ON;
-      PRAGMA journal_mode = WAL;
-      PRAGMA synchronous = FULL;
-      CREATE TABLE IF NOT EXISTS agent_budget_runs (
-        workspace_id TEXT NOT NULL,
-        run_id TEXT NOT NULL,
-        period_start INTEGER NOT NULL,
-        reserved_usd REAL NOT NULL CHECK(reserved_usd >= 0),
-        state TEXT NOT NULL CHECK(state IN ('reserved','unresolved','settled','released')),
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        PRIMARY KEY(workspace_id, run_id)
-      );
-      CREATE TABLE IF NOT EXISTS agent_budget_usage (
-        workspace_id TEXT NOT NULL,
-        run_id TEXT NOT NULL,
-        usage_id TEXT NOT NULL,
-        cost_usd REAL NOT NULL CHECK(cost_usd >= 0),
-        created_at INTEGER NOT NULL,
-        PRIMARY KEY(workspace_id, run_id, usage_id),
-        FOREIGN KEY(workspace_id, run_id) REFERENCES agent_budget_runs(workspace_id, run_id)
-      );
-      CREATE INDEX IF NOT EXISTS agent_budget_usage_period
-        ON agent_budget_runs(workspace_id, period_start, state);
-    `)
-    this.db.prepare(`
-      UPDATE agent_budget_runs
-      SET state='unresolved', updated_at=?
-      WHERE state='reserved'
-    `).run(Date.now())
+    try {
+      chmodSync(databasePath, 0o600)
+      this.db.exec(`
+        PRAGMA busy_timeout = 5000;
+        PRAGMA foreign_keys = ON;
+        PRAGMA journal_mode = WAL;
+        PRAGMA synchronous = FULL;
+        CREATE TABLE IF NOT EXISTS agent_budget_runs (
+          workspace_id TEXT NOT NULL,
+          run_id TEXT NOT NULL,
+          period_start INTEGER NOT NULL,
+          reserved_usd REAL NOT NULL CHECK(reserved_usd >= 0),
+          state TEXT NOT NULL CHECK(state IN ('reserved','unresolved','settled','released')),
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          PRIMARY KEY(workspace_id, run_id)
+        );
+        CREATE TABLE IF NOT EXISTS agent_budget_usage (
+          workspace_id TEXT NOT NULL,
+          run_id TEXT NOT NULL,
+          usage_id TEXT NOT NULL,
+          cost_usd REAL NOT NULL CHECK(cost_usd >= 0),
+          created_at INTEGER NOT NULL,
+          PRIMARY KEY(workspace_id, run_id, usage_id),
+          FOREIGN KEY(workspace_id, run_id) REFERENCES agent_budget_runs(workspace_id, run_id)
+        );
+        CREATE INDEX IF NOT EXISTS agent_budget_usage_period
+          ON agent_budget_runs(workspace_id, period_start, state);
+      `)
+      this.transaction(() => {
+        const columns = this.db.prepare('PRAGMA table_info(agent_budget_runs)').all() as { name: string }[]
+        if (!columns.some(column => column.name === 'owner_pid')) this.db.exec('ALTER TABLE agent_budget_runs ADD COLUMN owner_pid INTEGER')
+        if (!columns.some(column => column.name === 'owner_token')) this.db.exec('ALTER TABLE agent_budget_runs ADD COLUMN owner_token TEXT')
+        const reserved = this.db.prepare("SELECT workspace_id, run_id, owner_pid, owner_token FROM agent_budget_runs WHERE state='reserved'").all() as { workspace_id: string; run_id: string; owner_pid: number | null; owner_token: string | null }[]
+        for (const row of reserved) {
+          if (this.ownerMayBeAlive(row.owner_pid, row.owner_token)) continue
+          this.db.prepare("UPDATE agent_budget_runs SET state='unresolved', updated_at=? WHERE workspace_id=? AND run_id=? AND state='reserved'").run(Date.now(), row.workspace_id, row.run_id)
+        }
+      })
+    } catch (error) {
+      try { this.db.close() } catch {}
+      throw error
+    }
   }
 
 
@@ -78,15 +91,15 @@ export class AgentBudgetLedger {
         if (existing.periodStart !== periodStart || existing.reservedUsd !== reserveUsd) {
           throw new Error('run id was already reserved with different budget terms')
         }
-        if (existing.state === 'reserved') return existing
+        if (existing.state === 'reserved' && this.ownsRun(workspaceId, runId)) return existing
         return null
       }
       const snapshot = this.readSnapshot(workspaceId, limitUsd, now)
       if (snapshot.remainingUsd === null || reserveUsd > snapshot.remainingUsd) return null
       this.db.prepare(`
-        INSERT INTO agent_budget_runs(workspace_id, run_id, period_start, reserved_usd, state, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 'reserved', ?, ?)
-      `).run(workspaceId, runId, periodStart, reserveUsd, now, now)
+        INSERT INTO agent_budget_runs(workspace_id, run_id, period_start, reserved_usd, state, created_at, updated_at, owner_pid, owner_token)
+        VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?)
+      `).run(workspaceId, runId, periodStart, reserveUsd, now, now, process.pid, this.ownerToken)
       return { workspaceId, runId, periodStart, reservedUsd: reserveUsd, state: 'reserved' }
     })
   }
@@ -101,6 +114,7 @@ export class AgentBudgetLedger {
         if (prior.cost_usd !== costUsd) throw new Error('usage id was replayed with different cost')
         return
       }
+      if (run?.state === 'reserved' && !this.ownsRun(workspaceId, runId)) throw new Error('budget reservation belongs to another owner')
       if (!run || (run.state !== 'reserved' && run.state !== 'unresolved')) throw new Error('run has no settleable reservation')
       this.db.prepare(`INSERT INTO agent_budget_usage(workspace_id, run_id, usage_id, cost_usd, created_at) VALUES (?, ?, ?, ?, ?)`).run(workspaceId, runId, usageId, costUsd, now)
     })
@@ -120,6 +134,7 @@ export class AgentBudgetLedger {
     this.transaction(() => {
       const run = this.getRun(workspaceId, runId)
       if (!run) throw new Error('run is not awaiting reconciliation')
+      if (run.state === 'reserved' && !this.ownsRun(workspaceId, runId)) throw new Error('budget reservation belongs to another owner')
       const prior = this.db.prepare(`SELECT cost_usd FROM agent_budget_usage WHERE workspace_id=? AND run_id=? AND usage_id=?`).get(workspaceId, runId, usageId) as { cost_usd: number } | undefined
       if (prior) {
         if (prior.cost_usd !== totalCostUsd) throw new Error('reconciliation id was replayed with different cost')
@@ -145,6 +160,9 @@ export class AgentBudgetLedger {
 
   close(): void {
     if (this.closed) return
+    this.transaction(() => {
+      this.db.prepare("UPDATE agent_budget_runs SET state='unresolved',updated_at=? WHERE state='reserved' AND owner_pid=? AND owner_token=?").run(Date.now(), process.pid, this.ownerToken)
+    })
     this.db.close()
     this.closed = true
   }
@@ -191,10 +209,23 @@ export class AgentBudgetLedger {
     this.transaction(() => {
       const run = this.getRun(workspaceId, runId)
       if (!run) throw new Error('budget reservation not found')
+      if (!this.ownsRun(workspaceId, runId)) throw new Error('budget reservation belongs to another owner')
       if (run.state === state) return
       if (!from.includes(run.state)) throw new Error(`cannot transition budget run from ${run.state} to ${state}`)
       this.db.prepare('UPDATE agent_budget_runs SET state=?, updated_at=? WHERE workspace_id=? AND run_id=?').run(state, now, workspaceId, runId)
     })
+  }
+
+  private ownsRun(workspaceId: string, runId: string): boolean {
+    const row = this.db.prepare('SELECT owner_pid, owner_token FROM agent_budget_runs WHERE workspace_id=? AND run_id=?').get(workspaceId, runId) as { owner_pid: number | null; owner_token: string | null } | undefined
+    return row?.owner_pid === process.pid && row.owner_token === this.ownerToken
+  }
+
+  /** PID reuse/permission ambiguity preserves quota; liveness never authorizes release. */
+  private ownerMayBeAlive(pid: number | null, token: string | null): boolean {
+    if (!Number.isSafeInteger(pid) || pid! <= 0 || !token) return false
+    try { process.kill(pid!, 0); return true }
+    catch (error) { return (error as NodeJS.ErrnoException).code !== 'ESRCH' }
   }
 
   private assertLimit(limitUsd: number | null): void {

@@ -287,3 +287,24 @@ This repair implements no Base persistence, row/schema operations, transport aut
 ## Delivery
 
 Prepare a separate draft PR stacked on the current verified #1314 branch `feat/unified-tables-baserow-20260930`, without modifying that branch. Root reviews the exact code/receipt before publication. Full downstream validation awaits accepted main CI/core repairs; native and complete UTB product acceptance remain separately owned.
+
+
+## Published September owner update (bac08230), retained scope evidence
+
+## Budget ownership and source index status (2026-09-30)
+
+A new ledger opener must not declare a living reservation owner dead. Persist per-instance ownership with each reservation; process liveness is only a conservative recovery signal, never release or dispatch authority. Ordinary lifecycle changes require the reservation owner. Foreign active usage/reconciliation must fail; exact trusted reconciliation for unresolved work retains its separate boundary. Missing/dead/explicitly closed owners preserve unresolved quota. Unknown live PID, PID reuse and module/worker ambiguity must retain quota rather than infer permission. SQLite contention is bounded, and initialization errors close the opened database before preserving the original error. Same-host/same-version behavior, real provider receipt fidelity and platform/runtime resource limits remain separately measured.
+
+Restore the existing source index STATUS route only for a current local Electron binding and its server-owned workspace. Project only the existing facade's indexed count and primary engine. Native, unbound, stale and foreign-workspace callers remain denied; no new native grant or channel classification is implied. Warmed config preservation and actual TS index readback are separate from cold migration, native-sidecar and whole Sources UI acceptance.
+
+## Scheduler terminal recovery and OMP evidence (2026-09-30)
+
+After a webhook effect, persist an exact terminal history intent in the durable queue before history append. Append by exact entry/attempt key and payload, rejecting conflicts or corruption; remove the intent only after acknowledgement. Same-version restart must recover history without executing the action again. Preserve run, matcher and action identity and block retention while terminal intent, corruption or unreadable queue state could remove recovery evidence.
+
+This contract covers a single scheduler owner and process loss. Existing atomic helpers do not establish power-loss durability. Older binaries cannot read terminal_pending safely: finish recovery using the current version before rollback, or preserve/isolate the private queue for explicit migration. No automatic downgrade is accepted.
+
+OMP acceptance must count actual parent spawn results and establish child readiness before testing the 80ms artificial handshake deadline. Production timeout/cancel/retry/escalation remain unchanged. Full provider, schedule/DST, reminder, UI and platform criteria retain their original scope.
+
+## Local meeting Blob media policy (2026-09-30)
+
+Permit the existing local recording Blob audio consumer through an explicit media-src self/blob directive. Keep all other CSP directives and recording/provider/consent behavior unchanged. Data and disallowed external-origin media stay denied before network. Hidden load-only media controls and renderer build do not accept visible meeting UI, capture or provider delivery.
