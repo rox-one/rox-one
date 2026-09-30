@@ -136,4 +136,3 @@ Correlate workspace/entity/command/receipt/event/policy revision без secret/b
 L, identity/membership+read hub then write/audit slices. Риски: local identity masquerading remote, cross-org data, privilege lockout, analytics denominators.
 
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
-

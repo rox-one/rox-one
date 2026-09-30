@@ -135,4 +135,3 @@ Correlate workspace/entity/command/receipt/event/policy revision без secret/b
 XL, schema/DSL validation→catalogue/formUI→versioned route designer/simulator. Риски: policy complexity, self-approval, stale recipients, inaccessible canvas.
 
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
-

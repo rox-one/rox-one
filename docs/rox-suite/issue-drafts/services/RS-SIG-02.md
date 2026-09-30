@@ -136,4 +136,3 @@ Correlate workspace/entity/command/receipt/event/policy revision без secret/b
 XL, identity/immutableintent→providercommandreconcile→evidenceverification+UI. Риски: intentspoofing, unknownexternaleffect, invalidcryptoassertions, longtermverifiability; chosenprovidercapability gate required.
 
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
-

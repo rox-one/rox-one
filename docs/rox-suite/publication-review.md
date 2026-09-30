@@ -6,7 +6,7 @@
 
 Source baseline: repository `rox-one/rox-one`, commit `249b3b44220bcfbd7d467de9cfc18f76e1c37807`.
 
-Checked publisher: `scripts/rox-suite/issues.mjs`, final SHA-256 `2a709985a9b725a1c09706dc549a3ca6244335f21b2fd0b1f2972147d51f9c2c`. Это hash проверенных локальных байтов, а не утверждение, что script уже содержится в source baseline. Первоначальный PASS на `2d43fd29549d9965620a31a695359f1ee25e8872a26b5e457593ebe4b3bf3e62` сохранён как historical attempt; после privacy cleanup все 11 checks повторены на final bytes и прошли.
+Checked publisher: `scripts/rox-suite/issues.mjs`, final SHA-256 `91d80c5114cf9cfada5e06fb34269882d833b3ecb87085ff8235b9128aa60851`. Это hash проверенных локальных байтов, а не утверждение, что script уже содержится в source baseline. Исторические attempts сохранены: первоначальные 11 checks PASS на `2d43fd29549d9965620a31a695359f1ee25e8872a26b5e457593ebe4b3bf3e62`; после privacy cleanup те же 11 PASS на `2a709985a9b725a1c09706dc549a3ca6244335f21b2fd0b1f2972147d51f9c2c`. После постоянного draft-hash fix — 12 checks PASS на final bytes.
 
 Evaluator запускал те же байты через Node VM. Filesystem mutations и `gh` были заменены in-memory adapters; `git show SHA:path` читал настоящий repository. **Ноль GitHub network calls и ноль изменений shared artifacts со стороны evaluator.** Идентификаторы `#9000…` использовались только в синтетических remote fixtures и не являются опубликованными issue numbers.
 
@@ -42,8 +42,11 @@ Evaluator запускал те же байты через Node VM. Filesystem m
 | Unknown prerequisite | Отклонён до output writes — PASS |
 | Private screenshot marker | Отклонён до GitHub calls; error не повторяет marker value — PASS |
 | RS ID в numeric `relatedIssues` | Отклонён до output writes — PASS |
+| Normalized draft / creation history | После exact readback текущий draft hash обновлён, initial creation hash сохранён; повторный run не перезаписывает history; failed readback не обновляет hashes — PASS |
 
-Последний isolated evaluator run после privacy cleanup: **11 сценариев PASS** на final SHA-256 выше. Строки таблицы hard/soft links и full readback входят в один combined сценарий. Six seeded failures — readback mismatch, duplicate ID, foreign repository, unknown dependency, private marker, invalid numeric related issue — дают ожидаемый отказ. Baseline collect/publish/recovery/readback зелёные. Ошибки инфраструктуры не учитывались как caught mutations.
+Последний isolated evaluator run: **12 сценариев PASS** на final SHA-256 выше. Строки таблицы hard/soft links и full readback входят в один combined сценарий. Six seeded failures — readback mismatch, duplicate ID, foreign repository, unknown dependency, private marker, invalid numeric related issue — дают ожидаемый отказ. Дополнительно два draft-hash mutants — удаление refresh и unconditional overwrite initial hash — отклоняются точными assertion нового сценария при green baseline. Ошибки инфраструктуры не учитывались как caught mutations.
+
+Reproducible command: `node --test scripts/rox-suite/issues.test.mjs`. Test file SHA-256 `ee2ead687a3c2d0ad5cf7ca4f29753618435dca8e4cdcfc499cb784d23932797`. Suite выполняет production publisher bytes в Node VM, кеширует настоящие `git show` reads и полностью изолирует `gh` и filesystem outputs; существующий publication receipt не изменяется.
 
 ## Source-backed safety seams
 
@@ -56,7 +59,7 @@ Evaluator запускал те же байты через Node VM. Filesystem m
 | Additional validation, line 14 | Numeric positive integer existing issues и known soft requirements |
 | Receipt guards, lines 17–19 | Repository/ID/URL consistency; bundle digest; предыдущий verified status сбрасывается до mutations |
 | `publish`, line 21 | `--body-file`, persistent receipt после каждого recovered/created ID, duplicate title rejection |
-| `link-and-verify`, line 22 | Exact remote body/state/url/ID readback; terminal verified только после complete loop |
+| `link-and-verify`, line 22 | Exact remote body/state/url/ID readback; только после успеха сохраняются initial creation hash и current draft hash; terminal verified после complete loop |
 
 Названные строки относятся к указанному SHA-256 publisher. Source baseline для product claims закреплён независимо; новый tooling не выдаётся за существующий feature mechanism.
 
@@ -69,10 +72,15 @@ Evaluator запускал те же байты через Node VM. Filesystem m
 5. **Закрыто:** AUT04 ссылался на `AutomationTestPanel.tsx:1–75`, реальный blob имеет 64 строки; AUT05 на `default-seeds.ts:509–555`, blob имеет 554. Текущие ranges исправлены; strict independent pass 136 links без ошибок. Validator теперь исключает trailing newline из line count.
 6. **Закрыто:** HD01 form intake мог реализовать второй renderer без Forms dependency. Текущий manifest требует `RS-FORM-01`; combined DAG остаётся ацикличным.
 7. **Закрыто до public Git push:** в первоначальном publisher guard были literal identifiers из private screenshots, хотя они отсутствовали в issue bodies. Final guard использует только общие patterns: clipboard filenames, inline image payloads, admin-console URLs и private-key headers. Publication flow не менялся; private-marker negative control остаётся PASS и не отражает marker value в error.
+8. **Закрыто постоянно:** `draftBodySha256` первоначально обновлялся только при create/recover; нормализация draft оставляла старое значение даже после нового successful readback. Теперь после exact readback `initialDraftBodySha256 ??= draftBodySha256`, затем current draft bytes hash присваивается `draftBodySha256` перед receipt save. Fixture с различными creation/current hashes, повторным resume и failed readback проходит; два seeded hash mutants отклонены.
 
 ## Privacy и receipt readback после cleanup
 
 После cleanup проверен local receipt: `PUBLISHED_AND_READBACK_VERIFIED`, 30 issues, `privateImagesPublished=false`. SHA-256 всех 30 local `publishedBodyFile` совпадает с `publishedBodySha256` в receipt. Реальный GitHub readback уже выполнен lead; evaluator не делал дополнительный remote вызов. Private screenshots и их source organization identifiers не были загружены через этот issue publication bundle; issue bodies не содержат исходных private IDs, images не прикладывались. Initial literal guard был удалён до публичной доставки tooling. Эта проверка ограничена данным bundle и не заявляет аудит всей ранее существовавшей истории GitHub или других внешних каналов.
+
+## Normalization addendum
+
+После whitespace normalization lead повторно выполнил actual remote link-and-verify на тех же 30 issue IDs и согласовал receipt/index. Независимый local readback подтверждает: статус `PUBLISHED_AND_READBACK_VERIFIED`, bundle digest `eed3548755da34fb3da6450a81d5852024ea661b3e51d73e86e7f896f508697b`; у всех 30 IDs current draft hash равен `issues.json.bodySha256` и receipt `draftBodySha256`, published bytes равны receipt `publishedBodySha256`. Для шести нормализованных service drafts сохранены отличающиеся historical `initialDraftBodySha256`. Новые IDs не создавались. Worker не выполнял GitHub calls или receipt/index mutations; local reconciliation выполнил lead после actual exact readback.
 
 ## Практические ограничения
 

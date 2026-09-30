@@ -138,7 +138,6 @@ L, identity/membership+read hub then write/audit slices. Риски: local ident
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
 
 
-
 ## GitHub dependency links (нормативный handoff)
 
 Прямых новых prerequisites нет; использовать общие действующие primitives.

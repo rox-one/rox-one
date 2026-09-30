@@ -10,7 +10,7 @@
 |---|---|
 | Issue source references | 136 immutable references / 66 blobs, paths и ranges PASS |
 | Task DAG | 30 unique IDs; hard/soft links разрешаются; cycle нет |
-| Publisher independent evaluator | 11 cases PASS; synthetic gh, ноль network effects reviewer |
+| Publisher independent evaluator | 12 cases PASS; synthetic gh, ноль network effects reviewer |
 | Product architecture review | P1 Draft/Published ordering и 3 P2 contracts исправлены; independent 7 assertions PASS |
 | Macro/ROX HEAD final probe | Macro767a999, ROXmainf63294b; source pinned249 docs revision has identical apps/packages |
 | Control handoff + cloud gates | 15 tests PASS, включая corruption/denied/stale/hash/path/fixture/ancestry controls |
@@ -30,6 +30,10 @@
 7. Historical Money $defs конфликтовали с новым inline revenue: effective defs/result binding нормализованы; первичные исторические schemas сохранены.
 8. Publisher повторный edit мог оставить старое verified claim: до mutation сохраняется IN_PROGRESS/current bundle digest; mismatch negative отклонён.
 9. Две source ranges были длиннее blobs: исправлены. Help Desk public form intake связан с общим Forms requirement.
+
+10. Staged whitespace gate обнаружил trailing spaces в ASCII схемах и blank EOF в шести drafts после предыдущей unstaged проверки. Форматирование нормализовано; published bodies повторно сверяются с GitHub, cloud digest пересобирается. Финальный gate проверяет весь диапазон доставки, включая новые ранее untracked файлы.
+
+11. Нормализация draft выявила устаревший draftBodySha256 в receipt. Publisher теперь обновляет его только после exact readback и сохраняет initialDraftBodySha256. Добавлен сценарий rerun/failed readback и две чувствительные мутации; 12/12 изолированных tests PASS. Все 30 текущих draft/index/published hashes согласованы.
 
 ## Improvements workflow
 

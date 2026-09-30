@@ -722,7 +722,7 @@
       "relatedIssues": [],
       "area": "mcp",
       "relatedRequirementIds": [],
-      "bodySha256": "87f4bf9501de550d30d3302062031ba8f0681a92047ab6c1c0aefd6b6bb968c1",
+      "bodySha256": "f2deb4d42dabf82c703f3d6f66f781421ad9c50a9dbcf314b15b4532c48d8ffe",
       "github": {
         "number": 1113,
         "url": "https://github.com/rox-one/rox-one/issues/1113",
@@ -730,7 +730,7 @@
       },
       "publishedSpec": {
         "path": "docs/rox-suite/published/RS-MCP-01.md",
-        "sha256": "fc580fb77576f739173aba987e42e2e7e29230eea3659cf1580607ea712b8273"
+        "sha256": "7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50"
       },
       "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
       "cloudExecution": "NOT_LAUNCHED",
@@ -748,7 +748,7 @@
       "relatedRequirementIds": [
         "RS-MCP-01"
       ],
-      "bodySha256": "02e4c762e02aa93e9dd46c9860a8d8eb175b702c4e1743503131c0c7462ac5f1",
+      "bodySha256": "e9ea43948f450795b48e980a99e06dc1ff4c59d3117d3ddf3ab2d15ca8a721de",
       "github": {
         "number": 1114,
         "url": "https://github.com/rox-one/rox-one/issues/1114",
@@ -756,7 +756,7 @@
       },
       "publishedSpec": {
         "path": "docs/rox-suite/published/RS-ADM-01.md",
-        "sha256": "70e56c0f32dbf216b1f2a86adcc5090e6ec4a52737d73296300ba0c0761ee71b"
+        "sha256": "f73a235f0c1b8890007baa1eef855c7c86e26a7f2f243555eb2e41ed63babd85"
       },
       "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
       "cloudExecution": "NOT_LAUNCHED",
@@ -806,7 +806,7 @@
       "relatedRequirementIds": [
         "RS-ADM-01"
       ],
-      "bodySha256": "5a145a3d5bb5cd78cd24ddcab647014146814452dab71b5cb09a5908c4da26c8",
+      "bodySha256": "36ea90f8458500c19d7c4b25e9d641bb320879caa20120ba3852b5d353d65b27",
       "github": {
         "number": 1116,
         "url": "https://github.com/rox-one/rox-one/issues/1116",
@@ -814,7 +814,7 @@
       },
       "publishedSpec": {
         "path": "docs/rox-suite/published/RS-HD-02.md",
-        "sha256": "8f22ed7c3ac6723ac3f3d650cebc9665af1ce5ab8265c9aae5ed6bab0b478574"
+        "sha256": "902624d19670400468911c9748f3be55813b0bd8f6e6e448b5faafe17aa851c6"
       },
       "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
       "cloudExecution": "NOT_LAUNCHED",
@@ -836,7 +836,7 @@
         "RS-APR-02",
         "RS-MCP-01"
       ],
-      "bodySha256": "3ebed5a2bd92f9c19beb3f2f7a8503ca74cfa096bee2921d91267384312d64c0",
+      "bodySha256": "bb548ce187000524288dd82cac8f1a18e80af3c4eb4b1ec1466291ff2d60dd14",
       "github": {
         "number": 1117,
         "url": "https://github.com/rox-one/rox-one/issues/1117",
@@ -844,7 +844,7 @@
       },
       "publishedSpec": {
         "path": "docs/rox-suite/published/RS-APR-01.md",
-        "sha256": "8408ffbadde5fd57f6b5baff2f61c1e450dd11f328fb13521c2fe3d397c2560c"
+        "sha256": "031077b67e4e89ba3d317a4f67933c064e508b7dcf2e7fef377da800f1b6e14c"
       },
       "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
       "cloudExecution": "NOT_LAUNCHED",
@@ -896,7 +896,7 @@
       "relatedRequirementIds": [
         "RS-SIG-02"
       ],
-      "bodySha256": "ff3ae4ded2afb8d3331bcfc77e0e4934dd8a92dcccd5f26afa9f7b66ea325efd",
+      "bodySha256": "3fe882560c2c2f881b4cc477e01353e864931dfd84ad38273631308e9745a389",
       "github": {
         "number": 1119,
         "url": "https://github.com/rox-one/rox-one/issues/1119",
@@ -904,7 +904,7 @@
       },
       "publishedSpec": {
         "path": "docs/rox-suite/published/RS-SIG-01.md",
-        "sha256": "9131557546c538a9112d33f7e2ef5ab16400fb3f408ad58886c4e15e6f4e2583"
+        "sha256": "77419303a3933c03f1441e841146ee2595239012bb31c4f6847205bcc35c653e"
       },
       "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
       "cloudExecution": "NOT_LAUNCHED",
@@ -927,7 +927,7 @@
         "RS-MCP-01",
         "RS-ADM-01"
       ],
-      "bodySha256": "37e6fbf0bb5d3700dcfeb9cd6382b649385ee4a3190d6a459c9041ca1bb4235f",
+      "bodySha256": "25dc85bcc3e28701e22b63ad21e5635d1992ad2d4c8d2a7da03d527998f91bd5",
       "github": {
         "number": 1120,
         "url": "https://github.com/rox-one/rox-one/issues/1120",
@@ -935,7 +935,7 @@
       },
       "publishedSpec": {
         "path": "docs/rox-suite/published/RS-SIG-02.md",
-        "sha256": "0d0e7f4801eba9a3429750442f7cadac8f7e7f80dbb2006bb964696a44433f1b"
+        "sha256": "8e0acde898023f04d7b374162d2f0ebe7c3ce53fabf0ba298d43dab4c954c755"
       },
       "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
       "cloudExecution": "NOT_LAUNCHED",
@@ -944,6 +944,5 @@
         1118
       ]
     }
-  ],
-  "publicationReceipt": "plans/rox-suite/publication.json"
+  ]
 }

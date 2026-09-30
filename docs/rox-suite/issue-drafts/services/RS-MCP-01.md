@@ -137,4 +137,3 @@ Correlate workspace/entity/command/receipt/event/policy revision без secret/b
 L, 3 vertical slices: discovery/read; grants/revoke; agent dispatch conformance. Риски: scope widening, hidden-title leakage, source-policy convention, schema drift.
 
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
-

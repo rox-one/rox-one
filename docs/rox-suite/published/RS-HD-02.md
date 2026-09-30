@@ -137,7 +137,6 @@ XL, algorithm+versioned policy, triageUI, KB draft/send slices. Риски: cale
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
 
 
-
 ## GitHub dependency links (нормативный handoff)
 
 - Требуется [RS-HD-01 — #1115](https://github.com/rox-one/rox-one/issues/1115)

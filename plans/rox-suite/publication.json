@@ -13,7 +13,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-FOCUS-01.md",
       "publishedBodySha256": "d7d78e5add70489d2c9e502a1938b9ea15ec7fabaa9a1af3c4d01e08480dbd04",
-      "verifiedReadbackAt": "2026-09-30T01:22:23.981Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:38.682Z",
+      "initialDraftBodySha256": "0ab5d7f3f74118b836e20b58461a291b22c70ac365eac9a28a89ae130b8798b7"
     },
     {
       "id": "RS-SHEET-01",
@@ -25,7 +26,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-SHEET-01.md",
       "publishedBodySha256": "7fcaf1c656415d9e18a852a908428320d39d992daaaf16db1246d94e3af7cac3",
-      "verifiedReadbackAt": "2026-09-30T01:22:26.166Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:41.009Z",
+      "initialDraftBodySha256": "8909c1fcbcffd39e0428768735dad12953e5cd98a20eb294821bb5c8dd35c2cf"
     },
     {
       "id": "RS-SLIDE-01",
@@ -37,7 +39,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-SLIDE-01.md",
       "publishedBodySha256": "a372f7762429f840e64e4ce677ecebec9aec2a70fdd61d77e1508b4dc6a7f4cf",
-      "verifiedReadbackAt": "2026-09-30T01:22:29.299Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:43.485Z",
+      "initialDraftBodySha256": "b02ce0ac6affbe8733b6eb038c0aff4294af16d0210fa540d6371c8b0f02a9f3"
     },
     {
       "id": "RS-BASE-01",
@@ -49,7 +52,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-BASE-01.md",
       "publishedBodySha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5",
-      "verifiedReadbackAt": "2026-09-30T01:22:31.480Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:45.490Z",
+      "initialDraftBodySha256": "d376aa907b0c623372b79883a0d47cf7ccdf704bc607b6f66611640775683fbb"
     },
     {
       "id": "RS-FORM-01",
@@ -61,7 +65,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-FORM-01.md",
       "publishedBodySha256": "c30ab28cf3014ed22e6e7c80bbba47fb7cbddbc3e5f3b5361dc48a360a2515d8",
-      "verifiedReadbackAt": "2026-09-30T01:22:33.626Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:48.046Z",
+      "initialDraftBodySha256": "cf3c32a1e7c4d84a232894acc7403dbe47aadbb58c5ad0af75f9e01fcf212159"
     },
     {
       "id": "RS-AUT-01",
@@ -73,7 +78,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-AUT-01.md",
       "publishedBodySha256": "2e5fccefa265389b9d927ed9779f5e2641ae1e10346ebd914326b54912208f3b",
-      "verifiedReadbackAt": "2026-09-30T01:22:36.077Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:50.405Z",
+      "initialDraftBodySha256": "0cce25fa735678a40567fd20717d78374d7babd9908fde0fe37429c14932cb5b"
     },
     {
       "id": "RS-AUT-02",
@@ -85,7 +91,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-AUT-02.md",
       "publishedBodySha256": "35dde92068f8b92b7ba034a62709d8c4e9617c7415c293659d89532b2cb550ab",
-      "verifiedReadbackAt": "2026-09-30T01:22:38.331Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:52.853Z",
+      "initialDraftBodySha256": "365493872cebf01d6f89fc91e6978e9f81101b14537fe6c86e8af249b34a140f"
     },
     {
       "id": "RS-AUT-03",
@@ -97,7 +104,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-AUT-03.md",
       "publishedBodySha256": "0d42c0105cecb110427e045272de9237e996f4ee29bf0a2981ce316f7b76b1a8",
-      "verifiedReadbackAt": "2026-09-30T01:22:40.893Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:54.711Z",
+      "initialDraftBodySha256": "c97343c804a36db1815e89f70478a5277b69bcd564332c8e2cba4a5ff9e4921d"
     },
     {
       "id": "RS-AUT-04",
@@ -109,7 +117,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-AUT-04.md",
       "publishedBodySha256": "2d1358a4044df3aa69dc1ae3a151e1301a103e0e9679344da502a19ab45ace40",
-      "verifiedReadbackAt": "2026-09-30T01:22:43.764Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:56.645Z",
+      "initialDraftBodySha256": "64546597efd261549699f3cc7ab9ca0ac7d9d8c661a19235308319fda71e690d"
     },
     {
       "id": "RS-AUT-05",
@@ -121,7 +130,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-AUT-05.md",
       "publishedBodySha256": "d744861d35de4c46df3de25d7649341414f1d22a5cd111ec19736682bce8aa75",
-      "verifiedReadbackAt": "2026-09-30T01:22:46.135Z"
+      "verifiedReadbackAt": "2026-09-30T01:33:59.108Z",
+      "initialDraftBodySha256": "66ec965dacd9933e56dfc345456851afac61fac6e3451ee5a0e9c44f07686eaf"
     },
     {
       "id": "RS-MTG-01",
@@ -133,7 +143,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MTG-01.md",
       "publishedBodySha256": "fec41688a5bd49a70e2482955d36b275c9cb44cfdf96839150dac010e1fdd730",
-      "verifiedReadbackAt": "2026-09-30T01:22:48.739Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:01.621Z",
+      "initialDraftBodySha256": "d012eab5962a9b6689fa09f0fbd78d5a618cd5b5ec5f4e0a02ea99a7ce9c99ab"
     },
     {
       "id": "RS-MTG-02",
@@ -145,7 +156,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MTG-02.md",
       "publishedBodySha256": "1a677b83146d9982d09f9bdd156b6e2792f24251f4feb8ebf23b3d382a189f00",
-      "verifiedReadbackAt": "2026-09-30T01:22:51.177Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:03.752Z",
+      "initialDraftBodySha256": "525979a1ed9c877eedef379979299403f4a0f1f7d0a29575e8a8d05b1bc512be"
     },
     {
       "id": "RS-MTG-03",
@@ -157,7 +169,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MTG-03.md",
       "publishedBodySha256": "e2b2521c62599c744d3b7dff9e91b4fa785693a4d57a0489eddfdcb1d6d2a1d3",
-      "verifiedReadbackAt": "2026-09-30T01:22:53.680Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:05.731Z",
+      "initialDraftBodySha256": "618e4042138e4dcf4bab3b0e932a266a18960686740b1dc358604018d3cc26b2"
     },
     {
       "id": "RS-MTG-04",
@@ -169,7 +182,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MTG-04.md",
       "publishedBodySha256": "08c3cb8c68f9302dc1c4587589f14f6b345234b59d16fe29264ed608da7c2d04",
-      "verifiedReadbackAt": "2026-09-30T01:22:56.249Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:07.693Z",
+      "initialDraftBodySha256": "a72f286ebf2da8c95468b292d0e5dbcee3f0d356499424f2c213a13b5adfff0d"
     },
     {
       "id": "RS-MTG-05",
@@ -181,7 +195,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MTG-05.md",
       "publishedBodySha256": "58622d94dbed0985bea4cc57f88f9a9808a0df3b24782a107650803d263a82f8",
-      "verifiedReadbackAt": "2026-09-30T01:22:59.867Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:09.964Z",
+      "initialDraftBodySha256": "66e3f87bfcdcbe9105389abdfcf314529d7d21925563d1ca454134d7d6f5913a"
     },
     {
       "id": "RS-MSG-01",
@@ -193,7 +208,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MSG-01.md",
       "publishedBodySha256": "7666cd3ddd561238ba77e6970f86b0f84bbb85a93c15d849cdd95a2667d1c21c",
-      "verifiedReadbackAt": "2026-09-30T01:23:02.415Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:12.717Z",
+      "initialDraftBodySha256": "04b24adaaa0755c0f3559629e6b66a17a739bd2c26caa25171fbf44095df3796"
     },
     {
       "id": "RS-MSG-02",
@@ -205,7 +221,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MSG-02.md",
       "publishedBodySha256": "ea870216b6513e3724fcdc5b96428fd969b2609df6d633b4c8f6822619530063",
-      "verifiedReadbackAt": "2026-09-30T01:23:04.939Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:15.345Z",
+      "initialDraftBodySha256": "8c4bfe6354bc10a0e722fbecbcd7600c7b8265e4923ebb2fe3b6b4ea8ddd5564"
     },
     {
       "id": "RS-MSG-03",
@@ -217,7 +234,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MSG-03.md",
       "publishedBodySha256": "9a7279b72be841f1d65d74a7e78166daae112fa1a927ce6fc96845bbeeae26a8",
-      "verifiedReadbackAt": "2026-09-30T01:23:06.812Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:17.937Z",
+      "initialDraftBodySha256": "7c090741003396f6c185cf13c90e11dadc80f8419c00abef2ef63f36485bb0fc"
     },
     {
       "id": "RS-DRV-01",
@@ -229,7 +247,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-DRV-01.md",
       "publishedBodySha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3",
-      "verifiedReadbackAt": "2026-09-30T01:23:09.475Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:20.051Z",
+      "initialDraftBodySha256": "17b3e5bc1ca1f47f8fe1f93b3e6f9206f4fb806196c30390dce8cf726de84e14"
     },
     {
       "id": "RS-DOC-01",
@@ -241,7 +260,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-DOC-01.md",
       "publishedBodySha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5",
-      "verifiedReadbackAt": "2026-09-30T01:23:12.433Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:22.539Z",
+      "initialDraftBodySha256": "f0809992a4df565d21483c9cb6f96d6df13bbd6e3f287e5332c966ec61544668"
     },
     {
       "id": "RS-WIKI-01",
@@ -253,7 +273,8 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-WIKI-01.md",
       "publishedBodySha256": "583895fb30b8be752342323812d85bcbec452839038edd23583740d4643cdb37",
-      "verifiedReadbackAt": "2026-09-30T01:23:14.764Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:24.574Z",
+      "initialDraftBodySha256": "ebf3ad98d0c29117c1183fe3a2bf63b3157396975f29e9d70796671abb56a13a"
     },
     {
       "id": "RS-NOTE-01",
@@ -265,31 +286,34 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-NOTE-01.md",
       "publishedBodySha256": "48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002",
-      "verifiedReadbackAt": "2026-09-30T01:23:16.852Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:26.654Z",
+      "initialDraftBodySha256": "cc907d5a3f2e4031d1ecd3114f3ca541e0e25f2fe2fb2b436ea850c5cb856201"
     },
     {
       "id": "RS-MCP-01",
       "url": "https://github.com/rox-one/rox-one/issues/1113",
       "number": 1113,
       "title": "[ROX Suite][RS-MCP-01] Каталог MCP capabilities, scopes и доступ инструментов агентам",
-      "draftBodySha256": "87f4bf9501de550d30d3302062031ba8f0681a92047ab6c1c0aefd6b6bb968c1",
+      "draftBodySha256": "f2deb4d42dabf82c703f3d6f66f781421ad9c50a9dbcf314b15b4532c48d8ffe",
       "state": "OPEN",
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-MCP-01.md",
-      "publishedBodySha256": "fc580fb77576f739173aba987e42e2e7e29230eea3659cf1580607ea712b8273",
-      "verifiedReadbackAt": "2026-09-30T01:23:19.128Z"
+      "publishedBodySha256": "7e0e4f01c7ab1230e9befeec9e93fdb360eb17ee0a441ec24863f27f99446d50",
+      "verifiedReadbackAt": "2026-09-30T01:34:28.838Z",
+      "initialDraftBodySha256": "87f4bf9501de550d30d3302062031ba8f0681a92047ab6c1c0aefd6b6bb968c1"
     },
     {
       "id": "RS-ADM-01",
       "url": "https://github.com/rox-one/rox-one/issues/1114",
       "number": 1114,
       "title": "[ROX Suite][RS-ADM-01] Organization и capability Admin Hub в существующих Settings",
-      "draftBodySha256": "02e4c762e02aa93e9dd46c9860a8d8eb175b702c4e1743503131c0c7462ac5f1",
+      "draftBodySha256": "e9ea43948f450795b48e980a99e06dc1ff4c59d3117d3ddf3ab2d15ca8a721de",
       "state": "OPEN",
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-ADM-01.md",
-      "publishedBodySha256": "70e56c0f32dbf216b1f2a86adcc5090e6ec4a52737d73296300ba0c0761ee71b",
-      "verifiedReadbackAt": "2026-09-30T01:23:21.523Z"
+      "publishedBodySha256": "f73a235f0c1b8890007baa1eef855c7c86e26a7f2f243555eb2e41ed63babd85",
+      "verifiedReadbackAt": "2026-09-30T01:34:31.471Z",
+      "initialDraftBodySha256": "02e4c762e02aa93e9dd46c9860a8d8eb175b702c4e1743503131c0c7462ac5f1"
     },
     {
       "id": "RS-HD-01",
@@ -301,31 +325,34 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-HD-01.md",
       "publishedBodySha256": "c88d30b3a78a48a1ef7a6587094c7b1f18fb2937a5f003f1e11c75cc5722ba45",
-      "verifiedReadbackAt": "2026-09-30T01:23:24.028Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:33.587Z",
+      "initialDraftBodySha256": "5bf2b5fe0ce145c5a800281bc34921688d68a8ade547d6c719e14790f2dce257"
     },
     {
       "id": "RS-HD-02",
       "url": "https://github.com/rox-one/rox-one/issues/1116",
       "number": 1116,
       "title": "[ROX Suite][RS-HD-02] Help Desk: triage, SLA calendar, knowledge и agent-assisted ответ",
-      "draftBodySha256": "5a145a3d5bb5cd78cd24ddcab647014146814452dab71b5cb09a5908c4da26c8",
+      "draftBodySha256": "36ea90f8458500c19d7c4b25e9d641bb320879caa20120ba3852b5d353d65b27",
       "state": "OPEN",
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-HD-02.md",
-      "publishedBodySha256": "8f22ed7c3ac6723ac3f3d650cebc9665af1ce5ab8265c9aae5ed6bab0b478574",
-      "verifiedReadbackAt": "2026-09-30T01:23:26.696Z"
+      "publishedBodySha256": "902624d19670400468911c9748f3be55813b0bd8f6e6e448b5faafe17aa851c6",
+      "verifiedReadbackAt": "2026-09-30T01:34:36.654Z",
+      "initialDraftBodySha256": "5a145a3d5bb5cd78cd24ddcab647014146814452dab71b5cb09a5908c4da26c8"
     },
     {
       "id": "RS-APR-01",
       "url": "https://github.com/rox-one/rox-one/issues/1117",
       "number": 1117,
       "title": "[ROX Suite][RS-APR-01] Approval designer: versioned forms, routes и decision policy",
-      "draftBodySha256": "3ebed5a2bd92f9c19beb3f2f7a8503ca74cfa096bee2921d91267384312d64c0",
+      "draftBodySha256": "bb548ce187000524288dd82cac8f1a18e80af3c4eb4b1ec1466291ff2d60dd14",
       "state": "OPEN",
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-APR-01.md",
-      "publishedBodySha256": "8408ffbadde5fd57f6b5baff2f61c1e450dd11f328fb13521c2fe3d397c2560c",
-      "verifiedReadbackAt": "2026-09-30T01:23:29.414Z"
+      "publishedBodySha256": "031077b67e4e89ba3d317a4f67933c064e508b7dcf2e7fef377da800f1b6e14c",
+      "verifiedReadbackAt": "2026-09-30T01:34:39.027Z",
+      "initialDraftBodySha256": "3ebed5a2bd92f9c19beb3f2f7a8503ca74cfa096bee2921d91267384312d64c0"
     },
     {
       "id": "RS-APR-02",
@@ -337,35 +364,41 @@
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-APR-02.md",
       "publishedBodySha256": "49edf1afbf899e1f80bd3700712d345494ee1303f00bfc54a9c1afe994fe6713",
-      "verifiedReadbackAt": "2026-09-30T01:23:32.040Z"
+      "verifiedReadbackAt": "2026-09-30T01:34:41.202Z",
+      "initialDraftBodySha256": "42eda3eb4385c7858c68d717440c20c4fd72f6885fc15f23b3704eb77a71ee53"
     },
     {
       "id": "RS-SIG-01",
       "url": "https://github.com/rox-one/rox-one/issues/1119",
       "number": 1119,
       "title": "[ROX Suite][RS-SIG-01] Secure Document Viewer: file versions, sharing и revocation",
-      "draftBodySha256": "ff3ae4ded2afb8d3331bcfc77e0e4934dd8a92dcccd5f26afa9f7b66ea325efd",
+      "draftBodySha256": "3fe882560c2c2f881b4cc477e01353e864931dfd84ad38273631308e9745a389",
       "state": "OPEN",
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-SIG-01.md",
-      "publishedBodySha256": "9131557546c538a9112d33f7e2ef5ab16400fb3f408ad58886c4e15e6f4e2583",
-      "verifiedReadbackAt": "2026-09-30T01:23:34.922Z"
+      "publishedBodySha256": "77419303a3933c03f1441e841146ee2595239012bb31c4f6847205bcc35c653e",
+      "verifiedReadbackAt": "2026-09-30T01:34:43.961Z",
+      "initialDraftBodySha256": "ff3ae4ded2afb8d3331bcfc77e0e4934dd8a92dcccd5f26afa9f7b66ea325efd"
     },
     {
       "id": "RS-SIG-02",
       "url": "https://github.com/rox-one/rox-one/issues/1120",
       "number": 1120,
       "title": "[ROX Suite][RS-SIG-02] Document signing: immutable sessions, signer intent и evidence lifecycle",
-      "draftBodySha256": "37e6fbf0bb5d3700dcfeb9cd6382b649385ee4a3190d6a459c9041ca1bb4235f",
+      "draftBodySha256": "25dc85bcc3e28701e22b63ad21e5635d1992ad2d4c8d2a7da03d527998f91bd5",
       "state": "OPEN",
       "createdOrRecovered": true,
       "publishedBodyFile": "docs/rox-suite/published/RS-SIG-02.md",
-      "publishedBodySha256": "0d0e7f4801eba9a3429750442f7cadac8f7e7f80dbb2006bb964696a44433f1b",
-      "verifiedReadbackAt": "2026-09-30T01:23:37.496Z"
+      "publishedBodySha256": "8e0acde898023f04d7b374162d2f0ebe7c3ce53fabf0ba298d43dab4c954c755",
+      "verifiedReadbackAt": "2026-09-30T01:34:46.361Z",
+      "initialDraftBodySha256": "37e6fbf0bb5d3700dcfeb9cd6382b649385ee4a3190d6a459c9041ca1bb4235f"
     }
   ],
   "privateImagesPublished": false,
-  "bundleDigest": "f26a3530b7e51fd5710836c003a97ba2d07dda4c00462e2839f1ba2ad8898edc",
-  "attemptStartedAt": "2026-09-30T01:22:21.676Z",
-  "requirementCount": 30
+  "bundleDigest": "eed3548755da34fb3da6450a81d5852024ea661b3e51d73e86e7f896f508697b",
+  "attemptStartedAt": "2026-09-30T01:33:36.238Z",
+  "requirementCount": 30,
+  "previousVerifiedBundle": "f26a3530b7e51fd5710836c003a97ba2d07dda4c00462e2839f1ba2ad8898edc",
+  "draftHashSemantics": "draftBodySha256 is current normalized source verified through published body; initialDraftBodySha256 retains initial creation/recovery source",
+  "normalizationCheckedAt": "2026-09-30T01:35:20.408Z"
 }

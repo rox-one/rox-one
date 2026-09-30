@@ -138,7 +138,6 @@ XL, identity/immutableintent→providercommandreconcile→evidenceverification+U
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
 
 
-
 ## GitHub dependency links (нормативный handoff)
 
 - Требуется [RS-SIG-01 — #1119](https://github.com/rox-one/rox-one/issues/1119)

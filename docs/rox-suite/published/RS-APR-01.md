@@ -137,7 +137,6 @@ XL, schema/DSL validation→catalogue/formUI→versioned route designer/simulato
 Декомпозиция обязательна на vertical slices, каждый заканчивается working scenario с permissions/search/agents. Крупная surface остаётся открыта до всех её gates; issue не закрывать по одному mock screen.
 
 
-
 ## GitHub dependency links (нормативный handoff)
 
 - Требуется [RS-ADM-01 — #1114](https://github.com/rox-one/rox-one/issues/1114)
