@@ -59,3 +59,12 @@ Acceptance: 24 запрошенных тематических документ�
 Метод: source snapshot → independent domain audits → implementation graph → capability inventory → выбор архитектуры → independent adversarial review → Revision 2 → механическая проверка артефактов → commit/push документации. Вывод о неизвестной функции допускает NOT_ESTABLISHED с указанием проверенной области; не превращать отсутствие одного grep match в доказательство отсутствия продукта.
 
 Артефакт является планом реализации, а не реализацией всех перечисленных возможностей. Пользователь запросил архитектуру переноса и work packages.
+
+
+## Legacy Markdown migration inventory (2026-09-30)
+
+This bounded addition inspects legacy `.rox-docs/commits` without running legacy recovery, publishing content, returning receipt payloads, or acknowledging operations. Its `nativeActivationAllowed` result is always false. Completed records are historical inventory only; prepared, malformed, unreadable, unexpected and symlinked state blocks recovery clearance. No-follow descriptor reads check regular-file identity and parent directory identity before consuming bytes.
+
+The module is deliberately unwired. Recovery clearance is not native ownership, an adoption permission, a trusted receipt, or a complete atomic migration guard. Canonical activation requires serial integration of the authenticated NativeJournal pipeline, private receipt custody, stable operation replay, and an explicitly authorized disposition for existing legacy files. The full compound package acceptance criteria remain unchanged.
+
+Acceptance: real filesystem fixtures preserve inspected bytes and directory entries; prepared and partially applied records fail closed; replacements at the open seam cannot contribute unrelated historical metadata; completed history never authorizes native activation.

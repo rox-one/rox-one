@@ -94,3 +94,15 @@ Decisions:Project-first Channels, CRM Досье, Calendar Meetings, Inbox exist
 Стратегии сравнения: копирование Macro services (лицензионный и эксплуатационный риск); отдельное Macro приложение (не удовлетворяет цели); расширение native ROX через существующий Rox2 seam и единый domain authority (основной кандидат). Уточненные tradeoffs и окончательное решение — в 19.
 
 Исследование завершено: 52 WPs / 154 edges, 38 surfaces / 162 capabilities / 38 entity mappings; Revision 2 и domain amendments интегрированы. 104 schemas, 30 diagrams, 612 commit source links, 308 evidence records, 7 rejected negative controls проходят artifact validator. Product runtime tests — NOT_RUN, future gates в22. Git delivery receipt фиксируется completion checkpoint после push/readback.
+
+
+## Bounded legacy migration fence plan (2026-09-30)
+
+Owner: compound integration reviewer; lead retains integration and publication. Base: `b9b8aa7197f5d25304ec377a049a8f375eccf3e5`. Scope: one read-only inventory module, its filesystem tests, and these scoped notes. No legacy writer, canonical custody, renderer, dependency, or existing worker checkpoint changes.
+
+1. Import only the reviewed fence module and tests into an isolated branch at the exact base.
+2. Run `bun test tests/lark-suite-extension/legacy-markdown-migration-fence.test.ts` using Bun built-ins; check the public diff and artifact hashes.
+3. Lead reviews and publishes a draft stacked against `feat/rox-compound-workspace-20260930`.
+4. Existing compound integrator separately decides recovery disposition and serial canonical pipeline integration. The inventory stays unwired until an actual preparation path and its authority prerequisites are reviewed.
+
+Verification covers unchanged real fixture bytes, interrupted WAL refusal, unreadable/malformed/symlink state, and deterministic file/parent replacement races. It does not claim complete migration, native UI acceptance, adoption of existing files, or closure of the full compound program.
