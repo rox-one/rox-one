@@ -34,7 +34,7 @@
 | 11 | TS2339: `Rox2Result.verification` unavailable on `Rox2LegacyOkResult` | `src/rox2/__tests__/platform-contract.test.ts:706,752,819,920,1047,1146,1245,1344,1447,1554,1661` |
 | 1 | TS2367: verification status union compared with `"verified"` | `src/rox2/meeting-conation-shell.ts:29` |
 
-The lead authorized investigation and repair of these diagnostics after the three core failures are committed. This receipt does not claim a green package typecheck yet.
+These were the baseline diagnostics at the first repair commit. The follow-up below resolves all 13.
 
 ## Evidence hashes
 
@@ -52,3 +52,21 @@ The lead authorized investigation and repair of these diagnostics after the thre
 The lead observed a separate uncommitted September union with a partial attachment-level locator repair (`LOCATOR_FIELDS`, `assertAllowedFields(input.locator)`, and accessor descriptor checks), an `account_replica_key` credential kind, and task recurrence/id/reminder work. This branch targets main and repairs the shared registry boundary. Integration must preserve the September union's unrelated additions; this worktree does not modify that union. Earlier targeted history searches did not find committed fixes; that finding does not exclude these uncommitted repairs.
 
 Cloud configuration, publication, network policy, and browser actions remain owned by the lead. This worker prepares local commits for lead review before any push or PR.
+
+## Follow-up: core TypeScript baseline repaired
+
+The lead authorized porting exactly the 13 narrow candidate hunks read from `/Users/t/Projects/rox-one-september-implementation` into this clean main baseline. That source worktree and its native-boundary worker were not modified. Unrelated calendar conflict/scoped identity changes and envelope tests in the candidate files were excluded.
+
+1. The calendar test now checks that an event row does not contain the task id, replacing an impossible comparison after the discriminant was already narrowed.
+2. Eleven tests read `verification` through the existing `normalizeRox2Result` union boundary. They retain their `receipt_verified` expectations; legacy success normalizes to `unverified`, so it cannot satisfy the assertion.
+3. The meeting guard rejects any queued canonical verification other than `unverified`. The old comparison with `verified` could never match either real verified state. New regressions prove that queued `receipt_verified` and `readback_verified` results throw; existing queued/fixture outputs explicitly assert `unverified`.
+
+| Check | Result | Evidence and SHA-256 |
+| --- | --- | --- |
+| Queued guard red run | 3 pass, 2 fail before the source fix | `/tmp/rox-cloud-core-typecheck-regression-red-20260930.log` — `6c026179eb9c37a3325d6df3b46f8ecd61e2751ca886ba658bd5cec113ae7aeb` |
+| Calendar/platform/meeting focused green | 218 pass, 0 fail; 1217 assertions | `/tmp/rox-cloud-core-typecheck-focused-green-20260930.log` — `e8567cf3ffaac3ca7a038fb1319b99d54ef431eb4b1eedd5c7804d8d2db58b69` |
+| Full core suite after follow-up | 817 pass, 0 fail; 77 files, 3496 assertions | `/tmp/rox-cloud-core-suite-final-20260930.log` — `6f09627914ab4471fef388af185e1e99dc5df68ea93fdddb787c2b488b4fe845` |
+| Core `bun run tsc --noEmit` | Exit 0, zero diagnostics | `/tmp/rox-cloud-core-typecheck-final-20260930.log` — empty successful output, SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| Diff whitespace check | Pass | `git diff --check` |
+
+Full baseline WebUI (52 errors) and server (8 errors) logs and routing are outside source in `/tmp/rox-cloud-typecheck-routing-20260930.md`. Those groups are separate integration work; the core verification guard was a shared dependency in each baseline.

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { isClaimableLive } from '../platform-contract.ts'
 import {
   MEETING_CONATION_SHELLS,
+  assertMeetingConationShellNotLive,
   gateMeetingConationShell,
   meetingConationShellResult,
 } from '../meeting-conation-shell.ts'
@@ -19,7 +20,7 @@ describe('meeting Conation shells fail-closed (Mail/CRM/calendar/room)', () => {
     for (const shell of MEETING_CONATION_SHELLS) {
       const result = meetingConationShellResult({ source: 'conation', shell })
       expect(result.lifecycle).toBe('queued')
-      expect(result.verification).not.toBe('verified')
+      expect(result.verification).toBe('unverified')
       expect(result.ok).not.toBe(true)
       expect(result.lifecycle).not.toBe('succeeded')
     }
@@ -30,6 +31,17 @@ describe('meeting Conation shells fail-closed (Mail/CRM/calendar/room)', () => {
     expect(isClaimableLive(gated.rox2)).toBe(false)
     expect(gated.status).toBe('queued')
     expect(gated.live).toBe(false)
-    expect(gated.rox2.verification).not.toBe('verified')
+    expect(gated.rox2.verification).toBe('unverified')
   })
+
+  for (const verification of ['receipt_verified', 'readback_verified'] as const) {
+    test(`queued shells reject ${verification} instead of treating it as pending`, () => {
+      expect(() => assertMeetingConationShellNotLive({
+        executionMode: 'live',
+        lifecycle: 'queued',
+        verification,
+        entityId: 'meetings.mail.queued',
+      })).toThrow('queued meeting Conation shell must not report verified')
+    })
+  }
 })
