@@ -4,6 +4,7 @@ import type { ReplicaFileChange, ReplicaOperation } from '../account-replica/typ
 export const NATIVE_REPLICA_IPC = {
   OPEN: '__nativeReplica:open',
   ENQUEUE: '__nativeReplica:enqueue',
+  ENQUEUE_CREATE: '__nativeReplica:enqueueCreate',
   PENDING: '__nativeReplica:pending',
   ACKNOWLEDGE: '__nativeReplica:acknowledge',
   CLOSE: '__nativeReplica:close',
@@ -41,6 +42,17 @@ export interface NativeReplicaEnqueueIpcInput extends NativeReplicaSessionIpcInp
 
 export interface NativeReplicaAcknowledgeIpcInput extends NativeReplicaSessionIpcInput {
   receipt: NativeDataReceipt
+}
+
+/** Server-canonical creation plan observed only by the authenticated preload wrapper. */
+export interface NativeReplicaCreatePlan {
+  context: NativeDataContext
+  writePermissionFence: string
+  mutation: NativeReplicaMutation
+}
+
+export interface NativeReplicaEnqueueCreateIpcInput extends NativeReplicaSessionIpcInput {
+  plan: NativeReplicaCreatePlan
 }
 
 /** A mutation to persist in the device-bound encrypted queue before an RPC attempt. */

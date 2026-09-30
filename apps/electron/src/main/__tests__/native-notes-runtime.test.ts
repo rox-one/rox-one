@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from 'bun:test'
+import { SqliteReplicaOutbox } from '@craft-agent/shared/account-replica'
 import { EventEmitter, once } from 'node:events'
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import WebSocket from 'ws'
@@ -123,7 +124,7 @@ function replicaIpcFixture(configDir: string) {
   const sender = Object.assign(new EventEmitter(), { id: 41, isDestroyed: () => false })
   const otherSender = Object.assign(new EventEmitter(), { id: 42, isDestroyed: () => false })
   const call = (channel: string, input: unknown, owner = sender) => handlers.get(channel)!({ sender: owner } as unknown as IpcMainInvokeEvent, input)
-  return { call, sender, otherSender, windows }
+  return { call, sender, otherSender, windows, storedKeys }
 }
 
 test('authenticated Notes producer and two independent transport consumers retain a durable offline operation through renderer loss and receipt loss', async () => {
@@ -350,4 +351,279 @@ test('closing custody during a committed but delayed RPC response fences receipt
   expect(await bridge.nativeReplica.acknowledge(reopened, replay)).toBe(true)
   expect(await bridge.nativeReplica.pending(reopened)).toEqual([])
   await bridge.nativeReplica.close(reopened)
+})
+
+// Creation uses the same actual authority/WS/journal/SQLite adapters as durable editing.
+test('preload native creation persists before the first server write and retains exact revision-one receipt and ACK', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const configDir = join(f.dir, 'creation-client')
+  const ipc = replicaIpcFixture(configDir)
+  let queued: NativeReplicaQueuedMutation | undefined
+  let receipt: NativeDataReceipt | undefined
+  const observedClient = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) {
+        expect(queued).toBeDefined()
+        expect(await client.invoke(RPC_CHANNELS.nativeData.READ_ENTITY, { workspaceId: f.workspaceId, kind: 'notes', nativeId: queued!.nativeId })).toBeNull()
+        expect(existsSync(join(f.root, queued!.changes[0]!.path))).toBe(false)
+      }
+      const result = await client.invoke(channel, ...args)
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) receipt = result
+      return result
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const bridge = createNativeReplicaBridge({ client: observedClient, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) queued = result
+    return result
+  } })
+  cleanups.push(bridge.dispose)
+  const note = await bridge.createNote(f.workspaceId, 'Canonical: creation', 'nested', { operationId: 'renderer-cannot-assign-custody-id', expectedRevision: null, schemaVersion: 1 })
+  expect(note).toMatchObject({ nativeRevision: 1, nativeId: queued!.nativeId })
+  expect(queued!.operationId).not.toBe('renderer-cannot-assign-custody-id')
+  expect(queued!.expectedRevision).toBeNull()
+  expect(receipt).toMatchObject({ operationId: queued!.operationId, sequence: 1, revision: 1, deleted: false })
+  expect(readFileSync(join(f.root, queued!.changes[0]!.path), 'utf8')).toBe(note.content)
+  const handle = await bridge.nativeReplica.open(f.workspaceId)
+  expect(await bridge.nativeReplica.pending(handle)).toEqual([])
+  const material = JSON.parse([...ipc.storedKeys.values()][0].value)
+  const dbPath = [...new Bun.Glob('**/*.sqlite').scanSync({ cwd: join(configDir, 'account-replica'), absolute: true })][0]!
+  const outbox = new SqliteReplicaOutbox({ databasePath: dbPath, key: Buffer.from(material.outboxKey, 'base64') })
+  try {
+    expect(outbox.acknowledgement(material.accountHash, f.workspaceId, queued!.operationId)).toMatchObject({ serverSequence: 1, revision: 1 })
+    expect(outbox.readReceipt(material.accountHash, f.workspaceId, queued!.operationId)).toEqual(receipt!)
+  } finally { outbox.close() }
+  await bridge.nativeReplica.close(handle)
+})
+
+for (const loss of ['before-submit', 'after-commit'] as const) test(`durable native creation recovers ${loss} through renderer loss and stable authenticated replay`, async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, `creation-${loss}`))
+  let queued: NativeReplicaQueuedMutation | undefined
+  let lostReceipt: NativeDataReceipt | undefined
+  let fail = true
+  const interrupted = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      if (channel === RPC_CHANNELS.nativeData.MUTATE && fail) {
+        fail = false
+        if (loss === 'after-commit') lostReceipt = await client.invoke(channel, ...args)
+        ipc.sender.emit('render-process-gone')
+        throw new Error('simulated renderer loss')
+      }
+      return client.invoke(channel, ...args)
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const bridge = createNativeReplicaBridge({ client: interrupted, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) queued = result
+    return result
+  } })
+  cleanups.push(bridge.dispose)
+  await expect(bridge.createNote(f.workspaceId, 'Recover creation')).rejects.toThrow('renderer loss')
+  expect(queued).toBeDefined()
+  const fresh = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => ipc.call(channel, input) })
+  cleanups.push(fresh.dispose)
+  const handle = await fresh.nativeReplica.open(f.workspaceId)
+  expect(await fresh.nativeReplica.pending(handle)).toEqual([queued!])
+  const digest = async (value: string) => Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))).toString('hex')
+  const fake = { issuer: f.issued.principal.issuer, subject: f.issued.principal.subject, workspaceId: f.workspaceId, kind: 'notes', nativeId: queued!.nativeId, operationId: queued!.operationId, revision: 1, sequence: 1, contentHash: await digest(JSON.stringify([[queued!.changes[0]!.path, await digest(queued!.changes[0]!.content!)]])), deleted: false } satisfies NativeDataReceipt
+  await expect(fresh.nativeReplica.acknowledge(handle, fake)).rejects.toThrow('observed server mutation receipt')
+  await expect(Promise.resolve().then(() => ipc.call(NATIVE_REPLICA_IPC.PENDING, { handle }, ipc.otherSender))).rejects.toThrow('not owned')
+  const replayController = createNativeNotesSyncController({ nativeReplica: fresh.nativeReplica,
+    nativeData: { readEntity: fresh.readEntity, mutate: fresh.mutate }, getTransportConnectionState: async () => client.getConnectionState() })
+  await replayController.start(f.workspaceId)
+  const replays = await replayController.flush()
+  expect(replays).toHaveLength(1)
+  const replay = replays[0]!
+  if (lostReceipt) expect(replay).toEqual(lostReceipt)
+  expect(replay).toMatchObject({ sequence: 1, revision: 1, operationId: queued!.operationId })
+  expect(await fresh.nativeReplica.pending(handle)).toEqual([])
+  await replayController.stop()
+  expect((await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })).changes).toEqual([replay])
+  expect(readFileSync(join(f.root, queued!.changes[0]!.path), 'utf8')).toBe(queued!.changes[0]!.content!)
+  await fresh.nativeReplica.close(handle)
+})
+
+test('creation plan loses authority after grant change and after managed workspace switch without enqueue or file writes', async () => {
+  for (const change of ['grant', 'window', 'write-epoch', 'principal'] as const) {
+    const f = await fixture(true)
+    const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+    cleanups.push(() => client.destroy())
+    const ipc = replicaIpcFixture(join(f.dir, 'creation-fenced'))
+    const alternative = f.authority.redeemEnrollment(f.authority.issueEnrollment(f.admin.credential, 'other author', Date.now() + 60_000), 'other author')!
+    f.authority.grantWorkspace(f.admin.credential, alternative.principal.subject, f.workspaceId, ['read', 'write'])
+    const otherClient = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: alternative.credential, autoReconnect: false })
+    cleanups.push(() => otherClient.destroy())
+    let activeClient = client
+    let planned = false
+    const handleClient = {
+      invoke: async (channel: string, ...args: unknown[]) => {
+        const result = await activeClient.invoke(channel, ...args)
+        if (channel === RPC_CHANNELS.notes.PREPARE_CREATE && !planned) {
+          planned = true
+          if (change === 'grant') f.authority.revokeWorkspaceGrant(f.admin.credential, f.issued.principal.subject, f.workspaceId)
+          else if (change === 'window') ipc.windows.set(ipc.sender.id, 'workspace-other')
+          else if (change === 'write-epoch') f.authority.grantWorkspace(f.admin.credential, f.issued.principal.subject, f.workspaceId, ['write'])
+          else activeClient = otherClient
+        }
+        return result
+      },
+      getConnectionState: () => client.getConnectionState(),
+      onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+    }
+    let enqueues = 0
+    const bridge = createNativeReplicaBridge({ client: handleClient, invokeIpc: async (channel, input) => {
+      if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) enqueues++
+      return ipc.call(channel, input)
+    } })
+    cleanups.push(bridge.dispose)
+    await expect(bridge.createNote(f.workspaceId, 'Denied creation')).rejects.toThrow()
+    expect(enqueues).toBe(0)
+    expect(existsSync(join(f.root, 'notes', 'Denied creation.md'))).toBe(false)
+  }
+})
+
+test('concurrent same-path native creation rejects the losing mutation, retaining its outbox without overwrite', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, 'creation-collision'))
+  let queued: NativeReplicaQueuedMutation | undefined
+  const racingClient = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) {
+        await client.invoke(RPC_CHANNELS.notes.CREATE, f.workspaceId, 'Racing creation', undefined, { operationId: 'other-client-create', expectedRevision: null, schemaVersion: 1 })
+      }
+      return client.invoke(channel, ...args)
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const bridge = createNativeReplicaBridge({ client: racingClient, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) queued = result
+    return result
+  } })
+  cleanups.push(bridge.dispose)
+  await expect(bridge.createNote(f.workspaceId, 'Racing creation')).rejects.toThrow()
+  const handle = await bridge.nativeReplica.open(f.workspaceId)
+  expect(await bridge.nativeReplica.pending(handle)).toEqual([queued!])
+  const changes = await client.invoke(RPC_CHANNELS.nativeData.PULL_CHANGES, { workspaceId: f.workspaceId, afterSequence: 0 })
+  expect(changes.changes).toHaveLength(1)
+  expect(changes.changes[0].operationId).toBe('other-client-create')
+  expect(changes.entities[0].revision).toBe(1)
+  expect(readFileSync(join(f.root, queued!.changes[0]!.path), 'utf8')).toBe(queued!.changes[0]!.content!)
+  await bridge.nativeReplica.close(handle)
+})
+
+test('disposing preload while an actual creation plan response is in flight cannot enqueue or commit', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const planned = Promise.withResolvers<void>()
+  const release = Promise.withResolvers<void>()
+  const delayed = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      const result = await client.invoke(channel, ...args)
+      if (channel === RPC_CHANNELS.notes.PREPARE_CREATE) { planned.resolve(); await release.promise }
+      return result
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const ipc = replicaIpcFixture(join(f.dir, 'disposed-creation'))
+  let enqueues = 0
+  const bridge = createNativeReplicaBridge({ client: delayed, invokeIpc: async (channel, input) => {
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) enqueues++
+    return ipc.call(channel, input)
+  } })
+  cleanups.push(bridge.dispose)
+  const creation = bridge.createNote(f.workspaceId, 'Disposed creation')
+  await planned.promise
+  bridge.dispose()
+  release.resolve()
+  await expect(creation).rejects.toThrow('context changed while planning')
+  expect(enqueues).toBe(0)
+  expect(existsSync(join(f.root, 'notes', 'Disposed creation.md'))).toBe(false)
+})
+
+test('private creation custody rejects foreign owners and malformed plans while public save enqueue remains snapshot-only', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const ipc = replicaIpcFixture(join(f.dir, 'creation-plan-validation'))
+  const bridge = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => ipc.call(channel, input) })
+  cleanups.push(bridge.dispose)
+  const handle = await bridge.nativeReplica.open(f.workspaceId)
+  const plan = await client.invoke(RPC_CHANNELS.notes.PREPARE_CREATE, f.workspaceId, 'Validated creation')
+  await expect(Promise.resolve().then(() => ipc.call(NATIVE_REPLICA_IPC.ENQUEUE_CREATE, { handle, plan }, ipc.otherSender))).rejects.toThrow('not owned')
+  for (const altered of [
+    { ...plan, context: { ...plan.context, subject: 'foreign-principal' } },
+    { ...plan, mutation: { ...plan.mutation, expectedRevision: 1 } },
+    { ...plan, mutation: { ...plan.mutation, nativeId: '../outside', changes: [{ path: 'notes/../outside.md', content: 'escape' }] } },
+    { ...plan, mutation: { ...plan.mutation, changes: [{ ...plan.mutation.changes[0], content: null }] } },
+    { ...plan, mutation: { ...plan.mutation, changes: [...plan.mutation.changes, { path: 'notes/second.md', content: 'extra' }] } },
+  ]) await expect(Promise.resolve().then(() => ipc.call(NATIVE_REPLICA_IPC.ENQUEUE_CREATE, { handle, plan: altered }))).rejects.toThrow('canonical server plan')
+  await expect(bridge.nativeReplica.enqueue(handle, plan.mutation)).rejects.toThrow('authoritative source snapshot')
+  expect(await bridge.nativeReplica.pending(handle)).toEqual([])
+  expect(existsSync(join(f.root, 'notes'))).toBe(false)
+  await bridge.nativeReplica.close(handle)
+})
+
+for (const boundary of ['context-open', 'ipc-open', 'enqueue'] as const) test(`disposing creation during ${boundary} cannot submit and preserves only already-persisted intent`, async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const paused = Promise.withResolvers<void>()
+  const release = Promise.withResolvers<void>()
+  let held = false
+  let submitted = 0
+  let enqueued = 0
+  const ipc = replicaIpcFixture(join(f.dir, `dispose-${boundary}`))
+  const delayed = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) submitted++
+      const result = await client.invoke(channel, ...args)
+      if (boundary === 'context-open' && channel === RPC_CHANNELS.nativeData.GET_CONTEXT && !held) {
+        held = true; paused.resolve(); await release.promise
+      }
+      return result
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const bridge = createNativeReplicaBridge({ client: delayed, invokeIpc: async (channel, input) => {
+    const result = await ipc.call(channel, input)
+    if (channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE) enqueued++
+    if ((boundary === 'ipc-open' && channel === NATIVE_REPLICA_IPC.OPEN) || (boundary === 'enqueue' && channel === NATIVE_REPLICA_IPC.ENQUEUE_CREATE)) {
+      paused.resolve(); await release.promise
+    }
+    return result
+  } })
+  cleanups.push(bridge.dispose)
+  const creation = bridge.createNote(f.workspaceId, 'Disposed boundary')
+  await paused.promise
+  bridge.dispose()
+  release.resolve()
+  await expect(creation).rejects.toThrow('context changed')
+  expect(submitted).toBe(0)
+  expect(enqueued).toBe(boundary === 'enqueue' ? 1 : 0)
+  expect(existsSync(join(f.root, 'notes', 'Disposed boundary.md'))).toBe(false)
+  // A late OPEN handle was closed rather than registered after disposal.
+  expect(ipc.sender.listenerCount('render-process-gone')).toBe(0)
+  const fresh = createNativeReplicaBridge({ client, invokeIpc: async (channel, input) => ipc.call(channel, input) })
+  cleanups.push(fresh.dispose)
+  const handle = await fresh.nativeReplica.open(f.workspaceId)
+  const pending = await fresh.nativeReplica.pending(handle)
+  expect(pending).toHaveLength(boundary === 'enqueue' ? 1 : 0)
+  if (boundary === 'enqueue') expect(pending[0]).toMatchObject({ nativeId: 'Disposed boundary', expectedRevision: null })
+  await fresh.nativeReplica.close(handle)
 })

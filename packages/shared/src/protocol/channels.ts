@@ -174,6 +174,7 @@ export const RPC_CHANNELS = {
     READ: 'notes:read',
     SAVE: 'notes:save',
     CREATE: 'notes:create',
+    PREPARE_CREATE: 'notes:prepareCreate',
     RENAME: 'notes:rename',
     MOVE: 'notes:move',
     DELETE: 'notes:delete',

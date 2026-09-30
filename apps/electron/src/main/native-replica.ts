@@ -10,6 +10,7 @@ import {
   queuedMutationFromOperation,
   type NativeReplicaAcknowledgeIpcInput,
   type NativeReplicaEnqueueIpcInput,
+  type NativeReplicaEnqueueCreateIpcInput,
   type NativeReplicaOpenIpcInput,
   type NativeReplicaSessionIpcInput,
   type NativeReplicaCacheSnapshotIpcInput,
@@ -162,6 +163,30 @@ export function registerNativeReplicaIpc(
       event.sender.removeListener('render-process-gone', cleanupSession)
     }
     return handle
+  })
+
+  // Not exported on electronAPI: only preload can supply the authenticated canonical plan.
+  ipc.handle(NATIVE_REPLICA_IPC.ENQUEUE_CREATE, (event, input: NativeReplicaEnqueueCreateIpcInput) => {
+    const session = requireSession(event, input)
+    const plan = input.plan
+    const mutation = plan?.mutation
+    const change = mutation?.changes?.[0]
+    if (!plan || !isNativeDataContext(plan.context) || !/^[a-f0-9]{64}$/.test(plan.writePermissionFence) ||
+        Object.keys(session.context).some(key => session.context[key as keyof NativeDataContext] !== plan.context[key as keyof NativeDataContext]) ||
+        !mutation || mutation.expectedRevision !== null || mutation.schemaVersion !== 1 ||
+        typeof mutation.nativeId !== 'string' || !mutation.nativeId || mutation.nativeId.length > 512 ||
+        mutation.nativeId.split('/').some(part => !part || part === '.' || part === '..' || /[\\\x00-\x1f]/.test(part)) ||
+        mutation.changes.length !== 1 || change?.path !== `notes/${mutation.nativeId}.md` || typeof change.content !== 'string') {
+      throw new Error('native Notes creation requires its current canonical server plan')
+    }
+    const scope = { accountId: session.accountHash, workspaceId: session.context.workspaceId, permissionFence: session.context.permissionFence }
+    if (session.outbox.readSnapshot(scope, mutation.nativeId) || session.replica.pendingOffline(session.context.workspaceId).some(operation =>
+        operation.nativeId === mutation.nativeId || operation.changes.some(item => item.path === change.path))) {
+      throw new Error('native Notes creation conflicts with an existing source or pending operation')
+    }
+    return queuedMutationFromOperation(session.replica.enqueueOffline({
+      ...mutation, deviceId: session.deviceId, workspaceId: session.context.workspaceId, category: 'notes',
+    }))
   })
 
   ipc.handle(NATIVE_REPLICA_IPC.ENQUEUE, (event, input: NativeReplicaEnqueueIpcInput) => {

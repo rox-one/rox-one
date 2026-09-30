@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "id": "NATIVE-NOTES-CREATE-20260930",
+  "observedAt": "2026-09-30T12:14:20.177Z",
+  "inputRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+  "publication": {
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "sourceStatus": "VERIFIED_FOLLOWUP_CANDIDATE; PUSH_READBACK_PENDING",
+    "fullProductDelivery": "PENDING"
+  },
+  "implementation": "Canonical no-write server creation plan, private main-owned encrypted enqueue before mutation, authenticated exact receipt and ACK, stable replay; legacy explicit null plan remains compatible.",
+  "independentReview": {
+    "status": "BOUNDED_PASS",
+    "disposedOpenReproduction": "ZERO_ENQUEUES_ZERO_MUTATIONS_AFTER_FIX",
+    "channelClassification": "773_CHANNELS_CLASSIFIED",
+    "artifact": "independent-review-final.json"
+  },
+  "functionalScope": [
+    "actual WebSocket NativeAuthority/NativeJournal/SQLite",
+    "creation sequence/revision 1/1 and exact encrypted receipt in isolated fixture custody",
+    "renderer loss before submit and after commit",
+    "same-operation replay without duplicate journal entry",
+    "read/write/principal/workspace/window fences",
+    "duplicate path refused without overwrite",
+    "forged exact-digest ACK refused",
+    "disposal at GET_CONTEXT, IPC OPEN and after enqueue",
+    "explicit legacy null versus denied/error planning"
+  ],
+  "sourceBinding": {
+    "sourceCount": 4841,
+    "manifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+    "unchangedAcrossGates": true,
+    "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+    "excluded": [
+      "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+      "apps/electron/.impeccable/hook.cache.json"
+    ],
+    "bindingLimit": "Pre-commit candidate. Root binds committed source after push readback; docs excluded from source manifest."
+  },
+  "gates": [
+    {
+      "artifact": "shared.union.native-create-final.txt",
+      "sha256": "0c7cf23a1e4b0775f9317fc90fc7d3c4e00997e8ea465c1eb89b697c810c9798",
+      "result": "4902 pass / 12 skip / 0 fail; 21421 assertions; 468 files; 83.55 s"
+    },
+    {
+      "artifact": "server.union.native-create-final.txt",
+      "sha256": "975d2012a1a0a2215b4b8ad10ba0296ad4747517378936cc66e3686e31843d35",
+      "result": "1498 pass / 8 skip / 0 fail; 6099 assertions; 234 files; 21.39 s"
+    },
+    {
+      "artifact": "electron.union.native-create-full-scope.txt",
+      "sha256": "eb3850442a3278ff09d3b46e389f5ec295b217c8faa77c759a085b5cb547eba3",
+      "result": "4198 pass / 0 fail; 19989 assertions; 608 files; 25.62 s; apps/electron/src + all packages/ui + all packages/core"
+    },
+    {
+      "artifact": "focused.final.txt",
+      "sha256": "f30f1a49a6df54d898df902ba85b331e5763f4dea085a4bafbc30b4dac08b4dc",
+      "result": "34 pass / 0 fail; 235 assertions; 7 files"
+    },
+    {
+      "artifact": "review-final.txt",
+      "sha256": "79e0328a28ab9c436c9e26c6562204a3bad4b28f7bff09b5b6543cb7857f45ad",
+      "result": "41 pass / 0 fail; 1139 assertions; 4 files"
+    },
+    {
+      "artifact": "electron-main-build.native-create-final.txt",
+      "sha256": "c8d99d9cc9fc19f2e566ab82274218016c5d091c0f8e7287d82e9a22ae5bf243",
+      "result": "exit 0; build output verified"
+    },
+    {
+      "artifact": "electron-preload-build.native-create-final.txt",
+      "sha256": "5f2b572850839749bdb24be6b069d694b7bab19297e8ea3aa797a1e34e5a2618",
+      "result": "exit 0; preload entries verified"
+    },
+    {
+      "artifact": "shared.typecheck.final.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result": "exit 0"
+    },
+    {
+      "artifact": "server.typecheck.final.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result": "exit 0"
+    },
+    {
+      "artifact": "electron.typecheck.final.txt",
+      "sha256": "71228a274898dd4fa50280c05b5fdb2dce28aa3a991cd9816aca89d2989b8d39",
+      "result": "exit 0"
+    }
+  ],
+  "linuxBaseline": {
+    "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "environment": "Actual OrbStack NixOS Linux aarch64; Bun 1.4.2 / Node 24.20.0 / Git 2.55.0",
+    "sourceAcquisition": "Public GitHub directly inside isolated VM; no host private inputs",
+    "frozenInstall": "1812 packages; exit 0; lock unchanged",
+    "native": {
+      "artifact": "native-focused.txt",
+      "sha256": "38d04adfcbed5275c0a88b17c3c454dbc400fe11fcf6b29949471ac71bcb0164",
+      "result": "36 pass / 0 fail; 447 assertions; 5 files"
+    },
+    "cli": {
+      "artifact": "cli-focused.txt",
+      "sha256": "c9fdfc883760067bc19f06338225154d02b8fefb5082e7232d5fea789456faf7",
+      "result": "85 pass / 0 fail; 144 assertions; 4 files"
+    },
+    "serverTypecheck": "exit 0",
+    "limitation": "Headless arm64 baseline; creation follow-up, desktop/x64/cloud/iOS/Windows excluded. Standalone --help probe is unsupported and did not start a server."
+  },
+  "actualUi": {
+    "baseline": "Own-name/save/menu Quit/cold restart/menu Reload and independent reader verified before creation repair",
+    "creationFollowup": "NOT_RUN; CUA_SKY_UNRESPONSIVE",
+    "recoveryAttempts": [
+      "Exact app-path rebind timed out",
+      "Existing AX binding timed out and kernel reset",
+      "Fresh adapter after reset timed out"
+    ],
+    "actualCustodyReceiptDecryption": "PENDING; previous external audit does not bind credential profile and current credential read API may write/keychain; no new key reads attempted"
+  },
+  "limits": [
+    "No new offline authoring before canonical plan",
+    "Other creation-like routes are unchanged",
+    "Actual new creation UI/process crash and private OS custody audit pending",
+    "Full original DATA/SHARED and platform/provider matrix remains pending"
+  ],
+  "originalTasks": 109,
+  "requirements": 489,
+  "dependencyEdges": 464,
+  "fullTasksAccepted": 0
+}

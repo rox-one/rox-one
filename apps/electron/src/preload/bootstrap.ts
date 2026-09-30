@@ -225,6 +225,7 @@ const nativeReplicaBridge = createNativeReplicaBridge({ client, invokeIpc: (chan
 ;(api as ElectronAPI).nativeData.readEntity = nativeReplicaBridge.readEntity
 ;(api as ElectronAPI).nativeData.mutate = nativeReplicaBridge.mutate
 ;(api as ElectronAPI).readNote = nativeReplicaBridge.readNote
+;(api as ElectronAPI).createNote = nativeReplicaBridge.createNote
 
 let cancelPendingChatGptOAuth: (() => void) | null = null
 let pendingChatGptOAuthState: string | undefined

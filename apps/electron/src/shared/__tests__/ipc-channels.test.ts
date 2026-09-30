@@ -430,6 +430,7 @@ const EXPECTED_CHANNELS: string[] = [
   'notes:list',
   'notes:listAssets',
   'notes:move',
+  'notes:prepareCreate',
   'notes:read',
   'notes:rebuildIndex',
   'notes:rename',

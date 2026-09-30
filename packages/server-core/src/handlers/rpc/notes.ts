@@ -7,6 +7,7 @@ import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import matter from 'gray-matter'
 import yaml from 'js-yaml'
 import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteDocument, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary } from '@craft-agent/shared/protocol'
+import type { NativeReplicaCreatePlan } from '@craft-agent/shared/protocol/native-replica'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
@@ -54,6 +55,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.READ,
   RPC_CHANNELS.notes.SAVE,
   RPC_CHANNELS.notes.CREATE,
+  RPC_CHANNELS.notes.PREPARE_CREATE,
   RPC_CHANNELS.notes.RENAME,
   RPC_CHANNELS.notes.MOVE,
   RPC_CHANNELS.notes.DELETE,
@@ -1212,6 +1214,25 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (nextLinkCount > previousLinkCount) awardXpSafe('note_linked')
     changed({ workspaceId, reason: 'save', noteId: note.id })
     return note
+  }, { nativeAction: 'write' })
+
+  // Planning uses the same canonical filename/frontmatter authority as CREATE; it never commits.
+  server.handle(RPC_CHANNELS.notes.PREPARE_CREATE, (ctx, workspaceId: string, title: string, folder?: string): NativeReplicaCreatePlan | null => {
+    if (!ctx.principal) return null // Explicit legacy response; authorization failures never fall back.
+    const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
+    if (typeof title !== 'string' || (folder != null && typeof folder !== 'string')) throw new Error('invalid native note creation intent')
+    const safeFolder = folder ? assertSafeNoteId(folder) : ''
+    const filename = safeNoteFilename(title || 'Untitled')
+    const nativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
+    const path = `${NOTES_DIR}/${nativeId}.md`
+    assertSafeNoteId(nativeId)
+    const permissionFence = context.authorizationFences.find(item => item.action === 'read')!.fence
+    assertNativeNotesFences(deps, context)
+    return {
+      context: { issuer: context.principal.issuer, subject: context.principal.subject, workspaceId, permissionFence },
+      writePermissionFence: context.authorizationFences.find(item => item.action === 'write')!.fence,
+      mutation: { nativeId, expectedRevision: null, schemaVersion: 1, changes: [{ path, content: buildInitialNoteContent(title || 'Untitled') }] },
+    }
   }, { nativeAction: 'write' })
 
   server.handle(RPC_CHANNELS.notes.CREATE, async (ctx, workspaceId: string, title: string, folder?: string, operation?: NativeNoteOperation) => {

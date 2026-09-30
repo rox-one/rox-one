@@ -428,7 +428,8 @@
             "NATIVE-STARTUP-LIVE-BINDING-20260930",
             "NATIVE-WORKSPACE-STARTUP-20260930",
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
-            "NATIVE-NOTES-UI-BOUNDED-20260930"
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
           "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
         },
@@ -445,7 +446,8 @@
             "NATIVE-WORKSPACE-STARTUP-20260930",
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -455,7 +457,7 @@
           "codeRevision": null,
           "publishedIssueIsCodeDelivery": false,
           "evidenceRefs": [],
-          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+          "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
       }
@@ -526,7 +528,8 @@
             "NATIVE-STARTUP-LIVE-BINDING-20260930",
             "NATIVE-WORKSPACE-STARTUP-20260930",
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
-            "NATIVE-NOTES-UI-BOUNDED-20260930"
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
           "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
         },
@@ -543,7 +546,8 @@
             "NATIVE-WORKSPACE-STARTUP-20260930",
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -553,7 +557,7 @@
           "codeRevision": null,
           "publishedIssueIsCodeDelivery": false,
           "evidenceRefs": [],
-          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+          "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
       }
@@ -4240,7 +4244,8 @@
             "NATIVE-NOTES-BOUNDARY-20260930",
             "REVIEW-NATIVE-20260930",
             "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
-            "NATIVE-NOTES-UI-BOUNDED-20260930"
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
           "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
         },
@@ -4253,7 +4258,8 @@
             "REVIEW-NATIVE-20260930",
             "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -4263,7 +4269,7 @@
           "codeRevision": null,
           "publishedIssueIsCodeDelivery": false,
           "evidenceRefs": [],
-          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+          "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
       }
@@ -9776,9 +9782,10 @@
             "BUILD-MAIN-NATIVE-ENTRY-20260930",
             "BUILD-RENDERER-NATIVE-ENTRY-20260930",
             "TYPECHECK-ELECTRON-NATIVE-ENTRY-20260930",
-            "NATIVE-NOTES-UI-BOUNDED-20260930"
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
-          "summary": "Passing uncommitted broad union precedes later workspace/lifecycle edits. Later actual WS, helper, natural-exit checks plus main/renderer/typecheck refresh are bounded evidence; final revision-bound acceptance/delivery remains pending."
+          "summary": "Baseline source is published for review; native creation follow-up passes stable-source shared/server/Electron+full UI/core unions, typechecks and rebuilt main/preload. Full original integration/product/platform acceptance remains pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -9807,7 +9814,8 @@
             "BUILD-RENDERER-NATIVE-ENTRY-20260930",
             "TYPECHECK-ELECTRON-NATIVE-ENTRY-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
+            "NATIVE-NOTES-CREATE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -9817,7 +9825,7 @@
           "codeRevision": null,
           "publishedIssueIsCodeDelivery": false,
           "evidenceRefs": [],
-          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+          "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
       }
@@ -10005,7 +10013,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "dataContractFreeze": "NOT_ACCEPTED",
     "sharedContractFreeze": "NOT_ACCEPTED",
-    "build": "COMPLETE_STARTUP_BUILD_PASSED; LATER_MAIN_RENDERER_REFRESH_PASSED; FINAL_REVISION_REFRESH_PENDING",
+    "build": "COMPLETE_STARTUP_BUILD_PASSED; LATER_MAIN_RENDERER_AND_NATIVE_CREATE_MAIN_PRELOAD_REFRESH_PASSED",
     "fullPlatformMatrix": "PENDING",
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
@@ -10016,6 +10024,14 @@
       "sourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
       "scope": "NAMED_SOURCE_PATHS_ONLY; NOT_ALL_REPOSITORY_FILES"
     },
-    "finalFullGateRefresh": "PENDING_REVISION_BOUND_INTEGRATION"
+    "finalFullGateRefresh": "LOCAL_NATIVE_CREATE_SOURCE_MANIFEST_UNCHANGED_ACROSS_PASSING_UNIONS; PUSH_READBACK_PENDING",
+    "gitPublication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0
+    },
+    "nativeCreationEvidence": "native-create-20260930.json"
   }
 }
