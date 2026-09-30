@@ -1,7 +1,7 @@
 import { mkdtempSync, realpathSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync } from '../../utils/sqlite-runtime.ts';
 import { describe, expect, test } from 'bun:test';
 import en from '../../i18n/locales/en.json';
 import ru from '../../i18n/locales/ru.json';

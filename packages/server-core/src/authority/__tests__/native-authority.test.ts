@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
-import { DatabaseSync } from 'node:sqlite'
+import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isCredentialToken, NativeAuthority } from '../native-authority.ts'

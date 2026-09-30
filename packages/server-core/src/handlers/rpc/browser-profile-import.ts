@@ -4,7 +4,7 @@
  */
 import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { DatabaseSync } from 'node:sqlite'
+import { DatabaseSync } from '@craft-agent/shared/utils/sqlite-runtime'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'

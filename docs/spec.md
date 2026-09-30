@@ -154,6 +154,8 @@ Observed baseline evidence: Electron build passed at `a2a91649a8b7b81e7ce49f59b1
 
 ## Native local startup and bounded Notes acceptance (2026-09-30)
 
+Cloud runtime compatibility for the preserved working union is separately specified in [cloud-sqlite-runtime-recovery.md](cloud-sqlite-runtime-recovery.md). Startup/auth/restart must pass on the pinned Bun runtime before Cloud runtime is marked verified.
+
 A registered native principal starts from its own durable display name and the currently proved Electron window/workspace. Native startup observes only a four-field configuration-only runtime summary and its own workspace metadata. It does not read or mutate the host account roster, setup credentials, provider auth state or default connection. The server renews the original private window proof before requests and after awaited responses; workspace changes, renderer replacement, window destruction and credential revocation deny subsequent access. Session authorization remains independent: a denied session load is visible while Notes remains available.
 
 The integration must retain actual UI creation/edit/save, canonical file readback, an independently enrolled reader, renderer reload and cold restart evidence. These bounded observations do not accept all original Notes conversion/views, offline/conflict/revoke/workspace-switch UI, DATA/SHARED consumers or platform criteria. Creation and edit must be distinguished when only edit traverses the durable replica outbox. Exact encrypted receipt inspection has a separate evidence limit.

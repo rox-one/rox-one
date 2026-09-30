@@ -169,3 +169,7 @@ The current scope still contains all **297 remaining rows**; the September regis
 ## Scoped WebUI type visibility recovery
 
 See [webui-bridge-recovery.md](webui-bridge-recovery.md) for the isolated compiler recovery from the September source snapshot, its owner, bounded paths, dependencies and verification. The existing program DAG and acceptance states above remain canonical.
+
+## Scoped Cloud SQLite runtime recovery
+
+The recovery lead owns the isolated provider adapter, exact import repairs and real Bun/Node/runtime verification described in [cloud-sqlite-runtime-recovery.md](cloud-sqlite-runtime-recovery.md). It depends on the captured September union and reviewed bridge recovery. It does not accept the full program or modify the active native owner's worktree.
