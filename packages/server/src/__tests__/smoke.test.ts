@@ -246,8 +246,10 @@ describe('headless server lifecycle smoke', () => {
 
   for (const exitCode of [0, 17]) {
     it(`rejects a child already exited with ${exitCode} as graceful shutdown`, async () => {
+      const profile = createProfile()
       const proc = Bun.spawn([process.execPath, '-e', `process.exit(${exitCode})`], {
-        env: {}, stdout: 'pipe', stderr: 'pipe',
+        env: { ROX_CONFIG_DIR: profile.root, CRAFT_CONFIG_DIR: profile.root },
+        stdout: 'pipe', stderr: 'pipe',
       })
       const drains = Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()])
       const stop = createServerStop(proc, drains, () => 'already-exited child fixture')

@@ -57,6 +57,9 @@ jobs:
 
       - name: Build WebUI assets
         run: bun run webui:build
+        env:
+          # The hosted macOS Vite build exceeded Node's default ~2 GiB heap.
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Build server bundle
         # xlsx stays external — its ESM build has no default export, so bundling fails;
