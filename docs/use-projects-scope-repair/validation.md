@@ -18,6 +18,6 @@ Hook after SHA-256: `2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0
 
 Runtime: Bun1.3.14. Command: `bun test apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts`.
 
-The added14th case verifies actual projectCatalogAtom shared metadata retention; the original13 regression assertion bodies are retained. Sanitized logs and exact hashes are in evidence/ and validation.json. Personal filesystem prefixes in the RED stack are replaced with fixture/; private raw logs remain separate provenance artifacts.
+The added14th case verifies actual projectCatalogAtom shared metadata retention; the original13 regression assertion bodies are retained. Sanitized logs and exact hashes are in evidence/ and validation.json. Personal filesystem prefixes in the RED stack are replaced with fixture/ and trailing excerpt whitespace is normalized; private raw logs remain separate provenance artifacts.
 
 This controlled closure/lifecycle evidence does not claim a DOM mount, native/browser pass, authority acceptance, full repository suite or completion of the R15 union. Existing source owners retain integration, full build/type/native/UI gates and program acceptance.

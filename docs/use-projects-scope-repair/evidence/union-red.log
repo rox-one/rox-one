@@ -207,7 +207,7 @@ error: expect(received).toEqual(expected)
 
       at <anonymous> (fixture/apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:192:24)
 (fail) useProjects workspace and load generations > queued callback from a disposed A subscription cannot alter B [7.72ms]
-195 | 
+195 |
 196 |   test('an obsolete refresh closure cannot start a request for the old scope', () => {
 197 |     const h = harness()
 198 |     try {

@@ -59,7 +59,7 @@
     },
     {
       "path": "docs/use-projects-scope-repair/evidence/union-red.log",
-      "sha256": "47cb3b9dcbcb29eab5ca29de6d924c5578f749e77c4028fb86a8d5ad4011869a"
+      "sha256": "d174b3fdb3f3e83e92af200ccbebf60e86920322daa7f9a9fd316b678da9ed94"
     },
     {
       "path": "docs/use-projects-scope-repair/evidence/union-green.log",
@@ -69,5 +69,6 @@
       "path": "docs/use-projects-scope-repair/evidence/independent-root-green.log",
       "sha256": "479e213861fea87762ca2bd73b6886340317c1dae72746dd9adfb13e7f8ab78a"
     }
-  ]
+  ],
+  "publicLogNormalization": "Personal filesystem prefixes replaced with fixture/; trailing source-excerpt whitespace normalized. Raw producer logs retained separately."
 }
