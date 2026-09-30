@@ -1,5 +1,23 @@
 # September program implementation plan
 
+
+## Current native publication runtime recovery (2026-09-30)
+
+This additive technical recovery does not replace any of the existing 109 program tasks or mark their product acceptance complete. The published dependency is native PR #1293 head `c358bd0ce0670cf6baaf0b3579933956c7009eb5`; previously tested old WIP stack PR #1315 is historical portability evidence.
+
+| Work | Owner | Dependency | Owned artifact | Verification / delivery |
+|---|---|---|---|---|
+| Isolate latest published native source and reproduce pinned Bun import failure | CloudRecovery | Exact remote #1293 head readback | New `fix/september-sqlite-runtime-20260930` checkout; baseline log | Absolute root/ref; clean baseline; unchanged native creation/outbox source |
+| Transplant reviewed runtime adapter and fixtures | CloudRecovery | Reviewed adapter SHA256 `8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831` | Six consumer imports, three direct-DB fixture imports, shared adapter/cross-runtime fixtures | SQL/schema/auth and native changes preserved; frozen install without lock changes; domain tests and five types |
+| Exercise actual built runtime with strict helper | CloudRecovery | Final reviewed helper SHA256 `c02452b78951a13e58e0279191d2be895c7220ce62ab91cf4c8e28b6f9b75e68` | Built subprocess, WebUI and server from own checkout; scoped workflow | Real HTTP/WS auth, private config, required live SIGTERM/exit0, stopped endpoints, persistence, pre-exited0/17 negatives |
+| Independently review, publish and read back exact hosted execution | Root / GatesReviewer; CloudRecovery delivers after approval | Frozen source manifest plus local logs | Runtime recovery receipt; draft stacked PR based on `feat/september-program-20260930` | Review before commit/push; exact remote head; Ubuntu/macOS job logs, actual checkout SHAs/parents, counts and preserved failure history |
+
+The scoped workflow preserves frozen install scripts, contents:read permission, package checks, actual builds and assertions. Existing ephemeral install token and bounded 4096MiB Node compiler/build heap settings repeat the already observed hosted remedies. No runner registration, account credential, network policy or original active-worktree change is part of this recovery.
+
+Real PR integration follow-up: merge exact published07907f909838253eb011e4e27a510c4ba5b5a9df into the reviewed8f302b20 recovery branch, preserve both native caller-session and runtime scopes in spec/plan, and keep all production runtime/fixture/helper bytes unchanged. Root owns the new native App/caller loader producer; CloudRecovery owns only this isolated integration, existing caller-session-loading test inclusion, final manifest and repeated affected gates. Independent review and exact hosted push/PR source evidence bind the new merge commit. No future source is adopted automatically.
+
+Documentation integration recovery: repeated native publications produced append-only conflicts in these recovery sections. The complete recovery addendum now appears near the document start; the entire native document from tested base `07907f909838253eb011e4e27a510c4ba5b5a9df` remains byte-preserved, rather than retained as a prefix. This layout change adopts no newer native implementation. Local five-type, three-build, 919-test and strict 4-test evidence binds to reviewed ordinary merge `da78e3e79f5c268a33fc429d2913e8b8d59adeac`; hosted PR evidence must separately identify its actual synthetic checkout and both parents.
+
 **Goal:** deliver an evidence-backed, non-duplicative Rox/Conation/RMA/Golden Gate program: reconstruct requirements and current state, audit actual screens, freeze common interfaces, implement approved independent work safely, serially integrate, and prove the full platform/product acceptance matrix. The program is authorized for concurrent implementation across the existing 109-task DAG; work is in progress and acceptance is NOT COMPLETE.
 
 **Spec:** [`docs/spec.md`](spec.md); product scope/complete U01–U31, Conation seq703 16-row checklist and domain mapping: [`docs/september-program/PRD.md`](september-program/PRD.md).
@@ -201,18 +219,3 @@ Recovery producer owns only App, the caller-aware inventory/capability helper an
 Final combined Electron src + entire UI/core: **4,203 pass / 0 fail**, 20,022 assertions across 609 files; Electron TypeScript and production renderer rebuild pass. Its 3,588-file package gate manifest is unchanged before/after and distinct from the broader 4,846-file runtime publication manifest. Independent actual helper probes pass: delayed transport error stays cleared, delayed permission result applies zero callbacks. Root binds only the three reviewed renderer paths and their scoped evidence; the subsequent scheduler recovery work is excluded.
 
 Native app restarted in the sole preserved task profile. Root recovered exact PID/index binding across multiple Electron apps, native AX and a task-window screenshot; an open workspace wizard was observed. Positive creation/banner/receipt readback remains pending because foreground ownership changed. No creation or complete desktop acceptance is inferred from source tests or startup. All 109 original tasks/489 requirements/464 edges are unchanged. Current facets are 25 implementation-in-progress and 23 verification-in-progress, zero full tasks accepted.
-
-## Current native publication runtime recovery (2026-09-30)
-
-This additive technical recovery does not replace any of the existing 109 program tasks or mark their product acceptance complete. The published dependency is native PR #1293 head `c358bd0ce0670cf6baaf0b3579933956c7009eb5`; previously tested old WIP stack PR #1315 is historical portability evidence.
-
-| Work | Owner | Dependency | Owned artifact | Verification / delivery |
-|---|---|---|---|---|
-| Isolate latest published native source and reproduce pinned Bun import failure | CloudRecovery | Exact remote #1293 head readback | New `fix/september-sqlite-runtime-20260930` checkout; baseline log | Absolute root/ref; clean baseline; unchanged native creation/outbox source |
-| Transplant reviewed runtime adapter and fixtures | CloudRecovery | Reviewed adapter SHA256 `8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831` | Six consumer imports, three direct-DB fixture imports, shared adapter/cross-runtime fixtures | SQL/schema/auth and native changes preserved; frozen install without lock changes; domain tests and five types |
-| Exercise actual built runtime with strict helper | CloudRecovery | Final reviewed helper SHA256 `c02452b78951a13e58e0279191d2be895c7220ce62ab91cf4c8e28b6f9b75e68` | Built subprocess, WebUI and server from own checkout; scoped workflow | Real HTTP/WS auth, private config, required live SIGTERM/exit0, stopped endpoints, persistence, pre-exited0/17 negatives |
-| Independently review, publish and read back exact hosted execution | Root / GatesReviewer; CloudRecovery delivers after approval | Frozen source manifest plus local logs | Runtime recovery receipt; draft stacked PR based on `feat/september-program-20260930` | Review before commit/push; exact remote head; Ubuntu/macOS job logs, actual checkout SHAs/parents, counts and preserved failure history |
-
-The scoped workflow preserves frozen install scripts, contents:read permission, package checks, actual builds and assertions. Existing ephemeral install token and bounded 4096MiB Node compiler/build heap settings repeat the already observed hosted remedies. No runner registration, account credential, network policy or original active-worktree change is part of this recovery.
-
-Real PR integration follow-up: merge exact published07907f909838253eb011e4e27a510c4ba5b5a9df into the reviewed8f302b20 recovery branch, preserve both native caller-session and runtime scopes in spec/plan, and keep all production runtime/fixture/helper bytes unchanged. Root owns the new native App/caller loader producer; CloudRecovery owns only this isolated integration, existing caller-session-loading test inclusion, final manifest and repeated affected gates. Independent review and exact hosted push/PR source evidence bind the new merge commit. No future source is adopted automatically.
