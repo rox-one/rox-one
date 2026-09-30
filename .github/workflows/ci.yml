@@ -19,3 +19,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun run validate:ci
+        env:
+          # The hosted Electron TypeScript graph exceeded Node's default ~2 GiB heap.
+          NODE_OPTIONS: --max-old-space-size=4096
