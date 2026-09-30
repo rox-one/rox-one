@@ -213,3 +213,9 @@ The final full shared union is 4,914 pass/12 skip/0 fail, 21,547 assertions acro
 The rollback boundary is material: old readers can dispatch terminal_pending again. Recovery is same-version only; complete current recovery or preserve/isolate the private queue before any older binary is launched. SIGKILL does not prove power-loss durability or multi-writer scheduling. Owned loopback effects do not accept production SSRF/provider/recipient behavior.
 
 The registry preserves all 109 tasks, 489 requirements and 464 edges. RUNTIME-02 receives bounded existing-worker acceptance evidence; REMINDERS-01 stays NOT_RUN. There are zero fully accepted tasks. Root publishes the five reviewed paths and evidence, verifies every manifest blob against Git and reads the exact remote/PR head before updating publication status.
+
+## Exact local CI dependency recovery (2026-09-30)
+
+The earlier interrupted document attempt is retained as failure history. Distinct offline-cache, official full-transfer and verified ranged-transfer remedies identified and repaired the missing declared cryptography50.0.2 artifact. The exact official wheel SHA256 was matched to PyPI metadata; task-private public dependency cache preparation preserved normal scripts, dependency declarations and source bytes. No new pins, global installations, private inputs or alternate mirrors were used.
+
+Exact bun run validate:ci now passes exit0 in109.43s: typecheck:all,242 selectedBun tests/687assertions,19 document tests and all three i18n checks. All4,849 source files match pre-preparation/pre-validation/after manifests and committed source8dae0422. This is prepared-host evidence: clean runners still need working official PyPI transfer or a verified cache, and the missing eligible trusted GitHub toolchain runner remains separate. Prior interruptions and original product/platform/native custody criteria are preserved.

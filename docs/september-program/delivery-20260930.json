@@ -421,5 +421,69 @@
     "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
     "committedSourceMatchesTestedManifest": true,
     "bindingLimit": "Shared/server/Electron full unions and types bind to exact source. Exact validate:ci interrupted document dependencies and is incomplete. Actual native creation, providers, iOS/Windows and GitHub eligible-runner acceptance remain pending. Later docs-only commits have a different head."
+  },
+  "localCiRecovery": {
+    "status": "LOCAL_EXACT_VALIDATION_PASSED",
+    "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+    "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+    "sourceCount": 4849,
+    "observedAt": "2026-09-30T15:26:18.258Z",
+    "command": "bun run validate:ci",
+    "exitCode": 0,
+    "seconds": 109.427146958,
+    "typecheckAll": "PASS",
+    "selectedBun": {
+      "pass": 242,
+      "fail": 0,
+      "assertions": 687
+    },
+    "documents": {
+      "pass": 19,
+      "fail": 0
+    },
+    "i18n": {
+      "parity": "PASS",
+      "sorted": "PASS",
+      "coverage": "PASS"
+    },
+    "dependencyPreparation": "Task-private offline UV cache; exact official PyPI cryptography50.0.2 wheel reconstructed through bounded ranges and verified against release SHA256; public document cache artifacts cloned independently using APFS. Normal scripts and dependency declarations unchanged; no new pins/global packages/private inputs.",
+    "wheel": {
+      "version": "50.0.2",
+      "bytes": 3914904,
+      "sha256": "fa8f5efb344d6908a1ce62f4a24e2e5780f825d6f53f5f50ec5ffacac72936cb"
+    },
+    "retainedEvidence": [
+      {
+        "id": "document-dependency-preparation-20260930/report.md",
+        "sha256": "8945ac070a64c3a59a8c889d70019ea64dda4360c0150322b6e8780ab0cff001",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/validate-ci.txt",
+        "sha256": "4c26989a8a8e6ea8a440d85f524b464742126c70bb9c517c2835a5f179255804",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/validate-ci-result.json",
+        "sha256": "a89ea0c7baa278a13d2ab371168cacc2ce7e96e5debb0218170cc227463e203e",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/dependency-provenance.json",
+        "sha256": "8a027b52d2b346d78bacc9d229fa3d14d24bb48d0f3de28c12c068bad3e0aec9",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      },
+      {
+        "id": "document-dependency-preparation-20260930/official-wheel-ranged-receipt.json",
+        "sha256": "1e1453b3fd7fc41fe4a856bc1863660342aa3eba9d7747aa609b6547ec1728cc",
+        "distribution": "PRIVATE_LOGS_RETAINED; sanitized summary only in public packet"
+      }
+    ],
+    "limits": [
+      "Prepared-host exact CI acceptance, not clean ephemeral runner connectivity or remote GitHub required-check completion.",
+      "Original interrupted17pass/2controlledSIGTERM history remains unchanged.",
+      "Full platform/provider/native UI/receipt custody and original task criteria remain pending."
+    ],
+    "fullOriginalTasksAccepted": 0
   }
 }
