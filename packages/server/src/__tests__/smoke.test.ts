@@ -28,7 +28,7 @@ interface SpawnedServer {
   proc: Subprocess
   logs: () => string
   tokenWasLogged: () => boolean
-  stop: () => Promise<void>
+  stop: (mode?: 'graceful' | 'cleanup') => Promise<void>
 }
 
 async function within<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
@@ -40,6 +40,34 @@ async function within<T>(promise: Promise<T>, ms: number, message: string): Prom
     ])
   } finally {
     clearTimeout(timer)
+  }
+}
+
+function createServerStop(proc: Subprocess, drains: Promise<unknown>, logs: () => string): SpawnedServer['stop'] {
+  let stoppedGracefully = false
+  return async (mode = 'graceful') => {
+    if (proc.exitCode !== null) {
+      await drains
+      if (mode === 'cleanup') return
+      if (stoppedGracefully) {
+        expect(proc.exitCode).toBe(0)
+        return
+      }
+      throw new Error(`Server exited before requested SIGTERM (${proc.exitCode})\n${logs()}`)
+    }
+    proc.kill('SIGTERM')
+    try {
+      const code = await within(proc.exited, 10_000, 'Server did not stop on SIGTERM')
+      await drains
+      if (code !== 0) throw new Error(`Server exited ${code} after SIGTERM\n${logs()}`)
+      expect(code).toBe(0)
+      stoppedGracefully = true
+    } catch (error) {
+      if (proc.exitCode === null) proc.kill('SIGKILL')
+      await proc.exited
+      await drains
+      throw error
+    }
   }
 }
 
@@ -108,21 +136,7 @@ async function spawnTestServer(profile: ReturnType<typeof createProfile>, token:
     proc,
     logs: () => output.replaceAll(token, '[test token redacted]'),
     tokenWasLogged: () => output.includes(token),
-    stop: async () => {
-      if (proc.exitCode !== null) { await drains; return }
-      proc.kill('SIGTERM')
-      try {
-        const code = await within(proc.exited, 10_000, 'Server did not stop on SIGTERM')
-        await drains
-        if (code !== 0) throw new Error(`Server exited ${code} after SIGTERM\n${server.logs()}`)
-        expect(code).toBe(0)
-      } catch (error) {
-        proc.kill('SIGKILL')
-        await proc.exited
-        throw error
-      }
-      await drains
-    },
+    stop: createServerStop(proc, drains, () => output.replaceAll(token, '[test token redacted]')),
   }
   SERVERS.push(server)
   if (token.length < 16) {
@@ -139,7 +153,7 @@ async function spawnTestServer(profile: ReturnType<typeof createProfile>, token:
     expect(url).toBe(server.url)
     return server
   } catch (error) {
-    await server.stop()
+    await server.stop('cleanup')
     throw new Error(`${error instanceof Error ? error.message : error}\n${server.logs()}`)
   }
 }
@@ -167,7 +181,7 @@ function request(server: SpawnedServer, path: string, options: RequestInit = {})
 
 afterEach(async () => {
   try {
-    const results = await Promise.allSettled(SERVERS.splice(0).map(server => server.stop()))
+    const results = await Promise.allSettled(SERVERS.splice(0).map(server => server.stop('cleanup')))
     const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected')
     if (failures.length) throw new AggregateError(failures.map(result => result.reason), 'Server cleanup failed')
   } finally {
@@ -223,9 +237,23 @@ describe('headless server lifecycle smoke', () => {
     expect(JSON.parse(readFileSync(join(profile.root, 'config.json'), 'utf8'))).toMatchObject(JSON.parse(savedConfig))
     expect(server.tokenWasLogged()).toBe(false)
     expect(restarted.tokenWasLogged()).toBe(false)
+    await restarted.stop()
   }, TEST_TIMEOUT)
 
   it('rejects short token at startup', async () => {
     await spawnTestServer(createProfile(), 'short')
   }, TEST_TIMEOUT)
+
+  for (const exitCode of [0, 17]) {
+    it(`rejects a child already exited with ${exitCode} as graceful shutdown`, async () => {
+      const proc = Bun.spawn([process.execPath, '-e', `process.exit(${exitCode})`], {
+        env: {}, stdout: 'pipe', stderr: 'pipe',
+      })
+      const drains = Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()])
+      const stop = createServerStop(proc, drains, () => 'already-exited child fixture')
+      expect(await within(proc.exited, 10_000, 'Exit fixture timed out')).toBe(exitCode)
+      await expect(stop()).rejects.toThrow(`before requested SIGTERM (${exitCode})`)
+      await expect(stop('cleanup')).resolves.toBeUndefined()
+    }, TEST_TIMEOUT)
+  }
 })
