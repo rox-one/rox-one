@@ -1,0 +1,44 @@
+{
+  "recordedAt": "2026-09-30T16:25:22.603Z",
+  "report": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/review-report.json",
+    "sha256": "fc60997f1473f753b275cf7918cdd57e00739044fd4839fc8bd19f1976494e1c",
+    "bytes": 31206
+  },
+  "originalReview": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/native-v1-review.json",
+    "sha256": "620b2fcd671c3be0bedb5c42dd9ed0b05780e5d45e59170cd59d00b53833bc4d",
+    "bytes": 23504
+  },
+  "originalOracle": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/validator-controls.test.ts",
+    "sha256": "58295732a250579829e468e76c4fa20687aa758fac6c3ae0cf6d3d7f9d5f5d65",
+    "bytes": 4726
+  },
+  "originalFailure": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/validator-execution.log",
+    "sha256": "e99ec1e994fe73757528614e696958fdca6cd698e82d8f8b5b9cb1b93564176b",
+    "bytes": 3340
+  },
+  "sealedDelta": {
+    "path": "/tmp/rox-wp48-domain/native-v2/manifest.json",
+    "sha256": "9be658a3be679eb23158d88cc5007477832c67688453d5ca052ac1636de19531",
+    "bytes": 15597
+  },
+  "executedFrozenDelta": {
+    "path": "/tmp/rox-wp48-domain/native-v2/review-manifest.json",
+    "sha256": "f9fe52b70997e6e635be5384764306d672005a1e4e6b7b2476932af31267d8f5",
+    "bytes": 5219
+  },
+  "finalCrossBinding": {
+    "path": "/tmp/rox-wp48-native-independent-ultra-20260930/v2/final-seal-receipt.json",
+    "sha256": "d6a5b6c7e32beeb2eb68250764fe876d07fb0b5a8411f698e63c758c8cc8070e",
+    "bytes": 29227
+  },
+  "rootMutation": false,
+  "actualIndependentExecution": {
+    "pass": 20,
+    "fail": 0,
+    "assertions": 27
+  }
+}

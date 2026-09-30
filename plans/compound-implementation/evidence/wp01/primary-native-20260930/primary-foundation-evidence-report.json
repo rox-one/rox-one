@@ -1,0 +1,770 @@
+{
+  "schemaVersion": 1,
+  "scope": "Bounded WP01 foundation primary native evidence audit; all work outside; no root/UI/runtime/PG writes or launches",
+  "currentPrimary": {
+    "resultPath": "/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790787061130/result.json",
+    "resultSha256": "79af30eecbbd71b62e6e74b44d943e24eb7e53b618b616857cd76bc9d6131528",
+    "inputRevision": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "sourceSha256": "cac6ec003b57812e29eb660a39473f939292e3e94edf8d5d87324c5199c26630",
+    "status": "PASS_NATIVE_WP01_CONSUMER",
+    "assertionsExecuted": 383,
+    "assertionCountSource": "root-owned actual execution receipt provided by root",
+    "errors": 0,
+    "consoleErrors": 0,
+    "electron": "39.2.7",
+    "node": "22.21.1",
+    "chrome": "142.0.7444.235",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "originalAssertions": {
+    "primary130UnchangedThroughWorkerPatch": true,
+    "offline92UnchangedThroughWorkerPatch": true,
+    "proof": "/tmp/rox-wp01-native-current-diagnostic/worker-core-gate-ultra/pierre-seed-proposal/manifest.json",
+    "currentCACRootOwnedFurtherEdits": "type-only digeststring|Uint8Array and existing passive observer moved before sidebar, nativeDOM diagnostics; parent confirms originals unchanged; currentCACsource independently represented by receipt hash, currentsourcecopy not supplied"
+  },
+  "fixture": {
+    "actualSeed": [
+      {
+        "profile": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/A",
+        "requested": "pierre",
+        "stored": "pierre",
+        "resolved": "pierre",
+        "presetSha256": "dd1a2ac59e1873d69dc8fd31a56aa6621cacfdf294c3a12a664cb055e74b6539",
+        "supportedModes": [
+          "light",
+          "dark"
+        ],
+        "scenic": false
+      },
+      {
+        "profile": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/B",
+        "requested": "pierre",
+        "stored": "pierre",
+        "resolved": "pierre",
+        "presetSha256": "dd1a2ac59e1873d69dc8fd31a56aa6621cacfdf294c3a12a664cb055e74b6539",
+        "supportedModes": [
+          "light",
+          "dark"
+        ],
+        "scenic": false
+      }
+    ],
+    "actualInitialAndRestartReadbacks": [
+      {
+        "profile": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/A",
+        "requested": "pierre",
+        "appColorTheme": "pierre",
+        "workspaceColorTheme": null,
+        "theme": "pierre",
+        "scenic": null
+      },
+      {
+        "profile": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/B",
+        "requested": "pierre",
+        "appColorTheme": "pierre",
+        "workspaceColorTheme": null,
+        "theme": "pierre",
+        "scenic": null
+      },
+      {
+        "profile": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/A",
+        "requested": "pierre",
+        "appColorTheme": "pierre",
+        "workspaceColorTheme": null,
+        "theme": "pierre",
+        "scenic": null
+      },
+      {
+        "profile": "/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/rox-wp01-electron-2J90UG/B",
+        "requested": "pierre",
+        "appColorTheme": "pierre",
+        "workspaceColorTheme": null,
+        "theme": "pierre",
+        "scenic": null
+      }
+    ],
+    "patchSha256": "68fcca10941edebcf102131df2c4396091b102f99f7c528ef98efc7f36a77433",
+    "productionThemeBehaviorChanged": false,
+    "pureFrozenActualTests": "5pass/0fail/12expect, Bun1.4.2; Pierre3/0/8+conditionalclamp2/0/4"
+  },
+  "capture": {
+    "pngSHAAndCRCValidated": 27,
+    "all27ManuallyDecoded": true,
+    "personallyViewedNames": [
+      "A-dark-native-shared-detail",
+      "A-light-native-shared-detail",
+      "A-dark-200-percent-narrow-keyboard",
+      "A-light-200-percent-narrow-keyboard",
+      "B-projection-before-rejected-private-get",
+      "B-projection-after-rejected-private-get",
+      "B-private-canonical-route-denied-no-title",
+      "B-native-Connections-403-quiesced-live-preserved-durable",
+      "A-post-service-and-profile-restart",
+      "B-post-service-and-profile-restart",
+      "B-revoked-session-denied-host-folder-preserved",
+      "B-explicit-native-disconnect-no-durable-token",
+      "create-reviewed-7fe5dfa8",
+      "create-reviewed-f5d466d6"
+    ],
+    "privateExactPNGAndText": true,
+    "privateExactRawRGBA": true,
+    "privateDimensions": [
+      1832,
+      312
+    ],
+    "privatePNG": "6aa695201da66b3f4aacdbb74d497e07f68ef3595964e86cd915a7a97b8c5a64",
+    "rawRGBA": "cc3b2dc8d52507618415b06af9b662fcff38bcf1b4cd7de533ec1be9c31fbf67",
+    "browserRGBA": "1fca4c96963aa236df719b9686dfed3b2b1e5f29881c12d64ec37619f1ef1a6e",
+    "rawEqualsBrowser": false,
+    "ICC": {
+      "profileSha256": "4c0ff0fead968dfabb20d3534cab8e0287146c4cfcdce51a61fd1caa9ba1de7c",
+      "bytes": 536,
+      "colorSpace": "RGB ",
+      "pcs": "XYZ ",
+      "description": "Google/Skia/0E983EAA5A1289650CB7C7F6821DF696"
+    },
+    "thirdIndependentDecoder": {
+      "name": "Pillow11.3.0",
+      "rawRGBA": "cc3b2dc8d52507618415b06af9b662fcff38bcf1b4cd7de533ec1be9c31fbf67",
+      "matchesManual": true,
+      "ImageCmsToSRGBRGBA": "d7c73b95f04445bbaf6c73dcd1dfbc0338e504a734cb71e5ef6fc3f7ba18f0f0",
+      "matchesBrowser": false
+    },
+    "interpretation": "Encoded bytes/raw decoded equality independently verifies beforeafter no-pixel-change. Embedded ICC plus browser canvas decode permits color conversion, but exact browser transformation is not established; no foreign-buffer conclusion.",
+    "narrowDOM": {
+      "modes": [
+        "dark",
+        "light"
+      ],
+      "nativeContent": [
+        980,
+        800
+      ],
+      "zoom": 2,
+      "displayScale": 2,
+      "renderer": [
+        490,
+        400
+      ],
+      "DPR": 4,
+      "panel": [
+        445,
+        340
+      ],
+      "clientAndScrollWidth": 437,
+      "refreshDimensions": [
+        80.73828125,
+        33.75
+      ],
+      "refreshBottomAfterOriginalScroll": 400,
+      "scrollTop": 8.75,
+      "actualHitTarget": true,
+      "trustedFocusedEnter": true
+    },
+    "narrowPixel": {
+      "encodedSize": [
+        980,
+        800
+      ],
+      "headlineAndIDClipped": true,
+      "refreshAbsentFromCapture": true,
+      "status": "NOT_VERIFIED",
+      "observation": "Saved narrow PNG shows approx4pixel/CSS drawing with viewport crop, inconsistent with full DOM490x400 coverage; correct theme/ID/content. Cause not established."
+    }
+  },
+  "originalFailureHistory": {
+    "fail270": "Themeclass waitfailed afterdarkgeometry; actual earlier preset/Space target unavailable. CurrentcompatiblePierre+trustedSpace works; no retrospective Haze cause claim.",
+    "fail243": "Strict actualpixels3172x312→1162x312 detected afterFORBIDDEN; current stablebeforeafter geometry does not establish oldresize source.",
+    "fail253": "ArrowRightwait timedout ataria198 withoutAprepostnative/eventevidence; currentactual1400x900width320→328→320/trustedseparatorworks. Conditionaldisplayclamp candidate remains unconfirmed foroldrun."
+  },
+  "criteria": {
+    "matrixPath": "/tmp/rox-wp01-native-current-diagnostic/criteria-input/matrix.json",
+    "matrixSha256": "004bbbf0ae52c155123e0dd8ce35a32dc275ab3cd4a238447bad110b41d59a14",
+    "original54Summary": {
+      "criterionRows": 54,
+      "counts": {
+        "VERIFIED": 32,
+        "PENDING": 17,
+        "DEFERRED_BY_DECLARED_WP01_SCOPE": 5
+      },
+      "fullNativeAcceptance": false,
+      "fullWp01DoD": false,
+      "deliveryVerified": false
+    },
+    "definitePrimaryClosures": [
+      "B6",
+      "A1",
+      "UI2",
+      "UI3",
+      "T1",
+      "FC2"
+    ],
+    "pending17Count": 17,
+    "definiteClosures": 6,
+    "remainingPending": 11,
+    "rows": [
+      {
+        "id": "B1",
+        "criterion": "transport-authenticated Actor",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "B2",
+        "criterion": "workspace membership",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "B3",
+        "criterion": "minimal Project identity row",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "B4",
+        "criterion": "owner-only policy enforced server-side",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "B5",
+        "criterion": "Project create transaction+idempotent receipt",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "B6",
+        "criterion": "native Project RPC/list/detail",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+        "primaryEvidence": [
+          "createReceipts:3 genuine native form→production RPC→PostgreSQL receipts",
+          "A/B private and shared canonical details",
+          "A/B post-service-and-profile-restart captures"
+        ],
+        "remainingGap": null
+      },
+      {
+        "id": "A1",
+        "criterion": "A opens private Project in native ROX",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+        "primaryEvidence": [
+          "A-private-native-detail PNG/HTML/text: actual private title, canonical ID, detail ready"
+        ],
+        "remainingGap": null
+      },
+      {
+        "id": "A2",
+        "criterion": "B without membership gets 403 and no title through RPC/HTTP",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "A3",
+        "criterion": "client cannot forge principal/workspace",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "UI1",
+        "criterion": "loading",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+        "primaryEvidence": [],
+        "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+      },
+      {
+        "id": "UI2",
+        "criterion": "empty",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+        "primaryEvidence": [
+          "create-reviewed-7fe5dfa8 + create-reviewed-f5d466d6 PNG/HTML/text: ready section,0shared rows,visible Нет доступных общих проектов. behind creation dialog"
+        ],
+        "remainingGap": null
+      },
+      {
+        "id": "UI3",
+        "criterion": "permission_denied",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+        "primaryEvidence": [
+          "B-private-canonical-route-denied-no-title: detail denied+FORBIDDEN/no private title",
+          "Connections403/revoked-session denial captures"
+        ],
+        "remainingGap": null
+      },
+      {
+        "id": "UI4",
+        "criterion": "offline_queued",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+        "primaryEvidence": [],
+        "remainingGap": "Queue mechanism verified by actual PG/HTTP/WS/SIGKILL/immutable encrypted bytes and fences; rendered queue/retry/cancel/restart acceptance is still pending."
+      },
+      {
+        "id": "UI5",
+        "criterion": "retryable_error",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+        "primaryEvidence": [],
+        "remainingGap": "Actual retry denial/terminal-state mechanisms pass; rendered retryable-error state leaf is still pending."
+      },
+      {
+        "id": "UI6",
+        "criterion": "applied_verified",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+        "primaryEvidence": [
+          "PARTIAL: all3 actual receipts applied/succeeded/receipt_verified→canonical detail ready; no dedicated named applied_verified rendering leaf"
+        ],
+        "remainingGap": "Actual applied/receipt_verified canonical body passes schema/PG/restart; native applied_verified rendering remains pending."
+      },
+      {
+        "id": "T1",
+        "criterion": "A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+        "primaryEvidence": [
+          "New rendered A-open + genuine HTTP403/native FORBIDDEN/no-title; existing matrix forge/holdout portion retained as prior evidence, not rerun"
+        ],
+        "remainingGap": null
+      },
+      {
+        "id": "T2",
+        "criterion": "Seed broken identity boundary: unauthorized actor or dropped/duplicated event must fail WP-01 acceptance",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "T3",
+        "criterion": "Restart between persisted command and reply while running Private shared Project: authenticated actor and workspace boundary; state/receipt/canonical ID remain consistent",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "HOLDOUT",
+        "criterion": "independent evaluator injects second failure variant",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "SCHEMA",
+        "criterion": "strict request, body Actor and workspace schema",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "MIGRATION",
+        "criterion": "identity, ownership and idempotency constraints; startup migration replay",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "EVENTS",
+        "criterion": "transaction events, revisioned invalidation and replay cursor",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "OBS1",
+        "criterion": "commandId",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "OBS2",
+        "criterion": "causationId",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "OBS3",
+        "criterion": "correlationId",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "OBS4",
+        "criterion": "aggregateRevision",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "OBS5",
+        "criterion": "policyEpoch",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "OBS6",
+        "criterion": "projectionWatermark",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "OBS7",
+        "criterion": "retry/DLQ counters",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "PRIVACY",
+        "criterion": "no raw email/body/transcript/tokens in logs",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC1",
+        "criterion": "UI",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+        "primaryEvidence": [
+          "PARTIAL: native create/list/detail/empty/denied work; loading/offline/failure-state breadth and uncropped200%visual proof remain"
+        ],
+        "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+      },
+      {
+        "id": "FC2",
+        "criterion": "routing",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+        "primaryEvidence": [
+          "Projects UI list→canonical Project detail in A/B, denied canonical route B, local folder preserved"
+        ],
+        "remainingGap": null
+      },
+      {
+        "id": "FC3",
+        "criterion": "entity model",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC4",
+        "criterion": "persistence",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC5",
+        "criterion": "commands",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC6",
+        "criterion": "queries",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC7",
+        "criterion": "realtime where needed",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC8",
+        "criterion": "permissions",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC9",
+        "criterion": "sharing",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC10",
+        "criterion": "search",
+        "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC11",
+        "criterion": "mentions",
+        "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC12",
+        "criterion": "notifications",
+        "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC13",
+        "criterion": "activity",
+        "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC14",
+        "criterion": "agent access",
+        "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC15",
+        "criterion": "API/MCP where applicable",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC16",
+        "criterion": "observability",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC17",
+        "criterion": "tests",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+        "primaryEvidence": [
+          "PARTIAL: primary actualPASS; complete offline native and visual/delivery gates not reviewed in this report"
+        ],
+        "remainingGap": "Scoped actual tests and unchanged independent second variant pass; required full primary/offline Electron tests and screenshot review are still pending."
+      },
+      {
+        "id": "FC18",
+        "criterion": "documentation",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      },
+      {
+        "id": "FC19",
+        "criterion": "failure states",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+        "primaryEvidence": [
+          "PARTIAL: native403/rejectedreplacement/revoke/disconnect viewed; complete queued/retry/cancel/corrupt native state breadth remains"
+        ],
+        "remainingGap": "Actual denied/rollback/revoke/corrupt/offline failure mechanisms pass; required rendered failure-state acceptance remains pending."
+      },
+      {
+        "id": "FC20",
+        "criterion": "loading states",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+        "primaryEvidence": [],
+        "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+      },
+      {
+        "id": "FC21",
+        "criterion": "empty states",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+        "primaryEvidence": [
+          "PARTIAL: native shared Project empty leaf proved in A/B; broad generic empty-states completeness not automatically closed"
+        ],
+        "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+      },
+      {
+        "id": "FC22",
+        "criterion": "offline/reconnect where applicable",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+        "primaryEvidence": [
+          "PARTIAL: actual service/profile restart+PG reconnect proved; queued/retry/cancel/reconnect consumer requires offline native receipt"
+        ],
+        "remainingGap": "Actual offline encrypted persistence/restart/retry/cancel/session fences pass; rendered native queue/reconnect acceptance remains pending."
+      },
+      {
+        "id": "GATE",
+        "criterion": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+        "originalStatus": "PENDING",
+        "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+        "primaryEvidence": [
+          "PARTIAL: source-bound primary+viewed captures; native capture-mapping discrepancy,offline/full-state/delivery acceptance still required"
+        ],
+        "remainingGap": "Full primary native + offline native + viewed screenshots/theme/200-percent/narrow/restart/revoke receipts and source-bound commit/push/readback are pending. Package remains incomplete."
+      },
+      {
+        "id": "RESPONSE_SCHEMA",
+        "criterion": "Declared Project canonical response JSON Schema agrees with actual HTTP/WS response",
+        "originalStatus": "VERIFIED",
+        "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+        "primaryEvidence": [],
+        "remainingGap": null
+      }
+    ],
+    "basis": "Original32verified and5deferred are imported prior evidence, not claimed current-source reexecution. Only6 definite primaryleaf closures are new. UI6andFC21 interpretations remain explicit partial; no broad-completeness promotion."
+  },
+  "nextFiniteProbe": {
+    "owner": "root after offline native lease",
+    "source": "Needs frozen currentCACprimary+existinglocalcapturePagesignature before any exactworkerpatch",
+    "steps": [
+      "Retain original Playwright screenshot and all130/92 assertions.",
+      "At each existing wide+narrowdark/light capture, resolve exactly the target owned BrowserWindow/webContents ID and record nativecontent/bounds/zoom/display,DPR/visualViewport/section/client/scroll/button/hit before+after.",
+      "Capture same owned webContents via capturePage().toPNG in addition to originalPlaywright; copy returned binary intoownedUint8Array,record NativeImagegetSize/scaleFactors plusPNGdimensions/ICC/SHA/CRC;save separate named artifact.",
+      "Compare same-theme/ID/title/Refresh content and geometry; full nativecontent pixels and actualDOM must agree before visualcriterion can close.",
+      "Record rawRGBA and defaultbrowsercanvasRGBA separately, including ICC/profileSHA and decodeoptions; optionally collect colorSpaceConversion none/default diagnostics without replacing strict existing equality oracle."
+    ],
+    "toleranceChanged": false,
+    "productionThemeChanged": false,
+    "nativeWindowResizeAdded": false,
+    "foreignBufferClaim": false
+  },
+  "sourceBindings": [
+    {
+      "path": "theme-input/apps/electron/src/renderer/components/settings/SettingsMenuSelect.tsx",
+      "sha256": "438a010a56955e75386fcc0d621eecd200f0148ec4ab4db59b55dd40e584cda4"
+    },
+    {
+      "path": "theme-input/apps/electron/src/renderer/components/settings/SettingsRow.tsx",
+      "sha256": "0482f747b84cf955c9eefaed4f5fe4238e2bdb245d76e71ca2e3e57f27546780"
+    },
+    {
+      "path": "theme-input/packages/shared/src/config/storage.ts",
+      "sha256": "2e49b5c3050b0093fa063630a115632c33b9d4d2e787f2d2d51dcb049530030c"
+    },
+    {
+      "path": "theme-input/packages/shared/src/i18n/locales/ru.json",
+      "sha256": "0be1900b2a24664985f6ac85b1d79cc399839e2064c789c45e96b91c37bf9c8f"
+    },
+    {
+      "path": "theme-input/packages/shared/src/i18n/locales/en.json",
+      "sha256": "af2e23a96c704b2ff613741ceee36b5f9b068408e9bc546cd8c6968b0e4d1c25"
+    },
+    {
+      "path": "theme-input/tests/macro-integration/ui/wp-01-electron.test.ts",
+      "sha256": "c48e7fbd7004b4a69b742fba1819f9075b6a10048a9c44dbdcbd883c29e4e447"
+    },
+    {
+      "path": "theme-input/tests/macro-integration/ui/wp-01-offline-electron.test.ts",
+      "sha256": "0a7fa041ef1dce9cdce28dd9b45a772caeec6de7dd07bb7ff081d71c919771b8"
+    },
+    {
+      "path": "theme-input/apps/electron/src/renderer/lib/local-storage.ts",
+      "sha256": "5631e6120670357dd365d0511811d596727c27ea201a9ef41c971f6f9ff4e473"
+    },
+    {
+      "path": "theme-input/preset-readback/packages/shared/src/config/theme.ts",
+      "sha256": "b5c40518496ffb83f6b017f06e89704c74347ebbaa93e2e796b9765d51ae2d08"
+    },
+    {
+      "path": "theme-input/preset-readback/apps/electron/resources/themes/pierre.json",
+      "sha256": "dd1a2ac59e1873d69dc8fd31a56aa6621cacfdf294c3a12a664cb055e74b6539"
+    },
+    {
+      "path": "theme-input/preset-readback/apps/electron/resources/themes/haze.json",
+      "sha256": "0bd21718d83bde05ca346facbe88b0ce745f6c6b33bd7f196d5b6f27e39f28c8"
+    },
+    {
+      "path": "sidebar-input/apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "sha256": "dc43ed8a7643d810a5c6a007bebdf1417724d247933c015c002ffb4b82a30a78"
+    },
+    {
+      "path": "sidebar-input/apps/electron/src/renderer/components/app-shell/ResizeHandle.tsx",
+      "sha256": "722b82d9cb1844edda9011ab3c8a16db4839f15d91519f1a4486729f837d114f"
+    },
+    {
+      "path": "sidebar-input/apps/electron/src/renderer/components/app-shell/shell-width-clamp.ts",
+      "sha256": "e14eda35c77752c05fa1bd1d2d4a080e6abebe8b7fc8d667e2fa8c8a539b168e"
+    },
+    {
+      "path": "sidebar-input/apps/electron/src/renderer/components/app-shell/panel-constants.ts",
+      "sha256": "30df2cd724f6be36aae05244fe9e872627cff3c5e0afb2a310b9ee77a6618330"
+    },
+    {
+      "path": "sidebar-input/apps/electron/src/renderer/components/app-shell/resize-math.ts",
+      "sha256": "dab519851a7ac256f2e949f8aa7bf7adea7a73867ccd7d12439d72f2d4a618ef"
+    },
+    {
+      "path": "sidebar-input/supplemental/apps/electron/src/renderer/hooks/usePanelResize.ts",
+      "sha256": "2e5f1e07596a6218db9cb7cc5d1b4375dee93b0c2a9ea3b49ff2c3edfcd6a9bf"
+    },
+    {
+      "path": "sidebar-input/supplemental/apps/electron/src/renderer/components/app-shell/resize-controller.ts",
+      "sha256": "0bf849b8cdccd206439157a581c705ce8492b7bd15c19fd2bf5b6ae521d53613"
+    },
+    {
+      "path": "sidebar-input/supplemental/tests/macro-integration/ui/wp-01-electron.test.ts",
+      "sha256": "dde4c8f70608c82dded287afad2d54618f75668ee16348b6eb6ae72c69804988"
+    }
+  ],
+  "rootWrites": false,
+  "nativeLaunches": false,
+  "offlineNativeAccepted": false,
+  "deliveryVerified": false,
+  "fullFeatureDoDComplete": false,
+  "consumer5Complete": false
+}

@@ -1,0 +1,80 @@
+{
+  "state": "USER_RECOVERY_SEMANTIC_QUEUE_CONSUMED_ACK",
+  "at": "2026-09-30T17:21:11.099709+00:00",
+  "sourceParent": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+  "receipts": [
+    {
+      "path": "/tmp/rox-rs-aut-mtg-independent-semantic-review-20260930.md",
+      "sha256": "968351342ceed91b1216897aa9791538bfb0bd496326e96d06cfce86b73ec13e",
+      "bytes": 12524,
+      "readback": "READ_CONSUMED"
+    },
+    {
+      "path": "/tmp/rox-rs-adm-semantic-review-20260930.md",
+      "sha256": "c50f824d78ebe0d43d2945c1c33c9b37308d34e87944d1747d816bedfd93348e",
+      "bytes": 5256,
+      "readback": "READ_CONSUMED"
+    },
+    {
+      "path": "/tmp/rox-legacy-feature-executable-handoff-20260930.md",
+      "sha256": "8010d3a3761683e8256a72d1013c662858ca062462b05ef4463628f49dca6298",
+      "bytes": 17295,
+      "readback": "READ_CONSUMED"
+    }
+  ],
+  "criteriaDisposition": {
+    "RS-AUT-01": {
+      "state": "CHANGES_REQUIRED",
+      "findings": [
+        "JSON roundtrip undefined checksum",
+        "async mutated graph under old checksum"
+      ],
+      "repairOwner": "external recovery isolated correction worker",
+      "rootNativeWrites": false
+    },
+    "RS-ADM-01": {
+      "state": "CHANGES_REQUIRED",
+      "findings": [
+        "denial test reads pre-call snapshot instead of current file"
+      ],
+      "repairOwner": "external recovery isolated correction worker"
+    },
+    "RS-DRV-01": {
+      "state": "REPORTED_CHANGES_REQUIRED_NOT_OWN_REPRODUCED",
+      "findings": [
+        "stale workspace A PagesHome mislabeled B",
+        "nested DTO privateBody/grants leakage"
+      ],
+      "repairOwner": "external recovery isolated correction worker"
+    },
+    "RS-MSG-01": {
+      "state": "REPORTED_CHANGES_REQUIRED_NOT_OWN_REPRODUCED",
+      "findings": [
+        "conflicting duplicate revisions order-dependent subscription"
+      ],
+      "repairOwner": "external recovery isolated correction worker"
+    },
+    "RS-MTG-01": {
+      "state": "REVIEWED_PRESENTATION_ONLY_NOT_FEATURE_ACCEPTED",
+      "findings": [],
+      "nativeProviderAclGates": "OPEN"
+    },
+    "legacy": {
+      "VoiceWhisperNeuralDiarizationSummary": "RETAINED_NATIVE_PROVIDER_ACL_PROVENANCE_GATES",
+      "MiniCompanion": "RETAINED_NOT_REPLACED_BY_HOME_WIDGET",
+      "Channels": "RETAINED_TWO_HUMAN_MEMBERSHIP_DELIVERY_GATES",
+      "TeamsSharedProjectsMemory": "RETAINED_DISTINCT_CRITERIA",
+      "SettingsOverlay": "RETAINED_OWNER_DISPOSITION_REQUIRED",
+      "obsoleteCriteria": []
+    }
+  },
+  "graphCounts": {
+    "packages": 143,
+    "NOT_STARTED": 130,
+    "ROOT_INTEGRATION": 8,
+    "AWAITING_ROOT_REVIEW": 5,
+    "FullDoD": 0
+  },
+  "nextAction": "Root corrects current foundation/native failure, then independently reviews external finite RED-GREEN deltas against live source/private custody/ACL/receipt; no blind drifted patches/no duplicate correction writer",
+  "fullFeatureDoDAccepted": false
+}

@@ -1,0 +1,490 @@
+{
+  "matrixPath": "/tmp/rox-wp01-native-current-diagnostic/criteria-input/matrix.json",
+  "matrixSha256": "004bbbf0ae52c155123e0dd8ce35a32dc275ab3cd4a238447bad110b41d59a14",
+  "original54Summary": {
+    "criterionRows": 54,
+    "counts": {
+      "VERIFIED": 32,
+      "PENDING": 17,
+      "DEFERRED_BY_DECLARED_WP01_SCOPE": 5
+    },
+    "fullNativeAcceptance": false,
+    "fullWp01DoD": false,
+    "deliveryVerified": false
+  },
+  "definitePrimaryClosures": [
+    "B6",
+    "A1",
+    "UI2",
+    "UI3",
+    "T1",
+    "FC2"
+  ],
+  "pending17Count": 17,
+  "definiteClosures": 6,
+  "remainingPending": 11,
+  "rows": [
+    {
+      "id": "B1",
+      "criterion": "transport-authenticated Actor",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "B2",
+      "criterion": "workspace membership",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "B3",
+      "criterion": "minimal Project identity row",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "B4",
+      "criterion": "owner-only policy enforced server-side",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "B5",
+      "criterion": "Project create transaction+idempotent receipt",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "B6",
+      "criterion": "native Project RPC/list/detail",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+      "primaryEvidence": [
+        "createReceipts:3 genuine native form→production RPC→PostgreSQL receipts",
+        "A/B private and shared canonical details",
+        "A/B post-service-and-profile-restart captures"
+      ],
+      "remainingGap": null
+    },
+    {
+      "id": "A1",
+      "criterion": "A opens private Project in native ROX",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+      "primaryEvidence": [
+        "A-private-native-detail PNG/HTML/text: actual private title, canonical ID, detail ready"
+      ],
+      "remainingGap": null
+    },
+    {
+      "id": "A2",
+      "criterion": "B without membership gets 403 and no title through RPC/HTTP",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "A3",
+      "criterion": "client cannot forge principal/workspace",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "UI1",
+      "criterion": "loading",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+      "primaryEvidence": [],
+      "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+    },
+    {
+      "id": "UI2",
+      "criterion": "empty",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+      "primaryEvidence": [
+        "create-reviewed-7fe5dfa8 + create-reviewed-f5d466d6 PNG/HTML/text: ready section,0shared rows,visible Нет доступных общих проектов. behind creation dialog"
+      ],
+      "remainingGap": null
+    },
+    {
+      "id": "UI3",
+      "criterion": "permission_denied",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+      "primaryEvidence": [
+        "B-private-canonical-route-denied-no-title: detail denied+FORBIDDEN/no private title",
+        "Connections403/revoked-session denial captures"
+      ],
+      "remainingGap": null
+    },
+    {
+      "id": "UI4",
+      "criterion": "offline_queued",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+      "primaryEvidence": [],
+      "remainingGap": "Queue mechanism verified by actual PG/HTTP/WS/SIGKILL/immutable encrypted bytes and fences; rendered queue/retry/cancel/restart acceptance is still pending."
+    },
+    {
+      "id": "UI5",
+      "criterion": "retryable_error",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+      "primaryEvidence": [],
+      "remainingGap": "Actual retry denial/terminal-state mechanisms pass; rendered retryable-error state leaf is still pending."
+    },
+    {
+      "id": "UI6",
+      "criterion": "applied_verified",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+      "primaryEvidence": [
+        "PARTIAL: all3 actual receipts applied/succeeded/receipt_verified→canonical detail ready; no dedicated named applied_verified rendering leaf"
+      ],
+      "remainingGap": "Actual applied/receipt_verified canonical body passes schema/PG/restart; native applied_verified rendering remains pending."
+    },
+    {
+      "id": "T1",
+      "criterion": "A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+      "primaryEvidence": [
+        "New rendered A-open + genuine HTTP403/native FORBIDDEN/no-title; existing matrix forge/holdout portion retained as prior evidence, not rerun"
+      ],
+      "remainingGap": null
+    },
+    {
+      "id": "T2",
+      "criterion": "Seed broken identity boundary: unauthorized actor or dropped/duplicated event must fail WP-01 acceptance",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "T3",
+      "criterion": "Restart between persisted command and reply while running Private shared Project: authenticated actor and workspace boundary; state/receipt/canonical ID remain consistent",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "HOLDOUT",
+      "criterion": "independent evaluator injects second failure variant",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "SCHEMA",
+      "criterion": "strict request, body Actor and workspace schema",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "MIGRATION",
+      "criterion": "identity, ownership and idempotency constraints; startup migration replay",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "EVENTS",
+      "criterion": "transaction events, revisioned invalidation and replay cursor",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "OBS1",
+      "criterion": "commandId",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "OBS2",
+      "criterion": "causationId",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "OBS3",
+      "criterion": "correlationId",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "OBS4",
+      "criterion": "aggregateRevision",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "OBS5",
+      "criterion": "policyEpoch",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "OBS6",
+      "criterion": "projectionWatermark",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "OBS7",
+      "criterion": "retry/DLQ counters",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "PRIVACY",
+      "criterion": "no raw email/body/transcript/tokens in logs",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC1",
+      "criterion": "UI",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+      "primaryEvidence": [
+        "PARTIAL: native create/list/detail/empty/denied work; loading/offline/failure-state breadth and uncropped200%visual proof remain"
+      ],
+      "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+    },
+    {
+      "id": "FC2",
+      "criterion": "routing",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "VERIFIED_NATIVE_LEAF",
+      "primaryEvidence": [
+        "Projects UI list→canonical Project detail in A/B, denied canonical route B, local folder preserved"
+      ],
+      "remainingGap": null
+    },
+    {
+      "id": "FC3",
+      "criterion": "entity model",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC4",
+      "criterion": "persistence",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC5",
+      "criterion": "commands",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC6",
+      "criterion": "queries",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC7",
+      "criterion": "realtime where needed",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC8",
+      "criterion": "permissions",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC9",
+      "criterion": "sharing",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC10",
+      "criterion": "search",
+      "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC11",
+      "criterion": "mentions",
+      "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC12",
+      "criterion": "notifications",
+      "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC13",
+      "criterion": "activity",
+      "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC14",
+      "criterion": "agent access",
+      "originalStatus": "DEFERRED_BY_DECLARED_WP01_SCOPE",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC15",
+      "criterion": "API/MCP where applicable",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC16",
+      "criterion": "observability",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC17",
+      "criterion": "tests",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+      "primaryEvidence": [
+        "PARTIAL: primary actualPASS; complete offline native and visual/delivery gates not reviewed in this report"
+      ],
+      "remainingGap": "Scoped actual tests and unchanged independent second variant pass; required full primary/offline Electron tests and screenshot review are still pending."
+    },
+    {
+      "id": "FC18",
+      "criterion": "documentation",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    },
+    {
+      "id": "FC19",
+      "criterion": "failure states",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+      "primaryEvidence": [
+        "PARTIAL: native403/rejectedreplacement/revoke/disconnect viewed; complete queued/retry/cancel/corrupt native state breadth remains"
+      ],
+      "remainingGap": "Actual denied/rollback/revoke/corrupt/offline failure mechanisms pass; required rendered failure-state acceptance remains pending."
+    },
+    {
+      "id": "FC20",
+      "criterion": "loading states",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "NOT_VERIFIED_BY_PRIMARY",
+      "primaryEvidence": [],
+      "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+    },
+    {
+      "id": "FC21",
+      "criterion": "empty states",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+      "primaryEvidence": [
+        "PARTIAL: native shared Project empty leaf proved in A/B; broad generic empty-states completeness not automatically closed"
+      ],
+      "remainingGap": "Actual full native UI leaf for this criterion is not yet supplied. Native routing/PG mechanisms do not prove its rendered UI acceptance."
+    },
+    {
+      "id": "FC22",
+      "criterion": "offline/reconnect where applicable",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+      "primaryEvidence": [
+        "PARTIAL: actual service/profile restart+PG reconnect proved; queued/retry/cancel/reconnect consumer requires offline native receipt"
+      ],
+      "remainingGap": "Actual offline encrypted persistence/restart/retry/cancel/session fences pass; rendered native queue/reconnect acceptance remains pending."
+    },
+    {
+      "id": "GATE",
+      "criterion": "No complete status until real changed surface and relevant failure/reload path observed; fixture is not live receipt",
+      "originalStatus": "PENDING",
+      "primaryNativeStatus": "PARTIAL_NOT_VERIFIED",
+      "primaryEvidence": [
+        "PARTIAL: source-bound primary+viewed captures; native capture-mapping discrepancy,offline/full-state/delivery acceptance still required"
+      ],
+      "remainingGap": "Full primary native + offline native + viewed screenshots/theme/200-percent/narrow/restart/revoke receipts and source-bound commit/push/readback are pending. Package remains incomplete."
+    },
+    {
+      "id": "RESPONSE_SCHEMA",
+      "criterion": "Declared Project canonical response JSON Schema agrees with actual HTTP/WS response",
+      "originalStatus": "VERIFIED",
+      "primaryNativeStatus": "PRIOR_MATRIX_EVIDENCE_RETAINED_NOT_REEXECUTED",
+      "primaryEvidence": [],
+      "remainingGap": null
+    }
+  ],
+  "basis": "Original32verified and5deferred are imported prior evidence, not claimed current-source reexecution. Only6 definite primaryleaf closures are new. UI6andFC21 interpretations remain explicit partial; no broad-completeness promotion."
+}

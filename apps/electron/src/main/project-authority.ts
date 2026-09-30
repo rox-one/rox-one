@@ -1,3 +1,4 @@
+import type { LicenseAuditAttempt } from '../shared/license-audit-intent'
 import { ProjectCreateIntentStore, readVerifiedProjectCreateScope } from './project-create-intent'
 import type { ProjectCreateAttempt, ProjectCreateIntentView, ProjectCreateIntentAction, VerifiedProjectCreateScope } from '../shared/project-create-intent'
 import { getCredentialManager, type CredentialManager } from '@craft-agent/shared/credentials'
@@ -287,10 +288,11 @@ export async function storeProjectAuthorityCredential(localWorkspaceId: string,
 }
 
 
-/** Window-bound, create-only durable intent port. No background delivery or general command queue. */
-export async function storedProjectCreateIntent(localWorkspaceId: string, action: ProjectCreateIntentAction,
+/** Window-bound canonical project/license intent port. Explicit delivery through the existing authority. */
+
+async function storedAuthorityIntent(localWorkspaceId: string, action: ProjectCreateIntentAction,
   input: unknown = undefined, isCurrent: () => boolean = () => true,
-  injectedPorts?: ProjectAuthorityStoragePorts): Promise<ProjectCreateAttempt> {
+  injectedPorts?: ProjectAuthorityStoragePorts, operationKind: 'project.createShared' | 'audit.releaseLicense' = 'project.createShared'): Promise<ProjectCreateAttempt | LicenseAuditAttempt> {
   const operation = operationFor(localWorkspaceId)
   const generation = operation.generation
   try {
@@ -301,30 +303,58 @@ export async function storedProjectCreateIntent(localWorkspaceId: string, action
       requireCurrent(operation, generation, isCurrent)
       const store = new ProjectCreateIntentStore(ports.credentials)
       if (action === 'cancel') {
-        await store.cancel(localWorkspaceId)
+        await store.cancel(localWorkspaceId, operationKind)
         requireCurrent(operation, generation, isCurrent)
         return { state: 'none', eligible: false }
       }
       if (operation.blocked || operation.createQuiesced) {
-        if (action === 'get' && !await store.hasPending(localWorkspaceId)) return { state: 'none', eligible: false }
+        if (action === 'get') {
+          const pending = await store.hasPending(localWorkspaceId)
+          requireCurrent(operation, generation, isCurrent)
+          if (!pending) return { state: 'none', eligible: false }
+        }
         throw new ProjectAuthorityError('AUTH_FAILED')
       }
       const metadata = readStoredProjectAuthorityConfiguration(localWorkspaceId, ports)
       const target = await resolveProjectAuthorityTarget(localWorkspaceId, metadata ?? undefined, ports.credentials)
       requireCurrent(operation, generation, isCurrent)
-      if (!target) return await store.hasPending(localWorkspaceId) ? { state: 'blocked', eligible: false, code: 'AUTH_FAILED' } : { state: 'none', eligible: false }
-      if (action === 'get') return await store.view(localWorkspaceId, target)
+      if (!target) {
+        const pending = await store.hasPending(localWorkspaceId)
+        requireCurrent(operation, generation, isCurrent)
+        return pending ? { state: 'blocked', eligible: false, code: 'AUTH_FAILED' } : { state: 'none', eligible: false }
+      }
+      if (action === 'get') {
+        const view = operationKind === 'audit.releaseLicense' ? await store.licenseView(localWorkspaceId, target) : await store.view(localWorkspaceId, target)
+        requireCurrent(operation, generation, isCurrent)
+        return view
+      }
       if (action === 'queue') {
-        const result = await store.queue(localWorkspaceId, target, input)
+        const result = operationKind === 'audit.releaseLicense' ? await store.queueLicense(localWorkspaceId, target, input) : await store.queue(localWorkspaceId, target, input)
         requireCurrent(operation, generation, isCurrent)
         return result
       }
       if (action !== 'retry') throw new ProjectAuthorityError('INVALID_PAYLOAD')
-      return await store.retry(localWorkspaceId, target, () => operation.generation === generation && isCurrent())
+      return operationKind === 'audit.releaseLicense'
+        ? await store.retryLicense(localWorkspaceId, target, () => operation.generation === generation && isCurrent())
+        : await store.retry(localWorkspaceId, target, () => operation.generation === generation && isCurrent())
     })
   } catch (error) {
     return { state: 'blocked', eligible: false, code: safeProjectAuthorityCode(error) }
   }
+}
+export async function storedProjectCreateIntent(localWorkspaceId: string, action: ProjectCreateIntentAction,
+  input: unknown = undefined, isCurrent: () => boolean = () => true, injectedPorts?: ProjectAuthorityStoragePorts): Promise<ProjectCreateAttempt> {
+  const result = await storedAuthorityIntent(localWorkspaceId, action, input, isCurrent, injectedPorts)
+  if ((result.state === 'queued' || result.state === 'uncertain') && !('name' in result.command.payload)
+    || result.state === 'applied' && !('name' in result.result.data)) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
+  return result as ProjectCreateAttempt
+}
+export async function storedLicenseAuditIntent(localWorkspaceId: string, action: ProjectCreateIntentAction,
+  input: unknown = undefined, isCurrent: () => boolean = () => true, injectedPorts?: ProjectAuthorityStoragePorts): Promise<LicenseAuditAttempt> {
+  const result = await storedAuthorityIntent(localWorkspaceId, action, input, isCurrent, injectedPorts, 'audit.releaseLicense')
+  if ((result.state === 'queued' || result.state === 'uncertain') && !('decisionManifest' in result.command.payload)
+    || result.state === 'applied' && !('decisionManifest' in result.result.data)) throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
+  return result as LicenseAuditAttempt
 }
 export async function getStoredProjectCreateIntent(localWorkspaceId: string,
   injectedPorts?: ProjectAuthorityStoragePorts): Promise<ProjectCreateIntentView> {
