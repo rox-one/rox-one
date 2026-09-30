@@ -3484,7 +3484,7 @@
       "title": "[Sep-rma] Настоящий E3 harness Electron→RPC→storage для RMA (#385)",
       "area": "rma",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerRma",
       "dependsOn": [
         "RECON-01",
@@ -3544,16 +3544,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "PORTABLE-ELECTRON-BRIDGE-20260930"
+          ],
+          "summary": "Reusable actual Electron bridge harness implemented and independently run through production preload/IPC/WS/SQLite with synthetic task adapters. Full product UI E3, OS custody and platform gates remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "PORTABLE-ELECTRON-BRIDGE-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -4273,9 +4277,10 @@
             "REVIEW-NATIVE-20260930",
             "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930"
           ],
-          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+          "summary": "Existing native create/edit mechanism retained; portable actual Electron bridge adds exact observed ACK, pending restart/replay, forged-receipt and revoked/foreign-window runtime controls. Full Notes conversion/views, private OS custody and native UI acceptance remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -4287,7 +4292,8 @@
             "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -9961,9 +9967,10 @@
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
             "LOCAL-MEETING-BLOB-MEDIA-20260930",
-            "ROADMAP-SQLITE-JOINT-20260930"
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930"
           ],
-          "summary": "Reviewed additive Roadmap and import-only SQLite adaptation integrated without replacing existing authority, budget ownership, OKR or CSP. Five whole union/CI/build gates pass on identical source manifest. Full program predecessors and product/platform acceptance remain pending."
+          "summary": "Reviewed portable developer harness adds three source scripts without changing the4870 previously gated production inputs; scoped typing and both current-revision entry commands pass. Original program predecessors/product/platform remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -9999,7 +10006,8 @@
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
             "LOCAL-MEETING-BLOB-MEDIA-20260930",
-            "ROADMAP-SQLITE-JOINT-20260930"
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "PORTABLE-ELECTRON-BRIDGE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10189,7 +10197,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T17:26:06.713Z",
+    "asOf": "2026-09-30T17:37:07.007Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10215,7 +10223,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "dataContractFreeze": "NOT_ACCEPTED",
     "sharedContractFreeze": "NOT_ACCEPTED",
-    "build": "STANDARD_ROOT_ELECTRON_BUILD_PASSED_ON_FROZEN_4851_SOURCE_OWNER_STATUS_CANDIDATE; PACKAGING_SIGNING_NATIVE_UI_PENDING",
+    "build": "STANDARD_ROOT_ELECTRON_BUILD_PASSED_ON_FROZEN_4870_SOURCE_b512d93d; THREE_LATER_DEVELOPER_HARNESS_SCRIPTS_SCOPED_TYPED_AND_EXECUTED_WITH_SAME_BUILT_PRELOAD; PACKAGING_NATIVE_UI_PENDING",
     "fullPlatformMatrix": "PENDING",
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
@@ -10268,12 +10276,12 @@
     },
     "facetCounts": {
       "implementation": {
-        "IN_PROGRESS": 28,
-        "NOT_RUN": 81
+        "IN_PROGRESS": 29,
+        "NOT_RUN": 80
       },
       "verification": {
-        "IN_PROGRESS": 26,
-        "NOT_RUN": 83
+        "IN_PROGRESS": 27,
+        "NOT_RUN": 82
       },
       "fullAccepted": 0
     },
@@ -10442,6 +10450,12 @@
       "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head."
+    },
+    "portableElectronBridgeEvidence": "portable-electron-bridge-20260930.json",
+    "portableElectronBridgeCandidate": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "fullOriginalTasksAccepted": 0
     }
   }
 }

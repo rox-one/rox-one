@@ -260,3 +260,12 @@ Dependencies: current September source/head `bac082301aed341fe078cb5bd539c4ba074
 6. Update only bounded progress/evidence while preserving all 109 task IDs, 489 requirements and 464 dependency edges. Commit the exact reviewed files, push PR1293, compare every frozen source entry with its committed blob and read back the exact remote/PR revision. Preserve original 297-row scope and do not infer issue closure from partial checks or published draft code.
 
 Final joint gates pass on all 4870 unchanged source entries (SHA256 1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54). Shared 4944/0, server-core 1508/0, Electron/UI/core 4205/0; exact local CI and standard root Electron build exit0. Registry records 28 partial implementation and 26 partial verification facets; zero complete original tasks. All original contracts remain byte-identical. Root binds each committed blob and remote PR revision after publication.
+
+## Portable Electron bridge developer probe (2026-09-30)
+
+Owner `/root/native_boundary` produces an isolated harness from exact September base `bac082301aed341fe078cb5bd539c4ba074560eb`; root owns independent review, serial integration, source binding and delivery. Dependency: accepted revision-2 fixture controls, installed project Electron/esbuild and existing standard preload build. Existing SQLite module compatibility work remains separately owned and is not imported.
+
+1. Add portable TS runner and typed service fixture under scripts/tests; keep package-wide commands unchanged. Generate exclusive output/profile roots, whitelist environment, supervise actual child PIDs and bind source/preload/SDK hashes.
+2. Carry create/exact receipt, full-shaped unobserved ACK denial, revoke/no canonical effect, real second-window IPC and graceful stable-operation restart controls. Keep synthetic bootstrap/key adapters explicit and separate from OS/product main acceptance.
+3. Exercise both Bun and Node entry commands on the same isolated source, retain missing-preload/type/readiness failures and stdout, verify strict scoped TypeScript, exact PID exits and root cleanup. Freeze source manifest for independent review before public delivery.
+4. Root integrates accepted harness only and maps it as bounded composition. Product UI E3, OS custody, provider/media/platform and crash/power-loss criteria remain pending; no original full requirement is marked accepted by this probe.

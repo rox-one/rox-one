@@ -536,5 +536,10 @@
     "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
     "committedSourceMatchesTestedManifest": true,
     "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head."
+  },
+  "portableElectronBridgePublication": {
+    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING",
+    "fullOriginalTasksAccepted": 0
   }
 }
