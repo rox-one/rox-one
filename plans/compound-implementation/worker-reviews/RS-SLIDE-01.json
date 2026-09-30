@@ -315,11 +315,11 @@
     "implementationStartCondition": "Lead wave0 is committed and accepted RS-DRV-01 and RS-DOC-01 dependency receipts (including DOC discussions/collaboration and shared foundation gates) are supplied. Recheck this report's source digests against that revision, re-read changed seams, then issue a revision-bound implementation packet with one writer per shared path.",
     "firstImplementationStep": "Bind contracts.ts to the accepted Document/Page, AttachmentRef, collaboration and command envelope exports; integrate shared slides contentKind/schema/authority registrations through the owning lead, then implement the first persisted 3-slide command→UI→reload→ACL→PDF vertical path.",
     "leadReportVerificationArgv": [
-      "/Library/Developer/CommandLineTools/usr/bin/python3",
-      "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/launch-worker-pool.py",
+      "python3",
+      "plans/compound-implementation/launch-worker-pool.py",
       "--verify",
       "plans/compound-implementation/worker-reviews/RS-SLIDE-01.json",
-      "/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/RS-SLIDE-01/packet.json"
+      "${ROX_COMPOUND_PACKET_ROOT}/RS-SLIDE-01/packet.json"
     ],
     "verificationBoundary": "Root packet verifier and feature/runtime lanes are not claimed executed by this report; only owned-artifact JSON parsing/readback is permitted here."
   },
@@ -337,5 +337,6 @@
     "Published spec's UI-only N/A sentence cannot waive domain integration/concurrency requirements for this full feature package.",
     "Actual locale directory contains ar.json and ko.json in addition to the ten documented locales; active registration/parity must be reconciled by the i18n owner before shared key patches.",
     "No product execution evidence was collected or permitted. Feature remains unimplemented/unverified until integrated Linux/native and applicable real provider receipts exist."
-  ]
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
 }

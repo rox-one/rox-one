@@ -3108,8 +3108,8 @@ function AppShellContent({
         />
         </WorkspaceSurfaceHost>
 
-        {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
-        {!effectiveSidebarAndNavigatorHidden && (
+        {/* A collapsed sidebar has no resize boundary; its sash would intercept main-panel controls. */}
+        {isSidebarVisible && !effectiveSidebarAndNavigatorHidden && (
         <ResizeHandle
           labelKey="shell.resize.sidebar"
           controlsId="shell-sidebar"
@@ -3122,10 +3122,7 @@ function AppShellContent({
             top: PANEL_STACK_TOP_INSET,
             bottom: terminalClearance,
             height: 'auto',
-            left: unifiedRailOffset + (isSidebarVisible
-              ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
-              : -PANEL_GAP),
-            transition: sidebarResize.dragging ? undefined : 'left 0.15s ease-out',
+            left: unifiedRailOffset + sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2,
           }}
           onPointerDown={(event) => {
             setIsResizing('sidebar')

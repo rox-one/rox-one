@@ -1,0 +1,358 @@
+{
+  "task_id": "LSX-WP-007-preflight",
+  "attempt_id": "e63887a80b822b5122624d5a6dabf4c3",
+  "packet_hash": "8ba3e4de053a22ed8e3a42b1d1274c076e6206a21e265bc768a99b05ea8537a1",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-007",
+  "featureComplete": false,
+  "mode": "SOURCE_ONLY_PREFLIGHT",
+  "workTier": "bounded-workflow",
+  "scope": {
+    "writtenPaths": ["plans/compound-implementation/worker-reviews/LSX-WP-007.json"],
+    "productImplementation": "NOT_PERFORMED",
+    "buildTestsNativeUiNetwork": "NOT_RUN_BY_INSTRUCTION",
+    "integrationOwner": "lead; all source patches remain requests",
+    "codegraph": "Unavailable: no .codegraph index; used scoped read/grep/glob instead. No index created."
+  },
+  "dependencies": ["LSX-WP-001"],
+  "dependencyContract": {
+    "evidence": "plans/lark-suite-reference/work-packages.json:3348-3350; execution-packages.json:545-547",
+    "dispatchDependsOn": [],
+    "distinction": "The empty preflight dispatch depends_on does not remove the implementation DAG edge.",
+    "requiredReceipt": "Accepted LSX-WP-001 implementation commit and authoritative readback: existing Note/Page identity preserved, contentKind=base resolves one owner, no new top-level base kind. The lead's wave0 commit must precede implementation.",
+    "currentState": "NOT_VERIFIED; no dependency implementation/readback receipt inspected"
+  },
+  "foundationGates": [
+    {
+      "id": "EG-IDENTITY",
+      "classification": "EXPLICIT_EXTERNAL_GATE_NOT_DAG_EDGE",
+      "evidence": "work-packages.json:3351-3354,74-82; platform-contract.ts:592-609",
+      "requirement": "Authenticated actor/source grants and read-time revoke (Macro WP-01/WP-03). Actor, policy and workspace authorization must come from trusted transport, not renderer payload.",
+      "currentEvidence": "authorizeRox2Action checks actor plus permission grant only; the inspected signature does not encode entity/field/source scope or policy epoch. A capability catalog is explicitly not actor authorization.",
+      "missingPrerequisite": "Exact identity/source policy implementation commit plus runtime denied/revoke receipt for Base Page and personal preference scopes; published spec readiness is READINESS_NOT_VERIFIED.",
+      "state": "BLOCKED_UNVERIFIED"
+    },
+    {
+      "id": "EG-EFFECTS",
+      "classification": "EXPLICIT_EXTERNAL_GATE_NOT_DAG_EDGE",
+      "evidence": "work-packages.json:3351-3354,83-89,3526-3534; 07-domain-entity-model.md:53-57",
+      "requirement": "Atomic native command/receipt/outbox recovery (Macro WP-04); durable CAS config mutation and event publication with replay recovery.",
+      "currentEvidence": "NotesTableView.persistViews only sets React state and localStorage; platform-contract.ts explicitly performs no I/O. Neither is a durable Page command/outbox implementation.",
+      "missingPrerequisite": "Accepted native Page content persistence/command/outbox hook with operationId/idempotencyKey, receipt, restart and recovery evidence; no second Base store may substitute for it.",
+      "state": "BLOCKED_UNVERIFIED"
+    },
+    {
+      "id": "RS-DRV-01",
+      "classification": "HIDDEN_PUBLISHED_DEPENDENCY_NOT_LSX_DAG_EDGE",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:5,95-113; RS-DRV-01.md:21,28,38,60-62,73-75",
+      "requirement": "Published RS-BASE-01 requires RS-DRV-01 (#1109): Drive create/open library over canonical refs, preserving existing Pages artifacts. RS-DRV-01 itself requires common identity/ACL/command authority.",
+      "currentEvidence": "LSX-WP-007 lists only LSX-WP-001 as its explicit DAG edge. NotesViewHost props expose notes/workspace/activeNoteId but not canonical Base Page routing or an authenticated command port.",
+      "missingPrerequisite": "Lead must resolve the published dependency against accepted Drive/create/open receipts and bounded LSX scope before claiming the published Base flow. Do not silently append this to dependencies or claim publication proves implementation.",
+      "state": "BLOCKED_UNVERIFIED"
+    },
+    {
+      "id": "CANONICAL_PAGE_STORAGE_AND_COMMAND_TRANSPORT",
+      "classification": "HIDDEN_IMPLEMENTATION_FOUNDATION",
+      "evidence": "work-packages.json:3594-3596,3668; page.ts:10-23,294-320; 05-rox-bases-design.md:48-49,92,199",
+      "requirement": "Base config belongs to existing Page/content authority; HTML dashboard PageKind static/interactive/live remains unchanged. One Base ref must survive restart.",
+      "currentEvidence": "PageConfig schemaVersion=1 models HTML runtime/grants/share, not Base content/config revisions. NotesViewHost imports no Base command client and has no Base ref prop. The normative shared patch paths cover only two renderer files, not registration, IPC/RPC handlers, callers or persistence owner wiring.",
+      "missingPrerequisite": "Accepted LSX-WP-001 descriptor and a real Page content authority port; lead must identify exact server/renderer registration and caller symbols, acquire leases and issue an amended reviewed packet for any additional paths. Their locations were not guessed or broad-searched outside allowed inspection scope.",
+      "state": "BLOCKED_SCOPE_AND_INTERFACE"
+    },
+    {
+      "id": "SOURCE_SELECTOR_FIELD_DEFINITIONS",
+      "classification": "INPUT_INTERFACE_FOUNDATION_NOT_NEW_DAG_EDGE",
+      "evidence": "work-packages.json:3495-3499; 05-rox-bases-design.md:59-65,162-167,199; 07-domain-entity-model.md:138-142",
+      "requirement": "Accepted typed SourceSelector and stable FieldDefinitions with source/schema revision and authorized preview; duplicate views refer to the same source binding.",
+      "currentEvidence": "NoteBaseView contains string fields/columns and a fixed formula enum; projectNoteRows receives a supplied Notes array. These are not a server-side SourceSelector or field registry.",
+      "missingPrerequisite": "Lead-provided accepted selector/field contract and owner preview/query seam; align imports after wave0/dependency receipts rather than inventing another selector or implementing a parallel query engine.",
+      "state": "BLOCKED_UNVERIFIED"
+    },
+    {
+      "id": "I18N_AND_ACTUAL_ELECTRON_PROOF",
+      "classification": "DELIVERY_AND_SCOPE_FOUNDATION",
+      "evidence": "work-packages.json:3540-3542,3561-3569,3591; NotesViewHost.tsx:132,169-231; loaded repository AGENTS.md i18n rule",
+      "requirement": "New labels/help/errors via t() in all 10 existing locales; actual supported Electron runner, fonts/theme/IME/focus/reduced-motion/zoom evidence.",
+      "currentEvidence": "Existing table already uses t() and semantic theme classes; new source/scope/error controls and their locale entries do not exist in inspected seams. UI runner is deliberately unresolved in the normative record.",
+      "missingPrerequisite": "Lead-approved localization changes under packages/shared/src/i18n/locales/*.json and exact supported UI runner/desktop ownership. Locale files are not worker-owned; additional write scope needs reviewed authorization.",
+      "state": "BLOCKED_SCOPE_AND_VERIFICATION"
+    },
+    {
+      "id": "SPEC_AND_REVISION_LAUNCH_GATES",
+      "classification": "LAUNCH_CONTROL_NOT_FEATURE_DAG_EDGE",
+      "evidence": "execution-packages.json:583-587,615-625; work-packages.json:3658-3668",
+      "requirement": "Resolve reference_package_revision/digest, verify spec artifacts, accept prerequisites, acquire shared-path leases, integrate and reverify exact delivered bytes.",
+      "currentEvidence": "Execution and work-package whole-file hashes match dispatch input_manifest. Normative source baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab differs from dispatch input_revision a21aeab1da5a67e56788384ff930945b0f487879; source was inspected in the shared working tree, not a clean implementation checkout.",
+      "missingPrerequisite": "Lead's committed wave0, accepted dependency receipts, resolved delivery manifest and exclusive leases; fresh source hash check after those integrations. No Git mutation was performed.",
+      "state": "BLOCKED_UNVERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/bases/definition.ts",
+    "packages/server-core/src/bases/definition-store.ts",
+    "tests/lark-suite-extension/lsx-wp-007.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-007.spec.ts"
+  ],
+  "ownedNewFilePresence": "All four exact paths returned not found during scoped glob. These are normative future implementation files, not permission to create them in this preflight.",
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/definition.ts",
+      "symbols": ["BaseDefinition", "ViewDefinition", "ViewPreference", "base.createDefinition", "base.patchViewConfig", "base.getDefinition"],
+      "change": "Define versioned typed request/result/error schemas. BaseDefinition stores canonical page ref/contentKind=base, source binding, stable field definitions, schemaVersion/schemaRevision and config revision plus scoped ViewDefinitions, never authoritative row arrays. Shared/private views have explicit scope/ownership and own configRevision. ViewPreference is separate actor-local viewport/search/selection/active-view state indexed by workspace/page/view/schemaVersion within actor scope. Mutating envelopes require operationId/idempotencyKey and expected config revision; requests never authorize actor/owner/workspace claims. Unknown/corrupt decode returns read-only diagnostics and the original serialized bytes, not a normalized default.",
+      "errors": ["validation", "conflict", "denied", "deleted", "offlineUnsupported", "missingDependency", "rateLimited", "unknownFormat"],
+      "missingPrerequisite": "Accepted Page descriptor, SourceSelector/FieldDefinitions and transport/result contract; exact exported identifier conventions chosen from accepted prerequisite implementations. Listed operation names are normative proposals, not existing functions."
+    },
+    {
+      "path": "packages/server-core/src/bases/definition-store.ts",
+      "symbols": ["implementation of base.createDefinition", "implementation of base.patchViewConfig", "implementation of base.getDefinition"],
+      "change": "Implement a Page-authority-backed facade, not a second JSON/SQLite Base store. Resolve the authenticated principal and source policy before read/create/write; CAS shared config as authorized editor, create private views only if permitted, and keep personal preferences isolated. Commit payload, dedupe/receipt and config event atomically using accepted native authority. Return durable receipt then authoritative ref/revision/hash readback; exact replay reuses committed identity/result, divergent replay cannot overwrite. Config failure does not roll back native Task changes. Preserve future/corrupt payloads untouched and reject writes to them.",
+      "missingPrerequisite": "Real Page storage and registered authenticated command dispatcher/outbox/receipt hooks. New file alone cannot wire runtime endpoints; additional shared paths require lead-reviewed packet extension."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-007.test.ts",
+      "symbols": ["create/reload duplicate-view scenario", "reader/private preferences isolation scenario", "future-config preservation scenario", "seeded global-storage/shared-copy mutant"],
+      "change": "Exercise actual native owner/command boundary with deterministic synthetic source and two authenticated actors: identity preservation, independent config/row revisions, duplicate views retaining exact row refs, denied shared mutations, CAS conflict, exact/divergent replay, interrupted commit/recovery/restart, personal preference isolation and byte-identical unsupported config retention. Bind attempts/seed/input hashes and deliberately broken global-key/single-shared-copy control to semantic assertions, not timeout or wiring mocks.",
+      "missingPrerequisite": "Accepted command/storage owner and test fixture APIs; permanent consumer-visible assertions, not source-text/forwarding tests."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-007.spec.ts",
+      "symbols": ["actual Electron Create Base and view scope workflow", "read-only and conflict recovery workflow"],
+      "change": "Use the discovered supported real Electron runner against integrated commands. Preview authorized source rows then create, duplicate config only, switch views, private/shared scope, reload/restart same Base ref, deny reader shared edit and show future/corrupt config read-only. Capture pointer/keyboard/IME/focus/help/reduced-motion/200% zoom/theme/locale/ARIA/loaded-font evidence without treating an isolated fixture UI as the product.",
+      "missingPrerequisite": "Runner, registered create/open route, real runtime transport, desktop ownership and localization patch acceptance. No passing command or screenshot is asserted."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView; notesViewsStorageKey",
+      "change": "At the named seams, integrate the accepted Base/View contracts rather than adding a second authoritative renderer model. Keep NoteBaseView v1 as LSX-WP-008 migration input until that cutover is accepted. Retire notes:views:<workspaceId> as active canonical storage for new Bases; new preference key includes workspaceId/pageId/viewId/schemaVersion inside an authenticated actor-scoped namespace. Legacy keys remain migration/rollback inputs, not silently republished shared views.",
+      "reason": "Current v1 type has no ref/revisions/scope, and key lines 100-102 scope only workspace. LSX-WP-007 requires durable Page config and actor-local preferences; v1 migration belongs to LSX-WP-008, not an unreviewed destructive change here.",
+      "authorization": "REVIEWED_SERIAL_PATCH_ONLY; integration-owner lease required",
+      "missingPrerequisite": "Canonical contracts and actor/preference context; coordinate dependent v1 migration before removing legacy APIs."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows; formulaValue",
+      "change": "Keep projectNoteRows a derived projection over existing owner data; duplicate ViewDefinition changes config/view ID only, never rows or source identity. Adapt projection to accepted canonical row refs where provided by prerequisite owner, preserving source provenance. Preserve all four formulaValue built-ins and checkbox-derived meanings; do not change taskCount/openTaskCount to count native Tasks as a persistence side effect.",
+      "reason": "Rows presently preserve note.id/provenance.noteId (133-158); formulas 188-203 count tasks/openTasks/backlinks/tags. This is useful existing behavior, but lacks the canonical row ref boundary required for new Base sources.",
+      "authorization": "REVIEWED_SERIAL_PATCH_ONLY; integration-owner lease required",
+      "missingPrerequisite": "Accepted source identity mapping/adapter; no new row owner, native Task migration or query engine within this slice."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost; NotesViewNote (nested NotesTableView state/persistViews/patchView)",
+      "change": "Thread accepted canonical Base ref, authenticated Base command/query client and actor-scoped preference context through NotesViewHost to its existing table surface. Replace NotesTableView localStorage-authoritative views initialization and persistViews/patchView with native getDefinition/createDefinition/patchViewConfig, expected configRevision and receipt/readback handling. Keep last active view/search/scroll/selection personal. Bind load state to workspace/page/actor identity so switching context cannot render or persist the previous context's views. Expose source preview, config tabs/scope badge, explicit private-create/shared-edit actions with capability gates, and typed loading/empty/denied/conflict/error/offline/read-only states. Preserve original future/corrupt config bytes; never run new authoritative payloads through loadSavedViews' silent fallback. Keep existing Notes projection and non-Base canvas/graph/outline surfaces.",
+      "reason": "Current props at 58-78 have no Base ref/transport, and table state 132-159 acknowledges only React/localStorage updates and ignores quota failures. Existing memoized Notes rows at 79-88 and non-table dispatch should be reused, not duplicated.",
+      "authorization": "REVIEWED_SERIAL_PATCH_ONLY at approved parent seams; lead confirms nested table patch/caller lease coverage",
+      "missingPrerequisite": "Accepted content route, real renderer transport and revised caller/registration/locales scope if not supplied by wave0. No automatic publication of personal state."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "one Page ref; schema/view revision separate rowRevision",
+      "currentEvidence": "Rox2EntityRef at platform-contract.ts:233-239 is reusable; PageConfig at page.ts:294-320 only models HTML page metadata; NoteBaseView at note-views.ts:24-34 has no Page ref or revisions.",
+      "requiredChange": "BaseDefinition and Page-backed definition-store persist one contentKind=base Page identity; schema/config/view revisions are separate from each source row revision. Row commits never become config commits and config conflicts never roll back Task commits.",
+      "verification": "Create native Base; patch view, assert only config revision advances and source row refs/revisions stay exact; independently commit native Task edit and assert config conflict does not undo it. Authoritative readback before/after client reload and process restart at same Page ref/hash/revision.",
+      "missingPrerequisite": "wave0 commit, accepted LSX-WP-001 plus Page persistence/EG-EFFECTS receipts",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "duplicate view != duplicate dataset",
+      "currentEvidence": "projectNoteRows at note-views.ts:133-158 preserves note.id/provenance; applyNoteBaseView at 160-169 filters/sorts derived rows. Current saved view model has no canonical source binding or duplicate action.",
+      "requiredChange": "Duplicate only view ID/config under the same Base/source refs; retain dataset identity/provenance. Explicit new dataset creation is a different previewed operation, never the duplicate-view action.",
+      "verification": "Create/reload duplicate view; compare exact authorized source refs in both views and authoritative entity counts, then edit the source row and observe the same ref in both. Restart must retain both configs without extra records.",
+      "missingPrerequisite": "Accepted SourceSelector/canonical row ref and native query/readback ports",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "No Base transport import in NotesViewHost.tsx:1-46; authorizeRox2Action at platform-contract.ts:601-609 is not an entity-scoped authenticated handler. Normative required errors are work-packages.json:3514-3524.",
+      "requiredChange": "definition.ts supplies shared schemas for the three named operations and all eight error discriminants; definition-store validates payloads and obtains actor/policy/workspace from trusted transport. Lead registers actual boundary handlers/renderer client, rather than relying on exported types alone.",
+      "verification": "Compile both actual consumer boundaries, send malformed/cross-workspace/spoofed actor/owner inputs through authenticated transport and observe validation/denied without state change or private disclosures. Exercise each reachable error category and record readiness for dependencies.",
+      "missingPrerequisite": "EG-IDENTITY, transport/schema conventions and approved registration/caller paths",
+      "state": "BLOCKED_BOUNDARY_INTEGRATION"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "NotesTableView.persistViews at NotesViewHost.tsx:148-155 sets local state first, writes localStorage and ignores quota errors; it provides no native durable receipt. PageConfig file-completion-marker comments at page.ts:287-292 must not be assumed a Base transaction implementation.",
+      "requiredChange": "Page-backed definition-store returns native committed receipt after durable CAS and event/idempotency commit; table shows pending until commit/readback. Store/reopen config by canonical ref and preserve verified revision/hash.",
+      "verification": "Record request/payload SHA256, command/receipt/ref/configRevision/event IDs, authoritative payload SHA256; stop/restart owner and re-read exact ref. Inject interrupted/uncommitted write and confirm no committed-success acknowledgement; recovery yields stable committed identity or explicit failure.",
+      "missingPrerequisite": "EG-EFFECTS and actual restartable Page command owner",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "NotesTableView.patchView at NotesViewHost.tsx:157-159 performs client-side replacement without CAS/ACL/replay. Normative tests at work-packages.json:3555-3559 specify create/reload duplicate, reader preferences and future bytes.",
+      "requiredChange": "Implement server read/write/private-create authorization, shared config CAS, operation dedupe and recovery; expose actionable typed failures without discarding local drafts or publishing them as shared. Keep test attempts and seeds revision-bound.",
+      "verification": "Owner creates/patches/reloads; reader personal changes cannot overwrite shared layout; two editors with same expected revision produce one commit and one conflict; exact replay returns same receipt/ref; divergent replay is rejected; restart recovery and deletion/offline cases read back authoritative state.",
+      "missingPrerequisite": "Authenticated fixtures, accepted atomic command owner and actual transport",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:3571-3578 requires a global localStorage key/single shared config copy mutant; current workspace-only key and client-only config illustrate the isolation risk but no baseline or mutant was run.",
+      "requiredChange": "Deterministic semantic oracle uses two actors, same Page/view, isolated temporary viewport/search and fresh client reload of durable shared views. Deliberately collapse actor keys and shared/private copies in controlled evaluated mutant bytes; do not change product source for preflight.",
+      "verification": "Retain seed, input/hash and exact baseline/mutant artifact hashes. Green baseline; mutant must fail 'two actors have isolated viewport/search' and 'shared view survives new client reload; rows not duplicated' semantic assertions. Record infrastructure failures separately.",
+      "missingPrerequisite": "Working integrated baseline and mutation harness executing actual config/preferences semantics",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesViewHost.tsx:166-231 provides t()-based table controls and theme classes, not Base source preview/scope/read-only states. No actual UI was launched by instruction.",
+      "requiredChange": "Reuse existing Notes table host for create/source preview/tabs/scope/error/conflict controls; t() for all new labels/help/errors, existing themes, loaded Rox Mono, keyboard/focus/IME-safe editing and reduced-motion. Do not add a second editor surface.",
+      "verification": "Supported actual Electron runner: pointer create/duplicate/private/shared actions; keyboard menus/tabs/Escape/focus return; IME composing input without premature commit; hover/focus/click help; reduced motion; 200% zoom; Russian and locale parity; current-theme/light/dark regression; screenshots/ARIA/computed loaded-font and native receipt/readback. No invented runner command.",
+      "missingPrerequisite": "Accepted actual UI runner, integrated routes/transport, locale writes and desktop lease",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Normative proof lanes at work-packages.json:3562-3569: SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. This report contains source evidence only.",
+      "requiredChange": "Lead integrates reviewed implementation against accepted wave0/dependencies and supplies independent per-lane artifact/readback receipts at exact integrated commit. Source hashes and report validation do not establish feature completion.",
+      "verification": "Review compile/schema receipt, semantic test/negative-control outputs, native owner readbacks, restart receipts, denied/revoke controls and actual Electron evidence separately. Provider/collaboration evidence is additionally required if those lanes are exercised; queued is not committed/readback verified.",
+      "missingPrerequisite": "All feature proof lanes and independent integrated-revision review",
+      "state": "NOT_VERIFIED_FEATURE_COMPLETE_FALSE"
+    },
+    {
+      "criterion": "Persisted schema/view revision; same Base ref after restart; personal preferences scoped workspace/page/view/schemaVersion.",
+      "currentEvidence": "notesViewsStorageKey at note-views.ts:100-102 includes only workspace; NotesTableView activeViewId at NotesViewHost.tsx:137 is in-memory. Current useState initialization is not keyed to context changes.",
+      "requiredChange": "Page-owned schema/shared config plus separate private views/preferences, actor namespace and required tuple key; reset/reload correctly on workspace/page/actor switch. Saved configuration scope is explicit; personal state never automatically publishes.",
+      "verification": "Two actors and two Pages/workspaces with same view ID cannot leak search/scroll/selection; switching context never writes previous views under the new key; new authorized client sees durable shared config; original actor reload retains own allowed preferences; restart identity exact.",
+      "missingPrerequisite": "Actor identity/preference port, canonical page ref and native persistence",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Future/corrupt configurations retain original serialized payload and open read-only; legacy formulas remain unchanged.",
+      "currentEvidence": "parseNoteBaseView at note-views.ts:108-126 accepts only v1; restoreSavedViews at 534-543 drops invalid/future entries and loadSavedViews at 470-473 substitutes a default. parseRox2TypedRecord at platform-contract.ts:658-667 preserves unsupported raw objects, a reusable error convention but not a serialized-byte receipt. formulaValue at note-views.ts:188-203 is a four-way legacy count switch.",
+      "requiredChange": "New Base decoder preserves exact original serialized bytes and distinguishes missing/empty from corrupt/future read-only errors; no fallback overwrite. Keep legacy counts and rollback bytes for LSX-WP-008 migration; do not reinterpret checkbox counts as native Tasks here.",
+      "verification": "Load syntactically corrupt and future-version Base payloads; inspect read-only UI, attempted-write rejection, export/readback byte SHA256 unchanged before/after restart. Legacy taskCount/openTaskCount/backlinkCount/tagCount values remain equal for the same Notes input.",
+      "missingPrerequisite": "Accepted serialized Page payload codec and coordinated LSX-WP-008 migration/rollback boundary",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Create Base source preview; config event separate from row data; only authorized editor mutates shared config.",
+      "currentEvidence": "work-packages.json:3530-3547 and 05-rox-bases-design.md:173-177,197-203; NotesViewHost has only existing local table/group/tag/formula controls, no create/source scope or event consumer.",
+      "requiredChange": "Preview source capabilities/freshness/fields and three permitted example rows without effects; create returns one Page ref/config revision/query receipt. Publish base.viewChanged/base.schemaChanged via verified registry aliases and prescribed event envelope; authorize edits server-side and keep row commits independent.",
+      "verification": "Preview causes no entity mutation, shows read-only source before editor; create/restart one Page; editor shared update emits revision-bound config event, reader denied update emits no successful commit; two projections refresh config while existing Task row commit survives config conflict.",
+      "missingPrerequisite": "Source query/capability seam, EG-IDENTITY/EG-EFFECTS and event registration/consumer integration paths",
+      "state": "BLOCKED_BOUNDARY_INTEGRATION"
+    },
+    {
+      "criterion": "Published RS-BASE-01 acceptance: Create typed table → 3records → filtered Board → update status → reload; same record IDs in all views.",
+      "currentEvidence": "RS-BASE-01.md:76-80 is a broader linked requirement, relationship REFINES_BOUNDARY_NOT_DUPLICATE at work-packages.json:3612-3620. Current NotesViewHost view union at 71 is table/canvas/graph/outline; no typed record/Board status command in inspected seams.",
+      "requiredChange": "LSX-WP-007 supplies durable definition/source binding/view configs only. Published record creation, Board projection and canonical status update must be supplied by accepted domain/view slices; retain this published acceptance as outstanding rather than asserting this bounded package alone satisfies it.",
+      "verification": "At integrated published feature level create three real records, show filtered Board, mutate canonical status and reload with identical record refs in every view; attach owner receipts and real Electron evidence.",
+      "missingPrerequisite": "RS-DRV-01 and accepted typed-record/schema/Board/owner command implementation receipts beyond this packet; lead maps exact owners/slices",
+      "state": "OUTSTANDING_LINKED_FEATURE_ACCEPTANCE"
+    },
+    {
+      "criterion": "Published RS-BASE-01 acceptance: Company viewed in Base still resolves CRM canonical ref and email/task context; two owners cannot overwrite schema concurrently.",
+      "currentEvidence": "RS-BASE-01.md:79; platform-contract.ts includes crm-company entity kind at 31 and reusable scoped ref at 233. Inspected Notes projection does not supply CRM/email/task source adapters.",
+      "requiredChange": "Definition source bindings preserve owner refs; CAS schema/config updates in this slice. CRM/email/task resolution/context must use accepted owner adapters, not Base-owned copies.",
+      "verification": "Concurrent authorized schema updates have one committed successor; Base Company action opens canonical CRM ref with same email/task context after reload, verified through actual owner readback.",
+      "missingPrerequisite": "Accepted CRM/context adapters plus identity/command authority; bounded LSX packet does not authorize adding CRM storage",
+      "state": "OUTSTANDING_LINKED_FEATURE_ACCEPTANCE"
+    },
+    {
+      "criterion": "Published RS-BASE-01 acceptance: Viewer cannot mutate records via RPC/tool; private linked value/aggregation absent from search/export.",
+      "currentEvidence": "RS-BASE-01.md:80; 05-rox-bases-design.md:162-167 requires policy before query/projection. Browser-side applyNoteBaseView is not this server policy boundary.",
+      "requiredChange": "This slice denies unauthorized shared-config edits and preserves source ACL boundaries; record RPC/tool writes and actor-filtered relations/aggregates/search/export need the accepted common/domain query authority. View scope never grants source access.",
+      "verification": "Authenticated viewer RPC/tool mutation denied without owner state change; hidden linked values/counts absent in query/search/export and after revoke/cache refresh; exact permitted ref sets compared, not just UI-disabled controls.",
+      "missingPrerequisite": "Common tool/search/export/query policy integration and linked owner implementations; all broader acceptance remains required, not N/A",
+      "state": "OUTSTANDING_LINKED_FEATURE_ACCEPTANCE"
+    },
+    {
+      "criterion": "Published DoD: UI/routing/input/output/help/keyboard/state contracts; loading/empty/error/denied/retry checked; persistence/reload/negative/concurrency/reconnect checked.",
+      "currentEvidence": "RS-BASE-01.md:84-85; NotesTableView renders a toolbar/table/empty state but no native pending/conflict/reconnect workflow.",
+      "requiredChange": "Package-owned definition/scope surface must implement these states over real transport; broader record/grid/Board behavior remains integrated linked-feature work, not dismissed as UI-only N/A.",
+      "verification": "Actual supported Electron and native owner: loading, empty source versus filtered-empty, denied, error/retry, concurrent config CAS, restart and reconnect reauthorization with retained draft and authoritative readback.",
+      "missingPrerequisite": "Runtime boundary, route, policy and UI runner receipts",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Published DoD: Common grants, links, search, mentions, activity, notification and agent policy integrated for new domain entity.",
+      "currentEvidence": "RS-BASE-01.md:46,52-56,86; this bounded design uses existing page kind/contentKind=base, not a separate base-user or entity store. No common policy/search/tool integration imports in inspected host.",
+      "requiredChange": "Reuse Page identity and common policy/effects registry for Base commands and events; ensure every tool and link resolving this content uses the same authorization. Linked new CustomRecord domain integration requires accepted broader slices. Do not interpret 'UI-only N/A' clause as applicable to this persistence feature.",
+      "verification": "Read/write/share and revoke across actual UI/RPC/tool boundaries; permitted links/search/mentions and event/activity/deduped notification behavior use same refs/policy; owner private state absent for reader.",
+      "missingPrerequisite": "Common registry consumers and additional reviewed wiring paths; exact owner receipts",
+      "state": "OUTSTANDING_LINKED_FEATURE_ACCEPTANCE"
+    },
+    {
+      "criterion": "Published DoD: targeted tests and seeded broken control rejected; existing route/authority regression; Linux domain/renderer and actual Electron screenshots/ARIA/theme/font; provider lane for actual effects only.",
+      "currentEvidence": "RS-BASE-01.md:87-88; normative LSX proof lanes listed separately. No tests/runtime/UI/network ran during authorized preflight.",
+      "requiredChange": "Implement semantic controls on real integrated mechanisms and preserve existing Notes/Page artifact authority. Gather Linux domain/renderer proof and native Electron UI separately; external provider proof only when a real effect is exercised, never fabricated.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-007.test.ts plus supported discovered UI runner, regression existing Notes/Page routes, named mutant assertion failure, independent native and Linux receipts. Exact commands/results/seeds/hashes retained after integration.",
+      "missingPrerequisite": "Implemented integrated baseline, supported runners and provider readiness if effects are exercised",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Published DoD: source commit, exact diff, logs/hashes, expected/observed, migration/rollback and independent review attached; no screen without mechanism.",
+      "currentEvidence": "RS-BASE-01.md:89; work-packages.json:3648-3668 requires reviewed integration and exact artifact/readback receipts. This source-only report is not implementation delivery.",
+      "requiredChange": "Lead records committed wave0/prerequisites, implementation/integration commits, shared leases/diffs and independent review, preservation/rollback path for configs and coordinated legacy migration. No implicit destructive migration/drop.",
+      "verification": "Review artifacts bound to actual delivered revision/environment; verify config/ref/hash before and after restart and rollback; preserve failed attempts. Rerun affected proof after material source integration changes.",
+      "missingPrerequisite": "Real implementation/delivery revisions, migration receipt and independent review",
+      "state": "NOT_VERIFIED_FEATURE_COMPLETE_FALSE"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteBaseView","lineStart":24,"lineEnd":34,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"notesViewsStorageKey","lineStart":96,"lineEnd":102,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"projectNoteRows; formulaValue","lineStart":133,"lineEnd":203,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"loadSavedViews; restoreSavedViews","lineStart":459,"lineEnd":543,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8","inspectedRanges":[[459,473],[534,543]]},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesViewHost; NotesViewNote","lineStart":48,"lineEnd":117,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesTableView; persistViews; patchView","lineStart":119,"lineEnd":163,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageKind","lineStart":29,"lineEnd":35,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageConfig","lineStart":287,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":232,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action","lineStart":592,"lineEnd":610,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"parseRox2TypedRecord","lineStart":657,"lineEnd":690,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[6] LSX-WP-007","lineStart":3330,"lineEnd":3670,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"external_prerequisite_gates EG-IDENTITY/EG-EFFECTS","lineStart":74,"lineEnd":89,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-007 execution scope","lineStart":541,"lineEnd":627,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"4 canonical ownership; 7.2 saved config; 9.1 creation; 10 compatibility","lineStart":43,"lineEnd":229,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c","inspectedRanges":[[43,92],[156,229]]},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"3 proposed ref/receipt; 5 entity ownership","lineStart":35,"lineEnd":149,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b","inspectedRanges":[[35,62],[131,149]]},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"published acceptance/DoD; RS-DRV-01 dependency","lineStart":76,"lineEnd":113,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"},
+    {"path":"docs/rox-suite/published/RS-DRV-01.md","symbol":"canonical create/library; common authority foundation","lineStart":21,"lineEnd":75,"sha256":"ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3","inspection":"Relevant grep lines only; no product source outside package seams inspected."}
+  ],
+  "evidenceFreshness": {
+    "basis": "Whole-file SHA256 obtained by read-only shasum after code reads in current shared working tree. input_revision is the dispatched revision, not a claim that dirty working-tree bytes equal that commit.",
+    "specManifest": "Both dispatched input-manifest file hashes match observed whole-file hashes.",
+    "observedBaselineDrift": {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "normativeBaselineSha256": "2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358",
+      "observedSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "interpretation": "Observed working-tree file differs from published baseline; no claim about author or exact commit provenance. Current read includes ListTreeProjection integration. Preserve root-owned work."
+    },
+    "recheckTrigger": "Any lead/wave0/dependency edit to a referenced file invalidates that file's line/hash evidence; compare hashes and re-read changed ranges before crafting implementation patch. This preflight does not authorize reverting to product baseline."
+  },
+  "verification": {
+    "featureTests": "NOT_RUN",
+    "nativeUi": "NOT_RUN",
+    "network": "NOT_RUN",
+    "sourceDigestCommand": "shasum -a 256 of the ten concrete source/spec files listed in sourceReferences; read-only; observed successful",
+    "artifactVerification": {
+      "command": "python3 plans/compound-implementation/launch-worker-pool.py --verify plans/compound-implementation/worker-reviews/LSX-WP-007.json ${ROX_COMPOUND_PACKET_ROOT}/LSX-WP-007/packet.json",
+      "observedExitCode": 0,
+      "observedOutput": {"validPreflight": true, "featureComplete": false, "references": 18},
+      "scope": "Local report-only validation; not feature, build, product test, native UI or network proof."
+    }
+  },
+  "nextExecutableAction": {
+    "owner": "integration lead",
+    "action": "After committing wave0, collect accepted LSX-WP-001 and EG-IDENTITY/EG-EFFECTS implementation/readback receipts; resolve RS-DRV-01 published dependency and Page storage/transport/source-field interfaces; compare source hashes. Identify and lease exact missing registration/caller/i18n seams in an amended reviewed packet. Only then start packages/core/src/bases/definition.ts, followed by Page-backed definition-store.ts, serial renderer integration requests, and integrated semantic/native/UI proof lanes.",
+    "failClosed": "Without actual Page authority/transport readiness, do not implement an in-memory or standalone Base store and do not label an exported schema or localStorage UI feature complete."
+  },
+  "risks": [
+    "Published RS-BASE-01 has broader typed-record/Board/CRM/search/export acceptance than this LSX bounded definition slice. Preserve it as outstanding integrated feature acceptance rather than treating LSX-WP-007 as all of RS-BASE-01.",
+    "Only two renderer shared patch paths are normative; actual end-to-end runtime registration/callers and locale writes may require additional reviewed scope. Exact undiscovered symbols are deliberately not fabricated.",
+    "PageConfig.share is HTML publication bookkeeping, not authorization for Base shared config; PageKind runtime enum must not be replaced by contentKind.",
+    "Workspace-only localStorage keys and initialization-only React state can mix actors/pages or persist old context after a switch. Personal views/preferences must never publish automatically.",
+    "Legacy restoreSavedViews silently drops invalid/future entries and substitutes a default; routing new Base bytes through it risks loss and false saved-state UI.",
+    "New SourceSelector/FieldDefinitions must reuse accepted foundation contracts; a standalone selector/row store/query engine would duplicate authority and violate scope.",
+    "A Page-backed facade with unconnected registration/transport is not an implementation. Authenticated policy and durable command/outbox receipts are required at every real boundary.",
+    "Schema/config CAS is separate from source row CAS; a config conflict must not undo a successful native Task commit. Duplicate view is not duplicate dataset.",
+    "Legacy formula migration is LSX-WP-008; changing checkbox count meanings or deleting old keys in this slice would create data/rollback regressions.",
+    "Working-tree source evidence may go stale while root integration continues. Hashes establish inspected bytes, not a revision-bound feature proof or permission to overwrite concurrent work.",
+    "Reported preflight validation cannot substitute for SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE or ACTUAL_ELECTRON_UI proof."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

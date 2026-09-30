@@ -1,0 +1,423 @@
+{
+  "task_id": "RS-SIG-02-preflight",
+  "attempt_id": "6c3ee70270105858a565a8a5468458b4",
+  "packet_hash": "9900fd2df16e701717e61125e5e5d6a1e4b31ec6b7483e53a38fd122b26c6d77",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-SIG-02",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-SIG-01", "RS-APR-02"],
+  "dependencyEvidence": {
+    "publishedSpec": "docs/rox-suite/published/RS-SIG-02.md:11,141-148",
+    "normativeRecord": "plans/rox-suite/issues.json:917-945",
+    "dispatchDependsOn": [],
+    "interpretation": "The empty dispatch depends_on permits independent preflight only. Feature implementation still waits for RS-SIG-01 and RS-APR-02 accepted receipts, in that dependency order determined by the lead's DAG; neither receipt was provided or verified here.",
+    "relatedNotExplicitDependencies": ["RS-MCP-01", "RS-ADM-01"]
+  },
+  "evidenceBoundary": {
+    "scope": "Published package specification, exact normative issues record, four EXTEND paths, seven normative NEW paths and selected direct imports of the existing seams.",
+    "sourceBasis": "Observed working-tree bytes, not an assertion that they equal input HEAD. Root-owned uncommitted wave0 work is preserved. Hashes are whole-file SHA-256 values obtained with read-only shasum.",
+    "index": "Codegraph reported no .codegraph index for this project. Inspection used read/grep/glob; no indexing or upgrade performed.",
+    "absenceBasis": "Each of the seven normative NEW paths was queried individually with glob, gitignore=false, and returned Path not found. This is scoped absence evidence, not a claim that no similarly named implementation exists anywhere else.",
+    "staleness": "Hashes identify inspected snapshots; concurrent root integration can invalidate them. Rehash and reread any changed file before requesting or applying a patch. The declared input_revision is the packet's revision, not a freshly verified Git state.",
+    "verificationLimit": "No feature builds, tests, native UI, network, Git operations or product mutations performed. Planned verification below is future acceptance work, not observed proof. Packet verification_argv is reserved for lead validation; local deliverable verification is read-only JSON/identity/coverage and digest checking."
+  },
+  "foundationGates": [
+    {
+      "id": "wave0-integration",
+      "kind": "dispatch sequencing gate, not an explicit package DAG edge",
+      "source": "Worker prompt: implementations start after lead wave0 commit and accepted dependency receipts",
+      "requiredReceipt": "Lead's committed wave0 revision plus accepted RS-SIG-01 and RS-APR-02 receipts, with exact shared contracts, authority and transport ownership.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "ids": ["WP-02", "WP-03", "WP-04", "WP-07", "WP-35", "WP-36", "WP-47", "WP-52"],
+      "kind": "published architecture prerequisites absent from the explicit dependencies array",
+      "source": "docs/rox-suite/published/RS-SIG-02.md:13,70,97",
+      "requiredReceipt": "Lead must resolve each named WP to its accepted authority/API/persistence/event/identity/projection contract and source-pinned implementation receipt. The package record supplies IDs, not per-WP titles or completion evidence; no title or individual capability assignment is invented here. Consume existing Revision2 authority contracts rather than reimplementing foundations.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "signing-provider-conformance",
+      "kind": "independent capability gate before live enablement",
+      "source": "docs/rox-suite/published/RS-SIG-02.md:13,22,38-43,114,129,136",
+      "requiredReceipt": "Selected supported signing provider, versioned capability/identity-assurance policy, authenticated callback contract, documented idempotency/readback/cancel behavior, dedicated live tenant and independent conformance evidence. No provider, SDK, credentials or verification authority is selected by this preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "supported-evidence-scope",
+      "kind": "cryptographic verification and long-term evidence gate",
+      "source": "docs/rox-suite/published/RS-SIG-02.md:13,22,42,55,113-116",
+      "requiredReceipt": "Explicit supported signature/evidence formats and policy versions, independent verifier/trust-root and certificate/timestamp validation scope, artifact/evidence retention and export policy; private keys remain in provider/HSM. Unsupported evidence is disabled, not labeled verified.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "canonical-authority-and-projections",
+      "kind": "cross-cutting foundation gate exposed by scoped code inspection",
+      "source": "docs/rox-suite/published/RS-SIG-02.md:49-78,97; packages/core/src/rox2/platform-contract.ts:3-6,55-64,232-239,592-610; apps/electron/src/renderer/hooks/useInboxItems.ts:47-83",
+      "requiredReceipt": "Canonical FileVersion and Principal/guest/challenge binding, resource-scoped current-policy gateway, committed outbox/inbox/event aliases, authenticated client/IPC/MCP/jobs and revoke/replay/projection retraction contracts. Existing authorizeRox2Action accepts only actor/permission grants and is not by itself audience/version/expiry authorization. Existing Inbox remote sources are memory/skills/senders, not signing. Service target files are absent; foundations must be supplied by their owners before signing can mount.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "required-execution-and-delivery-lanes",
+      "kind": "completion gates, separate from implementation dependencies",
+      "source": "docs/rox-suite/published/RS-SIG-02.md:118,128-131",
+      "requiredReceipt": "Linux domain/renderer, exact-source macOS native IPC/font/device, provider-live when adapter acts, screenshots/ARIA/logs/expected-observed and tested commit, independent review/negative controls/runbook/licensing/user docs and implementation commit/PR-linked GitHub evidence. Any required pending lane leaves feature incomplete.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/signing/SigningSessionDetail.tsx",
+    "packages/shared/src/workspace-domain/signing/contracts.ts",
+    "apps/workspace-service/src/modules/signing/session-commands.ts",
+    "apps/workspace-service/src/modules/signing/provider-adapter.ts",
+    "apps/workspace-service/src/modules/signing/evidence-verifier.ts",
+    "apps/workspace-service/migrations/document-signing.sql",
+    "tests/rox-suite/document-signing.spec.ts"
+  ],
+  "ownershipNote": "ownedNewFiles lists only the specification's normative implementation targets, all absent at inspection. It does not authorize this worker to create them. This preflight owns only plans/compound-implementation/worker-reviews/RS-SIG-02.json; shared contracts/migrations/transport/i18n remain serialized under the lead's integration owner.",
+  "proposedContributions": [
+    {
+      "path": "packages/shared/src/workspace-domain/signing/contracts.ts",
+      "symbols": ["SignSession", "SignerStep", "SignerIdentityBinding", "SignatureField", "SigningIntent", "SignedArtifactRef", "SignatureEvidenceBundle", "VerificationRecord", "signing command/query contracts"],
+      "change": "Define the eight specified entities over shared EntityRef/FileVersion/Principal bindings. Require immutable sourceVersion/contentHash, recipient order, provider capability/policy version, expiry and revision. Keep domain states draft/sent/identity_pending/intent_pending/signing_pending/provider_accepted/signed_artifact_ready/verified/declined/expired/cancelled/unknown separate from unchanged Rox2Status. Sign takes stepRef/sessionRevision/nonce/contentHash/intentDigest/idempotencyKey; actor identity is transport-derived, not a trusted request field. Represent pending/unknown/signed results, provider receipt and separate VerificationRecord; do not equate receipt verification with cryptographic proof.",
+      "prerequisite": "Accepted dependency and Revision2 entity/FileVersion/identity/result contracts plus selected provider evidence scope. Exact imports must come from those receipts, not a new identity or document store."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/signing/session-commands.ts",
+      "symbols": ["signing.capabilities", "sessionCreate", "read", "send", "recordIntent", "sign", "verify", "cancel", "providerWebhook adapter entry"],
+      "change": "Implement authenticated commands/queries in canonical service transactions with current document.read/export/signing.request/eligible-signer/evidence-export policy. Record immutable manifest/consent policy and actor/time/digest, intent plus command outbox before external call. Enforce source/step/revision/nonce/digest/audience/expiry/revoke and signer order. Persist command aliases and callback event IDs; reconcile duplicate/reordered/late callbacks and unknown sends/cancels without deleting history or issuing an unproven second effect. Schedule expiry/challenge revocation and permitted reminders through foundation jobs/outbox. Do not accept human intent from agent prepare/request/read scopes.",
+      "prerequisite": "Canonical transaction/outbox/job/policy/authenticated transport interfaces and RS-SIG-01/RS-APR-02 receipts; external API readback/idempotency/cancel semantics."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/signing/provider-adapter.ts",
+      "symbols": ["headless signing provider adapter", "provider capabilities", "providerWebhook authentication and reconciliation"],
+      "change": "Implement chosen provider-specific sign/send/readback/verify-support/cancel and callback authentication using protected provider/HSM credentials. Publish versioned identity assurance/evidence capabilities. Return accepted/pending/unknown and receipt rather than success on timeouts. Correlate idempotency keys to durable commands, validate callback event identity and use readback to resolve ambiguous effects. Provider accepted is not artifact-ready or verified; renderer and MCP never receive private keys.",
+      "prerequisite": "Provider conformance receipt, supported evidence policy, dedicated live tenant and real adapter contract; fixture cannot close crypto proof."
+    },
+    {
+      "path": "apps/workspace-service/src/modules/signing/evidence-verifier.ts",
+      "symbols": ["independent artifact/evidence verification", "VerificationRecord creation"],
+      "change": "Verify exact downloaded artifact and evidence hashes, manifest/intent binding, supported certificate chain/signature/timestamp and versioned verification policy independently of provider acceptance. Persist verification result and evidence provenance with FileVersion refs; corrupt digest/artifact/certificate/time yields actionable failure, never a verified badge. Unsupported verification scope is explicit. Export uses separate current permission.",
+      "prerequisite": "Independent supported cryptographic verifier/trust policy and provider evidence format, canonical FileVersion storage and evidence-export policy."
+    },
+    {
+      "path": "apps/workspace-service/migrations/document-signing.sql",
+      "symbols": ["sign_sessions", "signer_steps", "immutable intent records", "provider command/event aliases", "evidence bundles"],
+      "change": "Add the specified canonical persistence: sourceVersion/hash/providerPolicy/expiry/revision, identity/order/state, append-only actor/time/consent-version/intent-digest records, unique command aliases and provider event IDs scoped to provider/account, artifactHash/certificate/timestamp/verificationPolicy refs and verification records. Signed output is a new FileVersion. Use revision-checked transitions and commit-bound outbox; do not mutate source version, store private keys or create a parallel FileVersion/Principal database.",
+      "prerequisite": "Lead migration owner, existing migration runner/schema conventions and accepted transaction/alias/FileVersion contracts; these service targets do not yet exist at inspected paths."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/signing/SigningSessionDetail.tsx",
+      "symbols": ["SigningSessionDetail", "Create session", "Signer identity", "Review intent", "Sign", "Verify/download", "Cancel/expire"],
+      "change": "Build the specified detail panel in the existing React shell: immutable version/hash/provider/state header, recipients/order/assurance, PDF fields with keyboard placement, explicit review/intent/Sign and evidence timeline. Distinguish signed/identity-verified/provider-accepted/cryptographically-verified. Use receipt-based success, safe purpose/grant-bound draft retention, forbidden/unsupported/degraded/stale/conflict/retryable/offline/unknown states, current-policy replay only when supported. Reuse overlay/theme tokens and t(); preserve selection/scroll using stable IDs and support 390px/200% zoom/reduced motion/500ms hover plus focus/click help.",
+      "prerequisite": "Accepted secure viewer, document version loader, authenticated signing client, route parser/mount receipts and provider capabilities; not a local mock screen or a replacement viewer."
+    },
+    {
+      "path": "tests/rox-suite/document-signing.spec.ts",
+      "symbols": ["six published signing acceptance scenarios", "shared-link user scenario", "revision-pinned evidence capture"],
+      "change": "Implement meaningful persisted/reloaded behavior assertions for all six specified scenarios and the cross-entity link/ACL scenario. Exercise UI and API/tool equivalents, denied paths and adjacent PDF/approval/Inbox flows. Record provider effective operations and immutable event history; negative controls must fail intended assertions on a green baseline. Separate fixtures, Linux/native/provider-live evidence and environment failures; a schema validator is not E2E acceptance.",
+      "prerequisite": "Accepted runnable dependencies, foundation fixtures/lane runners and independent provider-live verification. No tests were run or created in this preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/ui/src/components/overlay/PDFPreviewOverlay.tsx",
+      "symbol": "PDFPreviewOverlayProps; PDFPreviewOverlay headerActions and loadPdfData",
+      "change": "After secure viewer/FileVersion receipt, add optional caller-provided signing context/actions associated with one immutable version/hash, rendering Request/Sign/Verify only from capability/current-policy state. Existing filePath/items/loadPdfData preview behavior remains unchanged when signing context is absent. Loading/rendering/scrolling/copying must never record intent or invoke provider; request detail navigation uses typed routes. Keep authenticated hash/version loading outside this presentational overlay rather than treating a mutable filesystem path as a FileVersion.",
+      "reason": "Current props are only path/items/byte-loader/theme and header actions are ItemNavigator/CopyButton (30-52,76-101,117-122); read-only preview is not signing. Preserve existing PDF renderer instead of creating a second viewing surface."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "symbol": "KIND_GLYPH; KIND_TONE; KINDS; InboxPage selected/openSession/done/run",
+      "change": "Add signing row treatment and typed detail navigation from canonical signing projection refs. Display recipient/version/state and pending/unknown/expired distinctly; use authenticated receipts for workflow commands. Keep done/snooze as triage only, not signer intent or signing cancellation. Do not reuse permission/plan action branches as signing consent or route a signing ID through allSessions.",
+      "reason": "Existing maps/list omit signing (52-76), selected routing uses inbox(itemId) (105-110), done marks local triage (183-196) and openSession targets agent sessions (203-205)."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts",
+      "symbol": "InboxKind; InboxItem; InboxSources; DECISION_KINDS; ALL_KINDS; buildInboxItems; inboxCounts",
+      "change": "Add a typed signing projection input/kind whose payload carries shared session/step/version refs and provenance. Build one stable row per canonical actionable signing step from policy-filtered server data; keep IDs stable across callback replay/reload and let canonical retraction remove revoked rows. Include signing in appropriate decision/count maps without altering local markDone/snooze semantics. No second signing state store and no email-as-principal conversion.",
+      "reason": "Current union and source contract (8-35,94-104) have no signing; counts derive from ALL_KINDS (231-242). Stable pure aggregation is the existing mechanism."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useInboxItems.ts",
+      "symbol": "InboxRemoteSource; useInboxItems.load; refresh effect; buildInboxItems call; allLoaded/prune",
+      "change": "Consume canonical signing attention query/events through the accepted authenticated client; add loaded/error/capability state without an absent backend becoming a genuine empty success. Refresh signing on committed events/reconnect/current-policy change and retract denied data immediately. Include signing in allLoaded before prune so triage is not erased before its source loads; pass authorized rows into buildInboxItems. Scope late responses to the current workspace and policy generation.",
+      "reason": "Remote sources are memory/skills/senders (26,47-83); aggregation has no signing (91-104); pruning requires all sources loaded (106-112). Existing optional IPC fallbacks to [] must not be copied as evidence of an available signing backend."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view; ViewRoute",
+      "change": "Add a typed signing detail route builder accepting canonical session ID and optional step/version context, with encodeURIComponent/URLSearchParams as used by existing routes. Proposed route shape signing/session/{encodedId} with optional step/version query context must be agreed with the single parser/navigation owner before implementation. Links from Inbox/viewer/Company/Project/Ticket/Approval use this builder and preserve immutable version and history; opening a link has no mutation.",
+      "reason": "Existing inbox and encoded entity builders (170-184,213-227) and route union (300-302) supply the pattern; no signing builder occurs in the inspected view registry. A builder alone does not prove parser, shell mount or history integration."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "NavigationState; getNavigationStateKey; parseNavigationStateKey",
+      "change": "Add the agreed typed signing detail state and symmetric serialize/restore branch preserving session/step/version context and right sidebar. Apply the same escaping contract as the route builder; reject malformed refs and stale/unauthorized context through domain read rather than accepting it as authority. Coordinate actual route parser, NavigationContext/deeplink IPC and existing detail host edits under the lead owner; those host paths were not inspected in this bounded preflight.",
+      "reason": "The existing navigation union has Inbox but no signing (2601-2623); Inbox persistence is symmetric encoded item ID at 2771-2773 and 3000-3004. navigate.ts:44-50 only dispatches an event and does not mount or authenticate a signing route."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS; ROX2_PERMISSIONS; Rox2EntityRef; Rox2Event; Rox2Status; authorizeRox2Action",
+      "change": "Have the authority owner resolve canonical signing entity registration and document.read/export/signing.request/eligible-signer/evidence-export permission mapping from accepted foundation contracts. If missing, extend shared registries once with agreed names and consumers, not per-package aliases. Keep signing domain states in signing/contracts.ts; do not add enum values to Rox2Status executionMode/lifecycle/verification. Reuse revision/account-aware EntityRef and auditable causation/correlation/revision fields. Do not treat authorizeRox2Action's actor+permission match as complete resource/version/challenge authorization; actual commands must pass the accepted authenticated current-policy gateway.",
+      "reason": "Kinds/permissions currently lack signing/domain-scoped operations (17-64); refs/events already supply lineage seams (131-141,232-239,612-620); this file explicitly performs no I/O (3-6), and authorizeRox2Action lacks resource/audience/expiry inputs (601-610). Exact new registry names await the authority receipt rather than creating incompatible enums."
+    }
+  ],
+  "integrationRequests": [
+    {
+      "owner": "lead shared transport/router owner",
+      "request": "Return accepted actual route parser/deeplink/history/detail-host and generated authenticated client or IPC/preload registration paths and symbols, then serialize their signing patch with shared routes/types. No transport or shell mount file is invented or edited by this preflight.",
+      "source": "docs/rox-suite/published/RS-SIG-02.md:28,97,122-125"
+    },
+    {
+      "owner": "lead shared i18n/help owner",
+      "request": "Allocate signing UI/help/disabled-reason keys in all ten existing packages/shared/src/i18n/locales/*.json files with ASCII ordering and ru fallback conventions. Use existing t() and help controls; preserve selected typography/themes. Locale files and help component implementations were not inspected, so exact key/patch manifests must be returned by their owner before integration.",
+      "source": "Loaded repository AGENTS.md i18n contract; docs/rox-suite/published/RS-SIG-02.md:32,45; PDFPreviewOverlay.tsx:12,53"
+    },
+    {
+      "owner": "foundation projections/links/authorization owners",
+      "request": "Supply exact canonical event/outbox registration, resource link/mention/attachment/FileVersion, Company/Project/Ticket/Approval evidence-chip, search/OCR/notification/activity/MCP/memory/revoke/replay interfaces and patch locations. Signing emits/consumes those primitives; no separate Inbox, identity database, grant expansion or projection store. RS-MCP-01/RS-ADM-01 are related requirements, not added explicit dependency IDs.",
+      "source": "docs/rox-suite/published/RS-SIG-02.md:28,51,57,70,74-78,124-126"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "DoD-01",
+      "criterion": "UI и typed routes/history/contextual deep links работают в существующем ROX.",
+      "specLines": [122, 122],
+      "currentEvidence": "PDFPreviewOverlay props/headerActions are path-based preview (30-52,117-122); routes.view has inbox/entity builders but no signing (102-294); NavigationState lacks signing (types.ts:2601-2623); navigate dispatches only an event (navigate.ts:44-50). SigningSessionDetail target is absent.",
+      "seams": ["PDFPreviewOverlay", "routes.view", "NavigationState", "getNavigationStateKey", "parseNavigationStateKey", "NEW SigningSessionDetail"],
+      "requiredChange": "Implement existing-shell detail/viewer/Inbox entry plus agreed typed builder/parser/persistence/host and contextual same-version links, without a second viewer or agent-session ID conflation.",
+      "verification": "Future actual UI: create/open signing detail from secure document/Inbox/Company/Project/Ticket/Approval, back/forward/deeplink/reload preserves exact session/step/version; malformed and unauthorized links do not mutate or leak data. Existing PDF preview/Inbox/session navigation still work.",
+      "missingPrerequisite": "Wave0/dependency receipts; secure viewer/FileVersion loader and single router/client/detail-host integration receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-02",
+      "criterion": "Entity model, persistence/migration aliases, queries/commands/receipts и required background processing реализованы.",
+      "specLines": [123, 123],
+      "currentEvidence": "Five normative contract/service/migration target files are absent. platform-contract.ts:3-6 explicitly has no I/O; Rox2EntityRef/Rox2Event/Rox2Receipt are shared seams, not signing persistence.",
+      "seams": ["Rox2EntityRef", "Rox2Event", "Rox2Receipt", "NEW signing/contracts.ts", "NEW session-commands.ts", "NEW provider-adapter.ts", "NEW evidence-verifier.ts", "NEW document-signing.sql"],
+      "requiredChange": "Persist all eight entities, immutable source/intent, versioned provider policy, revision-checked commands, unique command/event aliases and commit-bound outbox; create signed output FileVersion, verification record and expiry/reconciliation jobs. Never claim a DB/provider distributed transaction or put keys in app DB.",
+      "verification": "Future migrate/restart and persisted readback through all lifecycle states; inspect exact hashes/identity/order/revisions/aliases/events, interrupted outbox recovery, expiry and late-callback reconciliation, one effective operation after response loss. UI/API/tool outputs agree.",
+      "missingPrerequisite": "Canonical service/migration/transaction/outbox/job authority, accepted RS-SIG-01/RS-APR-02 and supported provider policy.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-03",
+      "criterion": "Source/entity links и mentions используют общие IDs; source audience не расширяется автоматически.",
+      "specLines": [124, 124],
+      "currentEvidence": "Rox2EntityRef provides workspace/entity/revision/accountNamespace (232-239), Rox2Relation exposes common IDs (125-129); PDF preview receives mutable filePath, not a canonical version ref (30-40). No signing detail target exists.",
+      "seams": ["Rox2EntityRef", "Rox2Relation", "PDFPreviewOverlayProps", "NEW SignedArtifactRef"],
+      "requiredChange": "Use shared canonical source FileVersion and immutable contentHash everywhere; signed output is a derived new FileVersion. Cross-entity chips/mentions carry refs/provenance only and never broaden source ACL or guest workspace grants.",
+      "verification": "Future same signing record opened from CRM/Ticket/Project/Approval shows identical source version/hash after reload; a user authorized for the host but denied the source receives no title/body/count/evidence leak; allowed mentions resolve same IDs.",
+      "missingPrerequisite": "Shared link/mention/FileVersion/ACL and contextual chip owner interfaces; none provided as accepted receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-04",
+      "criterion": "Shared authorization/sharing/revoke покрывают UI/API/MCP/jobs/offline replay.",
+      "specLines": [125, 125],
+      "currentEvidence": "authorizeRox2Action only checks actor and permission grant (601-610); Rox2Context.permissionMode is not signing authorization (143-156). Current PDF overlay loader has no signer/challenge binding. Package spec mandates a common authenticated gateway (74-78).",
+      "seams": ["authorizeRox2Action", "Rox2ActorGrant", "NEW session-commands.ts", "NEW provider-adapter.ts"],
+      "requiredChange": "Use current resource policy and authenticated actor for read/export/request/eligible signer/evidence export; bind nonce/version/digest/audience/expiry and guest challenge server-side. Reject stale hash/intent/nonce, wrong recipient/actor spoof, expired/revoked access in every entry point and replay. Prepare/request/read agent scopes cannot synthesize human consent/signature.",
+      "verification": "Future UI, generated API/IPC, MCP and jobs deny identical unauthorized inputs; revoke while open and before replay/provider effect blocks stale action and retracts data. Guest challenge cannot enumerate workspace; malicious actor field or agent call cannot record intent/sign.",
+      "missingPrerequisite": "Accepted authenticated shared resource/challenge/revoke/replay gateway and transport scopes; registry ownership cannot be replaced by local boolean checks.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-05",
+      "criterion": "Search/notification/activity/agent/memory projections сохраняют policy и provenance; dedup/retraction проверены.",
+      "specLines": [126, 126],
+      "currentEvidence": "Rox2Event has causation/correlation/aggregateRevision (131-141); useInboxItems remote sources are memory/skills/senders (26,47-83), buildInboxItems has no signing sources (inbox-model.ts:94-104,120-199).",
+      "seams": ["Rox2Event", "isAuditableRox2Event", "InboxSources", "buildInboxItems", "useInboxItems"],
+      "requiredChange": "Emit specified signing events only from durable commit/outbox, project allowed metadata/evidence status with common IDs/hash/provenance and dedup. OCR keeps source ACL, agent/memory refs remain purpose-limited and contain no keys or personal certificate data without purpose. Revoke/retraction removes denied title/count/body from caches/search/push/memory and Inbox.",
+      "verification": "Future duplicate/reordered events yield one attention/reminder/activity projection per canonical event; reload/reconnect converges; revoke retracts all denied outputs, including counts/push/agent context. Assert logs/memory omit keys and sensitive evidence bodies.",
+      "missingPrerequisite": "Shared search/OCR/notification/activity/memory/MCP policy-filtered event and retraction owners; related RS-MCP-01/RS-ADM-01 contracts not verified here.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-06",
+      "criterion": "Required realtime/reconnect/persistence concurrency сценарии из tests пройдены; unavailable capability честно disabled.",
+      "specLines": [127, 127],
+      "currentEvidence": "useInboxItems refreshes known remote sources and prunes only when all three are loaded (68-83,106-112); no signing service/new tests paths exist. Rox2Status supports unknown without inventing signing-specific execution enums (68-111).",
+      "seams": ["useInboxItems refresh/allLoaded", "Rox2Status", "NEW session-commands.ts/providerWebhook", "NEW signing.capabilities"],
+      "requiredChange": "Revision-check races; durable outbox recovery, idempotent send/sign, dedup/reorder/late-callback reconciliation, cancel/expiry token revoke and unknown-effect readback. Reconnect rechecks current policy. Missing backend/provider/verifier is unsupported/degraded/disabled, not []/zero/verified; only capability-supported offline mutation queues.",
+      "verification": "Future race two sign/cancel commands and callback against expiry/revoke; kill/restart after commit and lose external send response; prove one effective operation, immutable audit and eventual authorized readback. Disconnect/reconnect preserves allowed drafts but blocks forbidden replay; absent capabilities show disabled reason.",
+      "missingPrerequisite": "Accepted revision/outbox/realtime/replay semantics and provider idempotency/readback/cancel conformance. All required scenarios remain unrun.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-07",
+      "criterion": "Hover/focus/click help, keyboard, loading/empty/error/offline, narrow390px, zoom200%, reduced-motion verified.",
+      "specLines": [128, 128],
+      "currentEvidence": "PDFPreviewOverlay uses t() and theme (12,41,53), loading/error handling (76-109); PreviewOverlay supplies common headerActions/theme and responsive overlay chrome (33-74,91-108). These do not prove signing help/a11y or narrow-layout behavior.",
+      "seams": ["PDFPreviewOverlay", "PreviewOverlay", "NEW SigningSessionDetail"],
+      "requiredChange": "Reuse tokens/current typography and native controls; support keyboard signature-field placement, explicit intent instructions, visible focus, 500ms hover/focus definition and separate What is this popover with meaning/units-or-not-applicable/source/asOf/example/policy/disabled reason. Escape returns focus; help click never mutates. Preserve drafts on failures/navigation under purpose/grant retention; no success before receipt. Cover all domain/general error/offline states and one main drilldown/sheets at narrow/zoom with reduced motion.",
+      "verification": "Future real surface at 390px/200% and reduced motion: Tab/ShiftTab/Enter/Escape and field keyboard placement work, selection/scroll stable, no shell-wide horizontal overflow. Hover timing/focus/help clicks and focus return observed; failed query/conflict/provider timeout/revoke/offline states preserve only allowed drafts and never show premature success.",
+      "missingPrerequisite": "Runnable UI/transport, existing help owner and all ten locale key patches; native/browser inspection forbidden in this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-08",
+      "criterion": "Linux domain/renderer lane; source-pinned macOS native для IPC/font/device; provider-live где actual adapter действует. Pending required lane оставляет feature incomplete.",
+      "specLines": [129, 129],
+      "currentEvidence": "PDFPreviewOverlay loads bytes through injected async loader (39-40,86-101); provider adapter and signing tests are absent. No execution evidence is produced by reading these seams.",
+      "seams": ["PDFPreviewOverlay.loadPdfData", "NEW provider-adapter.ts", "NEW document-signing.spec.ts"],
+      "requiredChange": "Integrate real domain/renderer/native transport and supported provider adapter, then retain separate lane receipts for exact delivered source. Keep fixture/simulated results distinct from live crypto proof and feature incomplete while any required lane is pending.",
+      "verification": "Future Linux domain/renderer scenario receipt; source-pinned actual macOS IPC/font/device interaction receipt; dedicated provider-live tenant signing and independent artifact verify/readback. Failures distinguish baseline, environment, capability and product failures.",
+      "missingPrerequisite": "Runnable accepted implementation, Linux/macOS runners, provider tenant/conformance and exact-source artifact. This worker is forbidden to execute any lane.",
+      "state": "NOT_VERIFIED_REQUIRED_LANES_PENDING"
+    },
+    {
+      "id": "DoD-09",
+      "criterion": "Screenshots/ARIA и logs/hash/expected-observed предоставлены с synthetic data и exact tested commit.",
+      "specLines": [130, 130],
+      "currentEvidence": "Scoped source hashes identify preflight inputs only; Rox2Event causation/correlation/revision is available (131-141,617-620). No screenshots, ARIA capture, runtime logs or tested feature commit exist in this report.",
+      "seams": ["Rox2Event", "isAuditableRox2Event", "NEW document-signing.spec.ts"],
+      "requiredChange": "Capture actual UI/ARIA and secret-free correlated commands/receipts/events/policy revisions, hashes and expected/observed outputs with synthetic PDF/identities. Metrics include denominator/source/lag and actionable recovery, not inferred zero or unlimited retry. Bind evidence to exact tested implementation commit/environment.",
+      "verification": "Future evidence review ties screenshots/ARIA plus saved/reloaded artifact/evidence hashes and logs to each criterion and source commit; checks provenance/correlation and absence of secrets/private identities. Preflight snapshot digest is not runtime acceptance.",
+      "missingPrerequisite": "Implemented exercised lanes and lead-owned evidence/telemetry manifest; no feature runtime is authorized now.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-10",
+      "criterion": "Independent review, meaningful negative controls, runbook, source licensing/dependencies и user docs готовы.",
+      "specLines": [131, 131],
+      "currentEvidence": "Specification requires seeded mutant failure with green baseline (118), on-call reconcile/cache cleanup (105) and no copied Lark assets/licensing assumption (7,97); provider/test/new domain targets are absent.",
+      "seams": ["NEW provider-adapter.ts", "NEW evidence-verifier.ts", "NEW document-signing.spec.ts"],
+      "requiredChange": "Independent reviewer checks intent identity, policy/revoke, immutable audit and cryptographic claims. Add meaningful negative controls for stale binding, denied access, corrupt evidence and duplicate effects. Lead documents unknown-effect reconciliation, late callback/expiry/cancel and stale permission/search/cache cleanup, supported assurance/evidence limits, user instructions and provider/library licensing/dependencies. Do not copy external source assets or close on planning validation.",
+      "verification": "Future independent receipt plus negative-control intended assertions fail on green baseline; runbook steps exercised against unknown/cancel/revoke cases; docs match actual capabilities/units/help. Review dependency/license provenance separately from provider acceptance.",
+      "missingPrerequisite": "Implemented revision, independent reviewer, provider selection/licensing and lead-owned docs/runbook locations. No additional documentation files created by this worker.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DoD-11",
+      "criterion": "GitHub completion связывает implementation commit/PR и доказательства, а не только rendered screen.",
+      "specLines": [132, 132],
+      "currentEvidence": "issues.json:930-945 records OPEN issue #1120, PLANNED_NOT_IMPLEMENTED and NOT_LAUNCHED; input revision is only the dispatch reference. No completion receipt inspected or produced.",
+      "seams": ["plans/rox-suite/issues.json RS-SIG-02 record", "NEW document-signing.spec.ts acceptance evidence"],
+      "requiredChange": "Lead integrates and delivers source, publishes implementation commit/PR with all accepted lane/DoD evidence and dependency/foundation receipts, and only then updates completion. Root wave0 or this JSON alone is not signing completion.",
+      "verification": "Future lead readback of GitHub issue/PR/commit and evidence links checks exact delivered revision and every required acceptance receipt; no screenshot-only or schema-validator closure.",
+      "missingPrerequisite": "All implementation/acceptance gates and authorized lead Git/GitHub delivery. Git and network operations are prohibited here.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Scenario-01",
+      "criterion": "Synthetic PDF v1 → invite → identity challenge → explicit intent → provider artifact → independent verify/readback; exact hash/provenance сохраняются после reload.",
+      "specLines": [109, 109],
+      "currentEvidence": "PDF overlay only loads/render bytes (76-101,143-159); domain/provider/verifier targets are absent. Shared EntityRef/receipt seams exist but do not implement signing.",
+      "seams": ["PDFPreviewOverlay", "NEW sessionCreate/send/recordIntent/sign/verify", "NEW evidence-verifier.ts"],
+      "requiredChange": "Complete the actual immutable-source and authenticated-signer lifecycle, durable provider/evidence readback and new signed FileVersion/VerificationRecord, preserving source hash/provenance across restart.",
+      "verification": "Future synthetic v1 through UI and API/tool equivalents, persisted reload matches original source and signed artifact/evidence hashes, policy/intent/provider refs and verification result. Denied export/source access and adjacent normal preview are also exercised.",
+      "missingPrerequisite": "All dependencies/foundations, canonical storage/identity and supported live provider plus independent verifier.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "Scenario-02",
+      "criterion": "Read/approval decision/typed name без signing intent дают ноль provider operations.",
+      "specLines": [110, 110],
+      "currentEvidence": "PDF read path has no signing command; Inbox done is local markDone and session markRead (183-196), not intent. Specification explicitly rejects approval as intent (51).",
+      "seams": ["PDFPreviewOverlay.loadPdfData", "InboxPage.done", "NEW recordIntent/sign"],
+      "requiredChange": "Keep read/scroll/approval/typed-name/notification-triage semantically isolated from immutable human intent and sign. Only authenticated explicit review/intent followed by Sign can trigger eligible external operation.",
+      "verification": "Future read/scroll/approval/typed-name/done/help actions across UI/API/tool paths persist no SigningIntent and produce exactly zero provider operations; positive explicit authorized review/Sign produces the expected operation so the zero check is not a no-op implementation. Adjacent approval/read flow remains valid.",
+      "missingPrerequisite": "Accepted approval/viewer dependency mechanisms, real intent command and provider operation evidence.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "Scenario-03",
+      "criterion": "Changed source hash, stale intent/nonce, wrong recipient, expired challenge, revoked access отклоняются.",
+      "specLines": [111, 111],
+      "currentEvidence": "Rox2EntityRef has revision/account (232-239), authorizeRox2Action has no hash/nonce/recipient/expiry/resource input (601-610). No signing command target exists.",
+      "seams": ["Rox2EntityRef", "NEW SignerIdentityBinding", "NEW recordIntent/sign"],
+      "requiredChange": "Validate all source/identity/consent/challenge bindings server-side with current policy and revision concurrency before committing intent/external effect, including reconnect/revoke mid-screen.",
+      "verification": "Future independent negative cases for each changed hash, stale digest, replayed nonce, different recipient, expired audience/challenge and revoked grant return actionable denial/conflict and no effect across UI/API/MCP/job/replay; authorized control succeeds and denied projections leak no fields.",
+      "missingPrerequisite": "Accepted identity/challenge/current-policy/version authority and signing persistence.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "Scenario-04",
+      "criterion": "Duplicate/reordered callback и lost send response дают один effective provider operation и immutable audit.",
+      "specLines": [112, 112],
+      "currentEvidence": "Rox2Event has audit identity/revision fields (131-141,617-620), but there is no signing outbox/migration/provider adapter at normative paths.",
+      "seams": ["Rox2Event", "NEW provider command/event aliases", "NEW providerWebhook/session-commands/provider-adapter"],
+      "requiredChange": "Commit intent/command outbox and stable idempotency alias before external call; persist unique provider event IDs and append-only event history. Handle reorder/duplicates/late callbacks without state regression and reconcile response-loss/unknown with provider readback before retry. Unknown cancel is not confirmed cancellation.",
+      "verification": "Future inject duplicate/reorder/late completion, response loss, process restart and cancel/expiry race; provider readback shows exactly one effective operation, persisted immutable audit records all distinct events, dedup projections stay singular and UI/API converge after reload. Seed a dedup/idempotency mutant that fails intended assertions.",
+      "missingPrerequisite": "Provider conformance proving idempotency/readback, canonical outbox/migration/alias and recovery interfaces.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "Scenario-05",
+      "criterion": "Corrupt artifact/digest/certificate/time verification проваливается; signed badge не заменяет verified.",
+      "specLines": [113, 113],
+      "currentEvidence": "Rox2Status.verification has unverified/receipt_verified/readback_verified (82-111), which is result-proof metadata, not cryptographic document verification. Independent verifier path is absent.",
+      "seams": ["Rox2Status", "NEW VerificationRecord", "NEW SignatureEvidenceBundle", "NEW evidence-verifier.ts", "NEW SigningSessionDetail status badges"],
+      "requiredChange": "Add explicit domain cryptographic verification record bound to artifactHash/intent/policy/certificate/timestamp; keep provider acceptance, identity assurance, artifact signing and independent verification separate. Failed/unsupported scope cannot produce verified-complete UI or claims.",
+      "verification": "Future corrupt artifact bytes, digest, certificate/trust chain and timestamp independently and assert failed verification with persisted reasons and no verified badge in UI/API/tool output; independently valid live artifact verifies and readback remains valid after reload. Generic receipt_verified alone must not pass.",
+      "missingPrerequisite": "Selected supported evidence format, independent verifier/trust/time policy and real provider-live artifact.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "Scenario-06",
+      "criterion": "Agent impersonation и request actor spoof не обходят policy. Provider-live dedicated tenant; fixture не закрывает crypto proof.",
+      "specLines": [114, 114],
+      "currentEvidence": "authorizeRox2Action trusts the supplied actorId/grants match unless its caller authenticates them (601-610); specification requires actor/challenge from authenticated transport (53,74,78). No provider adapter exists.",
+      "seams": ["authorizeRox2Action caller boundary", "NEW session-commands.ts authenticated actor", "NEW provider-adapter.ts"],
+      "requiredChange": "Resolve actor/challenge exclusively from authenticated gateway; scope agents to prepare/request/read and prohibit fabricated human intent/signature or private-key access. Implement and validate actual adapter in a dedicated provider tenant, not a fixture-only accepted screen.",
+      "verification": "Future malicious request actor field and agent tools attempt recordIntent/sign as another signer and are denied before provider effect across IPC/API/MCP/jobs. Real human explicit intent produces live provider operation and independent cryptographic proof; fixture/simulated receipt remains labeled and cannot close feature.",
+      "missingPrerequisite": "Authenticated actor and agent-scope gateway receipt plus dedicated provider-live conformance/evidence tenant.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "id": "User-scenario",
+      "criterion": "Synthetic PDF подписывается через explicit signer review/intent и supported provider; сохраняются verification record/evidence bundle. Links из CRM/Ticket/Project указывают ту же version с общей ACL. Failed/unknown/expired не показываются verified complete.",
+      "specLines": [116, 118],
+      "currentEvidence": "Existing shared refs/relations and Inbox navigation supply integration seams only. SigningSessionDetail/service/verifier/tests are absent; this preflight supplies no runtime proof.",
+      "seams": ["Rox2EntityRef", "Rox2Relation", "routes.view", "NEW SigningSessionDetail", "NEW sign/verify"],
+      "requiredChange": "Integrate all vertical slices end-to-end, same-version cross-entity links and current ACL. Persist/reload signed output, immutable intent, evidence/verification and distinct pending/unknown/expired/failed states; no successful-looking fallback when provider/backend/evidence is unavailable.",
+      "verification": "Future actual UI plus API/tool equivalents and denied paths/adjacent flows, exact persisted/reloaded output, live tenant independent verify/readback and cross-entity ACL checks. Seed intended failing negative control against green baseline and retain source-pinned lane evidence; planning/schema validation is explicitly insufficient.",
+      "missingPrerequisite": "Accepted dependencies, architecture/provider/evidence foundations, all required runtime lanes and integration ownership receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "docs/rox-suite/published/RS-SIG-02.md", "symbol": "RS-SIG-02 prerequisites/ownership/acceptance/DoD", "lineStart": 1, "lineEnd": 148, "sha256": "8e0acde898023f04d7b374162d2f0ebe7c3ce53fabf0ba298d43dab4c954c755"},
+    {"path": "plans/rox-suite/issues.json", "symbol": "issues entry RS-SIG-02", "lineStart": 917, "lineEnd": 945, "sha256": "5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path": "packages/ui/src/components/overlay/PDFPreviewOverlay.tsx", "symbol": "PDFPreviewOverlayProps / PDFPreviewOverlay", "lineStart": 30, "lineEnd": 164, "sha256": "5846be9f49b65f2b198dea98c16d0e35f038b3816c3342f1aaaf3c397792f400"},
+    {"path": "packages/ui/src/components/overlay/PreviewOverlay.tsx", "symbol": "PreviewOverlayProps / PreviewOverlay chrome", "lineStart": 33, "lineEnd": 108, "sha256": "02b5b07a701dd8ebbfdb3d760ffdc26573f170e7533b6bd1f0166e2308f2bf96"},
+    {"path": "apps/electron/src/renderer/pages/InboxPage.tsx", "symbol": "KIND_GLYPH / KIND_TONE / KINDS / InboxPage selection and triage", "lineStart": 52, "lineEnd": 217, "sha256": "9e7b98fc482a3dca7a18042123f48e295d8c5a88d0f9cb48a2e6b464943209e3"},
+    {"path": "apps/electron/src/shared/routes.ts", "symbol": "routes.view / ViewRoute", "lineStart": 102, "lineEnd": 302, "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2 entity/permission/status registries", "lineStart": 3, "lineEnd": 167, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2EntityRef / Rox2ExternalBinding", "lineStart": 232, "lineEnd": 250, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2ActorGrant / authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event", "lineStart": 592, "lineEnd": 620, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts", "symbol": "InboxKind / InboxItem / InboxSources", "lineStart": 8, "lineEnd": 104, "sha256": "e6834df3cd5881c81b4c92f512b9ed698a68e9311011c07ada9fe60caba8fda2"},
+    {"path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts", "symbol": "buildInboxItems", "lineStart": 120, "lineEnd": 199, "sha256": "e6834df3cd5881c81b4c92f512b9ed698a68e9311011c07ada9fe60caba8fda2"},
+    {"path": "apps/electron/src/renderer/pages/inbox/inbox-model.ts", "symbol": "inboxCounts / markDone / pruneInboxState", "lineStart": 231, "lineEnd": 271, "sha256": "e6834df3cd5881c81b4c92f512b9ed698a68e9311011c07ada9fe60caba8fda2"},
+    {"path": "apps/electron/src/renderer/hooks/useInboxItems.ts", "symbol": "InboxRemoteSource / useInboxItems", "lineStart": 26, "lineEnd": 116, "sha256": "6d19994bf049e6200f0005efd3e1da775979045f57f5d33c618f3b7116a6eca7"},
+    {"path": "apps/electron/src/renderer/lib/navigate.ts", "symbol": "navigate", "lineStart": 44, "lineEnd": 50, "sha256": "fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "InboxNavigationState", "lineStart": 2496, "lineEnd": 2500, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "NavigationState", "lineStart": 2601, "lineEnd": 2623, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "getNavigationStateKey inbox branch", "lineStart": 2771, "lineEnd": 2773, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "parseNavigationStateKey inbox branch", "lineStart": 3000, "lineEnd": 3004, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead consumes and independently validates this owned report; do not apply source patches yet. Return committed wave0 and accepted RS-SIG-01/RS-APR-02 plus resolved architecture/provider/evidence/transport ownership receipts.",
+    "afterGates": "Rehash/reread affected files against the lead's integrated revision; agree canonical entity/permission/route/client contracts with shared owners, then implement the first vertical synthetic immutable-source → authenticated identity/explicit intent → durable command/outbox → real supported provider → independent evidence/readback scenario. Include denied paths, projections and agent scope in that slice; continue through every acceptance criterion before completion.",
+    "firstPatchBoundary": "Lead-owned packages/shared/src/workspace-domain/signing/contracts.ts and canonical migration/session command interfaces after accepted foundation imports; no duplicate authority or provider mock masquerading as implementation.",
+    "featureStatusUntilThen": "INCOMPLETE; required receipts and live evidence NOT_VERIFIED"
+  },
+  "risks": [
+    {"risk": "Hidden foundation gates are not represented by the two explicit DAG edges.", "evidence": "spec:13,97", "mitigation": "Keep explicit dependency array unchanged; require separate per-WP and provider/evidence receipts before source work/live enablement."},
+    {"risk": "Current policy helper or permissionMode could be mistaken for signer/resource authorization.", "evidence": "platform-contract.ts:143-156,601-610; spec:74-78", "mitigation": "Authenticate actor/challenge and check resource/version/audience/expiry/current grants at shared gateway across every path."},
+    {"risk": "PDF path/render, Inbox done or approval could be mistaken for immutable intent/signature.", "evidence": "PDFPreviewOverlay.tsx:30-40,76-101; InboxPage.tsx:183-196; spec:51,110", "mitigation": "Use canonical immutable version and separate explicit signer intent; prove zero provider calls for non-signing actions with a working positive control."},
+    {"risk": "Unknown external effect, duplicate callbacks and expiry/cancel races can create duplicate effects or false final state.", "evidence": "spec:43,55-57,112", "mitigation": "Durable intent/outbox and idempotency/event aliases, append-only history and provider readback; do not claim confirmed cancel after unknown stop."},
+    {"risk": "Receipt/readback status can be misrepresented as independent cryptographic signature verification.", "evidence": "platform-contract.ts:82-111; spec:22,42,113-114", "mitigation": "Separate VerificationRecord and supported policy scope; dedicated live tenant and independent corruption/trust/time checks required."},
+    {"risk": "Existing optional remote API fallback to [] or premature triage pruning could hide unavailable signing or lose state.", "evidence": "useInboxItems.ts:61-65,106-112", "mitigation": "Capability/loaded/error state for signing, no empty-success fallback, update allLoaded/prune and policy-generation/workspace-bound responses."},
+    {"risk": "Cross-entity links, OCR/search/push and agent memory can expand audience or retain revoked evidence metadata.", "evidence": "spec:70,74-78,124-126", "mitigation": "Common refs with source ACL, purpose-bound redaction/dedup/retraction across projections and replay; private key/certificate privacy boundaries."},
+    {"risk": "Concurrent root integration makes inspected snapshots stale, especially shared registry/routes/types/Inbox.", "evidence": "Worker prompt; whole-file sourceReferences", "mitigation": "Serialize shared patches under one owner and rehash/reread changed files before apply; no working-tree-to-HEAD equivalence claim."},
+    {"risk": "Provider capabilities, independent trust verification and long-term evidence format are consequential unresolved external prerequisites.", "evidence": "spec:13,22,55,136", "mitigation": "Resolve selected real adapter/capability/evidence conformance rather than implement a typed-name/approval/fixture fallback."},
+    {"risk": "Screen/schema success could close the issue despite missing native/Linux/provider-live/negative-control evidence.", "evidence": "spec:118,129-132,138", "mitigation": "Keep featureComplete=false until every required lane and per-criterion receipt binds to delivered implementation commit/PR."}
+  ]
+}

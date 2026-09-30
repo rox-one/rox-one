@@ -1,0 +1,345 @@
+{
+  "task_id": "RS-DOC-01-preflight",
+  "attempt_id": "f6ded17d3cfc6c11e1c4b32343dd9022",
+  "packet_hash": "c571f0a832632c49ed368027f251a85f72d7fcc2efb55876e751e7b59756236a",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-DOC-01",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not implementation",
+  "workTier": "bounded-workflow within the lead's existing worker graph",
+  "dependencies": ["RS-DRV-01", "RS-MSG-02"],
+  "dependencyEvidence": {
+    "path": "plans/rox-suite/issues.json",
+    "lines": [625, 653],
+    "note": "Normative dependsOn and published-spec links agree. Dispatch depends_on=[] describes this independent preflight, not permission to start feature implementation. Lead wave0 commit and accepted feature dependency receipts remain required."
+  },
+  "inspection": {
+    "basis": "Actual working-tree bytes, including user-owned uncommitted wave0 work; input_revision is the dispatch baseline, not a claim that inspected bytes equal HEAD.",
+    "codegraph": "Unavailable for this checkout: tool reported no .codegraph index. No indexing or upgrade performed.",
+    "find": "Scoped find failed with provider HTTP 402; known-symbol grep, filename glob and source read supplied the evidence instead. Failure is not evidence of source absence.",
+    "allocatedPaths": "Glob found no CollaborativeDocumentEditor.tsx, workspace-domain/collaboration files or EntityDiscussion-named files. This establishes absence under those names in the visible non-ignored tree, not absence of every possible collaboration implementation.",
+    "sourceFreshness": "Whole-file SHA256 values below were measured after inspecting the cited sections. No post-lead-integration freshness claim: any differing hash requires rereading and reconciling the affected request and line ranges.",
+    "prohibitedOperations": "No product/source/test/manifest/progress/shared-file/Git mutation, build, test, native UI or network operation was performed. Only the owned JSON report was written. Proposed verification below is future work, NOT_RUN."
+  },
+  "foundationGates": [
+    {
+      "id": "content-representation-and-authority",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:3,20,37,41",
+      "sourceSeams": ["PageConfig (packages/core/src/types/page.ts:294-320)", "PageConfigSchema (packages/shared/src/pages/validation.ts:199-215)", "createPage/updatePage/savePageContent (packages/shared/src/pages/storage.ts:281-379,445-463)"],
+      "requiredReceipt": "Versioned Page contentKind html_app|collaborative_document with legacy HTML migration, one existing Page identity/library entry, immutable representation after creation, relational metadataRev/CAS separate from body frontier. Durable body persistence must not use the script-private data/store.sqlite or introduce a Markdown master.",
+      "missingPrerequisite": "Accepted canonical SQL entity/body-WAL/snapshot owner, schema/migration and metadata CAS contract. Current schema is v1 HTML-oriented and updatePage is last-write-wins; no such foundation is demonstrated by inspected code."
+    },
+    {
+      "id": "single-react-crdt-binding-conformance",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:3,12,26,37,52,68",
+      "sourceSeams": ["TiptapMarkdownEditor useEditor/onUpdate/content effect (packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx:253-391,409-443)"],
+      "requiredReceipt": "Choose exactly one React editor-to-CRDT production binding using a conformance spike for schema/blocks/table/code/embed, IME, paste, relative anchors and actor-scoped undo. Disable conflicting local history for the document binding; do not run Markdown-controlled setContent and CRDT writers against the same body.",
+      "missingPrerequisite": "Chosen binding/library version and editor-neutral schema plus migration/conformance results. Existing Tiptap is a candidate only; no Solid UI transplant or second production writer is authorized."
+    },
+    {
+      "id": "durable-replication-and-offline-recovery",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:26,33,37,53,74",
+      "sourceSeams": ["PAGE_STORE_FILENAME and persistence contract (packages/shared/src/pages/storage.ts:10-12,39-46)", "PageView snapshot effect (apps/electron/src/renderer/components/pages/PageView.tsx:124-132)"],
+      "requiredReceipt": "Local durable WAL/checkpoints survive restart and upgrade with unchanged opIds; authenticated append validates ACL under document lock, deduplicates opIds and ACKs only durable commits. Snapshot/frontier anti-entropy supports device peers and awareness expires independently of body state.",
+      "missingPrerequisite": "Canonical local WAL location, upgrade/compaction protocol, server SQL append/lock transaction, durable-ACK transport and reconnect contract. The artifact snapshot watcher/app cache is not a document WAL."
+    },
+    {
+      "id": "transport-actor-acl-and-revocation-fence",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:33,37,54,74",
+      "sourceSeams": ["registerPagesHandlers callbacks ignore _ctx (packages/server-core/src/handlers/rpc/pages.ts:201-239,262-281,319-329)", "authorizeRox2Action (packages/core/src/rox2/platform-contract.ts:592-609)", "savePageContent (packages/shared/src/pages/storage.ts:445-463)", "buildPagesToolCallbacks (packages/server-core/src/pages/tool-callbacks.ts:184-224)"],
+      "requiredReceipt": "Authenticated principal/device, entity-scoped current ACL and epoch/fence govern WS, RPC/API, tools, download/export and private embedded entities. Revoke fences open writers and invalidates connected private previews; old raw-file/refresh/agent paths cannot mutate document bodies.",
+      "missingPrerequisite": "Accepted transport principal resolver, entity membership policy, atomic ACL/body-append fence and legacy writer isolation. HTML PageActionGrant is a source-action capability bound to HTML digest, not document collaborator membership. Do not claim physical deletion on a disconnected device."
+    },
+    {
+      "id": "common-message-anchor-mention-receipts",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:29-30,37,43,55",
+      "sourceSeams": ["Rox2EntityRef (packages/core/src/rox2/platform-contract.ts:233-239)", "ROX2_RELATION_KINDS/Rox2Event (packages/core/src/rox2/platform-contract.ts:42-51,131-141)", "NotesPage markdown comment writer (apps/electron/src/renderer/pages/NotesPage.tsx:2653-2664,2708-2712)"],
+      "requiredReceipt": "RS-MSG-02 exposes shared EntityDiscussion/message.create with PageRef, stable relative anchor/sourceRevision, resolve state, current-ACL fallback, idempotency and notification/mention receipt. Picker Enter selects, CmdEnter sends, Enter inserts newline; mention does not grant access.",
+      "missingPrerequisite": "Accepted RS-MSG-02 API/component path and anchor schema; no EntityDiscussion file was found under that name. Existing embedded Markdown comments are not the shared discussion engine and must not be copied into DocumentComments."
+    },
+    {
+      "id": "materialized-search-common-events-and-agent-preview",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:37,74",
+      "sourceSeams": ["Rox2Event/isAuditableRox2Event (packages/core/src/rox2/platform-contract.ts:131-141,617-619)", "PagesToolCallbacks/CreatePageToolInput/UpdatePageToolPatch (packages/session-tools-core/src/context.ts:594-657,872-935)"],
+      "requiredReceipt": "Committed body revisions project ACL-filtered text into existing search with watermark; common events propagate mentions/notifications/activity/agent/memory. Typed agent preview-before-write carries current revision and returns observable receipt; raw HTML content replacement never edits collaborative documents.",
+      "missingPrerequisite": "Accepted common event/outbox, search watermark and typed preview/commit owner/paths from lead foundations. Symbolic entity kinds/events are not proof of backend or projection completeness."
+    },
+    {
+      "id": "revision-restore-and-policy-bound-export",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:31-32,37,57",
+      "sourceSeams": ["Rox2EntityRef/isRevisionedEntityRef (packages/core/src/rox2/platform-contract.ts:233-239,613-615)", "PageConfig.share/grants (packages/core/src/types/page.ts:314-317)", "PageView SharePageDialog (apps/electron/src/renderer/components/pages/PageView.tsx:449-457)"],
+      "requiredReceipt": "History has allowed immutable body revisions with author/time/frontier; restore appends a new revision under current ACL and never restores grants. Markdown and actual PDF exports are bounded artifacts tied to source revision/hash/audience/policy with checksum/readback; DOCX only after real capability verification.",
+      "missingPrerequisite": "Canonical revision storage/restore transaction and export/download/attachment policy service with actual PDF provider/readback. Existing HTML publication dialog must not become automatic document sharing/export."
+    },
+    {
+      "id": "separate-native-live-and-sensitivity-gates",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-DOC-01.md:56,58,72-76",
+      "sourceSeams": ["PageFrame sandboxForKind (apps/electron/src/renderer/components/pages/PageFrame.tsx:34-76)", "NotesPage TiptapMarkdownEditor (apps/electron/src/renderer/pages/NotesPage.tsx:2609-2624)"],
+      "requiredReceipt": "Revision-bound two-principal live service, Linux fixture UI, Electron native and provider readback are separate receipts. Capture locale/font/ARIA/viewport and native IME/keyboard/narrow states, HTML/Notes regressions and seeded negative controls that fail assertions rather than time out.",
+      "missingPrerequisite": "Lead wave0 commit, accepted dependency/foundation receipts and approved implementation verification environment. This preflight has no authorization to execute these gates."
+    }
+  ],
+  "ownedNewFiles": [
+    {
+      "path": "apps/electron/src/renderer/components/pages/CollaborativeDocumentEditor.tsx",
+      "normativeAllocation": "components/pages/CollaborativeDocumentEditor.tsx",
+      "specEvidence": "docs/rox-suite/published/RS-DOC-01.md:42",
+      "proposedContribution": "One chosen React CRDT binding, durable/local versus committed sync states, awareness/carets, title CAS, TOC/formatbar, entity mention picker, RS-MSG-02 discussion integration, history/restore/export controls and native responsive/failure states within existing PageView.",
+      "existence": "Not found under allocated filename. No source file created by preflight."
+    },
+    {
+      "path": "workspace-domain/collaboration/contracts.ts",
+      "normativeAllocation": "workspace-domain/collaboration/contracts.ts",
+      "specEvidence": "docs/rox-suite/published/RS-DOC-01.md:42",
+      "repositoryRootResolution": "UNRESOLVED: published specification supplies this suffix only; no workspace-domain/collaboration tree was found. Lead must allocate its package root before implementation; do not invent a second contract location.",
+      "proposedContribution": "Editor-neutral versioned schema and PageRef-based append/ACK/frontier/opId/checkpoint/awareness/anchor/history/restore/export command and receipt shapes. Reference common identity, ACL/message and event contracts rather than creating a second entity/message store.",
+      "existence": "Not found under allocated suffix. No source file created by preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/types/page.ts",
+      "symbol": "PageConfig / PageKind",
+      "change": "Introduce versioned contentKind html_app|collaborative_document and separate metadata revision/body revision or frontier references in PageConfig using accepted foundation contracts. Preserve id/slug/projectId and existing runtime PageKind, grants, share and HTML contentDigest semantics. Migration must classify old pages as html_app, never rename HTML bodies into documents.",
+      "reason": "Spec lines 3,20,37,41; currently schemaVersion:1 and kind describe only HTML runtime. Representation and metadata CAS are missing."
+    },
+    {
+      "path": "packages/shared/src/pages/types.ts",
+      "symbol": "CreatePageInput / LoadedPage / core type re-exports",
+      "change": "Discriminate HTML creation from collaborative document creation using contentKind; document creation accepts the chosen neutral schema/initial revision, not index.html. Expose a common Page-backed document reference/receipt while retaining HTML folder/content/data paths for html_app only and existing imports.",
+      "reason": "CreatePageInput.content is explicitly index.html at lines 78-79; LoadedPage paths must not be misrepresented as a collaborative body/WAL."
+    },
+    {
+      "path": "packages/shared/src/pages/validation.ts",
+      "symbol": "PageConfigSchema / validatePageConfig",
+      "change": "Validate the accepted versioned representation and revision fields with a legacy html_app migration path. Apply representation-specific invariants; forbid document refresh/raw HTML payloads and prevent callers from mutating contentKind/revision/ACL-managed fields through generic metadata patches.",
+      "reason": "Existing PageConfigSchema accepts only schemaVersion 1 and no contentKind; every savePageConfig validates against it. Type-only additions would leave the actual persistence boundary unchanged."
+    },
+    {
+      "path": "packages/shared/src/pages/storage.ts",
+      "symbol": "createPage / updatePage / savePageConfig / savePageContent / UpdatePagePatch",
+      "change": "Dispatch new document creation to the accepted existing-domain SQL transaction, retain legacy HTML storage, add metadata expectedMetadataRev CAS with conflict/readback receipt, and freeze representation/managed revision fields in UpdatePagePatch. Reject savePageContent for collaborative_document; ensure refresh and generic data writers cannot become document body writers. page.json may be a compatibility projection, never a second authoritative document body or ACL store.",
+      "reason": "createPage always seeds v1; updatePage unconditionally spreads metadata without CAS; savePageContent directly replaces index.html. Script-private data/store.sqlite is expressly not a cross-process body store."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "symbol": "PageView / render-lease and snapshot effects / body / SharePageDialog / PageGrantsDialog",
+      "change": "Branch by contentKind before scheduling artifact effects: createPageLease/getPageData must run only for html_app. Render allocated CollaborativeDocumentEditor for documents, retaining PageFrame and its digest/lease/error lifecycle unchanged for apps. Gate HTML source grants/publication/refresh controls away from document membership/export controls; show localized Document versus App Page labels and keep slug alias navigation.",
+      "reason": "Current effects at 86-132 assume HTML digest/snapshot and body 386-439 treats no HTML content as empty. Merely swapping the final JSX still executes inappropriate HTML effects."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "symbol": "PagesHome / handleCreatePage / openPage / PageTile inputs",
+      "change": "Keep one existing pages library/project filter/stable slug navigation; add a localized document creation action through the same Page domain and the RS-DRV-01 creation receipt. Distinguish contentKind in library entry labels without changing the HTML New Page path into an implicit document rename.",
+      "reason": "Current handleCreatePage always sends kind:'interactive' and openPage uses routes.view.pages(slug); these are the exact existing lifecycle/navigation seams. Drive is an explicit accepted dependency, not a second Docs library."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / Rox2Event / Rox2Context / authorizeRox2Action",
+      "change": "Reuse kind:'page', workspaceId/entityId/revisionId/accountNamespace and existing parent/mentions relations for document references; connect accepted typed document command/receipt/frontier and anchored MessageRef contracts through the common platform. Require authenticated entity-scoped ACL decisions, audit causation/correlation/aggregateRevision and current revision in agent context; do not mistake permissions catalog or actor grant array alone for per-document membership/fencing.",
+      "reason": "Common identity/events exist, but inspected contract contains no document WAL/frontier or atomic revoke gate. No new document identity kind/store is necessary."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pages.ts",
+      "symbol": "registerPagesHandlers / CREATE / UPDATE / GET_CONTENT / SET_CONTENT / CREATE_LEASE / ISSUE_GRANT / REVOKE_GRANT / broadcastChanged",
+      "change": "Resolve principal/device from authenticated _ctx and enforce accepted current entity ACL on document reads/writes/subscriptions. Dispatch page.create/rename and collaborative append/history/restore/export to the canonical transaction service using typed commands; include expectedMetadataRev/current body revision/epoch. Reject legacy SET_CONTENT and CREATE_LEASE for documents and keep HTML action grants separate from membership grant/revoke. Emit only committed revision receipts/events and filter private listing/broadcast data using the foundation policy.",
+      "reason": "Shown handlers ignore _ctx; metadata and content paths call direct file writers. Existing REVOKE_GRANT deletes HTML action grants, not a collaborator epoch; pages:changed broadcasts loaded pages for the workspace."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI page methods (getPage/createPage/updatePage/getPageContent/setPageContent/createPageLease, lines 2102-2115)",
+      "change": "Align renderer-facing Page APIs with discriminated creation and metadata CAS receipts, add references to lead-allocated typed collaboration/history/restore/export methods, and reject treating setPageContent as a document body API. Integrator must migrate actual preload/protocol callers alongside the shared signature; their files were not inspected and no guessed paths are authorized here.",
+      "reason": "Existing contract uses generic metadata patches/HTML content string and lease; UI cannot observe CRDT ACK/frontier/fence or rename conflicts through these signatures."
+    },
+    {
+      "path": "packages/server-core/src/pages/tool-callbacks.ts",
+      "symbol": "buildPagesToolCallbacks / toSummary / createPage / updatePage / writePageData",
+      "change": "Bind authenticated actor and current entity policy from the invoking session; expose document references and typed preview-before-write/current-revision command receipts via accepted agent contracts. Deny raw patch.content, refresh/data replacement and generic file paths for collaborative_document while preserving HTML tool behavior. toSummary.hasContent must distinguish document state from existsSync(index.html).",
+      "reason": "updatePage currently directly calls savePageContent at 202-204; deps currently contain workspace identity but no authenticated principal/current body revision. Agent path must share the same commit/fence gate as humans."
+    },
+    {
+      "path": "packages/session-tools-core/src/context.ts",
+      "symbol": "CreatePageToolInput / UpdatePageToolPatch / PagesToolCallbacks (both declarations at 594-657 and 872-935)",
+      "change": "Coordinate both currently repeated declaration sites with the lead's ownership before adding representation/ref/metadata-CAS and typed document preview/commit receipts. Keep raw HTML content replacement only for html_app, preserve existing shared callback convention and migrate consumers instead of adding parallel tool schemas.",
+      "reason": "Actual inspected file declares these interfaces twice. Updating only one logical-looking block risks stale contract comments/fields or declaration-merging conflicts; it is a reconciliation gate, not authorization for unrelated cleanup."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditor / extensions / handleDroppedOrPastedFiles / content synchronization effect",
+      "change": "After conformance selects Tiptap if appropriate, reuse proven React block/format mechanisms without activating Markdown onUpdate/setContent as another document writer. Any necessary shared extension factoring must preserve existing Notes props, markdown engines, own-echo selection handling, editable transitions and file/IME behavior. Document-specific attachment/embed insertion must use current ACL/source/export policy rather than copying allowBase64/data-URL behavior. No unconditional conversion of Notes to CRDT.",
+      "reason": "Current onUpdate serializes Markdown and effects replace whole content; images allow base64 and pasted files are embedded as data URLs. The document binding must choose one writer and private embed policy, while #563 remains a separate regression."
+    }
+  ],
+  "integrationRequests": [
+    {
+      "owner": "RS-MSG-02 lead/dependency owner",
+      "requestedInterface": "Accepted EntityDiscussion component path, message.create signature, anchored parent/sourceRevision/drift fallback and resolve receipts, mention idempotency/current ACL/notification contract.",
+      "allocationStatus": "No implementation path found under EntityDiscussion name; do not invent or write DocumentComments."
+    },
+    {
+      "owner": "RS-DRV-01 lead/dependency owner",
+      "requestedInterface": "Accepted create Doc command and Drive/library receipt mapping to existing page entity id/slug/projectId; document export/download/attachment audience and permission contract.",
+      "allocationStatus": "Dependency receipts not inspected or accepted by this worker."
+    },
+    {
+      "owner": "Lead shared foundations",
+      "requestedInterface": "Exact ownership/root for workspace-domain/collaboration/contracts.ts, SQL body persistence/local WAL and replication service, authenticated actor/ACL fence, event/search projection, typed agent preview/write, revision and PDF export provider. Allocate production implementations without extra body/message/entity stores.",
+      "allocationStatus": "Published spec defines required behavior but does not identify all implementation files or additional package DAG IDs. These are foundation gates, not fabricated explicit dependencies."
+    },
+    {
+      "owner": "Lead UI/i18n integration owner",
+      "requestedInterface": "Add all user-facing document labels/help through t(); update all ten locale files with sorted keys and Russian plural conventions. Extend direct-import PageTile/page-visuals/navigation/protocol/preload as needed using their actual symbols after owner inspection.",
+      "allocationStatus": "No shared file written; precise located seams above supplied. Downstream files not opened are not represented as source-backed patch anchors."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Two-user convergence/hash/frontier/caret; localUndo preserves B insert.",
+      "specLines": [52, 52],
+      "currentEvidence": ["TiptapMarkdownEditor:342-391 has local useEditor and serialized Markdown onUpdate; 409-443 replaces content via setContent.", "PageView:386-439 renders HTML PageFrame, not a CRDT document editor."],
+      "symbolSeam": "Allocated CollaborativeDocumentEditor; existing TiptapMarkdownEditor useEditor/extensions and PageView contentKind branch; lead-allocated collaboration.append service.",
+      "requiredChange": "Conformance-select a single editor-neutral CRDT binding, append durable operations with stable actor/opIds, merge remote operations without whole-Markdown replacement, exchange TTL awareness and implement local-only CRDT undo.",
+      "verification": ["Future live A/B principals open same Page; interleave edits including same-offset insertion, deletion, block/table/code/embed and IME. Verify expected semantic content plus equal canonical hash/frontier after anti-entropy, carets/selections and awareness expiry.", "A inserts, B inserts, A undo: assert B text survives and both converge. Include delayed/reordered/duplicated packets; fixture-only echo is insufficient."],
+      "missingPrerequisites": ["Accepted RS-DRV-01 Page creation receipt", "Chosen conformance binding/schema and durable replication service", "Two authenticated users/devices and awareness transport"],
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_VERIFIED"
+    },
+    {
+      "criterion": "Crash/upgrade between localcheckpoint and ACK retains exact IDs/WAL; no duplicate or lost acknowledged edits.",
+      "specLines": [53, 53],
+      "currentEvidence": ["Page storage:10-12 declares data/store.sqlite script-private; 39-46 are artifact filenames.", "savePageContent:445-463 atomically writes HTML and then metadata, with no document opId/ACK protocol."],
+      "symbolSeam": "Allocated collaboration contracts checkpoint/opId/frontier/ACK shapes; canonical local-WAL and server SQL transaction services awaiting lead allocation.",
+      "requiredChange": "Persist local operation before local-saved status; keep exact opId/actor IDs across crash and upgrade; append under document lock/current ACL, ACK after durable commit, deduplicate retries and replay from checkpoint/anti-entropy. Keep queued, local durable and committed states distinct.",
+      "verification": ["Future crash injection after local WAL/checkpoint before append, after durable server commit before ACK and after ACK before local checkpoint. Restart/upgrade same device, replay and read back durable server state.", "Assert original opId set and frontier, expected acknowledged edits and exactly-once application; include snapshot/compaction recovery and duplicate delivery. Seed ACK-before-persist and require lost-durability assertion failure, not timeout."],
+      "missingPrerequisites": ["Accepted local WAL lifecycle/upgrade schema", "Document-lock SQL transaction and durable ACK transport", "Crash/upgrade injection environment"],
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_VERIFIED"
+    },
+    {
+      "criterion": "Revoke open WS/API/agent/legacy writer fails after fence; disconnected erase not claimed.",
+      "specLines": [54, 54],
+      "currentEvidence": ["pages RPC UPDATE/SET_CONTENT ignore _ctx at 226-281 and call direct writers; REVOKE_GRANT:319-329 removes action grants.", "Agent updatePage:184-204 calls savePageContent; PageConfig:314-317 grants concern source actions.", "authorizeRox2Action:601-609 checks actor grants but carries no entity/epoch context."],
+      "symbolSeam": "registerPagesHandlers, buildPagesToolCallbacks.updatePage, savePageContent, common authenticated ACL/fence service, allocated editor revoke subscription.",
+      "requiredChange": "Fence ACL epoch atomically with body append; recheck actor/current ACL under document lock; invalidate open subscriptions/private preview cache, refuse stale epoch append/download/export/agent calls and protect authoritative WAL against raw HTML/file/refresh writers. Preserve valid HTML sandbox/grant behavior.",
+      "verification": ["Future revoke B while WS open and append races: after returned fence receipt, WS append/read, RPC/API, typed agent tool, legacy set-content/refresh/raw shared-file attempt and private export/download all fail without new body revision.", "Assert connected cache/cursor policy and no data leakage; reconnect disconnected B denies access and follows purge policy, with no claim of remotely erasing a device that remains offline."],
+      "missingPrerequisites": ["Authenticated principal/device resolver and entity membership epoch", "Atomic ACL/body fence and legacy writer isolation", "Shared revoke/cache policy receipts"],
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_VERIFIED"
+    },
+    {
+      "criterion": "Anchors drift fallback/current ACL; mentions notify once, never grant.",
+      "specLines": [55, 55],
+      "currentEvidence": ["Rox2EntityRef:233-239 and parent/mentions relation kinds:42-51 supply reusable identity.", "NotesPage:2653-2664 and 2708-2712 persists comments into Markdown, not shared MessageRef.", "No EntityDiscussion-named file found in visible tree."],
+      "symbolSeam": "RS-MSG-02 EntityDiscussion/message.create accepted path pending; allocated editor selection/mention UI and neutral anchor contracts.",
+      "requiredChange": "Use one shared message.create with PageRef, sourceRevision and CRDT-relative selection anchor; provide drift/deleted-source history fallback under current ACL. Dedupe mention notifications by accepted message/mention identity. Resolve changes discussion state only and mention never changes grants.",
+      "verification": ["Future A comments selected text, B edits/deletes anchor, reload discussion: correct current anchor or explicit source/history fallback, never silently unrelated text.", "Retry same send/mention across reconnect: exactly one shared MessageRef and notification; unchanged ACL. Revoke target/source and assert picker, chip preview, fallback/history and notification payload remain permission-filtered.", "Exercise picker Enter-select, Enter-newline, CmdEnter-send, Escape/focus return and resolve without source deletion."],
+      "missingPrerequisites": ["Accepted RS-MSG-02 EntityDiscussion/message/anchor/mention receipts", "CRDT relative-position schema", "Current ACL and event/notification idempotency"],
+      "state": "DEPENDENCY_INTERFACE_NOT_ACCEPTED; NOT_VERIFIED"
+    },
+    {
+      "criterion": "IME/loading/empty/offline/queued/rejected/conflict/narrow native states verified.",
+      "specLines": [56, 56],
+      "currentEvidence": ["PageView:388-426 has HTML empty/error/loading states only.", "PagesHome:86-101 creates an interactive HTML page; NotesPage:2609-2624 mounts existing Markdown editor and wiki/tag callbacks."],
+      "symbolSeam": "Allocated CollaborativeDocumentEditor; PageView contentKind branch; PagesHome creation; t()-based labels and shared responsive editor mechanisms.",
+      "requiredChange": "Implement header48/formatbar36, body70-88ch min320, collapsible TOC180-220 and comments320; narrow hides rails before shrinking text and preserves focus/selection. Render truthful sync and metadata conflict states, all required block/IME/paste behaviors, read-only history and explicit rename conflict comparison. Do not represent app cache as saved WAL.",
+      "verification": ["Future native Electron walkthrough with real IME/composition, loading/empty, offline local durable, queued append, ACK, rejection/revoke and concurrent offline title conflict. Reload confirms persistence and keyboard focus/selection survives rail changes.", "Separate Linux fixture and native screenshots plus ARIA/computed font/viewport/locale evidence; Russian light fixture and dark regression. Verify hover/focus/click help, no hover mutation, contrast, focus, reduced motion and 32px desktop/44px touch targets."],
+      "missingPrerequisites": ["Chosen editor binding and WAL/ACK state machine", "Metadata CAS and shared discussion", "Native/live verification environment and all ten locale keys"],
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NATIVE_NOT_RUN"
+    },
+    {
+      "criterion": "Restore creates new revision, does not revert ACL; export actual allowed artifact.",
+      "specLines": [57, 57],
+      "currentEvidence": ["PageConfig:294-320 has HTML digest/grants/share but no document history/restore.", "PageView:449-457 uses HTML SharePageDialog; Rox2EntityRef:233-239 provides revision identity only."],
+      "symbolSeam": "Allocated editor history/restore/export controls and contracts; canonical document.restore/export services pending allocation; existing Page identity and common revision ref.",
+      "requiredChange": "Query allowed immutable body revisions; show author/time/frontier and readonly compare. Restore with confirmation/current revision creates a fresh body revision/event under current ACL, not a metadata/grant rollback. Export Markdown and real PDF after source/embed/attachment/audience policy checks to bounded receipt/hash/readback; no automatic public link; DOCX only verified capability.",
+      "verification": ["Future edit, revoke/change membership, restore older body: new revision differs from both historical/current IDs, intended content restored, current ACL unchanged and revoked readers still denied.", "Export allowed known revision with private embeds and approved audience; inspect actual Markdown/PDF artifact content and checksum/provider readback. Denied actor/audience/embed/attachment or stale revision does not leak bytes or create public link; verify size bound and failed provider state."],
+      "missingPrerequisites": ["Canonical body revision/restore service", "Current ACL/source/export/attachment policy", "Actual Markdown/PDF provider and receipt/readback"],
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; PROVIDER_NOT_RUN"
+    },
+    {
+      "criterion": "Seed ACK-before-persist, raw shared file writer, private embed bypass caught; #563/#570 regressions.",
+      "specLines": [58, 58],
+      "currentEvidence": ["savePageContent:455 writes index.html directly and tool updatePage:202-204 calls it.", "TiptapMarkdownEditor:269-280 allows base64 and pasted files use data URLs at 181-190.", "PageFrame:34-76 preserves opaque sandbox with no allow-same-origin; NotesPage:2609-2624 uses legacy Markdown callbacks."],
+      "symbolSeam": "Proposed doc-editor-conformance/concurrency/offline/revoke/export verification families (spec:44), existing Tiptap content/selection behavior, PageFrame sandbox and common document append/embed policy.",
+      "requiredChange": "Build deterministic fault/sensitivity checks around actual durable append, writer fence and embed resolver; negative controls must bypass each gate deliberately and be caught by behavioral assertions. Retain Notes roundtrip/rails/comments/editor mount and HTML artifact/grant/lease semantics; do not re-pin source-text/incidental tests.",
+      "verification": ["Future mutant ACK before durable persist then crash must fail acknowledged-edit readback invariant; enabling raw document-file write must fail unchanged authoritative body/revoke assertion; private embed ACL bypass must fail content/export leakage assertion.", "Require assertion failures specific to each seeded fault, not infra/timeouts. Exercise #563 Markdown roundtrip, controlled echo/caret, editable transition, rails/comments and mount; #570 HTML sandbox/CSP/lease/digest grants and renderer failure states. Preserve separate #562 agent session/approval versus human discussion behavior."],
+      "missingPrerequisites": ["Implemented append/fence/embed paths and test fixture controls", "Accepted regression expectations tied to current source hashes", "Lead-approved integrated runtime environment"],
+      "state": "SENSITIVITY_AND_REGRESSIONS_NOT_RUN"
+    },
+    {
+      "criterion": "Versioned Page representation, stable alias, metadata CAS and existing library/Drive create Doc flow.",
+      "specLines": [3, 48],
+      "currentEvidence": ["PageConfig uses stable id/slug/projectId and runtime kind; createPage:288-299 initializes only schema v1.", "PagesHome.openPage:79-82 uses routes.view.pages(slug); handleCreatePage:86-101 creates interactive HTML.", "updatePage:363-378 merges metadata without expected revision."],
+      "symbolSeam": "PageConfig/PageConfigSchema/CreatePageInput/createPage/updatePage; PagesHome.handleCreatePage/openPage; RS-DRV-01 accepted creation command.",
+      "requiredChange": "Add versioned contentKind without changing runtime kind; preserve Page/library/project identity and slug alias; separate metadataRev CAS from body frontier and expose explicit title apply/conflict compare. Reuse Drive entry lifecycle and typed history/discussion navigation instead of a second Docs surface.",
+      "verification": ["Future migrate existing HTML Page and open original slug with unchanged artifact behavior; create Doc from Drive and Page library, reload and open by stable Page identity/alias.", "Two offline rename requests with same expectedMetadataRev: one commit and one explicit conflict with current metadata, no silent overwrite, no body/ACL revision rollback."],
+      "missingPrerequisites": ["Accepted RS-DRV-01 creation receipt", "Versioned Page migration and metadata CAS", "Lead typed navigation/protocol patch ownership"],
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS; NOT_VERIFIED"
+    },
+    {
+      "criterion": "Feature includes search, mentions, attention/activity, agent tools, failures and observable receipt with authenticated actor.",
+      "specLines": [37, 74],
+      "currentEvidence": ["Rox2Event:131-141 has audit fields and isAuditableRox2Event:617-619 requires causation/correlation/aggregate revision.", "PagesToolCallbacks:650-657/928-935 exposes legacy file-backed operations only.", "pages RPC shown callbacks ignore _ctx; actor authorization is not established here."],
+      "symbolSeam": "Common Rox2EntityRef/Rox2Event, allocated collaboration command/receipt contracts, registerPagesHandlers, buildPagesToolCallbacks and lead-owned common projection services.",
+      "requiredChange": "Tie durable commits to authenticated actor and common causal events; publish materialized searchable text plus watermark under current ACL, route idempotent mentions/notifications/activity/agent/memory and expose typed preview-before-write/current-revision tools with domain receipts. No raw legacy document body writer or separate Markdown master.",
+      "verification": ["Future create/edit/comment/reconnect flow reads back page ref/revision/hash, event causation/correlation, search watermark and authorized search results; revoked/private queries and agent reads deny or redact.", "Agent preview has no write side effect; stale/current revision commit scenarios produce conflict/commit receipts through same ACL and durable append gate. Notification/attention/activity survive reload without duplicates."],
+      "missingPrerequisites": ["Authenticated actor resolver", "Common event/outbox/search/notification/activity/memory accepted foundations", "Typed document agent preview/commit contract"],
+      "state": "FOUNDATION_INTERFACES_NOT_ACCEPTED; NOT_VERIFIED"
+    },
+    {
+      "criterion": "General quality and acceptance evidence: exact commit/inputSha, domain receipts, reload/concurrency/negative assertions and separate fixture/live/native/provider gates.",
+      "specLines": [72, 76],
+      "currentEvidence": ["Specification explicitly marks implementation/runtime NOT_RUN and geometry proposed.", "This artifact contains working-tree source hashes only; no behavioral/UI/provider receipts were executed."],
+      "symbolSeam": "Allocated editor, PageView/PageFrame, shared t()-based UI and lead integrated acceptance runner.",
+      "requiredChange": "After implementation bind evidence to exact integrated commit and input hashes, preserve domain ref/revision/hash/receipt and negative controls; collect screenshots/ARIA/computed font/viewport/locale. Distinguish local/queued/committed/provider-confirmed, clear private previews under policy, maintain Escape/focus/reduced-motion/help and all locales. Do not copy literal Macro/Lark code/assets/private screenshot identifiers without clearance.",
+      "verification": ["Future separate evidence receipts for Linux fixture, actual service two-user/offline/revoke flows, Electron native IME/focus/narrow states and real provider export readback. Check that seeded assertions fail on mutants and pass for delivered bytes.", "All affected callsites and ten locale translations inspected by integration owner; reported NOT_RUN gates cannot be recast as N/A or passed on screenshots alone."],
+      "missingPrerequisites": ["Lead wave0 commit and accepted explicit dependency/foundation receipts", "Integrated implementation and approved verification environments", "Exact delivered revision and readback receipts"],
+      "state": "ACCEPTANCE_NOT_RUN; PREFLIGHT_ONLY"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"Normative full specification / Definition of Done / common gates","lineStart":1,"lineEnd":87,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"plans/rox-suite/issues.json","symbol":"RS-DOC-01 normative record","lineStart":625,"lineEnd":653,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"packages/core/src/types/page.ts","symbol":"PageConfig / PageKind","lineStart":294,"lineEnd":320,"sha256":"9789ed5f57703584452e865b572d1cc91e9eb612fbd79a9f5de0775b788fcd4e"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef / formatRox2EntityId","lineStart":218,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isRevisionedEntityRef / isAuditableRox2Event","lineStart":592,"lineEnd":619,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"TiptapMarkdownEditorProps / TiptapMarkdownEditor","lineStart":202,"lineEnd":391,"sha256":"5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"Controlled Markdown content synchronization effect","lineStart":409,"lineEnd":443,"sha256":"5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView render lease lifecycle","lineStart":50,"lineEnd":132,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PageView.tsx","symbol":"PageView artifact body / PageFrame","lineStart":386,"lineEnd":439,"sha256":"890e8f7bc3ca1177aaf6cc1b45f0f4086ef419a2594c923098a3a262763225d6"},
+    {"path":"apps/electron/src/renderer/components/pages/PagesHome.tsx","symbol":"PagesHome.openPage / handleCreatePage","lineStart":79,"lineEnd":101,"sha256":"3941920dba5049e0bb966d4f001e49816982d7396891727dd75d0e262319a484"},
+    {"path":"apps/electron/src/renderer/components/pages/PageFrame.tsx","symbol":"PageFrame security contract / sandboxForKind","lineStart":34,"lineEnd":76,"sha256":"7cb551294c720b87443d645041c0514c3b48a6ea04cad668b8c083629c1e3ba1"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"createPage / UpdatePagePatch / updatePage","lineStart":281,"lineEnd":379,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/storage.ts","symbol":"savePageContent","lineStart":445,"lineEnd":463,"sha256":"b2ce1a4d9979020359220a1b34e665bd56cc9f5cf47828ea78d15b8d3fd93ee7"},
+    {"path":"packages/shared/src/pages/types.ts","symbol":"CreatePageInput / LoadedPage","lineStart":71,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/shared/src/pages/validation.ts","symbol":"PageConfigSchema","lineStart":199,"lineEnd":215,"sha256":"dc9579b3f129baae3d81943a6fc2f5a87212af3aa72ecef1facbd9667deaf3f3"},
+    {"path":"packages/server-core/src/handlers/rpc/pages.ts","symbol":"registerPagesHandlers CREATE/UPDATE/GET_CONTENT/SET_CONTENT","lineStart":201,"lineEnd":281,"sha256":"c6bc8a9161d21c228dabf55c8406bce2bbfe5419315919cba072e8b6c01c7a04"},
+    {"path":"packages/server-core/src/pages/tool-callbacks.ts","symbol":"buildPagesToolCallbacks.createPage/updatePage/writePageData","lineStart":166,"lineEnd":224,"sha256":"b1b5ed4d62ca2407690f8bd0d03a030e273c943ae8a2ec328de7e668490460f0"},
+    {"path":"packages/session-tools-core/src/context.ts","symbol":"CreatePageToolInput / UpdatePageToolPatch / PagesToolCallbacks first declarations","lineStart":594,"lineEnd":657,"sha256":"aab3e5e2bb0099beae5c46aac559337d858c0777088fcf6acfe16fe746845fb3"},
+    {"path":"packages/session-tools-core/src/context.ts","symbol":"CreatePageToolInput / UpdatePageToolPatch / PagesToolCallbacks repeated declarations","lineStart":872,"lineEnd":935,"sha256":"aab3e5e2bb0099beae5c46aac559337d858c0777088fcf6acfe16fe746845fb3"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"NotesPage mounted TiptapMarkdownEditor / wiki callbacks","lineStart":2609,"lineEnd":2624,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads/validates this preflight artifact while completing wave0. No feature implementation starts from this worker receipt alone.",
+    "afterRequiredReceipts": "After lead wave0 commit and accepted RS-DRV-01/RS-MSG-02 receipts, reconcile cited source hashes, resolve collaboration contract package root and shared foundation ownership, then run the editor-to-CRDT conformance spike. First vertical delivery is two authenticated users on one existing Page with durable append/WAL and local-only undo; keep every remaining criterion mandatory.",
+    "firstPatchRequests": ["PageConfig/PageConfigSchema versioned contentKind and metadata revision", "Canonical collaboration contracts and chosen binding", "PageView contentKind branch with HTML-only lease/snapshot effects"],
+    "reportVerification": "Read back owned JSON; product runtime/build/tests/network prohibited for this preflight. Supplied launch-worker-pool.py --verify remains a lead verification action, not a feature-completion receipt."
+  },
+  "risks": [
+    "Inspected working tree can change during root-owned wave0 integration; source hashes must be reconciled before applying any requested patch, and dispatch input_revision must not be represented as the exact tested source revision.",
+    "Existing grants authorize HTML source actions; conflating them with collaborator membership would leave WS/API/agent/export and private embedded entities unfenced.",
+    "Binding CRDT to existing Markdown setContent/onUpdate creates two production writers, destroys relative selections/anchors and risks remote-actor undo or body loss.",
+    "Atomically written HTML/snapshot files and config-watcher completion are not durable local WAL or server ACK-after-persist semantics; data/store.sqlite is expressly script-private.",
+    "UI branching only the body leaves PageView HTML lease/snapshot/share/grant effects active for documents. Both effects and controls require representation dispatch while preserving PageFrame sandbox.",
+    "Editor-neutral block/table/code/embed schema, CRDT operation format and upgrade/compaction migration are selection gates; existing Tiptap usage does not establish table/conformance support.",
+    "Repeated page tool interface declarations in context.ts require lead reconciliation before shared contract changes; no unrelated cleanup performed.",
+    "Base64/private embed or export shortcuts can bypass source/attachment ACL and grant policy; actual PDF/provider artifact/readback cannot be claimed from HTML publication or a screenshot.",
+    "Normative collaboration contract path has no specified package root in the inspected specification; inventing one risks parallel contracts/stores. Lead must resolve allocation.",
+    "Exact seven DoD bullets and general gates remain NOT_VERIFIED. A conformance spike or first two-user vertical is not full feature completion; disconnected physical erase, copied Macro assets and fixture-as-live evidence are forbidden claims."
+  ]
+}

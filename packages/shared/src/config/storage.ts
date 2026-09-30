@@ -954,7 +954,7 @@ export function loadStoredConfig(): StoredConfig | null {
 // - getAnthropicApiKey() → credentialManager.getLlmApiKey(connectionSlug)
 // - getClaudeOAuthToken() → credentialManager.getLlmOAuth(connectionSlug)
 
-export function saveConfig(config: StoredConfig): void {
+export function saveConfig(config: StoredConfig, options?: { readonly durable?: boolean }): void {
   ensureConfigDir();
 
   // Convert paths to portable form for cross-machine compatibility and persist
@@ -973,6 +973,7 @@ export function saveConfig(config: StoredConfig): void {
   atomicWriteFileSync(
     CONFIG_FILE,
     JSON.stringify(storageConfig, null, 2) + '\n',
+    options,
   );
 }
 

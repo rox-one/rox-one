@@ -1,0 +1,349 @@
+{
+  "task_id": "LSX-WP-026-preflight",
+  "attempt_id": "2f089514715fb8358bb3cd636b8095be",
+  "packet_hash": "0a95d33353f5d74923a96990e59246f6af14ae34d4d0e607559579b382e2fef7",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-026",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow: one owned report, dependent specification/source inspection, no implementation delegation",
+  "dependencies": ["LSX-WP-003", "LSX-WP-005", "LSX-WP-006"],
+  "dependencyOrder": "After the lead's wave0 commit: accept LSX-WP-003 atomic CAS/epoch/receipt, then LSX-WP-005 retained raw-span patches, then LSX-WP-006 stable block identity; accept implementation and authoritative readback receipts, not final chat text, before LSX-WP-026 implementation.",
+  "evidenceScope": {
+    "revisionMeaning": "input_revision is the dispatch revision, not a claim that the inspected dirty working tree equals that commit. No Git commands were run.",
+    "sourceState": "Inspected live shared working-tree bytes, including root-owned uncommitted wave0 source. NotesPage already imports content resolution, MarkdownCommitCommand and block-tree services, unlike the older product-baseline excerpts in the specification.",
+    "freshness": "Whole-file SHA256 captured with read-only shasum after inspection. Root integration may subsequently change these bytes; all seam line ranges and hashes must be rechecked against the lead's committed wave0 before patch application. No runtime claim is attached to a source hash.",
+    "specManifestMatches": true,
+    "specManifestHashes": {
+      "plans/lark-suite-reference/execution-packages.json": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b",
+      "plans/lark-suite-reference/work-packages.json": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"
+    },
+    "codegraph": "Queried once; tool reported no .codegraph index. Used scoped read/grep/glob instead; did not initialize or upgrade it.",
+    "inspectionBoundary": "Named four product evidence files, their direct docs/type imports, package specification and its linked normative specification documents. No broader product subsystem audit.",
+    "newFilePresence": "Exact-path glob returned all five proposed implementation/test files as not found at inspection. They remain proposals, not implementations.",
+    "executed": ["read/grep/glob inspection", "read-only whole-file SHA256 capture"],
+    "notExecuted": ["builds", "tests", "native UI", "network operations", "product implementation", "Git operations", "dispatch verification_argv"],
+    "writeBoundary": "Only plans/compound-implementation/worker-reviews/LSX-WP-026.json is owned and written. No product source, tests, manifests, progress or other shared file was changed."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-LAUNCH",
+      "classification": "EXPLICIT_EXECUTION_GATE_NOT_DAG_EDGE",
+      "evidence": "execution-packages.json:2234-2277 and work-packages.json:9833-9843",
+      "requirement": "Lead wave0 committed; immutable reference_package_revision/reference_package_digest and each spec_ref hash resolved; approved prerequisites accepted; exclusive path leases held.",
+      "missingPrerequisite": "No delivery manifest, accepted dependency receipts or shared-path lease receipt supplied to this preflight. The reference fields remain RESOLVE_FROM_DELIVERY_MANIFEST in the actual records.",
+      "releaseProof": "Lead binds approved baseline plus wave0/dependency commits and verified specification digests to the revised execution packet."
+    },
+    {
+      "id": "FG-COLLABORATION",
+      "classification": "EXPLICIT_EXTERNAL_GATE_SEPARATE_FROM_DAG",
+      "evidence": "work-packages.json:9511-9513,92-97; 06-rox-docs-design.md:180-220; 07-collaboration-runtime.md:141-152,165-171",
+      "requirement": "EG-COLLABORATION: one writer/authority epoch, durable docWAL transport, authenticated append/catchup, current ACL/revoke fencing. Remote committed revisions must reconcile via that authority, presence stays ephemeral.",
+      "missingPrerequisite": "Gate is READINESS_NOT_VERIFIED in the specification. Native commit receipt is not shared transport ACK or a conformance-proven Tiptap/CRDT binding. No provider/collaboration implementation receipt was supplied.",
+      "releaseProof": "Macro WP-49/WP-51 owner provides exact accepted runtime commit, two-user convergence/local-undo preservation, reconnect/restart and revoke evidence. Bind shared draft operations to the existing WAL, not a parallel shared Markdown master."
+    },
+    {
+      "id": "FG-PUBLISHED-DRIVE",
+      "classification": "HIDDEN_PUBLISHED_FOUNDATION_NOT_EXPLICIT_LSX_EDGE",
+      "evidence": "RS-DOC-01.md:3,37,79-82; RS-NOTE-01.md:3,37,79-82; work-packages.json:108-113",
+      "requirement": "Published RS-DOC-01 and RS-NOTE-01 both require RS-DRV-01 #1109: existing Page/library and scoped NoteRef/source aliases, explicit personal/shared authority cutover, independent asset grants. HTML Page is not renamed into a collaborative document.",
+      "missingPrerequisite": "Drive/File identity and cutover readiness is not established by the three LSX dependency edges or publication receipts. No accepted RS-DRV-01/EG-FILES affected-scope receipt supplied.",
+      "releaseProof": "Drive/identity owner demonstrates same-ref route/readback after rename/reload and one-writer cutover with old native/raw writers fenced; asset/source grants remain independent. Do not implement Drive or migration in this package."
+    },
+    {
+      "id": "FG-PUBLISHED-DISCUSSIONS",
+      "classification": "HIDDEN_PUBLISHED_FOUNDATION_NOT_EXPLICIT_LSX_EDGE",
+      "evidence": "RS-DOC-01.md:30,43,79-82; work-packages.json:124-128; NotesReadingChrome.tsx:121-138,331-348",
+      "requirement": "Published RS-DOC-01 requires common RS-MSG-02 #1107/EG-DISCUSSIONS. Existing noteId-only private comment storage cannot become a shared DocumentComments engine or be silently published by binding/history restore.",
+      "missingPrerequisite": "Common Discussion/Message readiness not supplied. Legacy NotesComments writes localStorage and onCommit, with no authenticated shared discussion receipt.",
+      "releaseProof": "Discussion owner accepts the common backend/ACL seam and LSX-WP-027 migration/anchor coordination. LSX-WP-026 preserves private comments and existing rails; history snapshot selection cannot mutate current discussions or historical ACL."
+    },
+    {
+      "id": "FG-HISTORY-SERVER-BOUNDARY",
+      "classification": "DISCOVERED_IMPLEMENTATION_SCOPE_GATE",
+      "evidence": "ElectronAPI in shared/types.ts:930-940; MarkdownCommitStore:113-188; NativeNotesEngine:366-376,391-414,472-474; work-packages.json:9675-9695,9843",
+      "requirement": "Real doc.getHistory(ref,cursor), doc.previewRestore(ref,revisionId), doc.restoreRevision(envelope), current read/edit/history grants and immutable snapshots at the existing native authority. A renderer drawer cannot create this backend.",
+      "missingPrerequisite": "Inspected ElectronAPI exposes read/resolve/commit/receipt but no history/preview/restore or draft transport methods. MarkdownCommitStore journals committed command bytes but exposes no authorized revision-history query/restore API. NativeNotesEngine history is process-local, lacks authenticated history permissions, and stamps/reformats bytes; it is not a durable native history service.",
+      "releaseProof": "Integration owner must extend the reviewed packet for actual existing transport/server composition seams, then supply accepted source/schema, ACL and restart readback receipts. Server/transport files are outside the three currently allowed shared paths; no hidden implementation permission is inferred."
+    },
+    {
+      "id": "FG-DRAFT-PERSISTENCE-IDENTITY",
+      "classification": "DISCOVERED_IMPLEMENTATION_SCOPE_GATE",
+      "evidence": "NotesPage.tsx:663-670,1043-1057; shared/types.ts:930-940; descriptor-resolver.ts:16-32,48-55; RS-NOTE-01.md:57; 06-rox-docs-design.md:205-220",
+      "requirement": "One real scoped durable draft journal: verified actor/account/workspace/document/source/authorityEpoch identity, local draft sequence and exact pending operation IDs survive renderer/app crash. Shared lane reuses docWAL; incompatible schema is held, not wiped; policy controls quarantine/export.",
+      "missingPrerequisite": "Current draft and pending command maps are renderer-memory refs; no durable draft port or authenticated draft scope is exposed in the inspected ElectronAPI. Need an integration-approved persistence adapter and trusted identity/policy source, not comments localStorage, a mock adapter or second shared WAL.",
+      "releaseProof": "Native/local persistence owner supplies durable append/load/conditional-ack/quarantine operations with crash/quota/schema recovery proof and actor/source isolation. Integrator approves any necessary preload/server plumbing outside current packet before writes."
+    },
+    {
+      "id": "FG-IDENTITY-EFFECTS-I18N",
+      "classification": "TRANSITIVE_FOUNDATION_AND_SHARED_SCOPE_GATE",
+      "evidence": "work-packages.json:1961-1964,2670-2672,9755-9759; repository AGENTS.md i18n rule; descriptor-resolver.ts:16,48-55; MarkdownCommitOwner:90-99",
+      "requirement": "Accepted LSX-WP-003/-005 carry EG-IDENTITY and EG-EFFECTS proof: transport-authenticated actor, source binding and native receipt/outbox recovery. All new user-visible text must use t() and ten locales, with ASCII key ordering and plural parity.",
+      "missingPrerequisite": "Source interfaces alone do not establish live identity/effects readiness. Locale files, protocol/preload bindings and core export integration are not among the three allowed shared patch paths.",
+      "releaseProof": "Lead obtains dependency readiness receipts and expands integration scope for required locale/transport/export changes; do not place translations inline or bypass server ACL to stay within the old path list."
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/docs/DocumentEditorBinding.tsx",
+    "apps/electron/src/renderer/pages/docs/DocumentHistoryDrawer.tsx",
+    "packages/core/src/docs/draft-journal.ts",
+    "tests/lark-suite-extension/lsx-wp-026.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-026.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "apps/electron/src/renderer/pages/docs/DocumentEditorBinding.tsx",
+      "change": "Wrap the existing Tiptap host, not a new editor. Consume accepted descriptor/ref/revision/epoch/source identity and retained source. Project supported editor transactions to reviewed raw-span patches keyed by stable block identity; preserve unsupported regions and raw bytes. Coordinate durable draft append before send, per-sequence ACK reconciliation/readback, late-result fencing, explicit compare/rebase, restore result adoption and tagged save states. Declare schema-versioned history/preview/restore request/result/error boundaries with all eight required failure discriminants and consume the same schemas at the approved server boundary.",
+      "prerequisite": "FG-HISTORY-SERVER-BOUNDARY, FG-DRAFT-PERSISTENCE-IDENTITY, accepted LSX-WP-003/-005/-006; FG-COLLABORATION for shared operations. Tiptap transaction-to-byte mapping is new work, not already provided by retained-source.ts."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/DocumentHistoryDrawer.tsx",
+      "change": "RD-08 drawer in the existing Notes surface: authorized cursor timeline with author/source/revision/time, readonly preview/diff, explicit confirmation against current aggregate revision and epoch. Restore invokes the real native authority, then adopts its committed receipt/readback as a new history entry. Loading/empty/denied/deleted/conflict/offline states retain permitted draft, cancel performs no mutation, Escape returns focus without remounting the editor.",
+      "prerequisite": "Authenticated history permission/snapshot/restore service and common locale integration. Never call NativeNotesEngine.importVault to restore the live document."
+    },
+    {
+      "path": "packages/core/src/docs/draft-journal.ts",
+      "change": "Versioned DocumentDraft journal logic over the integration-approved real durable adapter, not a content authority. Key by trusted actor/account/workspace/canonical ref/sourceStoreId/authorityEpoch and device session where required. Persist retained base hash/bytes, base revision, sequence, pending raw-span intents and exact operationId before network send. ACK atomically retires only the matching sequence/operation/source/epoch; newer edits remain. Unknown outcomes replay the identical command, never a fresh ID. Recover incompatible/corrupt/quota states without deleting unacked bytes; quarantine revoked drafts under policy. Shared operations reference the existing collaboration WAL rather than duplicate it.",
+      "prerequisite": "Real adapter and authenticated scope supplied under FG-DRAFT-PERSISTENCE-IDENTITY. Adapter interfaces alone would be incomplete implementation."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-026.test.ts",
+      "change": "Behavioral cases for crash before send/ACK, lost ACK and identical replay, ACK of sequence N while N+1 remains, cross-actor/workspace/source isolation, stale epoch/revision, denied historic snapshots, same-body restore audit identity, old snapshot immutability, exact byte/hash readback after real authority restart and seeded draft-clear/history-overwrite mutants. Retain deterministic seeds and exact tested artifact digests; use actual native temporary owner persistence, not mock forwarding assertions.",
+      "prerequisite": "Accepted backend/adapter seams; implementation phase only. Not created or run during this preflight."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-026.spec.ts",
+      "change": "Use the discovered supported actual Electron runner for existing Notes route, not isolated drawer fixture. Exercise composition, tab switching, caret/local undo, pointer/keyboard help/history restore and focus return, narrow/sheets and 200% zoom, reduced motion, RU/all-locale labels and both themes; observe loaded Rox Mono font and save state/authoritative receipt correlation. Retain existing Notes/Page regression coverage and distinguish UI evidence from restart/domain lanes.",
+      "prerequisite": "Lead must discover the actual runner and approved native UI lane. No invented command or passing screenshot claimed."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "saveCurrentNote (1023-1099), pendingCommitsRef/revisionsRef (667-668), autosave effect (1106-1115)",
+      "change": "Route existing save seam through DocumentEditorBinding using the accepted committed descriptor epoch instead of literal authorityEpoch:1 at line1052; preserve current sourceStoreId and aggregate expectedRevision. Persist exact command/draft sequence before submitting or replaying; retain unresolved operations across restart. Validate returned operation/ref/source/epoch/revision and committedAt; reconcile readback before clearing only matching acknowledged draft sequence. A late ACK must not clear a newer draft or update a different document generation. Keep existing permission checks and failure recovery.",
+      "reason": "Current per-renderer queue/replay is useful wave0 machinery but ephemeral; stillDirty is based only on content equality, and literal epoch can become stale. Save spinner is not an acknowledged save timestamp.",
+      "scope": "ALLOWED_SHARED_PATH; integration-owner applies serially after lease and fresh wave0 hash",
+      "missingPrerequisite": "FG-DRAFT-PERSISTENCE-IDENTITY and accepted receipt/readback adapter"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "openNote (890-931), handleRichBodyChange (1623-1633), splitFrontmatter/mergeFrontmatter (161-171), TiptapMarkdownEditor mount (2609-2624)",
+      "change": "Initialize binding from exact retained content and resolved canonical ref/source/epoch. Recover permitted scoped drafts before resetting content/dirty; use request-generation fences on every async recovery/remote result. Replace rich-body full serializer merge with supported mapped raw-span edits while keeping the same Tiptap instance, callbacks, note route and view host. Frontmatter byte offsets come from retainSource, not the whitespace-normalizing helper; unsupported mappings remain readonly/exportable with unknownFormat, never save a lossy full body.",
+      "reason": "openNote currently resets draft state; splitFrontmatter normalizes trailing whitespace and lacks BOM handling; full rich-body serialization cannot promise byte preservation. Existing note IDs, wiki/task/comment/inspector views must survive.",
+      "scope": "ALLOWED_PATH_BUT_ADDITIONAL_SYMBOL_LEASE_REVIEW: normative named seam is saveCurrentNote; approve these bounded adjacent wiring symbols before applying",
+      "missingPrerequisite": "Accepted retained/block mapping and real recovery port"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "save status header (2288-2290), existing recovery dialog (2293-2314), existing document host and onKeyDownCapture (2487-2581)",
+      "change": "Mount RD-08 history drawer and explicit receipt-driven local/saving/committed/offline/conflict/denied indicator in this existing surface. Committed displays returned revision/time, never dirty=false alone. History selection is readonly; restore confirmation captures current revision/epoch and explicit conflict comparison. Preserve dock layout/editor mount and restore focus on close; return immediately for nativeEvent.isComposing before command shortcuts.",
+      "reason": "Current status collapses all clean documents to saved with no ACK time, and keyboard capture has no visible composition guard. Existing recovery dialog is a reload warning, not history/restore.",
+      "scope": "ALLOWED_PATH_BUT_ADDITIONAL_SYMBOL_LEASE_REVIEW; no second navigation shell",
+      "missingPrerequisite": "FG-HISTORY-SERVER-BOUNDARY, locale integration and actual UI runner"
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditor/TiptapMarkdownEditorProps, onUpdate (384-390), content synchronization (409-443), preprocessMarkdownForOfficial/postprocessMarkdownFromOfficial (75-104)",
+      "change": "Expose transaction/selection metadata needed by the binding through the existing editor host, retaining current onUpdate consumer behavior until all affected consumers migrate in the approved integration. Map edits to retained source in the binding rather than promote the full Markdown serializer to authority. Preserve controlled-echo suppression and non-emitting authority updates; apply remote changes with selection mapping and defer disruptive replacement during composition. Preserve parser-safety preprocessing as a projection only; do not mutate retained authoritative bytes through it.",
+      "reason": "Existing legacy/official paths are serializer alternatives in one Tiptap framework, not separate authorities. Full setContent on external replacement can disrupt composition/caret. Currency/math transforms are not a lossless persisted-source adapter.",
+      "scope": "ALLOWED_SHARED_PATH; exact named symbols already listed; avoid new parallel editor and broad extension rewrite",
+      "missingPrerequisite": "Accepted block/span conformance and collaboration binding receipt for shared lane"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "symbol": "NotesToc (156-215), NotesComments (311-394), loadNoteComments (125-134)",
+      "change": "Keep existing content-derived ToC and private comment mechanisms; add only approved history-preview/current-document mode wiring needed to avoid writes while inspecting an old snapshot and preserve keyboard focus when docks close. Do not reuse notes:comments:<noteId> as draft/history storage or auto-publish it. If a shared descriptor is rendered, select the accepted common discussion port rather than treat loadNoteComments as shared data; actual migration remains LSX-WP-027/common discussion owner work.",
+      "reason": "The rails are already present. NotesComments.add writes localStorage and emits onCommit; history preview must not accidentally write current-body comments or create a second discussion engine. Note-only keys are not actor/source-scoped draft identity.",
+      "scope": "ALLOWED_SHARED_PATH; preserve existing private behavior; shared discussion adaptation gated and coordinated, not implemented here",
+      "missingPrerequisite": "FG-PUBLISHED-DISCUSSIONS for shared mode; inspect current view callback contract under lease"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ElectronAPI Notes methods (930-940)",
+      "change": "Under an expanded reviewed packet, expose the real doc.getHistory/ref+cursor, doc.previewRestore/ref+revisionId, doc.restoreRevision/envelope and durable draft operations using the same versioned request/result/error schemas as the native handlers. Preserve transport-authenticated actor; payload workspace/source are preconditions, not grants. Lead must identify and lease the actual corresponding protocol/preload/server handler symbols before wiring.",
+      "reason": "Renderer owned files cannot implement server authorization, history persistence or invoke unregistered RPC operations. Inspected ElectronAPI has no such methods.",
+      "scope": "BLOCKED_OUTSIDE_CURRENT_SHARED_PATHS; proposal only, requires revised packet; no speculative preload/handler filenames asserted",
+      "missingPrerequisite": "Lead approves scope extension and accepted native history/draft owner contracts"
+    },
+    {
+      "path": "packages/server-core/src/docs/markdown-commit.ts",
+      "symbol": "MarkdownCommitStore.commitLocked/getReceipt/recover (118-188,651-670), MarkdownCommitReceipt (10-22), MarkdownCommitOwner (90-99)",
+      "change": "Under an expanded reviewed packet and authority-owner lease, provide authenticated current read/history/edit policy checks, cursor history and immutable snapshot preview, plus restore through the same commit/lease/WAL boundary. Record the initial predecessor snapshot and append a new restore audit entry including target revision, parent/current revision, actor, operationId and timestamp without restoring historical ACL. Retain exact bytes and current epoch/source fences. Reuse existing command journal/snapshot authority; do not copy NativeNotesEngine Map into a new production store. Define revision-entry identity separately from the content hash when restored bytes equal a previous/current body.",
+      "reason": "Current receipt revision is a content hash, so repeated/same-body restores can reuse it; unique command eventId is not an exposed revision timeline. Current journal retains command bytes but lacks public history/preview/restore and an initial snapshot contract. In-memory stampBlockMarkers is lossy and not a suitable alternate production writer.",
+      "scope": "BLOCKED_OUTSIDE_CURRENT_SHARED_PATHS; additional discovery/approved packet required before implementation",
+      "missingPrerequisite": "Authority owner resolves aggregate revision/audit identity compatibility, snapshot retention policy and transport binding"
+    },
+    {
+      "path": "packages/core/src/docs/index.ts",
+      "symbol": "docs barrel exports (1-7)",
+      "change": "If consumers use @craft-agent/core/docs, export only the accepted public draft journal/schema API under an expanded integration lease; keep backend-only persistence adapters out of renderer bundles.",
+      "reason": "Owned draft-journal new file is not yet in the current barrel. A new file alone does not expose a working persistence boundary.",
+      "scope": "BLOCKED_OUTSIDE_CURRENT_SHARED_PATHS; integrator may instead use an already-supported direct import after confirming package export policy",
+      "missingPrerequisite": "Lead reviews actual package export boundary; no manifest changes authorized here"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "new docs draft/save/history/restore help and error keys in all ten locale dictionaries",
+      "change": "Integration owner adds the exact binding/drawer t() keys to de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant dictionaries, ASCII-sorted, with repository plural conventions; reuse existing common strings when semantically correct.",
+      "reason": "Normative UI contract and AGENTS require RU default plus locale parity. These dictionaries were not inspected; exact individual key placements must be discovered by the integrator before editing, not guessed by this preflight.",
+      "scope": "BLOCKED_OUTSIDE_CURRENT_SHARED_PATHS; scope expansion required; no locale source edits or runtime readiness claim",
+      "missingPrerequisite": "Accepted exact UI schema/string set and locale path lease"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: actual native font/focus/IME checks required",
+      "currentEvidence": "Existing single Tiptap useEditor lifecycle and onEditorReady: TiptapMarkdownEditor.tsx:342-399. Controlled echo suppression:416-420. NotesPage keydown capture:2503-2555 has no composition guard. No native checks run.",
+      "requiredChange": "Keep editor mounted for same document/epoch, composition-safe transaction/remote update handling and selection mapping; add composing guard in host capture; return focus after history/conflict sheets. Bind actual font/theme tokens without claiming CSS declaration proves loaded font.",
+      "verification": "On actual Electron app type Cyrillic and multi-stage IME, update externally while composing, switch tabs/views, open/close history with keyboard and pointer; exact composed bytes and selection survive; document.fonts plus computed rendered font verify Rox Mono including Cyrillic. Record actual screenshots/ARIA/focus state at delivered revision.",
+      "missingPrerequisite": "Actual native runner, accepted binding and locale integration; current preflight prohibits UI execution.",
+      "state": "NOT_VERIFIED_SOURCE_ONLY"
+    },
+    {
+      "criterion": "DoD 2: one editor framework and authority retained",
+      "currentEvidence": "NotesPage.tsx:2609-2624 mounts existing Tiptap legacy path; TiptapMarkdownEditor.tsx:253-335 has two serializer modes in one framework. Existing authority resolution at NotesPage.tsx:898-909 and canEditContent:785. NativeNotesEngine.writeHead:395-414 reformats content via stampBlockMarkers:154-160.",
+      "requiredChange": "DocumentEditorBinding wraps this existing instance and routes all accepted writes through the resolved native/shared authority. Retained source is canonical; editor/block tree/history preview are projections. Preserve note route/id, NotesViewHost, wiki/frontmatter/tasks/comments/properties and HTML Page artifact distinction. Do not use NativeNotesEngine as a second writer or add a second editor/catalog.",
+      "verification": "Existing note opens same ref/content/links and all existing views after reload; no-op and single-span edit preserve unrelated BOM/EOL/frontmatter/opaque bytes. For shared adoption verify old save/raw writer denied and one authority epoch. Existing Notes/Page regressions remain separate proof lanes.",
+      "missingPrerequisite": "LSX-WP-003/-005/-006 accepted receipts; FG-PUBLISHED-DRIVE and FG-COLLABORATION for shared cutover scope.",
+      "state": "PARTIAL_EXISTING_MECHANISM_NOT_FEATURE_COMPLETE"
+    },
+    {
+      "criterion": "DoD 3: Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "decodeMarkdownCommitCommand:22-46 runtime-validates current commit fields and discards arbitrary actor input. MarkdownCommitStore.commit takes actor separately:113-115; MarkdownCommitOwner.authorize:92. ElectronAPI exposes no history API:930-940. MarkdownCommitErrorKind:13 and ContentFailure:84 have different subsets of the required eight failures.",
+      "requiredChange": "Declare and runtime-decode history cursor/preview/restore and draft contracts at the approved common boundary; include validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Server derives actor from authenticated transport, resolves real source grants and checks current history/read/edit permissions. Payload actor/workspace/owner cannot supply authorization. Share schemas with renderer rather than fake TS-only contracts.",
+      "verification": "Compile both approved boundaries in implementation phase; malformed cursor/ref/revision/epoch/format fails validation; forged actor/source/workspace cannot gain access and denied errors return no protected snapshots. Exercise real native transport, not mock schema forwarding.",
+      "missingPrerequisite": "FG-HISTORY-SERVER-BOUNDARY, FG-IDENTITY-EFFECTS-I18N and reviewed additional transport paths.",
+      "state": "BLOCKED_FOUNDATION_AND_SCOPE"
+    },
+    {
+      "criterion": "DoD 4: Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "MarkdownCommitStore.commitLocked:153-162 syncs prepared journal, publishes content, syncs receipt, then returns; publishContent:677-687 syncs bytes/directory and rechecks CAS. NotesPage.saveCurrentNote:1054-1062 treats result receipt as save and clears dirty by equality, without retained durable draft/readback state or displayed committedAt. Receipt has revision/eventId/committedAt:10-22.",
+      "requiredChange": "Validate correlated durable receipt, persist ACK transition atomically by draft sequence and source/epoch, show revision/time, reconcile lost ACK via getMarkdownCommitReceipt/identical command. Authoritative readback compares exact canonical ref, receipt revision and retained source hash; on mismatch preserve draft and show conflict/unconfirmed, not green saved.",
+      "verification": "Real temp native owner save/readback followed by app/server restart returns same exact bytes/hash/ref/revision. Kill after journal sync, content rename, receipt sync and before UI ACK; acknowledged writes survive; no unacknowledged sequence is pruned. Later-head race is reported/reconciled, not mistaken for failure-free exact historical readback.",
+      "missingPrerequisite": "Accepted wave0 native authority readback receipts and FG-DRAFT-PERSISTENCE-IDENTITY; revision-specific readback/history service for head advancement races.",
+      "state": "PARTIAL_SOURCE_DURABILITY_NOT_RUNTIME_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "NotesPage.tsx:1043-1048 replays unknown responses but only in memory;1032-1035 fences document generation;1074-1086 classifies errors. Store deduplicates actor+operationId and fingerprint:132-139; epoch-before-CAS:141-145. No requested tests executed.",
+      "requiredChange": "Persist replay identity/base/sequence and make rejected, unknown, offline and conflict states explicit. History/restore rechecks present permissions and aggregate expectedRevision/epoch before returning snapshot or committing. Preserve both local/remote branches for explicit server-approved rebase/compare; no automatic stale-epoch rebase.",
+      "verification": "Happy edit/save/restore; stale revision and epoch; conflicting external writer; duplicate identical command returns same receipt; changed payload under same ID rejects; crash/lost ACK replay after restart; denied/deleted/restricted old snapshot; account/source change; offline/quota/incompatible journal cases. Retain seeds, baseline inputs, attempt outcomes and hashes.",
+      "missingPrerequisite": "Real journal/history transport and dependency acceptance. Build/test execution intentionally deferred to authorized implementation phase.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "DoD 6: Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:9738-9746 names draft clear on autosave start or history overwrite mutants and three must-fail assertions; proposed unit test file is absent.",
+      "requiredChange": "Add deterministic behavioral assertions for unacked draft recovery, immutable historical snapshot and durable/auditable new restore revision. Mutate actual evaluated journal ACK retirement or restore snapshot handling in an isolated control, not source-text assertions or broken infrastructure.",
+      "verification": "Green baseline then draft-clear mutant fails 'unacked draft recovered'; overwrite mutant fails 'history old snapshot immutable' and/or 'new restore revision durable and auditable'. Preserve reproduction seed, exact baseline/mutant input hashes and semantic assertion output, separately classify timeout/runner errors.",
+      "missingPrerequisite": "Implemented real journal and history/restore boundaries plus authorized test/control runner.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "DoD 7: Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "Existing rails use t(): NotesReadingChrome.tsx:169-213,330-392. Header status:NotesPage.tsx:2288-2290; editor class max-w-[70ch]:2623. No native screenshots, loaded-font proof, zoom or interaction evidence exists in this preflight.",
+      "requiredChange": "RD-02 distinct acknowledged save states and RD-08 readonly history/confirm restore within existing Notes shell; accessible names/help hover+focus+click, keyboard operation, visible focus and Escape return, narrow sheets without losing selection. Preserve light/dark user theme and reduced-motion behavior; all new keys in ten locales, not inline English/Russian fallback text.",
+      "verification": "Actual Electron UI at wide/narrow and 200% zoom; pointer/keyboard restore/cancel/conflict; IME and sheet focus; reduced-motion no positional animation; light/dark contrast/overflow; RU and locale parity; computed font/loading and screenshots/ARIA. Confirm pointer hits intended unobscured control and help never mutates content.",
+      "missingPrerequisite": "Supported actual native runner and FG-IDENTITY-EFFECTS-I18N scope expansion; no fixture substitutes.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "DoD 8: Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:9729-9735 lists SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. Existing save errors show toasts:NotesPage.tsx:1088-1089. This report is planning evidence only.",
+      "requiredChange": "Lead collects independent lane receipts on exact integrated implementation bytes/revision, with native authoritative ref/revision/hash before/after restart. Provider/collaboration proof and redaction are required when those lanes are exercised; queued/pending is not committed. Keep featureComplete false until every applicable required lane is accepted, not N/A because foundation is missing.",
+      "verification": "Cross-check all lane artifacts, exact test inputs/seeds, integrated commit and hashes; rerun affected readback/UI after material integration change. Test baseline/control assertion sensitivity is separate from report validation.",
+      "missingPrerequisite": "All implementation/proof receipts; external collaboration/provider readiness where used.",
+      "state": "PREFLIGHT_ONLY_NOT_FEATURE_COMPLETION"
+    },
+    {
+      "criterion": "Functional contract: durable scoped draft survives tab change/crash and is retained until matching durable ACK.",
+      "currentEvidence": "NotesPage.tsx:590,602,665-668 stores draft/content/pending operations in state/refs; openNote:911-916 clears dirty and replaces content. No durable draft journal exists at proposed path. NotesReadingChrome.localStorage stores comments only:121-138.",
+      "requiredChange": "Persist exact retained base plus operations/sequence before send under trusted actor/account/workspace/ref/source/epoch; recover before openNote reset; older ACK can retire only its own sequence, never newer edits. Keep unknown command fingerprint/operationId across restart and quarantine revoked scope under policy, with schema/quota recovery not destructive reset.",
+      "verification": "Type draft, switch tabs/reopen and force crash before send/ACK; restart recovers exact bytes and IDs. ACK N with N+1 pending leaves N+1. Different actor/workspace/source cannot read/replay draft; expired/revoked scope denies replay. Quota/corrupt/incompatible cases preserve recoverable original.",
+      "missingPrerequisite": "FG-DRAFT-PERSISTENCE-IDENTITY; shared lane must use accepted docWAL not duplicate it.",
+      "state": "NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Functional contract: history restore creates a new revision and preserves immutable audit and current ACL.",
+      "currentEvidence": "NativeNotesEngine.revisions:472-474 returns Map history; writeHead:395-414 appends snapshot but revisionId:92-99 hashes content/sidecar, not restore audit identity. Production MarkdownCommitReceipt.revision hashes content:markdown-commit.ts:6,150. Inspected APIs lack restore/history preview.",
+      "requiredChange": "Real authorized timeline/readonly preview and explicit restore expectedRevision+epoch+operationId. Append restore audit entry referencing chosen historical revision and current parent/actor/time under the same authority; keep historical snapshots immutable and do not restore grants. Resolve repeated/same-content restores with unique auditable history-entry identity while preserving accepted CAS compatibility and explicit content hash.",
+      "verification": "Save A then B, preview A without mutation, restore A produces new auditable head entry parented to B; A/B snapshots byte-identical; current grants unchanged; exact restored bytes/hash after restart. Repeat same-body restore is still a new audited operation or follows an explicitly accepted idempotent replay of identical operationId, not overwrite of prior history. Restricted historical snapshot rejects without protected text.",
+      "missingPrerequisite": "FG-HISTORY-SERVER-BOUNDARY and reviewed server/transport paths; authority owner must settle unique revision-entry versus hash token semantics.",
+      "state": "BLOCKED_FOUNDATION_AND_SCOPE"
+    },
+    {
+      "criterion": "Functional contract: editor raw-span operations preserve unedited source and existing Notes behavior.",
+      "currentEvidence": "retainSource:83-108 preserves UTF8 bytes/EOL/frontmatter ranges; applyRawSpanPatches:176-199 preserves gaps; rebaseRawSpanPreview:203-226 rejects overlap. Tiptap.onUpdate:384-389 serializes entire body, NotesPage.handleRichBodyChange:1623-1629 merges it with normalized frontmatter; splitFrontmatter:161-165 normalizes whitespace and does not accept BOM-prefixed frontmatter.",
+      "requiredChange": "Build real Tiptap transaction-to-stable-block/byte-span mapping against retained source and accepted marker version, not a generic serializer diff assumed lossless. Apply validated patches, preserve opaque regions/BOM/CRLF/comments/wiki/footnotes/tasks, and block unsupported edits with unknownFormat/export original. Use explicit authority rebase when current revision differs.",
+      "verification": "No-op read/save byte-identical; edit one supported range preserves every other byte including YAML comments/unknown fields and trailing newline; unsupported block roundtrip doesn't delete source; concurrent same-span conflict remains visible; stable IDs and existing views/links survive reload.",
+      "missingPrerequisite": "Accepted LSX-WP-005/-006 and editor mapping conformance; existing raw-span functions alone do not provide a Tiptap source map.",
+      "state": "PARTIAL_BYTE_PRIMITIVES_BINDING_MISSING"
+    },
+    {
+      "criterion": "Functional contract: local/saving/committed/offline/conflict/denied states are distinct and carry acknowledged save time.",
+      "currentEvidence": "NotesPage header:2288-2290 derives failed/saving/autosaving/saved from booleans; receipt committedAt is available in MarkdownCommitReceipt:21 but not rendered. pendingCommitsRef reconciliation:1043-1057 is memory-only.",
+      "requiredChange": "Tagged binding state carries local durability, current draft sequence, acknowledged operation/revision/committedAt and freshness; unknown send outcome remains unconfirmed. Server conflicts/denials retain permitted draft and display compare/reload/quarantine choices. Never display shared-server committed based on local save or queued provider receipt.",
+      "verification": "Observe state transitions against delayed ACK, disconnected transport, conflict, denied and lost response on actual UI; committed revision/time exactly matches receipt and readback; delayed older ACK cannot label newer draft saved.",
+      "missingPrerequisite": "Real durable adapter, transport state and locale keys.",
+      "state": "NOT_IMPLEMENTED"
+    },
+    {
+      "criterion": "Functional contract: current grants protect read/edit/history; revoke quarantines drafts per policy.",
+      "currentEvidence": "Descriptor policy has read/adoptDescriptor actions:descriptor-resolver.ts:49-55; commit owner has authorize and source/epoch fences:markdown-commit.ts:90-99,585-588. Renderer canEditContent:785 is permission-aware but not server history authorization. No history-specific policy exposed in inspected seams.",
+      "requiredChange": "Server authorizes current history/read/edit for ref and every selected old snapshot; denied results include no protected content. Recheck queued mutations on replay and source/epoch changes; remove protected projections and quarantine unsent draft under accepted actor policy. Do not claim immediate physical erase on a disconnected device.",
+      "verification": "Revoke while history/editor open, attempt preview/restore/replay with old grants and another actor/source; writes/reads denied after fence without text leak. Offline lease expiry stops protected reads and replay; remaining authorized actor continues normally.",
+      "missingPrerequisite": "FG-COLLABORATION, accepted identity policy/offline lease and FG-HISTORY-SERVER-BOUNDARY.",
+      "state": "BLOCKED_POLICY_FOUNDATION"
+    },
+    {
+      "criterion": "Functional contract: remote revision merge/rebase is authoritative; presence is ephemeral.",
+      "currentEvidence": "NotesPage.onNotesChanged:961-994 handles descriptor and external events; dirty external change becomes a warning, otherwise reopen. It is not CRDT catchup. MarkdownChangedEvent:34-39 carries eventId/workspace/note/reason only, not full proposed revisionCommitted envelope.",
+      "requiredChange": "Consume accepted authority-committed revision events with dedup/correlation and current permissions. Reconcile missing operations or explicit server rebase against aggregate revision/epoch, map selection and preserve local intent; show conflict for rejected overlap. Reuse existing outbox/event family alias with complete versioned event envelope, not second event bus. Presence/cursor stays separate from durable revisions/activity.",
+      "verification": "Two authorized actors edit/reconnect/restart and converge exact logical content/ref/hash; local undo preserves remote insertion; stale epoch and overlapping structural/text edits conflict, not silent accept. Duplicate event/command yields one audit entry; presence expiry never adds durable revisions.",
+      "missingPrerequisite": "FG-COLLABORATION and accepted event envelope/outbox alias; current native change callback acceptance is not remote client delivery ACK.",
+      "state": "BLOCKED_COLLABORATION_FOUNDATION"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"saveCurrentNote; draft/pending refs; save status","lineStart":1023,"lineEnd":1115,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"apps/electron/src/renderer/pages/NotesPage.tsx","symbol":"splitFrontmatter/mergeFrontmatter","lineStart":161,"lineEnd":171,"sha256":"872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path":"packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx","symbol":"TiptapMarkdownEditorProps/TiptapMarkdownEditor; editor lifecycle and content synchronization","lineStart":202,"lineEnd":451,"sha256":"5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx","symbol":"loadNoteComments/saveNoteComments/NotesToc","lineStart":121,"lineEnd":215,"sha256":"8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a"},
+    {"path":"packages/core/src/rox2/notes-engine.ts","symbol":"NativeNotesEngine/createNativeNotesEngine/writeHead/revisions","lineStart":366,"lineEnd":503,"sha256":"77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path":"packages/core/src/docs/command-envelope.ts","symbol":"MarkdownCommitCommand/decodeMarkdownCommitCommand","lineStart":1,"lineEnd":46,"sha256":"39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"},
+    {"path":"packages/core/src/docs/retained-source.ts","symbol":"retainSource/previewRawSpanPatches/applyRawSpanPatches/rebaseRawSpanPreview","lineStart":83,"lineEnd":226,"sha256":"eafb42712b3e5d349c370c733484867be2db3d390cd973556ac8b44d2abea4e5"},
+    {"path":"packages/core/src/docs/index.ts","symbol":"docs exports","lineStart":1,"lineEnd":7,"sha256":"8b5e0db083c582f579b2aaf591f6c0f0430e102b27025612df4a5ca051b377e9"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"AuthenticatedContentContext/SourceBinding/ContentPolicy/ContentResolution","lineStart":15,"lineEnd":104,"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path":"packages/server-core/src/docs/block-tree-service.ts","symbol":"GetBlockTreeRequest/BlockTreeResult","lineStart":11,"lineEnd":26,"sha256":"e44598ec9837ae488a3f25439338657de41a33fa1d545dc5b5f3d10c6d3aae1d"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"MarkdownCommitStore.commit/commitLocked/getReceipt","lineStart":113,"lineEnd":188,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"recover/publishContent","lineStart":651,"lineEnd":688,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI Notes methods","lineStart":930,"lineEnd":940,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages/25 LSX-WP-026 complete functional and DoD record","lineStart":9488,"lineEnd":9844,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-026 ownership/dependencies/cloud launch gates","lineStart":2190,"lineEnd":2282,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"sections 10-12 command/authority/offline/DoD","lineStart":158,"lineEnd":231,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"history/restore, shared authority, DoD and normative dependency handoff","lineStart":24,"lineEnd":87,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"docs/rox-suite/published/RS-NOTE-01.md","symbol":"native/shared writer preservation, WAL upgrade, DoD and normative dependency handoff","lineStart":24,"lineEnd":86,"sha256":"48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"},
+    {"path":"docs/macro-integration/07-collaboration-runtime.md","symbol":"target DocumentSyncPort/EditorBinding and observable acceptance","lineStart":131,"lineEnd":194,"sha256":"30fe966a3513efc58f00cd36ddb90f364f3319d1061205d2d4a0c8d84e372864"}
+  ],
+  "nextExecutableAction": {
+    "owner": "integration-owner/lead",
+    "action": "Accept this preflight report, commit the existing wave0 under its current ownership, resolve immutable delivery spec revision/digest and collect accepted LSX-WP-003, then -005, then -006 receipts. Re-hash the inspected source against that commit; obtain EG-COLLABORATION and published Drive/discussion affected-scope readiness. Expand the reviewed packet for real authenticated history/draft transport, native authority, locale/export integration and adjacent NotesPage symbols, with exclusive leases. Only then dispatch LSX-WP-026 implementation of its five normative new files and serial reviewed shared patches.",
+    "firstWorkerActionAfterRelease": "Import accepted retained-source/block/commit contracts and implement durable journal plus existing-editor binding against the approved real persistence/authority ports; define history/restore schemas jointly with server owner before rendering RD-08. Never ship only an adapter interface or fake history data.",
+    "preflightVerification": "Read back and JSON-parse the owned report, check packet identity fields, explicit dependency array, normative new-file allowlist, all eight DoD rows and whole-file source hashes. This validates the report artifact only, not product behavior.",
+    "implementationVerification": "Authorized implementation runs bun test tests/lark-suite-extension/lsx-wp-026.test.ts plus the actually discovered native Electron runner and separate source/schema, property/mutation, native readback, restart and ACL lanes; exact command/results/seeds and delivered revision are retained. No such run occurred here."
+  },
+  "risks": [
+    "Live root integration may invalidate hashes/line ranges; evidence is current at capture, not pinned to a product implementation commit.",
+    "A renderer-only patch cannot satisfy durable journal, authenticated history/restore or revoke requirements; current writable packet omits required native transport/server and locale integration paths.",
+    "Hardcoded authorityEpoch:1 in the inspected save seam is not the resolved descriptor epoch; stale-epoch operations must reject before rebase.",
+    "Existing serializer and frontmatter helper normalize persisted bytes. Raw-span primitives do not supply editor-to-source mapping automatically, and NativeNotesEngine stamping cannot replace the retained authority.",
+    "Delayed ACK/unknown response handling must survive restart and preserve newer draft sequences; current in-memory pending map loses identity on crash.",
+    "Content-hash revision tokens repeat when restored content repeats. New immutable/auditable revision-entry identity and its aggregate CAS compatibility need authority-owner resolution before implementation.",
+    "History preview/restore must check present snapshot permissions and never revive old ACL/private comments or leak cached source/asset content.",
+    "Private comments localStorage is noteId-only and writes during add; it is neither a scoped draft journal nor common shared discussions. Migration is another owner/package gate, not automatic publication.",
+    "Published specifications contain broader Drive/common messaging and shared-document conformance dependencies absent from the three explicit LSX edges. They remain separate gates, not invented extra dependency entries or silently waived acceptance.",
+    "Native commit changed callback acceptance proves local invalidation handoff only, not remote ACK/delivery/convergence. Collaboration/presence cannot be simulated from watchNotes.",
+    "Actual Electron IME/font/focus/zoom/theme proof cannot be substituted by source inspection, fixture screenshots, toasts, green unit tests or validation of this report."
+  ]
+}

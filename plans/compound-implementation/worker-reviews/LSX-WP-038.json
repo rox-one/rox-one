@@ -1,0 +1,279 @@
+{
+  "task_id": "LSX-WP-038-preflight",
+  "attempt_id": "e51d9dc04968ad8387c76e52720a6bf3",
+  "packet_hash": "eebe2b95d6408190046fdbd37b19b7de42a2bf5f448df0712e7975cc45218957",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-038",
+  "featureComplete": false,
+  "state": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "scope": "Inspection and this report only. No product, test, manifest, progress, shared-file or Git changes; no builds, tests, native UI or network operations. Implementation belongs to the lead after wave0 commit and accepted dependency receipts.",
+  "dependencies": ["LSX-WP-021", "LSX-WP-037"],
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-021",
+      "requiredReceipt": "Accepted exact implementation commit, compiled date/capability contracts, Task/Event authoritative readback, date-only/DST proof, read-only-provider rejection and pending-to-ACK reconciliation.",
+      "seams": ["packages/core/src/bases/calendar-date-mapping.ts (proposed)", "base.previewCalendarMove(input) (proposed)", "base.applyCalendarMove(envelope) (proposed)"],
+      "evidence": "work-packages.json:7851-7875,7964-7971,8004-8064. This is a normative planned interface, not an observed implementation."
+    },
+    {
+      "packageId": "LSX-WP-037",
+      "requiredReceipt": "Accepted origin mapping and canonical Task receipt with source document/block/revision, source-scoped dedup, native completion projection and separate legacy/native counts.",
+      "seams": ["packages/server-core/src/tasks/markdown-task-adapter.ts (proposed)", "doc.previewTaskPromotion(input) (proposed)", "task.previewMarkdownMapping(input) (proposed)"],
+      "evidence": "work-packages.json:13255-13277,13395-13410,13453-13526. Dependency implementation readiness was not established in this preflight."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "EG-ATTENTION",
+      "kind": "explicit_external_prerequisite_not_LSX_DAG_edge",
+      "evidence": "work-packages.json:132-137,13655-13658,13878-13880; 08-automation-integration.md:59",
+      "requiredPrerequisite": "A real canonical intended-recipient reminder owner with durable schedule/cancel receipts, version fencing, one occurrence delivery key and recovery readback. PersonalTask.reminderAt alone is not a delivery receipt.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "EG-PROVIDERS",
+      "kind": "explicit_external_prerequisite_not_LSX_DAG_edge",
+      "evidence": "work-packages.json:116-121,13655-13658; CalendarEvent.localDirty/etag and SyncJournal.lastSyncedRevision",
+      "requiredPrerequisite": "Per-source authenticated capability and idempotency/ACK reconciliation receipts. Preserve read-only ICS versus writable OAuth; visibility is not write permission. Reject stale ACK by native/provider revision fence.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "PUBLISHED_RS_BASE_DRIVE_GATE",
+      "kind": "hidden_published_spec_foundation_not_explicit_LSX_edge",
+      "evidence": "Linked requirement RS-BASE-01 in work-packages.json:13951-13959; docs/rox-suite/published/RS-BASE-01.md:95-109 explicitly requires RS-DRV-01 (#1109).",
+      "requiredPrerequisite": "Integration owner must resolve the linked published RS-BASE-01/RS-DRV-01 authority, placement and permission readiness for the reused Docs/Base surface, with implementation receipts or a reviewed boundary determination. Issue publication is not implementation proof; do not silently append RS-DRV-01 to the LSX dependency array or expand this slice to implement all Base/Drive features.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "AUTHENTICATED_COMMAND_AND_QUERY_BOUNDARY",
+      "kind": "hidden_published_spec_and_package_contract_foundation",
+      "evidence": "RS-BASE-01.md:50-56; work-packages.json:13841-13871; 05-rox-bases-design.md:203-216",
+      "requiredPrerequisite": "Registered shared validator/authority and transport-derived actor/workspace policy, operation identity, expected revision, durable receipt and current source/field/provider/occurrence ACL. No inspected source file implements an authenticated planner handler; no server handler or transport registry is in this package's allowed new/shared paths. Obtain the accepted dependency registration seam and an updated reviewed packet for any additional path before editing.",
+      "state": "BLOCKED_ON_FOUNDATION_AND_SCOPE"
+    },
+    {
+      "id": "RD10_EXISTING_SURFACE_MOUNT_AND_LOCALIZATION",
+      "kind": "integration_scope_foundation",
+      "evidence": "06-rox-docs-design.md:43-66; work-packages.json:13781-13822,13873-13876; note-views.ts:5,24-34,100-126",
+      "requiredPrerequisite": "An integration-owned existing Notes/Docs/Tasks/Calendar panel mount and authenticated query/command bridge. note-views.ts is a pure configuration/projection module with no React import or panel mount. RD-10 cannot be mounted by changing only the two listed shared files. A reviewed packet must authorize the actual mount/registry and all required locale-key updates in the existing ten-locale t() convention. Do not introduce a new shell or persist planner rows in notes:views.",
+      "state": "BLOCKED_ON_FOUNDATION_AND_SCOPE"
+    },
+    {
+      "id": "TIMEZONE_AND_OCCURRENCE_AUTHORITY",
+      "kind": "source_discovered_foundation",
+      "evidence": "projections.ts:61-62,101-102,207-240; dates.ts:5-16,35-78; types.ts:15,24-33,42-75; 06-rox-docs-design.md:156",
+      "requiredPrerequisite": "Reuse accepted LSX-WP-021 date precision/timezone mapping and canonical recurrence occurrence keys/materialization. Existing helpers use process-local Date and fixed 24-hour arithmetic; PersonalTask has repeatOf but no explicit occurrence key, timezone, revision or receipt type. Do not infer RRULE/occurrence authority from the limited daily/weekly/monthly/yearly enum, expand recurrence independently, or materialize tasks in Docs.",
+      "state": "BLOCKED_ON_DEPENDENCY_CONTRACT"
+    },
+    {
+      "id": "OPTIONAL_NATIVE_TIME_OWNER",
+      "kind": "capability_gated_behavior_not_required_timer_implementation",
+      "evidence": "work-packages.json:13830-13838,13860-13862,13889-13892,13929-13930; 05-rox-bases-design.md:212; 06-rox-docs-design.md:156",
+      "requiredPrerequisite": "Only show running/elapsed/time-entry state from native owner receipts. If no accepted adapter exists, keep the layer explicitly unavailable with reason; this unavailable branch must be implemented and verified, not marked N/A. If an adapter is provided, prove one active timer policy, cross-device conflict, pause/resume/crash/reload and monotonic elapsed semantics using that owner, not a Docs timer loop.",
+      "state": "OWNER_NOT_SOURCE_PROVEN"
+    },
+    {
+      "id": "REVISION_MANIFEST_AND_SERIAL_INTEGRATION",
+      "kind": "explicit_launch_and_delivery_gate",
+      "evidence": "work-packages.json:13998-14008; execution-packages.json:3335-3345; supplied dispatch packet and worker instruction",
+      "requiredPrerequisite": "Lead wave0 commit plus accepted LSX-WP-021/037 receipts; resolved reference revision/digest and spec-ref hashes; reviewed reconciliation of product baseline e953786b versus dispatch input a21aeab1; exclusive leases for shared patches; integrated-revision readback. This worker must not checkout, commit or clean the root-owned dirty tree.",
+      "state": "IMPLEMENTATION_NOT_AUTHORIZED_IN_PREFLIGHT"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/docs/DayPlannerBinding.tsx",
+    "packages/core/src/docs/planner-source-mapping.ts",
+    "tests/lark-suite-extension/lsx-wp-038.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-038.spec.ts"
+  ],
+  "ownedFilePlan": [
+    {
+      "path": "packages/core/src/docs/planner-source-mapping.ts",
+      "proposedSymbols": ["PlannerSourceRef", "PlannerLayerItem", "mapPlannerSources"],
+      "change": "Implement a pure projection over authorized owner query results, not a store. Retain discriminated DailyNoteLink, native Task/TaskOccurrence, CalendarEvent and TimeEntryRef layers; source ref, revision/hash and freshness travel separately from labels. Use taskCalendarAt's startAt-before-dueAt semantics, canonical occurrence identities from accepted dependencies, and account/calendar/event tuple identity. Range intersection and day grouping use LSX-WP-021 precision/timezone contracts, including multi-day and date-only events. No local task materialization, reminder delivery, timer or provider-write fallback. Dependency-derived native receipt/pending/ACK metadata is not inferred from a timestamp or boolean. All proposed names are design proposals, not existing exports."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/DayPlannerBinding.tsx",
+      "proposedSymbols": ["DayPlannerBinding", "DayPlannerQueryInput", "PlannerSchedulePreviewInput", "PlannerResult", "PlannerError"],
+      "change": "Render RD-10 within the existing host: day/3-day/week, daily-note/task/event/time-entry layers, canonical Open task/source actions, per-layer freshness and explicit pending/ACK state. Define boundary-usable request/result/error schemas for the two normative planner operations using the accepted common schema convention; server registration requires the foundation scope gate. Query input carries day/range/timezone/permitted refs, never trusted actor authority. Schedule preview is side-effect free; apply delegates to accepted base.applyCalendarMove/native owner with expected revision and stable operation/idempotency identity. Share preview validation and ambiguity UI between drag and keyboard scheduling; preserve draft until native receipt/readback or explicit typed failure. Time-owner absence displays unsupported reason and no fake elapsed value. Use t() and existing theme/font/help/motion components; actual registry/mount and new locale keys require integration authorization."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-038.test.ts",
+      "proposedSymbols": ["planner semantic regression cases and seeded negative-control cases"],
+      "change": "Test same native Task identity after planner scheduling and Tasks/Calendar readback, account-scoped event collision, canonical occurrence dedup, DST/date-only/range boundaries, read-only source denial, conflict/stale ACK/replay/recovery and absent timer capability. Assert actual owner effects and authoritative receipts, not mock forwarding or source text. Seeded mutant independently starts Docs reminder/timer ownership and must fail the named delivery/update/receipt assertions on otherwise green evaluated bytes."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-038.spec.ts",
+      "proposedSymbols": ["actual mounted RD-10 interaction and readback scenarios"],
+      "change": "Use the discovered supported actual Electron runner, not an isolated React fixture. Exercise drag and keyboard schedule equivalence, ambiguity, source links, range/layer selection, loading/empty/error/denied/offline/retry, pending versus ACK, unavailable time owner and post-restart authoritative state. Preserve Russian/all-locale, font, pointer/focus/IME/reduced-motion/zoom/theme screenshot and ARIA evidence. No runner command is claimed discovered or passing in this restricted preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/tasks/personal/projections.ts",
+      "symbol": "buildTodayPlan",
+      "baseSha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2",
+      "change": "Integration-owned conditional patch after the accepted LSX-WP-021 contract is known: allow buildTodayPlan to consume an explicitly authorized, timezone-resolved day context with dayStart and hour/minute classification plus the canonical today task subset. In this explicit context, use that subset instead of projectTasks(tasks, now, 'today'), compare overdue against supplied dayStart and classify via the accepted timezone accessors rather than new Date(ts).getHours()/getMinutes(). Existing no-context consumers keep their established local-Today behavior; the planner supplies the explicit accepted context. Keep the established bucket order, project grouping, sorting and unscheduled/evening rules. Concrete context type must reuse the accepted dependency type; no invented committed export is asserted here.",
+      "reason": "buildTodayPlan currently uses process-local Today filtering and hour classification, so directly reusing it for an arbitrary supplied planner timezone produces incorrect day/bucket membership. Do not fix this by creating a second planner task store or copying the bucketing implementation. The change is unnecessary if the dependency already supplies the shared accepted range projection; root must inspect accepted bytes before deciding."
+    },
+    {
+      "path": "packages/core/src/tasks/personal/projections.ts",
+      "symbol": "taskCalendarAt / projectTasks",
+      "baseSha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2",
+      "change": "Reuse taskCalendarAt unchanged for startAt ?? dueAt and projectTasks unchanged for existing local native projections. Do not alias provider events into PersonalTask or change Today semantics to approximate a supplied planner day/range. The planner range comes from the accepted timezone/occurrence adapter; if root elects to generalize all native projections, request expanded named-seam/caller scope first instead of touching matchesProjection/dates silently.",
+      "reason": "projectTasks has no day/range/timezone parameter and is not a universal calendar query. Preserving the existing semantics prevents regressions to Inbox/Today/Upcoming while exposing the precise boundary needing accepted dependency support."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows",
+      "baseSha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8",
+      "change": "Preserve row.id and provenance.noteId exactly as the canonical note identity and consume the accepted LSX-WP-037 source mapping outside legacy checkbox aggregation. If the accepted host needs day-link metadata in NoteProjectionRow, pass only already-authorized mapping through existing properties rather than resolving links by title/folder/date in projectNoteRows. Keep tasks/openTasks from Markdown checkbox input and leave formulaValue taskCount/openTaskCount unchanged; never count native occurrences as new note checkboxes. Do not create planner rows or timer data in notesViewsStorageKey. No patch is required here if the accepted host passes source links directly to DayPlannerBinding.",
+      "reason": "projectNoteRows currently derives legacy checkbox counts and canonical provenance. Native Task/source mapping must not double-count, change existing formula meanings or duplicate note/task identity. The dependency explicitly requires separate legacy/native counts."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView / formulaValue / notesViewsStorageKey",
+      "baseSha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8",
+      "change": "No planner persistence or new kind in NoteBaseView v1: keep its table/base kinds and existing serialization contract. Preserve formulaValue's four built-ins and notes:views:<workspaceId> keys. Mount RD-10 through an integration-approved existing host, not by calling a new renderer endpoint from this pure module. If an accepted canonical Base migration changes this contract, integrate its receipt first and rebase the request onto it.",
+      "reason": "NoteBaseView is not a panel registry; adding a planner kind would be rejected by parseNoteBaseView and requires migration/caller changes outside the named seams. Shared-file listing does not authorize a broad rewrite or a second surface."
+    }
+  ],
+  "additionalScopeRequests": [
+    {
+      "need": "Server/transport command-query registration and real RD-10 host mount plus localization resources",
+      "evidence": "The four normative new files contain no listed server handler, and both shared modules are pure data/projection seams. Published RS-BASE-01 names NotesViewHost.tsx as an existing surface, but that path is not writable in this packet and its implementation was not inspected.",
+      "action": "Root identifies the accepted dependency-owned actual handler/mount/locale symbols, supplies their source and receipts, and issues a reviewed updated packet/path lease before any additional edit. Do not invent a concrete registration symbol from an uninspected file."
+    },
+    {
+      "need": "Explicit-timezone daily note destination",
+      "evidence": "note-views.ts dailyNoteDestination:527-531 uses process-local Date fields; the named shared symbols exclude dailyNoteDestination.",
+      "action": "Resolve authorized DailyNoteLink from the accepted source mapping/date contract without title-only lookup. If dailyNoteDestination must change, explicitly add that symbol and its callers to reviewed scope before applying a timezone patch."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "planner is shared projection/command adapter",
+      "currentEvidence": "projections.ts projectTasks:13-15, taskCalendarAt:101-102 and buildTodayPlan:207-261 are pure native projections. note-views.ts projectNoteRows:133-158 preserves note provenance. Normative planner files were not found by exact-path glob.",
+      "requiredChange": "Implement pure mapPlannerSources and mounted DayPlannerBinding; reuse accepted source mapping and base/native scheduling command. No planner Task/Event/done/reminder store, no duplicate shell or task materialization.",
+      "verification": "Native Task scheduled in Planner has same canonical ref and expected changed revision/hash in Tasks and Calendar, with exactly one native update; open source resolves the same note/block. Perform SOURCE_SCHEMA, UNIT_PROPERTY and NATIVE_DOMAIN_READBACK on integrated bytes.",
+      "missingPrerequisite": "Accepted LSX-WP-021 and LSX-WP-037 receipts, server authority registration and host mount scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "provider pending/ACK and native object identity distinct",
+      "currentEvidence": "CalendarEvent:22-38 distinguishes event kind and localDirty/etag; CalendarAccount:11-20 has account status/timezone; SyncJournal:64-70 tracks sync revision; calendarEventIdentity:103-107 scopes identity to account/calendar/event. PersonalTask:42-75 is a distinct model, with startAt/dueAt/reminderAt and repeatOf, not a provider event.",
+      "requiredChange": "Keep kind and source namespaces in layer keys, use scoped provider refs, show pending separate from durable native commit and remote ACK, and fence stale provider ACK. ICS remains read-only; no event-to-task conversion.",
+      "verification": "Same event id in two accounts/calendars renders and reads back as distinct objects; queued provider result never becomes acknowledged success; real ACK reconciles exact revision and stale ACK cannot restore an older schedule. Deny read-only event drag before commit. Provider proof lane is required for exercised provider effects.",
+      "missingPrerequisite": "LSX-WP-021 date/capability/ACK contract and EG-PROVIDERS real-provider readiness receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:13841-13858 specifies doc.queryDayPlanner/doc.previewPlannerSchedule and eight errors. Inspected types.ts and calendar/types.ts are TypeScript domain types, not runtime-authenticated request validators; note-views.ts has no transport imports.",
+      "requiredChange": "Define and register schema-versioned query/preview results and validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat errors with common schema mechanism. Actor/workspace authorization comes from authenticated transport and current policy, never payload owner or actor. Revalidate source and occurrence/provider capabilities on apply.",
+      "verification": "Compile shared boundary schemas at both real server and renderer; validate malformed range/timezone/ref and unsupported format. Attempt actor/workspace spoof, cross-workspace source, revoked source/field access and provider-write bypass via real transport; deny without protected titles/counts/refs. Compile-only success is not authorization proof.",
+      "missingPrerequisite": "Accepted shared schema/authority/transport registration seam and updated writable scope; no registered planner handler was observed in the allowed files.",
+      "state": "BLOCKED_ON_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "PersonalTask.updatedAt:73-74 is optional modification metadata, not a durable receipt or CAS token; CalendarEvent.etag and journal.lastSyncedRevision likewise do not establish local command commit. 05-rox-bases-design.md:203 explicitly separates optimistic pending from committed result.",
+      "requiredChange": "Consume canonical owner's ref/revision/hash receipt for schedule and reminder changes. Keep preview/pending/error separate; requery authoritative owner by exact ref and fence events by revision. Preserve accepted source links after restart without planner-owned persistence.",
+      "verification": "Record before/after exact source/native refs, revision/hash, command identity and expected schedule; restart actual owner/client, requery exact refs and compare authoritative state across Planner/Tasks/Calendar. Provider queued receipt alone fails success oracle.",
+      "missingPrerequisite": "Durable native command/readback owner and accepted restart runner/readiness receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:13889-13903 requires same Task readback, recurrence dedup, DST and missing timer checks; 06-rox-docs-design.md:156 requires ambiguity and occurrence semantics. dates.ts:5-16 and projections.ts:61-62/231-240 use process-local calculations.",
+      "requiredChange": "Implement semantic test scenarios on real accepted owner boundaries: schedule success, malformed/ambiguous dates, denied/read-only/deleted source, stale revision/ACK, repeated operation/event, crash/restart, occurrence dedup and DST range/day behavior. Preserve failed attempts and input/seed hashes.",
+      "verification": "Later run bun test tests/lark-suite-extension/lsx-wp-038.test.ts plus discovered owner/native recovery lanes. Include spring-forward/fall-back day boundaries with explicit supplied timezone different from runtime timezone, recurring duplicate occurrence, superseding reschedule, replay after crash and no unsupported running/elapsed fields.",
+      "missingPrerequisite": "Accepted date/occurrence/command owners and integration revision. Builds/tests are prohibited in this preflight and were not run.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:13905-13913 names independent Docs timer/notification loop mutation and three mandatory assertions.",
+      "requiredChange": "Add deterministic bounded synthetic owner/source fixture and actual semantic mutation route that starts independent Docs reminder ownership; retain seed, original input SHA256 and exact evaluated-byte hashes. Keep baseline green before interpreting mutant failure.",
+      "verification": "Mutant must fail one registered delivery occurrence, native schedule updated once and no timer state reported without owner receipt assertions as applicable to the injected duplicate ownership. Preserve assertion/log evidence; timeout/runner failure is a separate failed proof, never a killed mutant.",
+      "missingPrerequisite": "Accepted EG-ATTENTION/native schedule owner with inspectable occurrence/effect receipts and runnable semantic test boundary.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "06-rox-docs-design.md:43-66 specifies existing-surface RD-10, preserved theme, font, help and zoom. note-views.ts is not a rendered planner and NoteBaseView only accepts table/base. No UI was launched in this preflight.",
+      "requiredChange": "Mount actual DayPlannerBinding in existing surface; implement day/3-day/week and distinct layers with freshness, canonical links, drag/keyboard schedule and ambiguity preview; expose loading/empty/error/denied/offline/retry and unsupported-time-owner reason. Use all ten existing locales through t(), current theme/Rox Mono, keyboard accessible help and reduced-motion behavior.",
+      "verification": "Actual Electron pointer and keyboard/IME schedule interactions, focus recovery after success/conflict/deny, hover/focus/click help, all ranges, 200% zoom/no overflow, light/dark preserved and reduced positional motion. Capture screenshots/ARIA and actual font load/cyrillic/computed-font evidence at integrated revision. No isolated fixture screenshot substitutes for native owner readback.",
+      "missingPrerequisite": "Reviewed host/locale patch scope, accepted transport and discovered actual Electron runner. Native UI operations are prohibited in this preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:13896-13903 and 13927 require SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI separately. Published RS-BASE-01.md:84-89 additionally requires integrated source/diff/log/hash/rollback/review evidence for its affected boundaries.",
+      "requiredChange": "Keep per-criterion lane receipts and exact integrated revision/artifact hashes; do not promote featureComplete until all package DoD and affected linked foundation boundaries are proved. Provider/collaboration proof is conditional on actual exercised effects, not substituted with mocks.",
+      "verification": "Root independently accepts dependency, implementation and integrated readback receipts with expected/observed data, mutation evidence, failure history and actual UI artifacts. This report's schema/hash validation proves only preflight integrity.",
+      "missingPrerequisite": "Wave0 and dependencies accepted, implementation integrated, independent root verification and complete required lane artifacts.",
+      "state": "NOT_VERIFIED_FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "One reminder owner; reschedule cancels old timer by version fence and recurrence occurrence delivers once.",
+      "currentEvidence": "PersonalTask.reminderAt:65-66 stores a reminder timestamp only; 08-automation-integration.md:59 and work-packages.json:13878-13880 require canonical timer cancellation and dedupe. No delivery owner is source-proven by the inspected projection files.",
+      "requiredChange": "Route reminder changes to the registered canonical owner and consume its native schedule/occurrence/reminder receipts. Subscribe only to verified canonical task.updated/provider.syncAcknowledged/reminder aliases with the specified envelope; no independent Docs timer or notification loop.",
+      "verification": "Reschedule A to B; old timer cannot deliver after B revision. Repeat event/replay/restart yields one intended-recipient notification per canonical occurrence key and one native update per operation. Observe actual owner receipts and count deliveries, not just UI notices.",
+      "missingPrerequisite": "EG-ATTENTION owner readiness and verified event aliases/envelopes; LSX-WP-021 schedule command.",
+      "state": "BLOCKED_ON_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Unavailable time tracking shown explicitly; missing timer capability does not fake running/elapsed data.",
+      "currentEvidence": "PersonalTask:42-75 has no timer/time-entry model. Normative outputs and tests at work-packages.json:13835-13838,13889-13892 require unavailable behavior. 05-rox-bases-design.md:212 and 06-rox-docs-design.md:156 define owner-backed tracking only.",
+      "requiredChange": "Model unavailable capability with explicit reason and no running/elapsed/time-entry claims. If a real accepted adapter exists, use its persisted events and active-timer/conflict receipt rather than a new Docs timer. TimeEntryRef remains a link to owner data, not copied time authority.",
+      "verification": "Disable/remove adapter capability and exercise actual planner: unavailable reason is readable by pointer/keyboard, timer actions cannot start and no running/elapsed data is reported. If enabled, pause/resume/crash/reload and concurrent cross-device starts obey the owner policy and authoritative receipts.",
+      "missingPrerequisite": "Actual mounted planner to verify unavailable branch; accepted native time adapter only for supported tracking branch.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/tasks/personal/projections.ts","symbol":"projectTasks","lineStart":13,"lineEnd":15,"sha256":"d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path":"packages/core/src/tasks/personal/projections.ts","symbol":"taskCalendarAt","lineStart":100,"lineEnd":103,"sha256":"d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path":"packages/core/src/tasks/personal/projections.ts","symbol":"buildTodayPlan","lineStart":207,"lineEnd":261,"sha256":"d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"PersonalTask / TaskLink / Recurrence","lineStart":14,"lineEnd":75,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"packages/core/src/tasks/personal/dates.ts","symbol":"localDayKey / startOfLocalDay / parseNlDate","lineStart":5,"lineEnd":79,"sha256":"6b8ac9696b55c5f5e9406664c947eec59fdd7946264c450bd57209d8a9afaa87"},
+    {"path":"packages/core/src/calendar/types.ts","symbol":"CalendarEvent / SyncJournal","lineStart":22,"lineEnd":70,"sha256":"3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path":"packages/core/src/calendar/types.ts","symbol":"CalendarBundle / calendarEventIdentity","lineStart":86,"lineEnd":107,"sha256":"3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteBaseView / notesViewsStorageKey / projectNoteRows / formulaValue","lineStart":24,"lineEnd":203,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"dailyNoteDestination","lineStart":527,"lineEnd":532,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[37] LSX-WP-038","lineStart":13633,"lineEnd":14010,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-038 execution record","lineStart":3259,"lineEnd":3347,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"9.3 TaskNotes / Day Planner transfer","lineStart":195,"lineEnd":216,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"RD-10 and TaskNotes / Day Planner reference behavior","lineStart":43,"lineEnd":178,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/08-automation-integration.md","symbol":"4.5 Day planner reminder","lineStart":53,"lineEnd":76,"sha256":"32b1ffb806b8dab6be2ffe38f3144b1a5601e0695620b5a8f7bbed9b4f345a68"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Shared authority, DoD and RS-DRV-01 dependency","lineStart":44,"lineEnd":110,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"}
+  ],
+  "evidenceFreshness": {
+    "binding": "Whole-file SHA256 values from read-only shasum over the inspected working-tree files, not assumed Git blobs. Five inspected product hashes and both input-manifest hashes matched the normative/dispatch values at hash capture.",
+    "revisionLimit": "input_revision is retained from dispatch. Root-owned uncommitted wave0 work and concurrent integration are acknowledged; current HEAD/ancestry were not queried or modified. These source observations establish no implementation or runtime readiness.",
+    "stalenessRule": "Any subsequent change to a bound file invalidates its source evidence/patch base. The authorized report verifier must reject digest drift; re-read affected source before revising a request, never replace a hash without inspection. Dependency APIs are explicitly proposed until accepted receipts arrive.",
+    "codegraph": "Queried once for this repository; returned no .codegraph index. Continued using bounded native file reads/searches; no index was created.",
+    "normativeNewFilePresence": "Exact-path glob returned path-not-found for all four normative files at inspection. This does not assert absence of dependency implementations or alternate seams outside the bounded read set."
+  },
+  "verification": {
+    "preflightIntegrityResult": {"validPreflight": true, "featureComplete": false, "references": 15, "exitCode": 0},
+    "featureTests": "NOT_RUN: user explicitly prohibited builds, tests, native UI and network operations during preflight.",
+    "preflightIntegrityCommand": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/LSX-WP-038.json", "${ROX_COMPOUND_PACKET_ROOT}/LSX-WP-038/packet.json"],
+    "integrityLimit": "This read-only verification checks lineage/required report fields/current whole-file source hashes and featureComplete=false. It is not source compilation, feature tests, UI, provider or native readback proof."
+  },
+  "nextExecutableAction": "Lead verifies this preflight report against its packet/source hashes now. Implementation remains gated until lead wave0 commit and accepted LSX-WP-021/037 receipts. Then inspect their exact date/source/owner/transport contracts, resolve EG-ATTENTION and EG-PROVIDERS readiness, reconcile linked RS-BASE-01/RS-DRV-01 foundation and authorize real server/mount/locale paths in a reviewed packet. Acquire serial shared-path leases and implement the four normative files against the accepted shared mechanisms; re-read any drifted sources before patch requests. Do not launch implementation from preflight validation alone.",
+  "risks": [
+    "Process-local Today/day/hour helpers and fixed 24-hour arithmetic cannot represent arbitrary supplied timezone/DST days; adding a planner-only workaround would diverge from native views.",
+    "No explicit occurrence key, RRULE authority, date-only precision, CAS or receipt model is present in PersonalTask's inspected type; repeatOf and updatedAt are not substitutes.",
+    "CalendarAccount pending/localDirty/etag do not alone prove durable remote ACK or writable provider capability; remote ids collide across accounts/calendars.",
+    "The packet lists no real server/transport registration or existing UI mount path; two pure shared projection files cannot alone produce end-to-end RD-10 or authenticated planner API.",
+    "Localization parity and new UI keys require integration-owned locale changes beyond the listed shared paths, not hardcoded Russian or a second translation store.",
+    "Published RS-BASE-01 uses historical baseline 249b3b44 and requires RS-DRV-01; package baseline e953786b and dispatch a21aeab1 differ. Root must resolve contracts/revisions with receipts rather than treating historical publication as readiness.",
+    "Legacy note checkbox taskCount/openTaskCount must retain meaning when native Task links/occurrences appear; planner rows must not become a second checkbox/completion authority.",
+    "Time-owner absence must remain explicit and exercised. Fabricated elapsed/running data or independent Docs timer/reminder loops violate the required ownership invariant.",
+    "No test/UI/provider lane was executed under the inspection-only authorization. Source-backed design and preflight integrity cannot be reported as feature completion."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync, mkdtempSync, renameSync } from 'fs';
-import { extname, basename, resolve, join, relative } from 'path';
+import { existsSync, readFileSync, statSync, writeFileSync, unlinkSync, mkdtempSync, renameSync, openSync, closeSync, fsyncSync } from 'fs';
+import { extname, basename, resolve, join, relative, dirname } from 'path';
 import { execSync } from 'child_process';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
@@ -34,15 +34,22 @@ export function readJsonFileSync<T = unknown>(filePath: string): T {
  * This prevents partial writes from corrupting the file on crash/interrupt.
  * Uses write-to-temp-then-rename pattern which is atomic on POSIX systems.
  */
-export function atomicWriteFileSync(filePath: string, data: string): void {
+export function atomicWriteFileSync(filePath: string, data: string, options?: { readonly durable?: boolean }): void {
   // Unique temp name per write: a fixed `${filePath}.tmp` lets two concurrent
   // writers to the same target (e.g. a page's refresh script and a host one-shot
   // both regenerating snapshot.json) clobber each other's temp mid-rename,
   // producing a torn/empty file or ENOENT. pid + random keeps them disjoint.
   const tmpPath = `${filePath}.${process.pid}.${randomBytes(6).toString('hex')}.tmp`;
   try {
-    writeFileSync(tmpPath, data);
+    if (options?.durable) {
+      const fd = openSync(tmpPath, 'wx');
+      try { writeFileSync(fd, data); fsyncSync(fd); } finally { closeSync(fd); }
+    } else { writeFileSync(tmpPath, data); }
     renameSync(tmpPath, filePath);
+    if (options?.durable) {
+      const directoryFd = openSync(dirname(filePath), 'r');
+      try { fsyncSync(directoryFd); } finally { closeSync(directoryFd); }
+    }
   } catch (error) {
     // Clean up temp file if rename failed
     try { unlinkSync(tmpPath); } catch {}

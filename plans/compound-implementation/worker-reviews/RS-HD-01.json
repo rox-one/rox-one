@@ -1,0 +1,407 @@
+{
+  "task_id": "RS-HD-01-preflight",
+  "attempt_id": "af44e9f3cdbc3c1434e881ed1d749476",
+  "packet_hash": "4003f732f7daa804b02c386393b258e85faac94b56ca939624dd27ae112e6e4f",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-HD-01",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "scope": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "owner": "omp-rox-compound-20260930T101129Z-RS-HD-01",
+    "onlyWrittenPath": "plans/compound-implementation/worker-reviews/RS-HD-01.json",
+    "implementationAuthorization": "None in this preflight. Root retains source integration. Start implementation only after lead wave0 commit and accepted RS-ADM-01 and RS-FORM-01 receipts, with a fresh implementation packet.",
+    "notExecuted": ["product builds", "product tests", "native UI", "provider/network operations", "Git mutations"],
+    "inspectionLimit": "Published package/dependency handoff records, normative existing paths and their direct navigation, mail, Inbox and screen-kit imports. The supplied preflight verifier was inspected solely to establish a read-only artifact validation path."
+  },
+  "dependencies": ["RS-ADM-01", "RS-FORM-01"],
+  "dependencyEvidence": {
+    "normativeRecord": "plans/rox-suite/issues.json:766-794",
+    "publishedHandoff": "docs/rox-suite/published/RS-HD-01.md:142-150",
+    "specHeaderCaveat": "Line 11 lists only RS-ADM-01; the exact issues.json array and appended normative handoff include RS-FORM-01. Preserve both, not the older abbreviated header.",
+    "adminRequiredReceipt": "Accepted RS-ADM-01 organization/membership/capability policy and canonical product-menu registration seam; a Settings screen alone is insufficient.",
+    "formsRequiredReceipt": "Accepted RS-FORM-01 immutable FormRevision, submit-only scoped grants, private Responses, shared renderer and atomic idempotent response-to-Ticket mapping contract. RS-FORM-01:27-29,48-56,78-80 establish these requirements. Its own explicit RS-DRV-01/RS-BASE-01 edges remain transitive dependencies, not extra RS-HD-01 array entries.",
+    "relatedNotDependencies": ["RS-HD-02", "RS-MCP-01"]
+  },
+  "foundationGates": [
+    {
+      "id": "PUBLISHED_WP_PREREQUISITES",
+      "explicitDagEdge": false,
+      "requirements": ["WP-01", "WP-02", "WP-03", "WP-04", "WP-05", "WP-06", "WP-07", "WP-08", "WP-09", "WP-11", "WP-17", "WP-18"],
+      "evidence": "RS-HD-01:13,70,98. Specification lists these architecture prerequisites separately from service Dependency IDs.",
+      "requiredHandoff": "Lead supplies accepted Revision2 authority foundation contracts and owning symbols for authenticated actor/current-policy gateway, durable command/query transaction, shared identity/link/message/attachment, outbox, policy-aware projections and transport. Do not recreate them inside Help Desk.",
+      "currentEvidence": "platform-contract.ts is expressly an I/O-free typed seam (1-6). authorizeRox2Action (601-610) checks actor+permission only, not workspace/queue/resource; registerExternalBinding (336-371) accepts an in-memory Map, not a restart-safe intake store. apps/workspace-service and packages/shared/src/workspace-domain were absent at inspection. This is a missing inspected foundation seam, not proof that all repository foundation work is absent.",
+      "state": "REQUIRES_ACCEPTED_FOUNDATION_RECEIPTS_AND_REBASE"
+    },
+    {
+      "id": "CANONICAL_CONTACT_COMPANY_MESSAGE_ATTACHMENT_AUTHORITY",
+      "explicitDagEdge": false,
+      "evidence": "RS-HD-01:20-22,51,70,74-78; DossierPage.tsx:98-119,168-177; platform-contract.ts:17-38,232-245.",
+      "requiredHandoff": "Canonical Principal/Contact/Company IDs and migration/alias resolution from existing local dossier identities, common Message parent=ticket, Attachment quarantine/upload grants, EntityLink/mentions and resource-scoped policy. Customer Contact must not become a teammate by an email match.",
+      "currentEvidence": "DossierPage still persists DossierData through loadWorkspaceJson/saveWorkspaceJson and allocates newLocalId('dos'); it is a precursor, not an authenticated shared Contact authority. Existing kinds include person/crm-company/mail-thread/channel-message, not ticket. Do not add another contacts/comments table or treat a local dossier ID as verified principal identity.",
+      "state": "MISSING_ACCEPTED_SHARED_IDENTITY_AND_MESSAGE_BINDINGS"
+    },
+    {
+      "id": "NAV_TRANSPORT_AND_PROJECTION_OWNER_DECISIONS",
+      "explicitDagEdge": false,
+      "evidence": "RS-HD-01:28,76-78,98,128; nav-destinations.ts:51-84; NavigationContext.tsx:45-65,106-108; types.ts:506,921-922.",
+      "requiredHandoff": "One integration owner approves canonical Help Desk destination, typed route/view encoding, Admin/command search entry and authenticated generated API or IPC/RPC path plus common agent/MCP/job dispatch. Foundation owner supplies realtime/reconnect, search/notification/activity/memory retraction seams before claiming them implemented.",
+      "currentEvidence": "No Help Desk entry in inspected nav registry or route prefix list. ElectronAPI.mailLocal is a mail-only bridge, not ticket authority. Inbox useInboxItems remote sources are memory/skills/senders, not shared Ticket queues.",
+      "state": "INTEGRATION_CONTRACT_NOT_YET_BOUND"
+    },
+    {
+      "id": "LIVE_EMAIL_AND_DELIVERY_RECONCILIATION",
+      "explicitDagEdge": false,
+      "evidence": "RS-HD-01:13,53-57,102,113,117,130; mail-local.ts:8-10,32-43,107-141; useMail.ts:1-6,84-104; MailPanels.tsx:477-492.",
+      "requiredHandoff": "Dedicated authorized synthetic mail tenant, inbound adapter/event authentication and account-scoped IDs, durable outgoing operation/receipt and readback/reconcile capabilities. Manual intake can precede mail adapter, but full issue cannot omit provider-live email acceptance.",
+      "currentEvidence": "Mail defaults to loopback; MailStatus.local explicitly means external email cannot reach it. MailLocalApi.send returns emailId only and exposes no durable delivery operation/status reconciliation API. A JMAP onChanged refresh is not webhook intake dedup/out-of-order handling. Existing generic MailCompose.send is not a safe ticket public/internal message delivery implementation.",
+      "state": "PROVIDER_LANE_NOT_RUN_AND_TENANT_NOT_ESTABLISHED"
+    },
+    {
+      "id": "EVIDENCE_REVIEW_AND_COMPLETION_LANES",
+      "explicitDagEdge": false,
+      "evidence": "RS-HD-01:119,130-133,139.",
+      "requiredHandoff": "Linux domain/renderer lane; source-pinned macOS native IPC/font/device lane; dedicated live provider lane; seeded failing controls; independent review; source/dependency/license review; reconciliation/revoke runbook and user docs; exact implementation revision/PR and GitHub evidence linkage. No planning validator substitutes for these lanes.",
+      "state": "ALL_FEATURE_LANES_NOT_RUN_BY_PREFLIGHT"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/HelpDeskPage.tsx",
+    "apps/electron/src/renderer/components/helpdesk/TicketDetail.tsx",
+    "packages/shared/src/workspace-domain/helpdesk/contracts.ts",
+    "apps/workspace-service/src/modules/helpdesk/intake.ts",
+    "apps/workspace-service/src/modules/helpdesk/commands.ts",
+    "apps/workspace-service/migrations/helpdesk-tickets.sql",
+    "tests/rox-suite/helpdesk-intake.spec.ts"
+  ],
+  "ownedNewFilesEvidence": "Exactly the seven normative NEW paths in RS-HD-01:89-96; proposed implementation ownership only, not files created by this worker. Directory/file lookup found HelpDeskPage, components/helpdesk, workspace-domain, workspace-service and helpdesk-intake.spec.ts absent at inspection. Shared migration ownership must be serialized by lead despite the normative package path.",
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS; ROX2_RELATION_RULES; Rox2EntityRef/Rox2Event/Rox2CanonicalResult",
+      "change": "Add canonical 'ticket' kind through the single registry. Extend assigned.domain with ticket (currently task/session/note only); extend member-of.domain with ticket when binding Ticket to canonical Project. Reuse parent/mentions/derived-from/attached-to rules and existing encoded provider/account alias helper. Consume existing result triad and causation/correlation/revision fields unchanged; queue/requester/service action contracts belong to accepted authority and helpdesk/contracts.ts, not arbitrary new Rox2Status enums.",
+      "reason": "Ticket refs currently fail isRox2EntityKind/parseRox2EntityId/parseRox2TypedRecord; assignment/Project relations fail existing domain rules. A new kind without these consumer-visible relation updates is incomplete.",
+      "baseSha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view; Route/ViewRoute derived types",
+      "change": "Add a typed Help Desk queue builder and ticket builder for helpdesk/ticket/{encodeURIComponent(id)}/view with the lead-approved view encoding. Keep routes.view.inbox untouched. Define the approved list/board and queue/filter navigation parameters once, coherently with parser and NavigationState.",
+      "reason": "No ticket route exists; contextual links cannot use raw ad-hoc URLs or replace Inbox.",
+      "baseSha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "NavigationState; InboxNavigationState adjacent seam; getNavigationStateKey; parseNavigationStateKey; ElectronAPI",
+      "change": "Add HelpDeskNavigationState with ticket detail/view and queue representation state, its union member and isHelpDeskNavigation guard. Extend persisted key build/parse for the identical encoded route shape. Only if IPC is the approved authority client, extend ElectronAPI with typed Help Desk query/command/subscription methods backed by the shared gateway, not renderer actorId or direct mailLocal.send.",
+      "reason": "Panel state/history restoration must retain ticket selection and view. ElectronAPI only exposes mailLocal at the inspected mail seam, not ticket commands.",
+      "baseSha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"
+    },
+    {
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "symbol": "NavigatorType; ParsedCompoundRoute; COMPOUND_ROUTE_PREFIXES; parseCompoundRoute; buildCompoundRoute; convertCompoundToViewRoute; convertCompoundToNavigationState; convertParsedRouteToNavigationState; navigationStateToCompoundRoute",
+      "change": "Register helpdesk prefix and navigator. Add ticket/view and queue route handling in both directions, preserving approved representation/filter state; extend ParsedCompoundRoute data shape only for fields required by that contract. Extend parsed-view conversion and navigation conversion branches together. Reject invalid ticket IDs/view shapes through the existing parse error path instead of falling back to a successful unrelated destination.",
+      "reason": "Updating builders alone leaves renderer navigation, persisted state and rox:// deep links inconsistent. COMPOUND_ROUTE_PREFIXES is explicitly shared with main deep-link acceptance.",
+      "baseSha256": "1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"
+    },
+    {
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "symbol": "NavigationState guard imports/re-exports",
+      "change": "Import and re-export isHelpDeskNavigation alongside existing Inbox/Tasks guards; reuse existing parse/build and focused-panel history path. Any Help Desk navigation branches identified by the integration owner must consume the canonical NavigationState, not a second history store.",
+      "reason": "MainContentPanel imports navigation guards from this context. Existing URL-driven history and stable peer-panel keys must be preserved.",
+      "baseSha256": "40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "symbol": "AppNavDestinationId; APP_NAV_DESTINATIONS; APP_NAV_DESTINATIONS_BY_ID",
+      "change": "After accepted canonical registry decision, register one Help Desk destination with shared i18n label, icon, routes.view helpdesk builder and isHelpDeskNavigation predicate. If the authority capability is unavailable use the existing disabledTooltipKey/route:null gating convention; do not imply an available queue by rendering an empty list. Admin product entry and command search consume that same decision through their owning packages.",
+      "reason": "Registry is single source of truth for rail identity and lookup; package specification forbids another product shell or duplicate registry.",
+      "baseSha256": "022c1bf1adeb1da16db51c1c3db396b0de6a926a59f74b3015ddeb4433f033e4"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "symbol": "lazy page declarations; MainContentPanel navigator branches beside isInboxNavigation",
+      "change": "Lazy-load HelpDeskPage and dispatch isHelpDeskNavigation through existing wrapWithStoplight/Panel composition; supply typed selected ticket/view/queue state to the new page. Retain InboxPage and ExtraScreenHost dispatch unchanged.",
+      "reason": "A registered destination must render the real domain page inside existing panels, not an isolated Help Desk shell.",
+      "baseSha256": "1652819dedf8f1af35b83faaa49e403a1012a7825b9d48e8931c59b887bae10b"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "symbol": "InboxPage mail selection; both MailReader call sites (465 and 478); allItems/allCounts",
+      "change": "Wire an explicit contextual Create Ticket callback in both full mail-folder and compact merged-Inbox reader paths. Resolve authenticated provider account/message/source refs through authority; show source audience preview without auto-copying body, call intake.accept with stable event/command identity, then navigate only on committed Ticket receipt (including existing/quarantined disposition). Preserve unread mail pinning, mail done flags, allItems merge and existing session attention flows. Consume Ticket attention only from a policy-aware shared projection, never calculate queue counts from local Ticket arrays.",
+      "reason": "Both mail views must offer the same safe intake; replacing Inbox aggregation with a ticket engine would break a required neighboring existing flow.",
+      "baseSha256": "9e7b98fc482a3dca7a18042123f48e295d8c5a88d0f9cb48a2e6b464943209e3"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
+      "symbol": "MailReader props and contextual action row at 307-314,368-370",
+      "change": "Add typed optional contextual Create Ticket action plus disabled reason/help and invoking state to MailReader, supplied by InboxPage; route the operation through shared intake authority. Do not clone toTask's concatenated preview/body into a wider-audience Ticket, and do not reuse generic MailCompose.send for ticket internal/public reply dispatch.",
+      "reason": "Existing reader props expose reply/edit/remove only. Existing toTask copies message.preview; applying that pattern to a ticket violates source-private audience acceptance.",
+      "baseSha256": "58489312903d05712ece9e6cdac4b8eb6f771bd0180e1ce77561e26b79511044"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx",
+      "symbol": "ModeScreenLayout; NavItem",
+      "change": "If Help Desk uses this shared layout, request a backward-compatible responsive/drilldown composition option for the existing kit with single main column at narrow/zoomed width; preserve existing defaults for current consumers. Ensure focus-visible styling for reused NavItem controls, which currently set outline-none. If the owner selects another existing responsive panel composition, do not patch ModeScreenLayout merely to accommodate the new page.",
+      "reason": "Current navigator 220px + minimum list 240px + detail 320px cannot satisfy 390px without explicit drilldown. Reuse controls/tokens, not this fixed three-column structure unmodified or a second UI framework.",
+      "baseSha256": "9610f99c424dcf1760915eaff638eaf1b4cea9a854399e9eb420e3a5ec3c3905"
+    }
+  ],
+  "unboundIntegrationRequests": [
+    {
+      "owner": "foundation transport/authority/projections owner",
+      "request": "Provide exact post-wave0 existing dispatcher, command schema registry, authenticated client/preload handlers, migration runner, shared Message/Attachment/EntityLink store, projection/outbox subscribers, revoke/replay hooks and agent/MCP tool registry symbols. Then issue base-hash-pinned shared patch requests for ticket.list/read/create/update/link/reply and intake.accept. No such implementation path was present in the inspected normative NEW directories; do not invent handlers or a second store.",
+      "state": "WAITING_FOR_ACCEPTED_FOUNDATION_SOURCE"
+    },
+    {
+      "owner": "RS-ADM-01 owner",
+      "request": "Provide the accepted Admin product menu/command search registration symbol so Help Desk opens via the canonical menu, with queue capability disabled reason and current membership policy. Its published target OrganizationAdminHub.tsx is not assumed implemented here.",
+      "state": "WAITING_FOR_DEPENDENCY_RECEIPT"
+    },
+    {
+      "owner": "RS-FORM-01 owner",
+      "request": "Provide accepted shared form contracts/service mapping symbols and atomic response-to-ticket integration hook. Map immutable field IDs and pinned revision into intake.accept; enforce submit-only public grants, quota/scan and private Responses. Do not add a Help Desk form builder.",
+      "state": "WAITING_FOR_DEPENDENCY_RECEIPT"
+    },
+    {
+      "owner": "Message/Channel intake owner",
+      "request": "Bind the Message-to-Create-Ticket contextual control and source alias to the same intake.accept authority as form/mail; no inspected package path identifies a canonical message reader control, so a source-hashed patch request requires its owning source handoff rather than a guessed file.",
+      "state": "WAITING_FOR_CANONICAL_MESSAGE_SURFACE_HANDOFF"
+    },
+    {
+      "owner": "shared i18n owner",
+      "request": "Register all Help Desk labels, policy/help definitions, action disabled reasons, statuses, recovery instructions and notification templates through t(), in every de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant locale with ASCII-sorted keys and Russian plural forms per repository rules. Locale files were not inspected in this scoped preflight; integration owner must bind exact current bytes before patching.",
+      "state": "REQUIRED_SHARED_LOCALE_PATCH_NOT_YET_SOURCE_BOUND"
+    }
+  ],
+  "proposedOwnedContribution": {
+    "contracts.ts": "Typed Ticket/SupportQueue/TicketRequester/TicketSource contracts; canonical workspace-scoped refs and alias/policy version provenance; new/open/waiting_requester/resolved/closed state machine and priority/assignee; queue query/cursor/asOf; expectedRevision+commandId command inputs; committed receipt+intakeDisposition; separate local_durable/provider_accepted/readback and reply delivery unknown. Server supplies actor/audience, never trust renderer actorId or requester ownerId.",
+    "commands.ts": "Register list/read/create/update/link/reply through accepted authority. One transaction writes ticket, shared message/link, revision, receipt and outbox. Enforce workspace ticketNumber uniqueness and stale revision conflict; public reply stores explicit allowed recipients and durable delivery operation, internal notes never enter delivery outbox; canonical Task conversion uses existing task command if exposed, not a new task store.",
+    "intake.ts": "Implement intake.accept for manual/channel/form/mail through the same domain/policy path: stable command/event dedup, account-scoped external message alias uniqueness or sourceRef+intakePolicyVersion; durable dedup/quarantine disposition; authenticated webhook/source resolution and explicit visible thread-grouping policy; untrusted attachment quarantine and quotas; duplicate/restart/out-of-order replay returns original ref/receipt without repeated source link or notification. Reconcile unknown external outcomes before repeat send.",
+    "helpdesk-tickets.sql": "Register through the accepted migration runner: tickets workspaceId/queueId/number/subject/requesterRef/status/priority/assigneeRef/revision; unique workspaceId+number; durable ticket_sources uniqueness, intake_dedup, quarantine metadata and required indexes/constraints. Integrate common links/messages/outbox transaction rather than private copies. Exact SupportQueue/requester authority storage and alias foreign keys require foundation schema handoff; migration upgrade/backfill/rollback must preserve existing aliases.",
+    "HelpDeskPage.tsx": "Existing panel/token/control composition for authorized queues, compact list/board, search/status/assignee/priority/source filters, typed detail routes and manual/shared Forms intake. Preserve draft through navigation/query/permission/provider failures with workspace/purpose/grant retention; current grant recheck on reconnect; forbidden/unsupported/degraded distinct from genuine/filtered empty. N outside editor, slash search, arrows/Enter selection, Escape drilldown; receipt-before-success.",
+    "TicketDetail.tsx": "Requester/Contact/Company/Project source relation summary, common discussion and attachments, revisioned state/assignment Apply+Escape restore, audience-explicit public reply versus internal note, CmdEnter preview then explicit send. Policy-aware links and help/popovers with 500ms hover/focus, focus return, disabled recovery reasons. Narrow sheets/drilldown, selected preferences typography, reduced motion and stable keys.",
+    "helpdesk-intake.spec.ts": "Exercise real authority persistence/reload and UI/API/agent equivalents for all six published acceptance tests plus full external synthetic mail scenario, concurrency/reconnect/revoke, alias/migration/restart and existing Inbox neighbors. Include meaningful seeded missing-policy and disabled-outbox-dedup controls; do not test copied text/wiring or substitute mocked success for provider evidence. Linux/native/provider proof remains separate from a test file's presence."
+  },
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1 — UI and typed routes/history/contextual deep links work in existing ROX (RS-HD-01:123)",
+      "seam": "routes.view; route-parser.ts parse/build/convert paths; types.ts NavigationState/key helpers; NavigationContext; AppNavDestinationId/APP_NAV_DESTINATIONS; MainContentPanel; InboxPage/MailReader; NEW HelpDeskPage/TicketDetail",
+      "currentEvidence": "Inspected registry has no helpdesk kind; routes.view.inbox remains contextual Inbox route. Parser prefix list and detail conversions have Inbox/Tasks but no Help Desk. Panel renders InboxPage, not HelpDeskPage.",
+      "requiredChange": "Apply route/registry/panel requests together after owner decision; wire canonical Admin/search and explicit Message/Mail Create Ticket, leaving Inbox intact. Implement queue list/board/detail and draft-safe drilldown.",
+      "verification": "Open Admin and command search entry; create via manual/Mail/Message contexts; test encoded ticket IDs, deep links, Back/Forward, reload persisted view/selection and neighboring Inbox. Observe real persisted ticket after receipt, not just route rendering.",
+      "missingPrerequisite": "Lead wave0 commit; accepted RS-ADM-01 registry/authority and RS-FORM-01 receipts; authenticated client seam and Message reader owner; canonical route/view decision.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 2 — Entity model, persistence/migration aliases, queries/commands/receipts and required background processing (124)",
+      "seam": "platform-contract.ts kind/ref/alias/event/result; NEW helpdesk/contracts.ts, commands.ts, intake.ts, helpdesk-tickets.sql; accepted shared transaction/outbox/delivery worker",
+      "currentEvidence": "No ticket kind; registerExternalBinding is Map-based. Spec's workspace-service/domain target directories absent at inspection; typed platform seam alone performs no I/O.",
+      "requiredChange": "Implement Ticket/SupportQueue/requester/source mapping; revisioned lifecycle, six ticket commands and intake.accept; durable uniqueness, atomic shared messages/links/outbox/receipts, background delivery/reconciliation and quarantine. Preserve alias migration and canonical task links.",
+      "verification": "Upgrade populated synthetic database, create then read/reload/restart with identical ref/revision and aliases; concurrently allocate numbers/update same revision; rollback/reapply migration; crash before/after commit and before ack; replay events/jobs without duplicate durable effects; agent read equivalent.",
+      "missingPrerequisite": "Accepted WP foundation transaction/schema/migration/job handoff and common message/link authority; dedicated provider reconciliation adapter.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 3 — Source/entity links and mentions use common IDs; source audience not automatically expanded (125)",
+      "seam": "Rox2EntityRef; encoded Rox2ExternalBinding; ROX2_RELATION_RULES; DossierPage local identity precursor; NEW ticket.link/intake.accept",
+      "currentEvidence": "Shared workspace/account/revision ref and provider alias encoding exist. Dossier uses local JSON and dos IDs; MailReader.toTask concatenates preview. Neither proves shared Contact mapping or safe Ticket source excerpt handling.",
+      "requiredChange": "Bind canonical Principal/Contact/Company/Project and source aliases, migrate existing identity aliases through accepted authority; source ACL per hop, no automatic source body/preview import; shared mentions/attachment/message refs and permission-neutral relation links.",
+      "verification": "Create Ticket with wider queue audience from a private mail/channel source; requester can see allowed Ticket fields but not source title/body/attachment, search/agent context or quoted preview; reload shows stable Company/source references without duplicate contact or body import.",
+      "missingPrerequisite": "Canonical Contact/Company identity resolution and alias migration; shared relation/mention/source-policy gateway.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 4 — Shared authorization/sharing/revoke cover UI/API/MCP/jobs/offline replay (126)",
+      "seam": "authorizeRox2Action; Rox2ActorGrant; NEW service command/query adapter; current-policy authority and transport/job/tool/replay entry points",
+      "currentEvidence": "authorizeRox2Action denies missing actor/grant but checks actorId+permission only; not a queue membership/resource-scoped gateway. ElectronAPI.mailLocal exposes mail actions without Ticket policy contracts.",
+      "requiredChange": "Enforce ticket.read/write/assign/reply, allowed queues, requester-own visibility and narrow public intake tokens on server-derived actor/audience through one gateway. Recheck on revoke, subscriptions, every source hop/job and offline replay; clear restricted caches/drafts/memory according to workspace/purpose grants.",
+      "verification": "Requester A/operator in queue A versus requester B/queue B; denied direct ID, search/count, API/agent/MCP, job and transport probes; revoke while detail/subscription open and during queued offline mutation, then reconnect; no leaked title/count/body/push/memory and no unauthorized replay write.",
+      "missingPrerequisite": "Accepted Admin current membership policy plus resource-scoped foundation auth/revoke/replay/tool dispatch seams and public form grants.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 5 — Search/notification/activity/agent/memory projections retain policy/provenance; dedup/retraction verified (127)",
+      "seam": "Rox2Event audit fields; NEW ticket/intake outbox events; useInboxItems projection integration seam; accepted common search/notification/activity/context subscribers",
+      "currentEvidence": "Rox2Event has actor, causationId, correlationId, aggregateRevision and isAuditableRox2Event. useInboxItems joins session attention and memory/skill/sender RPCs, not canonical Ticket search/notifications.",
+      "requiredChange": "Emit commit-bound ticket.created/updated/assigned/status_changed/source_linked and intake.accepted/duplicate/quarantined plus common message.created; policy-aware title/body/metadata index and Inbox/activity/agent/memory projections. Dedup event+recipient/channel, handle retries/retractions on revoke; exclude secrets/bodies from logs.",
+      "verification": "Repeated/out-of-order delivery/restart yields one source link and one allowed notification, consistent activity revision; revoke/reindex removes restricted search/title/count/push/context/memory. Seed outbox-dedup removal and missing policy and prove intended assertions fail on green baseline; measure latency/reconcile/projection lag with source/denominator.",
+      "missingPrerequisite": "Accepted persistent outbox/projection registry, retraction and agent context authority; not supplied by the existing Inbox aggregator.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 6 — Required realtime/reconnect/persistence concurrency scenarios pass; unavailable capability honestly disabled (128)",
+      "seam": "NEW revisioned ticket commands/intake dedup; foundation realtime subscriptions/replay; nav-destinations route:null/disabledTooltipKey; mail-local MailStatus",
+      "currentEvidence": "Mail hook refreshes on JMAP onChanged and polls status, not Ticket realtime; nav has explicit disabled destination convention. Mail state includes disabled/unreachable; existing MailStatus.local distinguishes loopback external unreachability.",
+      "requiredChange": "Implement authorized Ticket live changes, revision conflicts, durable command/intake dedup, reconnect replay/current-policy check and stable selection/scroll. Display backend/provider unavailable distinctly from empty; gate offline cached/queued actions by actual capability and permission.",
+      "verification": "Two operators race expectedRevision; concurrent double-submit; disconnect/restart between commit and ack; reconnect to current queue revision without duplicate record/link/notification; revoke during outage denies replay; unsupported provider/capability disables mutation with reason while retaining allowed draft.",
+      "missingPrerequisite": "Foundation realtime/reconnect and durable operation identity; accepted source adapter capabilities.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 7 — Hover/focus/click help, keyboard, loading/empty/error/offline, 390px, 200% zoom, reduced motion verified (129)",
+      "seam": "NEW HelpDeskPage/TicketDetail; reused ModeScreenLayout/NavItem; existing ROX panels/tokens and t()",
+      "currentEvidence": "ModeScreenLayout has 220px nav plus min 240px list and 320px detail; NavItem sets outline-none. No Help Desk UI exists in target files. Reusing these widths unmodified cannot meet narrow acceptance.",
+      "requiredChange": "Reuse existing controls/tokens/selected typography without global font reset; add one-main drilldown/sheets below breakpoint, stable keys and reduced spatial motion. Non-obvious controls have 500ms hover/focus help, visible focus ring and What-is-this popover with meaning/units or not-applicable/source/asOf/example/policy/disabled reason. Preserve draft on errors/navigation. All strings via shared 10-locale t() keys.",
+      "verification": "Actual surface at 390px and 200% zoom has no shell horizontal scroll; keyboard N outside editor, /, arrows/Enter, CmdEnter preview/explicit send, Tab/ShiftTab and Escape focus return; help click does not mutate; loading/genuine/filtered empty, forbidden/unsupported/degraded/stale/conflict/retry/offline/cancelled/unknown are distinguishable. Verify selected font/theme, reduced-motion, selection/scroll and draft retention across errors/navigation.",
+      "missingPrerequisite": "Accepted client transport for real loading/errors, canonical help/popover primitives and shared locale integration owner; native/UI verification authorization belongs to implementation phase.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 8 — Linux domain/renderer, source-pinned macOS native IPC/font/device and provider-live lanes (130)",
+      "seam": "NEW helpdesk-intake.spec.ts; actual Electron route/authority client; MailLocalApi source/delivery adapter boundary",
+      "currentEvidence": "No feature run performed by this read-only worker. Mail local loopback state is not a dedicated tenant or external mail proof.",
+      "requiredChange": "Integrate runnable domain/renderer and native client then execute each required lane on the delivered revision. Use an actual dedicated provider tenant for external synthetic mail/reply/readback. Keep incomplete if any required lane is pending.",
+      "verification": "Linux real persistence/policy/retry cases and renderer actions; macOS Electron IPC/font/device observation and reload; provider live contact sends email/operator replies/requester receives allowed content and consistent Company/source references. Capture lane-specific environment and exact source revision.",
+      "missingPrerequisite": "Integrated implementation, Linux/native runners, authorized dedicated provider tenant/adapter and lane leases/receipts.",
+      "state": "ALL_REQUIRED_FEATURE_LANES_NOT_RUN"
+    },
+    {
+      "criterion": "DoD 9 — Synthetic screenshots/ARIA, logs/hash and expected-observed evidence with exact tested commit (131)",
+      "seam": "HelpDeskPage/TicketDetail actual rendering; Rox2Event/receipt correlation; implementation evidence receipt",
+      "currentEvidence": "This report binds inspected files by SHA256 only; no screenshot, ARIA, runtime log or implemented commit is claimed.",
+      "requiredChange": "Capture real UI and accessible semantics with synthetic dataset; retain command/receipt/event/policy revision correlation without private body/secrets; hash artifacts and record expected versus observed plus exact tested commit/environment.",
+      "verification": "Independent reader can follow create/read/reload/reply/revoke evidence to same persisted ref/revision and source bytes; screenshots and ARIA correspond to actual integrated surface, not planning/mock fixtures; no private identities/reference screenshot assets leak.",
+      "missingPrerequisite": "Implemented source-pinned integrated surface and executed required lanes; evidence owner/approved artifact locations.",
+      "state": "FEATURE_EVIDENCE_NOT_PRODUCED"
+    },
+    {
+      "criterion": "DoD 10 — Independent review, meaningful negatives, runbook, source licensing/dependencies and user docs (132)",
+      "seam": "NEW helpdesk-intake.spec.ts; commands/intake/migration; published DoD and implementation documentation owner",
+      "currentEvidence": "Published tests require seeded missing-policy/outbox-dedup failure; specification explicitly disallows reference source/assets copying. No implementation, review or runtime runbook exists in inspected target paths.",
+      "requiredChange": "Independent review of queue/requester auth, alias uniqueness/spoofing, unsafe uploads, internal/public delivery and migration/reconciliation; negative controls that fail intended assertions on green baseline. Document operations for unknown sends, dedup/quarantine, stale policy/search/cache/memory cleanup and recovery; explain lifecycle/thread policy/permissions in user docs and review actual dependencies/license provenance.",
+      "verification": "Reviewer reproduces intended failures and green baseline; operator runbook recovers committed-but-unacked intake and provider unknown outcome without duplicate send; user docs agree with observed state/disabled reasons; dependency/assets review confirms no copied proprietary source.",
+      "missingPrerequisite": "Delivered implementation/evidence, independent reviewer and documentation/license owner. No extra normative NEW file is invented by this preflight.",
+      "state": "NOT_REVIEWED_NOT_RUN_NOT_DOCUMENTED"
+    },
+    {
+      "criterion": "DoD 11 — GitHub completion links implementation commit/PR and evidence, not rendered screen only (133)",
+      "seam": "Issue #1115 completion evidence; root integration/delivery receipt",
+      "currentEvidence": "issues.json marks PLANNED_NOT_IMPLEMENTED/NOT_LAUNCHED; user progress says NOT_STARTED/fullFeatureDoD NOT_VERIFIED. This worker has no issue/Git write authority.",
+      "requiredChange": "Root attaches integrated commit/PR and all accepted domain/renderer/native/provider/review receipts after every required criterion passes. Keep RS-HD-01 incomplete while required gates remain.",
+      "verification": "Lead checks immutable commit/artifact hashes and issue evidence references resolve to the same tested implementation; no feature completion based on this report or rendered screen.",
+      "missingPrerequisite": "Lead wave0 and final implementation commits, accepted dependency/integration receipts, all full-feature DoD proofs and authorized GitHub delivery.",
+      "state": "FEATURE_INCOMPLETE_NO_GITHUB_COMPLETION"
+    },
+    {
+      "criterion": "Acceptance 1 — Create form → detail → reload/query/agent read same ref/revision (110)",
+      "seam": "HelpDeskPage create; commands.ts ticket.create/read; canonical ref/receipt; agent command gateway",
+      "currentEvidence": "Typed shared refs/results exist, but ticket kind/service/new page absent in inspected paths.",
+      "requiredChange": "Manual authenticated create and shared FormRevision intake both return committed canonical ref/revision/receipt; render and reload via authorized query and agent read, not local optimistic-only records.",
+      "verification": "Submit synthetic request, navigate on receipt, reload/restart then query/agent read exact ref/revision/body; deny another requester and exercise existing Inbox route.",
+      "missingPrerequisite": "Accepted shared authority and Forms receipts; integrated client/tool transport.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Acceptance 2 — Mail webhook duplicate/out-of-order retry and form double-submit yield one Ticket/source link/notification (111)",
+      "seam": "intake.ts intake.accept; helpdesk-tickets.sql ticket_sources/intake_dedup; shared Forms mapping/outbox",
+      "currentEvidence": "registerExternalBinding Map supports alias quarantine but is not durable intake dedup; JMAP renderer refresh is not a webhook receiver.",
+      "requiredChange": "Persist account-scoped source uniqueness and versioned sourceRef intake key; stable command/event dedup; atomically create/map/link/receipt/outbox. Preserve explicit thread policy, return existing original receipt on duplicate and quarantine invalid conflicting source mappings.",
+      "verification": "Deliver concurrent duplicate/out-of-order events, form double-click and lost-ack retries across restart; assert exact one canonical Ticket, source relation and event-recipient-channel notification; different account namespaces do not collide; failure-before-commit permits safe retry.",
+      "missingPrerequisite": "Inbound adapter, durable authority/outbox, accepted FormRevision mapping transaction and provider tenant.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Acceptance 3 — Requester sees own only; other queue hidden from search/count/agent/direct API (112)",
+      "seam": "ticket.list/read and policy-aware projections; shared queue membership/requester binding authority",
+      "currentEvidence": "Existing generic grant helper lacks queue/resource conditions; Inbox counts are attention/mail counts rather than requester-authorized ticket counts.",
+      "requiredChange": "Enforce requester binding and operator queue groups before query/count/title/body projection. Public submit token has no workspace read/list rights; direct ID and agent access use same gateway.",
+      "verification": "Two requesters/two queues and restricted operator; list/read/count/search/agent/MCP/direct API/public token probes all deny foreign data without title/count/existence leakage; revoke open view then reconnect removes cached/pushed data.",
+      "missingPrerequisite": "Admin membership/current policy, authenticated Principal resolver, shared query/index/retraction gateway.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Acceptance 4 — Public provider timeout reconciles; internal note sentinel absent outgoing mail (113)",
+      "seam": "commands.ts ticket.reply common Message audience; commit-bound delivery/reconcile worker; MailLocalApi adapter boundary",
+      "currentEvidence": "MailLocalApi.send only returns emailId; MailCompose.send closes on r.ok and has no durable Ticket reply audience/unknown-outcome contract. It is not this acceptance mechanism.",
+      "requiredChange": "Separate internal-note persistence from public reply delivery outbox, preview explicit recipients, durable operation ID/receipt and pending/accepted/readback/unknown outcome. On timeout reconcile before repeat provider effect; do not report readback/provider acceptance from a local commit.",
+      "verification": "Internal sentinel note plus public reply; inspect actual provider/outgoing payload/requester received mail for absence of sentinel. Timeout after provider acceptance then restart/reconcile yields readback-linked receipt and no duplicate send; denied/failed send retains draft/actionable recovery.",
+      "missingPrerequisite": "Shared Message audience policy, durable provider operation/status/reconcile API and dedicated tenant/readback.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Acceptance 5 — Private source into wider Ticket copies no auto excerpt; missing-policy/outbox-dedup mutant fails (114)",
+      "seam": "InboxPage/MailReader contextual intake; intake.accept source resolution; shared outbox/projections",
+      "currentEvidence": "Existing mail-to-task helper copies preview; that pattern must not be reused for Ticket. platform-contract source refs themselves do not enforce source audience.",
+      "requiredChange": "Create by source alias and explicitly authorized fields only; no private automatic preview/body import; evaluate source ACL at query/context/attachment hops. Seed narrowly scoped policy-check removal and outbox dedup disabling for negative acceptance controls.",
+      "verification": "Authorized operator links private source to wider queue; unauthorized requester receives permitted Ticket only, no source excerpt in detail/search/push/agent/memory/outbound. Green baseline passes; each seeded mutant fails its intended leak/duplicate assertion, not environment setup.",
+      "missingPrerequisite": "Shared source policy and outbox/projector seams; actual test fixture and integrated baseline.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Acceptance 6 — Untrusted upload quarantined; oversized/malformed recovery without success toast (115)",
+      "seam": "intake.accept validation/quarantine; shared Attachment narrow upload grants; Forms renderer; HelpDeskPage/TicketDetail",
+      "currentEvidence": "MailAttachment describes blob metadata and MailPickedFile local paths, not public signed grants/scan/quarantine. Shared Forms spec requires attachment size/type/scan policy.",
+      "requiredChange": "Use accepted shared upload grants, token queue/field/upload quotas, attachment scan/quarantine and durable intake quarantine reason. Reject malformed/oversized payload without creating a successful Ticket/notification; preserve authorized draft and actionable recovery, receipt-before-success.",
+      "verification": "Malformed fields/revision, oversize/type-invalid and untrusted synthetic attachment submissions; assert quarantine or actionable reject, no access to quarantined bytes via direct URL/API/agent, no success toast/uncommitted Ticket and safe corrected retry. Verify submit token cannot enumerate other Ticket titles/IDs or Responses.",
+      "missingPrerequisite": "Shared Attachment scan/quarantine/grant infrastructure, FormRevision validation and integrated UI/authority.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Full external synthetic user scenario and every scenario's cross-surface/denied/neighbor/mutant proof (117-119)",
+      "seam": "Dedicated inbound mail adapter → intake.accept → ticket.assign/reply → provider readback; canonical Ticket/source/Company refs; helpdesk-intake.spec.ts and lane receipts",
+      "currentEvidence": "Current mail-local defaults to loopback and explicitly documents no external mail reachability. No feature run or tenant provisioning done in preflight; source SHA alone is not acceptance proof.",
+      "requiredChange": "Implement complete manual, shared form/message/mail intake and reply/delivery vertical slices; external synthetic contact email produces canonical Ticket, operator assigns/replies, requester receives allowed mail, references stay consistent. Full feature remains open through all required gates.",
+      "verification": "Record actual received email/ref → committed Ticket/reload/query/tool → operator assignment/reply receipt → actual requester mail/readback → Company/source relation; duplicate delivery/restart creates no duplicate record. For every published test retain inputs/actions/persisted outputs, API/tool equivalent, denied path, existing Inbox neighbor and meaningful failing negative control; distinguish baseline from environment failure.",
+      "missingPrerequisite": "All accepted foundations/dependencies, integrated domain/UI/tool lanes and dedicated live mail tenant/readback.",
+      "state": "FULL_FEATURE_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-HD-01.md","symbol":"Architecture prerequisites; NEW paths; tests/DoD; Forms/handoff","lineStart":11,"lineEnd":150,"sha256":"c88d30b3a78a48a1ef7a6587094c7b1f18fb2937a5f003f1e11c75cc5722ba45"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues[RS-HD-01] normative record","lineStart":766,"lineEnd":794,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/components/app-shell/nav-destinations.ts","symbol":"AppNavDestinationId; APP_NAV_DESTINATIONS","lineStart":51,"lineEnd":184,"sha256":"022c1bf1adeb1da16db51c1c3db396b0de6a926a59f74b3015ddeb4433f033e4"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view.inbox; routes.view.tasks","lineStart":170,"lineEnd":181,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"InboxNavigationState; NavigationState; isInboxNavigation","lineStart":2496,"lineEnd":2678,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"getNavigationStateKey inbox branch; parseNavigationStateKey inbox branch","lineStart":2771,"lineEnd":3004,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"NavigatorType; ParsedCompoundRoute; COMPOUND_ROUTE_PREFIXES","lineStart":59,"lineEnd":106,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path":"apps/electron/src/shared/route-parser.ts","symbol":"convertCompoundToNavigationState inbox branch; navigationStateToCompoundRoute inbox branch","lineStart":1025,"lineEnd":1509,"sha256":"1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path":"apps/electron/src/renderer/contexts/NavigationContext.tsx","symbol":"route-parser imports and navigation guard re-exports","lineStart":45,"lineEnd":108,"sha256":"40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"},
+    {"path":"apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx","symbol":"MainContentPanel Inbox dispatch and neighboring navigator branches","lineStart":442,"lineEnd":479,"sha256":"1652819dedf8f1af35b83faaa49e403a1012a7825b9d48e8931c59b887bae10b"},
+    {"path":"apps/electron/src/renderer/pages/InboxPage.tsx","symbol":"InboxPage; allItems/allCounts; selectedEmailId","lineStart":91,"lineEnd":152,"sha256":"9e7b98fc482a3dca7a18042123f48e295d8c5a88d0f9cb48a2e6b464943209e3"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"ROX2_ENTITY_KINDS; Rox2EntityRef; Rox2ExternalBinding","lineStart":17,"lineEnd":245,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"registerExternalBinding; ROX2_RELATION_RULES; isAllowedRox2Relation","lineStart":336,"lineEnd":402,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action; isAuditableRox2Event","lineStart":592,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx","symbol":"DossierPage; data/save/updateEntity; selected/addEntity","lineStart":94,"lineEnd":177,"sha256":"fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/useMail.ts","symbol":"api; useMail; refresh; onChanged; local ensure","lineStart":11,"lineEnd":104,"sha256":"552929f76ee0f841414061a364914fd08fbba67b8c637ac9ff9d36a21aa7a6a9"},
+    {"path":"apps/electron/src/shared/mail-local.ts","symbol":"MailStatus; MailMessage; MailComposeInput; MailLocalApi","lineStart":32,"lineEnd":142,"sha256":"65689fe50e18d5c8a9e7bb0032ce6e0db65d5cb6ce42f40d4bea19e04c41c3d2"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx","symbol":"MailReader; toTask; contextual actions","lineStart":307,"lineEnd":370,"sha256":"58489312903d05712ece9e6cdac4b8eb6f771bd0180e1ce77561e26b79511044"},
+    {"path":"apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx","symbol":"MailCompose.send","lineStart":477,"lineEnd":492,"sha256":"58489312903d05712ece9e6cdac4b8eb6f771bd0180e1ce77561e26b79511044"},
+    {"path":"apps/electron/src/renderer/hooks/useInboxItems.ts","symbol":"InboxRemoteSource; useInboxItems; counts","lineStart":26,"lineEnd":116,"sha256":"6d19994bf049e6200f0005efd3e1da775979045f57f5d33c618f3b7116a6eca7"},
+    {"path":"apps/electron/src/renderer/components/mode-screen/ModeScreen.tsx","symbol":"ModeScreenLayout; NavItem","lineStart":12,"lineEnd":119,"sha256":"9610f99c424dcf1760915eaff638eaf1b4cea9a854399e9eb420e3a5ec3c3905"},
+    {"path":"docs/rox-suite/published/RS-ADM-01.md","symbol":"Admin prerequisites, canonical menu/Settings and proposed owned paths","lineStart":11,"lineEnd":98,"sha256":"f73a235f0c1b8890007baa1eef855c7c86e26a7f2f243555eb2e41ed63babd85"},
+    {"path":"docs/rox-suite/published/RS-FORM-01.md","symbol":"FormRevision/public grant/mapping; commands; acceptance; dependencies","lineStart":27,"lineEnd":99,"sha256":"c30ab28cf3014ed22e6e7c80bbba47fb7cbddbc3e5f3b5361dc48a360a2515d8"}
+  ],
+  "evidenceFreshness": {
+    "basis": "Actual inspected working-tree bytes, whole-file shasum -a 256; input_revision is dispatch lineage, not a claim all inspected bytes equal committed HEAD. Root-owned uncommitted wave0 work is preserved.",
+    "inputManifest": "Both inspected normative input hashes match dispatch manifest values.",
+    "staleEvidencePolicy": "Root integration may change these sources during/after inspection. Hash mismatch invalidates affected symbol/line evidence and patch requests. Lead must re-read current changed bytes and rebind against wave0/dependency integration before implementation. No stale hash is silently substituted or taken as accepted feature evidence.",
+    "toolLimitations": ["Codegraph reported no project index; no indexing attempted.", "find judge provider returned HTTP 402 and no judged hits, so its no-hits output was not used as absence evidence. Continued via specified paths and direct imports using read/grep/glob."]
+  },
+  "verification": {
+    "kind": "read-only preflight artifact validation, not product tests or E2E feature proof",
+    "argv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/RS-HD-01.json", "${ROX_COMPOUND_PACKET_ROOT}/RS-HD-01/packet.json"],
+    "executionNote": "Supplied verifier verify() was read: it reads report/packet/source bytes, checks lineage/fields/digests and featureComplete=false, and returns JSON. Executed with PYTHONDONTWRITEBYTECODE=1 to avoid import-cache writes; exit code 0, observed result: validPreflight=true, featureComplete=false, references=23. This validates report lineage and source hashes only, not feature implementation or acceptance.",
+    "observedResult": {"validPreflight": true, "featureComplete": false, "references": 23},
+    "exitCode": 0
+  },
+  "nextExecutableAction": "Lead can read and validate this owned preflight report now. Feature implementation must wait for lead wave0 commit and accepted RS-ADM-01/RS-FORM-01 receipts. Then compare all bound source hashes, re-read drifted seams, obtain accepted WP authority/schema/message/transport/projection contracts and exact Admin/Forms hook symbols, serialize shared route/kind/i18n/migration requests, and issue a fresh owned implementation packet. Execute authenticated manual create→committed Ticket→detail/reload/agent read as the first vertical slice; retain the full form/message/mail/reply/provider acceptance gates rather than closing on that slice.",
+  "risks": [
+    "A screen or generic Rox2 grant helper can be mistaken for resource-scoped shared authority; queue counts/search/jobs/MCP/replay need actual current-policy gateway.",
+    "Header lists only RS-ADM-01, but normative record and appended handoff require RS-FORM-01; public Forms intake cannot be omitted or rebuilt privately.",
+    "Architecture WP IDs, canonical identity/common Message/Attachment, provider-live tenant and independent lanes are hidden completion gates beyond explicit RS dependency array.",
+    "Current Contact/Company precursor is local JSON; copying it into a helpdesk contacts table creates duplicate identity and misbinds unverified external senders.",
+    "Map-based external bindings cannot supply durable dedup/atomic outbox across restart; use accepted persistent foundation and unique keys scoped by provider account/policy version.",
+    "Generic mail send has no durable unknown-outcome reconcile seam. Retrying blindly after provider timeout can send duplicates, and generic reply quoting can leak internal/source-private content.",
+    "Existing MailReader.toTask copies preview; copying that pattern to wider-audience Ticket violates source privacy. Internal note must never enter outgoing delivery payload or requester projection.",
+    "Loopback Stalwart pilot cannot prove external mail acceptance; tenant/inbound authenticity/spoofing/thread-grouping/readback are required, not unavailable-to-empty fallbacks.",
+    "Updating route builder without parser, legacy/view conversion, persisted navigation keys, guard exports and deep-link prefix produces broken restoration/contextual links.",
+    "Adding ticket kind without assignment/Project relation domain updates silently breaks canonical links; broadening generic grants/status enums is not an authorized substitute for service policy/domain state.",
+    "ModeScreenLayout fixed column minimums exceed 390px and outline-none controls need visible focus treatment; inheritance of selected preferences must not be replaced by a global font reset or separate framework.",
+    "Untrusted public upload requires shared narrow grant/scan/quarantine; local attachment path metadata is not secure public intake.",
+    "Root may integrate new foundation/registry bytes while this report is prepared; every patch must rebind fresh hashes. No builds/tests/native/network or source/Git mutations were performed by this worker.",
+    "Independent review, runbook/docs/license evidence, exact-revision lane receipts and GitHub completion remain required, not N/A. Preflight validator proves report lineage/digests only."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

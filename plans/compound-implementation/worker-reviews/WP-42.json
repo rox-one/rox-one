@@ -431,7 +431,8 @@
   ],
   "preflightVerification": {
     "kind": "read-only artifact lineage/schema/hash verifier, not product tests",
-    "argv": ["/Library/Developer/CommandLineTools/usr/bin/python3", "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-42.json", "/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/WP-42/packet.json"],
+    "argv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-42.json", "${ROX_COMPOUND_PACKET_ROOT}/WP-42/packet.json"],
     "executionEvidence": "Verifier output is delivered in the worker response; all feature checks listed above remain NOT_RUN."
-  }
+  },
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
 }

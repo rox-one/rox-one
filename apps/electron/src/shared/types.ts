@@ -2086,6 +2086,17 @@ export interface ElectronAPI {
   setDefaultThinkingLevel(level: ThinkingLevel): Promise<{ success: boolean; error?: string }>
   setWorkspaceDefaultLlmConnection(workspaceId: string, slug: string | null): Promise<{ success: boolean; error?: string }>
 
+  // Domain-only shared projects. LoadedProject/folder APIs remain host-owned.
+  getProjectAuthorityState(): Promise<import('./project-authority').ProjectAuthorityState>
+  getProjectAuthorityConfiguration(workspaceId: string): Promise<import('./project-authority').ProjectAuthorityConfiguration | null>
+  connectProjectAuthority(workspaceId: string, input: import('./project-authority').ProjectAuthorityLoginInput): Promise<import('./project-authority').ProjectAuthorityMutationResult>
+  disconnectProjectAuthority(workspaceId: string): Promise<import('./project-authority').ProjectAuthorityMutationResult>
+  onProjectAuthorityChanged(callback: () => void): () => void
+  getSharedProjects(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').ProjectPage>
+  getSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProject>
+  createSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProjectResult>
+  getSharedProjectEvents(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').IdentityEventPage>
+
   // Projects (workspace-scoped)
   getProjects(workspaceId: string): Promise<unknown>
   getProject(workspaceId: string, projectIdOrSlug: string): Promise<unknown | null>

@@ -485,7 +485,7 @@
     "now": "Deliver this owned source-backed preflight to the lead. Do not start product implementation or mutate shared files.",
     "afterPrerequisites": "After wave0 commit and accepted WP-36/WP-03 receipts, revalidate source hashes and accepted DTOs; agents domain owner integrates WP-50 contract/provenance repository additions first, then selected migration/command-query transaction and revocation lineage, then root integrates capture/persistence/read/share/export/UI consumers. Only after all affected paths are cut over exercise live scenario, failures/reload and caught negative controls. Missing viewer/source/runtime gates remain blocking acceptance, not N/A.",
     "firstImplementationContribution": "Extend the accepted WP-36 agents contracts/repository with artifact provenance and typed GetSessionShareDecision/RevalidateContext/RedactDerivedArtifact, maintaining one domain owner and common gateway. The independent wp-50.test.ts contribution and migrator-owned WP-50 SQL may then proceed once implementation is authorized.",
-    "preflightVerificationArgv": ["/Library/Developer/CommandLineTools/usr/bin/python3", "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-50.json", "/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/WP-50/packet.json"]
+    "preflightVerificationArgv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-50.json", "${ROX_COMPOUND_PACKET_ROOT}/WP-50/packet.json"]
   },
   "risks": [
     "Raw persisted session/tool/SDK text and previously downloaded exports cannot be made unread. Do not promise retroactive erasure; retain private authorized owner history while fencing every controlled future retrieval/export/context use. Exact historical download versus hosted summary boundary must be explicit in accepted API/docs.",
@@ -502,5 +502,6 @@
     "Body actor spoofing, workspace/account alias collisions, stale CAS, idempotency conflict, provider timeout/ambiguous effect and dropped/reordered invalidation require meaningful negative assertions. A transport wiring test or fixture PASS cannot satisfy feature verification.",
     "Service/migrator/UI/HTTP/viewer/consumer seams outside permitted inspection remain exact root integration prerequisites; this report does not invent implementations or reduce search/mention/notification/activity completeness.",
     "Whole-file hashes bind observed working-tree snapshots only. Root integration can change bytes after inspection; verifier rejection is stale evidence, not grounds to change user source or silently refresh hashes without re-reading affected code."
-  ]
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
 }

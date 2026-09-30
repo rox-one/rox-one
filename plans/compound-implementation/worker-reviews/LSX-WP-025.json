@@ -1,0 +1,251 @@
+{
+  "task_id": "LSX-WP-025-preflight",
+  "attempt_id": "705731ce8ec6dc5f30d65d526d17cac5",
+  "packet_hash": "0de901977cde3ed6b4f535af8a9cc1d376c56414479ae22337f1395442c788f2",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-025",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-001", "LSX-WP-010"],
+  "externalPrerequisitesAsDeclared": [],
+  "inspection": {
+    "revisionBinding": "input_revision is the dispatch revision, not a claim that inspected dirty files are committed at that revision. Read current working-tree source only; preserve root-owned wave0 work.",
+    "evidenceStatus": "SOURCE_OBSERVED_NOT_RUNTIME_VERIFIED",
+    "staleness": "NotesPage differs from the specification baseline blob: observed 872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba versus normative 0266d999906c17b5c7d9d69945495f9584b276e46c5ccf76537f40dc801d356b. saveCurrentNote now starts at 1023, not 871. NotesPage, descriptor-resolver and shared/types hashes were sampled twice and unchanged across inspection. Concurrent root changes after the samples invalidate affected references; re-read and re-hash before implementing. No Git-state verification was performed.",
+    "specificationInputs": [
+      {"path": "plans/lark-suite-reference/work-packages.json", "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952", "record": "/work_packages/24", "lines": [9170, 9485], "matchesPacketManifest": true},
+      {"path": "plans/lark-suite-reference/execution-packages.json", "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b", "lines": [2103, 2187], "matchesPacketManifest": true}
+    ],
+    "toolLimitations": [
+      "codegraph reported no index for this checkout; used scoped read/grep instead and did not initialize an index.",
+      "Scoped find failed because its judging service returned account credit errors; no absence claim is based on that failed search. Used literal symbols and explicit specification paths afterward."
+    ],
+    "operationsNotPerformed": ["product edits", "tests", "builds", "native UI", "network operations", "Git mutations", "implementation receipts", "worker-pool verification command"]
+  },
+  "foundationGates": [
+    {
+      "id": "FG-IDENTITY-AUTHORITY",
+      "relationship": "Published foundation gate, not an additional direct LSX-WP-025 DAG edge",
+      "evidence": "RS-DRV-01.md:62 requires common identity/ACL/command authority despite no direct prerequisites; 07-domain-entity-model.md:7,33,60-62 requires source-scoped identity, current domain validation and compatible page/note aliases. LSX-WP-001:1267-1269 and LSX-WP-010:4405-4407 declare EG-IDENTITY.",
+      "requiredReceipt": "Accepted authenticated identity/policy/source-binding receipt propagated through both explicit dependencies; workspaceId, owner filters and source scopes are selectors, never authorization.",
+      "state": "REQUIRED_RECEIPT_NOT_INSPECTED"
+    },
+    {
+      "id": "FG-LIBRARY-DRIVE-OWNER",
+      "relationship": "Hidden owner readiness gate behind external_prerequisites=[]",
+      "evidence": "LSX-WP-025 risk at work-packages.json:9403 says Library/Drive owner external. RS-DRV-01.md:3,21,38,62 requires canonical Page/Note/File references, existing Pages destination, effective grants, source aliases and actor preferences. RS-DOC-01.md:81 requires RS-DRV-01 (#1109).",
+      "requiredReceipt": "Integration owner identifies and supplies the real existing library/location owner, authorized list/query/create capabilities, supported count semantics and preference persistence. No alternate catalog, invented native permission adapter or synthetic owner may stand in for production readiness.",
+      "state": "OWNER_AND_READBACK_NOT_ESTABLISHED"
+    },
+    {
+      "id": "FG-QUERY-TRANSPORT",
+      "relationship": "Missing integration seam, not permission to extend current write scope",
+      "evidence": "ElectronAPI at apps/electron/src/shared/types.ts:931-940,954 exposes listNotes/searchNotes/resolveContent/commitMarkdown, not the proposed doc.queryLibrary/doc.getCreateCapabilities. queryVaultDocuments:807-812 accepts only notesRoot/query. ResourceSearchContext:36-42 has query/prefix/keys/signal/limit, not an authenticated actor, snapshot cursor or authorized totals. LSX-WP-010:4501-4509,4537-4587 defines the future permission-aware service/contract and watermark.",
+      "requiredReceipt": "Accepted LSX-WP-010 query service and transport receipt plus reviewed packet amendment assigning server query/create-capability handlers, protocol, preload/bridge and shared boundary types to integration owners. Exact uninspected handler paths must be discovered by that owner before patching. This package can author library-query.ts but cannot register a live RPC using only its two currently permitted shared seams.",
+      "state": "REVIEWED_TRANSPORT_CONTRACT_REQUIRED"
+    },
+    {
+      "id": "FG-SURFACE-ROUTE-LEASE",
+      "relationship": "Named seam mismatch discovered in current code",
+      "evidence": "NavigationRegistry:118-173 and NavigatorType:77 cover sessions/sources/settings with placeholder components; no Notes/Pages entries. NotesPage uses the actual navigate event bridge at handleOpenNote:1657-1660. Published RS-DRV-01:21 preserves pages/page/{slug}. work-packages.json:9278-9296 authorizes only saveCurrentNote and NavigationRegistry; mounting RD-01 and changing query/selection uses other NotesPage symbols.",
+      "requiredReceipt": "LSX-WP-001 accepted alias/route handshake; exclusive leases; reviewed amendment naming NotesPage/refreshNotes/search effect/handleOpenNote/render and view-selection seams and any real Pages dispatch integration discovered by its owner. Do not create a new Docs shell or add another placeholder route to claim integration.",
+      "state": "EXPANDED_NAMED_SEAMS_REQUIRED"
+    },
+    {
+      "id": "FG-SUPPORTED-REPRESENTATIONS",
+      "relationship": "Published RS-DOC-01 dependencies are distinct from LSX-WP-025 explicit dependencies",
+      "evidence": "RS-DOC-01:3,37,41-44,81-82 requires real collaborative representation and common discussion owner RS-MSG-02 (#1107); HTML Page is not a document by rename. Current DocumentDescriptor:24-33 has contentKind/authority/ref/revision, while ContentResolution:101 has only read/write/adoptDescriptor capabilities. defaultNoteEntityCapabilities:69-77 marks every existing Note view available, not server-proven Sheet/Form/Base editors.",
+      "requiredReceipt": "Real representation/renderer/open/create capability receipts for every advertised type, including preservation of PageFrame/artifact runtime. Unsupported Sheet/Form etc remain visible, disabled, explained and non-mutating; they are not N/A or fabricated routes. Collaboration/discussion receipts remain gates for those representations if enabled, but building a new CRDT/comments engine is outside this filter slice.",
+      "state": "CAPABILITY_OWNER_HANDSHAKE_REQUIRED"
+    },
+    {
+      "id": "FG-LOCALE-EVENT-PREFERENCES",
+      "relationship": "Cross-owner obligations absent from currently listed shared patches",
+      "evidence": "work-packages.json:9333-9353 requires personal preferences only, verified document.revisionCommitted/content.descriptorChanged aliases and watermark reordering. NotesPage:965-982 resolves active descriptor events then returns and ignores non-external body events for list refresh. RD-01:74 requires per-user grid/list state; repository i18n contract requires all ten locales for each new key.",
+      "requiredReceipt": "Common owner supplies actor/workspace/source-scoped preference store and authorized watermark/invalidation subscription; integration owner verifies event aliases rather than adding an event bus. If new keys are needed, amended scope assigns all ten existing locale files to the integration owner and includes parity proof. No hardcoded Russian UI or separate shared-view store.",
+      "state": "OWNER_CONTRACT_AND_SCOPE_AMENDMENT_REQUIRED"
+    },
+    {
+      "id": "FG-REFERENCE-BASELINE-PROOF",
+      "relationship": "Operational launch gates, separate from dependency DAG",
+      "evidence": "execution-packages.json:2145-2148,2177-2187 retains old product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and unresolved reference revision/digest. Dispatch input is a21aeab1da5a67e56788384ff930945b0f487879 and explicitly permits root-owned dirty wave0 during preflight only.",
+      "requiredReceipt": "Lead wave0 commit and reviewed base reconciliation; resolved delivery-manifest revision/digest and both spec-ref hashes; accepted dependency artifacts plus readback; clean implementation base; lease receipts; supported actual Electron runner and independent proof-lane collection. Dirty source inspection is not an implementation launch receipt.",
+      "state": "IMPLEMENTATION_START_BLOCKED_UNTIL_RECEIPTS"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/docs/DocumentLibraryAdapter.tsx",
+    "packages/core/src/docs/library-query.ts",
+    "tests/lark-suite-extension/lsx-wp-025.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-025.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/docs/library-query.ts",
+      "symbols": ["LibraryFilter", "DocumentListRow", "FormatCapability", "LibraryQueryRequest", "LibraryQueryResult", "LibraryQueryFailure"],
+      "change": "Names are proposed, not existing APIs. Define shared request/result/runtime decoders without React/server imports. Request includes search, type/content format, owner/project/updated-range/shared filters, sort, source scope and opaque cursor; no trusted actor field. Result contains authorized canonical refs/origin/revision/descriptor metadata, supported total or explicit unsupported-count state, authorized unfiltered-source-empty classification, queryRevision/permissionEpoch/watermark/freshness and next cursor. Failure union preserves validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Compile LibraryFilter into the accepted LSX-WP-010 typed query shape; never compute ACL or totals by filtering already exposed title arrays. Query/cache identity binds actor transport, workspace/account, approved source binding, filter/sort/schema/policy revisions; stable ref tie-break comes from the snapshot owner. Export row-to-existing-alias/capability decisions using existing descriptor/identity helpers, not a second identity format."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/DocumentLibraryAdapter.tsx",
+      "symbols": ["DocumentLibraryAdapter", "doc.queryLibrary", "doc.getCreateCapabilities"],
+      "change": "Operations are normative proposed contracts, not current runtime symbols. Consume real authenticated library owner APIs and render RD-01 inside the existing destination: 200ms debounced search with explicit Enter and IME safety; filter chips and clear-all retaining query; same authorized IDs in list/grid; stable canonical selection independent of sorting; unsupported total uses shown-row count. Failed requests retain exact input/cursor; request generation suppresses late results across changed scope/query. Empty-source versus filtered-empty must be supplied from authorized source evidence, not inferred from an empty page. Render error/retry, denied, loading, authorized offline rows plus last-sync freshness; no offline create unless owner storage contract proves it. Request current descriptor/capabilities at open/create time, use existing owner route/alias and existing flush guard, and never create/adopt a descriptor merely to open. Capability menu includes Document/Note/Markdown map/Base/Sheet/Slides/Form/Folder; unsupported items remain explained and disabled with no route or artifact. Integrate Upload/Templates via existing owner if supported, otherwise expose honest capability status; do not implement a competing uploader/catalog. Subscribe to accepted owner watermarks/alias events, preserve selection by canonical identity and clear revoked metadata. Personal list/grid/filter preferences only, via existing owner contract."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-025.test.ts",
+      "symbols": ["query recovery cases", "same-ref open cases", "unsupported create cases", "seeded semantic negative control"],
+      "change": "Permanent behavioral assertions cover actor/source namespace isolation, ACL before filters/totals, supported versus unsupported totals, opaque cursor/query mismatch and policy invalidation, retained search/cursor on failure, empty-source versus filtered-empty versus unavailable/error, no duplicate/skipped ref across stable pages, watermark selection preservation, authoritative same-ref/revision/hash open with unchanged canonical entity count, and unsupported Sheet/Form create causing diagnostic but no artifact/route. Use isolated deterministic fixture/seed and real owner boundaries where necessary, not mocked forwarding echoes. Run the exact specified mutation creating a new Doc on existing-note selection and prove entity-count/ref/hash assertions fail; preserve baseline input and evaluated artifact hashes and all attempts."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-025.spec.ts",
+      "symbols": ["actual Electron library scenarios", "navigation and capability diagnostics", "input accessibility matrix"],
+      "change": "Use the project-supported actual Electron runner after owner discovery, not a guessed command or fixture-only completion. Assert search/chip/clear/retry, list/grid identity, sorting announcement, row Enter, focus-owned Space, Cmd/Ctrl new-panel open, Shift-F10/menu/Escape focus return, unsupported menu interaction and absent artifact, revoke/denied cache clearing, offline freshness, loading/empty/error distinction and stable selection after reordered watermark. Collect pointer/keyboard/IME/focus/reduced-motion/200%-zoom/narrow/light-dark/Russian/all-locales evidence, screenshots/ARIA/computed font including Cyrillic. Bind proof to integrated revision and real native owner readback before/after restart."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "saveCurrentNote",
+      "change": "After commitMarkdown returns its durable receipt at 1054-1070, notify the accepted library query owner of the committed existing ref/revision so the same library projection may refresh/invalidate; retain current saveQueueRef/pendingCommitsRef/expectedRevision/replay/dirty guards and do not add another writer or create a Doc. Obtain the accepted event invalidation API before producing an exact diff; if the owner already emits the required invalidation, preserve this function unchanged instead of duplicating publication. Route library departures through its existing flushBeforeAction caller guard.",
+      "reason": "The only currently authorized NotesPage symbol is this save seam; it already has receipt-aware commit/replay. Optimistic sidebar mutation is not an authorized query-watermark update. No duplicate event delivery or save rewrite is needed.",
+      "authorization": "REVIEWED_SERIAL_PATCH_ONLY_AFTER_LEASE_AND_OWNER_API",
+      "currentLines": [1023, 1104]
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/navigation-registry.ts",
+      "symbol": "NavigationRegistry",
+      "change": "Integrate the accepted LSX-WP-001 canonical-ref/legacy-alias capability mapping with the existing live Notes/Page dispatcher, preserving existing IDs and Page slug routes and refusing absent renderers. Do not introduce a new Docs content store or register PlaceholderComponent as evidence of functionality. This file currently has no Notes/Page navigator, so coordinate the real destination/alias contract first; a typed route extension also needs reviewed changes to NavigatorType/NavigationState/AnyDetailsType and the actual shell consumer if that design is selected.",
+      "reason": "The normative navigation seam is incomplete in current code. Merely adding a docs key to this placeholder registry cannot demonstrate same-ref navigation in the live shell.",
+      "authorization": "REVIEWED_SERIAL_PATCH_ONLY; EXTRA_TYPE_OR_DISPATCH_SYMBOLS_REQUIRE_AMENDED_PACKET",
+      "currentLines": [77, 199]
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/NotesPage.tsx",
+      "symbol": "NotesPage / refreshNotes / search effect / handleOpenNote / library render / noteViewCapabilities",
+      "change": "Request a reviewed scope amendment before patching: mount DocumentLibraryAdapter in the existing library destination; replace Docs library queries/counts with the authorized owner result rather than filterNotes or notes.length; pass the current flushBeforeAction plus existing navigation callback; descriptor-derived capabilities select an existing Note/Map/Base view without changing identity; use authorized snapshot invalidation instead of unconditional raw list refresh. Preserve existing Notes editor, sidebar and unrelated view behavior unless explicitly migrated by the accepted shell design. Do not execute this expanded request under the current saveCurrentNote-only authorization.",
+      "reason": "RD-01 mounting, server filter/cursor integration and capability navigation are not achievable by a patch to saveCurrentNote alone. Current search uses 180ms and has no late-response token, current count is notes.length, and capabilities are unconditional; the exact additional seams are now source-backed.",
+      "authorization": "NOT_AUTHORIZED_UNTIL_REVIEWED_PACKET_AMENDMENT_AND_EXCLUSIVE_LEASE",
+      "currentLines": [563, 792],
+      "additionalLineRanges": [[824, 831], [1117, 1158], [1657, 1660], [2123, 2232]]
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "capability-driven navigation, no second catalog",
+      "currentEvidence": "NotesPage.handleOpenNote:1657-1660 flushes then navigates the same note ID; openNote:890-910 reads existing note and descriptor. content-descriptor.ts:95-121 preserves source/account/workspace identity and legacy alias. createDescriptorResolver:395-424 returns canonicalRef/ownerRef/revision/contentHash and actual read/write support. NavigationRegistry:118-173 does not implement Docs/Page routes. Resource registry search:50-80 is an omnibox projection, not a canonical library owner.",
+      "actualSeams": ["handleOpenNote", "flushBeforeAction", "openNote", "canonicalPageRef", "legacyNoteAlias", "createDescriptorResolver.resolveContent", "NavigationRegistry"],
+      "requiredChange": "Implement library-query.ts and DocumentLibraryAdapter over the accepted canonical owner; pass existing canonical ref, approved source binding and format/view capability to the existing route. Recheck current policy on open, keep existing HTML Page runtime separate and render unknown formats honestly read-only. Never invoke createNote or adoptContentDescriptor on ordinary row-open. Show unsupported Sheet/Form/Slides/Base create reason and no fake editor route. Add no catalog, copied body, parallel IDs or second shell.",
+      "verification": "Native Note/Page fixture records canonical entity count and owner bytes/ref/revision/hash before library open and after reload/restart; selection/view change leaves identity/hash/count invariant. List/grid opens the same permitted set. Unsupported create yields diagnostic with zero artifacts/routes. Published existing Page grants/runtime regression remains intact.",
+      "missingPrerequisite": ["Accepted LSX-WP-001 and LSX-WP-010 receipts", "FG-LIBRARY-DRIVE-OWNER", "FG-SUPPORTED-REPRESENTATIONS", "FG-SURFACE-ROUTE-LEASE", "FG-QUERY-TRANSPORT"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "empty-source vs filtered-empty clear",
+      "currentEvidence": "NotesPage:2223-2226 uses query/selectedTag to choose noMatches/empty; queryVaultDocuments:808-811 returns [] both for unavailable DB and no matches; registry.search:69-75 converts provider failure to an empty contribution. None of these proves an authorized source is actually empty.",
+      "actualSeams": ["NotesPage library empty branch", "queryVaultDocuments", "ResourceProviderRegistryImpl.search", "proposed LibraryQueryResult"],
+      "requiredChange": "Owner result distinguishes authorized unfiltered source-empty, filtered-empty, exhausted page and error/unavailable. Display first-document/import/template affordances only for proven authorized empty-source; filtered-empty offers clear filters retaining query; transport or provider failure offers retry retaining query/cursor, not an empty message. Count derives from authorized supported total or shown rows, never from hidden or raw catalog size.",
+      "verification": "Exercise zero authorized documents, nonempty authorized source with zero filtered matches, last page exhaustion, denied source and unavailable index/transport separately; assert appropriate message/action and no leaked title/count. Failure followed by retry sends identical query/cursor and recovers same snapshot semantics.",
+      "missingPrerequisite": ["LSX-WP-010 authorized source/count status contract", "FG-LIBRARY-DRIVE-OWNER", "FG-QUERY-TRANSPORT"],
+      "state": "PARTIAL_LEGACY_UI_ONLY_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "AuthenticatedContentContext:15-16 is distinct from payload. Resolver.load:356-391 authorizes alias/source before metadata read and rechecks policy. ResourceSearchContext and queryVaultDocuments have no transport actor/cursor/totals contract. ContentFailure:84-85 excludes rateLimited, so directly aliasing it would miss the eight required library errors. ElectronAPI:931-954 has no proposed library operations in the inspected Notes boundary.",
+      "actualSeams": ["AuthenticatedContentContext", "ContentPolicy.authorize", "proposed LibraryQueryRequest/Result/Failure", "ElectronAPI Notes methods"],
+      "requiredChange": "Place non-React shared validated schemas in library-query.ts, consume them through adapter contracts and real server handler supplied by amended scope. Include all eight exact discriminants, allow only typed supported filters and bind opaque cursors to source/query/schema/policy. Actor/owner/workspace payload values never grant access; owner filter is query data only. Policy protects row titles/metadata/count before search/sort/aggregate, and denied fields are rejected.",
+      "verification": "After implementation, compile both server and renderer boundary consumers; run schema rejects for malformed filter/cursor and actor/source spoofing, including all error variants. Assert denied metadata/totals never reach wire responses/errors, and stale policy cursor is rejected. Compilation alone does not prove authorization.",
+      "missingPrerequisite": ["Accepted authenticated LSX-WP-010 service contract", "FG-IDENTITY-AUTHORITY", "FG-QUERY-TRANSPORT"],
+      "state": "PROPOSED_CONTRACT_NOT_COMPILED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "saveCurrentNote:1043-1057 replays retained commands then consumes commitMarkdown receipt; getMarkdownCommitReceipt is exposed at shared/types.ts:940. ContentResolution:89-103 contains canonical/owner ref, revision, contentHash and freshness. hashVaultMarkdownFiles:938-949 provides native disk hashes but no actor policy; it is an owner/test readback seam, not a renderer endpoint.",
+      "actualSeams": ["saveCurrentNote", "ElectronAPI.commitMarkdown", "ElectronAPI.getMarkdownCommitReceipt", "createDescriptorResolver.resolveContent", "hashVaultMarkdownFiles"],
+      "requiredChange": "Library open remains read-only and must not acknowledge a new mutation. Supported create goes only through the existing real owner, waits for a durable native receipt and resolves its exact canonical ref/revision/hash before navigation. Refresh library from acknowledged owner receipt/watermark; offline/queued states must not display committed. Reuse existing save/replay mechanisms, not an extra persistence layer.",
+      "verification": "Record actual owner receipt and independently read native persisted bytes plus resolver ref/revision/contentHash before/after opening and before/after application/server restart; counts stay unchanged on open. Supported create survives restart with one stable entity and matching hash. Simulated queued/unknown response must not be reported committed.",
+      "missingPrerequisite": ["FG-LIBRARY-DRIVE-OWNER durable create/readback receipt", "Accepted dependency persistence/readback receipts", "Actual restart-capable native proof runner"],
+      "state": "SOURCE_SEAMS_PRESENT_RUNTIME_NOT_RUN"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Spec test cases:9362-9365 require cursor/query preservation, exact same Note ID/hash and no fake Sheet/Form route. Resolver.load:370-388 distinguishes source/epoch/revision conflict, denied/deleted and offlineUnsupported. Notes search effect:1117-1135 preserves query on error but has no cursor or stale-response fencing; saveCurrentNote:1043-1087 contains receipt replay and conflict recovery.",
+      "actualSeams": ["queryVaultDocuments", "createDescriptorResolver.load", "NotesPage search effect", "saveCurrentNote pendingCommitsRef", "proposed library query retry state"],
+      "requiredChange": "Add deterministic behavior tests and actual native/UI scenarios for permitted search/open, denied source/title/count, policy revoke between pages, cursor/filter/source conflict, deleted ref, unknown format, rate-limited and missing dependency, authorized versus unsupported offline state, same-request retry, replayed owner receipt and restart. Use query generation guards so older queries/workspaces cannot overwrite current results. Subscription watermark reorders rows while canonical selection stays fixed; revoked cache metadata is removed according to current policy.",
+      "verification": "Future bun test tests/lark-suite-extension/lsx-wp-025.test.ts plus supported actual Electron/native runner. Retain fixture/source input hash, reproduction seed, expected/observed values, all failed attempts and exact integrated commit. Retry preserves input/cursor; reorder preserves canonical selection; policy change invalidates old cursor and cache rather than showing denied titles.",
+      "missingPrerequisite": ["LSX-WP-010 snapshot/policy/watermark acceptance", "FG-QUERY-TRANSPORT", "FG-LOCALE-EVENT-PREFERENCES", "FG-REFERENCE-BASELINE-PROOF"],
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:9378-9386 mandates mutation 'Create new Doc record whenever existing note selected' and assertions entity count unchanged, same ref/hash; denied title absent, unsupported create diagnostic no artifact. Current handleOpenNote performs only flush and existing route navigation.",
+      "actualSeams": ["handleOpenNote", "proposed DocumentLibraryAdapter row-open handler", "existing owner canonical entity enumeration/readback"],
+      "requiredChange": "Create isolated owner/source fixture with explicit permitted/denied entities and deterministic seed; capture immutable baseline inputs/evaluated bytes. Establish passing native invariants, then inject the named create-on-open mutation in the evaluated test artifact only. Assert unchanged canonical entity count and exact selected ref/hash, plus private metadata absence and unsupported-create no-artifact invariant. Do not commit a mutant or count a launch failure as detection.",
+      "verification": "Baseline passes; the exact mutant fails the named semantic entity-count/ref assertion on the exact evaluated hash; report baseline/mutant artifact digests, seed, expected/observed values and distinguish infrastructure outcomes. Re-run green baseline after removing mutation.",
+      "missingPrerequisite": ["Real owner enumeration and authoritative readback", "Implemented adapter", "Isolated future mutation runner and accepted proof receipt"],
+      "state": "NOT_RUN_NO_SENSITIVITY_CLAIM"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesPage uses useTranslation at 564 and existing controls/sidebar. RD-01 design:72-78 specifies hover/focus checkboxes, title/Cmd-Ctrl/Enter/Space open behavior, aria-sort, 200ms search and chip/reset/empty/offline behavior. Repository requires all ten locale keys; current EntityViewTabs capabilities are not server format proof. No new adapter/UI was observed or exercised.",
+      "actualSeams": ["proposed DocumentLibraryAdapter", "existing NotesPage destination", "navigate(options.newPanel)", "useEntityView", "useTranslation"],
+      "requiredChange": "Implement compact accessible RD-01 without replacing user theme/font system; verify actual Rox Mono and Cyrillic. Handle composing input without premature Enter query, focus-owned row shortcuts, context-menu focus and Escape return, touch/pointer and 200% zoom/narrow reflow, reduced-motion, chip removal and explanatory hover/focus/click help including count/freshness meaning. Use all ten locales through existing t(); locale changes require authorized integration owner patches outside current package scope.",
+      "verification": "Actual Electron screenshots/ARIA/computed loaded font and viewport/locale receipts plus observed pointer/keyboard/IME/focus interactions at 200% zoom, narrow and normal width, light/dark/current theme and reduced-motion. Exercise every empty/error/offline/disabled state and compare list/grid ID sets. No visual receipt was collected in preflight; fixture UI cannot substitute.",
+      "missingPrerequisite": ["FG-SURFACE-ROUTE-LEASE", "FG-LOCALE-EVENT-PREFERENCES", "Supported actual Electron runner and screenshot/ARIA/font capture"],
+      "state": "UI_NOT_IMPLEMENTED_NOT_EXERCISED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:9369-9375 lists six lanes; 9399-9400 prohibits fixture-only/completion claims. RS-DRV-01:75 and RS-DOC-01:76 separate native Electron, live service and provider readback. Package/dispatch records remain preflight/planned; no runtime acceptance receipt was provided.",
+      "actualSeams": ["SOURCE_SCHEMA", "UNIT_PROPERTY", "NATIVE_DOMAIN_READBACK", "RESTART_RECOVERY", "ACL_NEGATIVE", "ACTUAL_ELECTRON_UI"],
+      "requiredChange": "Lead integrates only reviewed patch against reconciled base and accepted dependencies, then gathers six independent receipts tied to integrated artifact SHA256/input seed/ref/revision/hash. Provider/collaboration lanes are additional when actually used. Preserve denied-output redaction and failure history; never infer durable commitment from toast or queued state. Keep featureComplete=false until full acceptance.",
+      "verification": "Integration owner audits each lane against integrated commit and exact native owner readback; missing receipt fails closed. This JSON's creation/readback establishes only preflight delivery, not any of those implementation lanes.",
+      "missingPrerequisite": ["All earlier matrix obligations and foundation gates", "Resolved delivery manifest", "Accepted implementation and integrated readback receipts"],
+      "state": "PREFLIGHT_ONLY_FULL_DOD_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "saveCurrentNote / flushBeforeAction", "lineStart": 1023, "lineEnd": 1104, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "openNote", "lineStart": 890, "lineEnd": 931, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "search effect / visibleNotes", "lineStart": 1117, "lineEnd": 1158, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "handleOpenNote", "lineStart": 1657, "lineEnd": 1660, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/pages/NotesPage.tsx", "symbol": "library empty/count branches", "lineStart": 2223, "lineEnd": 2232, "sha256": "872013d83b878f778131fc1ce7a523f0f05ad717a7bd965cc80b2e824c05f1ba"},
+    {"path": "apps/electron/src/renderer/lib/navigation-registry.ts", "symbol": "NavigationRegistry", "lineStart": 118, "lineEnd": 173, "sha256": "beeb25cc9e7cddea25d39f5384b3650aba662239f2a21bd7069994a604fdc4c7"},
+    {"path": "apps/electron/src/renderer/lib/navigate.ts", "symbol": "NavigateOptions / navigate", "lineStart": 24, "lineEnd": 50, "sha256": "fbf258fb42a94c07a2a5db579714706140e75c049e9ccad6125959c2b21a7fac"},
+    {"path": "packages/core/src/platform/resources/registry.ts", "symbol": "ResourceProviderRegistryImpl.search / createResourceProviderRegistry", "lineStart": 50, "lineEnd": 90, "sha256": "dbbe1bddb349ebb2922e7605d5b300e9973519144b26077596d03f339a054d94"},
+    {"path": "packages/core/src/platform/resources/types.ts", "symbol": "ResourceItem / ResourceSearchContext / ResourceProviderRegistry", "lineStart": 23, "lineEnd": 58, "sha256": "2e95bc0416269082a13f386045222755fe265cc7b61bca218d9c18ef0841862d"},
+    {"path": "packages/server-core/src/knowledge/vault-index.ts", "symbol": "listVaultDocuments / queryVaultDocuments", "lineStart": 801, "lineEnd": 812, "sha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path": "packages/server-core/src/knowledge/vault-index.ts", "symbol": "hashVaultMarkdownFiles", "lineStart": 938, "lineEnd": 949, "sha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path": "packages/server-core/src/knowledge/vault-index.ts", "symbol": "applyVaultWatchTick", "lineStart": 978, "lineEnd": 988, "sha256": "7721d3c3d3cd52afa865414c2a33dd1890661707c035cdbafe5ada7cae87cce0"},
+    {"path": "packages/server-core/src/docs/descriptor-resolver.ts", "symbol": "ContentFailure / ContentResolution", "lineStart": 84, "lineEnd": 104, "sha256": "c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path": "packages/server-core/src/docs/descriptor-resolver.ts", "symbol": "createDescriptorResolver / load / resolveContent", "lineStart": 344, "lineEnd": 426, "sha256": "c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path": "packages/core/src/docs/content-descriptor.ts", "symbol": "DocumentDescriptor", "lineStart": 24, "lineEnd": 38, "sha256": "0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path": "packages/core/src/docs/content-descriptor.ts", "symbol": "contentEntityKey / contentOriginKey / canonicalPageRef / legacyNoteAlias", "lineStart": 95, "lineEnd": 122, "sha256": "0234ad0d971b59dd3d9fc511b6257601c584bc76112faea0ddaf555321b47263"},
+    {"path": "apps/electron/src/renderer/components/app-shell/EntityViewTabs.tsx", "symbol": "defaultNoteEntityCapabilities", "lineStart": 69, "lineEnd": 78, "sha256": "2321a05101305db5e5fd7dc6345fddfe82cbfa726a6147d2268033beceb92e7b"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "ElectronAPI Notes boundary", "lineStart": 930, "lineEnd": 962, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "/work_packages/24 definition_of_done", "lineStart": 9388, "lineEnd": 9404, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-025 cloudPacket launch_gates", "lineStart": 2103, "lineEnd": 2187, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/rox-suite/published/RS-DRV-01.md", "symbol": "canonical library/domain / foundation dependency / quality gates", "lineStart": 19, "lineEnd": 75, "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "existing Page representation and dependency links", "lineStart": 79, "lineEnd": 87, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "sections 4-5 / RD-01", "lineStart": 51, "lineEnd": 78, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "sections 1-3 / EntityRefV2 identity", "lineStart": 5, "lineEnd": 62, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"}
+  ],
+  "nextExecutableAction": {
+    "owner": "integration-owner",
+    "action": "After the lead wave0 commit, reconcile the old normative baseline with dispatch revision; accept LSX-WP-001 then LSX-WP-010 dependency artifacts/readback. Resolve delivery-manifest hashes, real library owner, authenticated query/create-capability transport, alias/renderer and preference/event contracts; approve the extra named NotesPage mounting/query/view seams and boundary/localization owners, acquire shared leases, then re-read/re-hash touched sources. The LSX-WP-025 implementation worker can then author only the four normative new files against those accepted contracts and submit reviewed serial patch requests. Collect all six proof lanes only after integration.",
+    "preflightDelivery": "This worker writes only plans/compound-implementation/worker-reviews/LSX-WP-025.json; no implementation starts here.",
+    "dependencyOrder": ["lead wave0 commit and base reconciliation", "LSX-WP-001 accepted", "LSX-WP-010 accepted including its LSX-WP-009/EG-IDENTITY prerequisites", "foundation and scope receipts", "LSX-WP-025 implementation and serial integration", "integrated acceptance evidence"]
+  },
+  "risks": [
+    "Current root-owned uncommitted changes can stale exact line/hash evidence; baseline published line numbers already drifted. Source inspection is not a revision-bound runtime receipt.",
+    "Explicit dependencies do not establish the external Library/Drive owner. Implementing around its absence would silently replace the requested same-catalog feature with a second catalog or mock adapter.",
+    "Only saveCurrentNote and NavigationRegistry are named shared seams; neither alone mounts RD-01 or adds real authenticated query APIs. An amended reviewed integration packet is required before broadening symbols/files.",
+    "Omnibox provider errors and unavailable vault DB become empty arrays; treating them as empty-source hides failures. Raw list lengths or pre-ACL facets leak hidden metadata.",
+    "Canonical page refs and legacy note routes differ in representation, not native identity; route lookup must preserve workspace/account/source binding and existing Page slug aliases instead of using just the displayed title or note ID globally.",
+    "Current unconditional Note view capabilities and resolver read/write/adopt flags are not a verified format/create matrix; descriptors alone cannot manufacture a writable Base/Sheet/Form/Slides renderer.",
+    "NotesPage.openNote reads the note before resolving its descriptor. Whether readNote itself enforces current transport policy was not inspected because its server handler is outside this packet's direct read scope; owner receipt must establish it before any denied-path claim.",
+    "saveCurrentNote currently sends authorityEpoch:1 at 1052; a stale epoch may produce legitimate authority conflict. Do not bypass this by a new writer; preserve failure behavior and ask accepted descriptor/commit owner for epoch contract before any scope-expanded correction.",
+    "Actor-scoped preference persistence, verified event aliases and all-locale strings require contracts and integration ownership not supplied by the four new files. Do not persist private result bodies in a new library preference cache.",
+    "Published broad Drive/Docs obligations (real uploads/templates, Page artifact runtime, collaborative representation/discussions) retain their owners and readiness gates; this slice must not fabricate those capabilities or label unmet requirements N/A.",
+    "Actual Electron/native restart/ACL/mutation evidence is mandatory later and cannot be replaced by this JSON, unit fixtures, screenshots alone or queued provider receipts. No tests/build/UI/network were run during preflight."
+  ]
+}

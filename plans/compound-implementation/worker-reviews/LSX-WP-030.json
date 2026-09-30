@@ -1,0 +1,335 @@
+{
+  "task_id": "LSX-WP-030-preflight",
+  "attempt_id": "3029cc003835ce15abd8d2da4c86a643",
+  "packet_hash": "6f4cdf6447520215c004c88d4ed5275c59db4dc9380751e07f4258078a4727b5",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-030",
+  "featureComplete": false,
+  "mode": "inspect-only; owned preflight artifact, not feature implementation",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-005", "LSX-WP-006", "LSX-WP-028"],
+  "dependencyEvidence": [
+    {
+      "packageId": "LSX-WP-005",
+      "requiredReceipt": "Accepted lossless source/frontmatter patch and native readback/restart receipts, not merely existing files.",
+      "currentEvidence": "retained-source.ts exports retainSource, previewRawSpanPatches, applyRawSpanPatches, retainedSourceHash; index.ts exports them. Implementation is present in the live uncommitted tree; this preflight establishes no accepted dependency receipt.",
+      "requiredUse": "Construct conversion patches against retained byte ranges; preserve unknown frontmatter and bytes outside changed spans. Use SHA-256 retainedSourceHash/markdownRevision, not the legacy contentHash token."
+    },
+    {
+      "packageId": "LSX-WP-006",
+      "requiredReceipt": "Accepted stable mapping, duplicate-marker diagnostics and native/restart receipts.",
+      "currentEvidence": "block-identity.ts exports projectBlockIdentity, previewMarkerMapping and applyMarkerMapping; block-tree-service.ts wraps authenticated snapshots and native commit. Queries do not stamp markers. No accepted dependency receipt was supplied.",
+      "requiredUse": "Reuse both ROX and Obsidian anchor mapping, retained opaque blocks and epoch-scoped identities. Retain allocated marker IDs from the reviewed preview rather than regenerating them on confirm."
+    },
+    {
+      "packageId": "LSX-WP-028",
+      "requiredReceipt": "Accepted single text/tree/authorityEpoch aggregate CAS, semantic inverse/rebase and attached-prose policy receipts.",
+      "currentEvidence": "The normative proposed packages/server-core/src/docs/tree-commands.ts was absent in the file-presence probe. Existing outlineFromHeadings derives IDs from index/title and is not the required command authority.",
+      "requiredUse": "Apply conversion/rollback through the same document authority and structural validation as insert/move/delete; never introduce independent structure CAS or a second text store."
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "FG-ONE-WRITER-EPOCH",
+      "notAnExplicitDAGEdge": true,
+      "specEvidence": ["docs/rox-suite/published/RS-NOTE-01.md:37,48,55,81-82", "docs/rox-suite/published/RS-DOC-01.md:37,53-54,57,81-82", "docs/lark-suite-reference/06-rox-docs-design.md:37-41,176-182", "plans/lark-suite-reference/work-packages.json:11151-11153"],
+      "currentEvidence": "content.ts owner.bindingFor and MarkdownCommitOwner.authorityEpoch return 1; writeNative also supplies 1. descriptor-resolver.ts:460-466 explicitly rejects authority/format migration through adoptDescriptor. MarkdownCommitStore serializes content changes but has no descriptor/owner epoch cutover operation.",
+      "requiredPrerequisite": "Lead must obtain the real one-writer native/shared adoption and epoch migration readiness receipt, including old save/raw writer fences and crash recovery. Published RS-NOTE-01 requires RS-DRV-01 and RS-DOC-01; RS-DOC-01 additionally requires RS-MSG-02. These are separate published foundations, not additions silently made to the package dependencies array.",
+      "state": "BLOCKED_NOT_VERIFIED",
+      "scope": "Required for the promised inPlace authority/format cutover and any shared adoption; personal Markdown Copy must not be passed off as the entire feature."
+    },
+    {
+      "id": "FG-ATOMIC-SOURCE-COPY-CAS",
+      "notAnExplicitDAGEdge": true,
+      "specEvidence": ["docs/lark-suite-reference/06-rox-docs-design.md:140,176", "plans/lark-suite-reference/work-packages.json:11112-11114,11127-11134"],
+      "currentEvidence": "MarkdownCommitStore.writeNative takes the vault lease, checks only its changes and can publish a missing destination collision-safely with link(). Its change union has no read-only source assertion. Calling readNote followed by a destination-only write does not hold source revision/epoch constant across publication.",
+      "requiredPrerequisite": "Integration owner must expose an authority-owned conversion transaction/read-assertion seam that validates the source binding/epoch/revision under the existing writer lease while creating the destination. Do not simulate this by rewriting an unchanged source or by inventing an independent worker lock.",
+      "state": "REQUIRES_REVIEWED_SCOPE_EXTENSION"
+    },
+    {
+      "id": "FG-DURABLE-ROLLBACK-MAPPING",
+      "notAnExplicitDAGEdge": true,
+      "specEvidence": ["docs/rox-suite/published/RS-NOTE-01.md:37", "docs/rox-suite/published/RS-DOC-01.md:53,57", "docs/lark-suite-reference/05-rox-bases-design.md:227-229", "plans/lark-suite-reference/work-packages.json:11057-11060,11141-11145"],
+      "currentEvidence": "Markdown commit journals retain target content/receipts but no conversion backup, derivedFrom mapping or rollback operation. Native write receipts contain noteIds, not each destination revision/hash or descriptor migration mapping. NativeNotesEngine.importVault replaces an entire vault snapshot; that would discard later acknowledged work.",
+      "requiredPrerequisite": "Accepted native migration journal extension must bind backup bytes/hash, source/destination refs, before/after epochs, descriptor revisions and idempotent command identity to the existing authority. Rollback creates a current-CAS new revision with a rebased inverse or explicit conflict, never restores a stale whole-vault snapshot or permissions.",
+      "state": "REQUIRES_REVIEWED_SCOPE_EXTENSION"
+    },
+    {
+      "id": "FG-ACL-ASSET-DESTINATION",
+      "notAnExplicitDAGEdge": true,
+      "specEvidence": ["plans/lark-suite-reference/work-packages.json:11080,11091-11093", "docs/rox-suite/published/RS-NOTE-01.md:28-29,37,56", "docs/rox-suite/published/RS-DOC-01.md:33,37,54"],
+      "currentEvidence": "localContentPrincipal derives a principal from the owned local Electron window/workspace. content.ts authorizes native safe paths and writable parents, but the inspected ports do not provide a shared audience/asset grant or collaboration owner.",
+      "requiredPrerequisite": "Reuse current identity/ACL/File/collaboration owners with explicit source-read, destination-write and inPlace-edit checks plus independent private asset/source review. Shared destinations need real owner and permission readiness receipts; payload actor/owner/workspace and copied asset URLs are never grants.",
+      "state": "BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-REACHABLE-TYPED-UI",
+      "notAnExplicitDAGEdge": true,
+      "specEvidence": ["docs/lark-suite-reference/06-rox-docs-design.md:53,62,140,178,231", "docs/rox-suite/published/RS-NOTE-01.md:20,41", "plans/lark-suite-reference/work-packages.json:11095-11098,11116-11124"],
+      "currentEvidence": "note-views.ts is projection/type utilities with no React modal mount; its NoteViewKind lacks map. convertNote produces task/session drafts, not document conversion. RPC_CHANNELS.content contains resolver, descriptor, Markdown commit and marker methods, but no conversion methods. The allocated ConversionPreview.tsx does not exist.",
+      "requiredPrerequisite": "Lead must approve additional shared path leases for typed protocol registrations and the actual existing Notes/Docs view host or navigation trigger. All locale files need lead-owned translation integration. A standalone modal file or changed NoteBaseView utilities cannot demonstrate a reachable RD-06 flow. No Electron runner was discovered or launched in this restricted inspection; discovery and native proof remain lead duties.",
+      "state": "REQUIRES_REVIEWED_SCOPE_EXTENSION"
+    },
+    {
+      "id": "FG-AUTHORIZED-EVENT-DELIVERY",
+      "notAnExplicitDAGEdge": true,
+      "specEvidence": ["plans/lark-suite-reference/work-packages.json:11086-11089,11100-11102", "docs/rox-suite/published/RS-NOTE-01.md:37", "docs/lark-suite-reference/06-rox-docs-design.md:195-197,218-220"],
+      "currentEvidence": "MarkdownChangedEvent supports save/create/rename/delete/asset/properties; notes.ts pushes notes.CHANGED and marks internal mtime/index freshness. Journal event intents are durable, but document.converted/content.descriptorChanged full envelopes are not supplied by those types.",
+      "requiredPrerequisite": "Integration owner must resolve actual common event aliases/outbox and authorized projection delivery. Emit only after durable conversion, use stable event IDs for replay, preserve watcher loop prevention, and invalidate/reload all views at the committed ref/revision/epoch. Do not claim local callback acceptance is peer delivery ACK.",
+      "state": "BLOCKED_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-REVISION-SCOPE-LEASE",
+      "notAnExplicitDAGEdge": true,
+      "specEvidence": ["plans/lark-suite-reference/execution-packages.json:2623-2633", "plans/lark-suite-reference/work-packages.json:10878-10881,10888,11022-11044"],
+      "currentEvidence": "Dispatch revision a21aeab1da5a67e56788384ff930945b0f487879 differs from normative historical product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab. Live notes.ts differs from the published baseline hash and contains root-owned uncommitted native content integration. Spec manifest hashes match the dispatch packet; reference delivery revision/digest remain placeholders in the normative records.",
+      "requiredPrerequisite": "Wait for lead wave0 commit and accepted dependency receipts, resolve delivery revision/digest and spec_ref hashes, acquire serial shared leases, and rebase this seam report against that exact approved implementation baseline. No checkout/Git mutation was performed by this worker.",
+      "state": "BLOCKED_NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/docs/conversion-service.ts",
+    "apps/electron/src/renderer/pages/docs/ConversionPreview.tsx",
+    "tests/lark-suite-extension/lsx-wp-030.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-030.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/server-core/src/docs/conversion-service.ts",
+      "proposedSymbols": ["ConversionPlan", "DerivedFromLink", "MigrationReceipt", "decodePreviewConversionRequest", "decodeApplyConversionRequest", "createConversionService"],
+      "change": "Define versioned runtime request/result/error decoders and an authority-port service for previewConversion/applyConversion. Preview is read-only: resolve current authorized ref/format/binding/revision/epoch, retain bytes, use accepted marker/tree planning, compute raw-span diff/affected lines/property-marker-geometry warnings and compatibility/loss report. Bind all options (mode, target format, marker/layout, attached-prose policy, asset/audience plan), refs and source SHA-256 into a canonical preview digest. Keep exact allocated marker IDs. Apply checks current authorization, source binding and epoch before aggregate CAS, revalidates the digest and commits only through the existing authority. Copy allocates a distinct collision-safe EntityRef/path and durable derivedFrom link while atomically asserting unchanged source; inPlace journals byte backup, mapping and epoch switch. Expose backup/rollback receipt through the approved native history/restore seam, with later revisions preserved by current-CAS inverse/rebase or explicit conflict. Do not keep an independent document store or make read-time mutations. Missing authority ports return the specified missingDependency/offlineUnsupported result, not a success fallback.",
+      "missingPrerequisite": "Accepted WP-005/006/028 contracts and lead-owned transaction/cutover/rollback ports, approved typed transport integration. Rollback request shape must be agreed with existing history/restore owner because normative public operations name only preview/apply."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/ConversionPreview.tsx",
+      "proposedSymbols": ["ConversionPreview"],
+      "change": "Implement RD-06 within the existing app shell using typed preview/apply ports: original vs changed raw spans, affected line count, exact source ref/revision/hash/epoch, added marker IDs, geometry/property changes, losses/unknown-format diagnostics and independent asset/audience review. Copy selected by default; inPlace explicit; cancel performs no commit. Source conflict retains the user's intent/draft, obtains an authorized new diff and requires review again. Keep pending/durable/readback-unavailable/conflict/denied states distinct. Show returned derivedFrom or epoch/backup/rollback mapping. Use existing i18n/theme/Rox Mono, accessible help, keyboard/IME and focus restoration; reduced motion and 200% zoom. Denied/revoked previews expose no protected content.",
+      "missingPrerequisite": "Lead-owned reachable host trigger/mount, typed RPC schema/channel integration, all ten locale entries and actual Electron verification runner. Renderer must not import server-only fs/crypto runtime modules."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-030.test.ts",
+      "change": "Add deterministic semantic cases for exact Copy source preservation and distinct refs, occupied/racing filename retention, inPlace epoch fences, source change after preview in both modes, tampered mode/target/options/digest, unsupported/malformed source, BOM/CRLF/frontmatter/interstitial/trailing/no-terminal-newline preservation, read/preview/cancel/no-op nonmutation, replay/mismatched replay, ACL/revoke/assets negatives, durable failures/restart/recovery, and later-ACK-preserving rollback. Persist reproduction seeds and input hashes with execution evidence. Include source reread omission and collision overwrite mutants whose specified assertions fail; neither infrastructure failures nor mocks are acceptance evidence.",
+      "verificationAfterAuthorization": "bun test tests/lark-suite-extension/lsx-wp-030.test.ts plus native domain/restart proof on the integrated commit; NOT_RUN here."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-030.spec.ts",
+      "change": "Exercise the real existing Notes/Docs Open-as-map or Import trigger into RD-06, Copy default/cancel/inPlace/conflict refresh and receipt readback using the supported actual Electron runner. Cover pointer/keyboard/IME/focus-return/reduced-motion/200% zoom/light-dark/Russian and locale coverage, loaded Rox Mono including Cyrillic, help via hover/focus/click, denied/error/pending/recovery states. Retain redacted screenshots/ARIA/font and exact commit/viewport/locale evidence. Do not create a fixture-only app or invent a runner command.",
+      "missingPrerequisite": "Actual host integration and lead-discovered Electron runner and leases; NOT_RUN here."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/notes.ts",
+      "symbol": "registerNotesHandlers (nativeContent composition, SAVE and UPDATE_PROPERTIES callbacks)",
+      "change": "After lead provides typed channels and authority ports, compose createConversionService with the authenticated nativeContent authority, safe source read and collision-safe destination transaction. Register doc.previewConversion and doc.applyConversion at the approved content transport mapping with runtime decoding and all eight error discriminants. Use RequestContext/window/workspace-derived actor; never accept payload actor/owner as authorization. Return exact durable native migration/copy receipts plus ref/revision/hash/epoch readback, and retain result-unavailable semantics when content is durable but readback/event delivery fails. Replace hardcoded authorityEpoch:1 in the SAVE and UPDATE_PROPERTIES closures with the authority-resolved epoch so pre-conversion writers are fenced, not redirected blindly. Preserve index/watch invalidation and native scope checks. Published symbols saveNote and updateNoteProperties no longer exist here: patch their current registerNotesHandlers callbacks, do not resurrect deleted helpers.",
+      "reason": "The only approved existing server integration path already composes nativeContent and readback. Separate direct writeFile, serializer or memory engine would bypass current writer/ACL/journal mechanisms.",
+      "prerequisite": "Lead wave0 commit, accepted dependency receipts, exclusive lease, approved content/protocol/transaction scope extension. notes.ts alone cannot manufacture descriptor epoch migration or atomically assert source during Copy."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows (retain NoteBaseView, formulaValue and notesViewsStorageKey semantics)",
+      "change": "If the accepted descriptor/identity adapter requires conversion provenance in existing row projections, extend the projectNoteRows input/projection with typed committed canonical ref/revision/epoch and derivedFrom from that adapter; continue to keep native noteId provenance and existing task/formula values. Do not perform preview/apply or source normalization in this utility. Preserve existing v1 NoteBaseView storage and formula expressions; any view-key migration retains old keys until canonical readback and rollback receipt. No unrelated changes to formulaValue or storage key are justified by this package. Mounting ConversionPreview and adding the Open-as-map trigger must be a separately reviewed host patch, not fabricated inside this non-React file.",
+      "reason": "The normative listed view seam is projection/config plumbing, not a conversion UI host or persistence authority. Existing convertNote is a different task/session feature and must not be repurposed as document conversion.",
+      "prerequisite": "Accepted canonical descriptor and view adapter contract plus an exclusive integration lease; full UI acceptance additionally needs an approved actual host path."
+    }
+  ],
+  "integrationScopeGaps": [
+    {
+      "path": "packages/server-core/src/handlers/rpc/content.ts",
+      "symbol": "registerContentHandlers.services / returned nativeContent ports",
+      "requiredReviewedRequest": "Expose trusted source/destination authorization, client operation identity and conversion transaction/receipt recovery ports; resolve actual owner epoch instead of fixed 1. Native writeNative currently generates a fresh UUID on every call and returns no native receipt lookup port; this cannot satisfy conversion replay by itself.",
+      "authority": "READ_ONLY_DIRECT_IMPORT; not a permitted shared patch in current packet. Lead must amend scope or provide accepted foundation ports first."
+    },
+    {
+      "path": "packages/server-core/src/docs/markdown-commit.ts",
+      "symbol": "MarkdownCommitStore.writeNative / NativeMarkdownChange / NativeMarkdownWriteReceipt / existing vault lease and journal",
+      "requiredReviewedRequest": "Authority owner supplies source read-assertion plus collision-safe destination creation under the same lease, durable source backup/mapping and exact per-ref result hashes, conversion receipt recovery and coordinated descriptor epoch switch. Reuse existing writer lease/journal rather than a conversion-specific second store. Existing forward recovery is not later-edit-safe user rollback.",
+      "authority": "READ_ONLY_DIRECT_IMPORT; packet amendment or foundation-owned implementation required."
+    },
+    {
+      "path": "packages/server-core/src/docs/descriptor-resolver.ts",
+      "symbol": "createDescriptorResolver.adoptDescriptor / ContentOwner.bindingFor / StoredDescriptor",
+      "requiredReviewedRequest": "Provide explicit native owner migration port coordinating descriptor/origin/aliases/epoch/derivedFrom with the content authority and backup receipt. Do not relax adoptDescriptor to become a second body writer; it intentionally rejects authority/format migration.",
+      "authority": "READ_ONLY_DIRECT_IMPORT; packet amendment or accepted foundation implementation required."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "symbol": "RPC_CHANNELS.content",
+      "requiredReviewedRequest": "Add approved typed mappings for doc.previewConversion and doc.applyConversion, and use existing history/restore or an explicitly reviewed rollback mapping. Carry request/result/error types across server/renderer without importing server runtime code. Lead must discover and lease the actual routing schema/preload consumer locations, not rely on string-only server.handle registrations.",
+      "authority": "READ_ONLY_DIRECT_IMPORT; not writable under current packet."
+    },
+    {
+      "path": null,
+      "symbol": "Existing Notes/Docs host trigger and modal mount",
+      "requiredReviewedRequest": "Published RS-NOTE-01:41 names NotesPage/NotesViewHost as host seams; the actual consuming source is outside this package's listed paths/direct imports and was not opened. Lead must identify, approve and lease its exact path/symbol for Open-as-map/Import → ConversionPreview and committed ref/epoch view switch. note-views.ts cannot mount React UI.",
+      "authority": "Uninspected additional source scope; no guessed path or claimed existing implementation."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "Conversion preview labels/help/errors (new keys agreed with lead)",
+      "requiredReviewedRequest": "Root-owned translations in de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant, ASCII-sorted, RU defaults and locale parity. No translation files were opened or changed by this worker.",
+      "authority": "Repository AGENTS requirement; outside current allowed shared patches."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "source/revision/epoch and losses explicit",
+      "currentEvidence": "notes.ts:454-469 returns exact UTF-8 source and SHA-256 revision; block-tree-service.ts:89-108 binds sourceStoreId/epoch/revision and projects retained identity/list tree. No conversion plan/preview is present; owner epoch is fixed 1. Core contentHash is a noncryptographic legacy string hash, not the native SHA-256 revision.",
+      "actualSeam": "readNote, registerNotesHandlers.nativeContent, createNativeBlockTreeService.snapshot/project, retainSource, previewMarkerMapping",
+      "requiredChange": "ConversionPlan must show canonical source ref/binding/revision/SHA-256/format/authorityEpoch and raw before/after spans/affected lines, markers/geometry/property changes, attached-prose and compatibility/loss warnings. Hash all reviewed semantics into previewDigest; unknown/corrupt future format read-only, original retained. Check epoch first, then aggregate CAS on apply.",
+      "verification": "Native source/revision/hash/epoch matches displayed preview; digest changes for every changed option; tampered/unknown format rejects; external source change requires new diff and review; no-op/preview/cancel hashes identical. Exercise RD-06 on actual app after integration.",
+      "missingPrerequisite": "Accepted WP-005/006/028; resolved descriptor epoch and native conversion port; typed reachable UI.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "rollback preserves acknowledged later revisions",
+      "currentEvidence": "MarkdownCommitStore.recover handles interrupted forward writes, not conversion rollback; descriptor adoption is separate. NativeNotesEngine.importVault clears heads/history and is unsafe as a rollback after later ACKs. No conversion backup/rollback mapping exists in inspected contracts.",
+      "actualSeam": "MarkdownCommitStore existing vault lease/journal/commit/getReceipt; createDescriptorResolver; NativeNotesEngine.importVault is a prohibited substitute",
+      "requiredChange": "Journal exact source byte backup, before/after refs/descriptor/epoch/mapping and native conversion receipt. Restore as a new revision using current expectedRevision and epoch with an inverse rebased over later ACKs; conflict on overlapping edits, retain later content/history and current ACL. Never replace a whole vault or lower/reuse an old writer epoch. Provide a reachable receipt/history rollback flow via approved owner contract.",
+      "verification": "Convert A→B; acknowledge later independent and overlapping edits; request rollback; assert later ACK content persists or conflict occurs without mutation, revision/history/ACL retained. Restart/crash around cutover and rollback; one writer and byte backup survives; stale old-epoch writes denied.",
+      "missingPrerequisite": "Accepted WP-028 inverse/rebase and foundation-owned migration/history/epoch ports; approved rollback transport/UI shape.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "localContentPrincipal validates current owned Electron workspace/window; block-tree-service has runtime read/apply decoding. RPC_CHANNELS.content has no conversion slots. Existing MarkdownCommitError mapping has six cases; conversion requires validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat.",
+      "actualSeam": "localContentPrincipal, registerNotesHandlers/registerContentHandlers, RPC_CHANNELS.content, decodeContentEntityRef",
+      "requiredChange": "Runtime conversion schemas in the allocated contract file plus approved browser-safe shared transport types, all eight discriminants and authenticated service context. Resolve destination ownership/assets server-side, reauthorize preview/apply/replay/readback; deny returns no protected bytes or labels.",
+      "verification": "Lead compiles server and renderer boundaries on exact integrated revision; native requests with forged actor/workspace/owner/ref/path/asset context fail before source lookup/mutation; malformed/tampered digest rejects; exercise eight discriminants using real missing/unsupported capabilities rather than fabricated providers.",
+      "missingPrerequisite": "Approved protocol/schema consumers and lead-owned shared ACL/destination readiness; exclusive notes.ts lease.",
+      "state": "PARTIAL_FOUNDATION_FEATURE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "MarkdownCommitStore fsyncs journal/content and returns a receipt; content.ts:196-226 compares safeRead revision to receipt and reports DOCUMENT_RESULT_UNAVAILABLE on failed readback. NativeWriteReceipt lacks per-result revision/hash and writeNative wrapper uses fresh UUIDs.",
+      "actualSeam": "MarkdownCommitStore.commit/writeNative/getReceipt/getNativeWriteReceipt, registerContentHandlers.commit and safeRead",
+      "requiredChange": "Extend existing authority receipt recovery for conversion command identity, source/destination exact revisions/hashes/epochs/backup mapping and derivedFrom. Do not acknowledge migration before content+descriptor+mapping durable; preserve pending/durable-but-readback-unavailable states and recover the same receipt after restart, no duplicate Copy.",
+      "verification": "Native Copy and inPlace → exact source/destination/hash readback; restart → same refs/mapping/receipts. Inject existing afterJournalSync/beforeContentRename/afterContentRename/afterReceiptSync/afterChangedAccepted faults and authority-switch failures through the accepted owner; no ACK-before-durable or duplicate destination. Distinguish invalidation acceptance from peer ACK.",
+      "missingPrerequisite": "Foundation migration transaction and recoverable operationId port; accepted restart evidence and actual native runner.",
+      "state": "PARTIAL_FOUNDATION_FEATURE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Allocated package test files are absent. Current journal fingerprints reject operation ID reuse with different inputs and return existing committed receipts for identical commands, but the RPC native lifecycle wrapper hides operation identity.",
+      "actualSeam": "createConversionService (proposed), registerNotesHandlers transport composition, MarkdownCommitStore.writeNative/commit fingerprint branches",
+      "requiredChange": "Implement semantic package tests and native exercised cases for Copy/inPlace, filename collision/race, changed source, source-binding/epoch changes, cancel/no-op, denied and revoke-after-preview, invalid format, identical replay/mismatched replay and interrupted recovery. Keep exact seeds/input hashes/results and failure attempts.",
+      "verification": "After authorized implementation run bun test tests/lark-suite-extension/lsx-wp-030.test.ts, then integrated native domain/ACL/restart scenarios. Assert original/colliding files retain exact bytes; replay gives same destination and receipt; denied output has no content; new source diff explicitly reviewed. All commands/scenarios NOT_RUN here.",
+      "missingPrerequisite": "Accepted explicit dependencies, same-lease source assertion, operation identity and source/destination ACL ports, actual native verification environment.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "Normative package:11127-11135 names skip-source-reread and colliding-copy-overwrite mutants and three must-fail assertions. No package tests or mutation proof exist in the inspected allocated paths.",
+      "actualSeam": "Conversion apply source-CAS and missing-target create transaction; retainSource/applyRawSpanPatches no-op byte path",
+      "requiredChange": "Create isolated seeded fixture with stale source and occupied destination; temporarily mutate the evaluated implementation to omit source assertion or overwrite collision, retain exact baseline/mutant hashes and seeds. Include BOM/EOL no-op assertion as specified, with actual same-byte output oracle.",
+      "verification": "Green exact baseline; skip-reread mutant fails 'changed source rejected before mutation'; overwrite mutant fails 'original hash/file survives Copy'; 'no-op byte-identical including BOM/EOL' remains asserted. Record semantic assertion failures separately from launch, timeout or infrastructure errors.",
+      "missingPrerequisite": "Implemented conversion path, deterministic package fixtures and lead-authorized mutation proof on isolated evaluated bytes.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "ConversionPreview.tsx and its UI spec are absent. note-views.ts is not a rendered modal host; document-ia.ts imports existing i18n. The full UI requirement applies, not N/A.",
+      "actualSeam": "ConversionPreview (proposed), lead-discovered existing Notes/Docs host and typed RPC client; existing theme/i18n/font system",
+      "requiredChange": "Reachable RD-06 default Copy, explicit inPlace, cancel-no-mutation, conflict new diff, warning and recovery states. Preserve mounted editor/IME draft and return focus; accessible pointer/keyboard/help; dark/light, reduced motion and 200% zoom; all ten translations via t(), actual Rox Mono Cyrillic.",
+      "verification": "Actual integrated Electron trigger→preview→apply→readback with pointer/keyboard; IME composition, Escape/focus return, theme/zoom/motion, ARIA and loaded-font evidence. Save redacted screenshots with viewport/locale/commit; fixture render alone insufficient. Supported runner must be discovered by lead, no passing UI command claimed.",
+      "missingPrerequisite": "Reviewed additional host/protocol/i18n leases; app/runner and native desktop acceptance after implementation.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "This is an inspect-only preflight. Whole-file source hashes and spec manifest matches establish inspected bytes, not feature behavior or accepted dependencies. All six normative proof lanes remain unrun by this worker.",
+      "actualSeam": "Normative cloud launch gates and integrated conversion source/native/UI contracts",
+      "requiredChange": "Lead records SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI separately on the integrated commit. Provider/collaboration evidence is required when those lanes are exercised; no simulated adapter counts. Redact actor-specific output; preserve artifact hashes and attempts.",
+      "verification": "Verify integrated revision and receipt/readback artifact hashes for every lane, dependency acceptance and mutation sensitivity; independently read back results after restart. featureComplete remains false until every original criterion is satisfied.",
+      "missingPrerequisite": "Complete implementation, accepted foundations, authorized full proof execution and lead integration receipt.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Copy default creates a new derivedFrom EntityRef, never overwrites filenames; source changed after preview is rejected in both modes.",
+      "currentEvidence": "createNote loops occupied filenames then calls native writer with expectedRevision:null; native writer uses link() to avoid replacing a racing existing destination. No derivedFrom metadata and no source read assertion exist in destination-only native changes.",
+      "actualSeam": "notes.ts.createNote, MarkdownCommitStore.writeNative/applyNativeJournal, createDescriptorResolver",
+      "requiredChange": "Reuse missing-target create semantics with a distinct identity/path, deterministic receipt replay and authorized durable derivedFrom source ref/revision/hash. Allocate collision suffixes through approved owner and require source CAS under the same lease, not only pre-preview/read-before-create.",
+      "verification": "Occupied and simultaneously occupied targets both preserved; source hash unchanged; result identity differs and derivedFrom points to exact source revision. Source edit/deletion/epoch change before apply leaves no converted destination or inPlace mutation. Identical retry yields the same destination receipt.",
+      "missingPrerequisite": "Atomic source assertion/destination transaction, provenance/descriptor persistence and replay ports.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Unknown frontmatter/interstitial/trailing prose preserved; no-op byte-identical including BOM/EOL; marker/layout/attached-prose changes explicit.",
+      "currentEvidence": "Retained-source.ts applies checked byte spans and keeps BOM/EOL; block-identity.ts preserves mappings/opaque blocks. roundTripNoteMarkdown normalizes trailing whitespace; NativeNotesEngine.writeHead stamps normalized blocks; stringifyNoteContent serializes YAML. None is safe as a general conversion serializer.",
+      "actualSeam": "retainSource/previewRawSpanPatches/applyRawSpanPatches/projectBlockIdentity/previewMarkerMapping; avoid roundTripNoteMarkdown/stampBlockMarkers/stringifyNoteContent",
+      "requiredChange": "Generate only declared retained patches with accepted tree/marker policy, preserve unknown metadata and invalid/future format bytes for read-only/repair-copy flow. Display all geometry/property changes and attached-prose move/reparent impact. Personal viewport/folds stay preferences, never independent stored text.",
+      "verification": "BOM/CRLF/LF/no final newline, unknown YAML/comments, list-interstitial and trailing prose/code/table/opaque metadata fixtures: byte equality outside selected spans; no-op exact full-file equality after reload/restart; duplicate/future markers diagnose without overwrite.",
+      "missingPrerequisite": "Accepted lossless/identity/tree receipts and reviewed layout schema/policy; no formatting normalization fallback.",
+      "state": "PARTIAL_FOUNDATION_FEATURE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Server ACL, events and realtime enforce the same authority; pending conversion is not reported saved.",
+      "currentEvidence": "nativeContent validates local window/source binding and native paths; notes.CHANGED/index invalidation exists. Shared destination/asset owner, full conversion event envelopes and epoch-switch peer delivery were not present in inspected ports.",
+      "actualSeam": "localContentPrincipal, registerNotesHandlers.nativeContent changed callback, MarkdownChangedEvent durable intent, descriptor resolver capabilities",
+      "requiredChange": "Read source/write destination/current edit ACL with independent audience/asset review; emit approved document.converted/content.descriptorChanged envelopes only from durable receipt. View switches pinned to new ref/revision/epoch; old writers fenced; pending and durable-readback-unavailable distinguishable; reconnect reauthorizes.",
+      "verification": "Denied/revoked preview/apply/replay leak no body/URL; Copy does not inherit source audience grants blindly. Native index/watch avoids loops and all active projections agree on committed epoch/ref/content; queued old-epoch changes fail; crash/restart event replay is deduplicated by stable eventId.",
+      "missingPrerequisite": "Real common ACL/asset/collaboration owner and event alias/outbox readiness, approved epoch/router integration.",
+      "state": "BLOCKED_FOUNDATION_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteBaseView/projectNoteRows/formulaValue/notesViewsStorageKey","lineStart":24,"lineEnd":203,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"outlineFromHeadings/convertNote","lineStart":352,"lineEnd":525,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"extractBlockIds","lineStart":182,"lineEnd":193,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"parseNoteDocument/roundTripNoteMarkdown","lineStart":655,"lineEnd":709,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"packages/core/src/rox2/notes-engine.ts","symbol":"contentHash","lineStart":75,"lineEnd":82,"sha256":"77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path":"packages/core/src/rox2/notes-engine.ts","symbol":"NativeNotesEngine/createNativeNotesEngine/writeHead/save/importVault","lineStart":366,"lineEnd":503,"sha256":"77f8c14ade5249c5dbaba4e5bb22551a9a4f98954b9dc7244ee5274404cd1480"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"readNote/createNote/stringifyNoteContent","lineStart":454,"lineEnd":510,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"registerNotesHandlers/nativeContent/SAVE","lineStart":909,"lineEnd":973,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/handlers/rpc/notes.ts","symbol":"registerNotesHandlers UPDATE_PROPERTIES callback","lineStart":1131,"lineEnd":1144,"sha256":"6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97"},
+    {"path":"packages/server-core/src/handlers/rpc/content.ts","symbol":"localContentPrincipal/registerContentHandlers.services/owner.bindingFor","lineStart":27,"lineEnd":171,"sha256":"d5189c2e79c4f479b8b907177e1b6a8f560e054dc1efd26f371198d6b7680acd"},
+    {"path":"packages/server-core/src/handlers/rpc/content.ts","symbol":"commit/readback/writeNative/GET_COMMIT_RECEIPT","lineStart":196,"lineEnd":290,"sha256":"d5189c2e79c4f479b8b907177e1b6a8f560e054dc1efd26f371198d6b7680acd"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"MarkdownCommitStore.commitLocked/MarkdownCommitReceipt","lineStart":10,"lineEnd":163,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"MarkdownCommitStore.writeNative/getNativeWriteReceipt","lineStart":244,"lineEnd":319,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/server-core/src/docs/markdown-commit.ts","symbol":"recoverNativeJournals/applyNativeJournal collision-safe create","lineStart":437,"lineEnd":488,"sha256":"0afa2a3859d07572edeca811746c8362322e71a87ad3b89429d24029e174f489"},
+    {"path":"packages/core/src/docs/retained-source.ts","symbol":"retainSource/rawSpanPreviewDigest/previewRawSpanPatches/applyRawSpanPatches","lineStart":83,"lineEnd":200,"sha256":"eafb42712b3e5d349c370c733484867be2db3d390cd973556ac8b44d2abea4e5"},
+    {"path":"packages/core/src/docs/block-identity.ts","symbol":"projectBlockIdentity/previewMarkerMapping/applyMarkerMapping","lineStart":261,"lineEnd":378,"sha256":"866be41e9d6345dea48a3e02a4a6e90cbf1373d346eccea14c73b1cca97d96a6"},
+    {"path":"packages/server-core/src/docs/block-tree-service.ts","symbol":"createNativeBlockTreeService/snapshot/previewMapping/applyMapping","lineStart":88,"lineEnd":160,"sha256":"e44598ec9837ae488a3f25439338657de41a33fa1d545dc5b5f3d10c6d3aae1d"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"SourceBinding/ContentOwner/StoredDescriptor/AdoptDescriptorCommand","lineStart":17,"lineEnd":114,"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"createDescriptorResolver.adoptDescriptor","lineStart":429,"lineEnd":493,"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[29] LSX-WP-030","lineStart":10873,"lineEnd":11167,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-030 execution/launch/scope gates","lineStart":2548,"lineEnd":2633,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"Conversion contract / Commands / Collaboration","lineStart":138,"lineEnd":182,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"Schema migrations / Import-export frontmatter portability","lineStart":218,"lineEnd":244,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/rox-suite/published/RS-NOTE-01.md","symbol":"Native/shared one-writer migration and dependency links","lineStart":35,"lineEnd":86,"sha256":"48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"Durable collaboration/restore and dependency links","lineStart":35,"lineEnd":87,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"}
+  ],
+  "evidenceFreshness": {
+    "basis": "Live working-tree inspection, whole-file SHA-256 obtained using read-only shasum. input_revision is the dispatch anchor, not a claim that uncommitted files equal that commit.",
+    "manifestHashes": "Both normative input manifest hashes matched packet values at hashing.",
+    "baselineDifferences": "note-views.ts, document-ia.ts and notes-engine.ts hashes match the normative historical baseline blobs. Current notes.ts is 6cae5fe376f31a8ea7d75787d1f601f635d055c5d3c377111e5eb7e7cf182a97 rather than the normative baseline 1e7fe211593c4475dd14888942208e1bc8736c76cabeb6e8dea8a831c5a19d0d; saveNote/updateNoteProperties moved into callbacks. Root integration is live, not assumed committed or accepted.",
+    "staleEvidencePolicy": "These hashes identify inspected snapshots, not ongoing freshness guarantees. Any subsequent root edit invalidates associated line/symbol evidence; compare whole-file hashes and reread changed seams after the wave0/dependency integration commit before implementation. No runtime evidence inferred from source existence."
+  },
+  "inspectionLimits": {
+    "operations": "Read/grep/glob and read-only shasum of concrete files; only the allocated report is written.",
+    "sourceScope": "Four normative read-only source files, direct content/Markdown/descriptor/block-tree/core docs/protocol imports, exact package/dependency records and their cited published/design specifications. No broad repository or UI-host source exploration.",
+    "lookupFailures": "Codegraph reported no .codegraph index. Descriptive find failed with its account-credit error, which is not evidence of missing code; explicit source/spec paths were inspected with read/grep instead. No index initialization or repair performed.",
+    "notRun": ["Product build", "Product tests", "Native UI", "Network/remote operations", "Git operations", "Packet verifier launch"],
+    "newFilePresence": "All four normative owned new files were absent in the presence probe; retained-source.ts and block-identity.ts were present; normative tree-commands.ts was absent.",
+    "verificationBoundary": "Report inspection/hashes are preflight evidence only. The lead owns the dispatch verifier and all accepted feature/runtime receipts. No product readiness or completion is claimed."
+  },
+  "nextExecutableAction": {
+    "owner": "integration lead",
+    "action": "Commit and accept wave0, resolve reference delivery revision/digest and spec_ref hashes, then obtain artifact+native readback receipts for LSX-WP-005, LSX-WP-006 and LSX-WP-028 in dependency order. Compare the attached whole-file hashes with that approved checkout and reread changed seams. Approve scope/lease requests for atomic source-Copy CAS, epoch/rollback authority ports, typed transport and existing UI mount/i18n. Only then dispatch implementation of the four normative new files; apply the two allowed shared patches serially under lead ownership and execute all required proof lanes on the integrated revision.",
+    "immediatelyReachable": "Lead can use this report to request precise foundation interface/lease decisions without changing this worker's artifact-only authorization. Missing shared/cutover foundations remain fail-closed, not N/A or personal-only completion."
+  },
+  "risks": [
+    "Destination-only create under a writer lease is collision-safe but does not atomically assert the reviewed source; a separate read-before-copy still permits changed-source acceptance.",
+    "Hardcoded native epoch 1 and separate descriptor transaction cannot fence an inPlace authority switch; adoptDescriptor intentionally refuses that migration.",
+    "Whole-vault snapshot rollback or unrebased inverse can erase later acknowledged edits; forward WAL recovery does not prove user rollback correctness.",
+    "Existing serializer/stamping/roundTrip helpers normalize bytes; using them breaks unknown frontmatter, terminal newline, BOM/EOL and attached prose acceptance.",
+    "Legacy contentHash, native SHA-256 revisions and descriptor contentHash are distinct contracts; use authoritative SHA-256 source revision and do not compare tokens interchangeably.",
+    "Fresh random operation IDs in native lifecycle wrappers defeat conversion replay/receipt recovery and may create duplicate Copies after uncertain delivery.",
+    "Current allowed shared view utility cannot render RD-06; without a reviewed actual host/protocol/i18n patch the specified feature is not reachable or fully localized.",
+    "Copying body/metadata/assets to a shared audience without independent ACL/source review leaks private content; native local ownership is not shared destination authorization.",
+    "notes.CHANGED and local invalidation acceptance are not full conversion/common-outbox or collaborative delivery evidence.",
+    "Published RS-NOTE-01/RS-DOC-01 dependencies and one-writer gates are not encoded in this package's explicit DAG; publication is not an implementation readiness receipt.",
+    "Concurrent lead wave0 edits can stale inspected hashes/line ranges; historical baseline spec symbols already differ from current notes.ts callbacks.",
+    "A digest alone is not provenance/authentication: recompute from authorized source and validated retained semantics, and never trust caller-supplied patches/actor/owner as authority."
+  ]
+}

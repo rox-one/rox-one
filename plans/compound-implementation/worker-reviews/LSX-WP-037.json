@@ -1,0 +1,235 @@
+{
+  "task_id": "LSX-WP-037-preflight",
+  "attempt_id": "14d71031841f31d6630abb5dd4c07544",
+  "packet_hash": "71f0468a677785de986e027dbb177a03ac5c80541838d8349a7240f42ed37370",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-037",
+  "featureComplete": false,
+  "mode": "source-backed-preflight-only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-004", "LSX-WP-006", "LSX-WP-034"],
+  "evidenceStatus": {
+    "code": "SOURCE_INSPECTED_NOT_RUNTIME_VERIFIED",
+    "revision": "input_revision is the supplied dispatch baseline, not a claim that the dirty working tree equals that commit; no Git commands were run",
+    "freshness": "Whole-file hashes bind the inspected sources. All five normative existing source hashes and both input manifest hashes matched the normative/dispatch digests when measured. Root integration may subsequently invalidate this evidence; compare hashes and reread affected seams before implementation.",
+    "newFilePresence": "Glob found none of the four normative proposed new paths at inspection time.",
+    "discoveryLimit": "Codegraph reported no index. Descriptive find failed with judge API 402 and provided no usable evidence; inspection continued by exact specification-named paths and a direct import. No dependency implementation was inferred from publication or source excerpts.",
+    "execution": "No product changes, builds, tests, native UI, Git mutations or intentional network operations. This is not a feature implementation receipt."
+  },
+  "foundationGates": [
+    {
+      "gate": "Published Drive/Docs foundations absent from the explicit package dependency array",
+      "classification": "HIDDEN_PUBLISHED_FOUNDATION_NOT_NEW_DAG_EDGE",
+      "evidence": ["docs/rox-suite/published/RS-NOTE-01.md:79-86 requires RS-DRV-01 #1109 and RS-DOC-01 #1110", "docs/rox-suite/published/RS-BASE-01.md:107-113 requires RS-DRV-01 #1109", "work-packages.json:13564-13581 links RS-NOTE-01 and RS-BASE-01 as boundary refinements"],
+      "requiredReceipt": "Lead must reconcile readiness for the affected Notes/Docs/Base authority, identity, policy and navigation seams. Publication is not implementation. Do not demand unrelated full Base/Drive features or silently add explicit DAG edges.",
+      "state": "READINESS_NOT_ESTABLISHED"
+    },
+    {
+      "gate": "Authenticated personal source-store/owner binding and durable effects",
+      "classification": "TRANSITIVE_EXTERNAL_FOUNDATION",
+      "evidence": ["work-packages.json:2301-2307 LSX-WP-004 depends on LSX-WP-002 and EG-IDENTITY/EG-EFFECTS", "docs/lark-suite-reference/07-domain-entity-model.md:31-33 scopes Task identity by sourceStoreId/ownerPrincipalId/nativeId", "work-packages.json:13471-13485 requires authenticated actor, source read/edit and personal Task create"],
+      "requiredReceipt": "Accepted LSX-WP-004 interface must provide authorized native creation/linking, not merely task.patchFields for existing Tasks; confirm its create capability and source-scoped receipt journal. Client workspace, payload owner and bare task ID cannot authorize promotion.",
+      "state": "BLOCKED_ON_ACCEPTED_DEPENDENCY_CONTRACT"
+    },
+    {
+      "gate": "Lossless source authority, atomic source CAS and stable anchors",
+      "classification": "TRANSITIVE_FOUNDATION_AND_SHARED_AUTHORITY",
+      "evidence": ["work-packages.json:3005-3007 LSX-WP-006 depends on LSX-WP-005", "docs/rox-suite/published/RS-NOTE-01.md:37,52-59 requires native atomic writer, authority fencing, no watcher write loop and privacy preservation", "docs/lark-suite-reference/06-rox-docs-design.md:176-178 requires aggregate CAS including authorityEpoch", "docs/lark-suite-reference/05-rox-bases-design.md:235-244 requires lossless raw frontmatter/comment/BOM/EOL preservation"],
+      "requiredReceipt": "Accepted anchor/format/import ports must resolve stable sourceRef+blockId at the expected revision and losslessly patch rox.entity_id/projection through the existing source writer. parseVaultMarkdown is an extractor, not an atomic writer or lossless CST serializer.",
+      "state": "BLOCKED_ON_ACCEPTED_DEPENDENCY_CONTRACT"
+    },
+    {
+      "gate": "Durable import-origin map, file privacy and recovery journal",
+      "classification": "TRANSITIVE_EXTERNAL_FOUNDATION",
+      "evidence": ["work-packages.json:12219-12226 LSX-WP-034 requires LSX-WP-002/005/006/016 and EG-FILES", "work-packages.json:12367-12418 requires explicit owner mapping, retained raw, resumable source-scoped origin journal and owner-revision readback"],
+      "requiredReceipt": "Reuse the accepted LSX-WP-034 origin map/journal for promotion and TaskNotes reimport. No separate adapter database. Confirm a serialized create-plus-origin receipt or supported recoverable saga across native Task and source writer; interrupted linking must not allow duplicate creation.",
+      "state": "BLOCKED_ON_ACCEPTED_DEPENDENCY_CONTRACT"
+    },
+    {
+      "gate": "Actual server transport and mounted existing editor/detail surface",
+      "classification": "PACKET_SCOPE_GAP",
+      "evidence": ["work-packages.json:13455-13458 declares three operations", "work-packages.json:13487-13489 requires preview and open native detail after repeat", "execution-packages.json:3200-3208 allows only the adapter, preview, tests and two shared helper/store paths", "note-views.ts:1-270,510-525 contains pure projections/conversion data, not RPC registration or a mounted React surface"],
+      "requiredReceipt": "Lead must provide already accepted registration/mount/navigation ports or amend the reviewed packet before touching extra files. The normative shared paths do not authorize editing RPC registries, NotesPage/NotesViewHost, personal persistence, types.ts or locale files. All ten locale keys for new UI strings require the integration owner to supply existing keys or approve extra locale patches.",
+      "state": "INTEGRATION_PORTS_UNRESOLVED"
+    },
+    {
+      "gate": "Reference delivery, wave0 and lease/readback acceptance",
+      "classification": "EXPLICIT_LAUNCH_GATE_NOT_FEATURE_DEPENDENCY",
+      "evidence": ["execution-packages.json:3213-3216 keeps product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and unresolved reference revision/digest", "execution-packages.json:3246-3256 requires spec hashes, accepted prerequisite receipts, clean approved state, exclusive shared leases and integrated readback"],
+      "requiredReceipt": "Wait for lead wave0 commit and accepted dependencies; reconcile the dispatch input a21aeab1da5a67e56788384ff930945b0f487879 with normative baseline and approved commits. Resolve delivery manifest revision/digest and spec_ref hashes; do not reset or alter the current root-owned worktree.",
+      "state": "NOT_RESOLVED_BY_PREFLIGHT"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/tasks/markdown-task-adapter.ts",
+    "apps/electron/src/renderer/pages/docs/TaskPromotionPreview.tsx",
+    "tests/lark-suite-extension/lsx-wp-037.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-037.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/server-core/src/tasks/markdown-task-adapter.ts",
+      "change": "Define versioned runtime-validated contracts for doc.previewTaskPromotion, doc.promoteTask and task.previewMarkdownMapping. Preview returns recognized title/status/priority/date/tags/context/recurrence, configurable field mappings, preserved unmapped raw props, ambiguities/losses and a source/expected-revision/authority-epoch/payload digest. Apply reauthenticates and revalidates the digest and source before invoking accepted native-owner creation/linking and LSX-WP-034 durable origin mapping. Return PromotionReceipt with exact native ref/revision/hash and source anchor provenance only after durable native commit/readback. Do not import provider credentials, infer sharing, parse arbitrary RRULE into an approximate rule or maintain a done/status column.",
+      "identity": "Serialize an unambiguous origin tuple from canonical scoped sourceRef, stable blockId and conversionKind. Owner/source-store binding is verified server-side. Title, line offset, path and nativeID alone are never dedup keys. Recurrence occurrenceKey is explicit for occurrence materialization, without weakening the base origin-key uniqueness rule.",
+      "mapping": "Use parseVaultMarkdown only for extraction, accepted anchor mapping for identity and accepted lossless writer for edits. Map supported TaskNotes status to existing complete/reopen/cancel transitions; priority to TaskPriority; due/scheduled to explicit date semantics; tags/links to native fields. Preserve recognized source values and raw unsupported/custom properties in the accepted origin/import representation. Repeated import of an existing origin uses native CAS, never resets a completed task from an old checkbox snapshot.",
+      "missingPrerequisite": "Accepted create/link/auth/CAS/readback/import journal ports and transport registration, including crash-safe multi-owner coordination. Error discriminants: validation, conflict, denied, deleted, offlineUnsupported, missingDependency, rateLimited, unknownFormat. Missing foundations must fail closed rather than return simulated success."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/TaskPromotionPreview.tsx",
+      "change": "Render a preview in the existing Docs/Notes flow, not a second task surface. Show title/date/context/recurrence separately, unknown props/import losses, source provenance, explicit ambiguity resolution, readonly/denied/conflict/offline states and pending-vs-committed status. Confirm submits the validated envelope; cancel performs no mutation. Replay opens canonical native detail from the returned scoped TaskRef. Checkbox completion is rendered from native Task readback/subscription; no locally persisted done state.",
+      "missingPrerequisite": "Lead-supplied existing editor mount/command/detail-navigation ports, locale integration for all ten locales and supported actual Electron runner."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-037.test.ts",
+      "change": "Cover consumer-visible origin uniqueness across duplicate click/reimport/concurrent apply/restart, equal titles and block IDs in different source documents/stores/owners, actor spoofing/source edit denial/task-create denial/revocation, stale revision/deleted source, crash between native creation and link commit, mapped fields/raw property byte preservation and unsupported recurrence/date ambiguity. Assert legacy three-checkbox count and separate one-native-task count, authoritative completion projection, and explicit unified-summary dedup policy. Include reproducible semantic negative controls, not mock echo or source-text assertions.",
+      "missingPrerequisite": "Real accepted native/store/source integration and isolated fixtures with seed/input hashes; no tests run during this preflight."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-037.spec.ts",
+      "change": "Exercise the mounted actual Electron promotion preview through pointer and keyboard, cancel/no-effect, confirm and repeat/open-same-detail, conflict/denied/retry, Russian IME and focus return, reload and native completion update. Record 200% zoom, light/dark user-theme retention, reduced motion, hover/focus/click help, ARIA and actual loaded Rox Mono including Cyrillic. Keep fixture-only proof separate from actual runtime proof.",
+      "missingPrerequisite": "Existing real Electron runner and integrated runtime with accepted dependencies; no invented UI command or screenshots."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/tasks/personal/store.ts",
+      "symbol": "CreateTaskInput; PersonalTaskStore.create/get/link/complete/reopen/cancel/completeTask",
+      "change": "Retain CreateTaskInput.source/links and native field semantics. At PersonalTaskStore, add a narrowly scoped create-or-reuse entry point taking the already authority-resolved existing native ID (or an explicitly absent origin result) plus CreateTaskInput. A resolved existing ID returns that Task without creating, updating status or adding a duplicate link; a resolved but missing ID returns a deleted/unresolved result rather than recreating. An absent origin delegates to create with source and mapped fields. The server authority, not this in-memory store, resolves scoped origin and serializes native create plus journal commit. Adapter maps initial imported completion via existing native transitions, never a second status field. Do not overload source.id with a composite origin string. If prerequisites already expose an equivalent native entry point, reuse it and omit this addition.",
+      "reason": "create currently always mints a native ID; importBundle merges only by ID. TaskLink has only kind/id/label, so it is provenance, not durable block/owner origin authority. A naive source-link dedup would also break completeTask, which intentionally copies links/source to the next occurrence.",
+      "verification": "Within real serialized owner commands: repeated origin returns same native ref/revision; distinct scoped origin creates another Task; deleted mapped target is not resurrected; completeTask still creates exactly its supported next occurrence and replay never creates it twice.",
+      "missingPrerequisite": "Accepted LSX-WP-004 create contract and LSX-WP-034 origin/receipt journal; store.ts alone cannot provide a durable transaction.",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView; projectNoteRows; formulaValue; notesViewsStorageKey",
+      "change": "Keep NoteBaseView v1 decode/storage identity and the existing notes:views:<workspaceId> key until the accepted view migration owns cutover. Extend the projectNoteRows input/projection only with an optional authorized native-relation projection supplied by the existing owner (scoped refs/revisions and completion), not a browser-origin map. Preserve row.tasks/taskCount as Markdown checkbox count and row.openTasks/openTaskCount as Markdown unchecked count. Route versioned legacy.markdownTaskCount.v1 / legacy.markdownOpenTaskCount.v1 and separate relation.nativeTaskCount.v1 through the accepted formula/view registry; native relation count dedups canonical scoped refs, not title/nativeID. Unified summary uses an explicit policy and source-block links to exclude promoted overlaps. Do not retag old formulas as native counts or persist Task status in view config. Any required changes outside the named seams need an updated reviewed packet.",
+      "reason": "projectNoteRows currently counts note.tasks and formulaValue directly returns those counts; promotion must not silently change legacy semantics. notesViewsStorageKey stores presentation configs, not domain receipts or task state.",
+      "verification": "With three legacy checkboxes and one linked native Task, legacy taskCount stays 3 and native relation count is 1; completing the native Task projects its linked checkbox and adjusts derived open counts without changing checkbox total. Explicit union policy counts the overlap once. Equal bare IDs from different stores remain distinct; denied native links do not leak counts. Existing v1 saved-view reload remains compatible.",
+      "missingPrerequisite": "Accepted versioned Base view/formula migration and authorized relation query feed; these helpers cannot mount UI, subscribe to events or register server commands.",
+      "mode": "REVIEWED_SERIAL_PATCH_ONLY"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "no second done/status store",
+      "currentEvidence": "store.ts:217-238 owns complete/reopen/cancel; types.ts:60-74 holds completion/cancellation/trash. vault-markdown.ts:167-174 extracts checkbox checked state; note-views.ts:133-158 is a projection only. Promotion is absent.",
+      "requiredChange": "Adapter uses native transitions and reads Task completion for promoted checkbox rendering. Source materialization is an existing-authority projection, never an independently writable completion store; reimport cannot overwrite native status from stale Markdown.",
+      "verification": "Native complete/reopen updates the same linked source block in actual runtime; restart/readback preserves native truth; stale checkbox reimport does not reset it; no new status persistence path.",
+      "missingPrerequisite": "Accepted Task command owner, anchor/writer and event/subscription ports.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "native Task source link and portable unmapped properties retained",
+      "currentEvidence": "CreateTaskInput.source at store.ts:51 and create:196-200 copy source into task and links. TaskLink at types.ts:17-22 lacks block/revision/owner metadata. parseVaultMarkdown:115-125 exposes frontmatter as values but is not a raw-preserving serializer. convertNote:510-525 supplies only whole-note title/body/noteId.",
+      "requiredChange": "Reuse native source/link and accepted TaskSourceLink/origin mapping for canonical sourceRef/blockId/revision/owner plus TaskRef. Preserve unknown/raw TaskNotes props and source bytes, explicitly map rox.entity_id and report import losses. Do not replace checkbox promotion with existing whole-note convertNote.",
+      "verification": "Task readback includes its existing note source link and durable origin; portable export/reimport resolves same scoped Task; unknown YAML/comments/BOM/EOL and untouched prose survive byte comparison; unsupported properties remain retrievable after restart.",
+      "missingPrerequisite": "LSX-WP-034 retained-raw origin mapping and LSX-WP-006 stable source anchors; schema additions to read-only types require expanded reviewed scope if not supplied by dependencies.",
+      "state": "PARTIAL_EXISTING_SEAM_NOT_FEATURE_COMPLETE"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:13453-13471 names the three operations and eight required errors. Existing core create input is TS-only and throws an untyped empty-title error at store.ts:175. Proposed adapter/preview are absent.",
+      "requiredChange": "Runtime-validated versioned adapter contracts at both boundaries with authenticated actor/source-owner binding; discriminated results including all eight errors and typed PromotionReceipt; reject untrusted actor/owner/workspace as authority. Preview is effect-free.",
+      "verification": "Compile integrated server and renderer contracts; exercise malformed envelopes, actor spoofing, cross-workspace/store refs, source edit/read and Task create denial and all declared error branches without protected-content leakage.",
+      "missingPrerequisite": "Accepted authenticated command transport/registry, Task create permission contract and compiled dependency interfaces.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "PersonalTaskStore snapshots/exports at store.ts:81-87 are in-memory bundle operations; audit at 685-687 contains at/action/taskId/detail, not durable DomainReceipt. The specification cites personal persistence, but that out-of-scope implementation was not inspected here.",
+      "requiredChange": "Native creation, origin mapping and source-link repair use accepted durable owner journal/transaction or recoverable saga. ACK only native committed ref/revision/hash and recorded origin receipt; distinguish incomplete source projection from committed native creation and never report both as committed prematurely.",
+      "verification": "Read authoritative Task and origin/source mapping using exact receipt refs/revisions/hashes before and after process restart. Crash at create-before-map, map-before-projection and ACK-before-response; replay resolves same Task and repairs pending projection without duplicate creation.",
+      "missingPrerequisite": "Accepted create-plus-origin commit/recovery protocol; LSX-WP-004 currently specifies patch operations, so create capability must be confirmed, not assumed.",
+      "state": "BLOCKED_ON_DURABLE_OWNER_CONTRACT"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "store.ts:158-205 always creates; importBundle:136-148 dedups native IDs only. vault-markdown ParsedTask has line/checked/text, not stable block mapping. No package test files exist.",
+      "requiredChange": "Add normative tests for duplicate promotion/reimport/concurrent apply, distinct source with same blockId/title/nativeID, stale preview/CAS, missing/deleted origin target, source read/edit/Task create denial, restart repair, retained raw mapping and recurrence occurrence identity.",
+      "verification": "After prerequisites and integration, run bun test tests/lark-suite-extension/lsx-wp-037.test.ts plus real native command/readback scenarios. Retain attempts, seeds, fixture/input SHA256 and expected/observed values for denied/conflict/replay/recovery, not merely green unit output.",
+      "missingPrerequisite": "Accepted real owner transports, isolated authorized fixtures, dependency receipts and lead-approved implementation revision.",
+      "state": "NOT_RUN_BY_PREFLIGHT_AUTHORIZATION"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:13518-13526 mandates title/nativeID-only dedup and legacy-count mutations; source projections preserve exact old counting meaning at note-views.ts:152-153,188-197.",
+      "requiredChange": "In test controls mutate scoped origin dedup to title or bare nativeID and separately replace legacy taskCount with native count. Keep correct baseline and exact mutated bytes/seeds; assert one scoped Task per origin, other source not merged and legacy/unified count semantics.",
+      "verification": "Green integrated baseline; each mutant must fail its named semantic assertion (not compilation, timeout, missing dependency or setup failure). Save mutation diff/hash, test input/seed and assertion receipt.",
+      "missingPrerequisite": "Implemented real promotion/relation projection and runnable baseline; none exists in this preflight.",
+      "state": "NOT_RUN_BY_PREFLIGHT_AUTHORIZATION"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "TaskPromotionPreview.tsx is absent; note-views.ts has no React UI or imports. Specification requires existing surface integration and preview/open-detail behavior.",
+      "requiredChange": "Implement and mount normative preview within existing Notes/Docs using supplied integration ports, t() and all ten locales, preserved user theme, actual Rox Mono, accessible help/focus/IME/zoom/reduced motion and authoritative repeated-click navigation.",
+      "verification": "Actual Electron, not isolated fixture: pointer/keyboard promotion, cancel, repeat-open same Task, native completion update, conflict/denied/retry; IME focus retention, Escape return, 200% zoom, light/dark, reduced motion and RU/all-locale checks. Capture screenshots, ARIA, computed/loaded-font evidence bound to commit/runtime.",
+      "missingPrerequisite": "Lead-approved mount/navigation/locale patch scope and supported actual Electron runner; no UI runs authorized here.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:13509-13516 names SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI; specification and publication state planned/not executed.",
+      "requiredChange": "Lead must collect each lane's independent exact-commit evidence, integrated authoritative readback and acceptance receipts. This JSON only contributes source inspection and implementation requests; featureComplete remains false.",
+      "verification": "Receipt inventory must link exact inputs/artifact SHA256/implementation commit and observed assertions for all six required lanes. Provider/collaboration evidence is added only if actually exercised, never simulated or substituted for native readback.",
+      "missingPrerequisite": "Full implementation and all dependency/integration/runtime proofs; report JSON validation is not a feature lane.",
+      "state": "PREFLIGHT_ONLY_FEATURE_NOT_COMPLETE"
+    },
+    {
+      "criterion": "Duplicate click/reimport leaves one task; same blockID different source/doc distinct.",
+      "currentEvidence": "work-packages.json:13257,13443-13445,13503-13504; store.create and importBundle have no origin-key uniqueness.",
+      "requiredChange": "Resolve canonical scoped origin tuple via LSX-WP-034 durable map under serialized native command. Repeated confirmation opens same scoped native ref and never reapplies initial status; renamed paths resolve aliases, not new identities.",
+      "verification": "Duplicate and concurrent click plus repeated import before/after restart yield exactly one mapped Task; equal block IDs and titles in different source/docs/stores/owners yield distinct mappings. Invalid target is explicit deleted/unresolved, not implicit recreation.",
+      "missingPrerequisite": "Accepted owner/source identity, origin map and atomic/recovery create protocol.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Legacy3checkboxes native1 counts separate; native checkbox completion sync; explicit unified double-count policy.",
+      "currentEvidence": "note-views.ts:15-17 fixed formula enum; projectNoteRows:152-153 and formulaValue:188-203 preserve Markdown counts. Entity model:155 requires separate versioned legacy/native built-ins.",
+      "requiredChange": "Preserve old formula meaning, add authorized native relation count through accepted versioned registry, project completion for linked blocks, and make unified-summary overlap exclusion an explicit policy using scoped refs/source anchors.",
+      "verification": "Three Markdown checkboxes remain taskCount=3 after promotion, one authorized native relation yields nativeTaskCount=1; native completion changes linked checkbox/open count without changing total. For a dedup-union policy, three source checkbox items including one promoted item plus that native Task count as three logical items, not four. Denied targets expose no hidden counts.",
+      "missingPrerequisite": "Accepted formula/view migration and authorized native relation/readback feed; helpers alone cannot satisfy live sync.",
+      "state": "PARTIAL_EXISTING_LEGACY_SEMANTICS_ONLY"
+    },
+    {
+      "criterion": "Recognized TaskNotes mapping and recurrence preview retain unsupported raw fields without guessing.",
+      "currentEvidence": "types.ts:15,24-33 supports only daily/weekly/monthly/yearly recurrence; dates.ts:35-79 uses machine-local Date and accepts ISO calendar normalization. store.completeTask:434-463 copies source/links to next native occurrence. quick-entry.ts:289-321 computes supported next dates, not RRULE identity.",
+      "requiredChange": "Preview configurable recognized field mapping with explicit timezone/date-only and occurrence semantics. Preserve unsupported RRULE/raw custom props as diagnostics, require resolution for ambiguous/invalid dates/status/context and do not call quickEntry title rewriting to silently choose them. Use existing native recurrence owner, with occurrenceKey in accepted mapping rather than source-link dedup.",
+      "verification": "Supported field/date/status/tags/priority mappings read back correctly; invalid dates, DST ambiguity and unsupported RRULE do not silently normalize/materialize. Completing a supported recurring Task yields only the expected native occurrence; replay/import preserves origin and occurrence distinctions and raw diagnostics.",
+      "missingPrerequisite": "Accepted date/occurrence schema and native recurrence commands plus raw import-origin storage.",
+      "state": "PARTIAL_NATIVE_FIELDS_NOT_TASKNOTES_MAPPING"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"CreateTaskInput; PersonalTaskStore.create","lineStart":32,"lineEnd":205,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/store.ts","symbol":"PersonalTaskStore.completeTask","lineStart":429,"lineEnd":464,"sha256":"d42104a7bd9e1d9e74b6433639b7a74f08a87b409450f1a193da9d3dc31a756c"},
+    {"path":"packages/core/src/tasks/personal/types.ts","symbol":"TaskLink; Recurrence; PersonalTask; PersonalTaskBundle","lineStart":14,"lineEnd":119,"sha256":"4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteBaseView; notesViewsStorageKey; projectNoteRows; formulaValue","lineStart":15,"lineEnd":203,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"convertNote","lineStart":510,"lineEnd":525,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"packages/server-core/src/knowledge/vault-markdown.ts","symbol":"ParsedTask; ParsedBlock; ParsedVaultNote; parseVaultMarkdown","lineStart":32,"lineEnd":226,"sha256":"6de9e4357c4607dd773b7418dc8cac7646e5686940074480da65951e69119765"},
+    {"path":"packages/core/src/tasks/personal/dates.ts","symbol":"localDayKey; parseNlDate; parseQuickEntry","lineStart":5,"lineEnd":91,"sha256":"6b8ac9696b55c5f5e9406664c947eec59fdd7946264c450bd57209d8a9afaa87"},
+    {"path":"packages/core/src/tasks/personal/quick-entry.ts","symbol":"nextRepeatDate (direct store import)","lineStart":288,"lineEnd":322,"sha256":"210159903504cfc7b7c7011f72315b04cd0a3e60fdaa217ac79313d5aafbbe7c"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[36] LSX-WP-037","lineStart":13254,"lineEnd":13632,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-037 execution contract","lineStart":3169,"lineEnd":3258,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/05-rox-bases-design.md","symbol":"9.3 TaskNotes; 11 import/export","lineStart":207,"lineEnd":244,"sha256":"187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"9 TaskNotes; 10 commands/revision/errors","lineStart":156,"lineEnd":178,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Source-scoped Personal Task identity","lineStart":24,"lineEnd":62,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"Legacy versus native formula invariants","lineStart":151,"lineEnd":157,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/rox-suite/published/RS-NOTE-01.md","symbol":"Domain authority; DoD; normative dependency links","lineStart":35,"lineEnd":86,"sha256":"48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"},
+    {"path":"docs/rox-suite/published/RS-BASE-01.md","symbol":"Authority, authenticated commands and normative dependency links","lineStart":44,"lineEnd":113,"sha256":"78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"}
+  ],
+  "nextExecutableAction": "Lead accepts this preflight, finishes wave0 commit, resolves reference delivery and reconciles baseline, then accepts LSX-WP-004/006/034 artifact+readback receipts in dependency order. Before coding, compare recorded hashes and reread changed seams; obtain explicit native-create/origin atomicity, authenticated transport, source writer, formula migration and preview mount/navigation/locale contracts, amending the packet for any extra shared paths. Acquire leases for store.ts and note-views.ts; implement only the four normative new files and approved serial patch requests, then run all six proof lanes on the integrated revision. No product implementation is authorized by this preflight run.",
+  "risks": [
+    "Existing source links cannot encode block/revision/scoped owner/raw props; adding metadata directly to read-only types.ts is outside the current slice unless accepted dependencies provide it or the packet is amended.",
+    "LSX-WP-004 proposes patch/batch APIs, while this package requires creation. An accepted field-patch receipt alone does not establish a durable native-create seam.",
+    "Two authorities may commit Task creation and source materialization separately; without durable origin reservation/recovery, response loss or crash can create duplicates or falsely acknowledge both effects.",
+    "Native recurrence copies source/links; dedup based on source alone can suppress a legitimate next occurrence, while replay of completion can duplicate one without native idempotency.",
+    "Markdown line/path/title are not stable identity; current parser only discovers explicit caret blocks and checkbox line/text, so it cannot replace LSX-WP-006 accepted mapping.",
+    "parseNlDate is machine-local and ISO Date construction normalizes invalid dates; TaskNotes preview must not silently coerce date-only/timezone/RRULE inputs.",
+    "RS-BASE-01 describes a new registered CustomRecord kind while the later entity-model design uses page/contentKind; reconcile accepted foundational contract rather than invent another reference namespace for this task slice.",
+    "Named shared helper/store seams do not mount preview or register transport, durable persistence/events or all-locale strings. Root must resolve these wiring gaps; a standalone component is not completion.",
+    "Legacy checkbox formulas, native relation counts and unified overlap policy are distinct semantics; changing taskCount to native count would violate the specified negative control.",
+    "Root-owned wave0 integration may change these files after hashing. This report is source evidence at inspection time, not a clean-worktree or integrated-runtime attestation.",
+    "No tests, UI runs or network checks were authorized; all behavioral verification above is proposed future verification, not observed success."
+  ]
+}

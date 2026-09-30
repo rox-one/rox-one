@@ -117,6 +117,16 @@ export type ErrorCode =
   | 'DOCUMENT_AUTHORITY_CHANGED'
   | 'DOCUMENT_BUSY'
   | 'DOCUMENT_RESULT_UNAVAILABLE'
+  // Authenticated workspace authority: constant domain errors, never resource details.
+  | 'UNAUTHENTICATED'
+  | 'FORBIDDEN'
+  | 'WORKSPACE_MISMATCH'
+  | 'INVALID_PAYLOAD'
+  | 'REVISION_CONFLICT'
+  | 'IDEMPOTENCY_CONFLICT'
+  | 'SCHEMA_VERSION_UNSUPPORTED'
+  | 'CURSOR_INVALID'
+  | 'PROVIDER_UNAVAILABLE'
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'HANDLER_ERROR',
@@ -156,6 +166,15 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'DOCUMENT_AUTHORITY_CHANGED',
   'DOCUMENT_BUSY',
   'DOCUMENT_RESULT_UNAVAILABLE',
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+  'WORKSPACE_MISMATCH',
+  'INVALID_PAYLOAD',
+  'REVISION_CONFLICT',
+  'IDEMPOTENCY_CONFLICT',
+  'SCHEMA_VERSION_UNSUPPORTED',
+  'CURSOR_INVALID',
+  'PROVIDER_UNAVAILABLE',
 ])
 
 export function isErrorCode(value: unknown): value is ErrorCode {

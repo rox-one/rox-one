@@ -1,0 +1,302 @@
+{
+  "task_id": "LSX-WP-032-preflight",
+  "attempt_id": "b3b35ec0d9a03eb2343c782dce61266c",
+  "packet_hash": "3a8f9c1a98cf7d5ba8d46c70bb330a2cb49670e42234a92daf3c47efafb57fcf",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-032",
+  "featureComplete": false,
+  "mode": "READ_ONLY_PREFLIGHT_ARTIFACT_ONLY",
+  "workTier": "bounded-workflow: specification, scoped source inspection, single owned report",
+  "dependencies": ["LSX-WP-026"],
+  "evidenceProvenance": {
+    "inputRevisionOrigin": "Dispatch packet; no Git command run to independently assert HEAD or attribute dirty source to a commit.",
+    "sourceSnapshot": "Actual working-tree files read during preflight, not assumed to equal input HEAD or normative product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab.",
+    "specManifestMatches": true,
+    "specManifestEvidence": "shasum -a 256 returned the exact two input_manifest hashes for execution-packages.json and work-packages.json.",
+    "baselineDrift": "TiptapMarkdownEditor.tsx inspected whole-file SHA256 is 5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747, not the normative baseline blob 8e919184dda7d4e7b632dc204b313c74aea8ba9feeaca9beeaa44577b926d3c1. In particular inspected controlled-echo/editability effects must be preserved rather than replaced with baseline code.",
+    "stalenessRule": "All line ranges and patch descriptions are inspection evidence only. Root integration may change these files; compare each whole-file hash, then reread changed seams after wave0 and accepted LSX-WP-026. Do not apply this report as a patch to a different snapshot.",
+    "explorationLimits": "Codegraph returned no project index; descriptive find failed because its judging provider returned 402. Scoped reads and literal grep supplied source evidence instead. No broad repository exploration, network, builds, tests, native UI, source edits or Git operations were performed. The four normative proposed new files were not found by exact-path glob.",
+    "verificationStatus": "SOURCE_INSPECTED_ONLY; all feature proof lanes NOT_RUN. Report readback is artifact verification, not feature verification."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0-REFERENCE-AND-LEASE",
+      "kind": "launch-and-integration",
+      "source": "execution-packages.json:2796-2806; work-packages.json:1145-1156; user dispatch instruction",
+      "required": "Lead wave0 commit, immutable delivery reference revision/digest with spec_ref hashes, approved prerequisite implementation/readback receipts, and exclusive integration-owner lease for TiptapMarkdownEditor.tsx. Reconcile packet input HEAD with normative baseline plus approved commits; do not mutate the dirty root checkout.",
+      "state": "RECEIPTS_NOT_SUPPLIED_IN_PACKET"
+    },
+    {
+      "id": "FG-PUBLISHED-DRIVE",
+      "kind": "hidden-published-dependency-not-explicit-LSX-edge",
+      "source": "docs/rox-suite/published/RS-DOC-01.md:32,60-62,79-82; work-packages.json:108-113",
+      "required": "RS-DRV-01 (#1109) readiness, common authorized export/FileRef/assets owner and revoke policy for affected export scope. LSX-WP-032 declares external_prerequisites=[] but its linked published spec explicitly requires this foundation. Publication is not implementation evidence.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-PUBLISHED-MESSAGING",
+      "kind": "hidden-published-dependency-not-explicit-LSX-edge",
+      "source": "docs/rox-suite/published/RS-DOC-01.md:37,43,60-62,79-82; work-packages.json:124-129",
+      "required": "RS-MSG-02 (#1107) common Discussion/Message readiness at document foundation; preserve stable anchors when applying marks. This slice must not implement a second comments store to satisfy the linked document spec.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-SINGLE-AUTHORITY-COLLABORATION",
+      "kind": "transitive-and-published-foundation",
+      "source": "work-packages.json:9506-9513,28-29,38-39,92-97; docs/rox-suite/published/RS-DOC-01.md:3,26,35-44,52-58; docs/lark-suite-reference/06-rox-docs-design.md:160-178",
+      "required": "Accepted LSX-WP-026 must include receipts for its LSX-WP-003/005/006 dependencies and EG-COLLABORATION. Preserve legacy Markdown retained-patch authority; collaborative_document must use the selected single React/CRDT binding, WAL/snapshot and fenced append owner. Presentation metadata is not a second independently writable body. Lead must establish format-specific routing because published Page CRDT requirements and the extension's legacy Markdown-first decision are distinct lanes, not interchangeable implementations.",
+      "state": "DEPENDENCY_ACCEPTANCE_AND_FORMAT_ROUTING_NOT_VERIFIED"
+    },
+    {
+      "id": "FG-NATIVE-PRESENTATION-AND-EXPORT-API",
+      "kind": "unallocated-server-seam",
+      "source": "work-packages.json:11711-11743,11790-11798; TiptapMarkdownEditor.tsx:202-223,384-390; registry.ts:20-47; RS-DOC-01.md:32-37",
+      "required": "An accepted native owner exposes doc.patchPresentation(envelope) and doc.previewCodeExport(ref,revision,profile), authenticated actor/current grants, aggregate CAS/epoch, idempotent durable receipt/readback, export hash, and recovery. Inspected editor accepts only content/onUpdate/editable and the command registry only stores/filters contributions; neither proves a persistence, authorization or export backend. Server handler/schema/transport modifications are outside this package's four new files and single shared file. Lead must assign them through an updated reviewed packet or demonstrate accepted existing contracts.",
+      "state": "NATIVE_OWNER_AND_COMPILED_BOUNDARY_NOT_ESTABLISHED"
+    },
+    {
+      "id": "FG-LOSSLESS-CODE-SOURCE-AND-COMPOSITION",
+      "kind": "direct-import-hidden-integration-seam",
+      "source": "TiptapCodeBlockView.tsx:103-184,275-325; TiptapMarkdownEditor.tsx:75-104,263-265; document-ia.ts:420-427,702-709",
+      "required": "Accepted dependency provides retained code raw spans, stable block IDs, exact line-ending/trailing-newline identity and revision/hash mapping. Existing node.textContent and Markdown token.text do not prove original-byte fidelity. Existing private code React view has no exported presentation composition seam. Obtain a reviewed scope extension for its code chrome/copy/parser seam rather than forking the language picker/NodeView or bypassing source preservation. document-ia sanitization/trimming must not be used as a code codec.",
+      "state": "LOSSLESS_MAPPING_AND_COMPOSITION_SEAM_NOT_ESTABLISHED"
+    },
+    {
+      "id": "FG-DOC-MAP-PALETTE-AND-LOCALES",
+      "kind": "unallocated-cross-surface-integration",
+      "source": "docs/lark-suite-reference/06-rox-docs-design.md:144,154; work-packages.json:11744-11747; repository AGENTS i18n contract",
+      "required": "One semantic palette contract consumed by Doc and Map, custom name/picker/save persistence, selected-range marks, and all ten locale translations with RU default. Map, selection toolbar, locale files and any package export wiring are outside the normative shared patch path. Lead must identify and allocate those concrete seams in a reviewed packet; a palette rendered only inside a code block does not satisfy Highlightr.",
+      "state": "CROSS_SURFACE_OWNER_AND_TRANSLATIONS_NOT_ESTABLISHED"
+    },
+    {
+      "id": "FG-CANCELLABLE-REGEX-WORKER",
+      "kind": "resource-and-bundling-foundation",
+      "source": "work-packages.json:11749-11752,11761-11763,11779-11782,11800-11801; docs/lark-suite-reference/06-rox-docs-design.md:154",
+      "required": "Electron-compatible isolated regex execution with bounded input/pattern/output/time, external watchdog terminating a catastrophic regex, cancellation on revision change/unmount, stale-result rejection and typed budget failures. A timer on the renderer thread cannot interrupt a synchronous RegExp. Worker entry/bundling/CSP seam is not allocated by the four-file packet; inline worker viability or an accepted existing runner must be evidenced, otherwise lead expands reviewed scope. No renderer eval/shell/network tokenizer execution.",
+      "state": "WORKER_RUNTIME_AND_BUDGET_CONTRACT_NOT_ESTABLISHED"
+    },
+    {
+      "id": "FG-ACTUAL-APP-PROOF",
+      "kind": "acceptance-not-a-source-shortcut",
+      "source": "work-packages.json:11765-11774,11790-11798; docs/rox-suite/published/RS-DOC-01.md:70-76",
+      "required": "Discover supported actual Electron runner and native domain restart/readback harness after implementation authorization. Keep SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI receipts separate. Preserve exact commit/input hashes/seeds and semantic mutant failures; plan validation and isolated fixture UI cannot close DoD.",
+      "state": "NOT_RUN_BY_PREFLIGHT_AUTHORIZATION"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/ui/src/components/markdown/DocumentCodePresentation.tsx",
+    "packages/core/src/docs/presentation-codec.ts",
+    "tests/lark-suite-extension/lsx-wp-032.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-032.spec.ts"
+  ],
+  "ownershipNote": "ownedNewFiles are the normative future implementation allocation, not files authored in this preflight. This worker writes only plans/compound-implementation/worker-reviews/LSX-WP-032.json.",
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/docs/presentation-codec.ts",
+      "symbols": ["CodePresentation", "HighlightMark", "StyleManifest", "decodePresentation", "encodePresentation", "previewCodeExport"],
+      "change": "Define schema-versioned declarative presentation types and runtime validation: stable block/group IDs, contentRevision/hash linkage, language/title/icon/lineStart, wrap/fold/semi-fold visibility, bounded named line/text ranges, annotations/theme and semantic named palette. Keep raw code spans in the existing authority, referenced rather than independently stored. Reject arbitrary attributes/CSS/scripts/event handlers; allow only parsed color values/tokens and explicit known fields. Retain unknown document extension payload as opaque fallback under the accepted lossless bridge, without executing it. Serialize basic highlights as ==text==, custom marks as sanitized mark/style manifest; remove only highlight marks. Produce grouped sequential titled exports with every raw line and warnings about unsupported styling; never derive authorization/redaction from fold state. Budget failures should be typed validation outcomes with machine-readable budget details using the required error union, not a ninth undocumented discriminant. Proposed symbol names are design requests, not existing code evidence."
+    },
+    {
+      "path": "packages/ui/src/components/markdown/DocumentCodePresentation.tsx",
+      "symbols": ["DocumentCodePresentation", "PatchPresentationRequestSchema", "PreviewCodeExportRequestSchema", "PresentationResultSchema", "PresentationErrorSchema"],
+      "change": "Build presentation chrome/preview on the existing code NodeView and authenticated dependency host, not a second editor. Include filename/language/icon, line numbers/start, wrap/fold/semi-fold, range/text highlights, group tabs, annotations/theme, exact-code copy and image-copy export preview. Render text as text and allowlisted marks, never dangerouslySetInnerHTML from imports. Reuse existing hover/dropdown mechanisms via an approved composition seam; selection editing preserves NodeViewContent/IME/undo. UI receives current capabilities/ref/revision/hash and durable receipts from the native owner. Revision changes invalidate decorations and cancel bounded worker jobs. All copy/export paths use retained raw code, not visible DOM. No component-local durable store. Compile runtime request/result/error schemas at both renderer and accepted server boundary; the UI contract file alone cannot create server enforcement."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-032.test.ts",
+      "symbols": ["proposed lossless presentation/codec/schema property cases"],
+      "change": "Permanent tests cover actual roundtrip/edit boundaries and rejection behavior: CRLF/LF, tabs, trailing spaces/newlines, empty code, Unicode, embedded fence lengths, literal currency/maths/sentinel strings, reverse/remove marks, line-range bounds, grouped exports/all folded lines, safe/unsafe marks and worker cancellation/budget outcomes. Retain deterministic reproduction seeds/input digests; generate the specified export/event-handler mutants with exact semantic assertion receipts. These tests must invoke real codec/worker/domain behavior, not source-text checks or mock echoes."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-032.spec.ts",
+      "symbols": ["proposed actual Electron code/highlight presentation scenarios"],
+      "change": "Use the discovered supported actual app runner for selection marks/custom palette, code controls, group switching, raw clipboard contents, authorized image/Print/PDF previews including inactive tabs, failure states, reload and restart readback. Capture pointer/keyboard/IME/focus restore, 200% zoom, theme contrast, RU/locales and actual font evidence; no fixture-only completion claim."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "TiptapMarkdownEditor",
+      "change": "At extensions useMemo (253-336), configure the existing tiptapCodeBlock through the approved DocumentCodePresentation composition/decoration extension and add the allowlisted semantic HighlightMark integration once for both Markdown engines. Keep StarterKit.codeBlock=false, Shiki github-light/github-dark, Mermaid/LaTeX separate nodes, legacy html:false, and existing language dropdown/keyboard behavior. At onUpdate/content-sync (384-443), send content changes through accepted LSX-WP-026 lossless binding while presentation changes use its native versioned metadata/receipt path; preserve controlled-echo selection and setEditable(editable,false). Require accepted host capabilities/ref/revision/hash/receipt rather than treating onUpdate as durable acknowledgement.",
+      "reason": "Single editor extension point already owns parsing, view registration and lifecycle; presentation must not establish another writer/editor or regress incoming root changes.",
+      "scope": "REVIEWED_SERIAL_PATCH_ONLY_AFTER_DEPENDENCY_ACCEPTANCE",
+      "prerequisites": ["FG-WAVE0-REFERENCE-AND-LEASE", "FG-NATIVE-PRESENTATION-AND-EXPORT-API", "FG-LOSSLESS-CODE-SOURCE-AND-COMPOSITION"]
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "preprocessMarkdownForOfficial",
+      "change": "Replace whole-document currency/inline-math replacement with the accepted lossless scanner's editable prose spans. Leave fenced/inline code, raw presentation payload and unsupported opaque blocks untouched, including dollars, literal ¤ and @@CA_INLINE_MATH_*@@ sequences. Use unambiguous span mapping for parser-safety transformations rather than a marker that can collide with original content.",
+      "reason": "Lines 79-98 currently apply math/currency rewrites globally; source code and literal sentinel text are not protected. Exact original-code copy/export cannot be established with these transformations.",
+      "scope": "REVIEWED_SERIAL_PATCH_ONLY; reuse accepted dependency scanner, do not invent a second Markdown parser"
+    },
+    {
+      "path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx",
+      "symbol": "postprocessMarkdownFromOfficial",
+      "change": "Undo only mapped parser-safety escapes in prose, never global replaceAll('¤','$'). Reattach validated presentation metadata by stable block identity via the same retained-span mapping for official serialization and the editor's legacy path; ensure fold/wrap/theme toggles do not reserialize raw code. Preserve complete raw code in portable/basic/grouped fallback.",
+      "reason": "Lines 102-104 currently convert every literal currency marker; the mapped inverse is required for reversible styling and exact code bytes.",
+      "scope": "REVIEWED_SERIAL_PATCH_ONLY_AFTER_LOSSLESS_MAPPING_RECEIPT"
+    }
+  ],
+  "additionalScopeRequests": [
+    {
+      "path": "packages/ui/src/components/markdown/TiptapCodeBlockView.tsx",
+      "symbol": "TiptapCodeBlockView; tiptapCodeBlock.parseMarkdown/renderMarkdown/addNodeView",
+      "change": "Integration owner must approve a minimal typed presentation composition seam on the existing private NodeView: optional header/line/chrome integration and an authoritative raw-code copy accessor, plus retained-span parser/serializer participation. Keep buildLanguageOptions, searchable keyboard language menu, copy feedback and Shiki extension rather than cloning them into a competing view. Gate accessor on revision/hash; default existing path remains the same until migrated under the accepted dependency. Embedded-fence-safe serialization and source line endings must come from the accepted codec, not token.text alone.",
+      "reason": "Direct import is in scope for reading, but this file is not in sharedPatchPaths. At 322-324 the renderer is fixed to a private component, and at 175-184 copy is fixed to node.textContent. The approved editor-only patch does not expose those mechanisms for extension without duplication or replacement.",
+      "authorization": "NOT_AUTHORIZED_BY_CURRENT_PACKET; updated reviewed packet and lease required before any edit"
+    },
+    {
+      "path": "packages/ui/src/components/markdown/tiptap-editor.css",
+      "symbol": ".tiptap-hover-action-btn; .tiptap-hover-actions; .dark .tiptap-editor .shiki span",
+      "change": "If scoped classes in the new component cannot satisfy inherited behavior, approve presentation-specific hitbox/reduced-motion and highlight/Shiki background layering rules. Do not globally restyle unrelated controls. Keep var(--font-mono) and existing theme semantics; verify actual Rox Mono font separately.",
+      "reason": "Existing action minimum is 24px (178) while published gate requires 32px desktop/44px touch; transitions at 163/186 and dark !important background at 279 need actual integration proof. Current packet does not authorize CSS edits.",
+      "authorization": "CONDITIONAL_UPDATED_REVIEWED_PACKET_REQUIRED"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "styling reversible and portable fallback clear",
+      "currentEvidence": "TiptapMarkdownEditor preprocessMarkdownForOfficial:75-99 rewrites whole-document maths/currency; postprocessMarkdownFromOfficial:102-104 globally replaces ¤. Existing code renderMarkdown:311-320 emits only language/text with fixed triple fences. No presentation codec file found.",
+      "seam": "presentation-codec.ts proposed decode/encode + approved preprocess/postprocess seams; existing tiptapCodeBlock parser/serializer",
+      "requiredChange": "Versioned bounded manifest linked to existing raw spans/stable block identity; lossless forward/inverse mappings; reversible mark-only removal; portable ==text==/sanitized custom mark fallback and sequential complete code groups with explicit unsupported-style warnings.",
+      "verification": "Real codec roundtrip properties across both Markdown engines, sentinel collisions, CRLF/trailing bytes/backticks/Unicode; toggle/remove styling and compare raw code digest; basic/grouped fallback asserts exact full text and clear warnings. Reload verifies persisted metadata and source separately.",
+      "missingPrerequisite": ["FG-LOSSLESS-CODE-SOURCE-AND-COMPOSITION", "FG-NATIVE-PRESENTATION-AND-EXPORT-API"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "hide lines explicitly presentation, not authorization",
+      "currentEvidence": "Existing copy:175-184 uses node.textContent, not display selection; source view:275-277 retains one NodeViewContent. No fold/redaction policy exists in this inspected component; specification 154 requires export full code unless explicit authorized redaction.",
+      "seam": "DocumentCodePresentation proposed fold/semi-fold + native previewCodeExport + presentation-codec grouped/basic renderer",
+      "requiredChange": "Fold/hidden ranges affect view only; show accessible help stating this is not secret redaction. Copy and ordinary export include all code; redaction must require a distinct native authorized workflow, never inferred from hidden ranges. Current-grant checks still apply to export assets/data.",
+      "verification": "Fold every line and semi-fold a middle range; clipboard and ordinary grouped/Print/PDF exports retain exact full code including inactive tabs. Denied audience/export cannot bypass ACL by toggling fold. Explicit redaction, if supported, requires its own authority receipt.",
+      "missingPrerequisite": ["FG-NATIVE-PRESENTATION-AND-EXPORT-API", "FG-PUBLISHED-DRIVE"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "Editor props:202-223 provide content/onUpdate/editable, not a document request envelope. createCommandRegistry:20-47 stores contributions and evaluates when; it is not an authenticated document mutation handler. Spec:11715-11729 names operations/eight error discriminants.",
+      "seam": "DocumentCodePresentation.tsx proposed contract schemas consumed by accepted doc.patchPresentation/doc.previewCodeExport native handlers",
+      "requiredChange": "Runtime schemas carry schemaVersion, document ref/block identity, expectedRevision, authorityEpoch, idempotency/correlation and validated declarative patch/profile. Result reports durable ref/revision/hash/receipt; errors include validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Server obtains actor from authenticated transport, rejects spoofed authority and current-grant violations.",
+      "verification": "Compile actual renderer/server contract imports; exercise real handler with valid/invalid envelopes, spoofed actor, stale epoch/revision, unknown format, budget validation and denied grants. Assert denied response has no protected code. Store compilation and boundary receipts separately.",
+      "missingPrerequisite": ["FG-NATIVE-PRESENTATION-AND-EXPORT-API", "FG-SINGLE-AUTHORITY-COLLABORATION"],
+      "state": "NATIVE_BOUNDARY_UNALLOCATED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "Editor onUpdate:384-390 synchronously emits Markdown and records an echo; no persistence ACK/readback is present. Spec:11733 separates versioned presentation from code; linked RS-DOC-01:37 requires ACK after durable commit.",
+      "seam": "Accepted LSX-WP-026 host binding; native patchPresentation receipt/readback; DocumentCodePresentation pending/committed display",
+      "requiredChange": "Persist presentation through the existing native authority atomically with aggregate revision/idempotency policy. Distinguish local/pending/committed/rejected; bind decorations/export to exact current content hash; no toast/onUpdate/local state as durable ACK.",
+      "verification": "Mutate presentation, read authoritative ref/revision/content hash/manifest hash; restart native owner and app, read same committed result; crash before ACK retains recoverable pending edit without duplicate committed revision. Content bytes remain unchanged for view-only toggles.",
+      "missingPrerequisite": ["FG-NATIVE-PRESENTATION-AND-EXPORT-API", "FG-SINGLE-AUTHORITY-COLLABORATION", "FG-ACTUAL-APP-PROOF"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Spec:11761-11774 requires copy/full fold export, unsafe content rejection and catastrophic regex/contrast; 11795 adds denied/conflict/replay/recovery. Current renderer has copy failure feedback but no domain failure contract.",
+      "seam": "Native patchPresentation/previewCodeExport; new unit/UI files; existing onUpdate/content synchronization:384-443",
+      "requiredChange": "Use dependency CAS/epoch and op dedup; reauthorize queued edits/export, invalidate stale decorations on revision change, preserve recoverable draft on conflict/rejection and reject late worker results. Handle all required error discriminants without silently treating failure as success.",
+      "verification": "Happy edit/copy/export; stale revision and stale epoch first; same key replay commits once, changed-payload key conflict; delete/revoke before replay; offlineUnsupported/missingDependency; restart/reconnect preserves acknowledged metadata and code. Record every attempt/seed/input hash and exact revisions.",
+      "missingPrerequisite": ["FG-NATIVE-PRESENTATION-AND-EXPORT-API", "FG-CANCELLABLE-REGEX-WORKER", "FG-ACTUAL-APP-PROOF"],
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "Spec:11776-11784 explicitly mutates dropped folded export lines or rendered imported event handlers, and requires full-code, inert-HTML and typed cancellable budget assertions.",
+      "seam": "Proposed lsx-wp-032.test.ts codec/export/security/worker scenarios and actual UI spec",
+      "requiredChange": "Retain deterministic synthetic owner/source fixture, seed and input SHA; evaluate green implementation and exact mutant bytes against named behavioral assertions. Distinguish worker's typed budget rejection from harness timeout. Do not mark a blocked runtime or assertion-free test as a killed mutant.",
+      "verification": "Baseline all three assertions pass; export-line-drop mutant fails full-code equality; event-handler mutation fails inert attribute/execution assertion; disabled watchdog/cancellation control is detected by budget contract oracle. Save exact assertion receipts and runtime failure history.",
+      "missingPrerequisite": ["FG-CANCELLABLE-REGEX-WORKER", "FG-ACTUAL-APP-PROOF", "FG-NATIVE-PRESENTATION-AND-EXPORT-API"],
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "Existing view:151-173 searchable language keyboard handling, 206-278 hover actions/editable code; CSS:166-171 focus-within visibility, 178 24px minimum, 144 var(--font-mono), 276-279 Shiki dark overrides. SimpleDropdown:256-259 closes Escape but does not explicitly return trigger focus; 322 has animation. No actual font/UI verification was run.",
+      "seam": "DocumentCodePresentation composing existing TiptapCodeBlockView/hover/dropdown and shared Doc/Map highlight controls",
+      "requiredChange": "RU default and ten-locale labels/help; named palette with swatch+label and keyboard selection; accessible fold/tab state; hover/focus/click help; Escape focus restore; composing input must not trigger shortcut actions; preserve theme and use actual existing mono font; scoped control sizing and reduced-motion overrides without unrelated restyles.",
+      "verification": "Actual Electron pointer/keyboard/IME workflows, visible focus/return, 200% zoom/no obscured controls, reduced motion/no positional animation, light/dark contrast and custom color validation, locale label coverage, computed font plus actual loaded-font/cyrillic proof, screenshots/ARIA/viewport tied to integrated commit.",
+      "missingPrerequisite": ["FG-DOC-MAP-PALETTE-AND-LOCALES", "FG-ACTUAL-APP-PROOF", "FG-LOSSLESS-CODE-SOURCE-AND-COMPOSITION"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Spec:11767-11774 lists six distinct lanes; 11798 rejects superficial completion and RS-DOC-01:76 distinguishes native/domain/UI/provider readback. This artifact is only preflight source evidence.",
+      "seam": "Root integration acceptance receipts for lsx-wp-032 unit/UI files and native dependency runtime",
+      "requiredChange": "Retain featureComplete=false until exact integrated commit passes SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI with artifact hashes. Provider/collaboration evidence is additional when exercised, not fabricated for this read-only worker.",
+      "verification": "Lead accepts revision-bound receipts for every lane and each criterion; authoritative post-integration readback must match delivered artifact. Report/artifact validator acceptance alone cannot set fullFeatureDoD verified.",
+      "missingPrerequisite": ["FG-ACTUAL-APP-PROOF", "FG-WAVE0-REFERENCE-AND-LEASE"],
+      "state": "PREFLIGHT_ONLY_ALL_FEATURE_LANES_NOT_RUN"
+    },
+    {
+      "criterion": "Original code/plain copy exact bytes; code header filename/language/icon, line start, wrap/fold/semi-fold, groups/annotations/syntax theme; grouped basic/Print/PDF includes all tabs.",
+      "currentEvidence": "Existing language and copy controls are present; copy uses node.textContent and renderMarkdown emits fixed triple fences. No title/lineStart/group/presentation props are exposed. Design:100,154 defines the additional behaviors, including copy image with preview.",
+      "seam": "Existing tiptapCodeBlock and private NodeView; new presentation component/codec; native previewCodeExport",
+      "requiredChange": "Extend the existing mechanism with bounded declarative options/preview and raw-span copy accessor; preserve node IDs/undo/selection. Numbering/chrome must not enter copied text. Group IDs resolve children through same document authority; ordinary/print/PDF expands inactive/folded children. Image copy is explicit approved preview, no external renderer calls.",
+      "verification": "Actual clipboard equality for tabs/CRLF/trailing whitespace and literal scripts/prompts; wrapping and fold changes leave raw hash unchanged. LineStart boundaries, empty block, embedded fences, group order/headings and every tab in print/PDF; preview image output before clipboard authorization. No execution/network on open.",
+      "missingPrerequisite": ["FG-LOSSLESS-CODE-SOURCE-AND-COMPOSITION", "FG-NATIVE-PRESENTATION-AND-EXPORT-API", "FG-PUBLISHED-DRIVE"],
+      "state": "PARTIAL_EXISTING_CONTROLS_FULL_REQUIREMENT_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Safe semantic highlight palette Yellow/Green/Blue/Pink/Purple/Custom; selected text only; named custom color save and mark-only removal; same Doc/Map palette.",
+      "currentEvidence": "Design:144 is normative; current code component only changes language through updateAttributes({language}) at 126-128. Editor already hosts TiptapBubbleMenus at 448, but this scoped inspection does not establish any existing shared HighlightMark/palette contract.",
+      "seam": "New HighlightMark/StyleManifest codec; editor extension list and dependency-selected-range mark host; approved Doc/Map integration",
+      "requiredChange": "Use one shared safe palette definition with names/labels/swatch/picker/save, contrast validated in light/dark. Selection-bound mark commands preserve unrelated HTML/text/marks; removal removes only highlight. Serialize basic ==text== and sanitized custom mark/manifest without custom CSS injection.",
+      "verification": "Apply to a bounded selection in Doc then read same marks/palette in Map/reopen; outside range unchanged; remove highlight preserves links/bold/content. Named custom color persists via native receipt; invalid/low-contrast/unsafe styles rejected; roundtrip/export fallback remains readable.",
+      "missingPrerequisite": ["FG-DOC-MAP-PALETTE-AND-LOCALES", "FG-NATIVE-PRESENTATION-AND-EXPORT-API"],
+      "state": "CROSS_SURFACE_SEAMS_NOT_ALLOCATED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Script/event-handler/unsafeCSS rejection; no shell/eval/network on render and assets/exports obey current grants.",
+      "currentEvidence": "LegacyMarkdown has html:false at 330-334; document-ia.sanitizePastedMarkdown:420-427 strips patterns from whole raw text, which is not a lossless presentation sanitizer. Code is currently NodeViewContent text; no inspected server-side current-grant renderer/export enforcement is established.",
+      "seam": "New decodePresentation/HighlightMark renderer and accepted authenticated preview/export boundary",
+      "requiredChange": "Sanitize only declarative presentation/allowed mark fields, preserving code containing literal script/event-handler strings as inert code text. Deny custom CSS/URL/style attributes outside explicit safe color values. Use text React nodes and trusted Shiki decorations, not imported HTML; grants checked before assets/export and invalidated on revoke.",
+      "verification": "Literal script snippets remain byte-exact in code, but imported presentation scripts/onerror/onclick/javascript URLs/CSS url()/expression() are rejected and never executed. Opening code/prompt and hover causes zero shell/network side effects. Current-grant denied/revoked export returns no protected code/assets.",
+      "missingPrerequisite": ["FG-NATIVE-PRESENTATION-AND-EXPORT-API", "FG-PUBLISHED-DRIVE"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Bounded highlight ranges/token regex budget; catastrophic regex cancellable and presentation cache invalidates on content revision.",
+      "currentEvidence": "Spec:11703,11749-11752,11763,11801 requires a budget/worker. Existing scheduleShikiRefresh:53-61 schedules best-effort refresh but is not a bounded user-regex worker.",
+      "seam": "New codec range validation and component accepted isolated worker/dependency runner",
+      "requiredChange": "Bound and validate lineStart/range endpoints against current code, token pattern/input/match counts and worker lifetime. Watchdog terminates regex worker; cancellation on revision change/unmount/revoke; tag results with revision/hash and never apply stale ranges. Explicit typed validation budget details use required error union.",
+      "verification": "Known catastrophic regex returns typed bounded failure while UI stays responsive; cancel ongoing job, change code revision, reject old result; boundary/empty-match/high-match-count patterns remain bounded. Harness timeout is failure, not a passing budget assertion; preserve seeds.",
+      "missingPrerequisite": ["FG-CANCELLABLE-REGEX-WORKER", "FG-LOSSLESS-CODE-SOURCE-AND-COMPOSITION"],
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "preprocessMarkdownForOfficial/postprocessMarkdownFromOfficial", "lineStart": 75, "lineEnd": 104, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "TiptapMarkdownEditor extensions/onUpdate/controlled content synchronization", "lineStart": 226, "lineEnd": 451, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "packages/ui/src/components/markdown/TiptapCodeBlockView.tsx", "symbol": "TiptapCodeBlockView.handleCopy and tiptapCodeBlock.parseMarkdown/renderMarkdown/addNodeView", "lineStart": 175, "lineEnd": 325, "sha256": "47e2871c3252e61e6dbb17c270bec29f82a01643b5e51463dcf49f04d14cfa45"},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "sanitizePastedMarkdown", "lineStart": 420, "lineEnd": 427, "sha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "parseNoteDocument/roundTripNoteMarkdown", "lineStart": 655, "lineEnd": 709, "sha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path": "packages/core/src/platform/commands/registry.ts", "symbol": "CommandRegistryImpl/createCommandRegistry", "lineStart": 20, "lineEnd": 66, "sha256": "832ae183641c47c28502469a9f8d77dd8a530fab80e958b8060406e610cf6f6f"},
+    {"path": "packages/ui/src/components/markdown/TiptapHoverActions.tsx", "symbol": "TiptapHoverActions/TiptapHoverActionButton", "lineStart": 27, "lineEnd": 52, "sha256": "28c0e5349106d179db91a2e5362f42d4ed572367d56de7ce2826e8efcfa018b8"},
+    {"path": "packages/ui/src/components/ui/SimpleDropdown.tsx", "symbol": "SimpleDropdown.handleKeyDown/portal animation", "lineStart": 256, "lineEnd": 334, "sha256": "01acb76ca0f908da11ef65f477fc1f996d95e3437c2c3fd6a8dd123a3f8eb07c"},
+    {"path": "packages/ui/src/components/markdown/tiptap-editor.css", "symbol": "code font/hover focus/min-height and transition styles", "lineStart": 122, "lineEnd": 220, "sha256": "046ae41e66a91ec988797dd574dc5b93502458fbf6f4dfc4b49016c7cbf1877c"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[31] LSX-WP-032 full API/UI/tests/definition_of_done", "lineStart": 11574, "lineEnd": 11869, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "LSX-WP-026 explicit dependencies and EG-COLLABORATION prerequisite", "lineStart": 9488, "lineEnd": 9513, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-032 sourceRecord/allowedWritePaths/sharedPatchPaths/cloudPacket", "lineStart": 2725, "lineEnd": 2808, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "Section 9 Highlightr/Codeblock Customizer; Section 10 envelope and CAS", "lineStart": 142, "lineEnd": 178, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "Domain/storage/ACL and exact foundation integration", "lineStart": 35, "lineEnd": 44, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "DoD/quality gates and normative RS-DRV-01/RS-MSG-02 dependency handoff", "lineStart": 50, "lineEnd": 82, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"}
+  ],
+  "nextExecutableAction": {
+    "now": "Integration lead reads this preflight report and resolves the recorded native presentation/export owner, private NodeView composition, shared Doc/Map palette/locale and worker-scope requests without touching product source from this worker.",
+    "implementationStartCondition": "Lead wave0 is committed; LSX-WP-026 and its accepted dependency/foundation readback receipts exist; reference revision/digest resolves; target snapshot and shared-path lease are approved; added seams have updated reviewed packet or accepted existing owner contracts.",
+    "firstImplementationAction": "Compare inspected whole-file hashes with the approved integrated snapshot, reread changed seams, and bind the new presentation codec/component contracts to the accepted lossless raw-span and authenticated native host interfaces before authoring the four normative new files. Apply named editor requests only serially through the integration owner.",
+    "notAuthorizedHere": "No feature implementation, dependency acceptance, tests/builds/app/network operations, extra source paths or Git mutation. Report is not a feature completion receipt."
+  },
+  "risks": [
+    "Root-owned wave0 edits are live: editor hash already differs from normative source; line-based requests become stale on the next integration change.",
+    "The exact explicit dependency array hides published RS-DOC-01 Drive/Messaging/CRDT obligations; do not silently add edges, claim them satisfied or reduce acceptance to renderer-only.",
+    "Private TiptapCodeBlockView fixes copy and NodeView registration; an editor-only integration may otherwise duplicate the existing language menu or leave obsolete code. Additional approved composition scope is required.",
+    "node.textContent/token.text/Markdown reserialization cannot establish original CRLF/trailing-byte fidelity; global currency marker replacements and document-ia trimming/sanitization can alter literal code.",
+    "Fixed triple-fence output can misrepresent code containing fence delimiters; retained-span/delimiter-safe fallback must be exercised, not assumed.",
+    "No inspected native server seam can prove auth/CAS/idempotency/durability/export grants; command registry visibility and editable=false are not authorization boundaries.",
+    "Shared Doc/Map palette and all ten locales are outside current allocated writes; displaying a code-only palette is incomplete Highlightr behavior.",
+    "A synchronous renderer regex plus setTimeout is not bounded execution. Worker CSP/bundling/termination needs actual Electron proof and a typed failure contract.",
+    "Dark Shiki !important background may obscure highlight tokens; inherited controls are smaller than published hitbox gates and animation/focus return need scoped actual-app verification.",
+    "Local fold/cache state cannot serve as durable presentation persistence or secret redaction; exports/current grants and print of inactive tabs require native owner receipts.",
+    "Published Page collaborative_document and legacy Markdown-first extension lanes have different authority requirements; adding a parallel JSON/Markdown master or claiming a Markdown NodeView is a ready CRDT editor violates the foundation contract.",
+    "This artifact intentionally supplies source-level plans and precise integration requests only; all eight DoD items and supplemental source-specified behaviors remain unverified until integrated native/runtime/UI evidence exists."
+  ]
+}

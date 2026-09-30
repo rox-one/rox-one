@@ -2,24 +2,28 @@
   "baselineRevision": "b922e52ed96425732776ff771fdb4fec09fc99b6",
   "electron": {
     "baselineUnique": 46,
-    "currentUnique": 44,
+    "currentUnique": 43,
     "new": [],
     "resolved": [
       "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[] | undefined' is not assignable to type '{ id: string; slug: string; name: string; color?: string | undefined; }[]'.",
-      "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[]' is not assignable to type 'LoadedProject[]'."
+      "apps/electron/src/renderer/components/app-shell/ProjectsHomeInMain.tsx: error TS2322: Type '{ id: string; slug: string; name: string; color?: string | undefined; }[]' is not assignable to type 'LoadedProject[]'.",
+      "packages/core/src/rox2/meeting-conation-shell.ts: error TS2367: This comparison appears to be unintentional because the types '\"unverified\" | \"receipt_verified\" | \"readback_verified\"' and '\"verified\"' have no overlap."
     ],
     "baselineLog": "/tmp/rox-compound-baseline-typecheck.txt",
-    "currentLog": "/tmp/rox-wave0-navigation-replay-electron-ts.log"
+    "currentLog": "/tmp/rox-wp01-max-input-electron-ts.log"
   },
   "server": {
     "baselineUnique": 25,
-    "currentUnique": 25,
+    "currentUnique": 24,
     "new": [],
-    "resolved": [],
+    "resolved": [
+      "packages/core/src/rox2/meeting-conation-shell.ts: error TS2367: This comparison appears to be unintentional because the types '\"unverified\" | \"receipt_verified\" | \"readback_verified\"' and '\"verified\"' have no overlap."
+    ],
     "baselineLog": "/tmp/rox-baseline-server-ts.log",
-    "currentLog": "/tmp/rox-wave0-frozen-server-ts.log"
+    "currentLog": "/tmp/rox-wp01-journal-server-ts.log"
   },
   "status": "NO_NEW_DIAGNOSTICS",
   "normalization": "Remove diagnostic coordinates and shared-workspace-package path prefix; ignore union-member order only, preserve all member text.",
-  "baselineEnvironmentNote": "Baseline detached checkout shares installed node_modules; workspace package links can display the implementation checkout prefix. Source for reported diagnostics is unchanged from baseline."
+  "baselineEnvironmentNote": "Baseline detached checkout shares installed node_modules; workspace package links can display the implementation checkout prefix. Source for reported diagnostics is unchanged from baseline.",
+  "verifiedAt": "2026-09-30T13:05:35.224257+00:00"
 }

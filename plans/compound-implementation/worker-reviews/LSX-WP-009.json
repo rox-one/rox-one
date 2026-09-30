@@ -1,0 +1,265 @@
+{
+  "task_id": "LSX-WP-009-preflight",
+  "attempt_id": "dc72ac8577773291eac35779692b0555",
+  "packet_hash": "a4c43860ffeb840246d53923102b1799b179f320df0dcf9bf5982eafad35775a",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-009",
+  "featureComplete": false,
+  "mode": "inspect-only; sole write is this preflight report",
+  "workTier": "bounded-workflow; specification, source seams, acceptance mapping and artifact validation",
+  "dependencies": ["LSX-WP-002", "LSX-WP-003", "LSX-WP-004", "LSX-WP-007"],
+  "dependencyContracts": [
+    {"id": "LSX-WP-002", "requiredReceipt": "Accepted personal source binding and picker implementation: sourceStoreId/ownerPrincipalId/nativeId mapping, explicit permitted workspace binding, actor/source grants and read-time revoke."},
+    {"id": "LSX-WP-003", "requiredReceipt": "Accepted atomic Markdown owner commit, CAS/authority epoch, durable receipt, idempotency and restart readback; a mutable NotesRepository Map is not this authority."},
+    {"id": "LSX-WP-004", "requiredReceipt": "Accepted canonical Task field command, native validation, expectedRevision and per-row receipts. Adapter advertises write only for fields these commands actually support."},
+    {"id": "LSX-WP-007", "requiredReceipt": "Accepted BaseDefinition persistence with canonical page ref, sourceBinding, schema/config revision and private/shared view separation. Do not introduce a second configuration store."}
+  ],
+  "foundationGates": [
+    {
+      "id": "wave0-and-reference-resolution",
+      "classification": "dispatch and normative launch gate, not an added DAG edge",
+      "evidence": "Dispatch forbids implementation before lead wave0 commit. work-packages.json:7-11,4371-4378 and execution-packages.json:760-764,794-801 leave immutable reference revision/digest unresolved.",
+      "requiredPrerequisite": "Lead wave0 commit, resolved delivery manifest/spec hashes, approved prerequisite commits and accepted artifact/readback receipts. Reconcile dispatch a21aeab1da5a67e56788384ff930945b0f487879 with normative product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab; do not silently choose either as implementation base.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    },
+    {
+      "id": "EG-DOMAIN-OWNERS",
+      "classification": "explicit external prerequisite, separate from internal dependencies",
+      "evidence": "work-packages.json:100-105,4028-4030,4305-4307 requires Project/Meeting/Calendar authority receipts. project-membership.ts:13-30,158-183 contains membership/visibility, not Project content revisions. platform-contract.ts:17-38 has calendar-event/project but no meeting kind.",
+      "requiredPrerequisite": "Per-source owner resolver, current read/write/create/field capability, revision/hash/freshness and authoritative reopen receipts. Missing Meeting owner must produce missingDependency and unavailable descriptor, never fixture rows or guessed call/calendar aliases.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "RS-DRV-01",
+      "classification": "hidden published-spec foundation gate, NOT in LSX-WP-009 explicit DAG",
+      "evidence": "RS-BASE-01.md:95-111 names dependency RS-DRV-01/#1109; lines 5,46,50,56 require Drive creation, scoped schema/identity, common policy/events. work-packages.json:108-113 associates EG-FILES with RS-DRV-01.",
+      "requiredPrerequisite": "Lead must reconcile the published Drive/File foundation with this bounded source-adapter slice and provide applicable foundation receipts or an approved scoped integration contract. Publication is not readiness. Do not implement Drive or add the broad published-spec new files to worker ownership.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    },
+    {
+      "id": "authenticated-policy-and-transport-registration",
+      "classification": "implicit shared foundation required by package DoD and published specification",
+      "evidence": "work-packages.json:4235,4246-4249,4298; RS-BASE-01.md:52,56. RequestContext in transport/types.ts:7-11 exposes clientId/workspaceId/webContentsId, no authenticated principal. Knowledge VIEW_RUN ignores _ctx and accepts workspaceId at knowledge.ts:1619-1629. HandlerDeps:62-71 has no general source-owner/policy service.",
+      "requiredPrerequisite": "Accepted principal resolver from authenticated client session, current field/source policy and revoke semantics, plus registered typed base.describeSource/base.readSourceRows transport/renderer contracts. Dependency owner must supply these shared seams; this worker cannot invent payload actor ownership or patch protocol/dependency bags outside packet.",
+      "state": "READINESS_NOT_VERIFIED"
+    },
+    {
+      "id": "field-state-and-renderer-integration",
+      "classification": "implicit cross-package integration gate, not asserted as a new DAG dependency",
+      "evidence": "05-rox-bases-design.md:109 separates null/empty/error/redacted/unsupported; 199,216 requires authorized sample3 and native navigation. Package write scope includes only two product modules and two tests; no renderer, locale or shared field-registry path is writable.",
+      "requiredPrerequisite": "Accepted shared typed-cell/field mapping schema or lead-approved exact contract, renderer owner consuming source descriptors and rows in the existing Base/source-picker surface, all-ten-locale copy and actual Electron runner. Expanded seams require reviewed packet/lease, not an extra standalone picker.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    },
+    {
+      "id": "provider-ack-and-event-aliases",
+      "classification": "affected-scope foundation gate; real provider effects only when exercised",
+      "evidence": "work-packages.json:116-121,4241-4244,4255-4258. CalendarEvent has optional etag, CalendarAccount connection state and scopedCalendarIds, SyncJournal has lastSyncedRevision. Existing knowledge watcher emits knowledge:changed/KnowledgeDocumentCreated-family at knowledge.ts:1787-1813, not the proposed source event envelope.",
+      "requiredPrerequisite": "Real provider capability/reconciliation receipt, missing/offline/queued vs acknowledged behavior, verified aliases from existing owner change feeds to source.capabilitiesChanged/source.snapshotAdvanced, common replay-safe event envelope. No new provider or competing polling/notification engine.",
+      "state": "READINESS_NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/server-core/src/bases/source-adapters.ts",
+    "packages/core/src/bases/source-capabilities.ts",
+    "tests/lark-suite-extension/lsx-wp-009.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-009.spec.ts"
+  ],
+  "ownedNewFilesStatus": "All four normative paths were absent in scoped glob inspection; none created by this preflight. Future implementation ownership only, not current write authorization.",
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/rox2/notes-repository.ts",
+      "symbol": "NotesRepository; createNotesRepository",
+      "change": "After LSX-WP-003 authority is accepted, add an owner-backed construction path whose get/put resolve/delegate to that same Notes authority through the accepted typed contract, preserving canonical entityId/revision/origin/sync and existing note-kind validation. Scope enumeration to permitted refs supplied by sourceBinding; do not expose unrestricted list(). Do not instantiate a second seeded Map for live Base rows. Keep current seed-backed construction usable only as existing explicitly classified projection/fixture behavior, never claim it durable; exact sync/async signature and callers must be reconciled with the authority receipt before patch.",
+      "reason": "Current lines 27-50 supply only void put and in-memory get; this does not expose durable ACK, policy, source binding or restart persistence. Base must read the existing owner rather than elevate this utility to a second writer.",
+      "owner": "integration-owner",
+      "prerequisite": "Accepted LSX-WP-003 API/receipt, refreshed source hash, exclusive path lease, exact consumer/signature review. If owner composition/caller edits exceed these symbols, update the reviewed packet first."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/knowledge.ts",
+      "symbol": "registerKnowledgeHandlers; KnowledgeViewRunArgs",
+      "change": "Compose the new source-adapters service once alongside the existing registry/resolveProvider/callProvider closures. Register accepted base.describeSource and base.readSourceRows channels through the shared typed transport contract; pass server-resolved actor, authorized workspace/source binding and policy revision, never args.actor/owner/workspace as grants. Resolve a persisted binding through LSX-WP-007 before dispatching domain reads. Reuse resolveProvider for explicitly matched Knowledge connection refs; do not allow default-provider fallback. For a Base-backed VIEW_RUN, normalize/resolve the binding from approved persisted config rather than manufacturing SearchHit-only rows; distinguish its typed Base result from the existing knowledge result according to the accepted boundary schema. KnowledgeViewRunArgs.workspaceId remains a validated selector, not authorization. Preserve existing Knowledge search/proposal flows and use accepted event aliases for projection invalidation/revoke cleanup.",
+      "reason": "Existing KnowledgeViewRunArgs has connectionId/viewId/optional workspaceId only (404-408), result has items/view without revision/capabilities (422-425), and VIEW_RUN ignores authenticated context (1619-1629). Existing provider factory/token resolution and watcher must be reused instead of copied.",
+      "owner": "integration-owner",
+      "prerequisite": "LSX-WP-007 binding API, authenticated principal/policy resolver, registered base transport schemas and typed renderer consumer, event mapping, exclusive path lease. Protocol/channel/renderer edits are outside this worker packet and need lead-owned approved integration."
+    }
+  ],
+  "proposedCodeContributions": [
+    {
+      "path": "packages/core/src/bases/source-capabilities.ts",
+      "symbols": "Proposed SourceDescriptor/SourceFieldCapability and descriptor validation; final names must reuse accepted shared contracts",
+      "change": "Represent all five source kinds explicitly; descriptor availability distinguishes ready/readOnly/unavailable with typed reason. Enumerate field read/write/create capability and named owner operation mappings independent of current value. Reuse the accepted typed-cell union; represent unsupported, denied/redacted, missing, empty and null as distinct states, not undefined-driven writability. Carry source/connection/schema/policy revisions and freshness; no local row store and no cloned task status. Map KnowledgeCapabilities mutations/features only to actually supported owner fields; Calendar provider capability remains separate from Task completion semantics."
+    },
+    {
+      "path": "packages/server-core/src/bases/source-adapters.ts",
+      "symbols": "Proposed SourceAdapter, describeSource, readSourceRows; normative base.describeSource/base.readSourceRows",
+      "change": "Implement bounded adapters over injected accepted domain authorities, not fake owner implementations. Validate binding+schemaRevision and source namespace under authenticated queryContext; apply current read/field grants before creating returned rows/sample3. Rows use canonical refs and owner revisions/hashes/provenance/freshness. Task ref uses accepted sourceStoreId/ownerPrincipalId/nativeId mapping; Calendar uses calendarEventIdentity and account namespace with scope/deleted/etag/journal checks. Project visibility/membership helpers filter relations but do not supply content authority. Meetings without accepted owner return missingDependency. Reuse bindSurfaceContext/visibleContextEntityRefs/rebaseLiveContext for snapshot/live context without treating renderer context as authorization. Describe write/create from accepted native commands but add no third write API in this slice. Reject all eight normative error discriminants as typed results where applicable; invalid unknown mapping/version is validation/unknownFormat, not guessed values. Subscribe through accepted owner event aliases; caches, if required by accepted query layer, are disposable and keyed by binding/schema/policy/source revision."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-009.test.ts",
+      "symbols": "Proposed source adapter behavior/property and seeded control cases",
+      "change": "Exercise source descriptors and distinct cell states, native/Base Task ref equality, colliding task nativeIds across stores, colliding calendar ids across accounts/calendars, scope/field denied and revoke, missing Meeting adapter, stale binding/schema/owner revision, offline restrictions and native receipt replay/restart. Retain seed/input hash. Broken controls must clone Task into a Base store and collapse Calendar namespace separately; require failure of owner equality/no-mirror-store and ref-distinctness assertions respectively, not arbitrary process failure."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-009.spec.ts",
+      "symbols": "Proposed supported actual Electron source-picker scenario",
+      "change": "Use the discovered supported project runner against the integrated application, not a fixture-only page. Verify exactly the authorized first three sample rows when at least three exist, honest empty/readOnly/unavailable states, native-detail and open-source resolving the same canonical refs, and create disabled with explanatory help before input when owner forbids it. Capture pointer/keyboard/IME/focus/reduced-motion/200% zoom/user-theme/Russian+i18n/Rox Mono evidence. No renderer changes are implicitly authorized by adding this test."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "all5 source descriptors expose explicit capabilities",
+      "currentEvidence": "NotesRepository has get/put only; PersonalTask projections are array filters; Project membership has visibility edges; Calendar CapabilityGap is provider-wide; KnowledgeCapabilities exposes provider features/mutations. No normative source-adapters/source-capabilities files present.",
+      "requiredChange": "Add five explicit descriptors in source-capabilities.ts and describeSource in source-adapters.ts. Compute per-field read/write/create under current owner/policy, disclose unavailable/missing reason, and never infer support from nonempty values. Meeting descriptor must remain honest unavailable until its owner is proven.",
+      "verification": "Five-source describeSource happy/readOnly/unavailable matrix through registered authenticated RPC; source/schema compilation and actual picker readback. Denied actor cannot learn private field values or names through samples.",
+      "missingPrerequisite": "All four accepted explicit dependency receipts; EG-DOMAIN-OWNERS and shared actor/policy/field contract readiness.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "unsupported field distinct from empty/null",
+      "currentEvidence": "PersonalTask optional dueAt/startAt (types.ts:53-54) and Calendar recurrence/etag (types.ts:32-36) encode absent values, not Base support. 05 design:105,109 and 07 model:153 demand distinct value states.",
+      "requiredChange": "Use shared discriminated typed cell states in source-capabilities.ts and mappings in source-adapters.ts: supported empty/null retains capability; unsupported carries reason; denied is redacted with no leaked value. Do not coerce empty to unsupported or denied to zero.",
+      "verification": "For the same mapped field prove supported empty, explicit null and unsupported differ in wire results and renderer semantics; deny/revoke removes value. Empty writable date remains editable while unsupported Calendar custom field never opens editor.",
+      "missingPrerequisite": "Accepted typed-cell schema/renderer consumer and field mapping revision contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "KnowledgeViewRunArgs:404-408 and result:422-425 lack binding/schema/owner revision contract. RequestContext:7-11 has no actor principal. VIEW_RUN:1619 ignores _ctx. Package:4225-4235 requires validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat.",
+      "requiredChange": "Reuse registered accepted request/result contracts for describe/read, validate binding+queryContext and discriminate all eight errors; shared knowledge.ts integration resolves principal from authenticated client and authorizes selector/ref/field at server. No payload actor grant.",
+      "verification": "Compile server and actual renderer consumers against identical schemas; authenticated RPC rejects forged actor/owner/workspace, cross-source namespace and stale schema inputs; error serialization preserves discriminants without private data.",
+      "missingPrerequisite": "Accepted shared transport principal resolver/policy and registered renderer protocol paths; those paths are outside worker write scope.",
+      "state": "BLOCKED_SHARED_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "createNotesRepository:33-49 is a Map with void put, not persistent. PersonalTask:42-75 has optional updatedAt but no revision token. CalendarEvent:34 etag is optional; journal:64-69 tracks sync revision. KnowledgeNode:95 has normalized contentHash. platform-contract:99-110,158-189 distinguishes queued/unverified from live verified success.",
+      "requiredChange": "Adapters read current native owner refs/revisions/hash and truthfully retain freshness/queued state; advertised writes route only through accepted LSX-WP-003/004 or proven provider commands. No adapter commit/receipt invented from updatedAt or normalized hash. Preserve exact owner's hash semantics and regenerate projections from owner after restart.",
+      "verification": "Through integrated Base/native flow mutate supported Task/Note field with accepted command, compare owner/Base canonical ref+revision+hash, restart actual owner/server and compare again. Queued provider response must not show committed. Deleting rebuildable projection must not lose canonical content.",
+      "missingPrerequisite": "Durable owner command/readback receipts and restart harness; no product run permitted in preflight.",
+      "state": "BLOCKED_OWNER_RECEIPTS_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "Package:4266-4280,4300 requires all six proof lanes. Existing helpers alone implement neither authenticated ACL nor restart/provider replay.",
+      "requiredChange": "Behavior tests and real integration cases cover five descriptors, state distinctions, current grants, stale binding/schema/owner revisions, deleted source, missing owner, offline/rateLimited/unknownFormat; delegate mutation conflict/idempotent replay to accepted native commands rather than implementing parallel handlers.",
+      "verification": "Future command bun test tests/lark-suite-extension/lsx-wp-009.test.ts plus independent actual native readback/restart/ACL scenarios and supported Electron runner. Record each attempt, exact evaluated commit/hash, fixture seed, expected/observed results; property cases cover task/calendar namespace collisions.",
+      "missingPrerequisite": "Accepted dependencies, domain runtime composition and real UI runner. No tests executed for this preflight.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "Package:4282-4289 names cloning Task records into Base or merging Calendar IDs without account namespace; assertions are native owner equality/no mirror store and distinct account/calendar/event refs.",
+      "requiredChange": "Add deterministic owner fixture and controls to lsx-wp-009.test.ts with retained seed/input SHA. Check canonical ref/source owner and authoritative persistence, not only equal displayed titles. Distinct Calendar identities must be tested against same remote ID and different account/calendar.",
+      "verification": "Observe green baseline and two separately injected broken implementations failing their named semantic assertions on exact bytes. Preserve failure diagnostics and classify timeout/build/infrastructure failures separately; do not claim mutation proof from those.",
+      "missingPrerequisite": "Implemented adapters and accepted native owner integration fixtures/runner.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "Package:4250-4253,4302 calls for source-picker sample3, native detail/open-source and disabled create before input. RS-BASE-01:42 requires actual Electron computed font, preserved theme and accessible help. Worker has no writable renderer/locale paths.",
+      "requiredChange": "Lead renderer owner integrates descriptors/rows into existing surface; lsx-wp-009.spec.ts exercises the actual app. Use localized help/errors in all ten locales, preserve user theme, prove loaded Rox Mono, pointer/focus/click help and keyboard/IME/zoom/reduced-motion behavior. Do not replace with a new fixture UI or mark N/A.",
+      "verification": "Actual Electron screenshots+ARIA/computed font bound to integrated revision; pointer and keyboard native-open actions resolve same refs; blocked create remains disabled before text entry; IME and focus remain usable at 200% zoom under preserved theme/reduced motion.",
+      "missingPrerequisite": "Approved renderer/locales integration lease and discovered actual Electron runner; UI operations explicitly forbidden during preflight.",
+      "state": "BLOCKED_RENDERER_SCOPE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Package:4273-4280 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI. This artifact records source inspection only, not any product lane PASS.",
+      "requiredChange": "Provide separate authoritative receipts for each lane; attach reviewed diff/exact base+implementation commit, compiled boundary report, seeds/control failures, owner ref/revision/hash readback before/after restart, actual UI evidence and conditional provider/collaboration receipts redacted per actor.",
+      "verification": "Integration owner verifies receipts against integrated commit and rejects plan-only/queued/fixture-only acceptance. Readback source owner and refresh all inspection hashes after material integration changes.",
+      "missingPrerequisite": "Implementation and observed integrated proof for all six required lanes.",
+      "state": "FEATURE_INCOMPLETE"
+    },
+    {
+      "criterion": "same task ref across native and Base",
+      "currentEvidence": "projectTasks:13-15 and taskCalendarAt:101-103 use existing PersonalTask objects/dates, but PersonalTask.id lacks sourceStoreId/ownerPrincipalId; model design:33 requires composite source identity.",
+      "requiredChange": "Task adapter consumes LSX-WP-002 registered namespaced ref and LSX-WP-004 native command/read receipt; only project typed fields with same owner/ref. Preserve startAt vs dueAt mapping and lifecycle completion/cancel/trash semantics. Never mint Base-owned task copy.",
+      "verification": "Two stores with same nativeId yield distinct canonical refs; same task in native and Base matches source owner/ref/revision before and after accepted mutation and restart. Mutation control copying Task into Base must fail.",
+      "missingPrerequisite": "Accepted LSX-WP-002/004 contracts and authoritative native owner readback.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "two Calendar accounts same remoteID remain separate",
+      "currentEvidence": "calendarEventIdentity:103-107 joins accountId/calendarId/id; CalendarAccount:11-20 specifies scoped calendars and connection state; events remain kind event, not tasks.",
+      "requiredChange": "Calendar adapter reuses calendarEventIdentity with accountNamespace/provider connection binding, checks scopedCalendarIds and current grants, preserves timezone/allDay/recurrence/deleted/etag and sync freshness. Never deduplicate on event.id alone or export credentialRef as source data.",
+      "verification": "Same event ID across two accounts and two calendars produces separate refs; account revoke/scope removal hides only affected rows. Provider queued/localDirty does not imply synced commit; timezone/all-day values round-trip unchanged.",
+      "missingPrerequisite": "EG-DOMAIN-OWNERS Calendar authority and current provider capability/ACK receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "meeting unavailable reports missing adapter, not fabricated row",
+      "currentEvidence": "Scoped ROX2_ENTITY_KINDS includes call/calendar-event but no meeting; membership/context utilities provide no Meeting content authority. Package:4269,4305-4307 explicitly requires honest missing adapter and Macro owner readiness.",
+      "requiredChange": "Always include Meetings descriptor with explicit unavailable/missingDependency reason until accepted owner is composed; readSourceRows must return typed missingDependency, not mock record, call alias, empty success, or fabricated permission/revision. When supplied, use owner's registered ref/format rather than altering platform kinds independently.",
+      "verification": "Authenticated describe/read without Meeting owner yields explanatory unavailable descriptor and missingDependency result with no synthetic rows. Repeat after real owner integration using its canonical ref/receipt.",
+      "missingPrerequisite": "Accepted EG-DOMAIN-OWNERS Meeting authority and identity mapping; no global absence claim beyond inspected scope.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Adapter checks source namespace, current policy and field grants; read-only not inferred from missing value.",
+      "currentEvidence": "NotesRepository.get:41-48 accepts caller readable/online booleans; visibleProjectsForEntity:171-182 filters caller-supplied visibility; visibleContextEntityRefs:51-55 filters a supplied set. None establishes authenticated authorization by itself.",
+      "requiredChange": "Source adapter must obtain permitted refs/fields from accepted server evaluator, reject unauthorized bindings before read/filter/sample, carry policy epoch and revalidate revoke/offline reconnect. Use existing visibility helpers only after authoritative policy resolution; redact denied values and invalidate subscriptions/caches on revoke.",
+      "verification": "Cross-store/cross-account/payload actor spoof denied at RPC; hidden source/field absent from sample3 and context. Revoke while picker/view is open removes content and prevents subsequent reads/writes; remote-private offline without approved lease fails closed.",
+      "missingPrerequisite": "Authenticated source/field evaluator and revoke/offline policy receipts from foundation/dependency owners.",
+      "state": "BLOCKED_POLICY_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Capability/revision change invalidates projections; provider queued != acknowledged.",
+      "currentEvidence": "knowledge watcher:1787-1813 already fans out knowledge:changed and automation events; surface-context.ts:76-91 rebinds revisions only for live context. Package:4243-4244 proposes source event aliases/envelope not yet verified.",
+      "requiredChange": "Subscribe adapters/query consumer through existing owner feeds with verified source.capabilitiesChanged/source.snapshotAdvanced aliases. Invalidate actor/policy/binding/schema/source-revision projections on capability/revision/revoke; live context rebases, snapshot context stays pinned until explicit refresh. Keep queued state distinct from ACK and avoid a second event/polling store.",
+      "verification": "Change capability/revision and observe integrated Base refresh, pinned snapshot behavior and native readback; duplicate/replayed events do not regress revision. Queued provider write remains pending until authoritative acknowledgment; restart reconstructs only allowed projections.",
+      "missingPrerequisite": "Accepted common event envelope/alias and owner change feeds; query/renderer consumer integration outside new adapter modules.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/core/src/rox2/notes-repository.ts", "symbol": "NotesRepository/createNotesRepository/nativeNoteRecord", "lineStart": 12, "lineEnd": 68, "sha256": "74384b88dbb255bbc5bad0f87898f6aebc804cd5f6fdaf49131761f49102992c"},
+    {"path": "packages/core/src/tasks/personal/projections.ts", "symbol": "projectTasks", "lineStart": 13, "lineEnd": 19, "sha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path": "packages/core/src/tasks/personal/projections.ts", "symbol": "taskCalendarAt", "lineStart": 100, "lineEnd": 103, "sha256": "d2cdc1cc648ca38d82cdf788e3d88f6ca3e9668184ef2eea04dbaf165f148ff2"},
+    {"path": "packages/core/src/tasks/personal/types.ts", "symbol": "PersonalTask/TaskProject", "lineStart": 42, "lineEnd": 88, "sha256": "4a4a04b3c39fdc1e836dd8be8f24889f7d4d1ffe5ab42cf26910ef33edf14e82"},
+    {"path": "packages/core/src/rox2/project-membership.ts", "symbol": "portfolioEntityIds/visibleProjectsForEntity", "lineStart": 158, "lineEnd": 183, "sha256": "c732cf3b3754b834c0db37b99544449fdbe85c48c7e357212589b64ba4a4a237"},
+    {"path": "packages/core/src/calendar/types.ts", "symbol": "CalendarAccount/CalendarEvent/SyncJournal/CalendarBundle", "lineStart": 11, "lineEnd": 94, "sha256": "3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path": "packages/core/src/calendar/types.ts", "symbol": "calendarEventIdentity", "lineStart": 102, "lineEnd": 114, "sha256": "3654f8c7ed213947f21368633981c89553e46385021d27e568ed5b8a6ee00e9e"},
+    {"path": "packages/core/src/rox2/surface-context.ts", "symbol": "bindSurfaceContext/visibleContextEntityRefs/rebaseLiveContext", "lineStart": 31, "lineEnd": 91, "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "ROX2_ENTITY_KINDS", "lineStart": 17, "lineEnd": 40, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/core/src/rox2/platform-contract.ts", "symbol": "Rox2EntityRef", "lineStart": 232, "lineEnd": 239, "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "KnowledgeViewRunArgs/KnowledgeViewRunResult", "lineStart": 404, "lineEnd": 425, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "registerKnowledgeHandlers/resolveProvider/callProvider", "lineStart": 491, "lineEnd": 555, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "registerKnowledgeHandlers VIEW_RUN handler", "lineStart": 1616, "lineEnd": 1638, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/server-core/src/handlers/rpc/knowledge.ts", "symbol": "registerKnowledgeHandlers WATCH/startKnowledgeWatch fanout", "lineStart": 1787, "lineEnd": 1813, "sha256": "31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path": "packages/server-core/src/handlers/handler-deps.ts", "symbol": "HandlerDeps", "lineStart": 56, "lineEnd": 72, "sha256": "501cc5c3367308146e1ac4045df516f936473d2072f444ac2c300435867dbef7"},
+    {"path": "packages/server-core/src/transport/types.ts", "symbol": "RequestContext/RpcServer", "lineStart": 7, "lineEnd": 34, "sha256": "844abb5154e0f0adfaf54b8ffaf9bd943d0faddef0ffce883343c361c7e83efa"},
+    {"path": "packages/core/src/knowledge/capabilities.ts", "symbol": "KnowledgeCapabilities", "lineStart": 6, "lineEnd": 31, "sha256": "5e2ddbe93a42b00936666bb6f98f1da043ad3f4581eb30e0d6f1fecfd12386f1"},
+    {"path": "packages/core/src/knowledge/provider.ts", "symbol": "KnowledgeNode/KnowledgeProvider/hashKnowledgeContent", "lineStart": 84, "lineEnd": 127, "sha256": "e675f22be93f414e6fbdad2f305bc23208c821d01a1320be1c6bfb26c3156a3c"},
+    {"path": "packages/core/src/knowledge/provider.ts", "symbol": "createKnowledgeRegistry.resolve", "lineStart": 179, "lineEnd": 193, "sha256": "e675f22be93f414e6fbdad2f305bc23208c821d01a1320be1c6bfb26c3156a3c"},
+    {"path": "packages/core/src/knowledge/refs.ts", "symbol": "KnowledgeRef/serializeKnowledgeRef", "lineStart": 19, "lineEnd": 63, "sha256": "b5e2d52d1e58687854ef30129c9db1fd4f97b9d6389d8675bb6dae654ef05241"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "/work_packages/8", "lineStart": 4004, "lineEnd": 4383, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-009 execution record", "lineStart": 715, "lineEnd": 806, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "sections 4 and 9 canonical boundaries/native field mapping/source preview", "lineStart": 43, "lineEnd": 216, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c", "inspectedRanges": [[43,126],[195,220],[257,298]]},
+    {"path": "docs/lark-suite-reference/07-domain-entity-model.md", "symbol": "section 2 source identity and section 5 authority", "lineStart": 24, "lineEnd": 149, "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b", "inspectedRanges": [[24,33],[131,176]]},
+    {"path": "docs/rox-suite/published/RS-BASE-01.md", "symbol": "published canonical authority/actor rules and RS-DRV-01 dependency", "lineStart": 44, "lineEnd": 113, "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"}
+  ],
+  "evidenceStatus": {
+    "sourceOnly": true,
+    "inputManifestHashes": "Both inspected normative JSON hashes match dispatch input_manifest exactly.",
+    "workingTree": "Lead-owned dirty wave0 tree supplied by dispatch; no Git commands executed, HEAD/dirty state not independently inspected or changed.",
+    "sourceSnapshot": "Whole-file SHA256 obtained using read-only shasum after scoped inspection. Six normative read-only source hashes match the hashes recorded at product baseline. This does not establish that all current checkout files belong to input_revision or that runtime is ready.",
+    "freshness": "Inspection is hash-bound and may become stale during root integration. Rehash/re-read changed seams at implementation dispatch and invalidate mismatched source evidence; no atomic snapshot or lease claimed.",
+    "codegraph": "Attempted primary explore; project has no index, so used scoped read/grep/glob. No index initialized.",
+    "find": "Scoped descriptive find failed due tool judge provider HTTP 402; continued via exact normative source paths and direct imports without claiming a successful behavioral search.",
+    "productVerification": "NOT_RUN by explicit preflight authorization: no builds, tests, native UI, runtime or network operations.",
+    "providedPacketVerifier": "Not run in preflight; verification_argv belongs to lead artifact acceptance. Report validation can parse JSON and check exact identifiers, explicit dependency/owned-path arrays, complete DoD coverage and source hashes read-only without invoking product tests or mutating other paths."
+  },
+  "nextExecutableAction": "Lead accepts this source-backed preflight artifact. After wave0 commit and accepted LSX-WP-002/003/004/007 artifact+readback receipts, resolve immutable spec delivery hashes and EG-DOMAIN-OWNERS readiness, refresh inspected hashes, reconcile published RS-DRV-01 and typed actor/field/UI gates, acquire notes-repository.ts/knowledge.ts leases and issue an implementation packet bound to the approved integrated base. First implementation contribution is source-capabilities.ts/source-adapters.ts using those accepted contracts; do not start product writes from this preflight.",
+  "risks": [
+    "No Meeting content authority found within permitted seams; do not equate call/calendar-event/task meeting links with a canonical Meeting owner.",
+    "ProjectMembershipStore stores edges/visibility only; TaskProject is a separate personal-task type. Neither proves Macro Project authority/revision/readback.",
+    "NotesRepository seed Map is not the actual durable Notes engine; broad replacement or new Base-owned content Map would violate single authority. Async authority signatures/callers may require reviewed scope expansion.",
+    "Knowledge registry resolve falls back to scheme/default provider at provider.ts:179-193 and serializeKnowledgeRef omits connectionId at refs.ts:61-63. Adapters must resolve an explicitly accepted connection-bound canonical ref, not reuse these compact forms as globally unique row identity.",
+    "Calendar etag is optional; Task updatedAt is optional; provider normalized content hash trims/normalizes line endings. Do not fabricate revision or claim raw-file preservation from these values.",
+    "Actor principal, shared protocol registration, renderer/source-picker and locales are missing from the bounded writable scope. Tests alone cannot supply those integrations; lead-approved integration contract is required before claiming full DoD.",
+    "Sample3 is only a preview of authorized real rows, not fabricated demonstration data or a substitute for full query snapshot/ACL totals behavior.",
+    "Current caller-supplied readable flags/context sets/workspace selectors are not server authorization. Remote-private offline reads require approved lease policy and fail closed otherwise.",
+    "Published RS-BASE-01 baseline and new file list differ from LSX adapter packet. Preserve bounded ownership and explicitly reconcile foundation gates, rather than importing the entire published feature into this slice.",
+    "Root integration can invalidate file hashes during/after inspection; all readiness/runtime claims remain unverified until revision-bound acceptance receipts."
+  ]
+}

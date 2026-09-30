@@ -20,11 +20,12 @@ import {
   DISCONNECTED_CLIENT_TTL_MS,
   isErrorCode,
   isLocalOnly,
+  CodedError,
   type MessageEnvelope,
   type PushTarget,
   type ErrorCode,
 } from '@craft-agent/shared/protocol'
-import type { RpcServer, HandlerFn, RequestContext, RpcHandlerOptions } from './types'
+import type { RpcServer, HandlerFn, RequestContext, RpcHandlerOptions, WorkspaceAuthorityAuthentication, WorkspaceAuthoritySession } from './types'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 import { createLogger } from '@craft-agent/shared/utils'
 import { CLIENT_OPEN_FILE_DIALOG } from './capabilities'
@@ -54,6 +55,8 @@ interface ClientConnection {
    * window/workspace binding. Raw handshake fields never create this state.
    */
   localBinding: TrustedLocalClientBinding | null
+  /** Resolver-owned opaque result; no Actor or identity enters through handshake fields. */
+  workspaceSession: WorkspaceAuthoritySession | null
   capabilities: Set<string>
   missedPongs: number
   alive: boolean
@@ -110,6 +113,12 @@ export interface WsRpcServerOptions {
   port?: number
   /** Whether to require a bearer token on handshake. Default: false */
   requireAuth?: boolean
+  /**
+   * Explicit shared authority mode. Requires a real pinned-issuer resolver and live refresh.
+   * Legacy boolean/cookie/local-proof auth is rejected. Generic push/client invocation is
+   * unavailable; authorized durable domain replay uses authenticatedWorkspace handlers.
+   */
+  workspaceAuthority?: WorkspaceAuthorityAuthentication
   /** Token validator. Called when requireAuth is true. */
   validateToken?: (token: string) => Promise<boolean>
   /**
@@ -182,6 +191,7 @@ export class WsRpcServer implements RpcServer {
   private readonly host: string
   private readonly requestedPort: number
   private readonly requireAuth: boolean
+  private readonly workspaceAuthority: WorkspaceAuthorityAuthentication | null
   private readonly validateToken: ((token: string) => Promise<boolean>) | null
   private readonly validateSessionCookie: ((cookieHeader: string | null) => Promise<boolean>) | null
   private readonly serverId: string
@@ -197,7 +207,16 @@ export class WsRpcServer implements RpcServer {
   constructor(opts?: WsRpcServerOptions) {
     this.host = opts?.host ?? '127.0.0.1'
     this.requestedPort = opts?.port ?? 0
-    this.requireAuth = opts?.requireAuth ?? false
+    if (opts && Object.hasOwn(opts, 'workspaceAuthority') && (!opts.workspaceAuthority
+      || typeof opts.workspaceAuthority.authenticate !== 'function'
+      || typeof opts.workspaceAuthority.revalidate !== 'function')) {
+      throw new Error('Explicit workspace authority resolver required')
+    }
+    if (opts?.workspaceAuthority && (opts.validateToken || opts.validateSessionCookie || opts.resolveLocalClientBinding)) {
+      throw new Error('Workspace authority cannot accept legacy or local authentication alternatives')
+    }
+    this.workspaceAuthority = opts?.workspaceAuthority ?? null
+    this.requireAuth = this.workspaceAuthority !== null || (opts?.requireAuth ?? false)
     this.validateToken = opts?.validateToken ?? null
     this.validateSessionCookie = opts?.validateSessionCookie ?? null
     this.serverId = opts?.serverId ?? 'local'
@@ -247,10 +266,44 @@ export class WsRpcServer implements RpcServer {
     }
   }
 
-  private registeredChannelsFor(client: Pick<ClientConnection, 'localBinding'>): string[] {
-    return [...this.handlers].flatMap(([channel, registration]) =>
-      registration.access === 'localElectron' && !client.localBinding ? [] : [channel],
-    )
+  private registeredChannelsFor(client: Pick<ClientConnection, 'localBinding' | 'workspaceSession'>): string[] {
+    return [...this.handlers].flatMap(([channel, registration]) => {
+      if (registration.access === 'localElectron' && !client.localBinding) return []
+      if (registration.access === 'authenticatedWorkspace' && !client.workspaceSession) return []
+      if (this.workspaceAuthority && registration.access !== 'authenticatedWorkspace') return []
+      return [channel]
+    })
+  }
+
+  private assertWorkspaceSession(bound: WorkspaceAuthoritySession, workspaceId: string): void {
+    const { actor, identity } = bound
+    if (!actor || !identity || !identity.issuer || !identity.subject
+      || actor.principalId !== identity.principalId || actor.sessionId !== identity.sessionId
+      || actor.deviceId !== identity.deviceId || actor.expiresAt !== identity.expiresAt
+      || !actor.sessionId || !actor.deviceId || !Number.isFinite(actor.expiresAt)
+      || actor.expiresAt <= Date.now() || !Array.isArray(actor.authenticatedWorkspaceIds)) {
+      throw new CodedError('AUTH_FAILED', 'Authentication required')
+    }
+    if (!actor.authenticatedWorkspaceIds.includes(workspaceId)) throw new CodedError('FORBIDDEN', 'Request denied')
+  }
+
+  private sameWorkspaceIdentity(left: WorkspaceAuthoritySession, right: WorkspaceAuthoritySession): boolean {
+    return left.identity.issuer === right.identity.issuer && left.identity.subject === right.identity.subject
+      && left.identity.principalId === right.identity.principalId && left.identity.sessionId === right.identity.sessionId
+      && left.identity.deviceId === right.identity.deviceId
+  }
+
+  private async refreshWorkspaceClient(client: ClientConnection): Promise<WorkspaceAuthoritySession> {
+    const resolver = this.workspaceAuthority
+    const previous = client.workspaceSession
+    if (!resolver || !previous || !client.workspaceId) throw new CodedError('AUTH_FAILED', 'Authentication required')
+    let current: WorkspaceAuthoritySession
+    try { current = await resolver.revalidate(previous) }
+    catch { throw new CodedError('AUTH_FAILED', 'Authentication required') }
+    if (!this.sameWorkspaceIdentity(previous, current)) throw new CodedError('AUTH_FAILED', 'Authentication required')
+    this.assertWorkspaceSession(current, client.workspaceId)
+    client.workspaceSession = current
+    return current
   }
 
   private resolveBinding(envelope: MessageEnvelope): TrustedLocalClientBinding | null {
@@ -267,6 +320,9 @@ export class WsRpcServer implements RpcServer {
   }
 
   push(channel: string, target: PushTarget, ...args: any[]): void {
+    if (this.workspaceAuthority) {
+      throw new CodedError('CAPABILITY_UNAVAILABLE', 'Shared generic push is unavailable; use authorized domain replay')
+    }
     const timestamp = Date.now()
 
     for (const client of this.clients.values()) {
@@ -296,6 +352,9 @@ export class WsRpcServer implements RpcServer {
   }
 
   invokeClient(clientId: string, channel: string, ...args: any[]): Promise<any> {
+    if (this.workspaceAuthority) {
+      return Promise.reject(new CodedError('CAPABILITY_UNAVAILABLE', 'Shared client invocation is unavailable'))
+    }
     return new Promise((resolve, reject) => {
       const client = this.clients.get(clientId)
 
@@ -459,6 +518,7 @@ export class WsRpcServer implements RpcServer {
     }
 
     let handshakeCompleted = false
+    let sharedHandshakeInProgress = false
     let handshakeTimeout: ReturnType<typeof setTimeout> | null = null
 
     // Give the client 5 seconds to send a handshake
@@ -478,12 +538,16 @@ export class WsRpcServer implements RpcServer {
       }
 
       if (!handshakeCompleted) {
+        if (this.workspaceAuthority && sharedHandshakeInProgress) {
+          ws.close(4003, 'Handshake already pending')
+          return
+        }
         if (envelope.type !== 'handshake') {
           ws.close(4003, 'Expected handshake')
           return
         }
 
-        if (handshakeTimeout) {
+        if (handshakeTimeout && !this.workspaceAuthority) {
           clearTimeout(handshakeTimeout)
           handshakeTimeout = null
         }
@@ -505,8 +569,44 @@ export class WsRpcServer implements RpcServer {
           return
         }
 
-        // Auth check — bearer token OR session cookie (web UI)
-        if (this.requireAuth) {
+        let workspaceSession: WorkspaceAuthoritySession | null = null
+        if (this.workspaceAuthority) {
+          sharedHandshakeInProgress = true
+          const fields = new Set(['id', 'type', 'protocolVersion', 'token', 'workspaceId', 'clientCapabilities', 'reconnectClientId', 'lastSeq'])
+          try {
+            if (Object.keys(envelope).some(key => !fields.has(key))
+              || !Object.hasOwn(envelope, 'token') || !Object.hasOwn(envelope, 'workspaceId')
+              || typeof envelope.token !== 'string' || envelope.token.length > 16384
+              || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(envelope.token)
+              || typeof envelope.workspaceId !== 'string'
+              || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(envelope.workspaceId)
+              || (envelope.clientCapabilities !== undefined && (!Array.isArray(envelope.clientCapabilities)
+                || envelope.clientCapabilities.some(value => typeof value !== 'string')))
+              || (envelope.reconnectClientId !== undefined && (typeof envelope.reconnectClientId !== 'string'
+                || !envelope.reconnectClientId || !Number.isSafeInteger(envelope.lastSeq) || Number(envelope.lastSeq) < 0))
+              || (envelope.lastSeq !== undefined && envelope.reconnectClientId === undefined)) {
+              throw new CodedError('AUTH_FAILED', 'Authentication required')
+            }
+            workspaceSession = await this.workspaceAuthority.authenticate(envelope.token)
+            workspaceSession = await this.workspaceAuthority.revalidate(workspaceSession)
+            // workspaceId is only route selection; effective scope comes from current persisted membership.
+            this.assertWorkspaceSession(workspaceSession, envelope.workspaceId)
+          } catch {
+            this.sendError(ws, envelope.id, 'AUTH_FAILED', 'Authentication required')
+            ws.close(4005, 'Auth failed')
+            if (handshakeTimeout) clearTimeout(handshakeTimeout)
+            return
+          }
+          if (ws.readyState !== ws.OPEN) return
+          if (this.maxClients > 0 && this.clients.size >= this.maxClients) {
+            ws.close(4008, 'Server at capacity')
+            return
+          }
+          if (handshakeTimeout) { clearTimeout(handshakeTimeout); handshakeTimeout = null }
+        }
+
+        // Standalone auth preserves its legacy bearer-token OR session-cookie behavior.
+        if (this.requireAuth && !this.workspaceAuthority) {
           let authenticated = false
 
           // 1. Try bearer token (standard path)
@@ -527,9 +627,9 @@ export class WsRpcServer implements RpcServer {
           }
         }
 
-        const localBinding = this.resolveBinding(envelope)
+        const localBinding = this.workspaceAuthority ? null : this.resolveBinding(envelope)
         const workspaceId = localBinding?.workspaceId ?? envelope.workspaceId ?? null
-        const webContentsId = localBinding?.webContentsId ?? envelope.webContentsId ?? null
+        const webContentsId = this.workspaceAuthority ? null : localBinding?.webContentsId ?? envelope.webContentsId ?? null
 
         // ── Reconnect attempt ──
         if (envelope.reconnectClientId && envelope.lastSeq != null) {
@@ -537,11 +637,40 @@ export class WsRpcServer implements RpcServer {
           if (entry) {
             const prevClient = entry.client
 
+            if (this.workspaceAuthority && workspaceSession && prevClient.workspaceSession
+              && prevClient.workspaceId === workspaceId
+              && this.sameWorkspaceIdentity(prevClient.workspaceSession, workspaceSession)) {
+              // Shared replay is never sourced from a transport buffer. Current authorized
+              // domain.events handles durable replay; refresh is mandatory even for identical identity.
+              clearTimeout(entry.timer)
+              prevClient.ws = ws
+              prevClient.workspaceSession = workspaceSession
+              prevClient.capabilities.clear()
+              prevClient.alive = true
+              prevClient.missedPongs = 0
+              prevClient.eventBuffer = []
+              prevClient.lastAckedSeq = 0
+              prevClient.lastSentSeq = 0
+              handshakeCompleted = true
+              this.disconnectedClients.delete(prevClient.id)
+              this.clients.set(prevClient.id, prevClient)
+              this.safeSend(ws, serializeEnvelope({ id: envelope.id, type: 'handshake_ack',
+                protocolVersion: PROTOCOL_VERSION, serverVersion: this.serverVersion || undefined,
+                clientId: prevClient.id, workspaceId: prevClient.workspaceId ?? undefined,
+                registeredChannels: this.registeredChannelsFor(prevClient), reconnected: true, stale: true }))
+              this.setupClientHandlers(ws, prevClient)
+              this.onClientConnected?.({ clientId: prevClient.id, workspaceId: prevClient.workspaceId,
+                webContentsId: null, capabilities: [], isLocalElectronClient: false })
+              return
+            }
+
             // A reconnect must prove the same effective identity. In particular,
             // an old local client cannot reconnect without renewing its
             // Electron-main binding proof.
             const identityMatch =
-              prevClient.workspaceId === workspaceId
+              this.workspaceAuthority === null
+              && prevClient.workspaceSession === null
+              && prevClient.workspaceId === workspaceId
               && prevClient.webContentsId === webContentsId
               && (
                 (prevClient.localBinding === null && localBinding === null)
@@ -654,7 +783,8 @@ export class WsRpcServer implements RpcServer {
           workspaceId,
           webContentsId,
           localBinding,
-          capabilities: new Set(envelope.clientCapabilities ?? []),
+          workspaceSession,
+          capabilities: new Set(this.workspaceAuthority ? [] : envelope.clientCapabilities ?? []),
           missedPongs: 0,
           alive: true,
           eventBuffer: [],
@@ -674,6 +804,7 @@ export class WsRpcServer implements RpcServer {
           registeredChannels: this.registeredChannelsFor(client),
           webContentsId: client.webContentsId ?? undefined,
           workspaceId: client.workspaceId ?? undefined,
+          stale: this.workspaceAuthority && envelope.reconnectClientId ? true : undefined,
         }
         this.safeSend(ws, serializeEnvelope(ack))
 
@@ -722,6 +853,9 @@ export class WsRpcServer implements RpcServer {
       }
     })
 
+    ws.on('close', () => {
+      if (this.workspaceAuthority && handshakeTimeout) clearTimeout(handshakeTimeout)
+    })
     ws.on('error', () => {
       // Connection errors are handled by the close event
     })
@@ -762,6 +896,15 @@ export class WsRpcServer implements RpcServer {
       return
     }
 
+    if ((registration.access === 'authenticatedWorkspace' && !client.workspaceSession)
+      || (this.workspaceAuthority && registration.access !== 'authenticatedWorkspace')) {
+      this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', 'Channel unavailable')
+      return
+    }
+    if (this.workspaceAuthority && args !== undefined && !Array.isArray(args)) {
+      this.sendResponseError(client.ws, id, channel, 'INVALID_PAYLOAD', 'Request failed')
+      return
+    }
     this.rpcCallCounter?.record(channel)
 
     // LOCAL_ONLY is a desktop-process gate, not a second handshake
@@ -784,13 +927,12 @@ export class WsRpcServer implements RpcServer {
       return
     }
 
-    const ctx: RequestContext = {
-      clientId: client.id,
-      workspaceId: client.workspaceId,
-      webContentsId: client.webContentsId,
-    }
-
     try {
+      const current = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : null
+      const ctx: RequestContext = {
+        clientId: client.id, workspaceId: client.workspaceId, webContentsId: client.webContentsId,
+        ...(current ? { actor: current.actor } : {}),
+      }
       const result = await Promise.race([
         registration.handler(ctx, ...(args ?? [])),
         new Promise<never>((_, reject) =>
@@ -804,12 +946,14 @@ export class WsRpcServer implements RpcServer {
         channel,
         result,
       }
-      this.safeSend(client.ws, serializeEnvelope(response))
+      const data = serializeEnvelope(response)
+      if (this.workspaceAuthority) await this.refreshWorkspaceClient(client)
+      this.safeSend(client.ws, data)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      const rawCode = (err as { code?: unknown } | null)?.code
+      const rawCode = err && typeof err === 'object' && 'code' in err ? err.code : undefined
       const code: ErrorCode = isErrorCode(rawCode) ? rawCode : 'HANDLER_ERROR'
-      this.sendResponseError(client.ws, id, channel, code, message)
+      this.sendResponseError(client.ws, id, channel, code, this.workspaceAuthority ? 'Request failed' : message)
     }
   }
 
@@ -845,6 +989,12 @@ export class WsRpcServer implements RpcServer {
   /** Wire up close + pong handlers for a WebSocket ↔ ClientConnection pair. */
   private setupClientHandlers(ws: WebSocket, client: ClientConnection): void {
     ws.on('close', () => {
+      if (this.workspaceAuthority && client.ws !== ws) return
+      if (this.workspaceAuthority) {
+        client.eventBuffer = []
+        client.lastAckedSeq = 0
+        client.lastSentSeq = 0
+      }
       transportLog.info('Client disconnected', { clientId: client.id })
       this.clients.delete(client.id)
 
@@ -950,7 +1100,7 @@ export class WsRpcServer implements RpcServer {
    */
   updateClientWorkspace(clientId: string, workspaceId: string): void {
     const client = this.clients.get(clientId)
-    if (client && !client.localBinding) {
+    if (client && !client.localBinding && !client.workspaceSession) {
       client.workspaceId = workspaceId
     }
   }

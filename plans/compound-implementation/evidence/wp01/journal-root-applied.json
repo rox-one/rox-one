@@ -1,0 +1,68 @@
+[
+  {
+    "path": "packages/shared/src/utils/files.ts",
+    "baseSha256": "5e8d95f2b41b8ecf3d919fc17b84875c1109cddce36d58210b1ff1b217a7e3b3",
+    "proposedSha256": "b396ae85a2910df6e776b0cec11f1868bb20b1bd153a8b77d6e7b8d8e584a62c",
+    "patchPath": "/tmp/rox-wp01-crash-recovery/packages__shared__src__utils__files.ts.patch",
+    "patchSha256": "b47f4aba0af37a408196b30fecc374cc9fbe43ec55210cd82cab8e9dc16ca5d3",
+    "manifest": "/tmp/rox-wp01-crash-recovery/durability-patch-manifest.json"
+  },
+  {
+    "path": "packages/shared/src/config/storage.ts",
+    "baseSha256": "3dd50b8f1af561f849e16dd2d029ef3499a3736ddf71aa5012a55b059b81efb7",
+    "proposedSha256": "2e49b5c3050b0093fa063630a115632c33b9d4d2e787f2d2d51dcb049530030c",
+    "patchPath": "/tmp/rox-wp01-crash-recovery/packages__shared__src__config__storage.ts.patch",
+    "patchSha256": "8616daeca39084a6dac29bd96b26976521eeeb30a21c92892ce1a0c8ed6533e9",
+    "manifest": "/tmp/rox-wp01-crash-recovery/durability-patch-manifest.json"
+  },
+  {
+    "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+    "baseSha256": "67a1466b3f2dedf30da4708c1125d7aa13671419a378038174f117a14876a01a",
+    "proposedSha256": "bda4d5b6f94753850322b379460a3a01595703624ab2f2eda7b637ad73a724b7",
+    "patchPath": "/tmp/rox-wp01-crash-recovery/packages__shared__src__credentials__backends__secure-storage.ts.patch",
+    "patchSha256": "85b89c0c82314da74ea11825bda42122107d3a7d31b99d31267fc12f5cfad17a",
+    "manifest": "/tmp/rox-wp01-crash-recovery/durability-patch-manifest.json"
+  },
+  {
+    "path": "apps/electron/src/main/project-authority.ts",
+    "baseSha256": "eb384c98f2bc6d3692d06621893618a79d746bfc95cdb51735e4f95c5608fe36",
+    "proposedSha256": "6f35b1b5bd76b7c8fecff5107e6bab72ad428f6858f6da0803e3c0d2b4f03540",
+    "patch": "/tmp/rox-wp01-crash-recovery/main-integration/apps__electron__src__main__project-authority.ts.patch",
+    "patchSha256": "32954a4c9700fa5ef35ad72137c3254b0d49bb8e888a69de877d381043f3ae8b",
+    "manifest": "/tmp/rox-wp01-crash-recovery/main-integration/patch-manifest.json"
+  },
+  {
+    "path": "apps/electron/src/main/index.ts",
+    "baseSha256": "6a66891cb73cba51793643e3206d2de9c3d229136c18513a35d8f2239c50a7d5",
+    "proposedSha256": "59e83da201dd22471da7178c108a8f8e89ba30501ebccb22842c3d6f3fd74049",
+    "patch": "/tmp/rox-wp01-crash-recovery/main-integration/apps__electron__src__main__index.ts.patch",
+    "patchSha256": "96f4cee1400e1e9c8d815dc26a4116fc6d2afd055b032a82ead17bfe6ecf1136",
+    "manifest": "/tmp/rox-wp01-crash-recovery/main-integration/patch-manifest.json"
+  },
+  {
+    "path": "tests/macro-integration/wp-01-native-routing.test.ts",
+    "baseSha256": "ef6859f9629b14d83f287fd227a040622df046cd2c99821e219d705ac78793d9",
+    "proposedSha256": "63ad87681445d60779e86ad54526ab19a04429aa02e9174d7e33326281698b54",
+    "patch": "/tmp/rox-wp01-crash-recovery/main-integration/tests__macro-integration__wp-01-native-routing.test.ts.patch",
+    "patchSha256": "ba4d96e696bd822b1a46f05a59aa11781ce0bf805ca6d1b2c60b68eb570a9f6b",
+    "manifest": "/tmp/rox-wp01-crash-recovery/main-integration/patch-manifest.json"
+  },
+  {
+    "path": "apps/electron/src/main/project-authority-journal.ts",
+    "source": "/tmp/rox-wp01-crash-recovery/main-integration/proposed/apps/electron/src/main/project-authority-journal.ts",
+    "sha256": "7751125f2e6c6703d68bdb2d7b48dedf3fc8d68a51ebcd03336b336902d45960",
+    "status": "PROPOSED_ONLY_NEW_PATH_NOT_AUTHORIZED"
+  },
+  {
+    "path": "tests/macro-integration/wp-01-authority-crash-child.ts",
+    "source": "/tmp/rox-wp01-crash-recovery/main-integration/proposed/tests/macro-integration/wp-01-authority-crash-child.ts",
+    "sha256": "9109cbf7ad317432277acf2a1494041770e8523f617ded6cf134a46eac281482",
+    "status": "PROPOSED_ONLY_NEW_PATH_NOT_AUTHORIZED"
+  },
+  {
+    "path": "tests/macro-integration/wp-01-authority-crash.test.ts",
+    "source": "/tmp/rox-wp01-crash-recovery/main-integration/proposed/tests/macro-integration/wp-01-authority-crash.test.ts",
+    "sha256": "ba06192b63f3f8b34da5b16fb33094e9525535bef0bbbd43635f45078373a3f6",
+    "status": "PROPOSED_ONLY_NEW_PATH_NOT_AUTHORIZED"
+  }
+]

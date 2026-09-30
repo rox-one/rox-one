@@ -1,0 +1,359 @@
+{
+  "task_id": "LSX-WP-027-preflight",
+  "attempt_id": "2789b2390312910f41c097f959109f1c",
+  "packet_hash": "d480ca1886ce6f7f104dd99454ee6bb91429ae8cf85c947edb5ea2b4655ab399",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-027",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "dependencies": ["LSX-WP-006", "LSX-WP-026"],
+  "inspectionBoundary": {
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-027.json",
+    "implementationStarted": false,
+    "buildsTestsUiNetworkRun": false,
+    "gitStateChanged": false,
+    "revisionMeaning": "input_revision is the dispatch binding, not a newly observed clean checkout or implementation revision. No Git commands were run.",
+    "sourceGeneration": "Whole-file SHA256 values below were observed on the working-tree files after reading the specified ranges. The three normative existing source files match their published baseline blob hashes; this does not establish that root-owned wave0 files or dependency implementations are accepted. Evidence must be invalidated on source drift and refreshed after the lead's wave0 commit.",
+    "toolLimitations": ["Codegraph reported no index for this project; scoped read/grep/glob were used instead.", "The scoped find call failed its judgment requests with provider 402; its no-hits response is not absence evidence. Named specification paths were read directly."]
+  },
+  "foundationGates": [
+    {
+      "id": "EG-DISCUSSIONS",
+      "relationship": "Explicit external prerequisite, not an LSX DAG edge",
+      "source": "plans/lark-suite-reference/work-packages.json:123-129,9868-9871; docs/rox-suite/published/RS-MSG-02.md:3,34,38-40",
+      "requiredProof": "Accepted common Discussion/Message native store, canonical message.create/update/delete and parent resolver for Note/Page, own current ACL, transaction/idempotency/outbox, revisioned reads and durable import provenance mapping. discussion.postAnchored must adapt to this authority, not create a DocumentComments store or use agent Chat/session messages.",
+      "state": "READINESS_NOT_VERIFIED",
+      "missingPrerequisite": "Exact accepted implementation commit, callable authenticated transport/service contracts and native runtime/readback receipt from the common messaging owner. Neither entity-kind declarations nor an issue publication establishes these."
+    },
+    {
+      "id": "EG-ATTENTION",
+      "relationship": "Explicit external prerequisite, not an LSX DAG edge",
+      "source": "plans/lark-suite-reference/work-packages.json:131-137,9868-9871; docs/lark-suite-reference/06-rox-docs-design.md:112",
+      "requiredProof": "One durable intended-recipient notification owner: current ACL intersection, mentions/assignments/subscriptions, recipient dedup, durable outcomes and replay/restart readback without workspace broadcast.",
+      "state": "READINESS_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted Macro WP-07 attention owner/service receipt and exact recipient/outbox contracts. No simulation or local list can replace this gate."
+    },
+    {
+      "id": "PUBLISHED-RS-DOC-01-FOUNDATIONS",
+      "relationship": "Hidden published-spec foundation beyond explicit dependencies [LSX-WP-006, LSX-WP-026]",
+      "source": "docs/rox-suite/published/RS-DOC-01.md:37,43,62,79-87",
+      "requiredProof": "RS-DOC-01 requires RS-DRV-01 (#1109) and RS-MSG-02 (#1107); its collaborative lane requires the proven editor/CRDT binding, durable document WAL, current ACL/revoke fencing and no second production writer. Common File/attachment ACL is required when attachments are used.",
+      "state": "READINESS_NOT_VERIFIED",
+      "missingPrerequisite": "Lead must supply scope-specific accepted Drive/File/document authority and RS-MSG-02 receipts, not expand this package into their implementation. Markdown marker/range support must not be advertised as CRDT relative-position support."
+    },
+    {
+      "id": "PUBLISHED-RS-MSG-02-HOST",
+      "relationship": "Hidden transitive published-spec foundation",
+      "source": "docs/rox-suite/published/RS-MSG-02.md:34,38-40,59,75-81",
+      "requiredProof": "RS-MSG-02 requires RS-MSG-01 (#1106) as host and reuses common File/mention/attention ports. Compile the canonical message command and parent policy before any anchored wrapper.",
+      "state": "READINESS_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted RS-MSG-01/RS-MSG-02 service interface and evidence for the affected discussion lane; no separate host, login engine, notification owner or agent-transcript migration."
+    },
+    {
+      "id": "TRANSITIVE-EDITOR-AND-FORMAT",
+      "relationship": "Transitive prerequisites conveyed by explicit dependencies, not extra explicit DAG edges",
+      "source": "plans/lark-suite-reference/work-packages.json:3005-3007,3147-3189,9506-9513,9662-9670; docs/lark-suite-reference/06-rox-docs-design.md:106,176-178",
+      "requiredProof": "LSX-WP-006 accepted stable block map with marker version/source revision/authority epoch and malformed/duplicate diagnostics; LSX-WP-026 accepted committed editor selection/revision and durable draft integration. LSX-WP-006 depends on 005; 026 depends on 003/005/006 and EG-COLLABORATION.",
+      "state": "DEPENDENCY_RECEIPTS_NOT_PROVIDED",
+      "missingPrerequisite": "Lead wave0 commit and accepted dependency receipts. Presence of files under packages/core/src/docs or packages/server-core/src/docs is not acceptance, and those root-owned files were not modified or treated as implemented dependencies."
+    },
+    {
+      "id": "BOUNDED-INTEGRATION-SCOPE",
+      "relationship": "Foundation/lease gate discovered from actual scoped code",
+      "source": "plans/lark-suite-reference/work-packages.json:9973-9996,10177-10187; apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx:114-138,217-287,311-351,396-469",
+      "requiredProof": "Root must supply the documentRef/revision/epoch/logical-selection transport seam to NotesComments; current props expose only noteId, quote strings and a synchronous legacy comment-array callback. Existing highlights, tooltip and composer must consume current authorized anchor projections and must not remain quote-search or stale-private-body bypasses.",
+      "state": "REVIEWED_PACKET_EXPANSION_REQUIRED",
+      "missingPrerequisite": "Current named shared symbols omit NoteComment, saveNoteComments, NotesCommentComposer, NotesCommentTooltip and NotesCommentHighlights. Any edits there, their caller/editor bindings, server registration or common store require a reviewed symbol/path lease extension or accepted prerequisite-owner integration, not worker scope creep."
+    },
+    {
+      "id": "LOCALIZATION-AND-NATIVE-RUNNER",
+      "relationship": "Full-DoD delivery gate outside the five normative new files",
+      "source": "plans/lark-suite-reference/work-packages.json:10048-10051,10069-10078,10101; docs/rox-suite/published/RS-MSG-02.md:68-72; repository AGENTS.md i18n rule",
+      "requiredProof": "Every new label/help/error uses t() and matching keys in all ten existing locales; actual Electron runner exercises the real dock, current user theme, loaded Rox Mono and input/accessibility states.",
+      "state": "OWNER_AND_RUNNER_NOT_VERIFIED",
+      "missingPrerequisite": "Integration owner must lease existing localization files beyond the two listed shared paths and discover the supported native UI runner. No invented runner command, fallback English literals or isolated fixture-only completion."
+    },
+    {
+      "id": "REVISION-MANIFEST-AND-LEASES",
+      "relationship": "Normative launch and evidence gates",
+      "source": "plans/lark-suite-reference/work-packages.json:10142-10187; plans/lark-suite-reference/execution-packages.json:2359-2369",
+      "requiredProof": "Resolve reference package revision/digest from delivery manifest and verify spec hashes; lead resolves the published baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab against dispatch a21aeab1da5a67e56788384ff930945b0f487879 plus wave0/dependency commits. Acquire exclusive leases for both shared paths and supply an approved implementation packet.",
+      "state": "NOT_READY_FOR_IMPLEMENTATION",
+      "missingPrerequisite": "No resolved manifest, wave0 commit, accepted prerequisite receipts or leases supplied in this packet; no checkout/Git mutation is authorized to resolve these in preflight."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/docs/discussion-anchor.ts",
+    "packages/server-core/src/docs/discussion-adapter.ts",
+    "apps/electron/src/renderer/pages/docs/AnchoredDiscussionDock.tsx",
+    "tests/lark-suite-extension/lsx-wp-027.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-027.spec.ts"
+  ],
+  "plannedContributions": [
+    {
+      "path": "packages/core/src/docs/discussion-anchor.ts",
+      "currentState": "NOT_PRESENT_IN_SCOPED_GLOB",
+      "change": "Define versioned runtime-validated request/result/error schemas for discussion.postAnchored, discussion.reanchor and discussion.previewLegacyImport; sourceRef preserves Rox2EntityRef. Define marker-version/epoch/revision-bound block+range anchors with quotedText used only for validation, plus discriminated valid/rebased/orphan projection states. Support relative positions only through a capability-proven collaborative format adapter. Explicitly validate body 1–8000 Unicode code points and legacy provenance/visibility preview; never accept payload actor as authority. Rebase and reanchor return explicit revisioned receipts. Use the accepted common command/error mechanisms rather than define a second envelope/store."
+    },
+    {
+      "path": "packages/server-core/src/docs/discussion-adapter.ts",
+      "currentState": "NOT_PRESENT_IN_SCOPED_GLOB",
+      "change": "Adapt authenticated commands to the accepted Doc descriptor/block map, shared Message/Discussion and attention owners. Validate current Doc/discussion/body/asset/recipient grants before content access or mutations; enforce expected revision and epoch; perform native durable post plus import mapping and outbox using common idempotency. Preview is non-publishing; apply revalidates an explicit audience/provenance decision with the accepted common handler. Emit verified canonical event aliases with the full envelope; query/revoke projections through owner services. Missing real owners return typed missingDependency without a fake store or successful receipt. Exact callable service names are prerequisite-owner inputs, not invented here."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/AnchoredDiscussionDock.tsx",
+      "currentState": "NOT_PRESENT_IN_SCOPED_GLOB",
+      "change": "Implement RD-03 as the existing right comment rail's data/controller enhancement, not a new route or competing panel. Reuse NotesComments/NotesCommentComposer and accepted host selection/query plumbing with a single render ownership direction. Add per-user all/open/resolved/mine filters, shared thread actions and explicit orphan reanchor, audience-aware legacy preview, mention results and receipt states. Preserve draft until durable success; clear denied body/quote/highlights on live revoke and reauthorize on reconnect. All strings use existing i18n and current theme/font tokens."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-027.test.ts",
+      "currentState": "NOT_PRESENT_IN_SCOPED_GLOB",
+      "change": "Behavior tests for duplicate quotes in different stable blocks, reorder/rebase versus deletion/orphan, explicit authorized reanchor and stale-epoch conflict; body Unicode boundaries; actor spoof/ACL denial; repeat post and provenance import; changed-audience preview invalidation; notification dedup and revoke/restart. Retain deterministic seeds and baseline fixture hashes; prove both specified semantic mutations are caught. Native domain/restart lanes require the real owner rather than mocked echo receipts."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-027.spec.ts",
+      "currentState": "NOT_PRESENT_IN_SCOPED_GLOB",
+      "change": "Use the discovered supported actual Electron runner against the integrated Notes dock: selection freeze, pointer/quote focus and Enter, Cmd/Ctrl+Enter versus newline, IME/autocomplete, Escape retained draft and focus return; filters/thread actions/orphan and private preview; live revoke purge; narrow/200% zoom/themes/reduced-motion/Russian and all-locale key parity/font. Save screenshots/ARIA/computed-style/font and ref/revision/hash evidence separately from unit tests. No passing command is claimed in preflight."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "symbol": "NotesComments",
+      "change": "Replace the local comment array as shared authority at lines 331-351 with accepted typed authorized discussion/query and command bindings carried by LSX-WP-026 host props. Preserve the existing notes-comments-rail container and composer/card surface; insert the AnchoredDiscussionDock controller/view enhancement with no second rail. Pass frozen block/range/revision selection instead of using draftQuote as durable identity; pending post keeps the draft and only durable receipt clears it. Stop saveNoteComments and legacy onCommit array publication on shared posting; legacy comments are separately supplied to visibility preview. Implement all/open/resolved/mine, thread/resolve/reopen/orphan actions and ID-based navigation on canonical revisions.",
+      "reason": "Current add creates a random local ID, writes localStorage and invokes synchronous onCommit without authenticated authority, receipt, stable anchor, ACL or recipient results. Existing UI is mandatory reuse, not a missing surface.",
+      "baseSha256": "8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a",
+      "prerequisite": "Accepted 006/026 host bindings and EG-DISCUSSIONS/EG-ATTENTION interfaces; integration owner path lease. Any caller signature migration beyond this path requires an updated packet."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "symbol": "loadNoteComments",
+      "change": "Keep notes:comments:<noteId> only as a read-only legacy-origin input to explicit migration preview. Validate legacy entries before presenting them; classify absent visibility as private/unreviewed, attach source origin+legacy ID for durable mapping, and never invoke shared posting from loading/rendering. Preserve original local records until native import receipt/readback confirms the reviewed mapping; no automatic publication or broad localStorage deletion.",
+      "reason": "Current JSON cast only checks Array.isArray, and NoteComment contains no audience, actor, provenance, block or revision. Local/private origin cannot be inferred as permission to publish.",
+      "baseSha256": "8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a",
+      "prerequisite": "Common migration schema/preview/apply/idempotency and actor-scoped source binding; provenance map is owned by shared native messaging, not this loader."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "symbol": "NotesToc",
+      "change": "Use accepted LSX-WP-006 block identity to enrich heading projection and navigation; keep the existing ToC rail/folds/labels and never persist a second outline. Provide stable heading block navigation through the accepted host while retaining the same authorized document revision; do not use generated h-<index>-<text> IDs or text alone as discussion anchor authority.",
+      "reason": "extractHeadings/NotesToc currently derives identity from array position/title and onJump only supplies text. Duplicate headings/renames/reorder cannot safely identify a referenced block.",
+      "baseSha256": "8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a",
+      "prerequisite": "Accepted block projection and editor jump callback from dependency owner; existing extractHeadings symbol/caller changes beyond named lease need reviewed scope extension."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/document-ia.ts",
+      "symbol": "extractBlockIds",
+      "change": "Consume the accepted 006 marker mapping rather than independently deriving only ^abc IDs. Project existing Obsidian and ROX markers to stable identity with retained spans/revision/marker-version diagnostics; ambiguous/duplicate mapping must remain diagnostic, not select the first quote or mint another identity. Do not inject or rewrite prose merely to compute an anchor.",
+      "reason": "Current implementation returns only id+preview from ^ tokens and cannot validate range/revision/epoch or ROX block mapping.",
+      "baseSha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa",
+      "prerequisite": "Accepted 006 mapping schema and retained-source format contract; any NoteBlockId type change must be reviewed under the shared lease."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/document-ia.ts",
+      "symbol": "parseNoteDocument",
+      "change": "Expose accepted block projection and parsed legacy embedded comments as explicit legacy provenance inputs, not active shared messages. Do not promote comments from structure.comments during render/load. Route new shared discussion state to the common service while preserving existing document parse/ToC/columns/frontmatter behavior.",
+      "reason": "The current parser returns extractComments(markdown) with quote-only IDs and no origin/audience distinction; that data needs an explicit migration boundary.",
+      "baseSha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa",
+      "prerequisite": "Reviewed common legacy origin mapping; any type/extractComments change requires approved symbol extension, not an unleased rewrite."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/document-ia.ts",
+      "symbol": "roundTripNoteMarkdown",
+      "change": "Stop normalizing legacy comment blocks by repeated upsert when using the accepted retained-source roundtrip; preserve unedited original Markdown bytes, marker identity and legacy IDs for preview/digest comparison. Shared posts must not append new authoritative messages through Markdown serialization. After reviewed import, provenance removal/update, if allowed by policy, is an explicit committed content operation rather than implicit roundtrip publication.",
+      "reason": "Current roundtrip extracts comments and repeatedly removes/reappends them via upsertMarkdownComment, so byte/spatial stability and source digest cannot be assumed; it must not become a second shared message writer.",
+      "baseSha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa",
+      "prerequisite": "Accepted lossless source/006/026 content authority plus explicit migration receipt; preserving all unrelated bytes is required."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/document-ia.ts",
+      "symbol": "serializeColumns",
+      "change": "No independent anchor identity allocation or comment serialization here. Integrate only if the accepted format adapter needs committed column block mapping: preserve canonical mapped block IDs and validate ranges against the enclosing committed document revision. Otherwise intentionally retain this serializer unchanged and verify anchored column content via the format adapter.",
+      "reason": "The symbol is a normative shared seam but currently serializes trimmed string cells; it is not a discussion store or a durable range authority. A broad column rewrite would exceed this slice.",
+      "baseSha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa",
+      "prerequisite": "006 format-adapter capability/readback; unsupported column anchoring must produce a typed unsupported-format result, not guessed quote matching."
+    }
+  ],
+  "additionalIntegrationRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx",
+      "symbols": ["NoteComment", "saveNoteComments", "NotesCommentComposer", "NotesCommentTooltip", "NotesCommentHighlights", "extractHeadings"],
+      "change": "Request explicit symbol lease expansion before implementation. Convert shared highlight rendering to authorized block/range projections instead of text.indexOf(quote); retain DOM Range only as ephemeral geometry. Exclude orphan/revoked anchors from geometry/tooltip/title/body. Add IME/isComposing and mention-menu Enter guards to the reused composer, and retain/cancel draft via accepted scoped draft authority. Make legacy DTOs and shared projections explicit rather than overload NoteComment or preserve a dual writer.",
+      "reason": "Named patch scope covers NotesComments/NotesToc/loadNoteComments only, but duplicate-quote negative control, revoke safety and IME require these existing mechanisms to change. Hiding the existing highlight path would be a symptom workaround, not completion.",
+      "state": "REQUIRES_UPDATED_REVIEWED_PACKET"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbols": ["new discussion labels/help/error translation keys across de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant"],
+      "change": "Integration owner must allocate localization leases and provide all keys used by AnchoredDiscussionDock and the reused comments UI, ASCII-sorted with locale parity and Russian plural variants where needed.",
+      "reason": "AGENTS.md requires all ten locale files for every new user-facing key; none is in this package's permitted shared patch paths. Pattern is the repository rule, not a claim that these files were inspected.",
+      "state": "REQUIRES_UPDATED_REVIEWED_PACKET"
+    },
+    {
+      "path": null,
+      "symbols": ["authenticated discussion command/query registration", "committed editor logical-selection and block navigation host", "revoke/search projection consumers"],
+      "change": "Lead/dependency owners must provide exact accepted path/symbol contracts and lease them before worker integration. No callable endpoint, caller signature, store transaction or search purge mechanism is invented from the scoped three source files.",
+      "reason": "The new adapter/dock files cannot alone make transport routes, native store readback or host selection available. These integration paths are outside the normative bounded packet and were not inspected under the preflight scope.",
+      "state": "EXACT_OWNER_SEAM_REQUIRED"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "stable block/range anchor with appropriate format adapter",
+      "currentEvidence": "document-ia.ts::extractBlockIds:182-193 returns only ^id+preview. NotesReadingChrome.tsx::NotesCommentHighlights:418-440 searches each quote and stops at first matching text node. No scoped source stores contentRevision/range/relative positions for comments.",
+      "seam": "accepted 006 block mapping -> discussion-anchor.ts format adapter -> committed Doc revision; document-ia.ts::extractBlockIds/parseNoteDocument",
+      "requiredChange": "Bind sourceRef/blockId/markerVersion/range/quote validation to revision and authority epoch. Reorder keeps identity; committed text edits explicitly rebase or conflict; deletion yields orphan. CRDT relative positions only after collaborative capability proof; no durable DOM offsets or guessed duplicate-quote match.",
+      "verification": "After integration, test identical quotes in separate blocks, reordered blocks, edited range, source deletion, duplicate/malformed markers, stale epoch/revision, unknown format and explicit reanchor; compare canonical anchor state/ref/revision/hash through native readback and restart.",
+      "missingPrerequisite": "Accepted LSX-WP-006 and 026 revision/selection receipts plus real format authority; highlight symbol lease expansion.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "existing ToC/comment UI reused",
+      "currentEvidence": "NotesReadingChrome.tsx::NotesToc:156-215 and ::NotesComments:311-394 already render the two rails; ::NotesCommentComposer:217-287 provides textarea, submit and Escape. Existing theme tokens and t() are used.",
+      "seam": "NotesComments/NotesToc/NotesCommentComposer with AnchoredDiscussionDock as a single-rail enhancement",
+      "requiredChange": "Keep existing note route, rail ownership, resizing/folding/visual tokens and composer; replace legacy shared-data authority with accepted typed bindings. Add RD-03 filters/actions/orphan state and stable navigation without a second panel, catalog or comments engine.",
+      "verification": "Observe actual integrated Electron document with the existing ToC and one comment rail; select/post/jump/reply/resolve/reopen/filter/reanchor, reopen document, and verify source content/IDs/route remain unchanged except authorized mutations.",
+      "missingPrerequisite": "Accepted 026 host binding and shared-path lease; actual Electron runner discovery.",
+      "state": "EXISTING_SURFACE_ONLY_FULL_DOD_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "platform-contract.ts::Rox2EntityRef:233-239 supplies existing identity. ::authorizeRox2Action:601-610 denies absent actor and requires matching explicit grant, but is not a source/block/recipient policy evaluator. NoteComment:114-119 and NotesComments props:320-329 are local TS structures, not transport schemas.",
+      "seam": "discussion-anchor.ts schemas -> authenticated discussion-adapter.ts -> renderer bindings; Rox2EntityRef and existing common evaluator",
+      "requiredChange": "Reuse canonical versioned envelope/schema pattern and validate post/reanchor/preview/result. Return validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Derive actor and workspace authorization from authenticated transport, validate sourceRef and current block/body/asset grants, never use payload actor/owner as authority.",
+      "verification": "Compile actual server and renderer consumers after integration; exercise malformed payload, spoofed actor/owner/workspace, revoked source, cross-workspace refs, unsupported format and each typed error through the real authenticated handler; denied results contain no protected body/quote.",
+      "missingPrerequisite": "Accepted common runtime command schemas, current policy evaluator and authenticated command/query registration lease outside this packet.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "NotesComments.add:339-351 immediately sets local state, writes localStorage and invokes onCommit. platform-contract.ts::liveResult:515-537 defaults verification to unverified; ::isClaimableLive:540-552 requires succeeded+verified but does not establish persistence itself.",
+      "seam": "discussion-adapter.ts -> accepted native Message/Discussion/provenance transaction and common outbox -> receipt-driven NotesComments",
+      "requiredChange": "Return discussionID/messageID/revision and intended-recipient outcomes only after native durable commit. Persist idempotent post/import mapping and outbox in common authority; read by exact ref/revision/hash before declaring saved. Preserve drafts for queued/rejected/conflict, and distinguish local draft from committed.",
+      "verification": "Post/import real synthetic owned data; read exact IDs, content hash and revision; restart authority/client and reread; inject pre-commit/crash/replay failures and assert acknowledged data remains exactly once, while pre-commit requests never claim committed success.",
+      "missingPrerequisite": "EG-DISCUSSIONS/EG-ATTENTION native owner and restart/readback environment, accepted durable draft binding.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:10064-10078 requires duplicate quotes/deletion, idempotent post/import, no private auto-share, revoke/recipient dedup and separate source/unit/native/restart/ACL/UI lanes. Neither normative LSX-WP-027 test file exists in the scoped glob.",
+      "seam": "tests/lark-suite-extension/lsx-wp-027.test.ts and actual adapter/store/query path",
+      "requiredChange": "Cover post, rebase, explicit reanchor, legacy preview/apply, recipient results and durable reads; deny forged actor/private access; reject stale revision/epoch; replay same key/origin yields exact same IDs; recover crash/restart without duplicate message or notification. Retain seed, input hash, attempts and integrated revision evidence.",
+      "verification": "Planned source command: bun test tests/lark-suite-extension/lsx-wp-027.test.ts. Separately exercise native authenticated commands and restart readback on the integrated commit; classify infrastructure failures independently. No tests were run in this preflight.",
+      "missingPrerequisite": "Accepted dependencies/common owners and permitted implementation/runtime environment; runner and test harness conventions supplied after root integration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:10080-10088 specifies first-duplicate-quote orphan reattachment or localStorage auto-publication mutations and assertions orphan not silently attached, private preview denied until explicit audience decision, one message/notification for replay. Current NotesCommentHighlights:425-439 already selects the first textual match, exposing the semantic risk.",
+      "seam": "discussion-anchor.ts resolution; discussion-adapter.ts preview/apply/idempotency; both planned test files",
+      "requiredChange": "Create deterministic owned synthetic duplicate-quote/private-origin fixture with exact baseline input hash. Evaluate clean baseline and deliberately seeded semantic mutations on exact bytes; assert preserved orphan identity, audience decision requirement and replay cardinality/IDs, not a mere test-run failure.",
+      "verification": "Record green baseline plus mutant failures naming the three required assertions, seed and artifact hashes. Failure due to timeout, absent service or compilation is infrastructure failure and cannot satisfy the control.",
+      "missingPrerequisite": "Working baseline anchor/migration/notification path and native owners; execution forbidden in preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "NotesCommentComposer:259-269 handles Escape/CmdCtrlEnter without isComposing/autocomplete guard. NotesComments quote button:368-375 is keyboard-focusable but uses quote text; NotesCommentTooltip:299-307 is pointer-events-none. Existing t()/theme use is source evidence only, not loaded-font or native acceptance proof.",
+      "seam": "reused NotesComments/NotesCommentComposer/tooltip/highlights plus AnchoredDiscussionDock and ui/lsx-wp-027.spec.ts",
+      "requiredChange": "Add IME/menu-priority protection, retained draft/focus return, logical-anchor navigation and accessible hover/focus/click help. Render canonical loading/empty/offline/queued/rejected/conflict/orphan states, filters and controls; support 200% zoom/narrow layout, reduced motion, current light/dark theme and all-locales t() keys with actual Rox Mono loading.",
+      "verification": "Discover and run actual Electron runner; interact with pointer, keyboard and IME, inspect ARIA/focus order and reduced-motion/zoom/theme; retain current native screenshots, computed styles/font readiness and viewport/locale records. All ten locale parity must pass after integration; no fixture screenshot substitutes for native behavior.",
+      "missingPrerequisite": "Composer/highlight symbol expansion, locale file leases, host selection binding and supported native runner.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:10071-10078 lists SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI; 10102 expressly rejects plan/fixture/toast/queued completion. This report is static source preflight only.",
+      "seam": "integration-owner accepted evidence bundle bound to actual integrated revision",
+      "requiredChange": "Produce distinct schema, property/behavior, native receipt/readback, restart, ACL-negative and actual Electron evidence. Preserve hashes/seeds/failed attempts and redact per actor. Add provider/collaboration proof if those lanes are exercised; do not silently waive unmet package criteria.",
+      "verification": "Lead independently reads evidence for every full DoD row against the integrated artifact and rejects isolated-fixture/queued/infrastructure-only success. Structural verification of this report never verifies the feature.",
+      "missingPrerequisite": "All implementation and runtime proof lanes remain unexecuted; no feature completion is claimed.",
+      "state": "FULL_FEATURE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Delete source creates retained orphan; authorized reanchor is explicit and duplicate quotes never silently reattach.",
+      "currentEvidence": "NotesCommentHighlights:418-440 has no orphan state and matches the first occurrence; NoteComment:114-119 has only quote/body/time. Design 06:106-110 mandates committed stable anchor and explicit orphan/reanchor.",
+      "seam": "discussion-anchor.ts valid/rebased/orphan transition; discussion.reanchor; NotesComments orphan card",
+      "requiredChange": "Keep Discussion/Message when source block/range is deleted, stop highlight/jump guessing, show 'fragment deleted' through t(), and reanchor only via authorized command against current revision/epoch with a new native receipt.",
+      "verification": "Delete the anchored duplicate-quote block, assert original discussion/message IDs retained with orphan state and no highlight on surviving duplicate; attempt denied/stale and then allowed explicit reanchor; verify revision/readback after restart.",
+      "missingPrerequisite": "Committed revision/block mapping and common discussion store with reanchor policy.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Legacy embedded comments import once with provenance; private local comments never auto-share and require visibility preview.",
+      "currentEvidence": "loadNoteComments:125-133 reads localStorage without audience/provenance. document-ia.ts::extractComments:195-208 parses embedded ID/quote/body/time; ::roundTripNoteMarkdown:702-708 upserts them. Design 06:112 and model 07:193-199 require visibility preview/provenance and no dual writer.",
+      "seam": "loadNoteComments/parseNoteDocument -> discussion.previewLegacyImport -> reviewed canonical post/import mapping",
+      "requiredChange": "Identify local versus embedded source origin, legacy ID and source digest/revision. Preview exact recipient visibility without mutation; require explicit audience decision for private/unknown visibility and revalidate on apply. Persist mapping with native post so replay cannot duplicate import, preserve original source until receipt, and stop legacy active shared writers after cutover.",
+      "verification": "Load/render local PRIVATE-MSG-73-style synthetic marker and assert absent shared messages/outbox/search; preview and deny unreviewed apply; authorize exact audience then replay import before/after restart; change audience/revision and invalidate preview; assert same native ID and one notification.",
+      "missingPrerequisite": "Common native provenance/import mapping and reviewed audience policy/application contract; original source generation binding and no-dual-writer integration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Mentions notify intended permitted recipients exactly once, never grant access or broadcast workspace-wide.",
+      "currentEvidence": "NoteComment and NotesComments have no mention IDs/recipient results. platform-contract.ts declares mentions relation and channel-message kind, but declarations are not durable messaging/attention owners. work-packages.json:10044-10046 and design 06:108,112 require ACL intersection.",
+      "seam": "discussion-adapter.ts canonical message creation -> common mention and EG-ATTENTION ports",
+      "requiredChange": "Use common mention picker/IDs, evaluate current parent/body/attachment/target policy, calculate mentioned/assigned/subscribed allowed recipient set, deduplicate durable outbox delivery and return typed delivery outcomes. No mention-induced grant and no broad membership broadcast.",
+      "verification": "Post with duplicate mention/subscription recipients, permitted and denied targets and an unrelated workspace member; replay and restart delivery; assert exact allowed recipient IDs once, denied target no title/body/push leak, unchanged grants and stable message ID.",
+      "missingPrerequisite": "Common mention resolver, policy evaluator and accepted attention/outbox readback receipt.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "ACL revoke removes body/quote from live dock, highlight and local searchable projection; reconnect reauthorizes.",
+      "currentEvidence": "NotesComments stores body in component state/localStorage; NotesCommentTooltip renders quote/body; NotesCommentHighlights exposes body in aria-label/title at lines 457-458. No scoped code subscribes to authorization revocation. Model 07:167 and design 06:112 require current ACL and offline limits.",
+      "seam": "accepted common revoke stream/query fence -> AnchoredDiscussionDock -> existing card/tooltip/highlight projections and search owner",
+      "requiredChange": "At committed revoke fence invalidate active query/body/anchor geometry/cached titles and permitted search projection; deny stale API/tool/WS reads/writes. Draft recovery follows accepted encrypted/lease policy only, not cached ACL. Reconnect reauthorizes before read/replay; never claim physical erase of disconnected device.",
+      "verification": "Revoke while dock/tooltip/highlight/search are open; inspect DOM/ARIA/title/cache/readback and attempt stale API/tool/WS post/read. Reconnect expired/denied actor and assert no protected snapshot or replay; independent offline lease boundary evidence.",
+      "missingPrerequisite": "Common realtime policy fence, projection/search owner contracts and additional existing-symbol lease; exact consumers are outside this scoped inspection.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "RD-03 threads, filters, resolve/reopen and composer return revisioned shared outcomes while preserving draft/input semantics.",
+      "currentEvidence": "NotesComments:353-391 renders flat quote/body cards and selected-quote composer only; no all/open/resolved/mine, replies, mentions, resolve/reopen or receipt states. NotesCommentComposer:265-268 already uses Cmd/Ctrl+Enter, but NotesComments resets body on note/array changes.",
+      "seam": "AnchoredDiscussionDock with reused NotesComments/NotesCommentComposer and common messaging commands",
+      "requiredChange": "Implement per-user persistent filter and shared thread status/actions through the common messaging owner, body Unicode validation, mention picker and attachment grant reuse; Enter newline, IME/menu Enter consumed, Escape preserves scoped draft and returns focus, successful durable receipt scrolls to canonical message. Resolve retains audit/search and reopen emits canonical event.",
+      "verification": "Native pointer/keyboard flows for each filter/action, author/editor allowed and denied policies, 0/1/8000/8001 Unicode-code-point body boundaries, concurrent edit/status conflicts, draft persistence/recovery and exact post/reply/result revisions with recipient outcomes.",
+      "missingPrerequisite": "Accepted common thread/status commands, per-user preference/draft authority, locale/extra symbol leases and actual native host.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Anchor events observe committed Doc revision and use verified canonical aliases/envelopes without private payload leaks.",
+      "currentEvidence": "platform-contract.ts::Rox2Event:131-141 is a minimal event shape; ::isAuditableRox2Event:618-619 checks causation/correlation/aggregateRevision only. work-packages.json:10039-10042 and model 07:171 specify proposed aliases and complete envelope.",
+      "seam": "discussion-adapter.ts -> accepted common event registry/outbox and authorized consumers",
+      "requiredChange": "Verify rather than blindly rename discussion.messageCreated/resolved and mention.created aliases. Fill eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId, derive anchor update only after committed revision, and let consumers resolve sensitive content under current ACL with revision/dedup fences.",
+      "verification": "Inspect native emitted event and consumer checkpoint for post/rebase/resolve/reopen/replay/revoke; assert exact source revision, durable event cardinality and no body/quote in unauthorized event delivery/search projection.",
+      "missingPrerequisite": "Accepted canonical registry, durable outbox and actor-scoped projection consumers; platform-contract.ts is read-only evidence, not permission to invent a parallel event system.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx","symbol":"NoteComment / loadNoteComments / saveNoteComments","lineStart":114,"lineEnd":138,"sha256":"8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx","symbol":"NotesToc","lineStart":156,"lineEnd":215,"sha256":"8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx","symbol":"NotesCommentComposer","lineStart":217,"lineEnd":287,"sha256":"8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx","symbol":"NotesComments","lineStart":311,"lineEnd":394,"sha256":"8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx","symbol":"NotesCommentHighlights","lineStart":396,"lineEnd":469,"sha256":"8829862889a65a4fd7e58f82b102c25cd916bc88b9d87532d5df9e92f478674a"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"extractBlockIds / extractComments / serializeComment / upsertMarkdownComment / serializeColumns","lineStart":182,"lineEnd":233,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"parseNoteDocument / roundTripNoteMarkdown","lineStart":655,"lineEnd":709,"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":233,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"registerExternalBinding","lineStart":336,"lineEnd":371,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"liveResult / isClaimableLive","lineStart":515,"lineEnd":552,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"authorizeRox2Action / isAuditableRox2Event","lineStart":592,"lineEnd":620,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[26] LSX-WP-027","lineStart":9846,"lineEnd":10189,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"packages LSX-WP-027","lineStart":2283,"lineEnd":2371,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"section 7 RD-03 discussion anchors","lineStart":104,"lineEnd":112,"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/lark-suite-reference/07-domain-entity-model.md","symbol":"section 7 permissions and section 9 migration rules","lineStart":159,"lineEnd":199,"sha256":"cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"Common EntityDiscussion and normative dependency handoff","lineStart":35,"lineEnd":87,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"docs/rox-suite/published/RS-MSG-02.md","symbol":"canonical human Message authority and normative RS-MSG-01 dependency","lineStart":32,"lineEnd":81,"sha256":"ea870216b6513e3724fcdc5b96428fd969b2609df6d633b4c8f6822619530063"}
+  ],
+  "nextExecutableAction": "Lead validates this preflight against its packet, then finishes/commits wave0 and obtains accepted LSX-WP-006 followed by LSX-WP-026 artifact+native-readback receipts and EG-DISCUSSIONS/EG-ATTENTION readiness. Resolve published RS-DOC-01/RS-MSG-02 foundations and reference manifest, refresh drifted source hashes, and approve shared symbol/transport/localization lease extensions. Only then issue a revision-bound implementation packet: compile the new discussion-anchor contract against accepted owners first, implement the real common-service adapter, and integrate the existing rail in dependency order. This preflight worker executes no feature implementation.",
+  "risks": [
+    "Critical scope gap: existing first-match highlights, tooltip body/title and IME composer sit outside the named shared symbols; leaving them unchanged defeats anchor/revoke/input DoD even if the new dock works.",
+    "Private localStorage and embedded Markdown lack visibility/provenance; automatic conversion, first-render import or synchronous onCommit would leak private data or maintain dual authorities.",
+    "Common Message/Discussion/attention readiness cannot be inferred from ROX2 kinds, minimal permission helper, issue publication or root-owned uncommitted foundation files.",
+    "Dependency order alone is insufficient: published RS-DOC-01 requires Drive and common messaging, RS-MSG-02 requires its host, and 026 carries collaboration/WAL/revoke gating. Do not replace external owners with fixtures.",
+    "CRDT relative positions are format-specific; legacy ^ markers, content offsets and duplicate quotes do not prove collaborative anchor support. Unknown formats must fail typed/read-only rather than silently guess.",
+    "roundTripNoteMarkdown currently relocates/normalizes legacy comment blocks; provenance digest and retained-source range validation must use the accepted lossless path, not normalize before preview.",
+    "Locale, command/query registration, host selection and search purge patches extend beyond the bounded packet; request exact owner seams/leases rather than invent endpoints or additional product files.",
+    "Source references are inspected working-tree generations, not guaranteed future wave0 bytes. Structural verification detects drift but cannot prove implementation, native behavior, persistence, authorization or delivery.",
+    "All six normative proof lanes and seeded controls remain NOT_RUN. No test, native UI, build, provider/network or feature completion evidence is claimed."
+  ]
+}

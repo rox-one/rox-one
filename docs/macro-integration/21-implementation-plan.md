@@ -10,6 +10,8 @@ Shared module paths повторяются намеренно: один влад
 
 **Private shared Project: authenticated actor and workspace boundary** (XL), dependencies: нет.
 
+Текущее исполнение 2026-09-30: [WP-01 implementation](wp-01-implementation.md) и [service runtime](wp-01-runtime.md). Canonical PostgreSQL/auth/HTTP/WS механизм интегрирован, Connections и Projects подключены в существующий Electron. Source-bound результаты и открытая native/DoD приёмка находятся в `plans/compound-implementation/wp01-integration-verification.json`; это частичная проверка, не закрытие пакета. Исторический план и нормативные критерии ниже сохраняются.
+
 Goal: A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace.
 
 Primary operation: `project.createShared`. Additional contracts: CreateSharedProject / GetProject; Actor injected in RPC and HTTP. DB: principal, auth_subject_alias, workspace_member, project; unique workspace membership.

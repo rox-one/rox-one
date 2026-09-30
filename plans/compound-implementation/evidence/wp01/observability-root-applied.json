@@ -1,0 +1,50 @@
+{
+  "manifestSha256": "fc680506f449c9fc2a739e7fe4289b3ae73300381093c249422c1617ae551b1f",
+  "paths": [
+    {
+      "path": "apps/workspace-service/src/modules/identity/observability.ts",
+      "baseSha256": null,
+      "proposedSha256": "ab061455e681deda09948d2752982901691c72feb75d84773af52df129b2c590",
+      "newFile": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "baseSha256": "b0c49a908946a228c82d6991689cabec1b8aac35bac77730cbb2a6bd148bb5e0",
+      "proposedSha256": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+      "newFile": false,
+      "patch": "/tmp/rox-wp01-observability/apps__workspace-service__src__modules__identity__repository.ts.patch",
+      "patchSha256": "34819e2c0eae8c72e21f4d85f616aa73e8d4611fd259db09066a546e166a5fec"
+    },
+    {
+      "path": "apps/workspace-service/src/server.ts",
+      "baseSha256": "6b4b004b607687f9ecd712466c2971d8086a362366ab8fe05f38ed6e8d96ada0",
+      "proposedSha256": "b44b1de53867b6d46312e3f350b142ebaa5d1700cc6f7fce3d2e53c875c75621",
+      "newFile": false,
+      "patch": "/tmp/rox-wp01-observability/apps__workspace-service__src__server.ts.patch",
+      "patchSha256": "200a61c698c51b35754e82bf5b94b807bb15522851713f4f504393f8d7ea275e"
+    },
+    {
+      "path": "apps/workspace-service/src/index.ts",
+      "baseSha256": "fb7cb9d48d7a292296fbc1cb0856a379012c8bd356e2e364b6d8c69caaad1a93",
+      "proposedSha256": "bf390e866e143827ca9e2e67a2e9cf2e514d982e00f3d1d8ddf8a5cdf87b2b96",
+      "newFile": false,
+      "patch": "/tmp/rox-wp01-observability/apps__workspace-service__src__index.ts.patch",
+      "patchSha256": "285486c794ba362bf24e68b457f9c144710a952dc9c6562ffb246ce06c9fdfc7"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-observability.test.ts",
+      "baseSha256": null,
+      "proposedSha256": "e63eecb4be67c165d061a3d57134b8464632b268deedf08e0daf6ab72c676c26",
+      "newFile": true
+    },
+    {
+      "path": "docs/macro-integration/wp-01-runtime.md",
+      "baseSha256": "4293bcd510b27888688aef91e14c840ed10f0858174edda76694c911e26365d4",
+      "proposedSha256": "39ab203b08f38ec08090e9899ededd1c6ff573f7dfacfd4c02b0f56ce5f4679a",
+      "newFile": false,
+      "patch": "/tmp/rox-wp01-observability/docs__macro-integration__wp-01-runtime.md.patch",
+      "patchSha256": "eddc2bf76294c922aa168064d2175554224f703120fb1d8bfe86c1e953b59d00"
+    }
+  ],
+  "verifiedAppliedCount": 6
+}

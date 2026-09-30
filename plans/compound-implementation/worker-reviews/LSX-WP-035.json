@@ -1,0 +1,395 @@
+{
+  "task_id": "LSX-WP-035-preflight",
+  "attempt_id": "55758095800b5c3f99653917d5e21e75",
+  "packet_hash": "51610296ec1c9bd1e441d8ce7a7c96552e2e1a7f3e2d95e167d697092a0d9efa",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-035",
+  "featureComplete": false,
+  "mode": "SOURCE_BACKED_PREFLIGHT_ONLY",
+  "workTier": "bounded-workflow",
+  "scope": {
+    "soleWritableArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-035.json",
+    "productSourceChanged": false,
+    "gitStateChanged": false,
+    "buildsTestsNativeUiNetworkRun": false,
+    "inspectionBoundary": "Four normative read-only source paths, their declarations, exact package/dependency specification records and linked published specifications. No unrelated implementation source inspected.",
+    "implementationAuthority": "Root integration owner retains all source integration. Proposed contributions below are not implemented."
+  },
+  "dependencies": ["LSX-WP-013", "LSX-WP-015", "LSX-WP-016", "LSX-WP-034"],
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-013",
+      "evidence": "plans/lark-suite-reference/work-packages.json:5462-5565",
+      "requiredReceipt": "Accepted formula-parser.ts/formula-evaluator.ts contract and runtime receipt: versioned fieldId expressions, legacy counts, pinned evaluationTime/timezone, bounded typed results and explicit DIV_ZERO/TYPE/CYCLE/BUDGET.",
+      "integrationUse": "Serialize expression plus function version and evaluation snapshot; reuse query results rather than evaluating now per format or row.",
+      "state": "RECEIPT_NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER"
+    },
+    {
+      "packageId": "LSX-WP-015",
+      "evidence": "plans/lark-suite-reference/work-packages.json:6074-6194",
+      "requiredReceipt": "Accepted relation-computation.ts contract and readback: actor/policy/query-scoped typed lookup/rollup, contributor refs and revoke invalidation.",
+      "integrationUse": "Export only permitted contributions, values, IDs and counts; do not use owner-wide caches or reconstruct aggregates from unrestricted targets.",
+      "state": "RECEIPT_NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER"
+    },
+    {
+      "packageId": "LSX-WP-016",
+      "evidence": "plans/lark-suite-reference/work-packages.json:6286-6310,6385-6505",
+      "requiredReceipt": "Accepted schema-migrations.ts contract: stable fieldIds, separate portable property keys, expectedSchemaRevision/row revisions, preserved invalid raw values, activation fences and resumable journal.",
+      "integrationUse": "Pin schema revision and migration epoch in export/import preview; schema changes before render/apply must conflict instead of silently remapping values.",
+      "state": "RECEIPT_NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER"
+    },
+    {
+      "packageId": "LSX-WP-034",
+      "evidence": "plans/lark-suite-reference/work-packages.json:12202-12227,12321-12430",
+      "requiredReceipt": "Accepted docs/vault-import.ts staging/apply/resume contract with durable source-scoped origin mapping, attachment authority, unknown-source retention and owner CAS/readback.",
+      "integrationUse": "base.previewPortableImport decodes into this staging mechanism; actual isolated apply/readback uses its canonical owners. Do not introduce another import store or an unlisted base.applyPortableImport operation.",
+      "state": "RECEIPT_NOT_INSPECTED_OR_ACCEPTED_BY_THIS_WORKER"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "PUBLISHED_RS_DRV_01",
+      "classification": "HIDDEN_PUBLISHED_PREREQUISITE_NOT_AN_EXPLICIT_LSX_EDGE",
+      "evidence": ["docs/rox-suite/published/RS-BASE-01.md:95-113", "docs/rox-suite/published/RS-DRV-01.md:36-38,51-62"],
+      "gate": "RS-BASE-01 explicitly requires RS-DRV-01 (#1109). The linked Drive specification requires common identity/ACL/command authority and canonical Page/Note/File library plus file checksums, scanning and resumable readiness. These are not supplied merely by the LSX-WP-035 dependencies array.",
+      "requiredPrerequisite": "Lead reconciles published dependency with the execution packet and supplies accepted Drive/File/authority receipts for the affected artifact and Base entry surface; issue publication is not readiness.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "PUBLISHED_ENTITY_MODEL_CONFLICT",
+      "classification": "HIDDEN_FOUNDATION_CONTRACT_DECISION",
+      "evidence": ["docs/rox-suite/published/RS-BASE-01.md:44-52,62-67", "docs/lark-suite-reference/05-rox-bases-design.md:41-48,263-268", "packages/core/src/rox2/platform-contract.ts:17-38,233-250"],
+      "gate": "Published RS-BASE-01 proposes a registered CustomRecord entity kind and shared/base/contracts.ts/workspace-service record-service.ts; the LSX design proposes kind=page with contentKind=record/base until a separately approved migration. The inspected entity registry contains page, not CustomRecord. Portability cannot independently choose a new identity/store or merge these parallel proposed APIs.",
+      "requiredPrerequisite": "Root supplies one accepted canonical entity/schema/command contract and explicit published-spec reconciliation; codecs target that contract and preserve existing Task/CRM IDs.",
+      "state": "NOT_RESOLVED_IN_INSPECTED_SCOPE"
+    },
+    {
+      "id": "CURRENT_FIELD_ASSET_POLICY",
+      "classification": "COMMON_AUTHORITY_FOUNDATION",
+      "evidence": ["packages/core/src/rox2/platform-contract.ts:55-64,592-610", "packages/core/src/rox2/surface-context.ts:18-55", "docs/lark-suite-reference/07-domain-entity-model.md:159-167", "plans/lark-suite-reference/work-packages.json:12766-12777"],
+      "gate": "authorizeRox2Action checks only actorId+permission; its input has no EntityRef, field, block or policyVersion. visibleContextEntityRefs filters a caller-supplied readable set, not authoritative export/asset grants. No export-specific permission appears in the inspected enum. These helpers alone cannot prove row/field/attachment export ACL or revoke fencing.",
+      "requiredPrerequisite": "Accepted common evaluator action mapping and authenticated transport context, current row/field/asset grant checks, policy revision/fingerprint and offline lease semantics; do not invent a second ACL engine or a new permission without root contract review.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "LOSSLESS_SOURCE_AND_DURABLE_ORIGINS",
+      "classification": "TRANSITIVE_FOUNDATION_NOT_ADDED_TO_EXPLICIT_DEPENDENCIES",
+      "evidence": ["packages/server-core/src/knowledge/vault-markdown.ts:54-79,115-125,176-192,212-226", "plans/lark-suite-reference/work-packages.json:12219-12226,12398-12430", "docs/lark-suite-reference/05-rox-bases-design.md:235-244"],
+      "gate": "parseVaultMarkdown is an index extractor, not a source-preserving writer: ParsedVaultNote lacks raw YAML/comment/BOM/EOL spans. Path-derived note IDs are not sufficient portable canonical IDs. LSX-WP-034 transitively depends on LSX-WP-002/005/006/016 and EG-FILES; LSX-WP-016 names EG-EFFECTS. The package's empty external_prerequisites array does not prove those capabilities ready.",
+      "requiredPrerequisite": "Accepted retained-source/CST boundary, durable identity/origin mapping, attachment map and native command receipt/journal from dependency owners, with EG-FILES/EG-EFFECTS readiness carried in accepted receipts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "DURABLE_ARTIFACT_EVENT_READBACK",
+      "classification": "COMMON_PERSISTENCE_FOUNDATION",
+      "evidence": ["packages/core/src/rox2/platform-contract.ts:99-105,131-141,515-552", "docs/lark-suite-reference/07-domain-entity-model.md:169-199", "plans/lark-suite-reference/work-packages.json:12757-12764"],
+      "gate": "Rox2Receipt supplies observedRevision but no byte hash. Rox2Event is not the full specified envelope. registerExternalBinding mutates a supplied Map and is not durable storage. Export needs immutable artifact revision/digest, durable origin/receipt authority and common outbox aliases artifact.created/base.imported, not a renderer download/toast or process-local Map.",
+      "requiredPrerequisite": "Accepted native artifact service with exact ref/revision/hash readback, common durable receipt/outbox mapping and restart recovery; extend package result schema with digest evidence without changing core result semantics.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "BOUNDED_SCOPE_WIRING_GAP",
+      "classification": "IMPLEMENTATION_SCOPE_GATE",
+      "evidence": ["plans/lark-suite-reference/execution-packages.json:3022-3056,3077", "apps/electron/src/renderer/pages/notes/note-views.ts:1-34,100-102", "plans/lark-suite-reference/work-packages.json:12739-12755,12770-12773"],
+      "gate": "The sole shared patch path is a pure note-view model/helper file with no React surface or authenticated transport registration. Creating ExportReview.tsx and export-service.ts does not mount RD-12 or register the three API operations. All ten i18n locale files are outside allowed paths. No verified approved integration seam for these was delivered in the packet.",
+      "requiredPrerequisite": "Root supplies accepted dependency-owned extension points or updates/reviews the packet and leases for API registration, actual UI mount and all locale changes before implementation. Do not invent exact out-of-scope source symbols or silently omit wiring/i18n.",
+      "state": "REQUIRES_INTEGRATION_OWNER_SCOPE_RESOLUTION"
+    },
+    {
+      "id": "REVISION_MANIFEST_AND_LEASES",
+      "classification": "LAUNCH_GATE",
+      "evidence": ["plans/lark-suite-reference/work-packages.json:12563-12566,12890-12900", "plans/lark-suite-reference/execution-packages.json:3067-3077"],
+      "gate": "Spec baseline e953786 differs from dispatch input a21aeab1; reference_package_revision/reference_package_digest remain RESOLVE_FROM_DELIVERY_MANIFEST. Root-owned uncommitted wave0 is expected during this preflight, not an implementation baseline.",
+      "requiredPrerequisite": "After lead's wave0 commit, reconcile exact approved baseline plus accepted dependency commits, resolve and hash spec artifacts/delivery manifest, acquire shared-file lease, and refresh inspected hashes. Do not checkout or mutate Git in this preflight.",
+      "state": "WAITING_FOR_ROOT_COMMIT_AND_ACCEPTED_RECEIPTS"
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/bases/portable-codecs.ts",
+    "packages/server-core/src/bases/export-service.ts",
+    "apps/electron/src/renderer/pages/bases/ExportReview.tsx",
+    "tests/lark-suite-extension/lsx-wp-035.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-035.spec.ts"
+  ],
+  "ownedNewFilePresence": "All five exact paths absent at inspection: glob returned no paths and read-only stat reported No such file or directory for each. This is not a claim about future root integration.",
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/bases/portable-codecs.ts",
+      "symbols": ["ExportManifest", "PortableBaseDefinition", "ImportMapping", "previewExport request/result schemas", "renderExport request/result schemas", "previewPortableImport request/result schemas"],
+      "change": "Define runtime-validated discriminated request/result/error schemas for the three normative operations. Manifest pins format/version, source/schema/query/permission revisions, evaluation timestamp/IANA timezone, authorized count, artifact digest, attachment mappings, encoding/delimiter/list/decimal policy and feature-level loss diagnostics. Implement original deterministic .base+MD, safe CSV and ROX JSON codecs consuming the accepted typed registry and frozen query snapshot; retain opaque source and unsupported expression bytes rather than claiming support.",
+      "contractStatus": "PROPOSED_SYMBOLS_NOT_EXISTING_EXPORTS"
+    },
+    {
+      "path": "packages/server-core/src/bases/export-service.ts",
+      "symbols": ["base.previewExport", "base.renderExport", "base.previewPortableImport"],
+      "change": "Implement these exact service operations using authenticated transport actor/workspace, dependency-owned query/schema/formula/derived/import authority and native artifact/receipt services. Preview has no effects; freeze authorized snapshot and preview digest; revalidate current policy before undispatched rendering and schema/source fences as required. Render yields an immutable native artifact receipt, not queued success. Portable import preview stages explicit mapping through LSX-WP-034; no standalone record/origin store.",
+      "contractStatus": "PROPOSED_OPERATIONS_FROM_SPEC; REGISTRATION_SEAM_UNRESOLVED"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/ExportReview.tsx",
+      "symbols": ["ExportReview"],
+      "change": "Implement RD-12 review using the accepted Base/query context: selected/allAuthorized/schemaOnly scope, format/version/encoding/list policy, pinned revisions/count, attachment map, exact loss/fallback report and raw JSON alternative. Disable dispatch on denied/stale/revoked context; expose typed errors and preserved unsupported import diagnostics. Use t() and common theme/font/help/focus/reduced-motion mechanisms; do not create a second Base surface/store.",
+      "contractStatus": "PROPOSED_COMPONENT; UI_MOUNT_AND_LOCALES_REQUIRE_ROOT_INTEGRATION"
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-035.test.ts",
+      "symbols": ["typed roundtrip cases", "authorized snapshot assertions", "seeded semantic negative controls"],
+      "change": "After accepted dependencies, cover the exact 18 field types, supported relation graph/ID mapping and raw unknown bytes; CSV injection/precision/list policies; unsupported formula diagnostics; forged grants, hidden rows/fields/assets, revoke-before-render, schema conflict, repeated import, and dependency/offline/format errors. Keep deterministic reproduction seeds and compare actual native bytes/readback, not mock echoes.",
+      "contractStatus": "PLANNED_NOT_RUN"
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-035.spec.ts",
+      "symbols": ["RD-12 actual Electron export/import review scenarios"],
+      "change": "Use the discovered supported real Electron runner and integrated UI route, not an isolated fixture component. Exercise scope/format/losses/raw fallback, pointer/keyboard/IME/focus, denied/stale/error/recovery, theme/Russian/i18n/200% zoom/reduced motion and actual font/ARIA evidence.",
+      "contractStatus": "PLANNED_NOT_RUN; RUNNER_NOT_DISCOVERED_WITHIN_PREFLIGHT_SCOPE"
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView",
+      "change": "At the NoteBaseView seam add a pure legacy-v1-to-PortableBaseDefinition adapter after the accepted portable/schema contract exists. Map id/name/kind/filters/formulas/groupBy/sort/columns using dependency-owned stable fieldId and portable-key mappings supplied by the caller; carry authoritative query/schema/context revisions separately. Preserve v:1 shape and existing filter/formula semantics. Unsupported imported .base syntax stays in portable diagnostics/raw source and must not be passed through parseNoteBaseView, which filters unsupported formulas away.",
+      "reason": "Connect the existing Notes Base definition to the one portable contract without replacing its store or silently dropping unsupported expressions.",
+      "owner": "integration-owner",
+      "prerequisite": "Accepted LSX-WP-013/016 contracts and exclusive path lease; adapter export name/signature reviewed against their compiled schemas."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows",
+      "change": "At the projection seam add a pure portable-row bridge which accepts existing projected rows plus the server-authoritative workspace/account/revision/field mapping and emits the accepted snapshot DTO. Preserve row.id and provenance.noteId; no title/folder identity inference, no unrestricted task/backlink counts, no renderer-derived authorization. The bridge must consume the already authorized snapshot rather than rerunning local filtering for allAuthorized.",
+      "reason": "Existing NoteProjectionRow lacks canonical EntityRef/revisions and its task/backlink counts trust input arrays; portable exports must preserve identity and use authorized server counts.",
+      "owner": "integration-owner",
+      "prerequisite": "Accepted query/ACL snapshot DTO and LSX-WP-015 receipt. Keep projectNoteRows current behavior for existing consumers; bridge must not create a second store."
+    }
+  ],
+  "intentionallyUnchangedSharedSeams": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "formulaValue",
+      "reason": "Leave four existing count built-ins unchanged in this slice. Versioned formula implementation belongs to LSX-WP-013; export serializes its accepted expression/version and uses its pinned result, not a second evaluator."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "notesViewsStorageKey",
+      "reason": "Keep notes:views:<workspaceId> as the existing personal-view compatibility key. Do not store export artifacts, receipts or imported canonical records in localStorage or automatically share old personal views."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "format+revision+timezone/hash manifest",
+      "currentEvidence": "NoteBaseView (note-views.ts:24-34) has only v:1/id/name/view config; bindSurfaceContext (surface-context.ts:31-48) pins some entity revisions, not format/schema/query/policy or artifact hash. Spec work-packages.json:12726-12735,12817 and design:242 require all metadata.",
+      "requiredChange": "ExportManifest in portable-codecs.ts and base.previewExport/renderExport in export-service.ts must bind format/version/encoding/list/precision policy, source/schema/query/permission revisions, evaluation time/timezone, authorized count, per-artifact digest and attachment map to frozen bytes.",
+      "verification": "Future source/schema compile plus actual rendered .base+MD/CSV/JSON artifact inspection; independently hash exact output bytes, compare manifest count/ref/revisions/timezone and read them back after restart. No run performed in preflight.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted schema/query/evaluation snapshot contracts and native immutable artifact authority; resolved spec delivery manifest."
+    },
+    {
+      "criterion": "no GPL code copied from Notion Bases reference",
+      "currentEvidence": "design:3,237,298 explicitly forbids automatic GPL engine reuse; all five implementation paths are absent. No product license audit is claimed.",
+      "requiredChange": "Implement original portable codecs from documented format semantics using existing approved dependencies; retain provenance/license decision for every actual dependency or literal reuse. Do not copy Notion Bases/Dynamic Views code.",
+      "verification": "Future exact integrated diff/dependency/provenance review and license audit against inspected reference manifest; record evaluated implementation revision and reviewer receipt, not just a developer assertion.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Actual implementation diff and approved dependency/license evidence."
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:12739-12755 specifies exactly base.previewExport, base.renderExport, base.previewPortableImport and validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. authorizeRox2Action:601-610 accepts explicit actorId but is not a transport identity resolver.",
+      "requiredChange": "Runtime-validated operation contracts in portable-codecs.ts imported by export-service.ts and ExportReview.tsx. Actor/workspace/policy derive from authenticated server session; payload actor/owner/workspace cannot grant authority. Implement every error discriminant with meaningful response semantics and exhaustive renderer handling.",
+      "verification": "Future compile at both boundaries and real authenticated API invocation: spoof actor/workspace rejected; invalid format/version, missing dependency, deleted/stale ref, denied/offlineUnsupported/rateLimited responses decoded by UI. Source helpers alone are not proof.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Root-approved authenticated API registration seam and common validator/query/permission contract."
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "liveResult:515-537 defaults verification to unverified; isClaimableLive:540-552 requires live/succeeded/policy-verified. Rox2Receipt:99-105 has revision but no hash. registerExternalBinding:336-371 uses an input Map, not durability.",
+      "requiredChange": "renderExport returns native immutable artifact ref/revision/digest and verified receipt; import comparison uses LSX-WP-034 canonical apply/readback receipts. Bind byte hash in the package result, reuse durable authority/origin map/outbox and never set success for queued/local/fixture receipt.",
+      "verification": "Future actual export -> read artifact by exact native ref/revision -> hash comparison -> process/service restart -> same readback; isolated import -> canonical row/graph/origin readback -> restart -> same values/mapping/receipt. Assert incomplete writes cannot be acknowledged as success.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted native artifact FileRef/receipt service, restart harness and LSX-WP-034 durable import authority."
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:12777,12786-12799,12821; design:244,279-288. Inspected helpers have no preview/render operation, policy revoke fence or persistent replay receipt.",
+      "requiredChange": "Implement export-service frozen preview/render flow and LSX-WP-034 staged import integration; reauthorize undispatched render, preserve conflicts when source/schema changes, replay import with durable origin/CAS, and report partial/error recovery without silent mutation.",
+      "verification": "Future happy .base/CSV/JSON export/import; denied row/field/asset and forged exported ACL; revoke after preview before dispatch; conflicting schema/source revisions; repeat origin import creates one native entity; crash/resume and offline lease expiry. Preserve expected/observed values, every attempt, seed, input hash and exact artifact/revision.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "All four accepted explicit dependency receipts plus actual policy/recovery/native runtime lanes."
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:12802-12810 names hidden-row count or false unsupported-.base restore mutants and three semantic assertions; design:288 defines A=10,B=20,hidden C=900 with count2/sum30, then revoke B => count1/sum10.",
+      "requiredChange": "lsx-wp-035.test.ts builds a seeded isolated synthetic source with permitted and hidden rows, typed values/ref mapping and unsupported renderer/action/formula. Control mutation includes hidden C in allAuthorized count or suppresses actual loss diagnostics/claims restored unsupported feature.",
+      "verification": "Future green baseline on exact bytes; mutant must fail 'export count equals authorized snapshot', 'loss report names unsupported features' or 'reimport same IDs/mapping typed values; no leaked grant' as appropriate. Save seed/input SHA/assertion output and distinguish infrastructure failure from caught mutation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Actual integrated implementation and authorized fixture/native authority; no product tests are run in this preflight."
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "work-packages.json:12770-12773,12823 requires RD-12; RS-BASE-01:36-42 requires hover/focus/click, existing semantic theme/font and motion behavior. note-views.ts has no React UI or mounting seam; ExportReview.tsx absent.",
+      "requiredChange": "Implement ExportReview within existing Base/RD-12 route and common help/motion/focus mechanisms, RU default plus all ten locale keys via t(), preserve current theme, prove actual Rox Mono loading. Support scope/format/loss details and raw fallback, loading/empty/denied/stale/conflict/error/retry with keyboard and IME-safe input.",
+      "verification": "Future supported actual Electron runner: pointer actions, Enter/Escape/Tab/focus return, IME composition, 200% zoom, light/dark/current theme, reduced-motion, RU and other locale coverage; screenshot/ARIA/computed font plus loaded-font evidence tied to integrated ref/hash. Isolated component screenshots are insufficient.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Root-approved UI mount and locale patch scope, supported actual Electron runner, integrated native data/service."
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "work-packages.json:12793-12799 lists SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE, ACTUAL_ELECTRON_UI; 12824 explicitly excludes proxy completion.",
+      "requiredChange": "Track separate revision-bound evidence for all six lanes and preserve false featureComplete/fullDoD until actual integrated acceptance. Provider/collaboration evidence is additional only when exercised, never a substitute for native domain/UI proof.",
+      "verification": "Future independent integration review verifies lane artifacts, exact implementation commit, expected/observed assertions, hashes and readback before accepting feature completion. This source-only report satisfies no feature proof lane by itself.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Implemented integrated revision and all six actual proof receipts."
+    },
+    {
+      "criterion": "Authorized selected/allAuthorized/schemaOnly export with exact current-policy snapshot and no row/field/asset/count/grant leak",
+      "currentEvidence": "projectNoteRows:133-158 trusts supplied notes/tasks/backlinks; applyNoteBaseView:160-169 performs local filtering/sorting, not ACL. visibleContextEntityRefs:51-55 merely filters input set. design:242; domain model:161-167; package ACL:12768.",
+      "requiredChange": "previewExport uses accepted authoritative query universe, selection intersected with current permission scope, schemaOnly with no rows, and field/asset policy checks before values/aggregates/counts/diagnostics. renderExport rechecks policy before dispatch. Imported policy refs remain provenance only; secret tokens/caches omitted.",
+      "verification": "Future two authenticated actors against owner/native authority, hidden-row/linked-field/media fixture, scope count/hash assertions, no denied labels/refs/URLs in any artifacts or diagnostics, revoke-before-render rejection, offline/reconnect policy fence. Verify no grant is created from bundle metadata.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Common actor/action/entity/field/policy evaluator and dependency query/derived/asset readiness."
+    },
+    {
+      "criterion": "Roundtrip 18 fields/ref graph/unknown bytes under declared support, explicit import mapping and isolated comparison receipt",
+      "currentEvidence": "design:107-132 enumerates exactly Title/Text/Number/Select/Multi-select/Checkbox/Date/URL/Email/Phone/Status/Formula/Relation/Lookup/Rollup/Image/Audio/Video; design:244 and work-packages.json:12787 require typed readback. ParsedVaultNote:54-67 does not retain raw frontmatter source spans.",
+      "requiredChange": "Versioned portable codecs declare per-format support for all 18 fields and preserve stored decimal/date-only/zoned/option-ID/list/null/error/redacted states, expression versions and canonical refs. Unsupported values remain raw/diagnostic, never coerced or called restored. ImportMapping uses stable source IDs/native owner mapping through LSX-WP-034 and retained-source boundary; compare relationship graph, IDs and untouched Markdown/YAML/comments/BOM/EOL bytes.",
+      "verification": "Future isolated export -> staged preview -> native import -> readback -> restart -> re-export across declared supported formats, preserving exact typed values, mapping and graph; generated seeds include large decimal/leading-zero phone/DST/date-only/null-vs-empty/unresolved refs/unknown future schema and raw comments. Unsupported assertions explicitly test retained diagnostics rather than a universal CSV roundtrip.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted 18-field registry/schema revisions, original-source CST retention, relation/attachment/origin authority and LSX-WP-034 apply/readback."
+    },
+    {
+      "criterion": "CSV =/+/-/@ injection-safe policy with exact raw JSON/Markdown alternative and declared list/precision encoding",
+      "currentEvidence": "design:238 and work-packages.json:12788 require safe CSV; no inspected source implements CSV portability.",
+      "requiredChange": "portable-codecs.ts applies selected versioned safe-cell policy to formula-leading strings, proper delimiter/quote/newline encoding and declared list/decimal policy. Preserve exact original data in ROX JSON/Markdown alternative and show altered/lost CSV semantics in ExportReview, including legitimate leading-plus phone values.",
+      "verification": "Future deterministic cells beginning =,+,-,@, quoted delimiters/newlines/Unicode, leading-zero phone, large precise numbers and null/empty/list cases; inspect safe output bytes and parse raw alternative to exact original values. Ensure CSV does not claim ACL/nested body/view/ref fidelity.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Approved codec policies and accepted typed field registry/raw source export authority."
+    },
+    {
+      "criterion": "Unsupported .base syntax/renderers/actions/ACL/non-note actions are retained and named in honest loss report",
+      "currentEvidence": "NoteViewFormula permits only four enum expressions (note-views.ts:15-22); parseNoteBaseView:108-126 filters formulas using isFormula:551-554, silently dropping others. design:237,240 forbids a universal .base equivalence claim; work-packages.json:12772,12789.",
+      "requiredChange": "portable-codecs.ts implements an explicit versioned expression/filter subset and capability/loss diagnostics keyed to original schema/field/view refs; preserve unsupported source expression/raw configuration. Do not run portable import through the lossy v1 parser or translate with eval; show exact unsupported feature and fallback before render/import.",
+      "verification": "Future unsupported expression, action block, custom renderer, ACL and non-note command fixtures produce retained source plus specific diagnostics; supported subset roundtrips independently. Mutant that removes a loss or falsely claims restored functionality must fail named semantic assertion.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted formula function/version contract, portable subset definition and RD-12 UI integration."
+    },
+    {
+      "criterion": "Preserve existing mechanisms, v1 semantics, canonical IDs and reversible migrations; no duplicate Task/Base store",
+      "currentEvidence": "notesViewsStorageKey:100-102 is notes:views:<workspace>; noteIdFromRelativePath:77-79 is a normalized path; registerExternalBinding:336-371 preserves scoped binding/collision quarantine but is process-local. domain model:193-199 requires v1 semantics, personal scope, durable aliases and no dual writers.",
+      "requiredChange": "Use existing saved personal views as input only; bridge to accepted portable contract without repinning localStorage as authority. Delegate origin mapping and native updates to LSX-WP-034; expectedRevision/idempotency through common owner commands. Keep legacy count behavior and mappings; retain unresolved collisions for reviewed mapping, not title-based overwrite.",
+      "verification": "Future legacy view semantics regression, repeat import same native Task/ref with one receipt/mapping, duplicate title/source namespace quarantine, concurrent expectedRevision conflict and restart mapping persistence; rollback retains newer acknowledged owner writes.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "LSX-WP-013/016/034 accepted contracts, durable alias/origin journal and approved shared patch lease."
+    },
+    {
+      "criterion": "Immutable artifact and import audit use common event/receipt authority with full envelope and actor-safe payloads",
+      "currentEvidence": "Rox2Event:131-141 is a narrower generic event; work-packages.json:12761-12764 requires verified aliases artifact.created/base.imported and eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId. domain model:180-189 requires atomic receipt/outbox or file journal recovery.",
+      "requiredChange": "export-service.ts submits artifacts/import receipts through accepted native authority and common durable outbox alias mapping. Populate full required envelope from authenticated command/ref/revision context; consumers reauthorize sensitive payload, no secondary notification/event engine or token-bearing manifest.",
+      "verification": "Future canonical artifact-created/imported event and receipt readback, operation replay dedupe, crash between commit/dispatch recovery, actor-scoped payload redaction and exact causation/correlation/source command/revision checks after restart.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED",
+      "missingPrerequisite": "Accepted common event alias registry, receipt/outbox or file journal contract and root-approved registration scope."
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView / parseNoteBaseView / projectNoteRows / formulaValue / notesViewsStorageKey / isFormula",
+      "lineStart": 15,
+      "lineEnd": 618,
+      "inspectedRanges": [[15,34],[73,83],[100,203],[534,618]],
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "packages/server-core/src/knowledge/vault-markdown.ts",
+      "symbol": "ParsedVaultNote / noteIdFromRelativePath / parseVaultMarkdown",
+      "lineStart": 54,
+      "lineEnd": 226,
+      "inspectedRanges": [[54,79],[115,226]],
+      "sha256": "6de9e4357c4607dd773b7418dc8cac7646e5686940074480da65951e69119765"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "ROX2_ENTITY_KINDS / Rox2EntityRef / registerExternalBinding / Rox2Receipt / Rox2Event / liveResult / isClaimableLive / authorizeRox2Action / parseRox2TypedRecord",
+      "lineStart": 17,
+      "lineEnd": 690,
+      "inspectedRanges": [[17,38],[55,64],[99,167],[233,250],[316,371],[515,552],[579,610],[624,690]],
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "SurfaceContextInput / bindSurfaceContext / visibleContextEntityRefs / rebaseLiveContext",
+      "lineStart": 18,
+      "lineEnd": 91,
+      "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"
+    },
+    {
+      "path": "plans/lark-suite-reference/work-packages.json",
+      "symbol": "work_packages[34] LSX-WP-035; exact dependency records LSX-WP-013/015/016/034",
+      "lineStart": 12557,
+      "lineEnd": 12902,
+      "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "LSX-WP-035 normative execution packet",
+      "lineStart": 2990,
+      "lineEnd": 3079,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "Sections 5,11,14; portable formats/18 fields/negative controls",
+      "lineStart": 107,
+      "lineEnd": 298,
+      "inspectedRanges": [[107,133],[231,298]],
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    },
+    {
+      "path": "docs/lark-suite-reference/07-domain-entity-model.md",
+      "symbol": "Sections 7-9; permissions, consistency, migration rules",
+      "lineStart": 159,
+      "lineEnd": 201,
+      "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "Published Base authority, contracts, DoD and RS-DRV-01 dependency",
+      "lineStart": 1,
+      "lineEnd": 113,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-DRV-01.md",
+      "symbol": "Drive canonical File/authority and common foundation gate",
+      "lineStart": 36,
+      "lineEnd": 84,
+      "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"
+    }
+  ],
+  "evidenceFreshness": {
+    "kind": "WORKING_TREE_FILE_SNAPSHOT_NOT_IMPLEMENTED_REVISION_PROOF",
+    "dispatchRevisionVerifiedWithGit": false,
+    "reason": "input_revision is the supplied dispatch binding; no Git operations were run. User disclosed root-owned uncommitted wave0 integration.",
+    "specInputHashes": "Both inspected whole-file input hashes exactly match dispatch input_manifest.",
+    "sourceBaselineComparison": "All four inspected normative source hashes exactly match the existing_code baseline hashes in work-packages.json. This proves byte equality at inspection, not dependency readiness or runtime correctness.",
+    "stalenessRule": "Root may change inspected files during integration. Rehash and reread changed ranges after wave0/dependency integration; this report's evidence is stale for any changed whole-file digest and must not authorize patches against new unseen contents."
+  },
+  "verification": {
+    "performed": ["Exact normative records and linked specification source read", "Read-only inspection of four normative existing source files", "Whole-file shasum -a 256 of inspected source/specification files", "Exact proposed path absence check"],
+    "notPerformed": ["Product implementation", "Build/typecheck", "Product tests or seeded mutations", "Native UI", "Network operations", "Git mutation or revision validation", "launch-worker-pool.py verifier"],
+    "futureSourceTestCommand": "bun test tests/lark-suite-extension/lsx-wp-035.test.ts",
+    "futureUiCommand": "Discover supported actual Electron runner after root scope/dependencies are ready; no invented command or PASS receipt.",
+    "featureVerificationState": "NOT_RUN"
+  },
+  "nextExecutableAction": "Root first commits wave0 and accepts artifact+readback receipts for LSX-WP-013, LSX-WP-015, LSX-WP-016 and LSX-WP-034 in dependency order. Then reconcile RS-DRV-01 and the CustomRecord-versus-page contract, resolve reference manifest hashes and approved API/UI/i18n integration scope, acquire note-views.ts lease, refresh inspected digests, and implement portable-codecs.ts against the accepted contracts before service and RD-12 integration. This preflight worker must not start product implementation.",
+  "risks": [
+    "Allowed source paths alone cannot register authenticated APIs, mount ExportReview or supply ten locale translations; additional reviewed scope or dependency-owned hooks are necessary, not optional acceptance.",
+    "Published RS-BASE-01 and LSX design propose different new domain kinds/services; unsynchronized implementation would create a second Base/record store or incompatible export identity.",
+    "parseNoteBaseView filters out unsupported formulas and drops unknown view fields; using it as a portable importer loses evidence silently.",
+    "parseVaultMarkdown is not a lossless writer; reconstructing frontmatter from its properties/body loses unknown YAML/comments/BOM/EOL semantics.",
+    "Caller-supplied readable sets and coarse permission helpers do not establish entity/field/attachment export authorization, hidden aggregate safety or revoke fencing.",
+    "CSV cannot preserve nested bodies/ref graph/ACL/views universally, and safe-cell prefixes alter legitimate plus/minus-leading strings; raw alternative and versioned explicit loss report are mandatory.",
+    "In-memory external binding Map, localStorage view key, queued result or renderer download cannot substitute for durable artifact/origin receipt and restart readback.",
+    "Empty package external_prerequisites does not eliminate EG-FILES/EG-EFFECTS readiness inherited through accepted import/migration dependencies.",
+    "Source references are working-tree snapshots and may become stale during root integration. Do not transplant proposed patches without fresh digests/range reads.",
+    "Codegraph has no index for this repository; descriptive find failed due its judge provider returning 402 insufficient credits. Inspection continued with exact known-path read/grep; no index creation, tool repair or network workaround was attempted."
+  ]
+}

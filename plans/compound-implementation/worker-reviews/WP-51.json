@@ -419,6 +419,7 @@
     "artifactVerificationAccepted": false,
     "observedArtifactResults": ["Verifier parsed JSON and passed dispatch lineage/required-field checks, then rejected stale notes.ts hash.", "After re-reading three concurrently changed files and updating report references/findings, verifier parsed refreshed JSON and again passed lineage/required-field checks, then rejected markdown-commit.ts because it changed again."],
     "acceptanceLimit": "This is a completed source-backed preflight artifact with an explicit stale evidence gate, not an accepted stable-revision receipt or implemented feature. Product tests/UI/network were not run.",
-    "verificationArgv": ["/Library/Developer/CommandLineTools/usr/bin/python3", "/Users/t/Projects/rox-one-compound-implementation/plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-51.json", "/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/WP-51/packet.json"]
-  }
+    "verificationArgv": ["python3", "plans/compound-implementation/launch-worker-pool.py", "--verify", "plans/compound-implementation/worker-reviews/WP-51.json", "${ROX_COMPOUND_PACKET_ROOT}/WP-51/packet.json"]
+  },
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
 }

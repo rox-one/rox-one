@@ -4,6 +4,8 @@
 
 ## 1. Общая acceptance boundary
 
+Текущее исполнение WP-01 фиксируется отдельно: [implementation evidence](wp-01-implementation.md#фактические-проверки), `plans/compound-implementation/wp01-integration-verification.json`, `tests/macro-integration/ui/wp-01-electron.test.ts`. Реальные domain/runtime/routing проверки не подменяют ещё открытую native приёмку и финальный полный цикл программы. Исходный план ниже не является отчётом PASS.
+
 Каждый vertical slice проверяется через настоящий changed surface: Electron renderer + RPC для desktop, поддерживаемый web client + HTTP/WS для shared workspace, native agent/MCP dispatcher для agent сценария. Direct DB fixture допустима для подготовки; пользовательские действия проходят UI/API. Mock provider подтверждает только adapter contract; provider acceptance требует реального изолированного test account и read-back через независимый provider client.
 
 Существующие ROX local functions продолжают работать в **standalone authority mode**. Их тесты не засчитываются как multi-user shared completeness. Shared entities пишутся только workspace service; local SQLite/files становятся projection/outbox/import assets согласно 19-target-architecture. `Rox2EntityRef`, event/relation contract и triad `executionMode × lifecycle × verification` сохраняются. Fixture/simulated/queued не могут стать live/succeeded/readback_verified без соответствующего evidence. Основание: ROX `packages/core/src/rox2/platform-contract.ts:Rox2Status,Rox2EntityRef:107–141,232–239` на baseline SHA.

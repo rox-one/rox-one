@@ -1,0 +1,274 @@
+{
+  "task_id": "LSX-WP-029-preflight",
+  "attempt_id": "8d9c6b77a3fbc169e265b2b35f6e7e85",
+  "packet_hash": "936d9bfc4da40101cd0d22a6ad822526f711c948d663ce88b3e3083c26bbb226",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-029",
+  "featureComplete": false,
+  "mode": "inspect-only / owned preflight artifact",
+  "workTier": "bounded-workflow; one report, no implementation or delegation",
+  "dependencies": ["LSX-WP-028"],
+  "externalPrerequisitesDeclaredByPackage": [],
+  "evidenceStatus": {
+    "basis": "Live working-tree source inspected on 2026-09-30, not an assertion that inspected bytes belong to input_revision. The dispatch supplies input_revision; no Git operation was performed.",
+    "specManifest": "Both specification SHA256 values match the dispatch input_manifest.",
+    "sourceDrift": "NotesViewHost.tsx whole-file SHA256 a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a differs from the normative product-baseline digest 2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358. The live host already imports core/docs and accepts blockTree. Treat this as working-tree/wave0 evidence, not an accepted prerequisite implementation receipt. note-views.ts and document-ia.ts match their normative baseline digests.",
+    "freshnessRule": "Every sourceReference is whole-file-hash bound. Re-read changed sources and amend the report before implementation if root integration changes these bytes; the supplied preflight validator rejects stale hashes.",
+    "runtime": "NOT_RUN; builds, tests, UI and network operations prohibited by this preflight packet.",
+    "exploration": "Codegraph reported no index. Scoped find failed with a judge account 402, not evidence of code absence; concrete specification paths, read, grep and direct-import reads supplied the evidence. The four normative new paths were not found by glob."
+  },
+  "foundationGates": [
+    {
+      "id": "published-doc-foundation-not-explicit-dag",
+      "kind": "PUBLISHED_SPEC_REQUIREMENT",
+      "source": "docs/rox-suite/published/RS-DOC-01.md:3,35-44,50-58,60-82",
+      "gate": "The linked published specification requires collaborative_document in the existing Page/library, one React editor/CRDT production binding, durable WAL/ACK, current-ACL fencing and shared discussions. It explicitly depends on RS-DRV-01 (#1109) and RS-MSG-02 (#1107); neither is an explicit LSX-WP-029 DAG edge.",
+      "impact": "Map must consume the same approved document authority, not instantiate its own body store or comments engine. Collaborative convergence, remote-edit-safe undo, offline/revoke and durable receipt proofs cannot be supplied by a renderer-only map fixture. Do not equate all RS-DOC-01 functionality with this bounded map contribution, but do not waive its affected foundation gates.",
+      "missingPrerequisite": "Root-owned readiness/acceptance receipts for the affected published Drive/document and message/discussion foundations, plus the selected document writer binding. Publication is expressly not implementation evidence.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    },
+    {
+      "id": "structural-authority-and-collaboration",
+      "kind": "TRANSITIVE_FOUNDATION",
+      "source": "plans/lark-suite-reference/work-packages.json:10208-10215,10319-10325,10366-10419; docs/lark-suite-reference/06-rox-docs-design.md:180-220",
+      "gate": "Explicit predecessor LSX-WP-028 itself depends on LSX-WP-003, LSX-WP-006 and LSX-WP-026 and declares EG-COLLABORATION. It allocates server-core/src/docs/tree-commands.ts and EditableOutline.tsx; tree mutation and text share one aggregate expectedRevision and authorityEpoch.",
+      "impact": "Obtain the accepted predecessor's actual insert/move/delete/rebase/text-edit/undo bridge and committed projection contract. ListTreeProjection alone is a read projection, not a structural mutation API. No independent structure token or map-label JSON writer.",
+      "missingPrerequisite": "Lead wave0 commit and LSX-WP-028 artifact plus native readback acceptance, including affected transitive and collaboration readiness. No dependency receipt was supplied with this packet.",
+      "state": "WAIT_FOR_ACCEPTED_DEPENDENCY"
+    },
+    {
+      "id": "layout-server-and-personal-preference-boundary",
+      "kind": "ALLOCATION_GAP",
+      "source": "plans/lark-suite-reference/work-packages.json:10711-10752,10859-10869; apps/electron/src/renderer/pages/notes/NotesViewHost.tsx:58-77,318-343,490-518",
+      "gate": "doc.patchMapLayout and doc.publishMapLayout need authenticated native transport, separate shared-layout permission, durable viewRevision CAS/idempotency and authorized doc.viewChanged events. Package allocates only renderer/core/test new files and two renderer shared files; no server transport or native metadata persistence seam is allocated here.",
+      "impact": "The core module can define data and decode contracts, and the renderer can consume an injected approved command bridge, but neither can prove server enforcement or durable publication by itself. Personal state must use the existing approved ViewPreference mechanism with authenticated principal/device scope, not another shared localStorage namespace. Current folds key contains only workspace/note.",
+      "missingPrerequisite": "Integration owner must identify and allocate the existing document metadata command/query/event and actor-scoped preference seams in an updated reviewed packet, or supply accepted prerequisite bridge receipts. Existing local canvas persistence is not an acceptable substitute.",
+      "state": "REQUIRES_ROOT_CONTRACT_AND_SCOPE_RESOLUTION"
+    },
+    {
+      "id": "renderer-route-and-core-export-scope",
+      "kind": "NAMED_SEAM_GAP",
+      "source": "apps/electron/src/renderer/pages/notes/note-views.ts:5,24-34; apps/electron/src/renderer/pages/notes/NotesViewHost.tsx:46,58-116; packages/core/src/docs/index.ts:1-7; plans/lark-suite-reference/work-packages.json:10672-10694,10869",
+      "gate": "The actual view-kind union is NoteViewKind and excludes map, while the normative note-views shared-symbol allocation names NoteBaseView/projectNoteRows/formulaValue/notesViewsStorageKey instead. The @craft-agent/core/docs barrel has no map-view-config export. Host accepts no editing/layout bridge, actor-scoped preferences or view-switch callback.",
+      "impact": "Adding a host branch alone does not make Map reachable or guarantee Map/Outline selection persistence. Do not overload table/base config or repurpose Canvas. Existing callers and package import/export reachability must be resolved by the integration owner.",
+      "missingPrerequisite": "Reviewed packet explicitly admitting NoteViewKind and any required existing route/caller and core export symbols. The caller source was outside this packet's inspected package/direct-import scope; its current symbols and behavior are not asserted here.",
+      "state": "REQUIRES_UPDATED_REVIEWED_PACKET"
+    },
+    {
+      "id": "locale-and-native-proof-ownership",
+      "kind": "INTEGRATION_PROOF_GATE",
+      "source": "Repository AGENTS.md i18n rules; plans/lark-suite-reference/work-packages.json:10747,10765-10774,10790-10798",
+      "gate": "All new UI strings need t() and all ten existing locales. Locale files are not allocated to this worker. Actual Electron/UI runner, authenticated A/B fixtures, crash/restart controls and loaded-font evidence must be established by root before feature verification.",
+      "impact": "No hardcoded Russian-only copy, invented UI command, fixture-only success, fabricated screenshot or compile-only completion.",
+      "missingPrerequisite": "Root-owned localization integration and actual supported native runner with isolated authorized actors. These are verification/ownership prerequisites, not new explicit DAG edges.",
+      "state": "NOT_ESTABLISHED_BY_PREFLIGHT"
+    },
+    {
+      "id": "revision-manifest-and-path-leases",
+      "kind": "NORMATIVE_LAUNCH_GATE",
+      "source": "plans/lark-suite-reference/execution-packages.json:2503-2506,2534-2544",
+      "gate": "Reference revision/digest remain RESOLVE_FROM_DELIVERY_MANIFEST; normative product baseline is e953786ba7e30fb5da5dca7e88e20e324d5aebab, whereas dispatch input_revision is a21aeab1da5a67e56788384ff930945b0f487879. Implementation requires approved prerequisite commits, an accepted baseline/revision binding and exclusive shared-file leases.",
+      "impact": "Do not checkout or alter the live dirty worktree during preflight, and do not start implementation from these uncommitted inspected bytes.",
+      "missingPrerequisite": "Lead's wave0 commit, resolved delivery manifest/spec hashes, explicit implementation input binding and accepted dependency receipts; serial path lease held by integration-owner.",
+      "state": "WAIT_FOR_ROOT_IMPLEMENTATION_PACKET"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/docs/DocumentMindMap.tsx",
+    "packages/core/src/docs/map-view-config.ts",
+    "tests/lark-suite-extension/lsx-wp-029.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-029.spec.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/docs/map-view-config.ts",
+      "change": "Propose versioned MapLayout and personal ViewPreference data/decoder contracts. Layout contains node-ID keyed finite positions and safe theme/style tokens plus independent viewRevision; no node text. Decode returns distinguishable valid/missing/recoverable-malformed/unknown-format states retaining original bytes and unknown fields. Validate without an automatic replacement save. Define layout patch/publish request/result/error schemas and a digest-bound Tidy/publish preview using document ref/revision, expected viewRevision, epoch and operation identity. Keep server ACL/durability in the approved native authority, not this pure module. Personal viewport zoom is clamped to 0.2–3; focus/folds/selection are not shared layout fields.",
+      "status": "PROPOSED_NOT_IMPLEMENTED; finalize exported names after accepted dependency/native bridge contracts"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/docs/DocumentMindMap.tsx",
+      "change": "Propose DocumentMindMap consuming the exact committed ListTreeProjection/ref/revision, accepted Doc command bridge, approved layout receipt and existing actor-scoped preferences. Render labels from node.text, durable keys from node.nodeId, unanchored/ambiguous nodes read-only until explicit accepted marker/conversion flow. Support bounded tree geometry, pan/select, pointer-anchored zoom/fit, folds/focus, node edit/child/sibling/reparent keyboard and pointer controls through the shared semantic command API, IME-safe edit drafts, remote-safe undo, Tidy preview and explicit permissioned publish. Preserve current theme and selection/zoom through Map/Outline switching; use t(), accessible controls/help and reduced motion.",
+      "status": "PROPOSED_NOT_IMPLEMENTED"
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-029.test.ts",
+      "change": "Exercise unknown-field roundtrip and malformed geometry non-overwrite; finite geometry and 20–300% bounds/pointer anchor; stable IDs and unchanged retained source across view switches/layout changes; Map text edit observed in Outline/Doc/reload through accepted authority; principal A/B preference isolation; explicit publication, stale preview/viewRevision conflicts, denied/replay/recovery and restart readback. Mutate independent-label storage and personal-focus broadcast and prove the named semantic assertions fail on exact mutant bytes with saved seeds.",
+      "status": "PLANNED_NOT_RUN"
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-029.spec.ts",
+      "change": "Use the project-supported actual Electron runner discovered by root, not an invented fixture command. Cover actual same-document route, pointer/keyboard/IME edit and focus restoration, pan/zoom/fit, Tidy preview/cancel/publish/undo, Map/Outline switching, narrow/touch controls, Russian and locale parity, light/dark and custom-theme contrast, 200% zoom, reduced motion, actual Rox Mono loaded-font readback, denied/conflict/offline/error states. Bind screenshots/ARIA and persisted domain readbacks to integrated revision and seeded input.",
+      "status": "PLANNED_NOT_RUN"
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "change": "After LSX-WP-028 is accepted, extend the host view prop union with map, import DocumentMindMap and add an explicit map branch before the graph fallback. Pass the same blockTree and active-document ref/revision binding as Outline, plus the accepted Doc command/layout bridge and shared Map/Outline selection preference controller. Add typed props for these accepted bridges and a scoped view-switch callback; show a recoverable unavailable/read-only state when prerequisite authority is absent, not Canvas or fabricated write success. Keep table/canvas/graph branches unchanged.",
+      "reason": "Current lines 58–116 route only table/canvas/outline/graph. Graph is the final fallback, so map must be an explicit same-document branch. Host is the existing surface; adding another content store or route is not authorized.",
+      "owner": "integration-owner",
+      "application": "REVIEWED_SERIAL_PATCH_AFTER_DEPENDENCY_RECEIPT",
+      "missingPrerequisite": "Accepted LSX-WP-028/native layout and ViewPreference bridge types; existing caller wiring allocation and exclusive lease. Rebase against lead's committed host bytes."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "change": "Add or reuse an optional authoritative document binding supplied by the accepted dependency: stable entity ref, committed aggregate revision/hash and authority epoch, while preserving existing id/title/markdown fields. Correlate activeNoteId and blockTree.sourceHash with that binding before enabling map commands. The host must not derive authorization from note.id, tags or payload owner/workspace, or synthesize a commit receipt from React state.",
+      "reason": "Current lines 48–56 contain display/content data but no revision, epoch or authoritative ref. ListTreeProjection has sourceHash/epoch but no complete entity ref or actor; publication and text edits need the authenticated approved binding.",
+      "owner": "integration-owner",
+      "application": "REVIEWED_SERIAL_PATCH_AFTER_DEPENDENCY_RECEIPT",
+      "missingPrerequisite": "Reuse actual predecessor binding shape rather than inventing a competing metadata schema; verify caller changes under an updated packet."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteViewKind",
+      "change": "Extend the existing NoteViewKind union at line 5 with map, keeping canvas distinct. Do not change NoteBaseView.kind, projectNoteRows, formulaValue or notesViewsStorageKey: those are table/base projections, not document geometry. Register map in existing consumers only under root-approved caller scope; do not introduce an independent map content/config store here.",
+      "reason": "The actual view discriminator excludes map. The normative shared-symbol list instead names unrelated table/base seams, so a reviewed packet correction is necessary before this exact patch; file-path authorization alone is not permission for unlisted symbols.",
+      "owner": "integration-owner",
+      "application": "BLOCKED_UNTIL_NAMED_SYMBOL_PACKET_UPDATE",
+      "missingPrerequisite": "Root admission of NoteViewKind and affected route/selector callers."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "stable node identity, actual pointer+keyboard visual QA",
+      "seam": "ListNode/ListTreeProjection/projectListTree; NotesOutlineView projectNode/openSource; proposed DocumentMindMap",
+      "currentEvidence": "list-tree.ts:4–35,61–98 keeps nodeId, sourceRange, textRange, parent and sourceHash; block-identity.ts:261–302 rejects ambiguous identities. NotesViewHost.tsx:514–530 uses block:nodeId and source-hash-scoped transient projection keys. No DocumentMindMap file was found and current Outline is a reading/source-opening projection.",
+      "requiredChange": "Use the same durable nodeIDs and H1 root for map labels/content; retain non-tree regions. Never treat sourceHash/blockIndex render keys as writable durable IDs. Route child/sibling/outdent/reorder/edit/marks/checkbox/list and branch drag through accepted same-document semantic commands. Preserve selection across views; scope shortcuts to the focused Docs surface and let editing caret/IME win. Implement keyboard alternatives for every pointer control.",
+      "verification": "Future package tests assert same IDs/content/order through Map→Outline→Doc→reload, source-preserving commands and invalid/self-descendant branch rejection. Actual Electron pointer/keyboard edit, drag and source-jump QA observes the same committed IDs/ref/revision; include escaped/cancelled edits, IME and selection restoration.",
+      "missingPrerequisite": "Accepted LSX-WP-028 command/edit/undo bridge, root route integration and actual Electron runner.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "themes contrast and fit keep readable source",
+      "seam": "canvasFitTransform and NotesCanvasView zoomBy as existing viewport patterns; proposed map-view-config and DocumentMindMap",
+      "currentEvidence": "note-views.ts:328–349 fits Canvas with a maximum scale of 1 and no map minimum; NotesViewHost.tsx:350–362 clamps Canvas to 25–400% around viewport center. These differ from required Map 20–300% and pointer-anchor behavior. Design 06:132–136 specifies Follow workspace/Paper/Slate/Graphite/Midnight/custom tokens and readable print.",
+      "requiredChange": "Implement map-specific bounded 20–300% zoom, pointer-anchored wheel/pinch, fit on measured tree bounds and readable source access rather than modifying existing Canvas defaults. Keep branch focus navigation/search possible; use safe theme tokens with validated light/dark/custom contrast and preserve the user's workspace theme. For large trees where full fit is unreadable, keep bounded zoom and an explicit usable focus/source navigation, not clipped inaccessible labels.",
+      "verification": "Future deterministic geometry assertions cover finite positions, empty/narrow viewports, min/max zoom and invariant world point under pointer zoom. Actual Electron theme and 200% UI zoom screenshots/computed contrast/font, fit/pan/focus and narrow/touch interaction show source remains reachable/readable.",
+      "missingPrerequisite": "Measured native surface, accepted theme tokens and root-owned locale/font integration; no UI was exercised here.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "seam": "decodeMarkdownCommitCommand; proposed map-view-config layout decoders and approved doc.patchMapLayout/doc.publishMapLayout transport",
+      "currentEvidence": "command-envelope.ts:2–45 validates revision/epoch/operation and optional sourceStoreId with six error kinds. Map specification 10715–10729 requires eight discriminants including offlineUnsupported and missingDependency and authenticated actor. Inspected host exposes no mutation/layout transport and package allocates no server map command file.",
+      "requiredChange": "Define runtime-decoded layout request/result/error union with validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Bind patch to document ref/revision, expected independent viewRevision, epoch and operation identity; publish confirms an exact previewDigest. Reuse the current server-authority transport, derive principal there and check current document and separate layout permissions. Do not widen the existing Markdown error union just to mimic layout transport or trust payload actor/workspace.",
+      "verification": "Future SOURCE_SCHEMA compilation at both actual boundaries plus decoder and authenticated native negative probes: malformed/nonfinite geometry, wrong actor/workspace, stale epoch/ref/viewRevision/digest, missing dependency and unsupported offline mode return the expected typed failure without a write.",
+      "missingPrerequisite": "Root must allocate/accept real server command, query and transport seams beyond the current renderer-only shared paths; accepted dependency contract names.",
+      "state": "BLOCKED_ON_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "seam": "ListTreeProjection.sourceHash/authorityEpoch; listTreeMarkdown; proposed native layout receipt and DocumentMindMap save status",
+      "currentEvidence": "list-tree.ts:102–106 checks retained source hash and returns the authority bytes rather than serializing visible nodes. Current Canvas writes localStorage in an effect (host:337–343), catches quota errors and exposes no durable native ACK. Specification requires independent layout viewRevision and explicit publication.",
+      "requiredChange": "Distinguish personal/local draft, preview, pending and durable committed state. Show shared layout saved only after native transaction receipt and exact readback; preserve the same document ref/content revision/hash on geometry-only publication while advancing viewRevision. Read committed tree/layout via approved authority, never browser storage as shared proof.",
+      "verification": "Future native readback asserts exact document ref/revision/content hash and layout revision/hash before/after publish and process restart; crash between draft/commit/ACK retains acknowledged result and does not promote an unacknowledged preview. Confirm geometry-only operations do not alter Markdown bytes.",
+      "missingPrerequisite": "Approved native metadata persistence/query/receipt seam and root-controlled restart/recovery lane.",
+      "state": "BLOCKED_ON_FOUNDATION_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "seam": "Accepted LSX-WP-028 tree authority; proposed layout patch/publish commands; DocumentMindMap edit/draft/conflict states",
+      "currentEvidence": "work-packages.json:10760–10763 gives Map edit readback, A/B preferences and malformed metadata cases; 10795 requires denied/conflict/replay/recovery. Design 06:182–220 requires aggregate tree CAS, current ACL at reconnect and no unauthorized replay. Read-only projectListTree does not implement those commands.",
+      "requiredChange": "Wire happy Map edit and explicit layout publish to the real authority. Handle concurrent text/move and stale layout preview as explicit preserved-draft conflicts or accepted rebases; separately deny text/layout permissions. Deduplicate operation replay, reauthorize after revoke/epoch change and expose queued/offlineUnsupported/recovery truthfully. Do not promise automatic merge of invalid structural races.",
+      "verification": "Future native A/B scenarios cover map edit→all views/reload, stale aggregate revision and stale viewRevision, no-cycle drag, deleted ancestor with late edit, denied layout despite document edit capability, duplicate operation, crash/reconnect and revoked queued mutation. Preserve every attempt, expected/actual receipt, seed and evaluated bytes; remote B edits survive A undo.",
+      "missingPrerequisite": "Accepted LSX-WP-028 and affected collaboration/ACL/idempotency/offline readiness with authenticated A/B fixtures.",
+      "state": "NOT_RUN_BLOCKED_ON_FOUNDATION"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "seam": "listTreeMarkdown retained authority; Map label projection, personal preference delivery and metadata decoder in proposed package tests",
+      "currentEvidence": "work-packages.json:10776–10784 names independent JSON map-label storage/personal-focus broadcast mutants and assertions: single content hash/ref across views, B viewport unchanged by A, unknown geometry fields survive. Current Canvas is a separate JSON model, making reuse a real same-authority failure risk.",
+      "requiredChange": "Create isolated seeded fixtures using the accepted native authority. Inject the specified independent-label-copy and personal-broadcast faulty paths; include unknown-geometry field loss control. Assert semantic outcomes rather than wiring, source text or not-throw. Retain exact baseline/mutant artifact hashes, seed and assertion identity.",
+      "verification": "Future UNIT_PROPERTY and native lanes have a green baseline and mutant failures specifically for content/ref divergence, B viewport mutation and unknown-field loss. The receipt must identify which assertion failed; timeouts, inability to launch or transport errors are rejected as sensitivity evidence.",
+      "missingPrerequisite": "Real dependency/native fixture harness and reproducible mutation injection lane; none executed in preflight.",
+      "state": "PLANNED_NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "seam": "NotesViewHost useTranslation/existing controls; proposed DocumentMindMap and native UI spec",
+      "currentEvidence": "Host uses useTranslation at lines 2,132,316,489,547. Normative UI file and DocumentMindMap were not found. Design 06:120–136 specifies edit, shortcuts, contextual controls, Tidy, 44px touch/pinch, view-switch selection and theme controls; no actual UI evidence exists here.",
+      "requiredChange": "Add accessible localized pan/select/fit/zoom/theme/publish/Tidy/error/help controls, focus parity with hover, explicit child/fold/edit actions, focus-return Escape, keyboard child/sibling/edit/find/shortcut sheet and scoped Map/Outline switching. Composition-aware key handling avoids dispatching structural shortcuts during IME; reduce motion and optional shortcut overlay appropriately. Integrate all ten locales through root, retain actual Rox Mono and current theme, and show loading/empty/denied/error/offline/conflict states without fake success.",
+      "verification": "Future actual integrated Electron acceptance records pointer plus keyboard/IME flows, hover/focus/click help, Escape restoration, touch44px, 200% zoom, reduced-motion and theme regression. Capture Russian plus locale results, ARIA/computed font and loaded-font confirmation with screenshot hashes/ref/revision/viewport; a Linux fixture screenshot alone is insufficient.",
+      "missingPrerequisite": "Supported real Electron runner and surface lease, approved locale changes/font availability, accepted authority and fixture actors.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "seam": "work-packages.json tests.proof_lanes and cloud_packet.artifact_requirements/launch_gates; launch-worker-pool.py verify",
+      "currentEvidence": "Specification 10767–10774 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI. Validator lines 47–69 only checks report lineage, required fields, whole-file hashes and featureComplete=false; it cannot establish any feature lane.",
+      "requiredChange": "Keep this artifact explicitly preflight-only. Root later integrates reviewed patches and records each proof lane independently against exact committed bytes, test inputs/seeds and authoritative receipts. Include collaboration lane when exercised and actor-redacted artifacts; avoid adding a provider requirement merely for local map rendering.",
+      "verification": "Now: run only the packet-supplied preflight report verifier. Later: root checks independent receipts for all six lanes on the integrated implementation revision and rejects fixture-only or queued/saved-toast evidence.",
+      "missingPrerequisite": "Approved implementation commit and complete independently verified feature-lane receipts; this packet permits no feature runtime verification.",
+      "state": "PREFLIGHT_ONLY_FEATURE_COMPLETE_FALSE"
+    },
+    {
+      "criterion": "One content authority: same node IDs/content via Doc commands; Map edits agree with Outline/Doc/reload, including non-tree source retention.",
+      "seam": "projectListTree/listTreeMarkdown; projectBlockIdentity; RetainedSource; NotesOutlineView",
+      "currentEvidence": "list-tree.ts:66–98 projects H1/list nodes and tracks retainedRegions; 102–106 exports retained Markdown, not geometry. retained-source.ts:83–108 retains source bytes and EOL/frontmatter ranges. document-ia.ts:182–192 is only a legacy ^id extractor; 702–708 rewrites trailing whitespace and is not a lossless Map writer.",
+      "requiredChange": "Render committed tree labels, not geometry text. Keep ROX/Obsidian marker alias mappings, unprojected prose/tables/code, BOM/CRLF/frontmatter/terminal bytes untouched outside accepted edited ranges. Route text through accepted lossless command patcher. Opening Map never allocates markers or silently converts arbitrary Markdown; conversion requires the accepted explicit preview/copy flow, not an ad hoc package implementation.",
+      "verification": "Future same-ref/hash readback after text edit and reload, no-op/view-only byte equality, stable IDs after rename/reorder and retained-region comparisons. Include unanchored/duplicate-ID/unknown-format fixtures and assert edits are disabled until the explicit valid prerequisite flow; no data is replaced with empty tree.",
+      "missingPrerequisite": "Accepted marker identity/lossless write/structural dependency receipts; conversion integration if arbitrary unanchored documents are opened.",
+      "state": "READ_PROJECTION_EXISTS_WRITE_PATH_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Personal viewport/focus/folds and selection survive view switch without leaking to B; shared layout persists only with explicit publication.",
+      "seam": "notesOutlineFoldsStorageKey/parseOutlineFolds; NotesOutlineView collapsedIds; proposed approved ViewPreference bridge and MapLayout publish",
+      "currentEvidence": "note-views.ts:491–492 uses only workspaceId/noteId, not principal/device. Host:492–511 owns Outline collapse state inside the view component. Canvas:331–334 resets fit on seed/key changes. Neither proves A/B isolation or cross-view zoom/selection persistence.",
+      "requiredChange": "Use the existing authenticated actor-scoped ViewPreference authority/controller shared by Map and Outline; retain personal focus/folds/zoom/selection across unmount/switch. Do not broadcast or put these fields in shared layout events. Local free drag/Tidy preview remains unpublished until an explicit authorized publish confirmation. Persist only position/theme metadata as shared viewRevision, never content or personal navigation.",
+      "verification": "Future A pans/folds/focuses/selects and switches Map→Outline→Map; A state survives, B state and network/shared layout remain unchanged. Explicit publish updates authorized B shared geometry only, with B zoom/selection intact. Restart restores scoped preferences and committed layout according to their separate policies; denied publish writes nothing.",
+      "missingPrerequisite": "Root-approved principal/device ViewPreference persistence seam and shared controller integration; current workspace/note-only fold storage cannot establish this guarantee.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Versioned geometry/theme retains unknown fields; malformed geometry gives recoverable warning and never saves empty replacement.",
+      "seam": "parseJsonCanvas/serializeJsonCanvas as incompatible existing behavior; proposed map-view-config decode/patch and DocumentMindMap warning state",
+      "currentEvidence": "note-views.ts:252–264 filters known nodes/edges and catches malformed JSON as empty; 267–268 serializes only nodes/edges. Host:324–343 substitutes seeded data and later persists it. Specification 10733 and design 06:116 expressly require unknown metadata retention and non-destructive malformed handling.",
+      "requiredChange": "Do not use Canvas parsing/persistence for map layout. Preserve unknown top-level/node/theme metadata when patching known finite position/token fields; distinguish missing metadata from malformed/unsupported version. Keep malformed raw data intact, expose recoverable warning/read-only layout and require explicit reviewed repair with CAS; safe display fallback must not schedule a save.",
+      "verification": "Future semantic roundtrip tests preserve nested unknown sentinel values and unrelated metadata; malformed JSON, wrong versions and nonfinite geometry produce warnings/errors with no write. Actual reopen/restart readback proves original malformed bytes were not erased; explicit repair requires reviewed preview/current revision.",
+      "missingPrerequisite": "Approved layout metadata owner/encoding and repair/publish native contract; no such decoder is in the inspected direct-import surface.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Tidy/free-layout/branch drag, pan/zoom and local semantic undo remain previewable and safe under concurrent committed tree updates.",
+      "seam": "moveCanvasNode/canvasFitTransform as geometry-only patterns; accepted doc.moveBranch/doc.rebaseTreeIntent and proposed DocumentMindMap",
+      "currentEvidence": "note-views.ts:321–325 moves independent Canvas coordinates. Design 06:124,130–132 requires aggregate tree revision, rebased local undo retaining remote edits, Tidy preview/undo, invalid-parent reason, pan toggle/space-drag and pointer-anchor zoom. Package realtime rule says view updates never overwrite text (10749–10752).",
+      "requiredChange": "Separate positional drag from structural reparent commands. Preview Tidy and parent insertion line, reject self/descendant targets with an accessible reason, and confirm only current valid revision/preview digest. Receive committed tree updates and preserve/validate personal focus and selection; never write stale labels when layout is applied. Delegate semantic undo to the accepted dependency; undo unpublished geometry personally and published changes through the current permissioned revision.",
+      "verification": "Future actual pointer drag/Tidy/cancel/undo plus keyboard equivalents and concurrent A-layout/B-text or A-reparent/B-text readback. Assert B text is retained or explicit conflict and invalid tree cannot commit; unknown metadata survives Tidy. Pinch/space-drag and wheel preserve pointer position and 20–300% bounds.",
+      "missingPrerequisite": "Accepted structural/undo authority and native layout conflict/event bridge; supported touch/native input harness.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesViewNote / NotesViewHost","lineStart":46,"lineEnd":117,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/NotesViewHost.tsx","symbol":"NotesOutlineView","lineStart":476,"lineEnd":536,"sha256":"a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"NoteViewKind / NoteBaseView","lineStart":5,"lineEnd":34,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"parseJsonCanvas / serializeJsonCanvas","lineStart":252,"lineEnd":269,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/note-views.ts","symbol":"notesOutlineFoldsStorageKey / parseOutlineFolds","lineStart":489,"lineEnd":508,"sha256":"697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"},
+    {"path":"apps/electron/src/renderer/pages/notes/document-ia.ts","symbol":"extractBlockIds / roundTripNoteMarkdown","lineStart":182,"lineEnd":192,"additionalRanges":[{"lineStart":702,"lineEnd":708}],"sha256":"f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path":"packages/core/src/docs/list-tree.ts","symbol":"ListTreeProjection / projectListTree / listTreeMarkdown","lineStart":22,"lineEnd":107,"sha256":"e845f5988d2806c695009c65a26e12700c9010fe392c151e29b0dfa8ab74c1c3"},
+    {"path":"packages/core/src/docs/block-identity.ts","symbol":"projectBlockIdentity","lineStart":261,"lineEnd":303,"sha256":"866be41e9d6345dea48a3e02a4a6e90cbf1373d346eccea14c73b1cca97d96a6"},
+    {"path":"packages/core/src/docs/retained-source.ts","symbol":"RetainedSource / retainSource","lineStart":83,"lineEnd":109,"sha256":"eafb42712b3e5d349c370c733484867be2db3d390cd973556ac8b44d2abea4e5"},
+    {"path":"packages/core/src/docs/command-envelope.ts","symbol":"MarkdownCommitCommand / decodeMarkdownCommitCommand","lineStart":2,"lineEnd":45,"sha256":"39e55e808796e48fee16ff0ee40c345886af9264bbc776c91657ce1ea2286817"},
+    {"path":"packages/core/src/docs/index.ts","symbol":"core/docs barrel exports","lineStart":1,"lineEnd":7,"sha256":"8b5e0db083c582f579b2aaf591f6c0f0430e102b27025612df4a5ca051b377e9"},
+    {"path":"plans/lark-suite-reference/work-packages.json","symbol":"work_packages[28] LSX-WP-029","lineStart":10554,"lineEnd":10870,"sha256":"c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"LSX-WP-029 execution package","lineStart":2462,"lineEnd":2545,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"docs/lark-suite-reference/06-rox-docs-design.md","symbol":"sections 8 / 11 / 12","lineStart":114,"lineEnd":136,"additionalRanges":[{"lineStart":180,"lineEnd":231}],"sha256":"a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path":"docs/rox-suite/published/RS-DOC-01.md","symbol":"Domain / API / storage / realtime / events / ACL; Dependencies; GitHub dependency links","lineStart":35,"lineEnd":85,"sha256":"b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path":"plans/compound-implementation/launch-worker-pool.py","symbol":"verify","lineStart":47,"lineEnd":69,"sha256":"79decd17b310ffde2a086ca7f637862e5199e17e9d47b8a8d3d971a456d56eeb"}
+  ],
+  "nextExecutableAction": "Lead validates this preflight artifact, commits wave0 and supplies accepted LSX-WP-028 artifact/native readback receipts. Before any package implementation, resolve the delivery manifest and baseline/input binding, re-read changed hash-bound seams, approve the real native layout/actor-scoped preference bridge and correct the named-symbol/route/export/localization scope gaps. Then prepare a dependency-ordered implementation packet for only the four normative new files and serial integration-owner shared patches. No source mutation is executable under this preflight packet.",
+  "risks": [
+    "Live host/core wave0 bytes can change before integration; source hashes are inspection evidence, not committed implementation receipts.",
+    "Naive reuse of JsonCanvas duplicates content authority, loses unknown fields and can overwrite malformed data with seeded/empty geometry.",
+    "Workspace/note-only Outline folds storage does not establish per-user isolation; independent in-component state also loses cross-view preferences.",
+    "Read-only/unanchored/ambiguous identities must not be silently converted or persisted as transient projection keys.",
+    "Renderer/core-only allowed files cannot establish server ACL, independent durable layout revision, authenticated actor, event privacy or crash recovery. Missing native ownership is fail closed, not adapter simulation.",
+    "Published RS-DOC-01 Drive/message and collaborative-document foundations are hidden gates beyond the sole explicit predecessor; a plan or publication does not close them.",
+    "Actual NoteViewKind/core export/caller/localization seams exceed the currently named allocation and require reviewed scope updates, not a broad shared-file rewrite.",
+    "Large trees need bounded layout/focus/export work and readable-fit policies; pointer/mobile gestures must coexist with IME and editing caret.",
+    "Structural and geometry undo differ: stale layout must never overwrite concurrent text, and semantic local undo must preserve remote edits.",
+    "No builds, tests, UI or network lanes were run; report validation establishes preflight integrity only, never feature completeness."
+  ]
+}

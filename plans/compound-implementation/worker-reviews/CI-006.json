@@ -1,0 +1,314 @@
+{
+  "task_id": "CI-006-preflight",
+  "attempt_id": "011671e693963f6232ea72bc322046b9",
+  "packet_hash": "572ce15ad235e739b22fceb583b02c81502e642e6459a1cd1711ab9722ff32d3",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-006",
+  "featureComplete": false,
+  "mode": "read-only-preflight; report is the only authored file",
+  "workTier": "bounded-workflow: one package, dependent specification/source inspection, artifact-only delivery",
+  "dependencies": ["CI-001", "CI-002", "CI-004"],
+  "evidenceBoundary": {
+    "revisionMeaning": "input_revision is the dispatch revision, not a claim that every inspected file is committed at that revision. The user reports root-owned uncommitted wave0 work; this inspection used live working-tree bytes without querying or changing Git state.",
+    "freshness": "Whole-file hashes below bind the inspected working-tree evidence. No observed intervening source change is claimed. Evidence becomes stale upon any differing file hash or accepted dependency interface change; re-read changed files before implementation.",
+    "codegraph": "The per-project tool reported no .codegraph index; no initialization or upgrade was attempted. Source inspection continued with read/glob/grep. One descriptive find failed because its judgment provider returned HTTP 402; a literal-symbol grep supplied the direct-import location instead.",
+    "manifestVerification": "Read-only shasum confirmed both input-manifest hashes exactly match the dispatch packet.",
+    "upstreamInspection": "OpenWiki surfaces and upstream hashes below are evidence published in the inspected specification, not independently read or executed upstream source in this preflight. No network operation, runtime probe, build, test or UI run was performed.",
+    "implementationState": "The five normative proposed files were absent from the scoped listing; packages/server-core/src/code-intelligence was absent. Existing shared repository refs/provider registration code is usable design evidence, not an accepted CI-001/CI-002/CI-004 implementation receipt."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0-ACCEPTED-BASE",
+      "kind": "dispatch and launch prerequisite, not an added DAG edge",
+      "evidence": "User requires the lead's wave0 commit and accepted dependency receipts before implementation. execution-packages.json:4567-4597 still names product baseline e953786ba7e30fb5da5dca7e88e20e324d5aebab and unresolved delivery revision/digest placeholders, whereas this packet names a21aeab1da5a67e56788384ff930945b0f487879.",
+      "missingPrerequisite": "Lead-supplied committed wave0/integration base, accepted artifact+readback receipts for CI-001/CI-002/CI-004, resolved delivery-manifest revision/digest and shared-path leases. Do not silently adopt the historical cloud baseline or treat live uncommitted foundations as accepted.",
+      "resolution": "Lead resolves and records the approved base/prerequisite commits and spec hashes, then renews source evidence on that base."
+    },
+    {
+      "id": "EG-IDENTITY",
+      "kind": "published external gate outside the explicit CI dependency array",
+      "evidence": "execution-packages.json:4607-4611; code-intelligence.json:151-156,2360-2389 require authenticated actor/workspace/source checks at every boundary. Current knowledge SEARCH/GET/GET_CONTEXT use _ctx and a global connectionId resolver (knowledge.ts:534-555,669-703).",
+      "missingPrerequisite": "Actual authenticated caller and identity readiness receipt, plus CI-002 authorizeRepositoryRead/Write/Job contracts. A repository binding's workspace strings alone do not authenticate an actor.",
+      "resolution": "Use the same accepted actor-aware resolver for RPC, cache/wiki retrieval, jobs and tools; foreign scope must fail before provider lookup and content exposure."
+    },
+    {
+      "id": "FG-CI008-CONTRACT-CYCLE",
+      "kind": "hidden foundation overlap, not permission to add a cyclic dependency",
+      "evidence": "CI-006 requires resolver-owned versions, freshness and generated-page ownership (3151-3195). CI-008 owns freshness.ts/artifacts.ts/output-ownership.ts (3594-3631) but explicitly depends on CI-006 (3599-3604). IntelligenceRun/GeneratedArtifact/VerificationReceipt contracts are conceptual, not established stores (1196-1232,1400-1415).",
+      "missingPrerequisite": "Accepted pre-provider contract for immutable staged artifact records, output namespace ownership, evidence freshness projection and receipt persistence. Waiting for all of CI-008 would create a cycle; inventing another store would violate the existing-subsystem requirement.",
+      "resolution": "Lead freezes these shared contracts in CI-001/CI-004 or a separately approved foundation slice before CI-006; CI-006 implements its provider mapping and resolver assessments, while CI-008 later owns shared watcher/idempotency/ownership integration. Keep the explicit dependencies unchanged."
+    },
+    {
+      "id": "FG-KNOWLEDGE-CONNECTION-SCHEMA",
+      "kind": "hidden shared-file integration gate",
+      "evidence": "KnowledgeConnectionRecord/SaveConnectionInput fix provider to siyuan and require baseUrl+credentialRef (connections-store.ts:81-110). knowledge.ts:522-538 always parses and reads a bearer credential; LIST_NOTEBOOKS/LIST_TREE/USER_CREATE instantiate a SiYuan client directly (766-839). These assumptions cannot support an owned-local generated wiki by registering a factory alone.",
+      "missingPrerequisite": "Lead-approved discriminated connection metadata and canonical read/list dispatch; connections-store.ts and capability/index integration are outside the normative six sharedPatchPaths.",
+      "resolution": "Extend the existing connection store, never add a RepoWiki connection store or fake a SiYuan URL/token. Bind local wiki connections to host-resolved workspace/project/binding metadata; keep existing SiYuan credential behavior."
+    },
+    {
+      "id": "FG-OPENWIKI-PIN-RUNTIME-EGRESS",
+      "kind": "published external provider and policy gate",
+      "evidence": "code-intelligence.json:160-171 pins langchain-ai/openwiki 0.6.1 at fab24e77afd1055078338848f3df3af7f785e291, MIT, Node >=22.22.0, pnpm 11.25; 252-259 describes model egress, telemetry opt-out and unexecuted readiness. provider.ts:67-96 requires genuine sourceRevision/artifactDigest and ready activation. execution-packages.json:4607-4611 lists scoped repository/egress policy and upstream readiness.",
+      "missingPrerequisite": "Verified frozen artifact/delivery digest, version/license/runtime receipt, generation provider credential reference and actor-approved model egress. The ambiguous product name remains CI-G-01's documented assumption; replacement must not change neutral contracts.",
+      "resolution": "No installation or execution in this preflight. Future OpenWiki invocation must use the pinned artifact, separate generation authority/egress checks, explicit OPENWIKI_TELEMETRY_DISABLED and DO_NOT_TRACK opt-out, and no daemon or retrieval-triggered generation. Local process execution must not be confused with absence of model egress."
+    },
+    {
+      "id": "FG-SEMANTIC-ASSESSOR-RECEIPTS",
+      "kind": "hidden semantic foundation gate",
+      "evidence": "code-intelligence.json:145,1312-1325,1400-1415 and CI-006-AC-6 require semantic supportAssessment plus a persisted VerificationReceipt. Existing readFileSpan/resolveRepositoryRefWithCurrentPolicy establish bounded exact bytes and current policy (refs.ts:504-517,591-595); they do not assess a proposition.",
+      "missingPrerequisite": "Accepted assessor method/output schema and shared receipt persistence/readback contract. Neither a valid URL, readable file nor OpenWiki confirmation operation is a semantic proof.",
+      "resolution": "wiki-claims.ts resolves exact evidence first, then records supported/partial/contradicted/unresolved with assessor/method/rationale and exact snapshot/ref IDs. Do not award supported without a source-backed assessment; absence of assessment remains unresolved."
+    },
+    {
+      "id": "FG-REMOTE-PRIVATE-CACHE-AUTHORITY",
+      "kind": "foundation policy required even for model-free retrieval",
+      "evidence": "code-intelligence.json:146,155,2364-2396,3195 requires shared authorization, default-denied remote-private offline bodies, optional scoped expiring leases and reconnect invalidation. Current repository-connection.ts:15-23 supports owned-local read-only provenance with connectionRef null; shared refs.ts:570-573 explicitly delegates live actor/lease discovery to the host.",
+      "missingPrerequisite": "CI-002 source-classification and live authority/lease receipt for any remote-private scope. Existing local-owned connection and snapshot contracts do not provide this behavior.",
+      "resolution": "Never enable remote-private cached body access as a local-file fallback. Retain stale/missing metadata separately from authorization, fail closed without required lease, and prove expired/revoked/reconnected cases when implementing."
+    },
+    {
+      "id": "FG-NATIVE-TRANSPORT-IF-EXERCISED",
+      "kind": "conditional published external gate, not an added mandatory DAG edge for artifact import",
+      "evidence": "execution-packages.json:4611 lists Native agent transport when tools used; code-intelligence.json:763-767 says an in-process runtime does not imply subprocess transport. createKnowledgeToolRuntime delegates to an injected provider resolver (tool-runtime.ts:31-77).",
+      "missingPrerequisite": "Actual transport readiness receipt if OpenWiki MCP or agent tools are used. The current in-process registration is not that receipt.",
+      "resolution": "Keep the provider-neutral import/retrieval seam independent of native transport. Tool-driven acceptance must exercise the actual transport and missing-transport errors, not simulate them or claim them from registration."
+    }
+  ],
+  "ownedNewFiles": [
+    "packages/core/src/knowledge/providers/repo-wiki.ts",
+    "packages/server-core/src/code-intelligence/providers/openwiki.ts",
+    "packages/server-core/src/code-intelligence/wiki-claims.ts",
+    "packages/server-core/src/code-intelligence/__tests__/repo-wiki.test.ts",
+    "packages/server-core/src/code-intelligence/__tests__/semantic-claim-receipts.test.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "packages/core/src/knowledge/providers/repo-wiki.ts",
+      "proposedSymbols": ["RepoWikiKnowledgeProvider", "RepoWikiKnowledgeProviderOptions"],
+      "change": "Implement KnowledgeProvider as a projection over an injected host-authorized read backend, not another store. search/get/getContext/list methods return canonical page/section/collection refs and complete bounded sections; open uses an injected canonical navigation callback. Keep generic authored-knowledge mutations unsupported with typed UNSUPPORTED_OPERATION and all mutation capabilities false; explicit generation belongs to the code-intelligence job lifecycle, not knowledge read or mutation fallbacks. Do not import server-core, spawn processes or invoke models from core."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/providers/openwiki.ts",
+      "proposedSymbols": ["OpenWikiRepoWikiAdapter", "OpenWikiGenerationBridge", "OpenWikiRunCheckpoint"],
+      "change": "Implement the neutral RepoWiki read contract with the pinned upstream search/read/list surface; keep generation's begin/submit_plan/next_page/submit_page/finish calls in a separate explicit writer-job bridge to accepted CI-004 jobs. Strictly normalize provider selectors/heading anchors, imported pages, sidecars and run schema; return full selected heading sections or an explicit limit error. Preserve schemaVersion/runId/phase/sourceFingerprint and ordered pending/skipped/complete page jobs in the shared job checkpoint with lossless provider metadata. Compare exact captured snapshot/policy and provider-native fingerprint before resume/page submission/finish. Use only an approved leased staging namespace, never an arbitrary user-page output root. Opt out of telemetry in every provider process; no installation, auto-start or model call for local read paths."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/wiki-claims.ts",
+      "proposedSymbols": ["importWikiClaims", "resolveWikiEvidence", "assessWikiClaim"],
+      "change": "Normalize add/confirm/update/retract claim metadata with provider-local IDs mapped through scopedProviderResourceId. Resolve evidence against authorized immutable snapshot/span refs and assign SourceVersion/contentHash/snapshotId from actual resolved bytes, never a model-proposed version. Retain current/stale/missing/retracted claim status separately from supported/partial/contradicted/unresolved semantic support. Persist the accepted shared VerificationReceipt shape with claim/ref IDs, exact snapshot, assessor, method, rationale, checkedAt and assessment; emit authorized monotonic freshness/assessed events through CI-004. No separate claim/receipt database or regex-based automatic semantic support."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/repo-wiki.test.ts",
+      "proposedSymbols": ["RepoWiki read and generation behavioral cases"],
+      "change": "Use isolated generated fixtures and the repository's existing injected-seam style, not global mock.module. Cover nested/duplicate heading anchors, complete-section byte boundary and limit rejection, body/claim/source roundtrip, local retrieval with no model credential, source drift and resume after a completed page, generated-vs-authored path collision and symlink escape, foreign scope/offline denial, inactive/unready provider behavior and preservation of rejected tools. A real pinned-provider smoke/readback lane remains mandatory beyond unit fixtures."
+    },
+    {
+      "path": "packages/server-core/src/code-intelligence/__tests__/semantic-claim-receipts.test.ts",
+      "proposedSymbols": ["Semantic assessment and receipt invariant cases"],
+      "change": "Use exact source propositions with positive, partial, contradicted and unrelated-statement controls. Assert receipt evidence and assessment semantics, resolver-owned versions, missing/retracted records, changed dirty bytes with no exact parent-commit citation, foreign evidence denial, and stale snapshot/assessor outcomes. Prove persisted receipt readback after restart; do not use test doubles that merely echo an expected assessment as semantic verification."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "packages/core/src/knowledge/provider.ts",
+      "symbol": "KnowledgeProvider, KnowledgeNode, KnowledgeRegistry.resolve/createKnowledgeRegistry",
+      "change": "Lead adds optional provider-neutral listCollections/listChildren read methods using canonical KnowledgeNotebookInfo/KnowledgeNode DTOs and bounded cursor results; optional source/provenance metadata links a generated node to authoritative artifact/section/evidence refs. RepoWikiKnowledgeProvider implements them. Registry must reject an explicit unknown/mismatched RepoWiki connection/provider instead of falling back to an unrelated default; retain compact/default SiYuan behavior. Generation is not added to this read interface.",
+      "reason": "KnowledgeProvider:104-112 has no list surface; notebook list is currently kernel-specific. resolve:179-193 can fall back to a default provider for an explicit unknown connection, which is unsafe for repository-scoped refs.",
+      "scope": "normative sharedPatchPath; integration-owner only"
+    },
+    {
+      "path": "packages/core/src/knowledge/refs.ts",
+      "symbol": "KnowledgeRef, KnowledgeRefProviderForm, validateKnowledgeRef, canonicalKnowledgeRef, parseKnowledgeRef, parseKnowledgeMentions, serializeKnowledgeRef, toProviderForm",
+      "change": "Lead adds a canonical discriminated RepoWiki ref branch with scheme/provider repo-wiki and opaque host-resolved namespaced IDs; map collection/page/section navigation onto existing notebook/document/block kinds, with WikiPage/WikiSection semantics in canonical intelligence DTOs rather than introducing competing kind strings. Ref IDs must identify the accepted artifact/page/section and source snapshot, not raw filesystem paths or SiYuan block IDs. Update every parser/validator/provider-form conversion for that branch, preserve existing SiYuan compact grammar, and keep connection/scope resolution host-side. Do not generate siyuan:// links for this branch.",
+      "reason": "refs.ts:19-32 fixes scheme to siyuan; provider-form parsing:79-85 and canonical conversion:167-175 always manufacture that scheme; structural validation:189-190 rejects any new scheme. The specification explicitly forbids casting a repo path into a SiYuan identifier (code-intelligence.json:743-747).",
+      "scope": "normative sharedPatchPath; exact grammar must be frozen with CI-001 before provider implementation"
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/knowledge.ts",
+      "symbol": "registerKnowledgeHandlers, resolveProvider, assertKnowledgeRef, toContractConnection, LIST_NOTEBOOKS, LIST_TREE, GET_EXPORT_PAYLOAD, USER_CREATE, auto-start watch loop",
+      "change": "Register RepoWikiKnowledgeProvider in the existing registry with the accepted host read backend. resolveProvider must branch on the discriminated connection record: retain token rotation for SiYuan, resolve repository binding/current actor/project/source policy for RepoWiki without fake bearer credentials. Pass authenticated RequestContext to CI-002 authorization before every RepoWiki SEARCH/GET/GET_CONTEXT/GET_BACKLINKS/export/list/body read; reuse canonical ref validation and validate ref-to-connection binding. Route RepoWiki notebook/tree reads through provider list methods, not SiyuanKernelClient. Reject RepoWiki USER_CREATE and generic direct-write paths; generation starts only via accepted CI-004 writer jobs. Export/open use provider-neutral exact refs, not siyuanDeepLink. Keep RepoWiki out of generic auto-start polling that could activate provider work; discovery does not start generation. Preserve existing navigator-vs-agent proposal/apply separation.",
+      "reason": "Current resolver always loads a credential (522-538), reads ignore _ctx (669-703), refs require siyuan (476-488), list/create/export bypass provider neutrality (730-839), and the watch loop resolves every connection at registration (1876-1902). Factory registration alone cannot meet read/permission/on-demand contracts.",
+      "scope": "normative sharedPatchPath; requires CI-002/CI-004 interfaces and connection-store foundation patch"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/types.ts",
+      "symbol": "canonical RepoWiki DTO additions adjacent to SourceFile/CodeIntelAdapter; CODE_INTEL_PACK, SELECTED_CODE_INTEL, REJECTED_CODE_INTEL_TOOLS",
+      "change": "Lead adds WikiPage/WikiSection/Claim/EvidenceRef/VerificationReceipt DTOs and neutral RepoWikiReadAdapter/read-list result/error contracts. Use existing RepositoryRef, SourceVersion and scope/snapshot identity via type-only imports; separate claim freshness/retraction from semantic supportAssessment. Define complete-section limit semantics and exact content hashes. Preserve sync CodeIntelAdapter.index and existing CodeGraph/local-fs-symbols/syft-sbom consumers. Record OpenWiki as optional on-demand repo-wiki capability under the existing pack's selection decision, never as always-on or an unconditionally selected provider; keep CodeWiki/DeepWiki/Graphify/Archify rejection unchanged.",
+      "reason": "types.ts:1-67 currently has only symbols/graph/commit-only citations and baseline pack selection. The required entities/receipt semantics are only conceptual in code-intelligence.json:1266-1327,1400-1415.",
+      "scope": "normative sharedPatchPath; integrate after CI-001 canonical contract receipt"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/index.ts",
+      "symbol": "public canonical exports",
+      "change": "Export the accepted neutral RepoWiki and receipt types from types.ts through @craft-agent/shared/code-intelligence. Preserve existing local-adapter/explainer/Syft and refs/provider/repository-connection exports. Do not export server-side provider/process implementations or invent another package entry point.",
+      "reason": "index.ts:1-27 is already the canonical integration surface and now exports live wave0 foundations; replacement would erase or duplicate existing mechanisms.",
+      "scope": "normative sharedPatchPath; integration-owner only"
+    },
+    {
+      "path": "packages/shared/src/capabilities/packs.ts",
+      "symbol": "CapabilityTool, tool, CAPABILITY_TOOLS, gitRef/checksum",
+      "change": "Lead reconciles rejected CodeWiki/DeepWiki/Graphify/Archify inventory entries so they cannot be offered as executable candidates under the current decision. Add optional OpenWiki metadata to the existing code-intelligence pack with genuine sourceRepo langchain-ai/openwiki, version 0.6.1, source revision fab24e77afd1055078338848f3df3af7f785e291 and the resolved frozen-artifact digest. Extend the tool metadata helper to accept verified explicit pins for this provider instead of hashing id@version; retain discovery-vs-installed-vs-selected-vs-active distinctions and explicit writer/egress permission. Do not assign a fabricated content checksum or silently enable a rejected daemon.",
+      "reason": "packs.ts:48-54 and 78-79 derive declaration hashes; 92-139 still offer rejected tools with example repositories. CodeIntelligenceProviderRegistry.register already rejects unpinned non-baseline providers (provider.ts:67-81).",
+      "scope": "normative sharedPatchPath; CI-001 registry reconciliation prerequisite and actual delivery digest required"
+    },
+    {
+      "path": "packages/server-core/src/knowledge/connections-store.ts",
+      "symbol": "KnowledgeConnectionRecord, SaveConnectionInput, parseConnectionFile, KnowledgeConnectionsStore.save",
+      "change": "Lead approves a foundation patch to the existing store: discriminate legacy siyuan records from repo-wiki records; RepoWiki records carry validated workspaceId/projectId/bindingId and source provenance references resolved by the host, not arbitrary root/baseUrl or a manufactured source_bearer credential. Preserve timestamps/status and old records; enforce provider-specific schema on save/read without inheriting SiYuan managed-kernel gates for owned-local artifacts. No second connection store.",
+      "reason": "The declared provider is siyuan-only (83,105); baseUrl and credentialRef are mandatory (85-87,103-104) and the parser does not enforce a provider discriminant (116-128). The normative six shared patches alone cannot represent this adapter honestly.",
+      "scope": "discovered direct-import foundation request OUTSIDE normative sharedPatchPaths; requires lead assignment/lease before any edit"
+    },
+    {
+      "path": "packages/core/src/knowledge/capabilities.ts",
+      "symbol": "KnowledgeCapabilities.features",
+      "change": "Lead adds optional neutral listCollections/listChildren/sectionRefs/claims read capability flags matching the accepted provider method contract. Existing providers keep valid capabilities without claiming new features. RepoWiki reports true only for implemented supported read operations and false for all generic authored-page mutations. Generation availability remains in the code-intelligence provider/job contract, not an implicit knowledge mutation permission.",
+      "reason": "The current mandatory feature list (10-22) has no wiki/section/list distinction; CI-006 apiChanges requires extending canonical knowledge capabilities.",
+      "scope": "discovered direct-import foundation request OUTSIDE normative sharedPatchPaths; integration-owner approval required"
+    },
+    {
+      "path": "packages/core/src/knowledge/index.ts",
+      "symbol": "canonical knowledge provider exports",
+      "change": "Lead exports RepoWikiKnowledgeProvider and its core options/read-backend types from the canonical knowledge entry, following the existing in-memory provider export. The RPC layer consumes this public surface rather than an unverified package subpath or a relative cross-package import.",
+      "reason": "index.ts:6-15 exports canonical knowledge contracts and InMemoryKnowledgeProvider but not the new owned provider; registration needs a supported import surface.",
+      "scope": "discovered direct-import integration request OUTSIDE normative sharedPatchPaths; no manifest change performed or assumed"
+    }
+  ],
+  "normativeVerificationSet": [
+    "section heading/anchor retrieval",
+    "missing/retracted evidence",
+    "page-job resume",
+    "source drift invalidates plan",
+    "local retrieval without model",
+    "telemetry opt-out configuration",
+    "existing file with unrelated statement remains unresolved",
+    "contradicted claim receipt"
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-006-AC-1",
+      "criterion": "Read tools separated from generation",
+      "currentEvidence": "KnowledgeProvider.search/get/getContext/open are existing read seams (provider.ts:104-112); RPC already exposes SEARCH/GET/GET_CONTEXT/GET_BACKLINKS (knowledge.ts:669-703). No RepoWiki implementation exists at the inspected paths. Published OpenWiki tools separate search/read/list from begin/plan/page/finish (code-intelligence.json:230-243,5505-5547).",
+      "actualSeam": ["KnowledgeProvider", "registerKnowledgeHandlers/resolveProvider", "CodeIntelligenceProviderRegistry.resolve", "createKnowledgeToolRuntime"],
+      "requiredChange": "Implement RepoWikiKnowledgeProvider and OpenWikiRepoWikiAdapter's strictly read-only search/get/context/list projection; generation only through OpenWikiGenerationBridge and CI-004 writer jobs. Read/search/list must require neither a model nor generation credentials, must enforce current read authority, and return complete selected heading sections or an explicit bound error. Preserve navigator/agent write separation.",
+      "verification": {"requiredSet": "All eight normativeVerificationSet items remain required, as published for every acceptance row.", "targeted": ["Read/search/list a pinned local generated wiki without model credentials; observe complete nested heading/anchor contents and exact returned refs/hashes, with no generation/run creation or outbound model call.", "Exercise oversize complete section and invalid anchor errors, foreign scope and disconnected remote-private denial.", "Start explicit authorized generation through CI-004 and show staged result rather than applied knowledge-page mutation; safe mode rejects writer scope."]},
+      "missingPrerequisite": ["FG-WAVE0-ACCEPTED-BASE", "EG-IDENTITY", "CI-002 shared authorization", "CI-004 explicit job API", "FG-KNOWLEDGE-CONNECTION-SCHEMA", "FG-OPENWIKI-PIN-RUNTIME-EGRESS"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-006-AC-2",
+      "criterion": "resolver assigns evidence version",
+      "currentEvidence": "SnapshotSourceFile/SourceVersion/FileSpan carry contentHash, snapshotId, working-copy versus commit provenance (refs.ts:68-85,125-135). readFileSpan and resolveRepositoryRefWithCurrentPolicy return exact authorized bytes (504-517,591-595). They are source resolution seams, not a Wiki EvidenceRef resolver or semantic assessment.",
+      "actualSeam": ["readSnapshotFile", "readFileSpan", "resolveRepositoryRefWithCurrentPolicy", "assertRepositoryCurrentReadPolicy", "scopedProviderResourceId"],
+      "requiredChange": "resolveWikiEvidence must resolve canonical source/span refs through accepted CI-002 authority and existing snapshot readers; assign evidence version/hash/snapshot/resolver/checkedAt from resolved immutable bytes, discard any model-proposed version. Detect evidence drift/missing/retraction without rewriting historical evidence and preserve dirty-byte provenance with no exact parent-commit citation.",
+      "verification": {"requiredSet": "All eight normativeVerificationSet items.", "targeted": ["Import a claim with a forged proposed evidence version and read back the resolver-assigned exact SourceVersion/contentHash/snapshotId.", "Use clean and dirty versions of the same file, change/delete/rename the source and change exclusion policy; assert stale/missing classifications and denial when current policy forbids content.", "Missing or retracted evidence remains visible as metadata; an unrelated statement in an existing file stays unresolved."]},
+      "missingPrerequisite": ["Accepted CI-001 immutable source contracts", "CI-002 current actor/source resolver", "FG-CI008-CONTRACT-CYCLE", "shared EvidenceRef and VerificationReceipt schema"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-006-AC-3",
+      "criterion": "run page queue and fingerprint preserved",
+      "currentEvidence": "Published frozen run-state evidence records schemaVersion 1, runId, planning/generating phase, sourceFingerprint and ordered pending/skipped/complete jobs (code-intelligence.json:5475-5486). CI-004 owns jobs.ts/job-store.ts and requires fingerprint-bound restart recovery (2732-2775); its server-core directory was absent in the scoped listing. assessSnapshotFreshness compares captured snapshot identity (refs.ts:519-528), but it is not a durable wiki page queue.",
+      "actualSeam": ["assessSnapshotFreshness", "RepositorySnapshot.id/policyHash", "CI-004 planned jobs.ts and job-store.ts (not present)"],
+      "requiredChange": "OpenWikiGenerationBridge losslessly maps the upstream begin/submit_plan/next_page/submit_page/finish lifecycle and checkpoint into CI-004's accepted job record. Retain upstream fingerprint plus exact ROX snapshot/policy/provider version; persist queue state after every page and resume same run without repeated completed pages. Source/policy drift makes the run stale and blocks next writes/finish. Preserve one-writer/cancel-vs-complete semantics and never mark completion as application.",
+      "verification": {"requiredSet": "All eight normativeVerificationSet items.", "targeted": ["Generate two required pages, checkpoint after one completed page, restart the actual host/provider bridge, and read back the same runId/fingerprint/order with exactly the remaining pending page.", "Change source bytes, dirty digest or exclusion policy between jobs; resume/submit/finish rejects the stale plan and cannot publish newer output over an older fingerprint.", "Cancel before/during/after page completion and exercise provider failure; durable state remains honest and staged artifacts are not applied."]},
+      "missingPrerequisite": ["Accepted CI-004 job checkpoint/cancel/resume/store contracts", "frozen OpenWiki lifecycle/run-state bytes and readiness receipt", "FG-CI008-CONTRACT-CYCLE"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-006-AC-4",
+      "criterion": "generated namespace never overwrites user knowledge pages",
+      "currentEvidence": "Existing KnowledgeBridgeService.propose/apply uses staged proposals and re-read base-hash checks (bridge-service.ts:227-328,407-440). Knowledge RPC USER_CREATE directly calls SiYuan (knowledge.ts:816-875), so it must not become a wiki-generation shortcut. GeneratedArtifact ownership and CI-008 output-ownership contracts are published requirements, not existing accepted artifact stores (code-intelligence.json:1215-1232,3594-3631).",
+      "actualSeam": ["KnowledgeBridgeService.propose/apply", "registerKnowledgeHandlers USER_CREATE", "CI-004 one-writer artifact namespace contract", "CI-008 planned output-ownership.ts (not present)"],
+      "requiredChange": "Run generation only in an approved generated-artifact staging root leased through CI-004/shared ownership contracts; callers cannot select arbitrary output directories. Use canonical realpath/ownership checks at writer boundaries; refuse symlink escape, authored-page collisions, mismatched base hash and superseded run. RepoWiki read provider rejects generic authored-knowledge mutation methods; generated completion emits staged events. Review/apply integration reuses accepted shared artifact/proposal machinery, never a second store or automatic write into authored pages.",
+      "verification": {"requiredSet": "All eight normativeVerificationSet items.", "targeted": ["Seed an authored page with identical relative path to a generated page and a sentinel hash; run generation, reject/apply-conflict paths and restart; authored bytes/hash remain unchanged.", "Attempt path traversal, symlink output redirection, two concurrent writers and older-run completion after newer output; each refuses unauthorized replacement.", "Observe generation completion as staged; explicit authorized review/application is distinct and base-hash mismatch is recoverable."]},
+      "missingPrerequisite": ["CI-004 namespace lease and staged record contracts", "FG-CI008-CONTRACT-CYCLE", "shared proposal/application ownership handshake; downstream CI-011 owns review UI rather than a new CI-006 surface"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-006-AC-5",
+      "criterion": "provider-neutral contract tolerates different intended OpenWiki",
+      "currentEvidence": "KnowledgeProvider is provider-neutral in name but canonical KnowledgeRef scheme is siyuan (refs.ts:19-32,167-205); CodeIntelligenceProviderRegistry already has repo-wiki operation and version/digest/activation gates (provider.ts:17-38,67-96). scopedProviderResourceId namespaces IDs by workspace/project/repository/snapshot/provider/version (111-123). The specification records OpenWiki identity as an assumption (160-163,5312-5316).",
+      "actualSeam": ["KnowledgeProvider/KnowledgeRegistry", "canonicalKnowledgeRef/validateKnowledgeRef", "CodeIntelligenceProviderRegistry", "scopedProviderResourceId", "@craft-agent/shared/code-intelligence exports"],
+      "requiredChange": "Place common RepoWiki page/section/claim/read/list contracts in canonical types/exports; keep upstream tool names, sidecar/run schema and pin handling entirely in openwiki.ts. Use neutral repo-wiki knowledge refs with opaque namespaced identity, not raw upstream IDs or repo paths cast to SiYuan. A changed intended upstream is another explicitly pinned implementation of the same contract, not another knowledge store/route.",
+      "verification": {"requiredSet": "All eight normativeVerificationSet items.", "targeted": ["Roundtrip page/section/collection refs through canonical parser/serializer/mentions/provider-form conversion and real RPC lookup.", "Use identical provider-local page IDs under distinct repository/snapshot/provider-version scopes; ensure no cross-resolution or default-provider fallback.", "Exercise the neutral contract with the real selected adapter and an isolated contract fixture for an alternative provider shape; fixture proof is not claimed as external provider readiness.", "Unknown provider, digest mismatch, wrong connection and inactive/unready provider fail closed while existing SiYuan/local-fs-symbols/Syft paths retain behavior."]},
+      "missingPrerequisite": ["Accepted CI-001 canonical ref and selection decision", "FG-KNOWLEDGE-CONNECTION-SCHEMA", "canonical shared RepoWiki DTOs and lead patches", "actual OpenWiki pin/readiness receipt"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-006-AC-6",
+      "criterion": "Claim verification requires semantic support assessment and a receipt, not only source existence/version",
+      "currentEvidence": "Existing snapshot/ref readers establish source existence, version/hash and bounds but have no proposition assessment (refs.ts:494-517,559-595). Existing CodeCitation contains only symbolId/path/startLine/commit (types.ts:18-23). Published EvidenceRef and VerificationReceipt explicitly require supported/partial/contradicted/unresolved and source-backed rationale (code-intelligence.json:1312-1325,1400-1415). wiki-claims.ts and semantic-claim-receipts.test.ts are normative new files and absent.",
+      "actualSeam": ["readFileSpan/resolveRepositoryRefWithCurrentPolicy", "CodeCitation", "canonical intelligence types and shared job/artifact receipts"],
+      "requiredChange": "assessWikiClaim first resolves permitted exact source evidence, then invokes the accepted assessor method and persists a source-bound VerificationReceipt with claim ID, evidenceRefIds, snapshotId, assessor, method, supportAssessment, rationale and checkedAt. Keep supported/partial/contradicted/unresolved independently visible from freshness/retracted status. No file existence, URL reachability, citation formatting, regex match or upstream confirm operation may manufacture a supported result.",
+      "verification": {"requiredSet": "All eight normativeVerificationSet items.", "targeted": ["Positive control proves the specific statement from captured source; partial control proves only its supported part; unrelated-but-existing source is unresolved; a source stating the opposite yields a contradicted receipt.", "Read back receipt fields and the exact evidence span/hash through the authoritative store before/after restart; source drift invalidates the assessment rather than silently reusing it.", "Missing/retracted/foreign evidence is retained or denied appropriately and cannot be upgraded to supported. Mutating the assessor to existence-only verification must fail the negative controls."]},
+      "missingPrerequisite": ["FG-SEMANTIC-ASSESSOR-RECEIPTS", "accepted source authority and receipt persistence", "model egress/credential readiness if the approved assessor uses a model"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-006-AC-7",
+      "criterion": "Optional OpenWiki is an on-demand provider inside existing pack; CodeWiki/DeepWiki daemon rejection remains until separately revised decision is recorded",
+      "currentEvidence": "CODE_INTEL_PACK and SELECTED_CODE_INTEL preserve off-by-default local-fs-symbols/syft-sbom; CodeWiki/DeepWiki are rejected (types.ts:52-67). Provider registration/resolve rejects those tools and requires enabled/allowed/ready/pinned state (provider.ts:40-47,67-96). CAPABILITY_TOOLS still offers codewiki/deepwiki and declaration-derived pins (packs.ts:48-54,91-107). RPC auto-start watch iterates every stored connection (knowledge.ts:1876-1902).",
+      "actualSeam": ["CODE_INTEL_PACK/REJECTED_CODE_INTEL_TOOLS/SELECTED_CODE_INTEL", "CODE_INTELLIGENCE_PROVIDER_DECISION", "CodeIntelligenceProviderRegistry.register/resolve", "CAPABILITY_TOOLS/tool", "registerKnowledgeHandlers watch startup"],
+      "requiredChange": "Integrate OpenWiki under the existing pack and CI-DEC-EXTEND-EXISTING-01 record as optional explicit activation with genuine artifact pin/readiness, distinct read and writer policy, and telemetry opt-out. Reconcile executable inventory with rejected tools before enabling; retain no-daemon/no-auto-install/no-auto-generation policy and baseline adapter behavior. Provider discovery, ordinary knowledge reads and startup watch registration cannot activate generation.",
+      "verification": {"requiredSet": "All eight normativeVerificationSet items.", "targeted": ["Observe fresh host registration/listing and ordinary repository/wiki reads with no OpenWiki generation process or run; explicit permitted activation starts only the bounded requested operation.", "Inactive/unready/unpinned/egress-denied providers produce typed failures; CodeWiki/DeepWiki remain rejected through both adapter registry and capability selection.", "Run the real pinned provider with telemetry opted out and inspect effective configuration/provider receipt, not just source strings. Local read/search/list succeeds without model.", "Exercise existing local-fs-symbols and missing-Syft no-install behavior on the integrated revision."]},
+      "missingPrerequisite": ["CI-001 capability reconciliation and accepted decision", "FG-OPENWIKI-PIN-RUNTIME-EGRESS", "lead packs.ts/knowledge startup integration", "accepted CI-004 bounded job activation"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "integrationVerificationPlan": {
+    "notExecuted": true,
+    "commandsAfterAuthorizationAndIntegration": [
+      "bun test packages/server-core/src/code-intelligence/__tests__/repo-wiki.test.ts packages/server-core/src/code-intelligence/__tests__/semantic-claim-receipts.test.ts",
+      "bun test packages/server-core/src/handlers/rpc/__tests__/knowledge.test.ts packages/shared/src/agent/__tests__/knowledge-permissions.test.ts",
+      "Package typechecks and affected caller/contract regression suite selected by the integration owner on the committed integrated version"
+    ],
+    "authoritativeRuntimeLane": "Lead runs the real pinned OpenWiki read and explicit generation lifecycle against an isolated authorized repository; prove local read/search/list/anchors without model, queue recovery and stale source rejection, immutable generated namespace, semantic positive/negative controls, telemetry opt-out and current actor/source authority. Persist exact artifact hashes, input fixture/seed, run/provider/snapshot/version and before/after restart readback. Unit fixture output alone is insufficient.",
+    "events": "repo-wiki.page.staged, repo-wiki.claim.assessed and repo-wiki.freshness.changed use the accepted CI-004 typed event path, authorized refs and monotonic run revision; never include foreign IDs or raw protected source/secrets.",
+    "uiBoundary": "CI-006 owns backend/knowledge adapters, not new UI files. Published RC-03/RC-04/RC-05/RC-08 expectations remain real acceptance obligations through integrated/downstream surfaces; if integration changes the UI, the lead must observe actual screenshots/ARIA/font and interactions. No surface is marked N/A or verified here.",
+    "workerReportValidator": "The packet's launch-worker-pool.py --verify command is retained for the lead's receipt validation; it was not executed because this worker is limited to read operations, source hashing and writing its owned report."
+  },
+  "sourceReferences": [
+    {"path":"plans/lark-suite-reference/code-intelligence.json","symbol":"workPackages[5] / CI-006 definitionOfDone and observableAcceptance","lineStart":3114,"lineEnd":3369,"sha256":"a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path":"plans/lark-suite-reference/execution-packages.json","symbol":"CI-006 dependencies/allowedWritePaths/sharedPatchPaths/cloudPacket","lineStart":4519,"lineEnd":4613,"sha256":"c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path":"packages/core/src/knowledge/provider.ts","symbol":"KnowledgeProvider and createKnowledgeRegistry","lineStart":104,"lineEnd":203,"sha256":"e675f22be93f414e6fbdad2f305bc23208c821d01a1320be1c6bfb26c3156a3c"},
+    {"path":"packages/core/src/knowledge/refs.ts","symbol":"KnowledgeRef/parseKnowledgeRef/canonicalKnowledgeRef/validateKnowledgeRef","lineStart":17,"lineEnd":205,"sha256":"b5e2d52d1e58687854ef30129c9db1fd4f97b9d6389d8675bb6dae654ef05241"},
+    {"path":"packages/core/src/knowledge/capabilities.ts","symbol":"KnowledgeCapabilities","lineStart":6,"lineEnd":31,"sha256":"5e2ddbe93a42b00936666bb6f98f1da043ad3f4581eb30e0d6f1fecfd12386f1"},
+    {"path":"packages/core/src/knowledge/context.ts","symbol":"ContextPayload/ContextSnapshot","lineStart":10,"lineEnd":37,"sha256":"40ee3354ac755ad845f1af15cb862e6b39727286e6647c49f4100f4355e2c278"},
+    {"path":"packages/core/src/knowledge/index.ts","symbol":"canonical knowledge exports","lineStart":6,"lineEnd":15,"sha256":"eb65577b07c58f99699f32ff8175bb9ac52533e9224cd51fad79042cffb8d7a4"},
+    {"path":"packages/shared/src/code-intelligence/types.ts","symbol":"CodeCitation/CodeIntelAdapter/CODE_INTEL_PACK/REJECTED_CODE_INTEL_TOOLS/SELECTED_CODE_INTEL","lineStart":18,"lineEnd":67,"sha256":"48b33cd382fb91825e79964724e102b7167d5f830e5a082432ec59ca3d9ca61e"},
+    {"path":"packages/shared/src/code-intelligence/index.ts","symbol":"canonical intelligence exports","lineStart":1,"lineEnd":27,"sha256":"ba83e46a3fa8348701bddda97acefa176bdc4938a51c7a70338f9a376b464e39"},
+    {"path":"packages/shared/src/code-intelligence/refs.ts","symbol":"readFileSpan/resolveRepositoryRefWithCurrentPolicy/assertRepositoryCurrentReadPolicy","lineStart":484,"lineEnd":595,"sha256":"432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path":"packages/shared/src/code-intelligence/provider.ts","symbol":"CodeIntelligenceProviderRegistry and scopedProviderResourceId","lineStart":60,"lineEnd":123,"sha256":"df76cab98d98e3562f28efe2aed1b86e47ef43f595b7d8ec96a7cc3a42afc404"},
+    {"path":"packages/shared/src/code-intelligence/repository-connection.ts","symbol":"RepositoryConnectionConfiguration/RepositoryConnection local-owned provenance","lineStart":8,"lineEnd":46,"sha256":"fcabbdab22124e8641b0df4404ea780f56da603ec1d277658823a41583b7107c"},
+    {"path":"packages/shared/src/capabilities/packs.ts","symbol":"CapabilityTool/tool/CAPABILITY_TOOLS declaration pins and rejected-tool inventory","lineStart":23,"lineEnd":139,"sha256":"0746e6c5df67dcb72e8bc8adb112a50dc337d207473a05beed74f6088540af9e"},
+    {"path":"packages/server-core/src/handlers/rpc/knowledge.ts","symbol":"registerKnowledgeHandlers/resolveProvider/assertKnowledgeRef","lineStart":468,"lineEnd":606,"sha256":"31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path":"packages/server-core/src/handlers/rpc/knowledge.ts","symbol":"SEARCH/GET/GET_CONTEXT/GET_BACKLINKS/GET_EXPORT_PAYLOAD/LIST_NOTEBOOKS/LIST_TREE/USER_CREATE","lineStart":669,"lineEnd":879,"sha256":"31af116347a9189834945bd8d2b4c029eb060416dca73da365096f3a43a9c571"},
+    {"path":"packages/server-core/src/knowledge/connections-store.ts","symbol":"KnowledgeConnectionRecord/SaveConnectionInput/parseConnectionFile","lineStart":81,"lineEnd":132,"sha256":"b608bc1b2a9b7a591a3d86b7acc00acb0034982988f36f8d779ad0079350cdef"},
+    {"path":"packages/server-core/src/knowledge/bridge-service.ts","symbol":"KnowledgeBridgeService.propose","lineStart":227,"lineEnd":328,"sha256":"416484c77f41bf69f7a9a9eedf67ffb9761eb8e0c7bf6cd96640f974e65d5712"},
+    {"path":"packages/server-core/src/knowledge/bridge-service.ts","symbol":"KnowledgeBridgeService.apply re-read/hash-check boundary","lineStart":407,"lineEnd":440,"sha256":"416484c77f41bf69f7a9a9eedf67ffb9761eb8e0c7bf6cd96640f974e65d5712"},
+    {"path":"packages/server-core/src/knowledge/tool-runtime.ts","symbol":"createKnowledgeToolRuntime","lineStart":31,"lineEnd":77,"sha256":"7fb3574194a4f68a60ec61ae37406665674166f4fbb12894c1bfa8e77971cbb3"},
+    {"path":"packages/shared/src/agent/knowledge-permissions.ts","symbol":"assertKnowledgeActionAllowed","lineStart":70,"lineEnd":85,"sha256":"3dcd1cd974223d983a33726ce89b4cf12be019a64fa3ade441b656688be53ac9"},
+    {"path":"packages/shared/src/code-intelligence/local-adapter.ts","symbol":"isSafeToIngest/localFsSymbolsAdapter","lineStart":1,"lineEnd":84,"sha256":"9d805685a6fc19e2487ed57e28550d4211339326157ef871febe2d7dd1b2fb35"}
+  ],
+  "nextExecutableAction": {
+    "now": "Lead reads this owned preflight report, resolves the CI-008 contract overlap and extra shared-file patch ownership, and records the current hashes against the wave0 base. This preflight does not authorize or begin product implementation.",
+    "afterGates": "After the lead's wave0 commit and accepted CI-001/CI-002/CI-004 artifact+readback receipts, re-read any hash-changed integration files, freeze neutral RepoWiki ref/read/receipt/checkpoint contracts and approved generated namespace, then implement only the five normative new files. Send the enumerated shared patches to the integration-owner; do not write them concurrently.",
+    "firstCodeContribution": "Implement RepoWikiKnowledgeProvider's injected read projection and OpenWikiRepoWikiAdapter's pinned model-free complete-section retrieval using accepted source authority. Then attach the explicit durable generation bridge and claim-assessment receipt mapping in dependency order; do not deliver read-only retrieval as feature completion."
+  },
+  "risks": [
+    "Current source is live wave0 state, not an accepted dependency receipt; a root integration change can invalidate line ranges and hashes.",
+    "Historical cloud product baseline differs from the dispatch revision, and delivery revision/digest placeholders must be resolved rather than copied as real pins.",
+    "KnowledgeConnectionRecord and RPC list/export/create assumptions require integration work beyond the normative sharedPatchPaths; a provider-only patch would compile poorly or route to SiYuan incorrectly.",
+    "Explicit unknown connection/provider fallback in KnowledgeRegistry can misroute RepoWiki refs unless guarded; connection identity must bind the source scope, not just pick a factory.",
+    "CI-008 freshness/output ownership is downstream of CI-006, so treating it as a new prerequisite edge would create a cycle; lead must supply foundation contracts without duplicating persistence.",
+    "Exact dirty captured bytes must not be cited as their parent commit. OpenWiki-native sourceFingerprint and ROX snapshot/policy hashes need a lossless checkpoint mapping, not an assumed identical hash algorithm.",
+    "Readable evidence and OpenWiki confirm metadata are not semantic verification; an existence-only assessor can hallucinate support unless contradicted/unrelated controls and receipts catch it.",
+    "Generated page replacement, symlink output redirection and stale-run publication can damage authored knowledge unless staging roots, ownership leases and base/fingerprint checks are enforced at every writer boundary.",
+    "Local provider execution can still send source to a model. Generation requires separately declared approved egress and external credential references; telemetry flags and untrusted repository instructions need explicit enforcement.",
+    "Cached remote-private page bodies cannot bypass live actor/source authority or expiring leases. Freshness and offline tool availability do not grant content permission.",
+    "Capability inventory still offers rejected daemons and uses id@version declaration hashes. Pin shape is not upstream artifact integrity or readiness.",
+    "Normal host startup watches and read registration must not auto-activate OpenWiki generation; subprocess/native MCP transport readiness is not established by in-process session tool registration.",
+    "Upstream source files were referenced through the frozen specification, not independently read/executed in this preflight. Exact parsing/signatures and installed-provider behavior must be verified after the artifact receipt is available.",
+    "No product behavior is verified here. Every acceptance row remains GAP_BLOCKS_COMPLETION; future source/schema, real provider runtime, negative control, restart readback and affected UI lanes remain required."
+  ]
+}

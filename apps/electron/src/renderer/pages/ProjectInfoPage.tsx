@@ -41,6 +41,7 @@ import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
 import type { LoadedProject, ProjectAsset } from '@craft-agent/shared/projects/types'
 import { RepositorySnapshotPanel } from '@/components/code-intelligence/RepositorySnapshotPanel'
+import { SharedProjectDetails } from '@/components/projects/SharedProjectProjection'
 
 interface ProjectInfoPageProps {
   projectSlug: string
@@ -49,6 +50,12 @@ interface ProjectInfoPageProps {
 type TabKey = 'sessions' | 'tasks' | 'assets' | 'settings'
 
 export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
+  return projectSlug.startsWith('project:')
+    ? <SharedProjectDetails entityId={projectSlug} />
+    : <LocalProjectInfoPage projectSlug={projectSlug} />
+}
+
+function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id

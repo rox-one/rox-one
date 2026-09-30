@@ -1,0 +1,378 @@
+{
+  "task_id": "LSX-WP-023-preflight",
+  "attempt_id": "40ea7a2c4ee52aecb61da591a990ad10",
+  "packet_hash": "eddde2f6f9de29713dfd6ebdefee1445029cd2514b4d103fa47f9658c2cb0b78",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-023",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "scope": {
+    "mode": "inspect",
+    "tier": "bounded-workflow",
+    "owner": "omp-rox-compound-20260930T101129Z-LSX-WP-023",
+    "onlyWrittenArtifact": "plans/compound-implementation/worker-reviews/LSX-WP-023.json",
+    "constraints": "No product, test, manifest, progress, shared-file or Git mutations; no builds, tests, native UI or network operations. The supplied artifact-only --verify command is not product verification.",
+    "implementationStart": "Only after lead wave0 commit and accepted dependency artifact/readback receipts; this report does not authorize implementation."
+  },
+  "dependencies": ["LSX-WP-015", "LSX-WP-017"],
+  "dependencyContracts": [
+    {
+      "packageId": "LSX-WP-015",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:6074-6199",
+      "requiredReceipt": "Accepted actor-scoped authorized aggregates, contributor refs and snapshot receipt from relation-computation; unit/null/cardinality rules, ACL-negative and revoke invalidation proof. Its proposed base.getAggregateContributors is not yet an observed callable API.",
+      "transitiveEdges": ["LSX-WP-013", "LSX-WP-014"],
+      "state": "ACCEPTANCE_RECEIPT_NOT_INSPECTED"
+    },
+    {
+      "packageId": "LSX-WP-017",
+      "specEvidence": "plans/lark-suite-reference/work-packages.json:6615-6619,6685-6771,6805-6817",
+      "requiredReceipt": "Accepted BaseTable integration exposing authorized queryRef, field descriptors, full-query summaries and shared queryRevision/permissionEpoch/pinned evaluation context; canonical row refs and actual native readback, not the existing NotesTableView rows.",
+      "transitiveEdges": ["LSX-WP-012", "LSX-WP-015", "LSX-WP-016"],
+      "state": "ACCEPTANCE_RECEIPT_NOT_INSPECTED"
+    }
+  ],
+  "foundationGates": [
+    {
+      "id": "PUBLISHED_RS_DRV_01",
+      "relationship": "Hidden published prerequisite, not an additional LSX explicit DAG edge",
+      "evidence": "docs/rox-suite/published/RS-BASE-01.md:95-113 requires RS-DRV-01; docs/rox-suite/published/RS-DRV-01.md:36-38,60-62,73-75 requires common identity/ACL/command authority and canonical library refs.",
+      "requirement": "Lead must provide accepted RS-DRV-01/common library identity and ACL authority readiness for Base page/ref/config scope, or explicitly reconcile the published prerequisite in a reviewed packet. Publication is not implementation acceptance.",
+      "state": "READINESS_NOT_ESTABLISHED"
+    },
+    {
+      "id": "AUTHENTICATED_CHART_SERVER_BOUNDARY",
+      "relationship": "Required mechanism with no writable server integration path in this packet",
+      "evidence": "work-packages.json:8652-8693 names base.queryChart and base.drillDownAggregate and server-enforced ACL; permitted new files contain only renderer/core/tests. NotesViewHost:58-117 is renderer-only. surface-context:31-56 binds supplied refs and filters a supplied readable set, not authenticated data-plane policy. platform-contract:597-609 checks actor/permission grants, not entity/field/policy-snapshot query authorization.",
+      "requirement": "Use the accepted shared Base query/aggregate authority and authenticated transport. Resolve its actual handler/registration/schema import names from dependency receipts. If it does not already implement both chart operations, obtain a reviewed scope extension naming exact server/transport integration paths and owner before any patch. Do not put an owner cache or authorization engine in BaseChart.",
+      "state": "SERVER_SEAM_AND_OWNER_RECEIPT_REQUIRED"
+    },
+    {
+      "id": "PAGE_CONFIG_AUTHORITY_AND_MIGRATION",
+      "relationship": "Persistence foundation, not localStorage feature work",
+      "evidence": "docs/lark-suite-reference/05-rox-bases-design.md:47-92,171-177,218-229; NotesTableView:133-159 stores layouts only in notes:views:<workspaceId>; NoteBaseView:24-34 has only v1 table/base kinds.",
+      "requirement": "Chart config belongs to the accepted Page-owned BaseDefinition/view revision, separate from row revisions. Reuse accepted migration and config save/readback commands; localStorage may retain personal preferences only. Resolve approved canonical Page/contentKind identity rather than inventing a new chart/record store. Published RS-BASE-01:46 proposes a registered CustomRecord kind while the newer design:41,48-51 uses proposed page contentKind=record; this authority decision is upstream, not a chart-worker enum edit.",
+      "state": "DURABLE_CONFIG_CONTRACT_RECEIPT_REQUIRED"
+    },
+    {
+      "id": "PINNED_TYPED_EVALUATION",
+      "relationship": "Transitive foundation, not additional explicit dependency",
+      "evidence": "LSX-WP-015 depends on LSX-WP-013 and LSX-WP-014 at work-packages.json:5990-5993; design:138-156 requires stable field IDs, pinned time/timezone, bounded computation, null/error/unit policy; entity model:153-157 requires decimal-safe money and legacy checkbox formula semantics.",
+      "requirement": "Consume accepted field descriptors, typed value union and bounded formula/rollup snapshot; never run independent now()/today() or coerce denied/error values to zero. Keep taskCount/openTaskCount as Markdown checkbox counts. Obtain accepted transitive receipts through the lead.",
+      "state": "DEPENDENCY_CONTRACTS_NOT_YET_BOUND"
+    },
+    {
+      "id": "REVOCATION_AND_EVENT_FENCE",
+      "relationship": "Common policy/change-feed foundation",
+      "evidence": "work-packages.json:8676-8693 labels base.aggregateInvalidated a proposed alias; design:162-169 requires row/field ACL before aggregate and revoke clearing before next render; entity model:157,167 covers actor/policy cache and offline/reconnect policy.",
+      "requirement": "Resolve the actual accepted event alias/envelope/subscription and permissionEpoch fence. Clear chart values, tooltip, data table, legend labels, cached contributors and selection immediately when prior authorization becomes invalid; discard late old-epoch responses. Reconnect must invalidate grants/cache before reads/replay. Remote-private offline reads require accepted bounded lease or fail closed.",
+      "state": "EVENT_AND_POLICY_READINESS_RECEIPT_REQUIRED"
+    },
+    {
+      "id": "REACHABLE_ROUTE_AND_I18N_SCOPE",
+      "relationship": "End-to-end UI integration outside the single shared-file lease if not supplied by dependencies",
+      "evidence": "NotesViewHost:71 accepts table/canvas/graph/outline only; NoteViewKind:5 and NoteBaseView:28 exclude chart. Package grants a patch only to NotesViewHost. AGENTS.md requires t() and keys in all ten locales; work-packages.json:8685-8689,8738 requires Russian/i18n/theme/font/keyboard proof.",
+      "requirement": "Lead must supply accepted Base view routing/selector contract from LSX-WP-017 and localization keys in all ten existing locales under their integration ownership. Merely adding an unreachable chart branch to NotesViewHost cannot satisfy DoD. If selectors/callers or locale files need edits, obtain a reviewed packet/path lease expansion, not a worker edit to note-views or locale files.",
+      "state": "ROUTE_AND_LOCALE_INTEGRATION_REQUIRED"
+    },
+    {
+      "id": "REFERENCE_AND_GENERATION_BINDING",
+      "relationship": "Launch/proof gate, separate from product dependencies",
+      "evidence": "execution-packages.json:1968-2010 and work-packages.json:8770-8813 contain unresolved reference revision/digest, historical product baseline and fail-closed launch gates.",
+      "requirement": "After wave0 commit, issue a new exact implementation packet resolving delivery manifest revision/digest and spec-ref hashes, accepted dependency commits/receipts and shared path lease. Preserve this preflight input_revision as historical; do not checkout the historical baseline over the lead's work. Reject unapproved dirty/ancestor generation. Re-read and hash live seams if integration changed them.",
+      "state": "IMPLEMENTATION_LAUNCH_NOT_AUTHORIZED"
+    },
+    {
+      "id": "NATIVE_PROOF_RUNNER",
+      "relationship": "Verification prerequisite, not an invented passing UI command",
+      "evidence": "work-packages.json:8695-8715,8734-8739 requires six separate proof lanes and supported actual Electron/UI runner discovery.",
+      "requirement": "Lead supplies native-domain authority fixture/readback and supported actual Electron runner on integrated revision. Preflight intentionally does not launch UI/tests or inspect unrelated runner subsystems. Provider/collaboration evidence is additional only when those lanes are actually exercised, never a substitute for native proof.",
+      "state": "RUNNER_AND_RUNTIME_RECEIPTS_NOT_INSPECTED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/bases/BaseChart.tsx",
+    "packages/core/src/bases/chart-definition.ts",
+    "tests/lark-suite-extension/lsx-wp-023.test.ts",
+    "tests/lark-suite-extension/ui/lsx-wp-023.spec.ts"
+  ],
+  "newFileContributions": [
+    {
+      "path": "packages/core/src/bases/chart-definition.ts",
+      "proposedSymbols": ["ChartDefinition", "QueryChartRequest", "QueryChartResult", "DrillDownAggregateRequest", "DrillDownAggregateResult", "ChartError"],
+      "change": "Proposed names, not observed existing symbols: define versioned bar/line/pie config using stable x/y field IDs and typed aggregate operator, explicit empty/null/error/unit policy, page/view config revision. Reuse accepted QueryRef, AuthorizedAggregate, typed values and Rox2EntityRef rather than redeclare their authorities. Requests bind queryRef and chart config/bucket identity to accepted query revision, permission epoch, schema/source snapshot and pinned evaluation time/timezone. Results carry bounded buckets, authorized contributor subset query refs, source/unit/freshness/evaluation metadata. Use the eight required error discriminants and existing serialization/validation convention resolved from accepted dependencies. Do not accept payload actor as authorization or treat compile-time types as runtime validation."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/bases/BaseChart.tsx",
+      "proposedSymbols": ["BaseChart"],
+      "change": "Consume the existing shared authenticated Base query adapter with base.queryChart/base.drillDownAggregate capability. Render server aggregate buckets as bar/line/pie plus semantic data table; never aggregate rendered Notes rows. Expose source/unit/freshness/pinned time help on hover, focus and click; keyboard legend toggle and Enter drill-down. Distinguish source/filter empty, all-null, unsupported, validation, denied, conflict, deleted, offline, rate-limited and missing dependency states. Use current theme and typography, t(), reduced motion and stable bucket focus. Apply revision/epoch fencing and synchronous revoke clearing; invoke the accepted shared Table subset-query navigation using returned QueryDrillDown, not a new records surface."
+    },
+    {
+      "path": "tests/lark-suite-extension/lsx-wp-023.test.ts",
+      "change": "After dependencies exist, use deterministic actor-scoped authority fixtures and recorded seeds to test all-pages totals across 100 paginated rows, viewer10 vs owner30, hidden C=900 absence, null/error/units and exact contributor sets, same pinned time/query revision, stale epoch rejection, revoked cache clearing, forged actor/cross-workspace/denied field rejection, conflict/replay/offline/reconnect and saved-config native restart readback. Retain fail-before/pass-after mutation evidence for rendered-row-only and unrestricted aggregation. Do not use a mock echo as server ACL proof."
+    },
+    {
+      "path": "tests/lark-suite-extension/ui/lsx-wp-023.spec.ts",
+      "change": "Use the discovered supported actual Electron runner and integrated live authority. Assert reachable Chart route, all three chart kinds, accessible table value equivalence, hover/focus/click help, keyboard legend and Enter drill-down, no stale tooltip after revoke, late-response fencing, Russian plus other locales, actual loaded Rox Mono, preserved themes, focus/IME, reduced motion and 200% zoom. Keep exact screenshot/ARIA/environment hashes and native refs/revisions with evidence; isolated fixture rendering is not completion."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewHost",
+      "inspectedLines": [58, 117],
+      "baseSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "change": "After LSX-WP-017 host integration is accepted, import BaseChart from ../bases/BaseChart and add Chart dispatch to the accepted Base view selection contract. Pass the SAME page-owned chart definition, queryRef/snapshot, field descriptors, authenticated shared query adapter, permission/event fence and subset-query navigation used by BaseTable. Route returned drill-down QueryDrillDown into that same Table/detail flow, keeping canonical contributor refs. Do not feed rows computed by projectNoteRows into chart aggregates; do not create new chart-only localStorage config. Existing canvas/outline/graph routes retain their behavior. Rebase this bounded patch onto the accepted host generation under the integration-owner lease; final prop identifiers come from its actual contract, not this preflight sketch.",
+      "reason": "Current view union has no chart and rows are local Notes projections; a chart using those rows would violate all-pages ACL totals, pinned snapshot, durable config and reachable shared-surface acceptance.",
+      "prerequisite": "Accepted BaseTable/query/config/routing contracts plus authoritative chart server operations; host source generation must be re-read if its hash changed."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote",
+      "inspectedLines": [48, 56],
+      "baseSha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a",
+      "change": "Preserve NotesViewNote as the legacy Notes input, not an authorization or aggregate schema. Reuse the separate accepted typed Base input introduced by LSX-WP-017 for Chart dispatch. If that dependency still uses this exact type for Base inputs, integration owner must make the minimal typed distinction at this seam so authoritative Base ref/query revision/permission epoch are supplied by the shared adapter; never invent authority fields from note.id or optional properties. No blanket rewriting of Notes data, no silent changing of checkbox formula meaning.",
+      "reason": "This type carries title/markdown/tags/properties/links/backlinks only; it has no canonical query or policy snapshot. Optional decorative revision properties would not provide server authorization.",
+      "prerequisite": "Review actual accepted LSX-WP-017 NotesViewNote/host patch first; if it already separates Base input no additional type edit is necessary, but the Chart authority requirement remains mandatory."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "same pinned time/query revision",
+      "currentEvidence": "DoD work-packages.json:8732. NotesViewHost:79-98 derives browser rows with no queryRef; note-views:188-203 implements four fixed counts, not pinned typed formula evaluation. surface-context:31-48,58-91 preserves per-entity revisions and explicit snapshot/live behavior but has no queryRevision, permissionEpoch or evaluation time.",
+      "symbolSeam": "NotesViewHost -> accepted BaseTable/query adapter -> proposed BaseChart and ChartDefinition",
+      "requiredChange": "Reuse the exact accepted queryRef/queryRevision/permissionEpoch/evaluation time/timezone for Chart, Table summary and contributors. Server validates config field IDs/schema revision; no independent client clock or re-evaluation. Fence responses against changed revision/epoch; refresh all equivalent views together.",
+      "verification": "After implementation compare chart/Table totals and returned snapshot metadata across 100 rows and multiple page windows; formula today()/now() around a day/timezone boundary remains identical for a pinned query. Concurrent source/schema/policy revision change yields conflict/refresh, never mixed buckets. Record seed and query/source hashes.",
+      "missingPrerequisite": "Accepted LSX-WP-015/017 and transitive pinned formula/query contract plus actual server chart handler.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "revoke clears stale aggregate tooltip",
+      "currentEvidence": "DoD work-packages.json:8733; event alias is PROPOSED at 8676-8679. Host:79-117 has no chart subscription. visibleContextEntityRefs:51-56 only filters supplied IDs and cannot revoke numeric caches or tooltip data.",
+      "symbolSeam": "proposed BaseChart invalidation/tooltip state and accepted base.aggregateInvalidated policy feed",
+      "requiredChange": "At authorization invalidation clear buckets, tooltip value/source, table rows, contributor refs, legend private labels and selected subset before a new render/query; reject late old-policy responses and requery using current permission epoch. Do not retain prior count in a stale tooltip or loading screen.",
+      "verification": "Owner rows A=10/B=20/hidden C=900; revoke B while tooltip is open and focus stays on chart. Assert next visible/accessibility state contains no B value/name/count, then fresh total/count/average=10/1/10. Deliver old response after revoke and replay duplicate/out-of-order events; forbidden values stay absent. Repeat reconnect/expired lease scenario.",
+      "missingPrerequisite": "Verified common policy/change-feed alias, envelope, actor cache key and online/offline revocation contract.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "work-packages.json:8655-8670,8734 lists the two operations and eight discriminants. No normative server file is writable. NotesViewNote:48-56 is not a chart schema. authorizeRox2Action:601-609 accepts actor/grants supplied by its caller and is not proof of authenticated entity/field query enforcement.",
+      "symbolSeam": "proposed chart-definition schemas; actual accepted authenticated server Base authority and renderer adapter, handler names unresolved",
+      "requiredChange": "Bind runtime-validated request/result schemas to both boundaries using dependency conventions; queryRef/bucket/config stable IDs, revision/epoch/time metadata and typed contributor subset refs. Errors must discriminate validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat. Derive actor/workspace/policy from authenticated session; payload ref scope is validated, never an ACL grant.",
+      "verification": "Lead compiles both consuming boundaries on integrated revision and executes valid and malformed requests. Forged payload actor/owner/workspace does not elevate access; denied x/y/filter fields and malformed/cross-workspace refs reject before bucket computation. Each discriminant reaches a nonblank accessible UI error state.",
+      "missingPrerequisite": "Reviewed server/transport scope and actual operation registration, shared schemas and authenticated actor resolver from accepted foundation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "DoD work-packages.json:8735; ownership 8674 says page-owned config. NotesTableView:133-159 acknowledges only React/localStorage state. design:92 assigns BaseDefinition/config to Page service and row fields to native owners.",
+      "symbolSeam": "accepted Page/BaseDefinition view-config commands -> proposed ChartDefinition -> NotesViewHost",
+      "requiredChange": "Save chart config only through existing canonical page/config authority with revision/operation receipt semantics. Do not claim save from optimistic state/toast. Pin aggregate readback to authoritative source/query/config/policy revisions and record hashes; rows remain canonical owner refs, not persisted aggregate copies.",
+      "verification": "Save chart kind/x/y/operator/policies through native command; record receipt/ref/revision/hash, read back from authority and open Chart/Table, restart real owner/service and Electron, read back same config/ref and recompute authorized query. Offline queued status is not committed; retry/replay returns the accepted durable receipt without duplicate config.",
+      "missingPrerequisite": "Accepted Page-owned config persistence/migration/CAS/idempotency and supported native restart/readback fixture.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "DoD work-packages.json:8736; tests:8701-8704 require 100 rows, actor sums, null/error/units/contributors/a11y. Current projectNoteRows:133-158 maps every supplied note without server field/row ACL; applyNoteBaseView:160-169 applies browser filters only.",
+      "symbolSeam": "proposed lsx-wp-023.test.ts and actual base.queryChart/base.drillDownAggregate handlers",
+      "requiredChange": "Exercise full authorized query, shared aggregate semantics and canonical contributors. Test denied field/row/actor, stale query/schema conflict, repeated reads/config operation replay, deleted source, missing dependency, offlineUnsupported/expired lease, rate limit and unknown format. Preserve failed as well as successful attempts; use accepted recovery/restart paths rather than bypassing authority.",
+      "verification": "After launch run bun test tests/lark-suite-extension/lsx-wp-023.test.ts and actual domain scenario on the integrated revision. Compare expected values/refs, record source/result hashes, operation/query revisions, reproduction seeds, attempts and native restart outcomes. UI runner is to be discovered, not claimed here.",
+      "missingPrerequisite": "Accepted server/config/error contracts, native fixtures and approved implementation packet.",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:8717-8725,8737 explicitly defines rendered-only/unrestricted aggregate mutations and three must-fail assertions.",
+      "symbolSeam": "proposed lsx-wp-023.test.ts semantic oracle at shared server aggregate boundary",
+      "requiredChange": "Keep deterministic baseline fixtures and mutate actual aggregation input to rendered rows or unrestricted rows. Assert Chart equals full permitted Table summary; drill-down refs exactly contributing allowed set; hidden count absent. Preserve exact baseline/mutant evaluated bytes, seed and input hashes. Do not substitute a source-text assertion or timeout.",
+      "verification": "Green baseline, then rendered-page mutant fails full-query total assertion on the 100-row fixture; unrestricted/owner-cache mutant fails viewer sum/count/contributor and hidden-count assertions. Record named assertion failure for each mutant separately from infrastructure errors.",
+      "missingPrerequisite": "Runnable accepted server aggregate seam and isolated reproducible authority fixture after implementation.",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "DoD work-packages.json:8738; design:181-193 requires three kinds, legend/Enter, tooltip and data table; NotesViewHost:71 has no chart route. Existing host uses useTranslation:2 and semantic theme tokens, so these conventions should be reused.",
+      "symbolSeam": "proposed BaseChart and integrated NotesViewHost chart dispatch; shared localization and supported actual Electron runner",
+      "requiredChange": "Provide real bar/line/pie, table, hover/focus/click help with value/unit/source/freshness/eval time, keyboard legend toggle and Enter drill-down. Preserve focus/selection by stable bucket/ref; handle loading/error/denied/empty/all-null/unsupported. Respect existing theme, actual Rox Mono, reduced motion, 200% zoom and IME for any config inputs. All user-facing text via t() in ten locales under lead ownership.",
+      "verification": "Actual Electron route and live authorized query; capture screenshots, ARIA values, computed and loaded font, Russian and another locale, light/dark user theme, pointer/focus/click help equality, keyboard legend and Enter to exact permitted Table subset. Check focused bucket/data row after invalidation, IME composition, reduced motion and 200% zoom. Bind environment and screenshot hashes to integrated revision.",
+      "missingPrerequisite": "Reachable Base route/callers, all-locale key integration and supported Electron runner with real authority.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "DoD work-packages.json:8739 and proof lanes:8708-8715. This is read-only preflight and featureComplete is false.",
+      "symbolSeam": "integration-owner acceptance receipt for LSX-WP-023 on delivered revision",
+      "requiredChange": "Collect SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI independently after dependency acceptance and integration. Bind exact diff/commit/artifact hashes, native ref/revisions, seeds and readback. Add provider/collaboration proof only if actually used; outputs redacted per actor.",
+      "verification": "Lead independently checks every lane artifact against exact integrated bytes and authoritative readback before/after restart, including named negative controls and native chart interaction. Preflight verifier success establishes report lineage/hashes only, never feature acceptance.",
+      "missingPrerequisite": "Implemented/integrated Chart, accepted dependencies and all six exercised proof lanes.",
+      "state": "FULL_DOD_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Chart sums/counts/units equal Table summary over all authorized pages; viewer10 vs owner30; hidden count absent.",
+      "currentEvidence": "Package goal:8513-8514, ACL:8683, tests:8702 and mutation assertions:8721-8723; design:162-169,288 defines ACL-first all-pages total and A10/B20/hiddenC900 control.",
+      "symbolSeam": "accepted AuthorizedAggregate server result -> BaseChart/ChartDefinition -> BaseTable summary",
+      "requiredChange": "Apply row/field ACL before formula/group/bucket/numerator/denominator. Share full filtered-set aggregate computation with Table independent of page/render window. Actor/policy fingerprint plus source/query/schema revisions partition cache; never share unrestricted owner result with viewer. Reject denied config fields even if no raw row would be returned.",
+      "verification": "Across 100 paginated permitted rows compare totals for every page size/window with full authorized Table summary. Owner A/B sees30, viewer A sees10, hidden C900 appears nowhere in buckets, totals, table, tooltip, diagnostics or contributor counts. After B revoke verify10/1/10. Denied filter/group fields cannot provide a match/count oracle.",
+      "missingPrerequisite": "Accepted full-query aggregate/query and server record/field policy contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Drill-down query subset refs exactly equal authorized contributing rows.",
+      "currentEvidence": "Outputs:8647-8650; API:8655-8657; tests:8703; design:166,191-193. Existing host onOpenNote(row.id):271-274 opens a local note, not a pinned authorized subset query.",
+      "symbolSeam": "proposed base.drillDownAggregate -> QueryDrillDown result -> accepted Table subset navigation",
+      "requiredChange": "Submit server bucket identity plus pinned queryRef, not arbitrary renderer row IDs. Server repeats original typed predicates/policy snapshot and aggregation contribution rules, returns exact authorized contributor subset query refs. If permission/schema changed reject stale binding and refresh; do not silently use prior hidden contributors. Selection keys canonical EntityRef, not visual indices/title.",
+      "verification": "For each bucket/operator assert exact contributor ref set including null/error inclusion policy, not merely count/length. Click and Enter open the same permitted subset in existing Table/detail surface. Revoke, change filter or reorder before drill-down and verify conflict/refresh without hidden titles/refs/actions; no stale response can restore forbidden selection.",
+      "missingPrerequisite": "Accepted contributor refs service from LSX-WP-015 and subset-query navigation from LSX-WP-017 plus chart server registration.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Explicit null/error/unit policies; empty/all-null/unsupported separate; bar/line/pie plus accessible data table.",
+      "currentEvidence": "Inputs:8642-8645; outputs:8647-8650; UI:8687; design:109,140,154,191 and entity model:153 specify typed states and decimal-safe money. Existing NoteProjectionRow counters and formulaValue return plain number only.",
+      "symbolSeam": "proposed ChartDefinition; accepted field/aggregate value union; proposed BaseChart",
+      "requiredChange": "Persist explicit count rows versus count non-empty semantics, null/error handling, unit metadata and supported aggregate compatibility. Count empty accessible set=0; sum=0 only when schema policy says so; avg/min/max=null. Incompatible type/unit is typed error, not an implicit conversion. Preserve exact decimal/minor-unit representation. Distinguish no source, filtered empty, all-null and unsupported aggregation from valid zero; chart visuals/table show identical typed result.",
+      "verification": "Seed mixed null/missing/invalid/error/denied values, empty relation/list, exact decimal values and incompatible units; assert sum/count/avg/min/max/distinct semantics and exact contributors per configured policy. Exercise all three kinds and table with the same result; diagnostics do not disclose denied identity or convert denied to zero.",
+      "missingPrerequisite": "Accepted field registry/rollup semantics and config validation/formatting contract from dependency chain.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Freshness/snapshot shared with grid; stale policy invalidates without prior-count leak; large charts use bounded server aggregation.",
+      "currentEvidence": "Realtime:8692; risk:8742; design:140,156,193 and entity model:157,167. surface-context rebaseLiveContext:76-91 preserves explicit live/snapshot revisions but is not a query cache or server aggregate budget.",
+      "symbolSeam": "shared query/event authority -> proposed BaseChart freshness and result fence",
+      "requiredChange": "Use accepted bounded server computation and result/cardinality policy; report budget/rate/type failure explicitly, not silently truncate to visible rows. Share live/cached/stale/offline status and query/source/policy revisions with grid. Derive cache only from authorized source and invalidate on source/target/policy changes. Keep accessible fallback without a second full-source browser store.",
+      "verification": "Exercise large permitted source with server configured limits; either correct bounded result or typed limit error, never a partial sum labeled full. Delay/out-of-order response with old source/permission revision cannot replace newer state. Remote offline/expired lease cannot reveal cached private count; reconnect revalidates before rendering.",
+      "missingPrerequisite": "Accepted server budget/cursor/snapshot/event/offline contracts and native workload fixture.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesViewNote; NotesViewHost",
+      "lineStart": 48,
+      "lineEnd": 117,
+      "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx",
+      "symbol": "NotesTableView; persistViews; patchView",
+      "lineStart": 119,
+      "lineEnd": 164,
+      "sha256": "a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "NoteBaseView; NoteProjectionRow; notesViewsStorageKey",
+      "lineStart": 24,
+      "lineEnd": 102,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/notes/note-views.ts",
+      "symbol": "projectNoteRows; applyNoteBaseView; groupNoteRows; formulaValue",
+      "lineStart": 133,
+      "lineEnd": 203,
+      "sha256": "697312c1ad87652582fa546ae7e172b384db9065f1b6082c3254cfd6464f33b8"
+    },
+    {
+      "path": "packages/core/src/rox2/surface-context.ts",
+      "symbol": "bindSurfaceContext; visibleContextEntityRefs; sameContextSnapshot; rebaseLiveContext",
+      "lineStart": 18,
+      "lineEnd": 91,
+      "sha256": "ae99c5688e47605849ec10dbcc3c81615621d078a5e736dfc4a8247ba4822191"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2Context",
+      "lineStart": 143,
+      "lineEnd": 156,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef",
+      "lineStart": 232,
+      "lineEnd": 239,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "authorizeRox2Action",
+      "lineStart": 597,
+      "lineEnd": 610,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "plans/lark-suite-reference/work-packages.json",
+      "symbol": "work_packages[22] / LSX-WP-023",
+      "lineStart": 8510,
+      "lineEnd": 8815,
+      "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"
+    },
+    {
+      "path": "plans/lark-suite-reference/execution-packages.json",
+      "symbol": "packages / LSX-WP-023",
+      "lineStart": 1928,
+      "lineEnd": 2012,
+      "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"
+    },
+    {
+      "path": "docs/lark-suite-reference/05-rox-bases-design.md",
+      "symbol": "sections 6-8 / Formula, query ACL, Chart view",
+      "lineStart": 134,
+      "lineEnd": 193,
+      "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"
+    },
+    {
+      "path": "docs/lark-suite-reference/07-domain-entity-model.md",
+      "symbol": "section 6 / Bases types and computation",
+      "lineStart": 151,
+      "lineEnd": 167,
+      "sha256": "cad4be4cdb3cfc9c5ac4b44393e89ea2ac2961a4eaba48fa45be68377d5aff6b"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-BASE-01.md",
+      "symbol": "Commands / authority; Dependencies / normative handoff",
+      "lineStart": 44,
+      "lineEnd": 113,
+      "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+    },
+    {
+      "path": "docs/rox-suite/published/RS-DRV-01.md",
+      "symbol": "Domain / authority; mandatory foundation gate; proof lanes",
+      "lineStart": 36,
+      "lineEnd": 75,
+      "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"
+    }
+  ],
+  "evidenceFreshness": {
+    "kind": "WORKING_TREE_SOURCE_INSPECTION_NOT_COMMIT_ATTESTATION",
+    "inputRevisionFromDispatch": "a21aeab1da5a67e56788384ff930945b0f487879",
+    "headIndependentlyInspected": false,
+    "specManifest": "Both inspected specification SHA256 values match the dispatch input_manifest.",
+    "hostBaselineMismatch": "The current NotesViewHost whole-file SHA256 a2a3232c713d7c059632c6b6d3bad3da686d674483ca11036875255c1af90a1a differs from the normative historical baseline hash 2fc3fc07f0cfb84bb7e7e18cc6548a34417ec6c34508a796942d0a80a6e13358. This report uses current working-tree lines; it does not assert the changes are committed or attribute their authorship. Root-owned wave0 work was preserved.",
+    "recheckTrigger": "Any source/spec whole-file hash change, wave0 integration, dependency acceptance, route/API contract change or new implementation packet invalidates corresponding proposed line anchors; re-read before applying a patch.",
+    "discoveryLimit": "Codegraph reported no project index. Descriptive find failed because its judging backend returned HTTP 402; inspection continued through literal grep and exact source reads. No repository-wide search or indexing performed. Normative four proposed new paths were not found by the exact glob lookup; no output files were implemented.",
+    "runtimeEvidence": "NONE: builds, product tests, network and native UI intentionally not run by this preflight."
+  },
+  "nextExecutableAction": {
+    "owner": "integration-owner",
+    "action": "After the lead's wave0 commit, bind accepted LSX-WP-015 and LSX-WP-017 artifact/readback receipts and their transitive foundations; reconcile RS-DRV-01 and authenticate the server/query/config/event/routing/i18n seams. Issue a reviewed revision-bound implementation packet resolving manifest hashes and any necessary server/transport/locale/caller scope expansion, then acquire the NotesViewHost lease. The implementation worker re-reads changed sources and consumes accepted contracts before writing the four normative new files; root applies the bounded host patch serially and verifies all six proof lanes on integrated revision.",
+    "workerReadyFirstChange": "Define ChartDefinition and request/result/error schemas by importing actual accepted field/query/aggregate/ref contracts, not guessing new stores or implementing aggregation in renderer.",
+    "notAnImplementationReceipt": true
+  },
+  "risks": [
+    "Current all-local NotesTableView may look reusable but its rows and localStorage config do not establish server ACL, all-pages totals or durable page-owned view authority.",
+    "The bounded packet has no writable authenticated server/transport registration path despite requiring two server-enforced chart operations; a renderer-only implementation cannot meet full DoD.",
+    "Only NotesViewHost is an approved shared patch path. Chart route selectors/callers, exports and ten locale files may need integration-owned scope expansion; neither note-views nor platform-contract is authorized for this worker to edit.",
+    "Published RS-BASE-01 requires RS-DRV-01 although LSX-WP-023 external_prerequisites is empty; keep the hidden gate separate from the exact two explicit dependencies.",
+    "Reference revision/digest placeholders and differing historical product baseline cannot be treated as resolved input; root must reconcile exact committed integration generation.",
+    "Old-epoch responses and focused tooltip/legend/table content can leak counts or labels even when row refs are filtered; clearing numeric and accessibility state is part of revoke acceptance.",
+    "Pagination, implicit null-to-zero, row-count/non-empty-count confusion, floating-point money and incompatible units can make chart totals disagree with Table and contributor semantics.",
+    "Ordinary source freshness changes and authorization revocation need different handling: stale policy may not display prior private totals while loading.",
+    "Surface context is a ref/revision binding mechanism, not an authenticated query authorization engine; do not upgrade browser-readable sets into proof of server permission.",
+    "Actual Electron/native restart proof and mutation sensitivity are not established by report validation, pure helper tests or screenshots of isolated fixtures.",
+    "Large sources require service-side bounded aggregation and explicit failure, not silent visible-window truncation or unbounded contributor materialization in browser.",
+    "Upstream entity kind/contentKind proposals must be reconciled by the authority owner; the chart slice must not register a second record/chart identity or store."
+  ]
+}

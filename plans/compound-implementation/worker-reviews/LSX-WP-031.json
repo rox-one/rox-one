@@ -1,0 +1,176 @@
+{
+  "task_id": "LSX-WP-031-preflight",
+  "attempt_id": "5e608c5bf42ea9716d5b012b146fad07",
+  "packet_hash": "8202a9d98e399313b7834da9db49728701996dbed8ab1e4da34bc915f8acc0b9",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "LSX-WP-031",
+  "featureComplete": false,
+  "mode": "inspect-only; owned report artifact",
+  "workTier": "bounded-workflow",
+  "dependencies": ["LSX-WP-006", "LSX-WP-026"],
+  "dependencyEvidence": [
+    {"id": "LSX-WP-006", "source": "plans/lark-suite-reference/work-packages.json:2988-3007,3147-3197", "requiredReceipt": "Accepted stable block/node mapping, retained spans, marker version and authority epoch; its explicit prerequisite is LSX-WP-005. Do not generate identity from label, offset or parse order."},
+    {"id": "LSX-WP-026", "source": "plans/lark-suite-reference/work-packages.json:9489-9513,9662-9714", "requiredReceipt": "Accepted existing Tiptap binding, durable actor/source-scoped journal, acknowledged revision, conflict/recovery and restore behavior; its prerequisites are LSX-WP-003/005/006 and EG-COLLABORATION. Exact exported interfaces must be obtained from its accepted implementation, not inferred from proposed filenames."}
+  ],
+  "foundationGates": [
+    {"gate": "EG-COLLABORATION / RS-DOC-01", "classification": "Hidden published foundation; also transitive through LSX-WP-026, not an additional explicit LSX-WP-031 edge", "source": "docs/rox-suite/published/RS-DOC-01.md:3,26,35-44,52-58; plans/lark-suite-reference/work-packages.json:92-97,9511-9513", "requiredProof": "One production React editor binding, single-writer adoption/authority epoch, durable WAL/snapshot ACK, reconnect dedup and revoke fence; container structure uses the same aggregate CAS while remote child edits survive parent reorder.", "state": "READINESS_NOT_VERIFIED; no accepted implementation receipt inspected"},
+    {"gate": "RS-DRV-01 / EG-FILES", "classification": "Published normative dependency absent from this package's explicit DAG and empty external_prerequisites array", "source": "docs/rox-suite/published/RS-DOC-01.md:32,62,79-82; plans/lark-suite-reference/work-packages.json:108-113,11259", "requiredProof": "Common FileRef/asset owner, authorized attachment manifest and export/download readback/revocation; approve basic export at exact document revision and audience without a new store or public link.", "state": "READINESS_NOT_VERIFIED"},
+    {"gate": "RS-MSG-02 / EG-DISCUSSIONS", "classification": "Published normative dependency absent from this package's explicit DAG", "source": "docs/rox-suite/published/RS-DOC-01.md:30,43,55,62,79-82; plans/lark-suite-reference/work-packages.json:124-129", "requiredProof": "Common Discussion/Message backend and its own ACL; stable child comment anchors and retained orphan state. Existing inline Markdown comments are not proof of this foundation and must not become a second DocumentComments engine.", "state": "READINESS_NOT_VERIFIED"},
+    {"gate": "EG-IDENTITY and EG-EFFECTS", "classification": "Behavioral foundations required by full DoD, not new explicit dependency edges", "source": "plans/lark-suite-reference/work-packages.json:76-89,11416-11439,11490-11493; docs/rox-suite/published/RS-DOC-01.md:37,74", "requiredProof": "Authenticated transport actor/current grants, server-authorized child reads/exports, atomic native command/receipt/outbox and replay recovery. A renderer transaction or onUpdate callback alone cannot satisfy these requirements.", "state": "READINESS_NOT_VERIFIED"},
+    {"gate": "Delivery manifest, wave0 integration and exclusive shared-path leases", "classification": "Launch gates, separate from domain DAG", "source": "plans/lark-suite-reference/execution-packages.json:2677-2722; user dispatch requires lead wave0 commit first", "requiredProof": "Resolve reference revision/digest and spec-ref hashes, receive lead wave0 commit and accepted dependency artifact/readback receipts, reconcile normative e953786 baseline with dispatch a21aeab1 and approved prerequisite commits, then acquire leases for all three shared paths. This worker must not checkout or integrate anything.", "state": "UNRESOLVED for implementation"}
+  ],
+  "ownedNewFiles": [
+    {"path": "packages/ui/src/components/markdown/DocumentContainers.tsx", "purpose": "Proposed non-atomic Tiptap semantic container/tab/column node definitions with real child content and React node views; validated single-transaction structural intents, roving focus and accessible controls. Reuse the existing editor and accepted binding; do not persist a second body or implement an authorization service in UI.", "observedPresence": "Not found by exact-path glob; not created"},
+    {"path": "packages/core/src/docs/container-codec.ts", "purpose": "Proposed shared versioned codec: typed containers with stable IDs/labels/child references and bounded widths, raw-span retention, validation budgets, semantic traversal with source locations, rich serialization and all-children basic expansion plus compatibility/losses report. Consume accepted identity/format contracts; no second writable tree store.", "observedPresence": "Not found by exact-path glob; not created"},
+    {"path": "tests/lark-suite-extension/lsx-wp-031.test.ts", "purpose": "Normative behavioral/property, native receipt/recovery, ACL/concurrency and seeded opaque-fence mutation assertions on exact input bytes; not created or run during preflight.", "observedPresence": "Not found by exact-path glob"},
+    {"path": "tests/lark-suite-extension/ui/lsx-wp-031.spec.ts", "purpose": "Normative actual Electron UI scenarios covering container manipulation, child persistence, accessibility, IME, themes, zoom, fonts and reduced motion using the supported runner discovered after dependencies are accepted.", "observedPresence": "Not found by exact-path glob"}
+  ],
+  "sharedPatchRequests": [
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "TiptapMarkdownEditor", "change": "Register DocumentContainers extensions in the common extensions array at lines 253-299 for both engines. Parse supported containers into non-atomic child nodes and serialize from that same tree. Wire structural intents through the accepted LSX-WP-026 binding/aggregate contract; preserve onEditorReady, controlled-echo selection handling and emitUpdate:false external updates at lines 384-443. Keep personal tab selection out of onUpdate and shared content. Do not report local Tiptap dispatch as durable save.", "reason": "Current registration has tasks/rich blocks/wiki links but no tabs/columns. Both legacy and official paths and all three input/output paths must retain child identity; no parallel editor."},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "preprocessMarkdownForOfficial / postprocessMarkdownFromOfficial", "change": "Make normalization span-aware using the accepted retained-source codec: apply existing math/currency policy only to editable supported text spans, never opaque future container bytes or code/raw metadata. Use the same codec in initial content, external setContent and serialization; preserve unsupported container payload exactly and expose readable read-only fallback instead of rewriting it.", "reason": "Lines 75-103 currently replace math/currency across the whole string. Unknown-version retention cannot be established by a global replacement or by flattening to a code node."},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "serializeColumns", "change": "Delegate supported container serialization to the shared codec while retaining the current callers' string API at the integration seam. Validate 2-4 columns instead of silently clamping to 3; retain child IDs, raw content and width metadata; invalid count must yield an explicit validation diagnostic before mutation, not truncate input. Import legacy :::columns blocks through the accepted marker mapping policy without inventing offset-derived IDs.", "reason": "Lines 228-232 truncate four cells to three and trim cell text; NoteColumnLayout at line 40 has only columns/cells, no stable identity or widths."},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "extractBlockIds / parseNoteDocument", "change": "Use the shared semantic traversal for nested tab/column children and accepted LSX-WP-006 identity mapping. Feed tasks, anchors, comments, links and embeds from supported children exactly once with retained source positions; do not scan encoded metadata or opaque future payload as executable/document children. Delegate existing extractColumns/locateColumnBlocks to the same boundary parser as a reviewed supporting patch rather than maintaining a second nesting parser.", "reason": "Lines 182-207 and 655-699 currently use raw line/regex scans; extractColumns and locateColumnBlocks terminate on ::: and trim cells, so they do not establish typed nested container identity. Supporting helper/type changes require lead approval if considered outside the packet's named symbols."},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "roundTripNoteMarkdown", "change": "Preserve codec-owned opaque regions and untouched raw spans; apply comment updates only to their accepted identity-associated regions. No-op roundtrip must not move nested comments to document tail or normalize unknown-version payload/trailing bytes; return diagnostics for malformed/unsupported data without empty overwrite.", "reason": "Lines 702-708 call upsertMarkdownComment, whose lines 218-225 remove all comments then append them, and normalize trailing whitespace. That can detach container child anchors or violate retained bytes."},
+    {"path": "packages/server-core/src/knowledge/vault-markdown.ts", "symbol": "parseVaultMarkdown / ParsedVaultNote", "change": "Project supported semantic children through the shared codec into the existing tasks/blocks/links/assetRefs result, retaining original-source line mappings and stable block IDs. Derive body/search projection from semantic children at the committed source revision rather than the selected tab or serialized metadata. Extend ParsedVaultNote only with the reviewed mapping/diagnostic fields required by accepted index consumers; retain source authority and do not create another index/store.", "reason": "Lines 115-225 scan raw content; JSON/fence payloads are not decoded into semantic child tasks, and syntactically task-looking code can be scanned as prose. Existing ParsedTask has line/checked/text but no child identity. Exact downstream schema compatibility must be settled by the integration owner."},
+    {"path": "packages/server-core/src/knowledge/vault-markdown.ts", "symbol": "noteIdFromRelativePath", "change": "Preserve existing slash/extension normalization unchanged; scope child container/block identity under the existing document ref and accepted authority epoch, never generate another note identity from tab title, position or column number.", "reason": "Lines 77-79 already provide the native note ID seam; container support must not rename the document or create one note per tab."}
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "typed semantic containers, not hidden-code-only content",
+      "currentEvidence": "TiptapMarkdownEditor extensions at 253-335 contain no semantic tab/column nodes. NoteColumnLayout at document-ia.ts:40 is string cells; MermaidBlock:8-42 is an atom/code pattern, unsuitable for semantic editable child content. parseVaultMarkdown:167-187 only scans raw task/block syntax.",
+      "requiredChange": "DocumentContainers.tsx must use real child node content, not atom:true with body in attrs. container-codec.ts must traverse all supported children for editor/index/export using LSX-WP-006 IDs, preserving TaskRefs and comment anchors. Presentation metadata remains separate from content authority.",
+      "verification": "After implementation run bun test tests/lark-suite-extension/lsx-wp-031.test.ts; construct nested tabs/columns with distinguishable tasks, links and comments in every child, mutate/reorder, save/reopen and compare stable IDs, task identities/search results and comment anchors on actual native readback.",
+      "missingPrerequisite": "Accepted LSX-WP-006/026 interfaces and native search/readback owner; no implementation or runtime proof yet.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "bounded depth/width and unknown-version retention",
+      "currentEvidence": "document-ia.ts:228-265 clamps column count to 2-3 during serialization but accepts arbitrary numeric header during extraction; nesting parser is delimiter-based. Editor preprocess/postprocess at 75-103 globally rewrites text. No numeric depth/height/width budgets are specified in the inspected normative package.",
+      "requiredChange": "Validate exactly 2-4 supported column children, bounded finite widths and total layout, depth/height/size budget before a transaction. Reuse accepted shared budgets or obtain lead-approved explicit values; reject rather than silently clip. Retain future-version raw bytes and unknown fields with readable read-only fallback and compatibility diagnostic; do not run transforms inside retained payload.",
+      "verification": "Boundary/property cases for 1/2/4/5 columns, NaN/infinite/negative/out-of-budget widths and depth, malformed closures and nested delimiter-like code; byte/hash equality for unknown-version payload across open/no-op save/restart/basic export original-retention path.",
+      "missingPrerequisite": "Accepted retained-span/format and identity contracts plus agreed concrete budget values; implementation must not manufacture normative limits.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Typed request/result/error schemas compile at server and renderer boundaries; actor comes from authenticated transport.",
+      "currentEvidence": "TiptapMarkdownEditorProps:202-223 exposes content/onUpdate/editable/onEditorReady only. No authenticated transport or insertContainer/patchContainer handler is present in the inspected three seams. Normative work-packages.json:11409-11426 names the two operations and eight discriminants.",
+      "requiredChange": "Define serializable validated container command payload/result/error schemas in shared codec and consume in DocumentContainers/accepted binding. Use workspace/documentRef/expectedRevision/authorityEpoch/idempotencyKey envelope and transport actor. Preserve validation/conflict/denied/deleted/offlineUnsupported/missingDependency/rateLimited/unknownFormat discriminants. Lead must provide native handler wiring in accepted foundation or update reviewed packet; cannot satisfy server boundary through renderer-only checks.",
+      "verification": "Compile actual server/renderer consumers after integration; submit malformed IDs/width/depth, stale epoch, forged payload actor/workspace and each error class through native API. Assert deny reveals no protected child content.",
+      "missingPrerequisite": "Server command/schema/authenticated actor seam supplied by accepted LSX-WP-026/foundation; server handler path is outside authorized package source scope and was not inspected.",
+      "state": "BLOCKED_ON_ACCEPTED_FOUNDATION"
+    },
+    {
+      "criterion": "Acknowledge only durable native receipt; perform authoritative readback at exact ref/revision/hash and after restart.",
+      "currentEvidence": "TiptapMarkdownEditor:384-390 emits Markdown immediately via onUpdate; vault-markdown:115-225 is a parser, not durable storage. LSX-WP-026 normative outputs at work-packages.json:9667-9670 promise committed receipt and durable draft but no accepted receipt was inspected.",
+      "requiredChange": "Route validated single-undo container transaction through the accepted editor binding and journal, keep pending draft until native ACK, then read committed source revision/hash. Replay/recovery must use same command identity, not a new container ID or a second store.",
+      "verification": "Exercise save, crash before ACK, restart after ACK and reload exact ref/revision/hash; inspect recovered draft versus committed native snapshot and event receipt; ACK-before-persist must be rejected as proof.",
+      "missingPrerequisite": "Lead wave0 commit, accepted LSX-WP-026 journal/durable command receipts and restart-capable native fixture.",
+      "state": "BLOCKED_ON_ACCEPTED_FOUNDATION"
+    },
+    {
+      "criterion": "Run happy path plus specified denied/conflict/replay/recovery cases; preserve all attempts and reproduction seeds.",
+      "currentEvidence": "work-packages.json:11446-11460 requires aggregate CAS, remote edit survival and child-text versus parent-delete conflict. Current editor controlled-echo and external updates at 411-443 preserve selection but establish no server conflict/replay policy.",
+      "requiredChange": "Insert/patch/rename/reorder/delete use expectedRevision and epoch, current ACL and idempotency key under the existing authority. Reorder must retain concurrent child edit or return explicit conflict; deleting parent racing child edit must never silently discard acknowledged text or resurrect branch. Preserve both drafts on conflict and reauthorize queued intents on reconnect.",
+      "verification": "Two actors: concurrent child text versus parent reorder, child edit versus container delete, stale revision/epoch, duplicate idempotency key, revoked actor and reconnect/restart. Assert exact child content/IDs and receipt/event dedup; record every attempt, seed and input hash, not only final green run.",
+      "missingPrerequisite": "EG-COLLABORATION/IDENTITY/EFFECTS acceptance and native authority seam with two actors.",
+      "state": "BLOCKED_ON_ACCEPTED_FOUNDATION"
+    },
+    {
+      "criterion": "Prove seeded negative control fails its named semantic assertion; infrastructure timeout is not mutation sensitivity.",
+      "currentEvidence": "work-packages.json:11473-11481 names opaque-fence serialization mutant and three must-fail assertions; current raw regex parsing is not proof of sensitivity.",
+      "requiredChange": "Normative unit test must provide isolated synthetic owner/source with known nested task identities/search terms, all child content and comment IDs. Mutate serialization/projection to opaque fence that stops semantic traversal, retaining exact baseline fixture/hash/seed; distinguish infrastructure error from assertion failure.",
+      "verification": "Observe green unmutated baseline; observe mutant fail nested task count/search unchanged, all child content present in basic export, and comment anchor IDs preserved on exact evaluated bytes; retain mutation delta and assertion receipt.",
+      "missingPrerequisite": "Implemented codec/native projection, accepted dependencies and real baseline harness; forbidden to run in this preflight.",
+      "state": "NOT_RUN"
+    },
+    {
+      "criterion": "Actual changed UI pointer/keyboard/IME/focus/reduced-motion/200% zoom/theme/Russian+i18n/font evidence where UI exists.",
+      "currentEvidence": "Existing EditorContent/BubbleMenus remain at TiptapMarkdownEditor:445-449; no DocumentContainers.tsx found. Normative UI contract at work-packages.json:11441-11444 and docs design:97-102 requires roving tabs/dividers/mobile/personal selection.",
+      "requiredChange": "Build within existing editor: tablist/tab/tabpanel relationships, roving arrow focus, add/rename/reorder/delete with semantic undo and focus return; pointer and keyboard bounded divider resize; mobile vertical stacking; IME-safe shortcuts; selection remains actor-personal and tab opening executes no action. RU default/all ten locales, existing theme/Rox font, hover/focus/click help and reduced motion. Obtain lead-owned locale patches before introducing keys because locale files are outside current shared-path grant.",
+      "verification": "After integration discover/use supported actual Electron runner for tests/lark-suite-extension/ui/lsx-wp-031.spec.ts; exercise every control, IME composition, undo/focus restore, 200% zoom, narrow/touch, reduced motion and light/dark. Preserve native screenshots, ARIA/focus, loaded Cyrillic Rox Mono proof, locale and viewport tied to commit/hash. Verify changing selected tab does not emit a content save or execute embedded actions.",
+      "missingPrerequisite": "Accepted LSX-WP-026 editor binding, actual Electron runner and root-managed i18n path lease/expanded packet; no UI launched here.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Do not mark done from plan validation, isolated fixture UI, a toast, or provider queued receipt; satisfy required proof lanes separately.",
+      "currentEvidence": "Package work-packages.json:11464-11471 requires SOURCE_SCHEMA, UNIT_PROPERTY, NATIVE_DOMAIN_READBACK, RESTART_RECOVERY, ACL_NEGATIVE and ACTUAL_ELECTRON_UI. Published RS-DOC-01:76 distinguishes fixture, native, service and provider lanes.",
+      "requiredChange": "Lead acceptance must attach lane-specific evidence for integrated revision, input hashes, real native domain receipt/readback/restart and actual UI. FeatureComplete stays false until every DoD is satisfied. Provider evidence only when actually used, collaboration evidence for required concurrent scenario.",
+      "verification": "Validate each proof lane's artifact and revision binding independently; reject a plan-only or fixture-only completion and reject queued/provider receipts as durable native ACK.",
+      "missingPrerequisite": "Integrated implementation, all accepted foundations and exact artifact/readback receipts; preflight report is not feature proof.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Basic Markdown expands all tabs/columns with safe fallback and compatibility report.",
+      "currentEvidence": "docs/lark-suite-reference/06-rox-docs-design.md:97-102 requires expanded labeled tabs/sequential column sections; work-packages.json:11403-11406 names report. None of the inspected seams implements an approved export artifact pipeline.",
+      "requiredChange": "container-codec.ts must implement explicit rich/basic profiles: basic exports every tab in stable order with label and every column sequentially, child content/IDs and comment anchors retained, not selected-tab-only. Report layout/interactivity losses and unsupported versions honestly, preserving future raw representation; authorize child embeds/assets through existing export owner, never expose denied snapshot.",
+      "verification": "Export nested containers where inactive tabs contain unique task/anchor/text; compare all semantic content and IDs, declared losses, safe links and audience-scoped asset manifest at exact ref/revision/hash, then isolated import/readback where supported. Future version remains opaque/readable and reported unsupported, not claimed lossless editable basic data.",
+      "missingPrerequisite": "EG-FILES/RS-DRV-01 export owner and accepted format descriptor/profile contract; owner integration outside three seams must be reviewed by lead.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Child embeds/assets independently authorized; no action execution on tab open.",
+      "currentEvidence": "work-packages.json:11437-11439 states required server ACL. vault-markdown.ts:189-193 collects local asset refs without evaluating access; TiptapMarkdownEditor:269-282 configures image/files but is not authorization proof.",
+      "requiredChange": "Consume current authorized child projections and export policy from common owner for both active and inactive children; tab activation only changes presentation/focus. Denied child placeholder contains no private label/text/URL; do not invent permissions or executors in DocumentContainers.",
+      "verification": "Native negative scenarios: readable parent/private child asset, permission revoke with open tab, basic export of unauthorized embed and inert action block; assert no private bytes/URLs in renderer/API/export/log artifact and no action command from activation.",
+      "missingPrerequisite": "Current authenticated ACL, common asset/embed owner and revoke fence receipts.",
+      "state": "BLOCKED_ON_ACCEPTED_FOUNDATION"
+    },
+    {
+      "criterion": "Stable child IDs, tasks/comments and one content authority survive editor/index roundtrip.",
+      "currentEvidence": "extractBlockIds:182-192 recognizes trailing ^ IDs; extractComments:195-207 handles inline markup; roundTripNoteMarkdown:702-708 relocates comments through upsert. ParsedVaultNote:54-67 has existing projection arrays but no container tree; document ID remains noteIdFromRelativePath:77-79.",
+      "requiredChange": "Reuse LSX-WP-006 marker mapping and single Markdown authority for existing Notes, preserving child TaskRefs and comment anchors across nested structure moves and no-op saves. Unknown markup/frontmatter/outside edited regions stays byte-retained. Do not promote every checkbox to a native Task, invent second note-per-tab identity or writable parallel JSON master.",
+      "verification": "Reorder/rename/delete+undo/save/reopen from same document ref, compare editor semantic tree and committed indexing projection; duplicate child text must retain distinct IDs, comments remain attached or explicitly orphaned, original TaskRefs unchanged and no duplicate task created.",
+      "missingPrerequisite": "Accepted block map/format descriptor and EG-DISCUSSIONS anchor backend; marker repair policy for legacy ID-less columns.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "document.revisionCommitted event uses native envelope and durable dedup.",
+      "currentEvidence": "work-packages.json:11432-11435 calls event family PROPOSED_ALIASES_MUST_BE_VERIFIED and lists eventId/workspaceId/entityRef/entityRevision/actorRef/occurredAt/schemaVersion/correlationId/causationId/sourceCommandId; no event emitter is present in inspected source paths.",
+      "requiredChange": "Use accepted authority/outbox's actual verified event family/alias for committed container commands with full envelope and native revision; no event per personal selected-tab change or pre-ACK renderer dispatch.",
+      "verification": "Native command replay/restart produces one durable committed event with same sourceCommandId/correlation binding and authoritative revision; personal tab focus changes produce no content event.",
+      "missingPrerequisite": "EG-EFFECTS and accepted event alias/schema; integration owner must provide emitter seam under reviewed scope.",
+      "state": "BLOCKED_ON_ACCEPTED_FOUNDATION"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "preprocessMarkdownForOfficial / postprocessMarkdownFromOfficial", "lineStart": 63, "lineEnd": 104, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "packages/ui/src/components/markdown/TiptapMarkdownEditor.tsx", "symbol": "TiptapMarkdownEditorProps / TiptapMarkdownEditor", "lineStart": 202, "lineEnd": 451, "sha256": "5d299132fed85bc106e16601d16bbf2daa120cd8b21b4fdf17c590f0992a2747"},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "extractBlockIds / extractComments / upsertMarkdownComment / serializeColumns / extractColumns / locateColumnBlocks", "lineStart": 182, "lineEnd": 312, "sha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path": "apps/electron/src/renderer/pages/notes/document-ia.ts", "symbol": "parseNoteDocument / roundTripNoteMarkdown", "lineStart": 655, "lineEnd": 709, "sha256": "f8c62bfa87d6946643ece39869dd4569da0acaf13ec1a6262c7de6b8a5dcabaa"},
+    {"path": "packages/server-core/src/knowledge/vault-markdown.ts", "symbol": "ParsedVaultNote / noteIdFromRelativePath / parseVaultMarkdown", "lineStart": 54, "lineEnd": 226, "sha256": "6de9e4357c4607dd773b7418dc8cac7646e5686940074480da65951e69119765"},
+    {"path": "packages/ui/src/components/markdown/extensions/MarkdownComment.ts", "symbol": "findMarkdownCommentEnd / MarkdownComment", "lineStart": 38, "lineEnd": 135, "sha256": "6f7f62facde4811af64ab31910c088a117182ffeb8f1b158037341623dfecc30"},
+    {"path": "packages/ui/src/components/markdown/extensions/MermaidBlock.tsx", "symbol": "MermaidBlock", "lineStart": 8, "lineEnd": 78, "sha256": "33fe6c3ccc4f16155848e99589820a01f407e195c5e1005b55483073bfc6dedd"},
+    {"path": "plans/lark-suite-reference/work-packages.json", "symbol": "work_packages[30] LSX-WP-031 full normative record", "lineStart": 11237, "lineEnd": 11573, "sha256": "c1ca060939ee4410acc15f86a57cf11d194590880d36076d011bb62c19452952"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "LSX-WP-031 execution record", "lineStart": 2636, "lineEnd": 2724, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/rox-suite/published/RS-DOC-01.md", "symbol": "Domain/API/storage and published normative dependency links", "lineStart": 35, "lineEnd": 85, "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"},
+    {"path": "docs/lark-suite-reference/06-rox-docs-design.md", "symbol": "RD-02 Block inventory / command CAS / DoD", "lineStart": 80, "lineEnd": 231, "sha256": "a0d93d353b47bbf874ed4a3e1ac27cfc969f272ebdf4a9fb7bc737cfea4d1a68"},
+    {"path": "docs/lark-suite-reference/05-rox-bases-design.md", "symbol": "Import/export and frontmatter portability", "lineStart": 231, "lineEnd": 244, "sha256": "187b6d7d8f96ca2297317ed2998b0e91d78b78442164ed546f1c5d8554cb389c"}
+  ],
+  "evidenceFreshness": {
+    "basis": "Read current working-tree source, not a clean checkout of input_revision; input revision is dispatch identity and was not independently queried with Git.",
+    "specManifest": "Observed work-packages and execution-packages whole-file SHA256 match dispatch input manifest.",
+    "baselineDifference": "Current TiptapMarkdownEditor SHA256 5d299132... differs from normative product-baseline blob 8e919184...; document-ia and vault-markdown hashes match their recorded baseline blobs. Preserve current editor selection/editable changes; do not revert to historical snippets.",
+    "stalenessRule": "Hashes were obtained after source reads; no lock held and no atomic snapshot claimed. Root integration can change any source while this report is authored. If any whole-file hash differs at receipt/implementation time, evidence for that file is stale and the lead must re-read affected symbols before applying requests. This report makes no clean-tree or accepted-dependency claim."
+  },
+  "verificationPerformed": {
+    "sourceInspection": true,
+    "wholeFileHashes": "Observed via read-only shasum -a 256; manifest matches and at least three actual product files referenced.",
+    "codegraph": "Unavailable: no .codegraph index found by mounted tool; no indexing performed.",
+    "find": "Attempted scoped find on known editor path; search judge unavailable (402 insufficient credits). Recovered using direct reads of normative paths and exact-symbol evidence, not absence inference from failed search.",
+    "buildsTestsNativeUiNetwork": "NOT_RUN; explicitly forbidden by this preflight dispatch.",
+    "dispatchVerifier": "NOT_RUN; verification_argv retained in dispatch for lead acceptance. No test execution or product source mutation performed."
+  },
+  "nextExecutableAction": "Lead accepts this source-backed preflight report, commits wave0, resolves delivery manifest and reconciled base, then collects accepted LSX-WP-006 and LSX-WP-026 artifact/readback receipts including transitive foundations. Rehash/re-read changed seams and obtain leases. First implementation action is to define shared container-codec contracts against those accepted identity/format/CAS APIs; then non-atomic DocumentContainers nodes, reviewed shared patches and all six proof lanes. If server/export/i18n/helper wiring is not already supplied by foundations, lead must update the reviewed packet before any out-of-scope patch; no implementation starts on speculative adapters.",
+  "risks": [
+    "Normative LSX-WP-031 external_prerequisites is empty although linked published RS-DOC-01 normatively requires RS-DRV-01 and RS-MSG-02, and LSX-WP-026 requires EG-COLLABORATION. Publication is not readiness.",
+    "Current package's four new files and three shared paths do not authorize native RPC/storage/export/event/i18n changes. Full server/auth/receipt DoD needs accepted foundation wiring or a revised reviewed scope, not renderer-only schemas or mock receipts.",
+    "Directly imported MermaidBlock's atom/code-in-attrs pattern must not be copied for semantic container child bodies; that reproduces the named opaque-fence mutant.",
+    "serializeColumns silently drops a fourth cell; delimiter-based extract/locate parsing and trim operations are not lossless or depth-aware. Shared helper/type migration needs lead approval and caller compatibility.",
+    "Raw regex scanners can both miss encoded semantic children and falsely index task-like code/raw regions. Traversal must produce exactly one authorized projection with original-source locations, not regex scans over expanded export plus raw original.",
+    "roundTripNoteMarkdown relocates comments and normalizes trailing whitespace; global official math/currency preprocessing can alter unknown payloads. Preserve opaque bytes and child anchors with retained spans.",
+    "Two-engine support and legacy comment preservation differ: MarkdownComment is registered only on legacy path. Future containers/comments must survive both supported paths without introducing a second convention.",
+    "No concrete numeric width/depth/height budgets, accepted operation schema, event alias or UI runner result was observed. These are implementation prerequisites, not acceptance exemptions.",
+    "Selected tab is personal presentation, not shared content revision; storing it in the container payload would create needless CAS conflicts and content save/events.",
+    "Root-owned uncommitted wave0 and serial dependency integration may invalidate source hashes. This report is a preflight contribution, not feature implementation or completion evidence."
+  ]
+}

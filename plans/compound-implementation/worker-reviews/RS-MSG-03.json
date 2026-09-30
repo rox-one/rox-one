@@ -1,0 +1,455 @@
+{
+  "task_id": "RS-MSG-03-preflight",
+  "attempt_id": "60271f38312b91a9a6194c37437f8987",
+  "packet_hash": "1b9f34b9e98f63f0755b0ff04edaeb7e22b33a916ee2938ea842f3e104f70da7",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-MSG-03",
+  "featureComplete": false,
+  "state": "PREFLIGHT_ONLY_IMPLEMENTATION_NOT_STARTED",
+  "workTier": "bounded-workflow",
+  "scope": {
+    "mode": "inspect",
+    "ownedArtifact": "plans/compound-implementation/worker-reviews/RS-MSG-03.json",
+    "sourceChanges": false,
+    "testsBuildsNativeUiNetwork": "NOT_RUN_BY_INSTRUCTION",
+    "inspectionBoundary": "Published package specification and exact issue record; Dossier files, existing Dossier model tests, Rox2 identity contract, and directly imported source/storage/agent/task/UI/navigation ports. The provided preflight verifier was inspected separately solely to establish that its --verify branch reads and hashes artifacts.",
+    "delegation": "No nested delegation: this is one already-dispatched bounded package preflight, with no independent source ownership.",
+    "codegraph": "Unavailable: no .codegraph directory for this checkout. No indexing performed.",
+    "find": "Both initial scoped searches failed because the search judge returned HTTP 402. Those no-hit responses are not absence evidence; subsequent evidence is from concrete scoped grep/read calls.",
+    "revisionEvidence": "input_revision is the dispatch lineage, not a claim that current uncommitted source bytes equal that commit. Source references bind inspected working-tree bytes using whole-file SHA256. Lead wave0 work is explicitly preserved."
+  },
+  "dependencies": ["RS-MSG-01", "RS-MSG-02"],
+  "dependencyEvidence": {
+    "path": "plans/rox-suite/issues.json",
+    "lineStart": 571,
+    "lineEnd": 598,
+    "publishedSpecLines": [55, 57, 73, 75, 76],
+    "relatedIssuesNotDependencies": [381, 380],
+    "dispatchDependsOn": [],
+    "interpretation": "Empty preflight packet depends_on permits investigation only. Implementation still requires RS-MSG-01 and RS-MSG-02 accepted receipts and the lead's committed wave0 generation."
+  },
+  "foundationGates": [
+    {
+      "gate": "FG-CONTACT-CRM-SCHEMA",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-MSG-03.md:3,18,33,39: one provider-neutral Contact/Company identity; commands only after schemas; shared CRM contracts and no second Contacts DB.",
+      "currentEvidence": "DossierEntity at dossier-model.ts:19-30 has local id, text org, string aliases, notes/promises and timestamps, not a canonical ContactRef, CompanyRef or field provenance. Rox2EntityRef at platform-contract.ts:233-239 supplies a reusable workspace/entity/revision/account envelope, not CRM schemas or SQL persistence.",
+      "requiredReceipt": "Shared CRM owner must identify actual existing/new schema and repository files and export canonical Contact/Company refs, addresses, origin, hidden fields, field provenance and revisioned create/update/link/merge/undo operations. Preserve person/crm-company Rox2 kind bindings; do not invent a competing Contact store.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "FG-AUTH-PRINCIPAL-BINDING",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-MSG-03.md:3,26,33,50,68: Principal UUID/authsubject separate from Contact/email; verified binding is a distinct administrative capability; actor comes from authenticated transport.",
+      "currentEvidence": "DossierEntity has no principal binding. useMessengerBindings at use-rox-sources.ts:92-114 projects only sessionId/platform/channelName/enabled, and startAgentRun safe mode is not an identity or field ACL check.",
+      "requiredReceipt": "Auth/RS-MSG-02 owner supplies the verified binding lookup and revocation semantics, exact ensureDm signature and transport actor/capability checks. External contact import must not create auth subjects, memberships or grants.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "FG-SQL-TRANSACTION-ALIAS-OUTBOX",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-MSG-03.md:25,28,33,48-49,52: company relation receipt; reviewed merge/undo; SQL contacts/company-links/aliases/provenance history plus common outbox; audited Dossier batches and CAS.",
+      "currentEvidence": "DossierPage save/updateEntity at 111-120 blindly replace local JSON. storage.ts:35-65 emits a local browser storage event only. registerExternalBinding at platform-contract.ts:336-370 is an in-memory helper, not a durable transaction or merge ledger.",
+      "requiredReceipt": "Foundation owner identifies canonical SQL/migration/outbox paths and accepted transaction/CAS/idempotency/audit interfaces, including persisted workspace+provider+account+type+remoteId aliases, rollback/undo mapping and conflict/quarantine receipts. The package consumes these rather than adding a UI-owned SQL or localStorage database.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "FG-SOURCE-FIELD-ACL-REVOCATION",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-MSG-03.md:18,24-25,29,33,51-52,68: permitted fields only; no denied titles, bodies or counts; current source policy applies to search, context, agents and caches.",
+      "currentEvidence": "buildDossierSummary at dossier-model.ts:163-219 matches source names/text and computes totals without a policy receipt. DossierDetail searches notes by names and catches failures as [] at DossierPage.tsx:375-394. Brief prompt copies touch titles/counts and task titles at dossier-model.ts:281-304.",
+      "requiredReceipt": "Source/gateway owner exports field-filtered contact/history/search projections, typed permitted links, policy/source generation and revoke events. Search/activity/memory/agent caches and persisted brief projections need invalidation governed by current policy, not safe-mode prompt wording. Backend file allocation was not discoverable within the authorized inspection boundary.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "FG-ONE-ROUTE-HOST-CROSS-SURFACE-LINKS",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-MSG-03.md:18,38,44,48: route host allocated once with CRM/Messenger owner, old dossier routes retained, canonical Contact route with parser/builder/migration, sameRef in Company/mail/task.",
+      "currentEvidence": "DossierPage select at 168-169 uses a local dossier item id. routes.view.screen at routes.ts:288-289 delegates to buildExtraScreenRoute. extra-screens.ts:10-40 supports dossier/radar/decisions/agents/focus only. Promise-to-task at DossierPage.tsx:542-545 stores the contact name in task notes rather than a typed ContactRef.",
+      "requiredReceipt": "Lead/suite navigation owner allocates one canonical contact host and exact route parser/host files, migration map and shared ContactRef link port for Messenger, CRM, Company, mail and task owners. No extra parallel Contacts navigation surface; dossier remains the specified representation/alias.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "FG-EVENTS-SEARCH-ACTIVITY-MEMORY-AGENT",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-MSG-03.md:33,68: contactcreated/updated/merged and company link changes feed common search/activity/memory; agents read/search/create/update/link through gateway; enrichment is cited and reviewed; notify assignments/mentions/shares only.",
+      "currentEvidence": "Local saveWorkspaceJson emits rox.extra-screens.storage-changed, not a common domain outbox. startAgentRun at agent-run.ts:14-22 launches an ordinary safe session with a plain prompt; no contact gateway contract is visible in inspected ports.",
+      "requiredReceipt": "Lead identifies accepted common event/projection/attention and gateway registrations with source-policy enforcement and deduplication. Contact command receipts must drive these existing mechanisms without publishing profile reads as notifications.",
+      "state": "REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "gate": "FG-REVISION-BOUND-UI-LIVE-NATIVE-PROVIDER-PROOF",
+      "explicitDagEdge": false,
+      "specEvidence": "RS-MSG-03.md:66-70: localization, geometry, hover/focus/help/reduced-motion, actual font; exact commit/receipts and sensitive negative assertions; Linux fixture UI, live service, Electron native and provider read-back are separate gates.",
+      "currentEvidence": "DossierPage currently uses i18n and shared semantic UI primitives, but list width is 380 at 219, avatar is 40 at 455, and ScreenButton defaults to h-7 at ui.tsx:78. No runtime was authorized or performed.",
+      "requiredReceipt": "After integrated implementation, bind domain and UI proofs to the exact committed bytes and environment, with permitted/denied fixtures, CAS/revoke/reload scenarios, native/provider access and seeded identity/auth mutants. A preflight verifier or fixture screenshot cannot satisfy these gates.",
+      "state": "REQUIRED_NOT_RUN"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/contacts/ContactDirectory.tsx",
+    "apps/electron/src/renderer/components/contacts/ContactProfile.tsx",
+    "apps/electron/src/renderer/components/contacts/ContactMergeReview.tsx",
+    "tests/rox-suite/contact-identity.test.ts",
+    "tests/rox-suite/contact-profile.spec.ts"
+  ],
+  "ownedNewFilesEvidence": "Published RS-MSG-03.md:35-40. Renderer components/contacts is the renderer-relative resolution of the proposed component path; contact-profile.spec.ts is resolved beside the explicitly named tests/rox-suite/contact-identity.test.ts. These are proposed future package outputs, not written files or permission to start now. Lead must confirm allocation once; no backend/schema/store/support-file names are fabricated as normative new outputs.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "DossierEntity, DossierTouch, DossierSources, normalizeDossierData",
+      "change": "Extend the existing representation with imported canonical ContactRef/CompanyRef and typed permitted source-link ports from the accepted shared CRM contract. Keep legacy local id, notes, promises, briefSessionId, timestamps and display aliases for standalone/import use. Normalization must retain validated canonical refs and migration/audit mapping when present without deriving identity from name/org/email or silently discarding refs on save. Source links carry ref/revision/source policy/freshness rather than a title-only identity.",
+      "reason": "Spec 3,18,33,37,39,48 requires one CRM identity plus an audited, non-destructive Dossier adapter. Existing normalization at 143-154 drops unknown fields.",
+      "prerequisite": "Accepted shared CRM schemas and audited import mapping; exact type export module to be supplied by foundation owner."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "suggestContacts, entityTerms, buildDossierSummary, filterEntities, buildBriefPrompt",
+      "change": "For canonical contacts, build suggestions and interaction histories from reviewed scoped provider/account/type/remoteId aliases and explicit permitted ContactRef relations. Do not use name-lowercasing or matchesAnyTerm as canonical deduplication, automatic relationship creation or merge. Keep name/text matching solely as standalone/import discovery candidates. Produce totals and agent brief context only from the gateway's permitted projection and invalidate it on policy/source revoke; retain Dossier notes/promises and supported brief sources.",
+      "reason": "suggestContacts currently collapses names across accounts at 250-260; buildDossierSummary currently attributes sessions/tasks/feed by matching names at 163-203 and brief copies the resulting titles/counts. Spec 24,28-29,33,49,51,53 prohibits those identity/ACL shortcuts.",
+      "prerequisite": "Scoped aliases, typed relation query, field policy and source revoke receipts."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierPage.save/updateEntity/addEntity/select; DossierDetail; openTouch",
+      "change": "Bind canonical-mode cards to ContactDirectory/ContactProfile/ContactMergeReview and the single suite host; replace canonical local JSON mutations with authenticated crm.createContact/updateContact/linkCompany/mergeContacts commands using expected revision and observable receipts. Keep standalone Dossier JSON as an explicit import/standalone adapter, not the canonical Contacts store. Resolve legacy dossier item ids through the audited migration map. Reauthorize openTouch links through the shared gateway. Do not switch UI to an allocated canonical host until the route/parser contract exists.",
+      "reason": "Current 98-120,168-189 and 328-346 use local identity/storage and raw source ids; spec 18,33,37-39 demands shared identity, commands, alias migration and current ACL.",
+      "prerequisite": "Wave0 commit, dependency receipts, canonical CRM commands, route host and import mapping."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierDetail note-search effect, generateBrief, brief snapshot effect, promise-to-task action",
+      "change": "Replace canonical profile name-based note searches with permitted typed-linked context and keep error/denied/offline distinct from empty. Pass only current-policy fields into the existing brief runner; clear displayed/cached brief and notes when their source projection is revoked. Create promise tasks through the confirmed task bridge plus an accepted typed ContactRef relation command and awaited receipt, not t(taskNote,{name}) as identity. Preserve existing promise direction/done state and brief-session provenance during migration.",
+      "reason": "375-394 converts failures to empty and searches by name; 418-428 submits untyped context; 542-545 writes name-only task notes. Spec 24,29,37,44,48,51-52,68 requires policy-safe context, ref continuity and honest persistence.",
+      "prerequisite": "Gateway context/revoke contract and task relation schema; createPersonalTaskConfirmed exists but alone does not accept a ContactRef."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts",
+      "symbol": "MessengerBinding, useMessengerBindings",
+      "change": "Extend the existing binding projection to retain the backend-provided ContactRef and complete provider/account/remoteType/remoteId alias identity with source revision/policy status; pass these through instead of dropping them in the map at 108. Reflect binding/source changes through the existing owner's realtime mechanism once its accepted event contract is available. Do not infer account or remote id from platform, channelName or sessionId.",
+      "reason": "Current projected fields cannot distinguish same-name contacts across provider accounts or support revoked/changed bindings; spec 33,48-49 requires durable scoped aliases and shared refs.",
+      "prerequisite": "RS-MSG-01/02 and source owner must identify the actual backend binding shape and event/IPC API. No claim is made that the current backend already supplies these fields."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/personal-task-bridge.ts",
+      "symbol": "createPersonalTaskConfirmed",
+      "change": "Use this existing native-confirmed creation seam for contact-derived tasks. Once the task owner supplies its canonical relation port, accept/persist a typed contact relation through that shared port and retain/reuse the attempted task id on an unknown receipt. Do not introduce a bridge-local relation database or overload notes with serialized contact identity.",
+      "reason": "Confirmed persistence is already available at 26-37; current Dossier uses the synchronous name-note path. Spec 44,48,68 requires sameRef after reload and distinguishing saved/queued/committed.",
+      "prerequisite": "Task owner accepts relation schema/transaction order and observable receipts; do not claim task+relation atomicity unless provided."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.screen and suite-owned canonical Contact builder",
+      "change": "Add exactly one suite-owned canonical Contact route builder using the accepted ContactRef serialization; keep routes.view.screen('dossier',legacyId) usable as required. Coordinate the matching parser and host migration with the navigation owner, including URI-safe account/entity ids and reload/back selection. Do not add per-surface incompatible builders.",
+      "reason": "Current screen builder at 288-289 handles ExtraScreenId/local item id only. Spec 18,38 requires builder/parser/migration and retained dossier aliases.",
+      "prerequisite": "Lead allocates canonical route syntax and parser/host paths; those implementations were not inspected and are not guessed."
+    },
+    {
+      "path": "apps/electron/src/shared/extra-screens.ts",
+      "symbol": "buildExtraScreenRoute, parseExtraScreenSegments",
+      "change": "Preserve the existing dossier route encoding/decoding and feed its parsed legacy item id into the accepted audited ContactRef resolver at the canonical host. Do not add a competing contacts screen merely by appending EXTRA_SCREEN_IDS. Any route migration must preserve selection when an imported local card is mapped and retain unmigrated standalone cards.",
+      "reason": "Existing 20-40 already round-trips encoded dossier item ids; spec explicitly retains these aliases and allocates one CRM/Messenger host.",
+      "prerequisite": "Suite navigation owner and legacy-id mapping receipt. Existing parser mechanics should remain unchanged unless that owner demonstrates a required change."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef, Rox2ExternalBinding, entityRefFromBinding, registerExternalBinding",
+      "change": "Reuse these identity/binding symbols for accepted CRM Contact/person and Company/crm-company refs and scoped alias keys. If the shared CRM owner requires a typed binding port, extend the existing contract at this seam rather than creating a Contacts-only entity id formatter. Persist aliases in the canonical repository with workspace in its unique key; do not share the helper's four-slot Map globally across workspaces or mistake Map updates for CAS/SQL persistence. No auth principal meaning may be inferred from the person kind.",
+      "reason": "Existing encoded account-scoped keys and collision quarantine at 241-370 are reusable; spec 33,39 forbids a second identity store and demands distinct Principal and external Contact.",
+      "prerequisite": "Shared CRM contract owner decides exact type/export extensions and persistence allocation. This request does not add SQL or auth policy to platform-contract.ts."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/__tests__/dossier-model.test.ts",
+      "symbol": "messenger suggestions skip known entities and duplicates; brief prompt forbids sending and carries context; canonical/standalone aggregation fixtures",
+      "change": "Replace canonical identity coverage that collapses equal display names with account-scoped fixtures asserting distinct ContactRefs and exact explicit links. Keep standalone discovery behavior separately where required. Delete prompt-wording assertions as evidence of auth/ACL safety; use gateway negative behavior tests in the normative contact-identity suite. Preserve behavior coverage for promises, standalone data normalization and sorted permitted history without pinning changed incidental object shapes.",
+      "reason": "Existing 130-140 expects same-name suppression without account identity and 143-148 checks strings, neither catches the requested identity/auth failures. Spec 49-53 requires real identity and auth assertions.",
+      "prerequisite": "Canonical/standalone ports and behavior fixtures defined by accepted contracts. No tests run or changed in preflight."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ru.json",
+      "symbol": "t() keys consumed by ContactDirectory/ContactProfile/ContactMergeReview",
+      "change": "Register Russian contact search/profile/company/history/tasks/documents, no-ROX-profile reason, provenance/freshness/help, review/quarantine/CAS/revoke/error and receipt-state labels through t(). Lead must read the existing catalog before choosing the final namespace and apply matching ASCII-sorted keys to all ten existing locale files de/en/es/fr/hu/ja/pl/ru/zh-Hans/zh-Hant, including appropriate plural forms. No literal UI labels in new TSX.",
+      "reason": "Repo i18n contract requires all ten locales; spec 22-29,66 requires Russian labels and accessible explanations. Existing Dossier uses extraScreens.dossier.* keys.",
+      "prerequisite": "Localization owner read-before-edit of catalogs, which were outside this package source inspection boundary. Namespace/key inventory is an integration request, not a claim of an applied catalog patch."
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "Same Contact from Messenger/CRM/Company/mail/task retains ref after reload.",
+      "specLines": [48],
+      "seam": "DossierEntity/normalizeDossierData; DossierPage.select/addEntity; MessengerBinding; promise-to-task; Rox2EntityRef.",
+      "currentEvidence": "Local dos-* id at DossierPage 175-185; selected by local id at 168-169. DossierEntity has no ContactRef (model 19-30). Bindings discard account/ref (source hooks 92-114). Promise tasks store name notes (page 542-545). Shared workspace/entity/revision/account envelope exists (platform contract 233-239), but inspected code does not demonstrate cross-surface canonical persistence.",
+      "requiredChange": "Use one canonical CRM ContactRef in each surface and relation; persist audited Dossier-id-to-ContactRef mapping, preserve standalone/import data and notes/promises/brief source refs, and resolve legacy routes into the same host. All mail/Company/task owners must retain the ref rather than infer by display name.",
+      "verification": "Future tests/rox-suite/contact-identity.test.ts plus contact-profile.spec.ts: create/import one external contact, link company/mail/task/Messenger, assert equal workspaceId/entityId/accountNamespace and expected revision receipts in every API/surface, restart service and reload Electron, then open each entry and a legacy dossier URL. Assert typed refs and preserved notes/promises/brief source linkage, not just matching titles.",
+      "missingPrerequisite": "Wave0 commit; accepted RS-MSG-01/02 receipts; shared CRM repository/schemas and canonical host; Company/mail/task relation owner contracts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Same-name different-account contacts/companies remain distinct; merge undo preserves provenance/aliases.",
+      "specLines": [49],
+      "seam": "suggestContacts; DossierEntity aliases/org; registerExternalBinding; proposed ContactMergeReview and canonical crm.mergeContacts/undo transaction.",
+      "currentEvidence": "suggestContacts keys names to lowercase and suppresses matched known names (model 250-260); aliases are strings and org is a string (19-30). Rox2 binding formatter includes provider/account/type/remoteId and quarantines collisions (platform 291-370). No merge/undo/provenance ledger is visible in the inspected package paths; a formatter or in-memory Map does not establish durable merge behavior.",
+      "requiredChange": "Persist EntityAlias uniqueness in workspace+provider+account+type+remoteId namespace for contacts and companies. Treat domain/email matches as confidence/source candidates, never identity. Explicit merge review must preview alias/relationship/source revisions and undo impact, require confirmation, quarantine ambiguous accounts, and write audited before/after mappings and reversible provenance-preserving alias/relationship changes in the shared transaction.",
+      "verification": "Create equal-name contacts and companies in two accounts; reimport each tuple and assert stable separate refs. Submit stale/ambiguous merge and assert conflict/quarantine without writes. Confirm a valid reviewed merge, restart, undo using its audit receipt, and compare restored exact aliases, source-field provenance and relationship endpoints. Include concurrent merge/update conflict and failure rollback.",
+      "missingPrerequisite": "Canonical alias/provenance/merge/undo schemas, transaction/outbox and reviewed company-link contracts; no normative backend path is allocated in this package record.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "External Contact cannot login or join DM without verified Principal binding.",
+      "specLines": [50],
+      "seam": "DossierEntity/addEntity; proposed ContactProfile message action; accepted auth binding lookup and RS-MSG-02 ensureDm port.",
+      "currentEvidence": "Current cards are business entities with local fields (model 19-30); addEntity creates no auth record (page 171-189). This is not proof that future shared CRM/auth/DM paths reject external contacts. No verified binding or ensureDm call is present in inspected Dossier/import ports.",
+      "requiredChange": "Keep ContactRef, emailaddress and Principal UUID/authsubject structurally distinct. Contact import must never mint login credentials/membership/grants. Server verifies the authenticated actor's binding-admin capability and binding status; ContactProfile disables Write with localized 'Нет ROX-профиля' until verified and invokes the same ensureDm with verified Principal, not Contact id/name/email. Revoked bindings must fail server-side even if UI is stale.",
+      "verification": "Import external mail contact; assert no auth subject/membership/grant side effects. Try login and direct forged DM API with ContactRef/email and assert authorization denial/no DM creation. Verify authorized binding, invoke same ensureDm twice and assert one permitted DM; revoke binding and assert old UI/API cannot create/join DM. Unauthorized actor cannot verify a binding.",
+      "missingPrerequisite": "RS-MSG-02 verified Principal/ensureDm contracts and auth owner's login, membership and capability assertion surface, with actor derived from transport.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Denied mail subject/body/count not exposed in profile/search/agent.",
+      "specLines": [51],
+      "seam": "buildDossierSummary, DossierDetail note search, buildBriefPrompt, startAgentRun, proposed ContactProfile/history and ContactDirectory queries.",
+      "currentEvidence": "Model 163-219 attributes and counts sessions/tasks/feed by text without a policy token; brief prompt 281-304 includes touch titles/counts/notes and task titles. DossierDetail 375-394 runs name/alias note search and merges title results. agent-run 14-22 sets safe mode but does not field-filter context. A mail source path was not inspected; absence of current mail UI is not permission to mark this requirement N/A.",
+      "requiredChange": "Gateway must filter source refs and individual contact fields before history, sorting, totals, search results/snippets, context assembly and agent tools. Denied source must reveal no title/subject/body/snippet/count or hidden total; private email/phone omitted by field policy. Reauthorize each source open and enrichment citation. Separate denied/error/empty and prevent generated brief text from bypassing revoke policy.",
+      "verification": "Seed uniquely identifiable denied mail subject/body/address plus permitted mail for same contact. As denied actor, assert absence in API responses, list/profile/history, totals/ranking/search snippets and the actual agent context/tool response/output; invoke direct source ref and observe denial with no title. Repeat after granting then revoking source access and after reload, with a permitted-source control proving the assertion path executes.",
+      "missingPrerequisite": "Accepted field/source policy gateway, mail/provider ACL fixtures, search/agent registrations and policy-bound projection/brief cache lifecycle.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Concurrent field update CAS; source revoke purges cached projections.",
+      "specLines": [52],
+      "seam": "DossierPage.updateEntity/save, storage.saveWorkspaceJson/subscribeWorkspaceJson, DossierDetail note/brief state, Rox2EntityRef.revisionId, canonical crm.updateContact.",
+      "currentEvidence": "Page 116-120 rewrites captured entity arrays with Date.now, not expected revision. storage 35-65 has setItem/browser events without CAS. Notes effect cancellation depends on workspace/name (page 375-394); brief snapshots are polled by briefSessionId (401-416). Optional revisionId (platform 233-239) alone does not enforce concurrency or revoke caches.",
+      "requiredChange": "Canonical server update compares expected revision inside transaction, returns conflict/current permitted projection and applies only authorized fields. Publish committed updates/revokes through common events, invalidate contact/history/search/activity/memory/agent and displayed/cached notes/brief projections by source/policy generation, and discard late responses from a revoked generation. Local standalone saves must not be labeled canonical commits. Describe disconnected-device purge limits honestly.",
+      "verification": "Two clients update same base revision concurrently: exactly one commits, one conflicts and cannot overwrite; reload observes winning fields/receipt. Prime profile/search/agent/brief caches, revoke source, delay an in-flight response and assert it cannot repopulate private fields/titles/counts; reload/reconnect and verify permitted recomputation. Assert shared source revoke does not remove unrelated permitted data. Record disconnected device behavior separately, not claimed physical erasure.",
+      "missingPrerequisite": "Shared CAS transaction and revision contract, realtime revoke event/policy generation, cache owner inventory and connected-client invalidation receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Seed name-only merge/contact-as-principal caught by identity/auth assertions.",
+      "specLines": [53, 70],
+      "seam": "Normative contact-identity.test.ts; existing dossier-model.test.ts suggestion/prompt coverage; accepted alias merge and verified binding/ensureDm seams.",
+      "currentEvidence": "Existing model fixture uses names/string aliases (test 16-45); suggestion test expects name-based deduplication (130-140), and brief safety is asserted as prompt wording (143-148). No seeded identity/auth mutation proof was run. Current code was not executed by instruction.",
+      "requiredChange": "Add behavioral assertions at canonical import/merge/DM/login gateways and explicitly seed two negative controls: name-only merge across distinct accounts and treating external Contact as Principal. Compare exact refs/aliases and auth side effects. Replace obsolete wording-only safety coverage rather than repinning it as authorization evidence.",
+      "verification": "First run unmutated accepted implementation; then each seeded fault separately must fail the intended identity or auth assertion (not crash, timeout, missing fixture or infrastructure error). Retain seed, assertion message, input commit/hash and logs. Restore exact tested bytes and rerun baseline. UI disabled-button checks alone are insufficient.",
+      "missingPrerequisite": "Implemented canonical merge/import and auth/DM gateways, accepted dependency receipts, runnable deterministic failure injection fixtures and root verification authorization.",
+      "state": "NOT_IMPLEMENTED_NOT_RUN"
+    },
+    {
+      "criterion": "One Contacts directory/profile representation; specified layout, tabs, source badges and narrow Back selection.",
+      "specLines": [18, 37, 38, 39],
+      "seam": "DossierPage/DossierDetail, imported ScreenRoot/ScreenColumn/ScreenDetail, proposed ContactDirectory/ContactProfile and suite-owned route host.",
+      "currentEvidence": "Dossier currently has a 380px list at 219, title/count at 220-223 and local rows at 254-269; detail avatar is 40px at 455, notes/promises/brief are separate Dossier sections. Shared ScreenColumn defaults to 360 (ui 19-27), but no five Contact tabs or canonical host is established in inspected files.",
+      "requiredChange": "Render one reusable contact surface in CRM/Messenger/Dossier representation: list 300-360px, profile flexible min420, header56/avatar48/actions32, tabs36 Overview/Company/History/Tasks/Documents, row56 with company/role/source badge, field policy filtering and narrow Back preserving selection. Preserve notes/promises/brief source representation and semantic theme/font rather than replacing it with a second store/surface.",
+      "verification": "Future contact-profile.spec.ts plus actual integrated fixture and Electron UI: open sameRef from both contexts, measure computed bounds at wide/narrow viewport, exercise each tab and Back/reload, assert selected ref, provenance and permitted fields; capture exact locale/font/viewport/screenshot evidence. Geometry is proposed acceptance, not a screenshot claim.",
+      "missingPrerequisite": "Single navigation host, accepted Contact/Company/read policy contracts, ten-locale labels and UI fixture/native runtime allocation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Search accepts query/company/tag/scope/cursor, exposes permitted results and truthful error states; keyboard and provenance/freshness help.",
+      "specLines": [24],
+      "seam": "filterEntities, DossierPage query/kindFilter/keyboard effect, proposed ContactDirectory.",
+      "currentEvidence": "Current filterEntities (model 236-242) filters a local array by name/org/aliases and kind; page 191-213 supports J/K and slash, not canonical query/company/tag/scope/cursor or policy-safe totals. Empty/no-results appears at 271-273; note/source ports often collapse failures into empty.",
+      "requiredChange": "Query the accepted common Contacts search port with all specified parameters and policy-filtered cursor/results; retain slash focus and add arrows/Enter navigation. Show error/denied/offline distinctly from genuine empty, omit hidden totals, and explain identity/provenance/asOf via accessible hover/focus/click help. Never mutate on hover.",
+      "verification": "Exercise each filter and pagination boundary with allowed/denied same-name contacts, request errors and an empty control; assert no hidden totals or field leaks, correct stable selection across cursors, slash/arrows/Enter behavior and hover/focus/click help without command/event side effects.",
+      "missingPrerequisite": "Common permitted search contract/index, stable cursor and policy/freshness receipts.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Company linking uses review, current revision and relation receipts; merge review explains provenance/undo and quarantines ambiguous accounts.",
+      "specLines": [25, 27, 28, 33],
+      "seam": "DossierEntity.org and DossierDetail org input; proposed ContactProfile company tab and ContactMergeReview; accepted crm.linkCompany/mergeContacts.",
+      "currentEvidence": "org is optional text (model 23), edited onBlur (page 466-471). There is no typed CompanyRef/relation receipt or merge review in inspected Dossier files. Scoped external binding contract already provides account/type identity, not grants or domain/email-confidence decisions.",
+      "requiredChange": "Replace canonical org-text linking with CompanyRef relation proposal including domain/email candidate confidence, citation/source and current revisions; require explicit preview/confirm and no grant implication. Merge review lists source/alias/account/relation revisions and impact/undo before server commit; ambiguous accounts return quarantine without silent merge. Field origin/freshness remains visible where permitted.",
+      "verification": "Select between same-name companies in different accounts; cancel preview and observe no relation mutation; confirm current revision and assert exact relation receipt/ref. Try stale relation and ambiguous merge, observe conflict/quarantine. Undo accepted merge and compare provenance/aliases, and assert company link creates no ACL grant.",
+      "missingPrerequisite": "Shared CompanyRef and relation/provenance/merge schema, authenticated commands and receipt format.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Interaction history and agent context use linked permitted email/chat/task/call/doc refs with current ACL/freshness; enrichment retains citations and review.",
+      "specLines": [29, 33, 44, 68],
+      "seam": "DossierTouch/buildDossierSummary, openTouch, DossierDetail notes/brief, existing startAgentRun.",
+      "currentEvidence": "TouchKind covers session/messenger/meeting/task/note/feed (model 80), not a complete typed mail/chat/task/call/doc relation set. openTouch navigates directly by raw ids (page 328-346); safe brief session copies summaries and notes (page 423-427, model 281-304). Current note search uses full-text names, not exact ContactRef relations.",
+      "requiredChange": "Extend existing typed-link ports to consume gateway-authorized source relations, policy/freshness and missing/denied/error receipts; use the same constraints for profile/history and agent gateway read/search/create/update/link. Open each source through current-policy gateway resolution. Retain enrichment proposals/citations for explicit review, not automatic name/domain merges or sends.",
+      "verification": "Exercise each source tile and direct gateway read with allowed, denied, removed and stale sources; denied refs reveal no title. Compare UI permitted refs to actual agent tool/context refs for the same actor/policy. Review/cancel an enrichment proposal and assert no update; confirm and inspect cited provenance and command receipt.",
+      "missingPrerequisite": "Source relation/gateway contracts for all specified source kinds, agent tool registrations, enrichment citation/review schemas and policy invalidation.",
+      "state": "NOT_IMPLEMENTED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "SQL persistence, authenticated commands, common events/search/activity/memory and explicit-only notifications, with honest receipt states.",
+      "specLines": [33, 68],
+      "seam": "DossierPage save/update/add; local storage event; Rox2 refs; shared CRM repository/outbox/gateway allocations requested from lead.",
+      "currentEvidence": "storage.ts persists localStorage and emits a DOM event (35-44); page synchronously updates local state (111-120). No canonical SQL transaction, actor transport, contact domain outbox, search/activity/memory subscription or Contacts agent command registration is demonstrated in the inspected import graph. This is a scoped evidence gap, not a repository-wide absence claim.",
+      "requiredChange": "Implement canonical contacts/company links/aliases/provenance history in the shared repository and transact outbox with create/update/link/merge. Actor comes solely from authenticated transport. Connect contact/link events to existing search/activity/memory and mentions/assignment/share attention mechanisms; do not notify profile reads. UI distinguishes local saved, queued, committed and provider-confirmed receipts and exposes command failure/retry/conflict state without false completion.",
+      "verification": "After implementation, command as authenticated actor and inspect SQL revision/audit/outbox receipt; restart and read back. Deny forged actor and unauthorized field mutation. Consume events once through existing projections, verify expected permitted ref updates and notification only for explicit assignment/mention/share; repeated profile reads and hover emit no mutations/notifications. Exercise queued/provider failure and truthful receipt labels.",
+      "missingPrerequisite": "Lead-allocated shared schema/repository/authenticated transport/outbox/search/activity/memory/agent/attention files and accepted APIs. Creating new backend normative filenames is not authorized by this record.",
+      "state": "FOUNDATION_REQUIRED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "RU i18n, semantic font/theme/accent, light fixture/dark regression, hitboxes, focus/escape/reduced-motion/contrast and accessible explanatory help.",
+      "specLines": [66],
+      "seam": "ContactDirectory/ContactProfile/ContactMergeReview; DossierPage useTranslation; imported ScreenButton/ListRow/TextField and theme classes.",
+      "currentEvidence": "Dossier uses t() (page 95,221,245 etc.) and existing semantic colors; shared primitives have focus-visible styling (ui 78,120,222). ScreenButton h-7 is 28px (78), below desktop minimum32 unless locally overridden. title tooltip alone does not prove hover/focus/click help. No actual font, contrast, motion or native/fixture appearance was observed.",
+      "requiredChange": "Use existing semantic components and t() across all ten locales; set package controls to at least32 desktop/44 touch without globally restyling unrelated screens. Provide visible keyboard focus, Escape return, reduced-motion transitions and accessible help on hover/focus/click explaining each metric's definition/source/freshness/example. Meet proposed contact geometry and retain existing semantic font/theme/accent with actual computed font evidence; hover never sends/shares/marks read.",
+      "verification": "Integrated light fixture and dark regression at declared viewports/locales: measure hitboxes and computed loaded font, contrast, tabs/row/header; keyboard through controls, Escape back to opener, touch help, reduced-motion setting. Capture ARIA/screenshots and assert hover/focus creates no command/event/read mutation. Run i18n key parity as a future root check, not preflight execution.",
+      "missingPrerequisite": "Accepted route/UI integration, localization owner allocation and actual fixture/Electron runtime verification authorization.",
+      "state": "PARTIAL_EXISTING_PRIMITIVES_FULL_GATE_NOT_VERIFIED"
+    },
+    {
+      "criterion": "Revision-bound receipts, reload/concurrency/negative assertions and separately observed fixture/live/native/provider evidence; seeded failures are assertion failures.",
+      "specLines": [70],
+      "seam": "Normative tests/rox-suite/contact-identity.test.ts and contact-profile.spec.ts plus root-owned runtime acceptance receipts.",
+      "currentEvidence": "No product test, build, native UI, provider or network execution occurred by instruction. This report binds inspected file hashes and packet lineage only. The existing --verify branch checks report lineage/source digests and featureComplete=false, not behavior.",
+      "requiredChange": "Root acceptance must retain exact integrated commit/inputSha, domain ref/revision/hash receipts and reproducible positive/negative/reload/CAS/revoke flows, with viewport/locale/font/ARIA/screenshots and separate Linux fixture, live service, Electron native and applicable provider read-back gates. Keep seeded identity/auth assertion logs distinct from infra errors. Do not copy Macro/Lark literal code/assets or private screenshot identifiers/images.",
+      "verification": "Run each declared acceptance scenario on the integrated committed generation and bind its artifacts to the same hashes/environment; independently review receipt contents and negative-control assertion failures. A passing preflight verifier is not counted as any feature DoD or runtime gate.",
+      "missingPrerequisite": "All foundation/dependency integrations and root-owned committed runtime environment/provider fixture access. Future proof remains NOT_RUN until actually observed.",
+      "state": "NOT_RUN_PREFLIGHT_ONLY"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": "docs/rox-suite/published/RS-MSG-03.md",
+      "symbol": "RS-MSG-03 domain/controls/precise files/Definition of Done/quality gates",
+      "lineStart": 1,
+      "lineEnd": 80,
+      "sha256": "9a7279b72be841f1d65d74a7e78166daae112fa1a927ce6fc96845bbeeae26a8"
+    },
+    {
+      "path": "plans/rox-suite/issues.json",
+      "symbol": "issues[id=RS-MSG-03]",
+      "lineStart": 570,
+      "lineEnd": 599,
+      "sha256": "5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierPage/save/updateEntity/addEntity/select",
+      "lineStart": 94,
+      "lineEnd": 189,
+      "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "openTouch; DossierDetail note-search, brief state and generateBrief",
+      "lineStart": 328,
+      "lineEnd": 434,
+      "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
+      "symbol": "DossierDetail promise-to-task action",
+      "lineStart": 534,
+      "lineEnd": 562,
+      "sha256": "fcc1db89139ac3a2eb207872ae7051e7cd31f1cd1c8f7c9cd75b52268edf77a9"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "DossierEntity/DossierSources/normalizeDossierData",
+      "lineStart": 19,
+      "lineEnd": 157,
+      "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts",
+      "symbol": "entityTerms/buildDossierSummary/filterEntities/suggestContacts/buildBriefPrompt",
+      "lineStart": 159,
+      "lineEnd": 305,
+      "sha256": "7cb89ba6653d9dc79c1f610484260d3f68cd472d8d90ba26840d4e277f91e5cd"
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef/Rox2ExternalBinding/formatRox2ExternalBindingKey/entityRefFromBinding/registerExternalBinding",
+      "lineStart": 218,
+      "lineEnd": 370,
+      "sha256": "3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/storage.ts",
+      "symbol": "workspaceStorageKey/loadWorkspaceJson/saveWorkspaceJson/subscribeWorkspaceJson/newLocalId",
+      "lineStart": 6,
+      "lineEnd": 71,
+      "sha256": "fa240f1c6737cfb526deb8a19817fc48e42e471b6664def2d2d5408bc25e51ba"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/use-rox-sources.ts",
+      "symbol": "useWorkspaceSessions/usePersonalTasks/useMeetings/MessengerBinding/useMessengerBindings/useFeedItems",
+      "lineStart": 14,
+      "lineEnd": 162,
+      "sha256": "7fd3d7a1a4b5356c5d63a76d35f75a89a4de675a1eb5404b102c72bcdb8fba34"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/agent-run.ts",
+      "symbol": "AgentRunRequest/startAgentRun/readAgentRun",
+      "lineStart": 7,
+      "lineEnd": 62,
+      "sha256": "74589220461ca04163fa273a3628ebd8170ef12d9d764f780c54fcab533929fc"
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/extra-screens/personal-task-bridge.ts",
+      "symbol": "createPersonalTask/createPersonalTaskConfirmed",
+      "lineStart": 18,
+      "lineEnd": 38,
+      "sha256": "6ddefec884971bd335a68d090ca2f2d1bfe3034e60431dd46aa53b3532aff121"
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.screen",
+      "lineStart": 288,
+      "lineEnd": 289,
+      "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"
+    },
+    {
+      "path": "apps/electron/src/shared/extra-screens.ts",
+      "symbol": "EXTRA_SCREEN_IDS/buildExtraScreenRoute/parseExtraScreenSegments",
+      "lineStart": 10,
+      "lineEnd": 41,
+      "sha256": "484851b890a36cc4decfd7f283d02d628058e1a6d45f323f20be93f981324551"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/ui.tsx",
+      "symbol": "ScreenRoot/ScreenColumn/ScreenDetail/ScreenButton/ListRow",
+      "lineStart": 10,
+      "lineEnd": 122,
+      "sha256": "346d305cddf2508e61f83f4a92f9a89f54396367d210cc83082ec622a6b8bfc9"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/__tests__/dossier-model.test.ts",
+      "symbol": "messenger suggestion deduplication and brief prompt string assertions",
+      "lineStart": 124,
+      "lineEnd": 149,
+      "sha256": "77cce553b3982ca4ff8e2bde3c4a1af150e2c678d81dcca1d9e4e024523536ac"
+    }
+  ],
+  "verificationPlan": {
+    "preflight": "Use only the dispatch-provided --verify branch to validate report lineage and all recorded source digests. This is artifact validation, not a product test/build/runtime operation; run with PYTHONDONTWRITEBYTECODE=1 to avoid incidental bytecode writes.",
+    "command": [
+      "python3",
+      "plans/compound-implementation/launch-worker-pool.py",
+      "--verify",
+      "plans/compound-implementation/worker-reviews/RS-MSG-03.json",
+      "${ROX_COMPOUND_PACKET_ROOT}/RS-MSG-03/packet.json"
+    ],
+    "observedArtifactValidation": {
+      "state": "PASSED",
+      "exitCode": 0,
+      "stdout": {"validPreflight": true, "featureComplete": false, "references": 16},
+      "scope": "Packet lineage, required report fields and all sixteen whole-file source references only; no feature behavior, tests, builds, native UI or network proof."
+    },
+    "productChecks": "NOT_RUN_BY_INSTRUCTION; every acceptanceMatrix verification is future root-owned acceptance, not observed behavior.",
+    "staleness": "Recorded source digests were measured after source reads. If --verify finds a mismatch, mark the relevant evidence stale and re-read/re-hash that changed source before issuing a compatible report. Preserve original packet/input_revision; implementation requires a fresh committed generation/accepted dependency receipts, not this historical preflight as a launch authorization."
+  },
+  "nextExecutableAction": "Lead validates this artifact against the dispatch packet and source hashes. Implementation remains gated: first commit wave0, accept RS-MSG-01 and RS-MSG-02 receipts, then resolve the shared CRM/schema/persistence/auth/policy/outbox/route-owner interfaces listed in foundationGates. Bind a fresh implementation packet to that committed generation and allocate the five normative new files once. Begin ContactDirectory/ContactProfile/ContactMergeReview against accepted contracts while lead integrates the source-backed shared patch requests; do not launch a local Contacts DB, fabricate Principal bindings or treat this preflight as feature implementation.",
+  "risks": [
+    "The explicit DAG names Messenger dependencies only; shared CRM schemas, SQL/CAS/outbox, auth capabilities, source-field ACL, revocation, agent/search/activity/memory/attention and Company/mail/task typed relations remain hidden foundation gates. Their actual backend file paths/API signatures were not available in the permitted import graph and must be allocated by the lead rather than guessed.",
+    "Name-based suggestContacts and source matching can collapse distinct accounts or attribute another person's same-name history. Keep them only as explicitly standalone/import discovery, not canonical merge/identity/security logic.",
+    "Dossier normalization reconstructs known fields, so adding canonical refs only in the UI would silently lose them on persistence. Migration must preserve notes/promises/brief sources and audit aliases without name-only identity.",
+    "Rox2 binding Map is not durable CAS and its key excludes workspace; reuse tuple encoding inside a workspace-scoped canonical alias repository, not as an unscoped global contact index. Existing collision quarantine must not be bypassed to support arbitrary merge rebinding.",
+    "A person entity kind or an email address is not a Principal. Disabled Write UI and safe-mode prompt wording cannot secure direct login/DM/agent API requests or revoke stale bindings.",
+    "Titles, touch counts, search snippets, task notes and retained generated briefs can disclose denied mail context even if the visible private address field is hidden. Policy must apply before aggregation/context construction and to cached projections; disconnected physical erasure cannot be promised.",
+    "The current task bridge can await native persistence but has no ContactRef input; switching to createPersonalTaskConfirmed alone would still fail the cross-surface identity DoD and does not prove atomic task+relation persistence.",
+    "The specified Dossier route compatibility is intentional; it is not authorization for a duplicate Contacts screen/store. The canonical parser/host is a lead-owned integration seam not inspected here.",
+    "Shared ScreenButton defaults to 28px height, smaller than the spec's minimum; contact components need local accepted hitbox sizing. Existing semantic colors/focus styling does not prove actual font, contrast, motion or native layout acceptance.",
+    "Root-owned uncommitted wave0 integrations may change inspected source during/after report delivery. Whole-file hashes are the compatibility boundary, not the nominal dispatch HEAD; a passing artifact verifier still proves no feature runtime behavior.",
+    "No test/build/native UI/network/provider operations were performed. All feature DoD gates remain unverified; the report is a code-level contribution and integration request only."
+  ],
+  "publicMetadataSanitization": {"basis": "Historical report, not newly executed proof. Repository paths are relative; ROX_COMPOUND_PACKET_ROOT denotes a privately supplied external packet directory, not a published repository artifact. Raw original retained privately by integration owner."}
+}

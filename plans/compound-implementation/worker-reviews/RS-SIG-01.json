@@ -1,0 +1,319 @@
+{
+  "task_id": "RS-SIG-01-preflight",
+  "attempt_id": "4172f56bbbe6aab0136b54237a626ddd",
+  "packet_hash": "1fffcc056a279147e07d6155052cf3f0ef37de3ab3a8529ead2abe784f24386d",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "RS-SIG-01",
+  "featureComplete": false,
+  "mode": "source-preflight-only",
+  "workTier": "bounded-workflow",
+  "dependencies": ["RS-ADM-01", "RS-MCP-01"],
+  "dependencyEvidence": "Published spec lines 11 and 144-145; issues.json lines 890-893. Dispatch depends_on=[] is not the normative implementation DAG. Neither dependency receipt nor wave0 completion is asserted by this report.",
+  "foundationGates": [
+    {
+      "ids": ["WP-02", "WP-03", "WP-05", "WP-06", "WP-07", "WP-09", "WP-15", "WP-35", "WP-39", "WP-40", "WP-51"],
+      "source": "docs/rox-suite/published/RS-SIG-01.md:13,98",
+      "kind": "published-architecture-prerequisites-not-explicit-DAG-edges",
+      "requiredReceipt": "Lead must supply current accepted Revision2 foundation interfaces/receipts for all eleven prerequisites before consuming them. Their individual titles, implementation status and WP-to-capability mapping were not inferred or surveyed outside this package scope.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "canonical-service-store-and-authority",
+      "source": "Published spec 50-79,98; platform-contract.ts 233-239,592-610; descriptor-resolver.ts 43-81,343-427",
+      "requiredReceipt": "Accepted authenticated actor gateway, canonical file/entity/grant store, revision/idempotency/CAS transactions and commit-bound outbox. Catalog permissions and authorizeRox2Action(actorId,permission) do not provide workspace/resource/version/expiry checks. Existing descriptor resolver is a source-authorized text/Page metadata seam, not immutable blob ACL storage.",
+      "observedGap": "glob reports apps/workspace-service/ and packages/shared/src/workspace-domain/ missing. No fileVersion or policyEpoch contract appears in inspected routes/types/platform/pages types.",
+      "state": "MISSING_IN_INSPECTED_TARGETS"
+    },
+    {
+      "kind": "real-preview-storage-and-revocable-delivery",
+      "source": "Published spec 13,54-58,75-79,110-113",
+      "requiredReceipt": "Dedicated real S3-compatible storage adapter and quarantine/scan/preview/OCR provider, policy-bound expiring delivery, current-policy fetch/download gate, workspace/policy-scoped dedup and revocation generation. No readFile remote fallback, fake public ACL or mock provider success.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "common-contextual-projections-and-reconnect",
+      "source": "Published spec 28,52,58,71,77-79,117-119",
+      "requiredReceipt": "Common Message/Anchor/EntityLink/Grant IDs, authorized search/OCR, notifications/activity/agent/memory projections with event dedup/retraction, reconnect cursor/current-policy replay and policy-scoped draft/cache lifecycle. Concrete shared owner paths must come from accepted foundations, not new SIG-only stores.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "kind": "required-execution-and-evidence-lanes",
+      "source": "Published spec 119,128-133",
+      "requiredReceipt": "Linux domain/renderer lane, source-pinned macOS native IPC/font/device lane, actual-provider live lane, synthetic fixtures, seeded negative controls and independent reviewer. These are completion gates, not optional follow-ups; this preflight deliberately runs none.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/components/documents/SecureDocumentViewer.tsx",
+    "packages/shared/src/workspace-domain/files/version-contracts.ts",
+    "apps/workspace-service/src/modules/files/authorized-preview.ts",
+    "apps/workspace-service/src/modules/files/share-commands.ts",
+    "apps/workspace-service/migrations/file-versions.sql",
+    "tests/rox-suite/secure-document-viewer.spec.ts"
+  ],
+  "ownershipNote": "These are exactly the six normative NEW target paths at spec lines 90-96, not files created in preflight or permission for concurrent edits. Shared contracts and migrations still require the lead's single-owner integration. Only this JSON is written by this worker.",
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/renderer/components/files/FileViewer.tsx",
+      "symbol": "FileViewer / FileViewerProps / loadFile",
+      "change": "Preserve the path:string|null local-only viewer. Add a discriminated version-ref input branch agreed with version-contracts, mounting SecureDocumentViewer for canonical authorized versions rather than passing remote IDs/storage refs into readFile. Guard local async loads against changed path/unmount so an earlier response cannot overwrite later selection. Never render path/title/bytes for a denied remote ref.",
+      "reason": "Lines 7-39 only load local text through electronAPI.readFile; header lines 55-60 expose the absolute path. The cloud version route needs a separate authorized adapter boundary, not a second file identity or raw path fallback. Local load has no stale-response guard."
+    },
+    {
+      "path": "packages/ui/src/components/overlay/PDFPreviewOverlay.tsx",
+      "symbol": "PDFPreviewOverlayProps / PDFPreviewOverlay loading effect / Document / Page",
+      "change": "Extend the existing injected loader with a typed authorized-version source agreed with the domain contract, while retaining existing local preview callers. For a version source use safe title/version labels instead of filePath/copy-path actions; bind loaded bytes and bounded page/search/zoom state to immutable version/contentHash/policyEpoch, abort/discard stale loads and clear rendered buffers on revoke. Provide inert secure rendering without executable annotations, external fetch/navigation or Node/action bridge; route allowed external references through an explicit policy-controlled action, not raw annotation links. Translate touched load-error labels through t().",
+      "reason": "Lines 30-40 accept a path-based injected byte loader, lines 80-101 already prevent stale load results after cleanup, lines 120-136 expose the source as a path, and line 155 enables annotations. pdf.js worker use is reusable but not proof of malicious PDF isolation."
+    },
+    {
+      "path": "packages/ui/src/components/overlay/PreviewOverlay.tsx",
+      "symbol": "PreviewOverlayProps.title / filePath / headerActions",
+      "change": "Consume the existing title/subtitle/headerActions seam for authorized document overlays, omitting filePath entirely. If additional access/status/footer slots are needed, extend this same overlay contract with the shared owner; do not introduce another overlay framework or local filesystem reveal action for version refs.",
+      "reason": "Lines 48-55 explicitly distinguish path Open/Reveal actions from a safe title. PDFPreviewOverlay currently always supplies filePath."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+      "symbol": "SharePageDialog / runPublish / runUnpublish / usePageShareCapabilities",
+      "change": "Keep Page artifact publication/password/unpublish and PageActionGrant execution semantics intact. Where a Page exposes a canonical document attachment, launch the SecureDocumentViewer resource-sharing sheet using its version ref; never feed resource grants into page.config.grants or reuse sharingEnabled as document authorization. Any shared copy/help text must distinguish published artifact from resource grant. Preserve remote-copy warning and receipt-before-success behavior.",
+      "reason": "Lines 97-105 gate script/action grants; lines 147-200 publish/password/unpublish operate on workspaceId+pageSlug. They are not audience/version ACL commands. Existing Page flow must remain independently functional."
+    },
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view / ViewRoute",
+      "change": "Add a typed documentVersion builder producing document/{encodeURIComponent(documentId)}/version/{encodeURIComponent(versionId)} with validated, nonempty IDs and agreed contextual return information. Use canonical workspace-scoped version refs at route resolution, not an absolute path. Integrate through the existing navigation/history owner, not a new Documents product surface.",
+      "reason": "Existing routes.view has Projects/Pages/Knowledge and no immutable document-version builder. knowledge/document/{id} identifies a SiYuan Knowledge ref and cannot stand in for version ACL."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "NavigationState / getNavigationStateKey / parseNavigationStateKey / ElectronAPI",
+      "change": "Add the typed immutable document/version detail state to NavigationState and round-trip serializer/parser with strict shape, percent-decoding and invalid-ref rejection. Coordinate all history/contextual return-state consumers with the route owner. Add generated authenticated fileVersion.readMetadata/preview/download/share/revoke/versionList DTO methods and policy-generation subscription only after gateway acceptance; keep readFile/readFileBinary local-only. IPC/preload/RPC handlers and MCP must consume the same domain gateway rather than trust renderer actor or capabilities.",
+      "reason": "Lines 2601-2623 omit version navigation; lines 2718 onward serialize current states and 2837 onward parse them. Lines 903-914 are raw-path file APIs, while 933-938 already demonstrate typed source-owner resolver APIs. The transport implementations are not inspected here and must be supplied by the shared integration owner."
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "symbol": "Rox2EntityRef / ROX2_ENTITY_KINDS / Rox2Receipt / Rox2Status / authorizeRox2Action",
+      "change": "Reuse workspaceId/entityId/revisionId/accountNamespace as version identity and preserve the executionMode/lifecycle/verification triad unchanged. Have the entity owner settle Document/File subtype and version registry mapping (file exists; document does not) and migration aliases before publishing version-contracts. Add only agreed common grant/receipt/provenance contracts; document-specific read/comment/download/export/share actions must be server-authorized against resource+version+audience+expiry+policyEpoch, not inferred from capabilities or this actor-only helper.",
+      "reason": "Lines 17-38 include file/page but not document; 233-239 are the identity seam; 99-111 distinguish receipt/status; 592-610 contain actor+permission only, explicitly not entity capability authorization."
+    },
+    {
+      "path": "packages/server-core/src/docs/descriptor-resolver.ts",
+      "symbol": "ContentOwner / ContentPolicy / SourceBinding / createDescriptorResolver.load / resolveContent",
+      "change": "Agree the source-owner/ref/provenance integration with the common descriptor owner. Preserve authorization before lookup, alias-target source authorization, offline lease checks and authorization after provider read. Do not put blob contents, file_versions, grants or preview jobs in DescriptorStore or treat the existing text resolver as a remote PDF loader. Consume a dedicated immutable version adapter from authorized-preview; only extend shared descriptor kinds/aliases if the accepted foundation contract requires it.",
+      "reason": "Lines 34-55 expose a string snapshot and read/adoptDescriptor policy; 78-81 commit metadata; 356-391 recheck authority before and after owner read; 382-388 canonicalize to Page and compare current snapshot revision, not retrieve arbitrary immutable blob versions."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/{de,en,es,fr,hu,ja,pl,ru,zh-Hans,zh-Hant}.json",
+      "symbol": "secureDocumentViewer translation namespace (proposed) / touched preview labels",
+      "change": "Shared locale owner adds ASCII-sorted keys in all ten locales for version/source/access, states, receipt failures, role/grant scope, hover/focus/click explanations and recovery text; use t() for every new user-facing string, Russian default, existing plural conventions. No global font reset or new skin.",
+      "reason": "Repository context requires ten-locale parity. FileViewer uses t(); PDFPreviewOverlay still has literal load errors at 95,108,136. Locale files were not read in this narrow preflight; exact insertion anchors must be obtained by their owner."
+    }
+  ],
+  "integrationRequests": [
+    {
+      "target": "Accepted workspace-service bootstrap, migration runner, canonical entity/grant store, authenticated transport and MCP owners",
+      "request": "Publish exact concrete shared paths/symbols and current receipts after wave0. Register the six normative SIG files with the existing service, store and gateway. Transactionally store immutable file_versions, preview_jobs(sourceVersionHash), document_anchors(version/page/range/digest), CAS grants, idempotent receipts and outbox events. No SIG-only authority DB. The absent target directories do not authorize this worker to create a new foundation.",
+      "source": "spec 54-58,71,98; scoped glob missing target directories"
+    },
+    {
+      "target": "Existing Project/Ticket/Approval attachment, common Message/Anchor/EntityLink, search/activity/notification and agent/memory owners",
+      "request": "Supply accepted attachment/version refs and projection hooks so all contextual opens use the same hash/ACL; common comment commands validate version-bound anchors and audience; revocation retracts search/OCR/notifications/agent projections with dedup. Publish exact patch anchors rather than inventing uninspected source paths.",
+      "source": "spec 28,43,52,58,75-79,117"
+    },
+    {
+      "target": "RS-SIG-02 signing owner",
+      "request": "Expose signing session preview for authorized immutable versionRef+contentHash; opening a viewer must never create a signature. Unavailable signing capability is honestly disabled. RS-SIG-02 is related/downstream, not an added explicit dependency of RS-SIG-01.",
+      "source": "spec 12,44,146; issues.json 917-923"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "criterion": "DoD 1: UI и typed routes/history/contextual deep links работают в существующем ROX.",
+      "currentEvidence": "FileViewer(path) lines 7-39; PDFPreviewOverlayProps lines 30-40; routes.view and NavigationState have no immutable document/version state. NEW documents directory is missing.",
+      "requiredChange": "Implement SecureDocumentViewer within the existing shell; integrate typed builder/state/parser/history and Project/Ticket/Approval attachment opens using one workspace/document/version ref and contextual Back behavior. Include header metadata/source/policy/sync, PDF/text/image center, thumbnails/page search, Comments/Links/Access/History tabs and footer page/zoom/download state.",
+      "verification": "After implementation open one synthetic version from each of Project/Ticket/Approval; compare authorized hash/ref/ACL, direct deep-link/reload and Back/history behavior; reject malformed or path-based cloud refs; compare existing local file/Page routes.",
+      "missingPrerequisite": "Accepted route/entity registry and contextual attachment contracts plus lead wave0 commit/dependency receipts.",
+      "state": "NOT_IMPLEMENTED_IN_INSPECTED_SEAMS"
+    },
+    {
+      "criterion": "DoD 2: Entity model, persistence/migration aliases, queries/commands/receipts и required background processing реализованы.",
+      "currentEvidence": "Rox2EntityRef is generic; DescriptorStore is metadata-only and text/Page-oriented. Normative workspace-domain and workspace-service directories are missing.",
+      "requiredChange": "Implement version-contracts, authorized-preview, share-commands and file-versions.sql against accepted common stores. Persist immutable hash/blobRef/mime/size, workspace/policy dedup, preview_jobs source hash, anchors, migration aliases and revision/idempotent receipts. Register six fileVersion APIs, quarantine/scan/preview processing and commit-bound file.version_created/preview_ready/quarantined/shared/access_revoked/download_requested events. Preserve canonical status triad and separate local_durable/provider_accepted/readback outcomes.",
+      "verification": "Persist/upload, restart/reload, compare byte hash and version receipt, exercise migration aliases, CAS/idempotency duplicate/conflicting commands, job retries/recovery and event commit boundaries; provider readback must match sourceVersionHash.",
+      "missingPrerequisite": "Canonical service/store/migration runner/outbox and real storage/scan/preview provider interfaces and receipts.",
+      "state": "FOUNDATION_GATED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 3: Source/entity links и mentions используют общие IDs; source audience не расширяется автоматически.",
+      "currentEvidence": "Rox2EntityRef lines 233-239; descriptor resolver lines 374-391 denies alias-target access independently. No common Message/Anchor implementation was inspected.",
+      "requiredChange": "Use common EntityRef/EntityLink/Message/Anchor, version/page/range/selection digest and audience-checked mentions; subtype Page artifact versus document explicitly. Contextual link and reference share alone never issue a resource grant.",
+      "verification": "Create anchored comment, reload exact anchor/ref, open from another context and notify only allowed audience; cross-workspace and denied-target mention/link expose no metadata and do not widen access.",
+      "missingPrerequisite": "Accepted shared relation/message/anchor IDs and audience policy gateway.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 4: Shared authorization/sharing/revoke покрывают UI/API/MCP/jobs/offline replay.",
+      "currentEvidence": "authorizeRox2Action only checks actor+permission; Page sharing/action grants are distinct; existing ContentPolicy covers read/adoptDescriptor and not document-specific download/export/share.",
+      "requiredChange": "Apply document.read/comment/download/export/share to metadata/preview/thumbnail/OCR/download/tools through the same authenticated gateway. Preview and commit audience/version scope with baseRevision, expiry, idempotency and explicit direct/inherited/public grants; revoke increments policyEpoch, blocks new reads/downloads/comments/tools and withdraws projections. Export widening requires server decision. Revalidate policy at job execution and queued replay, never trust UI/MCP capability labels.",
+      "verification": "Run identical allowed/denied actor/version cases via UI/API/IPC/MCP/job/replay; race revoke against open fetch/comment/download and stale audience preview; check no title/size/count/body/blob URL leakage and no readFile fallback.",
+      "missingPrerequisite": "RS-ADM-01 and RS-MCP-01 accepted receipts; resource/version ACL, delivery-generation and offline replay foundations.",
+      "state": "FOUNDATION_GATED_NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 5: Search/notification/activity/agent/memory projections сохраняют policy и provenance; dedup/retraction проверены.",
+      "currentEvidence": "Rox2Event has causation/correlation/aggregateRevision; spec 58,77-79 requires policy-bearing projections, but scoped viewer code has none.",
+      "requiredChange": "Emit common commit-bound events with workspace/version/hash/source/policy revision; project authorized OCR/search/cited extracted agent text, activity and anchored-comment notifications with stable dedup keys. Revoke retracts generation-bound projections and limited caches; private content never enters global memory or denied push bodies.",
+      "verification": "Duplicate/reorder/replay events and reconnect; assert single allowed notification/activity record and exact version citation. Revoke and query every projection as previously allowed and denied actors; verify retraction and absence of private title/count/body.",
+      "missingPrerequisite": "Common outbox/projection ownership, search/OCR authorization and memory/cache revocation hooks.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 6: Required realtime/reconnect/persistence concurrency сценарии из tests пройдены; unavailable capability честно disabled.",
+      "currentEvidence": "PDF load has a cancelled guard, FileViewer load has none; no policyEpoch/realtime version contract in inspected types. DescriptorStore documents single-process metadata transactions, not distributed file service.",
+      "requiredChange": "Subscribe to policy/version/job state, invalidate stale responses and render buffers on revoke; current-policy reconnect/replay with version pinning, CAS command conflicts and durable receipts. Preserve drafts under failed query/conflict/timeout/navigation but bind retention to workspace/purpose/current grants. Unsupported offline mutations/signing/provider capabilities show explicit reasons rather than fake empty/success.",
+      "verification": "Race version selection, revoke while fetch is pending, stale share previews, concurrent grants and duplicate idempotency keys; disconnect/reconnect/restart with queued replay, revoked cache and draft recovery. Verify unknown provider outcome reconciles rather than duplicates effects.",
+      "missingPrerequisite": "Accepted realtime cursor/replay, version policyEpoch, current-policy cache lease and draft-retention contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 7: Hover/focus/click help, keyboard, loading/empty/error/offline, narrow390px, zoom200%, reduced-motion verified.",
+      "currentEvidence": "Existing FileViewer renders translated loading/error/selection states; PreviewOverlay supplies Escape/responsive shell. PDFPreviewOverlay lacks required page search/zoom/help/revocation state. layout.ts modalBreakpoint=99999 means its implementation is effectively fullscreen, despite generic responsive documentation.",
+      "requiredChange": "Use selected ROX theme/font/tokens and native controls. Implement bounded page/search/zoom navigation with Arrows/PgUp/PgDn/Ctrl+F and aria-live; title/version/source/hash/asOf and distinct read/download/export. Implement all domain states uploading/quarantined/scan_pending/preview_pending/ready/forbidden/corrupt/offline_cached/revoked and common error/empty/filter/conflict/cancel/unknown states. Add 500ms hover/focus definitions and What-is-this popovers with meaning/units or explicitly not applicable/source/freshness/example/policy/disabled reason, no mutation on help click, correct Escape/focus restore and roving tab controls. Keep 390px/200% shell usable via drawer, stable keys and reduced motion.",
+      "verification": "Actual keyboard/hover/focus/click/ARIA and screenshots at 390px and 200%, reduced-motion preference, every state and error recovery; check no shell horizontal overflow or lost selection/scroll and actual selected font loading.",
+      "missingPrerequisite": "Implemented authorized state API, shared help/draft primitives and ten-locale keys; no UI runs authorized during preflight.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 8: Linux domain/renderer lane; source-pinned macOS native для IPC/font/device; provider-live где actual adapter действует. Pending required lane оставляет feature incomplete.",
+      "currentEvidence": "Source inspection only; pdf.js Vite worker loader lines 21-23 and ElectronAPI seams exist. No runtime lane was run.",
+      "requiredChange": "Lead schedules Linux domain/renderer, source-pinned macOS native integration and actual storage/preview-provider live acceptance against the implemented revision; missing required lane must keep featureComplete=false.",
+      "verification": "Record actual persisted/reloaded allowed and denied flows in each applicable required lane, environment versus baseline failures, worker/IPC/font behavior and provider receipts/readback, all bound to tested commit.",
+      "missingPrerequisite": "Implementation commit, real adapters/configuration and authorized lane runners/native UI access outside preflight.",
+      "state": "NOT_RUN_BY_DESIGN"
+    },
+    {
+      "criterion": "DoD 9: Screenshots/ARIA и logs/hash/expected-observed предоставлены с synthetic data и exact tested commit.",
+      "currentEvidence": "This report records whole-file SHA-256 evidence; that is not UI/feature proof. Spec's screenshot inspiration does not establish backend behavior.",
+      "requiredChange": "Capture sanitized screenshots/ARIA, API/tool outputs, source/content hashes, command/receipt/event/policy correlation and expected-versus-observed assertions for the exact implementation commit. Never log secret/content bodies; metrics expose source/denominator, latency/retry/denied/reconcile/projection lag.",
+      "verification": "Audit artifact hashes/revision/environment and synthetic-only data; compare allowed/denied outputs and confirm logs do not disclose document bodies, secrets or raw cloud paths.",
+      "missingPrerequisite": "Working acceptance lanes and observed implementation behavior.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 10: Independent review, meaningful negative controls, runbook, source licensing/dependencies и user docs готовы.",
+      "currentEvidence": "Spec 7 forbids copying inspiration assets and 106 requires reconciliation/cleanup runbook; PDF uses existing react-pdf/pdfjs dependencies. No implementation review/runbook proof exists in inspected scope.",
+      "requiredChange": "Independent review of ACL/version races, storage URL leakage, PDF isolation and projection retraction; user docs distinguish artifact publication/resource grants/download/export/screenshot limits; on-call runbook covers quarantine failure, provider unknown outcome/reconciliation, stale permissions/search/cache and bounded recovery. Shared owner audits existing/new dependency licensing; no Lark assets/source copying.",
+      "verification": "Green baseline plus intended-failing raw cloud path, share bypass and private OCR leak mutants; independent reviewer receipt and runbook recovery exercise; dependency/license provenance and documented help definitions.",
+      "missingPrerequisite": "Implemented behavior, negative-control fixtures, independent reviewer and shared documentation/license owner.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "DoD 11: GitHub completion связывает implementation commit/PR и доказательства, а не только rendered screen.",
+      "currentEvidence": "issues.json 909-910 says PLANNED_NOT_IMPLEMENTED / NOT_LAUNCHED; GitHub issue 1119 is the normative target. No network/Git operations performed.",
+      "requiredChange": "Lead links implementation commit/PR and all required proof to issue 1119 only after every feature gate passes; keep feature incomplete for pending required lanes. Preflight does not update issue/progress/Git.",
+      "verification": "Authorized lead verifies completion links reference exact accepted implementation revision and complete runtime evidence, not this preflight or a renderer screenshot alone.",
+      "missingPrerequisite": "All DoD gates, accepted root integration and authorized GitHub delivery.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Scenario 1: Upload → quarantine/scan → preview → download; hash/version survive reload; malicious PDF inert.",
+      "currentEvidence": "PDFPreviewOverlay loads Uint8Array through an injected loader and renders annotation layer; no upload/quarantine service in normative targets.",
+      "requiredChange": "Persist upload/version hash before processing, keep quarantined bytes unavailable until scan/preview readiness, issue authorized version-bound short-lived download receipt; isolate PDF active/external content with no Node/action bridge.",
+      "verification": "Compare upload/preview/download byte hashes and immutable version after reload; adversarial PDF cannot execute code, trigger external requests/navigation or host action; scan failure stays quarantined with actionable state.",
+      "missingPrerequisite": "Real storage/scan/preview provider and secure renderer isolation.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Scenario 2: Denied user receives no title/size/thumbnail/OCR/search/agent text/direct blob URL.",
+      "currentEvidence": "Descriptor resolver checks current policy before metadata lookup and after owner read; FileViewer header/loader have only a local-path contract.",
+      "requiredChange": "Reuse deny-before-read and post-provider-check ordering for every version surface and tool, suppress metadata/projection bodies on denial and avoid direct reusable blob URLs.",
+      "verification": "Same denied principal via metadata/preview/thumbnail/OCR/search/download/agent/MCP and contextual route sees only permission outcome, with no source lookup side-channel; cross-workspace dedup/existence is not disclosed.",
+      "missingPrerequisite": "Accepted canonical ACL and shared projections/delivery adapter.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Scenario 3: v1 grant does not open v2; stale audience preview conflicts.",
+      "currentEvidence": "Rox2EntityRef has optional revisionId; existing PageActionGrant digest binding is execution authorization, not version audience ACL.",
+      "requiredChange": "Require immutable version scope, server preview revision/token and CAS grant commit; reject stale audience/policy/version previews without success toast or draft loss.",
+      "verification": "Create v1 grant then upload v2 and prove v2 denial via UI/API/MCP/download; mutate audience/policy between preview and apply and assert conflict with unchanged durable grant set.",
+      "missingPrerequisite": "Canonical version/grant/CAS receipt model and authenticated sharing commands.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Scenario 4: Revoke during open viewer blocks new fetch/download/comment/agent query; URL expiry/policyEpoch checked.",
+      "currentEvidence": "PDF effect cancellation prevents stale item updates but has no policy generation; no policyEpoch appears in inspected contracts.",
+      "requiredChange": "Commit revoke receipt/policyEpoch atomically, reject old-epoch delivery and queued reads/mutations, cancel or disregard stale responses, retract projections and best-effort purge cache. Specify that screenshots/already delivered bytes cannot be retroactively forbidden.",
+      "verification": "Race pending load and revoke, retry retained URL before/after expiry, query/comment/download/agent after revoke and reconnect; verify denial under current epoch and revoked UI state in all contexts.",
+      "missingPrerequisite": "Revocable delivery/current-policy endpoint, realtime epoch subscription and projection cleanup.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Scenario 5: Corrupt preview/read failure/offline cache explicit; comment draft preserved.",
+      "currentEvidence": "PDFPreviewOverlay has loading/error state; FileViewer has local read errors; neither implements common anchored comments or policy-limited offline cache.",
+      "requiredChange": "Surface corrupt/provider timeout/unknown/read failure/offline_cached distinctly, retain allowed comment drafts across failed queries/conflicts/navigation and recheck grant/purpose at retention/replay; unauthorized offline mutation is disabled with reason.",
+      "verification": "Inject corrupt PDF/provider timeout/read error, disconnect with allowed and revoked cache leases, navigate away/back, reconnect and compare allowed draft content; no success without receipt and no private draft/cache after policy invalidation.",
+      "missingPrerequisite": "Draft/cache lease, comment gateway and explicit provider outcome contracts.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Scenario 6: Raw cloud path, share bypass, private OCR leak mutants fail; existing Page sharing regression passes.",
+      "currentEvidence": "FileViewer uses readFile(path); PDF path copy/reveal seam and Page publish/password/unpublish are concrete paths needing boundary regression coverage.",
+      "requiredChange": "Create the normative secure-document-viewer.spec.ts behavioral scenarios against real implemented gateway and persisted store; seed distinct bypass/leak mutations, not source-text/wiring assertions. Preserve existing Page artifact flow and local file preview.",
+      "verification": "Observe green baseline and each mutant failing its intended assertion; publish/republish/password/unpublish Page artifact with script-grant gating and remote-copy warning; compare local FileViewer/PDF preview behavior. Classify environment versus baseline failures.",
+      "missingPrerequisite": "Working service/renderer/provider lane, synthetic fixture data and negative-control harness.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "User acceptance: Same version from Project/Ticket/Approval; authorized anchored notification; share/revoke across all representations; separate Page publication.",
+      "currentEvidence": "routes.view.projects/pages exist; FileViewer/PDF and Page publication are independent reusable seams, not an end-to-end secure document service.",
+      "requiredChange": "Wire accepted contextual attachment refs to one viewer/domain path, create common version-bound comment/notification, grant/revoke using common gateway and generation, and keep Page artifact publication separate.",
+      "verification": "Execute full persisted/reloaded synthetic flow in all three contexts and API/tool equivalent, with denied actor and revoked access checks, identical hash/ACL and deduplicated allowed notification; exercise adjacent Page flow.",
+      "missingPrerequisite": "Accepted contextual surfaces, message/notification/projection contracts, authority and all runtime lanes.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "criterion": "Signing control: viewing does not create a signature; RS-SIG-02 session preview pins content hash.",
+      "currentEvidence": "Spec control row 44 and related downstream record issues.json 917-923; no signing API inspected.",
+      "requiredChange": "Only explicit Request signing action passes authorized immutable versionRef/hash to the related service; display real unavailable capability reason if absent. Viewer open must remain read-only.",
+      "verification": "Opening/reloading version produces no signing session/signature; explicit request previews exactly the authorized hash and forbidden/unavailable path is disabled without fabricated success.",
+      "missingPrerequisite": "Accepted RS-SIG-02 service capability/session-preview handoff; this is not an additional explicit DAG edge.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "sourceReferences": [
+    {"path":"docs/rox-suite/published/RS-SIG-01.md","symbol":"Architecture prerequisites / target ownership / acceptance / Definition of Done","lineStart":11,"lineEnd":133,"sha256":"77419303a3933c03f1441e841146ee2595239012bb31c4f6847205bcc35c653e"},
+    {"path":"plans/rox-suite/issues.json","symbol":"issues[RS-SIG-01]","lineStart":886,"lineEnd":915,"sha256":"5835135e1b7958e3deb0878ca417759173f1f88d23bcb0d4f3a9f2f2afdd6c8c"},
+    {"path":"apps/electron/src/renderer/components/files/FileViewer.tsx","symbol":"FileViewer / loadFile","lineStart":7,"lineEnd":39,"sha256":"62c8607b9ee44de7d2f975c3d2f0b4917a383258a056b359d3c80b3d7d59103f"},
+    {"path":"packages/ui/src/components/overlay/PDFPreviewOverlay.tsx","symbol":"PDFPreviewOverlayProps / PDFPreviewOverlay / Document / Page","lineStart":30,"lineEnd":163,"sha256":"5846be9f49b65f2b198dea98c16d0e35f038b3816c3342f1aaaf3c397792f400"},
+    {"path":"apps/electron/src/renderer/components/pages/SharePageDialog.tsx","symbol":"SharePageDialog / runPublish / runUnpublish","lineStart":85,"lineEnd":200,"sha256":"a06d7bf806cdac1c044c01ba2a75fb7103d04e7cbd82ee4136c69577f38bb5e0"},
+    {"path":"apps/electron/src/shared/routes.ts","symbol":"routes.view / ViewRoute","lineStart":254,"lineEnd":302,"sha256":"c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"NavigationState / getNavigationStateKey / parseNavigationStateKey","lineStart":2601,"lineEnd":2623,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"apps/electron/src/shared/types.ts","symbol":"ElectronAPI.readFile / readFileBinary / resolveContent / describeContent","lineStart":903,"lineEnd":938,"sha256":"9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2EntityRef","lineStart":232,"lineEnd":239,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/core/src/rox2/platform-contract.ts","symbol":"Rox2ActorGrant / authorizeRox2Action","lineStart":592,"lineEnd":610,"sha256":"3517c3465e704deccb37748a158be9d67f7265ffd71f60b4e91170797e6722a5"},
+    {"path":"packages/shared/src/pages/types.ts","symbol":"isPageGrantUsable / LoadedPage","lineStart":34,"lineEnd":100,"sha256":"89ec620aa244c217cc77e904197ede8b6ff31c46990a3ce7740550d2387a2caa"},
+    {"path":"packages/ui/src/components/overlay/PreviewOverlay.tsx","symbol":"PreviewOverlayProps / PreviewOverlay","lineStart":33,"lineEnd":122,"sha256":"02b5b07a701dd8ebbfdb3d760ffdc26573f170e7533b6bd1f0166e2308f2bf96"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"ContentOwner / ContentPolicy / DescriptorStore","lineStart":15,"lineEnd":104,"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"},
+    {"path":"packages/server-core/src/docs/descriptor-resolver.ts","symbol":"createDescriptorResolver / load / resolveContent","lineStart":343,"lineEnd":427,"sha256":"c36d9d6526b22bf7b658dfc0f2375b6ad78aa323703c4e3c28722298aeeea790"}
+  ],
+  "evidenceScope": {
+    "revisionMeaning": "input_revision is packet lineage, not a claim that all inspected bytes are committed at that SHA. Sources are the live working-tree files, including concurrent lead work; whole-file hashes identify the inspected snapshots.",
+    "freshness": "Revalidate these digests before implementation. Any root integration changing a referenced file invalidates that file's line anchors and requires reinspection; never relabel stale evidence as the new revision.",
+    "inputManifest": "Both specified manifest SHA-256 values matched shasum output during inspection.",
+    "tools": "codegraph reported no project index; fallback was scoped read/grep/glob. One scoped find failed with judge provider 402, so it supplied no absence evidence; literal symbol search and direct reads supplied the navigation evidence instead.",
+    "notPerformed": ["Product edits", "Tests", "Builds", "Native UI", "Network operations", "Git mutation", "Progress mutation", "Feature implementation"],
+    "coverageLimit": "No broad foundation/caller survey. Shared transport/attachment/projection owner paths remain an explicit integration prerequisite, not invented patch locations. Preflight artifact validation is separate from feature verification."
+  },
+  "nextExecutableAction": "Lead first records wave0 committed revision and accepts current RS-ADM-01/RS-MCP-01 receipts plus published WP foundation/provider interfaces. Revalidate report source digests and re-read changed seams; settle canonical file subtype/version refs, store/migrations/gateway ownership and concrete transport/projection patch anchors. Then implement the normative version-contracts/file-versions.sql/authorized-preview vertical slice against accepted foundations: upload -> quarantine -> authorized preview/download with denied actor and reload/hash verification, before layering sharing/revoke/anchors/contextual UI and all remaining gates. This worker has no source-integration authority.",
+  "risks": [
+    "Missing normative service/domain directories may tempt a second SIG-only store or fake backend; the spec explicitly requires common persistence/Revision2 authority and real adapters.",
+    "Current file:/Page identity, generic revisionId and source-authorized text descriptors are not immutable FileVersion ACL semantics. Settling subtype/alias mapping is a hidden foundation gate.",
+    "Path-based PDF title/copy/reveal and local readFile APIs must not receive cloud refs or raw object paths. PDF annotation rendering is enabled; active/external content isolation requires observed adversarial proof.",
+    "A presigned object URL that remains usable after revoke can defeat current-policy read denial before TTL. The real delivery adapter must define/check policyEpoch and expiry rather than promise cache purge alone solves access revocation.",
+    "Version-scoped audience grants must not implicitly include future versions; stale audience previews require revision conflict, not silent broadening.",
+    "OCR/search/agent/memory/notification retraction is part of the feature, not a UI-only extension; denied title/count/body and cross-workspace dedup existence leakage require negative tests.",
+    "Sensitive draft preservation must coexist with revoked grants: no global/private indefinite retention, replay or offline mutation without current policy.",
+    "Existing Page sharing and execution grants must remain separate and regression-tested; introducing public resource permissions through Page publish is forbidden.",
+    "Concurrent root wave0 edits can invalidate hashes between inspection and verifier; retain failure evidence and re-read changed files before refreshing references.",
+    "Feature completion requires Linux, pinned macOS and real-provider lanes, independent review and exact-commit artifacts; successful preflight JSON validation is not feature proof."
+  ]
+}

@@ -98,6 +98,11 @@ type ApiToChannelMapKeys = Exclude<
   FunctionKeys<ElectronAPI>,
   | 'performOAuth'
   | 'getTransportConnectionState'
+  | 'getProjectAuthorityState' // direct preload authority state; no credential data
+  | 'onProjectAuthorityChanged' // local projection invalidation callback
+  | 'getProjectAuthorityConfiguration' // metadata-only direct IPC
+  | 'connectProjectAuthority' // main-owned credential exchange
+  | 'disconnectProjectAuthority' // main-owned encrypted credential deletion
   | 'getRuntimeEnvironment'
   | 'onTransportConnectionStateChanged'
   | 'reconnectTransport'

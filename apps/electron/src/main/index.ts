@@ -1139,6 +1139,57 @@ app.whenReady().then(async () => {
       ipcMain.on('__get-ws-token', (e) => {
         e.returnValue = instance.token
       })
+      const projectAuthorityRequests = new Map<number, number>()
+      const quiesceProjectAuthorityWindows = (workspaceId: string, initiatingSenderId: number): void => {
+        for (const window of windowManager?.getAllWindowsForWorkspace(workspaceId) ?? []) {
+          if (!window.isDestroyed() && window.webContents.id !== initiatingSenderId) window.webContents.send('__project-authority:configuration-changed')
+        }
+      }
+      ipcMain.handle('__project-authority:resolve', async (event, localWorkspaceId: unknown) => {
+        const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
+        const { resolveStoredProjectAuthority } = await import('./project-authority')
+        const result = await resolveStoredProjectAuthority(bound)
+        if (windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
+        return result
+      })
+      ipcMain.handle('__project-authority:configuration', async (event, localWorkspaceId: unknown) => {
+        const bound = windowManager?.getWorkspaceForWindow(event.sender.id)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) throw new Error('WORKSPACE_MISMATCH')
+        const { getStoredProjectAuthorityConfiguration } = await import('./project-authority')
+        const result = await getStoredProjectAuthorityConfiguration(bound)
+        if (event.sender.isDestroyed() || windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
+        return result
+      })
+      ipcMain.handle('__project-authority:connect', async (event, localWorkspaceId: unknown, input: unknown) => {
+        const senderId = event.sender.id
+        const bound = windowManager?.getWorkspaceForWindow(senderId)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) {
+          return { ok: false, error: { code: 'WORKSPACE_MISMATCH', status: 403 } }
+        }
+        const generation = (projectAuthorityRequests.get(senderId) ?? 0) + 1
+        projectAuthorityRequests.set(senderId, generation)
+        const { connectStoredProjectAuthority } = await import('./project-authority')
+        const result = await connectStoredProjectAuthority(bound, input, () => !event.sender.isDestroyed()
+          && windowManager?.getWorkspaceForWindow(senderId) === bound && projectAuthorityRequests.get(senderId) === generation)
+        if (result.ok) quiesceProjectAuthorityWindows(bound, senderId)
+        return result
+      })
+      ipcMain.handle('__project-authority:disconnect', async (event, localWorkspaceId: unknown) => {
+        const senderId = event.sender.id
+        const bound = windowManager?.getWorkspaceForWindow(senderId)
+        if (!bound || typeof localWorkspaceId !== 'string' || localWorkspaceId !== bound) {
+          return { ok: false, error: { code: 'WORKSPACE_MISMATCH', status: 403 } }
+        }
+        const generation = (projectAuthorityRequests.get(senderId) ?? 0) + 1
+        projectAuthorityRequests.set(senderId, generation)
+        const { disconnectStoredProjectAuthority } = await import('./project-authority')
+        const result = await disconnectStoredProjectAuthority(bound, undefined, () => !event.sender.isDestroyed()
+          && windowManager?.getWorkspaceForWindow(senderId) === bound && projectAuthorityRequests.get(senderId) === generation)
+        if (result.ok) quiesceProjectAuthorityWindows(bound, senderId)
+        return result
+      })
+
       ipcMain.on('__get-workspace-remote-config', (e) => {
         const wsId = windowManager?.getWorkspaceForWindow(e.sender.id)
         if (!wsId) { e.returnValue = null; return }

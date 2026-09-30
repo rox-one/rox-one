@@ -20,6 +20,8 @@ import '@sentry/electron/preload'
 import { contextBridge, ipcRenderer, shell, webUtils } from 'electron'
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { RoutedClient } from '../transport/routed-client'
+import { ProjectAuthorityConnection } from '../transport/project-authority-connection'
+import { PROJECT_AUTHORITY_IPC, PROJECT_AUTHORITY_CONNECT_IPC, PROJECT_AUTHORITY_DISCONNECT_IPC, PROJECT_AUTHORITY_CONFIGURATION_IPC, type ProjectAuthorityTarget, type ProjectAuthorityConfiguration, type ProjectAuthorityMutationResult } from '../shared/project-authority'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
 import { createCallbackServer } from '@craft-agent/shared/auth/callback-server'
@@ -71,6 +73,7 @@ const openClawHostControl = createOpenClawHostControlBridge({
 })
 
 let client: TransportClient
+let projectAuthority: ProjectAuthorityConnection | null = null
 
 if (isClientOnly) {
   // ── Thin-client mode ───────────────────────────────────────────────────
@@ -167,6 +170,11 @@ if (isClientOnly) {
   }
 
   const routedClient = new RoutedClient(localClient, initialWorkspaceClient)
+  projectAuthority = new ProjectAuthorityConnection(async localWorkspaceId => {
+    const value: ProjectAuthorityTarget | null = await ipcRenderer.invoke(PROJECT_AUTHORITY_IPC, localWorkspaceId)
+    return value
+  })
+  routedClient.setProjectAuthority(projectAuthority, workspaceId)
 
   // Set workspace ID mapping if initial workspace is remote
   if (remoteConfig) {
@@ -217,6 +225,33 @@ client.handleCapability(CLIENT_BROWSER_INVOKE, async (req: BrowserCapabilityRequ
 // ---------------------------------------------------------------------------
 
 const api = buildClientApi(client, CHANNEL_MAP, (ch) => client.isChannelAvailable(ch))
+let projectAuthorityMutationGeneration = 0
+// Every window discards private transport/cache state after a committed identity or configuration change.
+ipcRenderer.on('__project-authority:configuration-changed', () => { ++projectAuthorityMutationGeneration; projectAuthority?.destroy() })
+api.getProjectAuthorityState = async () => projectAuthority?.getState() ?? 'unconfigured'
+api.onProjectAuthorityChanged = callback => projectAuthority?.subscribe(callback) ?? (() => {})
+api.getProjectAuthorityConfiguration = async workspaceId => {
+  if (!projectAuthority) return null
+  const value: ProjectAuthorityConfiguration | null = await ipcRenderer.invoke(PROJECT_AUTHORITY_CONFIGURATION_IPC, workspaceId)
+  return value
+}
+api.connectProjectAuthority = async (workspaceId, input) => {
+  if (!projectAuthority) return { ok: false, error: { code: 'CAPABILITY_UNAVAILABLE', status: 503 } }
+  const generation = ++projectAuthorityMutationGeneration
+  projectAuthority.destroy()
+  const result: ProjectAuthorityMutationResult = await ipcRenderer.invoke(PROJECT_AUTHORITY_CONNECT_IPC, workspaceId, input)
+  if (generation !== projectAuthorityMutationGeneration) return { ok: false, error: { code: 'WORKSPACE_MISMATCH', status: 403 } }
+  if (result.ok) await projectAuthority.setWorkspace(workspaceId)
+  if (generation !== projectAuthorityMutationGeneration) return { ok: false, error: { code: 'WORKSPACE_MISMATCH', status: 403 } }
+  return result
+}
+api.disconnectProjectAuthority = async workspaceId => {
+  if (!projectAuthority) return { ok: false, error: { code: 'CAPABILITY_UNAVAILABLE', status: 503 } }
+  ++projectAuthorityMutationGeneration
+  projectAuthority.destroy()
+  const result: ProjectAuthorityMutationResult = await ipcRenderer.invoke(PROJECT_AUTHORITY_DISCONNECT_IPC, workspaceId)
+  return result
+}
 
 let cancelPendingChatGptOAuth: (() => void) | null = null
 let pendingChatGptOAuthState: string | undefined

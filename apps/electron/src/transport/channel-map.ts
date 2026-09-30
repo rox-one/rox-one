@@ -789,6 +789,10 @@ export const CHANNEL_MAP = {
   setWorkspaceDefaultLlmConnection: invoke(RPC_CHANNELS.llmConnections.SET_WORKSPACE_DEFAULT),
 
   // Projects
+  getSharedProjects: invoke('domain.project.list'),
+  getSharedProject: invoke('domain.project.get'),
+  createSharedProject: invoke('domain.project.createShared'),
+  getSharedProjectEvents: invoke('domain.project.events'),
   getProjects: invoke(RPC_CHANNELS.projects.GET),
   getProject: invoke(RPC_CHANNELS.projects.GET_ONE),
   createProject: invoke(RPC_CHANNELS.projects.CREATE),

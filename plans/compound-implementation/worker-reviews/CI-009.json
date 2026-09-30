@@ -1,0 +1,356 @@
+{
+  "task_id": "CI-009-preflight",
+  "attempt_id": "d0c2269b2419ae2d790e15d45b61fd39",
+  "packet_hash": "33085db600489283c324dc5125607cbfd29f3e56a1c55c8b84b11149436274e8",
+  "input_revision": "a21aeab1da5a67e56788384ff930945b0f487879",
+  "packageId": "CI-009",
+  "featureComplete": false,
+  "mode": "inspect-only-preflight",
+  "workTier": "bounded-workflow",
+  "dependencies": ["CI-001", "CI-003", "CI-004"],
+  "evidenceStatus": {
+    "basis": "Read current working-tree source and normative specifications; whole-file SHA256 measured with read-only shasum. No product execution, build, test, UI, provider, network or Git command performed.",
+    "revisionQualification": "input_revision is supplied dispatch identity, not an assertion that inspected dirty files equal that commit. The user reports root-owned uncommitted wave0 work. ProjectInfoPage contains RepositorySnapshotPanel and ProjectConfig contains repositoryConnection/repositoryBindings; their measured bytes, not historical spec hashes, are evidence.",
+    "specManifest": [
+      {"path": "plans/lark-suite-reference/code-intelligence.json", "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7", "matchesPacket": true},
+      {"path": "plans/lark-suite-reference/execution-packages.json", "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b", "matchesPacket": true}
+    ],
+    "staleness": "All source evidence is provisional until the lead's wave0 commit. Rehash and reread changed seams against accepted dependency commits before implementation; no accepted dependency receipt was supplied or verified by this worker.",
+    "explorationLimit": "Package paths and direct imports only. Codegraph reported no index. find failed with judge 402; literal/name searches and direct reads supplied the evidence instead. No index initialization or network recovery attempted.",
+    "promptEvolution": "No prompt/skill change: this bounded inspection does not establish a justified canonical improvement and only the owned report is writable."
+  },
+  "foundationGates": [
+    {
+      "id": "FG-WAVE0-RECEIPTS",
+      "kind": "integration-launch",
+      "explicitDagEdge": false,
+      "evidence": "Dispatch requires wave0 commit and accepted dependencies. execution-packages.json:4837-4865 retains historical product_baseline_sha e953786ba7e30fb5da5dca7e88e20e324d5aebab and unresolved reference revision/digest.",
+      "requiredPrerequisite": "Lead resolves authoritative delivery manifest, wave0 base, spec hashes and approved prerequisite commits; accept CI-001/003/004 artifact plus readback receipts, acquire shared-file leases, then issue the implementation packet. Do not treat preflight dispatch depends_on=[] as the implementation DAG.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-TRANSITIVE-SCOPE-POLICY",
+      "kind": "hidden-foundation",
+      "explicitDagEdge": false,
+      "evidence": "code-intelligence.json:2536-2539 and 2737-2740 make both CI-003 and CI-004 depend on CI-002. contractPolicies:152-155 and root14:59 require one actor/workspace/source authorization and offline lease resolver. refs.ts:559-567 rejects foreign repository/snapshot refs; refs.ts:570-573 explicitly does not discover actors or renew leases.",
+      "requiredPrerequisite": "CI-002 acceptance must be present transitively, plus EG-IDENTITY and scoped repository/egress readiness for the affected scope. Renderer checks cannot substitute for authenticated host reads. Remote-private defaults to no offline access; bounded lease expiry and reconnect revocation must be implemented by the shared resolver.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-ROUTE-SCHEMA-OWNERSHIP",
+      "kind": "hidden-foundation",
+      "explicitDagEdge": false,
+      "evidence": "Published sharedPatchPaths list routes.ts but omit its parser and state contract. parseCompoundRoute:133-136 strips query tails; project parsing:320-328 ignores additional route segments; buildCompoundRoute:637-640 emits only project slug. ProjectsNavigationState:2453-2456 has no repository/snapshot/tab/ref.",
+      "requiredPrerequisite": "Integration owner authorizes and owns additional patches to apps/electron/src/shared/route-parser.ts and apps/electron/src/shared/types.ts. A builder-only patch cannot survive NavigationContext.navigate's parse/rebuild at 880-890.",
+      "state": "BLOCKS_IMPLEMENTATION_CONTRACT"
+    },
+    {
+      "id": "FG-EXISTING-PANEL-SINGLE-AUTHORITY",
+      "kind": "hidden-foundation",
+      "explicitDagEdge": false,
+      "evidence": "ProjectInfoPage:474-479 already mounts RepositorySnapshotPanel in Assets. RepositorySnapshotPanel:40-100 owns scope cancellation, inspection and local selected snapshot; its current props do not expose route-controlled selection.",
+      "requiredPrerequisite": "Accept wave0 and request its panel owner to expose controlled selection/status projection, or explicitly transfer that shared component to integration ownership. Move the single connection panel into Code Intelligence; do not duplicate a binding editor, snapshot store or private source cache.",
+      "state": "BLOCKS_IMPLEMENTATION_CONTRACT"
+    },
+    {
+      "id": "FG-TYPED-SOURCE-STATUS-AND-EVENTS",
+      "kind": "hidden-foundation",
+      "explicitDagEdge": false,
+      "evidence": "ElectronAPI:941-947 exposes local project preview/bind/capture/list/span/freshness/cancel only. Existing getProjects/getProject at 2090-2091 return unknown. SourceInfoPage consumes sources, permissions and MCP tools; FolderSourceConfig:490-528 has no repository/project association, while RepositoryBinding:61 permits sourceId.",
+      "requiredPrerequisite": "CI-001/CI-004 must deliver typed authorized source-to-project/repository capability/status projection, stable ref handling, index/run status and workspace-scoped events. Establish whether sourceId is canonical source config.id or another accepted identifier; never guess by path, provider label, source slug or git URL. No endpoint names beyond accepted contracts should be invented in CI-009.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-RENDERER-SAFE-REF-BOUNDARY",
+      "kind": "hidden-foundation",
+      "explicitDagEdge": false,
+      "evidence": "refs.ts:2-8 imports Node crypto/process/filesystem/path APIs; serializeRepositoryRef/parseRepositoryRef:547-557 use Buffer. code-intelligence/index.ts:25-27 reexports host-bearing modules. Existing RepositorySnapshotPanel uses type-only imports.",
+      "requiredPrerequisite": "CI-001/004 provide canonical refs through a renderer-safe codec/export or authorized host DTOs containing canonical serialized refs. Keep opaque ref transport in route state; validate and resolve at the host. Do not value-import the host-bearing barrel into renderer/shared route parser or invent a second incompatible ref grammar.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-CAPABILITY-REGISTRY-TRUTH",
+      "kind": "hidden-foundation",
+      "explicitDagEdge": false,
+      "evidence": "CI-001 DoD:2152-2153 requires reconciliation of selected/rejected tools and alwaysOn=false. MarketplaceSettingsPage:447-455 reports installed counts from catalog locks. CAPABILITY_TOOLS uses example/codewiki and example/deepwiki, and hashes id@version in packs.ts:48-53; root14:17-19 says these are not upstream verification receipts.",
+      "requiredPrerequisite": "CI-001 owner supplies reviewed inventory/selection revision and provider version/license/runtime readiness receipts for any enabled provider. CI-009 labels available, installed, selected and active separately and preserves off-by-default behavior. Native agent transport readiness is mandatory when handoff actually invokes tools; unavailable lanes remain explicit, never simulated.",
+      "state": "NOT_VERIFIED"
+    },
+    {
+      "id": "FG-I18N-AND-UI-PROOF",
+      "kind": "hidden-foundation",
+      "explicitDagEdge": false,
+      "evidence": "Repository AGENTS requires t() and all ten locale files. root14:38,57,61-67 prescribes same-host tabs, compact layout, responsive sheets, explicit failure states, accessible focus/help and reduced motion. execution-packages.json:4867-4873 requires real UI/font/ARIA and integrated readback evidence.",
+      "requiredPrerequisite": "Integration owner assigns translations under packages/shared/src/i18n/locales/*.json, outside the CI-009 write manifest. Actual native UI and negative-control proof must occur later under an implementation authorization and integrated revision; not performed in this preflight.",
+      "state": "NOT_VERIFIED"
+    }
+  ],
+  "ownedNewFiles": [
+    "apps/electron/src/renderer/pages/CodeIntelligencePage.tsx",
+    "apps/electron/src/renderer/components/code-intelligence/RepositoryStatus.tsx",
+    "apps/electron/src/renderer/components/code-intelligence/__tests__/navigation.test.ts"
+  ],
+  "proposedContributions": [
+    {
+      "path": "apps/electron/src/renderer/pages/CodeIntelligencePage.tsx",
+      "change": "Implement the real child host of ProjectInfoPage, not a new rail service. Consume loaded canonical workspace/project identity plus typed route selection. Use existing repository panel and accepted CI-003/004 projections for RC-01/02/12. Overview and Runs must use real status/receipts; Wiki/Diagram/Search/Architecture handoff tabs retain the same scoped route, with unimplemented/unavailable capabilities explicitly marked, never filled with fake analysis. This package does not implement downstream CI-010 search/graph or CI-011 wiki adoption. Maintain captured snapshot identity when refresh creates a new snapshot; route changes require explicit selection. Clear results and cancel scoped work before project/workspace changes; late responses/events cannot restore old private content.",
+      "prerequisite": "Accepted dependency DTOs, renderer bridge/events and shared patch requests."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/RepositoryStatus.tsx",
+      "change": "Render accepted repository/snapshot/index/run status DTOs without persistence or independent polling authority: repository/branch, parent commit plus dirty manifest identity, captured/index freshness/time, permissions and coverage/truncation, declared scanner limitations, explicit loading/empty/unbound/denied/stale/offline/error/unavailable states. Actions use the existing scoped host and accepted RPC; show cost/token units only when present in actual run receipts, not guessed zeros. Reuse existing repository error categories rather than display raw host errors/paths.",
+      "prerequisite": "CI-001 snapshot identity, CI-003 coverage/index outcomes, CI-004 event/run schemas."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/__tests__/navigation.test.ts",
+      "change": "Add consumer-visible route round-trip, malformed/foreign ref rejection, compact existing-panel preference, scope-transition late-result suppression and captured-snapshot retention checks. Follow Bun/Jotai patterns in panel-stack-knowledge.test.ts. Use canonical dependency fixtures and deterministic distinct workspace/project/repo/snapshot identities; no source-text assertions or mock echoes. Native reload/history/permissions proof remains a separate later lane.",
+      "prerequisite": "Integrated route/parser/type/panel contracts and accepted backend fixtures."
+    }
+  ],
+  "sharedPatchRequests": [
+    {
+      "path": "apps/electron/src/shared/routes.ts",
+      "symbol": "routes.view.projects; routes.view; toQueryString; ViewRoute",
+      "change": "Preserve existing projects() callers. Add a typed projectCodeIntelligence(projectSlug, { repo, snapshot, tab, ref? }) builder producing projects/project/{encodedSlug}/code-intelligence?repo={id}&snapshot={id}&tab={overview|wiki|diagram|search|architecture|runs}&ref={opaqueCanonicalRef}. Allow explicit unbound overview entry with absent repo/snapshot/ref; reject partial or inconsistent selections in the parser/host. Use URLSearchParams to encode query values, never source text/credentials. Ref semantics come from accepted CI-001 DTOs; repo/snapshot values must agree with a resolved ref.",
+      "reason": "Central route builders must serialize all four normative selection dimensions and keep Project as scope root.",
+      "ownership": "integration-owner; normative sharedPatchPath"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "symbol": "ProjectInfoPage; ProjectInfoPageProps; TabKey; loadProject; TabButton; Assets RepositorySnapshotPanel mount",
+      "change": "Add the Code Intelligence project tab and render CodeIntelligencePage as a child using loaded project.config.id and current workspace identity. Pass this panel's parsed selection from its existing host rather than reading a global focused route for nonfocused siblings. If dispatcher currently supplies only projectSlug, owner must supply panel-local selection through the existing ProjectInfoPage mount (mount caller not inspected in this package scope). Make Code Intelligence tab/selection route-derived and update through navigate/routes, keeping ordinary project tabs readable. Move the existing RepositorySnapshotPanel out of Assets into the single Code Intelligence child, retaining its keyed scope cancellation and preview/bind workflow. Before CI content loads, clear old project state on scope change and ignore late getProject responses; current loadProject has no response identity guard.",
+      "reason": "No duplicate repository editor/store; no global-focused-state bug in split panels; route reload and scope transitions must restore only authorized project content.",
+      "ownership": "integration-owner; normative sharedPatchPath"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+      "symbol": "SourceInfoPage source-loading/onSourcesChanged effects; Info_Page.Content; connection and permissions sections",
+      "change": "Add RepositoryStatus using a typed host-authorized source capability projection. Display permitted bindings, roots/exclusions, provider policy, index/freshness and links to the same Project Code Intelligence host. Require explicit project choice if multiple permitted bindings exist. Retain native source configuration/OAuth/MCP/permission editors. On workspace/source change or deletion clear repository status, cancel its requests and ignore late results/events; do not infer binding from local.path, provider or source URL. Source current loading effect does not clear previous source and missing updates leave it unchanged: guard CI rendering against this stale-source condition.",
+      "reason": "Sources is a connection/capability surface, not an independent repository scope or data authority.",
+      "ownership": "integration-owner; normative sharedPatchPath; waits for source projection gate"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/MarketplaceSettingsPage.tsx",
+      "symbol": "MarketplaceSettingsPage capability-packs map; copyOfflineReport; CAPABILITY_PACKS/CAPABILITY_TOOLS projection",
+      "change": "Consume CI-001's reconciled existing inventory and selection revision. Keep install-lock counts labelled as installed only; add actual selected/active/readiness distinctions and links to existing provider configuration or explicitly selected permitted Project host. Do not derive active/runtime-ready from installedCount or declared hashes; do not grant offline source access from buildOfflineCapabilityReport. Preserve opt-in/high-risk permissions and existing marketplace actions; no global repository selection store.",
+      "reason": "CI-R-40 requires available/installed/selected/active distinctions without silently enabling placeholder/rejected providers.",
+      "ownership": "integration-owner; normative sharedPatchPath"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+      "symbol": "APP_NAV_DESTINATIONS projects entry; AppNavDestinationId; APP_NAV_DESTINATIONS_BY_ID",
+      "change": "Retain the existing projects/sources/sessions/skills destination identities and projects isActive:isProjectsNavigation predicate for nested CI routes. No additional Agents/Code Intelligence/OpenWiki/GitDiagram/Groma destination. With nested navigator:'projects' no runtime registry patch is necessary; owner must preserve this exact behavior when integrating other waves. Any future optional global shortcut requires an explicit registry decision and points to the same authorized project host, not another surface.",
+      "reason": "AC-4 and root14 primary placement require reuse of the single navigation registry.",
+      "ownership": "integration-owner; normative sharedPatchPath; intentional zero diff for selected design"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts",
+      "symbol": "getActiveService; findServicePanel; resolveCompactWorkspaceSelection",
+      "change": "Keep the existing focus-first, then first-matching panel algorithm unchanged. Nested Code Intelligence state must parse as projects, so choosing Projects focuses an already open CI project panel, and choosing a panel focuses that exact id. Do not add another service selection kind or local navigation state. No production diff is needed once the central parser/type patch is integrated; verify this behavior using the normative navigation test file.",
+      "reason": "AC-3 preserves current compact navigation and panel focus, instead of implementing competing CI navigation.",
+      "ownership": "integration-owner; normative sharedPatchPath; intentional zero diff for selected design"
+    },
+    {
+      "path": "apps/electron/src/shared/route-parser.ts",
+      "symbol": "ParsedCompoundRoute; parseCompoundRoute; buildCompoundRoute; convertCompoundToViewRoute; convertCompoundToNavigationState; convertParsedRouteToNavigationState; navigationStateToCompoundRoute",
+      "change": "Add typed CI selection to project details and parse exactly the project/{slug}/code-intelligence shape plus allowlisted query keys. Preserve query values through every listed conversion and canonical builder, including project-info ParsedRoute params for pending navigation. Reject malformed percent encoding, extra segments, unsupported tabs, partial repository/snapshot tuples and malformed refs without displaying protected contents. Delegate canonical ref validation/resolution to accepted CI-001/004 boundary. Keep legacy projects/project/{slug} and unrelated route parsing intact. Preserve query encoding through NavigationContext navigate/reload/reconcile and panel delimiters.",
+      "reason": "Existing parser strips queries and accepts a CI suffix as an ordinary project, so routes.ts alone loses DoD data on normal navigate and reload.",
+      "ownership": "integration-owner; additional shared path omitted from normative manifest; authorization/lease required before implementation"
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "symbol": "ProjectsNavigationState.details; ElectronAPI project repository methods",
+      "change": "Extend project details with a typed optional Code Intelligence selection { repo?, snapshot?, tab, ref? } without changing navigator:'projects' or legacy project detail shape. Use dependency types and a discriminated unbound/bound selection so partial tuples cannot silently pass. CI-004 owner integrates typed index/run/status/events, canonical ref resolution and source capability lookup into ElectronAPI; exact signatures must match accepted transport rather than being guessed by CI-009.",
+      "reason": "No current state slot survives parse/rebuild for CI selection, and the existing local project RPC subset cannot provide the normative index/run/source event shell.",
+      "ownership": "integration-owner plus CI-004 contract owner; additional shared path omitted from normative manifest; authorization/lease required"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/code-intelligence/RepositorySnapshotPanel.tsx",
+      "symbol": "RepositorySnapshotPanelProps; snapshotId/path/range selection; request/refresh; repositoryErrorKey",
+      "change": "Wave0 owner exposes a route-controlled selection input and onSelectionChange/status projection to the single parent host. On reload select the requested authorized snapshot/ref, never refresh-fallback to snapshots[0] when an explicit captured snapshot is unavailable. Keep local form drafts nonpersistent and source reads bounded through the existing request/liveScope/cancelActive gate. Reuse existing error category helper and connection UI; retain no credentials or bodies in route state. Refresh may discover a new snapshot but must not silently retarget explicit citations.",
+      "reason": "This existing shared component owns selection privately today; creating a second selection/body store would violate the same-host and immutable-citation contracts.",
+      "ownership": "wave0/integration-owner; additional existing shared path omitted from normative manifest; approved owner handoff required"
+    },
+    {
+      "path": "packages/shared/src/code-intelligence/index.ts",
+      "symbol": "refs exports; serializeRepositoryRef/parseRepositoryRef import boundary",
+      "change": "Request CI-001 owner to publish a renderer-safe canonical ref/type boundary or CI-004 owner to return and validate canonical opaque refs via typed host DTOs. Keep host-bearing exports for existing server consumers; CI-009 route code must not import Node filesystem/process/Buffer implementations into renderer. No new codec file is owned by CI-009 and no parallel ref grammar is proposed.",
+      "reason": "Current export-all refs module contains Node imports, incompatible with assuming it is a renderer-safe runtime codec.",
+      "ownership": "CI-001/integration-owner; dependency integration request outside normative CI-009 shared paths"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/*.json",
+      "symbol": "projectInfo and codeIntelligence navigation/status/help translation keys",
+      "change": "Integration owner adds each new user-facing tab/status/action/help key to all ten existing locales in ASCII key order, with Russian default and required plural forms. Reuse existing codeIntelligence.repository.* categories; do not hardcode new visible strings or expose raw transport errors.",
+      "reason": "Repository AGENTS applies to all UI changes, but locale paths are absent from the normative package shared write manifest.",
+      "ownership": "integration-owner; additional shared locale paths require assignment; no files written by preflight"
+    }
+  ],
+  "acceptanceMatrix": [
+    {
+      "id": "CI-009-AC-1",
+      "criterion": "Project remains scope root",
+      "actualSymbol": "ProjectInfoPage/workspaceId/project.config.id; RepositoryBinding.workspaceId/projectId; resolveRepositoryRef",
+      "currentEvidence": "ProjectInfoPage:53-81 resolves current workspace and project slug; 474-479 passes canonical project id into existing panel. RepositoryBinding:54-65 distinguishes canonical repository id, workspace and project. resolveRepositoryRef:559-567 rejects foreign identities. No CodeIntelligencePage file was found.",
+      "requiredChange": "Mount one Code Intelligence child tab under this Project, keep Source and Marketplace links as handoffs to that same scoped host, and require current host authorization for every read/status/action. Clear prior scope before pending reload; never select a foreign ref or guess source-to-project bindings.",
+      "verification": ["Deep link reload restores the same allowed Project, repository and captured snapshot", "Switch workspace A to B while A request is pending: A content never renders and A ref is denied by host", "Unbound or empty Project shows explicit setup/empty status, not fabricated repository", "Focus/back navigation returns to the same project panel", "Denied, failed and truncated outcomes are visibly distinct and expose no foreign data"],
+      "missingPrerequisite": ["Wave0 commit and CI-001/003/004 accepted receipts", "Transitive CI-002 and EG-IDENTITY policy receipts", "Typed source capability projection and route/type integration leases"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-AC-2",
+      "criterion": "route serializes repo/snapshot/tab/ref",
+      "actualSymbol": "routes.view.projects; ParsedCompoundRoute; ProjectsNavigationState; NavigationContext.navigate; RepositoryRef",
+      "currentEvidence": "routes.ts:214-217 serializes projectSlug only. route-parser.ts:133-136 drops query, 637-640 builds project only, 1093-1100 and 1477-1481 lose selection. ProjectsNavigationState:2453-2456 carries no CI state. Canonical refs exist at refs.ts:137-146,547-557 but are host-bearing.",
+      "requiredChange": "Integrate builder/parser/state conversions for one typed nested project route with encoded repo/snapshot/tab/ref, explicit unbound entry, and host validation that route ids match canonical ref and current scope. Make panel selection controlled; preserve captured snapshot across refresh and reload. Credentials/source bodies never enter URL or history.",
+      "verification": ["Round-trip all six tabs plus snapshot/file/span refs with encoded paths, Unicode, slashes, colon, comma and question mark", "Normal navigate parse/rebuild, pending navigation, reload, multi-panel serialization and back/forward preserve exact identity", "Malformed/noncanonical/foreign/mismatched refs and unsupported tabs yield safe explicit invalid/denied outcomes", "Unavailable explicit snapshot remains unavailable instead of silently switching to latest", "Empty/unbound, permission/error/truncation and workspace switch denial scenarios cover the complete serialized selection"],
+      "missingPrerequisite": ["Additional shared route-parser.ts/types.ts authorization", "Renderer-safe canonical ref boundary", "Accepted snapshot/ref/status RPC and controlled wave0 panel contract"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-AC-3",
+      "criterion": "existing compact navigation and panel focus behavior retained",
+      "actualSymbol": "getActiveService/findServicePanel/resolveCompactWorkspaceSelection; updateFocusedPanelRouteAtom; NavigationContext.syncUrl; buildSemanticHistoryKey",
+      "currentEvidence": "compact-workspace-navigation.ts:21-58 prefers focused matching service panel, then first match, else navigation. panel-stack.ts:287-310 retains focused panel id and proportion. NavigationContext:289-305 serializes focused route, all panels and focused index; navigation-history.ts:21-32 includes routes and focused index in history key.",
+      "requiredChange": "Keep navigator projects and existing main-lane panel atoms/history authority. Pass each panel's route selection to its own ProjectInfoPage child, never borrow global focused selection. Route changes stay within existing navigate/updateFocusedPanelRouteAtom semantics; explicit new panel uses existing option only.",
+      "verification": ["With two CI project panels plus a source panel, Projects service selects the currently focused matching panel or first existing match without reopening", "Selecting another panel focuses its exact id and leaves routes/proportions unchanged", "Nested tab/ref navigation and reload preserve panel order/proportion/focused index", "Back/forward restores each sibling's own repository/snapshot/tab/ref, including workspace switch", "Empty/unbound and denied/error/truncation views do not hijack compact focus or create hidden panels"],
+      "missingPrerequisite": ["Central route parsing preserves CI state", "Integration owner resolves existing ProjectInfoPage mount to supply panel-local selection; caller outside this inspection scope", "Later actual native focus/back and compact UI proof"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-AC-4",
+      "criterion": "no separate Agents nav invented without registry change",
+      "actualSymbol": "AppNavDestinationId; APP_NAV_DESTINATIONS; APP_NAV_DESTINATIONS_BY_ID; getActiveService",
+      "currentEvidence": "nav-destinations.ts:51-62 has no Agents/CI id; projects at 96-103 uses isProjectsNavigation and sources at 136-143 uses isSourcesNavigation. root14:7 locates primary entry in Project and rejects separate provider apps in rail.",
+      "requiredChange": "Do not add any top-level Agents/provider/CI destination for this package. Keep Sessions/Skills for agent operations and existing Projects as active service. Source/Marketplace/deep links target same Project child. Optional future global shortcut is not authorized by this preflight and requires explicit registry integration.",
+      "verification": ["Actual desktop rail and compact menu after integration expose unchanged destinations and Projects stays active for all CI tabs", "Deep link reload and back retain Projects highlighting", "Workspace switch/empty/denied/error/truncated states do not add or route to another service", "Agent handoff uses existing Session/Skills paths without another Agents surface"],
+      "missingPrerequisite": ["Accepted route/parser integration", "Authoritative native rail and compact UI observation at integrated revision"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-RPC-EVENTS",
+      "criterion": "Renderer route/tab state consumes typed scoped RPC; UI subscribes index/run/freshness events and invalidates stale scope",
+      "actualSymbol": "ElectronAPI repository methods; RepositorySnapshotPanel.request/liveScope/cancelActive; onProjectsChanged/onSourcesChanged",
+      "currentEvidence": "ElectronAPI:941-947 defines local repository methods. Existing panel:70-100 rejects late responses and resets on scope changes. Normative CI-009:3875-3879 requires typed scoped RPC and index/run/freshness events; no such complete bridge contract was found in the inspected ElectronAPI surface.",
+      "requiredChange": "Consume accepted CI-004 typed status/events and CI-003 index outcomes. Gate subscriptions/results by current workspace/project/repo/snapshot and monotonic revision, cancel/unsubscribe on transition and invalidate stale scope immediately. Reuse the wave0 gate pattern, not a second event/cache authority.",
+      "verification": ["Inject delayed A-scope result/event after switching to B; no A identity or private data is displayed", "Out-of-order index/run revision cannot roll status backward", "Reconnect/reload rereads authoritative status and new snapshot does not retarget old citations", "Cancel/unmount cleans up pending scope and subscriptions"],
+      "missingPrerequisite": ["Accepted CI-004 renderer transport/event contracts and revision fields", "CI-003 index status", "CI-002 current authorization resolver"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-OFFLINE-PERMISSIONS",
+      "criterion": "Project/Source routes cannot select foreign repository; reload shows offline/unauthorized rather than stale remote-private contents",
+      "actualSymbol": "RepositoryScope; resolveRepositoryRef; assertRepositoryCurrentReadPolicy; RepositorySnapshotPanel.repositoryErrorKey",
+      "currentEvidence": "refs.ts:559-567 validates all ref identities; 570-573 says current authorization belongs to host. Panel:22-35 has localized error categories and connection types are explicitly local-owned at repository-connection.ts:1,16-24. Remote-private lease readiness is not established by these local contracts.",
+      "requiredChange": "Treat URL/ref as untrusted selection, not authority. At every host boundary resolve current actor/workspace/source policy; map denied/offline safely, purge old protected UI/cache on scope or revocation, and apply default no remote-private offline content. If an administrator enables bounded lease, show actual expiry/exposure window without promising instant disconnected revocation.",
+      "verification": ["Forged foreign binding/snapshot/span link returns denied and no protected payload", "Reload remote-private offline without lease exposes status only", "Expiry blocks search/wiki/diagram/agent context consistently", "Reconnect revocation clears formerly permitted data; locally owned allowed source still works under local policy"],
+      "missingPrerequisite": ["CI-002 shared lease resolver and identity readiness", "CI-004 host authorization readback receipts"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-PERSISTENCE",
+      "criterion": "Persist view/filter state only; no credentials or source bodies in navigation state",
+      "actualSymbol": "NavigationContext.syncUrl; storage.KEYS.workspaceUrl; RepositoryRef; RepositorySnapshotPanel draft/span state",
+      "currentEvidence": "NavigationContext:289-329 persists route/panels/focus and workspace URL. Ref schema:137-146 contains scoped identities/path/range only; validateRef:534 rejects extra keys. Panel keeps span excerpt and connection form drafts in component state, not route.",
+      "requiredChange": "Serialize only stable selection/filter identifiers in the existing URL/history store. Keep bounded excerpts, preview inventories, credentials, policy tokens and connection drafts out of URLs, workspaceUrl, analytics and public artifacts. Do not introduce CI localStorage or duplicate DB/persistence.",
+      "verification": ["After navigation/reload inspect URL, history and existing workspaceUrl: only allowlisted view fields are present", "Credential/source-body sentinel cannot appear in serialized state or error UI", "Back/forward restores filters/ref but reauthorizes content reads", "Malformed ref with extra payload fields is rejected"],
+      "missingPrerequisite": ["Canonical route and host ref validation contracts", "Later runtime persistence and negative sentinel readback"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-RC-01",
+      "criterion": "Repository connection entry preserves actual Project binding, approval preview, root/exclusion policy and bounded read-only workflow",
+      "actualSymbol": "ProjectInfoPage RepositorySnapshotPanel mount; RepositorySnapshotPanel.previewInventory/bind/capture; RepositoryConnectionConfiguration",
+      "currentEvidence": "Panel:107-133 previews configuration, binds with preview and expected policy fingerprints, then captures/readbacks. ProjectInfoPage passes saved workingDirectory; connection configuration:8-18 is readOnly:true and connectionRef:null; mandatory excludes at 43. This is existing local-owned functionality, not proof of full remote provider readiness.",
+      "requiredChange": "Reuse/move this actual local connection workflow into RC-01 under Code Intelligence. Preserve host-resolved saved directory, branch/includes/excludes/limits, approved preview fingerprint and current-policy validation. Show remote/git/provider choices only from accepted real contracts/readiness; unsupported paths remain explicit failures, not fake bindings.",
+      "verification": ["Actual saved Project directory preview/bind/capture then navigation reload readback", "Excluded .env and symlink escape fixture never produces readable content", "Policy/branch/root changes invalidate approval and report explicit state", "Unbound/missing directory/empty repo and foreign connection yield correct states"],
+      "missingPrerequisite": ["Wave0 acceptance and panel owner handoff", "CI-001/002 current policy receipts", "Real provider/version/credential readiness for any remote path enabled"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-RC-02",
+      "criterion": "Overview presents exact snapshot identity, freshness, index/coverage/failed scan state and same-host handoffs without speculative quality scores",
+      "actualSymbol": "RepositorySnapshotSummary/RepositoryFreshness; RepositorySnapshotPanel selection; proposed RepositoryStatus",
+      "currentEvidence": "refs.ts:90-117 distinguishes parentCommitSha, dirtyWorkingCopyDigest, coverage.truncated and freshness. Existing panel:89 chooses selected or first snapshot, while the normative overview requires stable snapshot identity and explicit failed/unknown outcomes.",
+      "requiredChange": "Render metadata through RepositoryStatus and accepted index/run DTOs, preserve explicit captured snapshot, label dirty bytes separately from remote commit identity, display truthful failure/uncovered/truncation and timestamp units. Overview cards update the same route/host rather than another page or state store.",
+      "verification": ["Dirty fixture remains distinguishable from clean parent commit after reload", "New capture does not change an already displayed citation until explicit selection", "Failed scanner displays unverified, never zero dependencies or analyzed success", "Limited inventory/index renders visible capped/truncated coverage with correct snapshot identity"],
+      "missingPrerequisite": ["CI-003 coverage/index status", "Route-controlled wave0 snapshot selection", "CI-004 freshness/event contract"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-RC-12",
+      "criterion": "Runs and recovery route handles jobID/status/cursor and real per-stage receipts/cancel/retry/resume; stale run cannot publish to new snapshot",
+      "actualSymbol": "CI-004 typed run/status/cancel/resume contracts to be accepted; proposed CodeIntelligencePage Runs projection",
+      "currentEvidence": "Normative RC-12 root14:55 and CI-004:2747-2749,2783-2799 require durable jobs/events and fingerprint recovery. Current inspected ElectronAPI local repository methods are not durable IntelligenceRun endpoints; RepositorySnapshotPanel cancellation only cancels repository requests.",
+      "requiredChange": "Use accepted IntelligenceRun refs in same project/snapshot route, render actual stage/status/cursor/receipts and only known cost/token units. Invoke real scoped CI-004 cancel/retry/resume; completion is not adoption/publication. Show stale/offline/provider failure explicitly and block stale publish via backend authority.",
+      "verification": ["Run route reload/restart restores same job/snapshot/cursor from host", "Cancel before/during/after completion has authoritative receipt", "Fingerprint drift marks stale rather than publishing to new snapshot", "Provider unavailable/offline and foreign run status do not leak private identifiers"],
+      "missingPrerequisite": ["CI-004 durable job acceptance and transport bridge", "CI-002 scope/egress readiness", "Provider runtime readiness only where actually exercised"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-SOURCE-MARKETPLACE",
+      "criterion": "Sources repository capabilities and Marketplace availability/configuration use existing policy/inventory and deep link into the same scoped host",
+      "actualSymbol": "SourceInfoPage; FolderSourceConfig/LoadedSource; RepositoryBinding.sourceId; MarketplaceSettingsPage capability map/copyOfflineReport",
+      "currentEvidence": "SourceInfoPage:209-228 loads source config and permissions; FolderSourceConfig has generic type/provider/local path, not repository status. Binding sourceId is optional. Marketplace:447-455 counts installed locks, and packs.ts:48-53,92-107 defines synthetic declaration pins and example repositories.",
+      "requiredChange": "Project authorized source bindings from typed host lookup, support explicit multiple-project choice and denied/unbound state. Display approved root/exclusions/index/provider policy without deriving authority from path/provider label. Marketplace uses accepted inventory to distinguish available/installed/selected/active, with configuration handoff and no auto enablement or offline content grant.",
+      "verification": ["Local and git/provider sources show only bindings allowed to current actor/workspace", "Ambiguous source binding requires explicit permitted Project choice", "Source deep link reload preserves authorized snapshot and denies foreign ref", "Installed placeholder is not active/runtime-ready and offline inventory report does not unlock protected code"],
+      "missingPrerequisite": ["Accepted sourceId identity semantics and typed source projection from CI-001/004", "CI-001 registry reconciliation receipt", "Identity/egress/provider readiness receipts"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    },
+    {
+      "id": "CI-009-UI-PROOF",
+      "criterion": "Root14 host shell remains localized, compact/responsive, accessible, and truthfully represents loading/empty/error/denied/stale/offline/truncated states",
+      "actualSymbol": "ProjectInfoPage.TabButton/Info_Page; SourceInfoPage.Info_Section; RepositorySnapshotPanel; proposed CodeIntelligencePage/RepositoryStatus",
+      "currentEvidence": "Existing pages use t(), Info_Page and shared controls. root14:38 requires header, six secondary tabs, responsive sheets below 900px; 57 mandates all input states; 63-67 mandates focus/help and reduced motion. No new CI page/status file or actual native observation exists in this preflight.",
+      "requiredChange": "Use existing components and Rox compact light UI; translated labelled tablist/tabpanel, visible keyboard focus, hover/focus/click help and reduced-motion-aware transitions. Use responsive tree/inspector sheets only for real mounted content and never fake downstream analysis panels. Add all new keys through integration owner to ten locales.",
+      "verification": ["Actual native Electron screenshots plus ARIA and computed loaded Rox font for normal, empty, denied/error/offline/stale/truncated views", "Keyboard tab navigation, focus return, back and sibling panel behavior", "Below-900px sheets, hover/focus/click help and reduced-motion behavior", "All locale keys resolve; later parity command and native Russian UI check on integrated revision"],
+      "missingPrerequisite": ["Translation/shared-path assignments", "Accepted actual dependency surfaces", "Later native UI authorization and integrated-revision artifact/readback proof"],
+      "state": "GAP_BLOCKS_COMPLETION"
+    }
+  ],
+  "sourceReferences": [
+    {"path": "plans/lark-suite-reference/code-intelligence.json", "symbol": "workPackages[8] CI-009 complete contract", "lineStart": 3822, "lineEnd": 4008, "sha256": "a3ef06c0e4cdff83ce5bf18ab15400b7d1eeab3dcf13e77081a5681ecf2fd5a7"},
+    {"path": "plans/lark-suite-reference/execution-packages.json", "symbol": "CI-009 ownership and launch contract", "lineStart": 4792, "lineEnd": 4882, "sha256": "c79e411bf85e84f7e83c75983280f5de76838847d576054e373e27bd20d6713b"},
+    {"path": "docs/lark-suite-reference/14-code-intelligence-ui.md", "symbol": "Placement; RC-01/02/12; offline policy and UI", "lineStart": 5, "lineEnd": 108, "sha256": "2c07a58511e385a7bef7d8630d333c685b924fb8e71819cf2215c097107b3c75"},
+    {"path": "apps/electron/src/renderer/components/app-shell/nav-destinations.ts", "symbol": "APP_NAV_DESTINATIONS projects/sources", "lineStart": 87, "lineEnd": 184, "sha256": "022c1bf1adeb1da16db51c1c3db396b0de6a926a59f74b3015ddeb4433f033e4"},
+    {"path": "apps/electron/src/renderer/components/app-shell/compact-workspace-navigation.ts", "symbol": "getActiveService/findServicePanel/resolveCompactWorkspaceSelection", "lineStart": 20, "lineEnd": 59, "sha256": "74d314e19240575ba6998d7f221cbde198e58008924f1ec32adc2d4f2ce0fd33"},
+    {"path": "apps/electron/src/shared/routes.ts", "symbol": "routes.view.projects", "lineStart": 213, "lineEnd": 217, "sha256": "c63ebd62bf194d35457354b267d6d3f431e5bfe03e4a315c5ac9357951170a29"},
+    {"path": "apps/electron/src/shared/route-parser.ts", "symbol": "parseCompoundRoute query stripping", "lineStart": 132, "lineEnd": 139, "sha256": "1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path": "apps/electron/src/shared/route-parser.ts", "symbol": "buildCompoundRoute projects", "lineStart": 637, "lineEnd": 640, "sha256": "1334b7d91ea07d66a32544a31e410201652ae29a7ac512d73fe95769fb9c2b3a"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "ProjectsNavigationState", "lineStart": 2450, "lineEnd": 2457, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path": "apps/electron/src/shared/types.ts", "symbol": "ElectronAPI project repository methods", "lineStart": 941, "lineEnd": 947, "sha256": "9e3d222fee9943a06589383cf77da174503faf0aa3f4e53406167e12b615bc0a"},
+    {"path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx", "symbol": "ProjectInfoPage tab bar and existing RepositorySnapshotPanel mount", "lineStart": 339, "lineEnd": 479, "sha256": "50eff1ed1db446b4cbc9c766f28ebfc60a28be50f713d97a6a786f246ef36d6c"},
+    {"path": "apps/electron/src/renderer/pages/SourceInfoPage.tsx", "symbol": "SourceInfoPage scoped load/permissions", "lineStart": 184, "lineEnd": 242, "sha256": "aace7e5efb2a07b053780b2727b36b2304e64df500e47c70ff2feab91aeb5960"},
+    {"path": "apps/electron/src/renderer/pages/settings/MarketplaceSettingsPage.tsx", "symbol": "MarketplaceSettingsPage capability-packs installed projection", "lineStart": 429, "lineEnd": 462, "sha256": "ed16ea0ab7bc472db6fe0946d40f5a7ffbf95df680bd9f1e2f9aeb668fcfd0fd"},
+    {"path": "apps/electron/src/renderer/components/code-intelligence/RepositorySnapshotPanel.tsx", "symbol": "RepositorySnapshotPanel scope/request/selection lifecycle", "lineStart": 38, "lineEnd": 150, "sha256": "ee9555f67011acfd94b4b0e18a1d5a41e7a580c04cbfc91dde0918f366e069c3"},
+    {"path": "apps/electron/src/renderer/contexts/NavigationContext.tsx", "symbol": "NavigationProvider navigate parse/rebuild", "lineStart": 837, "lineEnd": 903, "sha256": "40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"},
+    {"path": "apps/electron/src/renderer/contexts/NavigationContext.tsx", "symbol": "syncUrl panel/history persistence", "lineStart": 281, "lineEnd": 331, "sha256": "40e3ad32fd15de9e8357073459aabab2ef96013bcc1ddb0e5827186c878533c2"},
+    {"path": "apps/electron/src/renderer/contexts/navigation-history.ts", "symbol": "buildSemanticHistoryKey", "lineStart": 15, "lineEnd": 32, "sha256": "4d24a3462a3e1b2930646ede665348a7e5ef273cbd037b8532c90419a079f357"},
+    {"path": "apps/electron/src/renderer/atoms/panel-stack.ts", "symbol": "updateFocusedPanelRouteAtom", "lineStart": 287, "lineEnd": 311, "sha256": "9812c273f20af514ee56cc188566215a2781a183c9dd7e2effed254784cdc921"},
+    {"path": "packages/shared/src/projects/types.ts", "symbol": "ProjectConfig repositoryConnection/repositoryBindings", "lineStart": 35, "lineEnd": 61, "sha256": "fe25f9b57600eecb40d7ff2a8fc8bef8a6eae1c104a4a5ad64595f2cc4036ccb"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "RepositorySnapshotSummary/RepositoryRef", "lineStart": 90, "lineEnd": 146, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/refs.ts", "symbol": "validateRef/serializeRepositoryRef/parseRepositoryRef/resolveRepositoryRef", "lineStart": 532, "lineEnd": 573, "sha256": "432e2fc456532774886087a2e5e575102082bdb956c527afbad023499ba477d9"},
+    {"path": "packages/shared/src/code-intelligence/repository-connection.ts", "symbol": "RepositoryConnectionConfiguration/RepositoryConnectionInspection", "lineStart": 8, "lineEnd": 46, "sha256": "fcabbdab22124e8641b0df4404ea780f56da603ec1d277658823a41583b7107c"},
+    {"path": "packages/shared/src/capabilities/packs.ts", "symbol": "generated capability pins and placeholder CodeWiki/DeepWiki declarations", "lineStart": 48, "lineEnd": 107, "sha256": "0746e6c5df67dcb72e8bc8adb112a50dc337d207473a05beed74f6088540af9e"},
+    {"path": "packages/shared/src/sources/types.ts", "symbol": "FolderSourceConfig and LoadedSource workspace identity", "lineStart": 490, "lineEnd": 574, "sha256": "ada334585bc07a29dbce1fddfd7f1aadbc9c6399e6d73b71cc4150758ae8d377"}
+  ],
+  "nextExecutableAction": {
+    "owner": "integration-owner",
+    "action": "Read this report, reconcile the omitted shared route-parser/types/panel/locale and panel-local mount requests, and resolve wave0/delivery-manifest identity. After wave0 commit and accepted CI-001/003/004 receipts including transitive CI-002 readiness, rehash affected source seams and issue a scoped CI-009 implementation packet with exact DTO/event/ref exports and exclusive shared-file leases. Start with route/parser/type round-trip integration, then single Project host/status and Sources/Marketplace handoffs; run later product/UI/readback lanes only under that implementation packet.",
+    "workerImmediateDeliverable": "Owned preflight JSON only; not feature implementation or readiness acceptance."
+  },
+  "risks": [
+    "Root-owned wave0 bytes may change after inspection; historical source spec hashes cannot be used as current patch anchors.",
+    "A builder-only route change silently loses repo/snapshot/tab/ref through current query stripping and NavigationContext parse/rebuild.",
+    "Current project parser accepts extra suffix segments as plain project detail, so invalid CI deep links may appear valid unless exact shape is checked.",
+    "Reading global focused navigation inside a nonfocused ProjectInfoPage child can display another panel's private repository; existing mount caller must supply panel-local selection.",
+    "Duplicating the wave0 repository panel/selected snapshot state creates competing stores; current refresh defaults to first snapshot and can retarget explicit citations.",
+    "Existing ProjectInfoPage load lacks a response identity guard; SourceInfoPage retains prior source on missing lookup/update. New CI surfaces must be fenced against stale scope without claiming broad page fixes already exist.",
+    "Optional RepositoryBinding.sourceId is not sufficient evidence of implemented source lookup or accepted identifier semantics.",
+    "Node-bearing canonical ref exports cannot be assumed safe as renderer value imports; opaque transport still requires host validation.",
+    "Placeholder catalog pins and installed locks do not prove selected/active upstream provider/runtime readiness.",
+    "Remote-private offline lease and identity enforcement are required foundation gates, not optional UI masking or N/A.",
+    "The historical cloud baseline and unresolved manifest fields differ from the supplied preflight input revision; only the lead can bind an approved implementation base.",
+    "No product smoke/test/native UI evidence exists by design in this preflight; all DoD remains unverified and featureComplete remains false."
+  ]
+}
