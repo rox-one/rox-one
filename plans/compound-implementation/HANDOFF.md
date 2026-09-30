@@ -19,6 +19,12 @@ Baseline typecheck: 46 unique Electron / 25 server diagnostics; текущая f
 
 PostgreSQL 17.11 реально provisioned в отдельном локальном cluster, authenticated TCP и Bun.SQL transaction проверены. Receipt `wp01-postgres-readiness.json`; protected connection environment находится вне Git `/Users/t/.agents/state/rox-compound-workspace/postgres-environment.json`. Это инфраструктурная готовность, не реализация WP-01 и не cloud deployment.
 
+## Последний checkpoint и native отказ
+
+Wave 0 integration checkpoint `4b64b6f8489c1865e56dfe77145a3e6057f0bb39` запушен; `git ls-remote` подтвердил тот же SHA ветки. Native прогон `/Users/t/Pictures/Shots/Agents/rox-product-electron-1790762279842/result.json` прошёл 139 assertions, включая реальный CAS conflict/reload, удержанный native ACK при переходе A → B, typed properties и отсутствие повторных blur writes. Foreign B editor до/после ACK имел одинаковые decoded RGBA bytes. Затем открытие смешанного обычного/task списка вызвало нежелательную нормализацию Markdown: synthetic empty task, изменённые пробелы, удалённый завершающий newline. Outline gate не пройден. Native тест теперь требует ноль write requests, точные исходные bytes и правильные ordinary/task LI; ожидание загрузки не скрывает дефект. Исправление parser boundary в работе.
+
+Producer поддерживает 7 implementation workers и последующие 63 preflights (`--offset 70`) одновременно. Initial dispatch строго привязан к HEAD; return допускает только проверенный descendant с неизменными source hashes. Preflight не считается реализацией, full DoD остаётся открытым.
+
 ## Следующие действия
 
 1. Проверить `git status`, native worker state и новые логи. Не стирать dirty работу.

@@ -17,7 +17,7 @@ OMP = Path('/Users/t/.local/bin/omp')
 MODEL = 'openai-codex/gpt-6.1-sol'
 STATE = Path('/Users/t/.agents/state/rox-compound-70')
 sys.path.insert(0, str(RUNTIME))
-from harness.contracts import envelope, dispatch_packet, canonical_hash, verify_inputs
+from harness.contracts import envelope, dispatch_packet, canonical_hash, verify_inputs, input_manifest, revision
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -68,21 +68,30 @@ def verify(report_path, packet_path):
         raise ValueError('Preflight must not claim feature completion')
     return {'validPreflight': True, 'featureComplete': False, 'references': len(references)}
 
-def run(count):
+def preflight_selection(count, offset=0):
     if not 1 <= count <= 70:
         raise ValueError('Pool count must be between 1 and 70')
-    stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-    run_id = 'rox-compound-' + stamp
-    run_dir = STATE / run_id
-    run_dir.mkdir(parents=True)
+    if offset < 0:
+        raise ValueError('Preflight offset must be nonnegative')
     packages = json.loads((ROOT / 'plans/compound-implementation/progress.json').read_text())['packages']
     active = {'LSX-WP-001', 'LSX-WP-003', 'LSX-WP-005', 'LSX-WP-006', 'CI-001', 'RS-FOCUS-01'}
     first = ['WP-01', 'WP-48', 'RS-ADM-01', 'RS-AUT-01', 'RS-DRV-01', 'RS-MSG-01', 'RS-MTG-01']
     order = first + [p['id'] for p in packages if p['id'] not in first and p['id'] not in active]
     index = {p['id']: p for p in packages}
+    if offset + count > len(order):
+        raise ValueError(f'Preflight range [{offset}, {offset + count}) exceeds {len(order)} eligible packages')
+    return [index[identifier] for identifier in order[offset:offset + count]]
+
+
+def run(count, offset=0):
+    selected = preflight_selection(count, offset)
+    stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    run_id = 'rox-compound-' + stamp
+    run_dir = STATE / run_id
+    run_dir.mkdir(parents=True)
     jobs = []
-    for identifier in order[:count]:
-        package = index[identifier]
+    for package in selected:
+        identifier = package['id']
         spec_path, spec_record = record_for(package)
         directory = run_dir / identifier
         directory.mkdir()
@@ -130,7 +139,7 @@ Normative record ({spec_path}):
             'directory': str(directory), 'packetHash': packet['packet_hash'], 'output': output,
             'model': MODEL, 'inputRevision': packet['input_revision']}
         jobs.append((process, log, job))
-        write_json(run_dir / 'launch.json', {'runId': run_id, 'supervisorPid': os.getpid(), 'requested': count,
+        write_json(run_dir / 'launch.json', {'runId': run_id, 'supervisorPid': os.getpid(), 'requested': count, 'offset': offset,
             'started': len(jobs), 'phase': 'SOURCE_PREFLIGHT_ONLY', 'jobs': [j for _, _, j in jobs]})
     print(json.dumps({'runId': run_id, 'workersStarted': len(jobs), 'supervisorPid': os.getpid(), 'receipt': str(run_dir / 'launch.json')}), flush=True)
     while any(process.poll() is None for process, _, _ in jobs):
@@ -150,7 +159,7 @@ Normative record ({spec_path}):
             job['state'] = 'RUNNING' if code is None else 'PROCESS_EXITED'
             if code is not None:
                 job['exitCode'] = code
-        write_json(run_dir / 'launch.json', {'runId': run_id, 'supervisorPid': os.getpid(), 'requested': count,
+        write_json(run_dir / 'launch.json', {'runId': run_id, 'supervisorPid': os.getpid(), 'requested': count, 'offset': offset,
             'started': len(jobs), 'phase': 'SOURCE_PREFLIGHT_ONLY', 'jobs': [j for _, _, j in jobs]})
         time.sleep(10)
     for process, log, job in jobs:
@@ -159,7 +168,7 @@ Normative record ({spec_path}):
             job['preflightVerification'] = verify(ROOT / job['output'], Path(job['directory']) / 'packet.json')
         except (OSError, ValueError, KeyError) as error:
             job['preflightVerification'] = {'validPreflight': False, 'reason': str(error)}
-    write_json(run_dir / 'launch.json', {'runId': run_id, 'supervisorPid': os.getpid(), 'requested': count,
+    write_json(run_dir / 'launch.json', {'runId': run_id, 'supervisorPid': os.getpid(), 'requested': count, 'offset': offset,
         'started': len(jobs), 'phase': 'PREFLIGHT_PROCESSES_FINISHED', 'jobs': [j for _, _, j in jobs]})
 
 def repository_path(raw):
@@ -256,6 +265,7 @@ No Git writes/commits/push, install/update, build, broad typecheck, UI/browser/n
 Implement real source plus meaningful behavioral tests for the assigned mechanisms. Do not return only a report, plan, placeholder, TODO-only module, canned success result or disconnected mock screen. The report accompanies source and tests. Preserve current stores, actor/permission contracts, identity, commands, persistence and recovery. Every imported seam must actually exist at the assigned generation. Read current source: old preflight evidence may be stale.
 Dependencies and foundation gates differ. Use real current predecessor seams when implemented. If a required shared seam is absent, propose its precise root-owned implementation patch at the current generation; never invent a fallback, parallel authority or API and portray it as working. Record the exact blocked integration or external prerequisite, retain implementable work and tests, and keep all full DoD requirements open until root verifies them.
 Source generation hashes in packet.input_manifest bind immutable inspected inputs. Newly owned outputs are deliberately absent from that manifest. Check the input revision and hashes before starting and report any drift; do not silently adopt a new generation. Other workers have disjoint ownership. A policy boundary is not an OS sandbox.
+Root may commit independent files while you work. Keep the original packet/input_revision unchanged. At handoff only a verified descendant HEAD with every bound input/source byte unchanged can remain compatible; any source drift or rewritten ancestry is rejected. This does not relax initial preparation/launch revision checks.
 Write {directory}/implementation-report.json with exact packet task_id, attempt_id, packet_hash, input_revision and request_revision; packageId; featureComplete=false; state=IMPLEMENTED_PENDING_ROOT_INTEGRATION or BLOCKED_ON_FOUNDATION; dependencies equal the progress array; artifacts=[{{path,sha256}}] for every produced owned file; sharedPatchRequests=[{{path,baseSha256,patchPath,reason}}]; tests=[{{argv,exitCode,logPath,logSha256,state}}]; acceptanceMatrix=[{{criterion,mechanismEvidence,integrationNeeded,verification,state}}]; sourceReferences=[{{path,symbol,sha256}}]; remainingGates and nextExecutableAction.
 patchPath/logPath must point inside your external task directory. All artifacts/references need actual SHA256, not invented hashes. Tests must exercise behavior and a relevant failure path; if unavailable, mark NOT_RUN with exact prerequisite. Never claim root integration, full UI/native/provider verification, feature completion or issue closure. Include every produced file; every missing normative output remains a gate.
 Finish with paths to source, tests, patches and report plus concise concrete findings.
@@ -357,6 +367,27 @@ def external_file(directory, raw):
     return path
 
 
+def verify_handoff_generation(packet):
+    """Keep the original packet; permit only unchanged inputs on descendant HEAD."""
+    current_inputs = input_manifest(packet['cwd'], [item['path'] for item in packet['input_manifest']])
+    if current_inputs != packet['input_manifest']:
+        raise ValueError('Input artifacts changed since dispatch')
+    original = packet['input_revision']
+    current = revision(packet['cwd'])
+    if not original or not current:
+        raise ValueError('Committed input and current revisions required for implementation handoff')
+    argv = ['git', '-C', packet['cwd'], 'merge-base', '--is-ancestor', original, current]
+    checked = subprocess.run(argv, capture_output=True)
+    if checked.returncode != 0:
+        raise ValueError('Current HEAD is not a verified descendant of the input revision')
+    return {'inputRevision': original, 'currentRevision': current, 'generationAdvanced': current != original,
+            'ancestryVerification': {'argv': argv, 'exitCode': checked.returncode,
+                'relation': 'DESCENDANT' if current != original else 'SAME_REVISION',
+                'stdoutSha256': hashlib.sha256(checked.stdout).hexdigest(),
+                'stderrSha256': hashlib.sha256(checked.stderr).hexdigest()},
+            'inputManifestVerified': True}
+
+
 def verify_implementation(directory):
     directory = directory.resolve()
     packet = json.loads((directory / 'packet.json').read_text())
@@ -374,7 +405,7 @@ def verify_implementation(directory):
     if report.get('featureComplete') is not False or report.get('state') not in (
             'IMPLEMENTED_PENDING_ROOT_INTEGRATION', 'BLOCKED_ON_FOUNDATION'):
         raise ValueError('Worker cannot claim feature completion/integration')
-    verify_inputs(packet)
+    generation = verify_handoff_generation(packet)
     spec_path, record = record_for(binding['progressEntry'])
     if canonical_hash(record) != binding['normativeRecordSha256']:
         raise ValueError('Normative source generation changed')
@@ -445,7 +476,13 @@ def verify_implementation(directory):
             raise ValueError('Actual test exit code required')
     if not report['acceptanceMatrix'] or not report['nextExecutableAction'] or not report['remainingGates']:
         raise ValueError('Explicit acceptance and remaining integration gates required')
+    # Recheck generation after reading all artifacts; additional references stay bound to original bytes.
+    generation = verify_handoff_generation(packet)
+    for name, expected in source_hashes.items():
+        if not (ROOT / name).is_file() or digest(ROOT / name) != expected:
+            raise ValueError('Inspected source changed during verification: ' + name)
     return {'validImplementationHandoff': True, 'behaviorVerified': False, 'featureComplete': False,
+            **generation,
             'packageId': binding['packageId'], 'artifacts': artifacts, 'patches': patch_hashes,
             'missingNormativeOutputs': sorted(set(packet['outputs']) - set(names)),
             'scope': binding['verificationScope']}
@@ -519,6 +556,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--phase', choices=('preflight', 'implementation'), default='preflight')
     parser.add_argument('--count', type=int, default=70, help='Preflight pool size; unchanged default 70')
+    parser.add_argument('--offset', type=int, default=0, help='Preflight range offset in the stable eligible-package ordering')
     parser.add_argument('--ids', nargs='+', help='Explicit implementation package IDs; no automatic expansion')
     parser.add_argument('--expected-revision', help='Full committed input SHA required for implementation')
     parser.add_argument('--dependency-receipt', action='append', default=[], metavar='ID=PATH', help='Root-verified current dependency receipt; repeat as needed')
@@ -532,6 +570,8 @@ if __name__ == '__main__':
         elif args.verify_implementation:
             print(json.dumps(verify_implementation(Path(args.verify_implementation))))
         elif args.phase == 'implementation':
+            if args.offset:
+                parser.error('--offset applies only to preflight')
             receipts = {}
             for raw in args.dependency_receipt:
                 identifier, separator, path = raw.partition('=')
@@ -542,6 +582,6 @@ if __name__ == '__main__':
         elif args.ids or args.expected_revision or args.dependency_receipt or args.prepare_only:
             parser.error('Implementation selectors require --phase implementation')
         else:
-            run(args.count)
+            run(args.count, args.offset)
     except (OSError, ValueError, KeyError, StopIteration) as error:
         parser.exit(2, str(error) + '\n')

@@ -6,6 +6,8 @@
 
 Существующие `--count 70` и `--verify REPORT PACKET` сохраняют поведение source preflight. Default phase — `preflight`. Историческая preflight-волна `rox-compound-20260930T083916Z` имеет native receipts в `/Users/t/.agents/state/rox-compound-70/rox-compound-20260930T083916Z/launch.json` и снимок `external-workers.json`: это исследование, не реализация. Старые source hashes перечитываются при новой dispatch generation.
 
+Preflight `--offset` по умолчанию равен 0. Producer выбирает ровно диапазон `[offset, offset+count)` прежнего eligible ordering и отвергает отрицательный offset или выход за его границы до создания run directory. Следующие 63 пакета запускаются `--phase preflight --count 63 --offset 70`; последние четыре — `--count 4 --offset 133`. Offset записывается в launch receipt. Это 137 eligible preflights из 143 пакетов: шесть уже активных root-owned задач исключены прежним правилом.
+
 Implementation запускается только по явным IDs и полной committed input SHA. Первая независимая волна: `WP-01 WP-48 RS-ADM-01 RS-AUT-01 RS-DRV-01 RS-MSG-01 RS-MTG-01`. Все семь имеют пустой explicit dependency array. Это разрешает начало независимой работы после checkpoint commit, без заявления о полном DoD предыдущей волны. Foundation gates из published specification продолжают действовать.
 
 После root checkpoint commit выполнить:
@@ -32,7 +34,9 @@ python3 plans/compound-implementation/launch-worker-pool.py \
 
 ## Generation и dependencies
 
-Dispatch packet имеет native harness schema/hash, input revision и hashes нормативных specs, AGENTS, producer, этого контракта, preflight report и текущих inspected sources. External `implementation-binding.json` содержит exact progress entry, его hash, hash нормативной записи, ownership и source generation. Future owned outputs исключены из immutable `input_manifest`: запись своего файла не инвалидирует собственный packet. Смена input HEAD или bound existing source требует нового dispatch; verification не переименовывает stale evidence в успешное.
+Dispatch packet имеет native harness schema/hash, input revision и hashes нормативных specs, AGENTS, producer, этого контракта, preflight report и текущих inspected sources. External `implementation-binding.json` содержит exact progress entry, его hash, hash нормативной записи, ownership и source generation. Future owned outputs исключены из immutable `input_manifest`: запись своего файла не инвалидирует собственный packet. При preparation и launch HEAD обязан точно совпадать с input revision.
+
+При handoff разрешён новый HEAD только как проверенный descendant исходного input commit и только при точном совпадении всех `input_manifest` hashes, неизменных normative record/DAG и additional inspected source bytes исходной revision. Native `harness.contracts.input_manifest` проверяет inputs; настоящий `git merge-base --is-ancestor INPUT CURRENT` проверяет ancestry. Nonancestor/history rewrite и любой source drift отвергаются. Original packet, revision и packet hash не переписываются. Handoff receipt сохраняет `inputRevision`, `currentRevision`, `generationAdvanced`, exact ancestry argv/exit code и hashes stdout/stderr. Независимые root commits не аннулируют совместимый worker; изменение его source inputs требует нового dispatch.
 
 Изменение operational status/readiness/runtimeEvidence в `progress.json` не меняет source generation. Проверяются текущие `program`, `spec`, `dependencies` и точная нормативная запись. Дополнительные existing imports/patch targets, найденные после dispatch, допустимы только если их current bytes совпадают с bytes этого пути в bound commit. Они не добавляются в packet с новым hash задним числом.
 
