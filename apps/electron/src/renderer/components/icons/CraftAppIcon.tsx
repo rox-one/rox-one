@@ -5,7 +5,7 @@ interface CraftAppIconProps {
   size?: number
 }
 
-/** Rox mark (website favicon / email logo). */
+/** Rox mark (website favicon / email logo): transparent portrait, no plate or tile. */
 export function CraftAppIcon({ className, size = 64 }: CraftAppIconProps) {
   return (
     <img
@@ -14,7 +14,7 @@ export function CraftAppIcon({ className, size = 64 }: CraftAppIconProps) {
       width={size}
       height={size}
       className={className}
-      style={{ borderRadius: "22%", objectFit: "cover", aspectRatio: "1 / 1" }}
+      style={{ objectFit: "contain", aspectRatio: "1 / 1", background: "transparent" }}
       draggable={false}
     />
   )

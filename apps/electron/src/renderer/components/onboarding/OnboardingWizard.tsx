@@ -1,17 +1,15 @@
+import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
 import type { ApiSetupMethod } from "./APISetupStep"
 import { ProviderSelectStep, type ProviderChoice } from "./ProviderSelectStep"
 import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
 import { LocalModelStep, type LocalModelSubmitData } from "./LocalModelStep"
-import { CompletionStep } from "./CompletionStep"
 import { RoxConnectStep, type RoxConnectCodes } from "./RoxConnectStep"
 import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
 import { OmpCredentialStep, type OmpCredentialSubmitData } from "./OmpCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
 import type { CustomEndpointApi } from '@config/llm-connections'
-import { EnvironmentSetupStep } from "./EnvironmentSetupStep"
-import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 
 export type OnboardingStep =
   | 'welcome'
@@ -21,7 +19,7 @@ export type OnboardingStep =
   | 'local-model'
   | 'credentials'
   | 'omp-credential'
-  | 'environment'
+  /** Terminal state: the wizard closes (onFinish) — no completion screen. */
   | 'complete'
 
 export type LoginStatus = 'idle' | 'waiting' | 'success' | 'error'
@@ -37,6 +35,8 @@ export interface OnboardingState {
   gitBashStatus?: GitBashStatus
   isRecheckingGitBash?: boolean
   isCheckingGitBash?: boolean
+  /** First run: applying the default Rox runtime before the app opens. */
+  isFinishing?: boolean
 }
 
 interface OnboardingWizardProps {
@@ -67,12 +67,8 @@ interface OnboardingWizardProps {
   onRecheckGitBash?: () => void
   onClearError?: () => void
 
-  // Provider select (new flow)
+  // Provider select (Settings → ИИ)
   onSelectProvider?: (choice: ProviderChoice) => void
-  /** Called when user chooses "Setup later" on provider select */
-  onSkipSetup?: () => void
-  onSaveEnvironment?: (prefs: EnvironmentPrefs, completeQuestionnaire: boolean) => void
-  onSkipEnvironment?: () => void
 
   // Rox cloud Connect
   roxConnectCodes?: RoxConnectCodes | null
@@ -99,13 +95,12 @@ interface OnboardingWizardProps {
 }
 
 /**
- * OnboardingWizard - Full-screen onboarding flow container
+ * OnboardingWizard - Full-screen onboarding / provider setup container
  *
- * Manages the step-by-step flow for setting up Craft Agent:
- * 1. Welcome
- * 2. Provider Select (Claude / ChatGPT / Copilot / API Key / Local)
- * 3. Credentials (API Key or OAuth) or Local Model
- * 4. Completion
+ * First run: Welcome (username) only, then the app opens with the Rox runtime.
+ * Settings → ИИ: Provider Select (Rox / Claude / ChatGPT / Copilot / API Key /
+ * Local) → Credentials or Local Model → closes when the connection is saved.
+ * Reaching 'complete' calls onFinish once; there is no completion screen.
  */
 export function OnboardingWizard({
   state,
@@ -128,11 +123,8 @@ export function OnboardingWizard({
   onUseGitBashPath,
   onRecheckGitBash,
   onClearError,
-  // Provider select (new flow)
+  // Provider select (Settings → ИИ)
   onSelectProvider,
-  onSkipSetup,
-  onSaveEnvironment,
-  onSkipEnvironment,
   roxConnectCodes,
   roxConnectStatus = 'idle',
   roxConnectError,
@@ -145,6 +137,18 @@ export function OnboardingWizard({
   editInitialValues,
   className
 }: OnboardingWizardProps) {
+  // 'complete' is terminal: close the wizard exactly once per arrival.
+  const finishedRef = useRef(false)
+  useEffect(() => {
+    if (state.step !== 'complete') {
+      finishedRef.current = false
+      return
+    }
+    if (finishedRef.current) return
+    finishedRef.current = true
+    onFinish()
+  }, [state.step, onFinish])
+
   const renderStep = () => {
     switch (state.step) {
       case 'welcome':
@@ -153,6 +157,7 @@ export function OnboardingWizard({
             isExistingUser={state.isExistingUser}
             onContinue={onContinue}
             isLoading={state.isCheckingGitBash}
+            isFinishing={state.isFinishing}
           />
         )
 
@@ -186,7 +191,6 @@ export function OnboardingWizard({
         return (
           <ProviderSelectStep
             onSelect={onSelectProvider!}
-            onSkip={onSkipSetup}
           />
         )
 
@@ -229,22 +233,9 @@ export function OnboardingWizard({
           />
         )
 
-      case 'environment':
-        return (
-          <EnvironmentSetupStep
-            onContinue={(prefs, completeQuestionnaire) => onSaveEnvironment?.(prefs, completeQuestionnaire)}
-            onSkip={() => onSkipEnvironment?.()}
-          />
-        )
-
       case 'complete':
-        return (
-          <CompletionStep
-            status={state.completionStatus}
-            onFinish={onFinish}
-            accountAuthenticated={roxConnectStatus === 'success'}
-          />
-        )
+        // Closing via onFinish (effect above); keep the frame empty meanwhile.
+        return null
 
       default:
         return null

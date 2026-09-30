@@ -5,7 +5,7 @@
  * new messenger senders, unread agent replies). No I/O here.
  */
 
-export type InboxKind = 'permission' | 'credential' | 'plan' | 'memory' | 'skill' | 'sender' | 'reply' | 'error'
+export type InboxKind = 'permission' | 'credential' | 'plan' | 'memory' | 'skill' | 'sender' | 'reply' | 'error' | 'mail'
 export type InboxGroup = 'decision' | 'message'
 export type InboxView = 'all' | 'decisions' | 'messages' | 'snoozed' | 'done'
 export type InboxFilter = InboxView | { kind: InboxKind }
@@ -32,7 +32,7 @@ export interface InboxState {
 export const EMPTY_INBOX_STATE: InboxState = { done: {}, snoozed: {} }
 
 export const DECISION_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender']
-export const ALL_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error']
+export const ALL_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'mail']
 
 export interface SessionLike {
   id: string

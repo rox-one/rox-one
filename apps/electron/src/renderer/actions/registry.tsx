@@ -34,6 +34,8 @@ export function ActionRegistryProvider({ children }: { children: React.ReactNode
   const register = useCallback((handler: ActionHandler) => {
     const handlers = handlersRef.current.get(handler.actionId) || []
     handlers.push(handler)
+    // Stable sort: higher priority first, registration order within a tier.
+    handlers.sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
     handlersRef.current.set(handler.actionId, handlers)
 
     // Return cleanup function

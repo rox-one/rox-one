@@ -11,7 +11,7 @@
  * Rules:
  * - retry the startup RPCs with a short backoff, bounded by an overall
  *   deadline (a hung request cannot stretch startup to minutes);
- * - a definitive answer (`isFullyConfigured`) always wins;
+ * - provider/account readiness does not replace the name-only Welcome;
  * - if every attempt failed, App waits for the transport to reconnect and
  *   probes once more; only then does a user who already finished the Welcome
  *   step go to the app (never onboarding). A genuinely new user (no confirmed
@@ -86,8 +86,19 @@ export function decideStartupAppState(input: {
   usernameConfirmed: boolean
   workspaceId: string | null | undefined
 }): StartupAppState {
-  const { probe, usernameConfirmed, workspaceId } = input
-  const configured = probe.ok ? probe.value.isFullyConfigured : usernameConfirmed
-  if (!configured || !usernameConfirmed) return 'onboarding'
+  const { usernameConfirmed, workspaceId } = input
+  if (!usernameConfirmed) return 'onboarding'
   return workspaceId ? 'ready' : 'workspace-picker'
+}
+
+/** Re-read an unavailable workspace after a successful setup RPC establishes transport recovery.
+ * An authoritative null workspace remains a real picker decision, never an error fallback. */
+export async function recoverStartupWorkspace(
+  workspaceProbe: ProbeResult<string | null>,
+  setupProbe: SetupNeedsProbe,
+  fetchWorkspace: () => Promise<string | null>,
+  options: ProbeOptions = {},
+): Promise<ProbeResult<string | null>> {
+  if (workspaceProbe.ok || !setupProbe.ok) return workspaceProbe
+  return probeWithRetry(fetchWorkspace, options)
 }

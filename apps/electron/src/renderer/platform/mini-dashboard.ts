@@ -3,6 +3,7 @@
  * Missing measurements stay `null` (render "—"). Never coerce unknown to 0.
  */
 
+import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import type { TransportConnectionState } from '../../shared/types'
 
 export type SyncStatus =
@@ -14,6 +15,8 @@ export type SyncStatus =
   | 'error'
 
 export interface MiniDashboardSession {
+  name?: string
+  preview?: string
   hidden?: boolean
   isArchived?: boolean
   isProcessing?: boolean
@@ -33,7 +36,7 @@ export interface MiniDashboardSnapshot {
 }
 
 export function isVisibleDashboardSession(session: MiniDashboardSession): boolean {
-  return !session.hidden && !session.isArchived
+  return !session.hidden && !session.isArchived && !isInternalAgentSession(session)
 }
 
 export function resolveSyncStatus(

@@ -22,4 +22,10 @@ export interface ActionHandler {
   actionId: ActionId
   handler: () => void
   enabled?: () => boolean
+  /**
+   * Higher wins when several enabled handlers match (default 0). Lets a
+   * mounted screen take over a global hotkey while it applies (e.g. ⌘N on
+   * Задачи opens Quick Entry instead of a new chat).
+   */
+  priority?: number
 }

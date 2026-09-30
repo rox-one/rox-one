@@ -9,6 +9,7 @@ const setupDeferredCalls: boolean[] = []
 let oauthPreparationCalls = 0
 
 mock.module('@craft-agent/shared/auth', () => ({
+  fetchRoxBalance: async () => ({ balanceRox: '0' }),
   getAuthState: async () => ({
     billing: {
       type: null,
@@ -79,6 +80,7 @@ mock.module('@craft-agent/shared/credentials', () => ({
   getCredentialManager: () => ({
     setLlmOAuth: async () => {},
     setClaudeOAuthCredentials: async () => {},
+    hasRoxCloudSession: async () => false,
   }),
 }))
 
@@ -167,5 +169,12 @@ describe('onboarding:getAuthState', () => {
     await invoke(RPC_CHANNELS.onboarding.DEFER_SETUP)
 
     expect(setupDeferredCalls).toEqual([true])
+  })
+})
+
+describe('onboarding:getRoxBalance', () => {
+  it('is registered and reports «disconnected» without a Rox cloud session', async () => {
+    const { invoke } = await createHarness()
+    expect(await invoke(RPC_CHANNELS.onboarding.GET_ROX_BALANCE)).toEqual({ status: 'disconnected' })
   })
 })

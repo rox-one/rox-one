@@ -14,11 +14,14 @@
  * Reads are fail-soft: unknown/unsafe/corrupt ids yield null and are skipped
  * from list; corrupt sibling files are left on disk.
  */
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
+import { basename, join } from 'path'
 import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker } from '@craft-agent/core/tasks/personal'
 
 const TASK_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
+
+/** v2 = Things-style fields (checklist, trashedAt, reminderAt, source, repeat modes). */
+export const PERSONAL_TASK_SCHEMA_VERSION = 2
 
 export type { PersonalTaskMeta, PersonalTaskMigrationMarker } from '@craft-agent/core/tasks/personal'
 
@@ -133,6 +136,40 @@ export class PersonalTaskPersistStore {
     })
   }
 
+  /**
+   * Things-style schema (v2) marker. Before the first run of a build that
+   * writes v2 fields (checklist, trash, reminders, source…), copy every task
+   * file plus meta/migration markers verbatim into
+   * {root}/personal-tasks-backups/<stamp>-v1/. Idempotent; never deletes.
+   * Returns the backup dir when one was made in this call.
+   */
+  ensureSchemaBackup(version = PERSONAL_TASK_SCHEMA_VERSION, now: number = Date.now()): string | null {
+    const marker = this.readJson(this.schemaPath)
+    if (isPlainRecord(marker) && typeof marker.version === 'number' && marker.version >= version) return null
+    const root = join(this.dir, '..')
+    const stamp = new Date(now).toISOString().replace(/[:.]/g, '-')
+    const backupDir = join(root, 'personal-tasks-backups', `${stamp}-v${isPlainRecord(marker) && typeof marker.version === 'number' ? marker.version : 1}`)
+    let copied = 0
+    try {
+      mkdirSync(join(backupDir, 'personal-tasks'), { recursive: true })
+      if (existsSync(this.dir)) {
+        for (const name of readdirSync(this.dir)) {
+          if (!name.endsWith('.json')) continue
+          copyFileSync(join(this.dir, name), join(backupDir, 'personal-tasks', name))
+          copied += 1
+        }
+      }
+      for (const path of [this.metaPath, this.migrationPath]) {
+        if (existsSync(path)) copyFileSync(path, join(backupDir, basename(path)))
+      }
+    } catch {
+      // A failed backup must not flip the marker: retry next launch.
+      return null
+    }
+    this.writeJsonAtomic(this.schemaPath, { version, migratedAt: now, backupDir, copied })
+    return backupDir
+  }
+
   readMigration(): PersonalTaskMigrationMarker | null {
     const parsed = this.readJson(this.migrationPath)
     if (!isPlainRecord(parsed) || typeof parsed.migratedAt !== 'number') return null
@@ -145,6 +182,10 @@ export class PersonalTaskPersistStore {
 
   private get metaPath(): string {
     return join(this.dir, '..', 'personal-tasks-meta.json')
+  }
+
+  private get schemaPath(): string {
+    return join(this.dir, '..', 'personal-tasks-schema.json')
   }
 
   private get migrationPath(): string {

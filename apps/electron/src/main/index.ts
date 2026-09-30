@@ -136,6 +136,7 @@ import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc }
 import { createLocalClientBindingRegistry } from './local-client-binding'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
+import { registerMailIpc } from './mail/local-ipc'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@craft-agent/server-core/openclaw'
 
 // Initialize electron-log for renderer process support
@@ -536,6 +537,7 @@ app.whenReady().then(async () => {
     })
     registerMeetingCaptureIpc()
     registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
+    registerMailIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)))
 
     // Build real PlatformServices from Electron APIs
     const platform: PlatformServices = createElectronPlatform({

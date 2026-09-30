@@ -35,6 +35,19 @@ describe('buildMiniDashboard — no fake numbers', () => {
     expect(snapshot.sync).toBe('unknown')
   })
 
+  it('does not count Rox-internal distiller sessions', () => {
+    const snapshot = buildMiniDashboard({
+      sessions: [
+        { preview: 'You are the memory distiller for a coding agent. …', isProcessing: true },
+        { name: 'Реальная сессия' },
+      ],
+      tasks: null,
+      connection: null,
+    })
+    expect(snapshot.sessions).toBe(1)
+    expect(snapshot.activeAgents).toBe(0)
+  })
+
   it('does not treat missing tokenUsage as $0 / 0 tokens', () => {
     const snapshot = buildMiniDashboard({
       sessions: [

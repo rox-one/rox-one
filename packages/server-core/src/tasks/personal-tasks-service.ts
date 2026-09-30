@@ -20,7 +20,13 @@ import { PersonalTaskPersistStore } from './personal-persist.ts'
 
 export type { PersonalTasksMigrateInput, PersonalTasksMigrateResult, PersonalTasksSnapshot }
 
+const backedUp = new WeakSet<PersonalTaskPersistStore>()
+
 export function readPersonalTasks(store: PersonalTaskPersistStore): PersonalTasksSnapshot {
+  if (!backedUp.has(store)) {
+    backedUp.add(store)
+    try { store.ensureSchemaBackup() } catch { /* best effort — never blocks reads */ }
+  }
   return {
     tasks: store.list().map((entry) => entry.task),
     meta: store.readMeta(),

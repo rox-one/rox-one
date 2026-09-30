@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { waitForTransportConnected } from './lib/transport-wait'
-import { decideStartupAppState, probeSetupNeeds, probeWithRetry } from './lib/startup-setup-needs'
+import { decideStartupAppState, probeSetupNeeds, recoverStartupWorkspace, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
@@ -729,14 +729,15 @@ export default function App() {
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
     initialSetupNeeds: setupNeeds || undefined,
-    initialStep: usernameConfirmed ? 'provider-select' : 'welcome',
+    // Onboarding is the single name screen; provider setup lives in Settings → ИИ.
+    initialStep: 'welcome',
   })
 
   // Reauth login handler - placeholder (reauth is not currently used)
   const handleReauthLogin = useCallback(async () => {
     // Re-check setup needs
     const needs = await window.electronAPI.getSetupNeeds()
-    if (needs.isFullyConfigured && usernameConfirmed) {
+    if (usernameConfirmed) {
       setAppState('ready')
     } else {
       setSetupNeeds(needs)
@@ -756,8 +757,8 @@ export default function App() {
         // Startup RPCs share the local transport: retry transient failures
         // (server booting, reconnect, lock clash) so an error never sends an
         // already set-up user to onboarding or the workspace picker.
-        const wsProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
-        const wsId = wsProbe.ok ? wsProbe.value : null
+        let wsProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+        let wsId = wsProbe.ok ? wsProbe.value : null
         if (!wsProbe.ok) console.error('[App] getWindowWorkspace failed after retries:', wsProbe.error)
         setWindowWorkspaceId(wsId)
 
@@ -773,14 +774,18 @@ export default function App() {
           } catch (error) {
             console.error('[App] transport did not reconnect:', error)
           }
+
         }
         if (probe.ok) {
           setSetupNeeds(probe.value)
         } else {
           console.error('[App] getSetupNeeds failed after retries:', probe.error)
         }
-        // Onboarding only for a new user, incomplete setup, or unconfirmed
-        // display name; no workspace (thin client) → workspace picker.
+        wsProbe = await recoverStartupWorkspace(wsProbe, probe, () => window.electronAPI.getWindowWorkspace())
+        wsId = wsProbe.ok ? wsProbe.value : null
+        setWindowWorkspaceId(wsId)
+        // Welcome asks only for a display name; provider setup stays in Settings.
+        // Preserve retry/reconnect handling without restoring provider onboarding.
         setAppState(decideStartupAppState({ probe, usernameConfirmed, workspaceId: wsId }))
       } catch (error) {
         console.error('Failed to check auth state:', error)
@@ -2126,9 +2131,6 @@ export default function App() {
             onContinue={onboarding.handleContinue}
             onBack={onboarding.handleBack}
             onSelectProvider={onboarding.handleSelectProvider}
-            onSkipSetup={onboarding.handleSkipSetup}
-            onSaveEnvironment={onboarding.handleSaveEnvironment}
-            onSkipEnvironment={onboarding.handleSkipEnvironment}
             roxConnectCodes={onboarding.roxConnectCodes}
             roxConnectStatus={onboarding.roxConnectStatus}
             roxConnectError={onboarding.roxConnectError}

@@ -4,38 +4,55 @@
  * there is no org), «Новости» (user sources polled in the background:
  * RSS/Atom → autodiscovery → page diff) and «Подписки» (X home timeline via
  * the official API with a user token — never browser cookies). Data comes
- * from the feed:list server aggregator; «Источники ленты» manages sources.
+ * from the feed:list server aggregator; «Источники ленты» is a gallery of
+ * source cards with a preview-before-save add flow.
+ *
+ * Items carry user labels persisted in feed-state (feed:items:annotate):
+ * color, free-form tags, star and read state. The toolbar filters by color,
+ * tag, source, type and text, sorts newest/oldest with a per-day override,
+ * and switches list/cards density. The reading pane sends items to Tasks
+ * and Notes.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import {
-  FEED_DEFAULT_INTERVAL_MIN,
-  FEED_INTERVALS_MIN,
   FEED_TABS,
-  detectFeedSource,
-  type FeedItem,
+  type FeedAnnotationPatch,
+  type FeedColor,
+  type FeedItemAnnotation,
   type FeedListResult,
-  type FeedSource,
   type FeedTab,
   type XConnectionStatus,
 } from '@craft-agent/shared/feed'
+import {
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  CheckCheck,
+  ExternalLink,
+  LayoutGrid,
+  List as ListIcon,
+  ListTodo,
+  NotebookPen,
+  RefreshCw,
+  Search,
+  Star,
+} from 'lucide-react'
 import { navigate, routes } from '@/lib/navigate'
+import { cn } from '@/lib/utils'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useAutomations } from '@/hooks/useAutomations'
 import { useTeamState } from '@/components/team/team-store'
 import { useTeamRoster } from '@/components/team/use-team-roster'
-import { activityText, syncStatusText } from '@/components/team/team-labels'
+import { activityText } from '@/components/team/team-labels'
+import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
 import {
   Badge,
   Button,
   Card,
   Chip,
   EmptyState,
-  GroupLabel,
-  ListHeader,
-  ListRow,
   ModeScreenLayout,
   NavItem,
   NavSection,
@@ -46,20 +63,29 @@ import {
 } from '@/components/mode-screen/ModeScreen'
 import {
   TAB_CHIPS,
+  applyAnnotations,
   attentionCount,
   buildTeamItems,
-  filterFeed,
-  groupByDay,
-  sourceErrorText,
+  filterView,
+  groupOrdered,
+  sourceHealth,
   sourceLabel,
   sourceTone,
+  suggestTags,
   tabCounts,
+  tagsInUse,
   type FeedChip,
+  type FeedMark,
+  type FeedOrder,
+  type FeedViewItem,
 } from './feed/feed-model'
+import { ColorDot, ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
+import { SourceEditor, SourcesView } from './feed/FeedSources'
 
 type View = FeedTab | 'sources'
+type Density = 'list' | 'cards'
 
-const KIND_GLYPH: Record<FeedItem['kind'], string> = {
+const KIND_GLYPH: Record<FeedViewItem['kind'], string> = {
   session: '◧',
   'automation-run': '↻',
   'team-activity': '☺',
@@ -68,14 +94,29 @@ const KIND_GLYPH: Record<FeedItem['kind'], string> = {
   'x-post': '𝕏',
 }
 
-const STATUS_TONE: Record<NonNullable<FeedItem['status']>, Tone> = {
+const STATUS_TONE: Record<NonNullable<FeedViewItem['status']>, Tone> = {
   ok: 'success',
   error: 'danger',
   running: 'accent',
   waiting: 'warning',
 }
 
-const EMPTY: FeedListResult = { items: [], sources: [], x: { state: 'not-connected' }, generatedAt: 0 }
+const EMPTY: FeedListResult = { items: [], sources: [], x: { state: 'not-connected' }, generatedAt: 0, annotations: {} }
+const PREFS_KEY = 'rox.feed.view.v1'
+/** Read/unread styling only makes sense for external content. */
+const READABLE_TABS: ReadonlySet<FeedTab> = new Set(['news', 'subscriptions'])
+const STAR = FEED_COLOR_HEX.yellow
+
+function loadPrefs(): { order: FeedOrder; density: Density } {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as { order?: string; density?: string }
+    return { order: raw.order === 'oldest' ? 'oldest' : 'newest', density: raw.density === 'cards' ? 'cards' : 'list' }
+  } catch {
+    return { order: 'newest', density: 'list' }
+  }
+}
+
+const INPUT = 'h-7 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]'
 
 export default function FeedPage({ selectedId }: { selectedId?: string | null }) {
   const { t, i18n } = useTranslation()
@@ -90,11 +131,21 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
   const [chip, setChip] = useState<FeedChip>('all')
   const [sourceFilter, setSourceFilter] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [colors, setColors] = useState<ReadonlySet<FeedColor>>(new Set())
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
+  const [mark, setMark] = useState<FeedMark>('all')
+  const [prefs, setPrefs] = useState(loadPrefs)
+  const [perDay, setPerDay] = useState<Record<string, FeedOrder>>({})
   const [localSelected, setLocalSelected] = useState<string | null>(null)
   const [selectedSource, setSelectedSource] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [sent, setSent] = useState<{ itemId: string; kind: 'task' | 'note'; id: string } | null>(null)
   const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)) } catch { /* private mode */ }
+  }, [prefs])
 
   const routeBound = selectedId !== undefined
   const currentId = routeBound ? selectedId ?? null : localSelected
@@ -146,32 +197,53 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     () => buildTeamItems(team.activity ?? [], (e) => activityText(e, roster.members, roster.selfUserId, t)),
     [team.activity, roster.members, roster.selfUserId, t],
   )
-  const allItems = useMemo(() => [...data.items, ...teamItems], [data.items, teamItems])
+  const sourceById = useMemo(() => new Map(data.sources.map((s) => [s.id, s])), [data.sources])
+  const annotations = data.annotations
+  const allItems = useMemo(
+    () => applyAnnotations([...data.items, ...teamItems], annotations ?? {}, sourceById),
+    [data.items, teamItems, annotations, sourceById],
+  )
 
   const automations = useAutomations(workspaceId)
   const automationNames = useMemo(() => new Map(automations.automations.map((a) => [a.id, a.name])), [automations.automations])
 
   const tab: FeedTab = view === 'sources' ? 'news' : view
+  const readable = READABLE_TABS.has(tab)
   const counts = useMemo(() => tabCounts(allItems), [allItems])
   const attention = useMemo(() => attentionCount(allItems), [allItems])
+  const tabItems = useMemo(() => allItems.filter((i) => i.tab === tab), [allItems, tab])
+  const tabTags = useMemo(() => tagsInUse(tabItems), [tabItems])
+  const colorCounts = useMemo(() => {
+    const out: Partial<Record<FeedColor, number>> = {}
+    for (const i of tabItems) if (i.color) out[i.color] = (out[i.color] ?? 0) + 1
+    return out
+  }, [tabItems])
+  const unreadCount = useMemo(() => (readable ? tabItems.filter((i) => !i.read).length : 0), [tabItems, readable])
+  const starredCount = useMemo(() => tabItems.filter((i) => i.starred).length, [tabItems])
   const visible = useMemo(
-    () => filterFeed(allItems, { tab, chip, sourceId: tab === 'news' ? sourceFilter : null, query }, now, data.sources),
-    [allItems, tab, chip, sourceFilter, query, now, data.sources],
+    () => filterView(allItems, { tab, chip, sourceId: tab === 'news' ? sourceFilter : null, query, colors, tag: tagFilter, mark }, now, data.sources),
+    [allItems, tab, chip, sourceFilter, query, colors, tagFilter, mark, now, data.sources],
   )
-  const groups = useMemo(() => groupByDay(visible, now), [visible, now])
+  const groups = useMemo(() => groupOrdered(visible, now, prefs.order, perDay), [visible, now, prefs.order, perDay])
+  const ordered = useMemo(() => groups.flatMap((g) => g.items), [groups])
   const selected = useMemo(() => allItems.find((i) => i.id === currentId) ?? null, [allItems, currentId])
-  const sourceById = useMemo(() => new Map(data.sources.map((s) => [s.id, s])), [data.sources])
+  const suggestions = useMemo(() => suggestTags(allItems, data.sources, [], 10, t('feed.tags.defaults').split(',').map((x) => x.trim()).filter(Boolean)), [allItems, data.sources, t])
+  const filtersActive = !!(query || chip !== 'all' || sourceFilter || colors.size || tagFilter || mark !== 'all')
 
   const locale = i18n.resolvedLanguage || i18n.language
   const timeFmt = useMemo(() => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }), [locale])
   const dateFmt = useMemo(() => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), [locale])
   const dayFmt = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }), [locale])
-  const when = (at: number) => (new Date(at).toDateString() === new Date(now).toDateString() ? timeFmt.format(at) : dateFmt.format(at))
+  const longFmt = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }), [locale])
+  const when = useCallback((at: number) => (new Date(at).toDateString() === new Date(now).toDateString() ? timeFmt.format(at) : dateFmt.format(at)), [now, timeFmt, dateFmt])
 
+  const resetFilters = () => { setChip('all'); setQuery(''); setSourceFilter(null); setColors(new Set()); setTagFilter(null); setMark('all') }
   const switchView = (next: View) => {
     setView(next)
     setChip('all')
     setActionError(null)
+    setTagFilter(null)
+    setMark('all')
     if (next !== 'news') setSourceFilter(null)
   }
 
@@ -187,12 +259,43 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     }
   }
 
-  const titleOf = (item: FeedItem) => {
+  // Optimistic annotations: apply locally, persist, feed:changed reloads.
+  const annotate = useCallback((ids: string[], patch: FeedAnnotationPatch) => {
+    if (!ids.length) return
+    setData((d) => {
+      const next: Record<string, FeedItemAnnotation> = { ...(d.annotations ?? {}) }
+      for (const id of ids) {
+        const cur: FeedItemAnnotation = { ...(next[id] ?? {}) }
+        if (patch.tags !== undefined) { if (patch.tags.length) cur.tags = patch.tags; else delete cur.tags }
+        if (patch.color === null) delete cur.color
+        else if (patch.color) cur.color = patch.color
+        if (patch.starred !== undefined) { if (patch.starred) cur.starred = true; else delete cur.starred }
+        if (patch.read === true) cur.readAt = cur.readAt ?? Date.now()
+        else if (patch.read === false) delete cur.readAt
+        if (Object.keys(cur).length) next[id] = cur
+        else delete next[id]
+      }
+      return { ...d, annotations: next }
+    })
+    if (api?.feedAnnotate) void api.feedAnnotate(ids, patch).catch((e: unknown) => setActionError(e instanceof Error ? e.message : String(e)))
+  }, [api])
+
+  // Opening an item in the reading pane marks it read (external content only).
+  useEffect(() => {
+    if (selected && READABLE_TABS.has(selected.tab) && !selected.read) {
+      const id = selected.id
+      const timer = setTimeout(() => annotate([id], { read: true }), 600)
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [selected?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const titleOf = (item: FeedViewItem) => {
     if (item.kind === 'automation-run' && item.automationId && automationNames.get(item.automationId)) return automationNames.get(item.automationId)!
     return item.title || (item.kind === 'session' ? t('feed.untitledSession') : item.url ?? '')
   }
 
-  const openItem = (item: FeedItem) => {
+  const openItem = (item: FeedViewItem) => {
     if (item.ref?.type === 'session' || (item.kind !== 'automation-run' && item.sessionId)) {
       navigate(routes.view.allSessions(item.sessionId ?? item.ref!.id))
     } else if (item.ref?.type === 'automation') {
@@ -202,7 +305,28 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     }
   }
 
-  const onListKeys = useListKeys(visible, selected && visible.includes(selected) ? selected : null, (i) => select(i.id), openItem)
+  const toTask = (item: FeedViewItem) => void run(`task:${item.id}`, async () => {
+    const notes = [item.summary, item.url, item.sourceTitle ? t('feed.reader.fromSource', { source: item.sourceTitle }) : undefined].filter(Boolean).join('\n\n')
+    const task = createPersonalTask({ title: titleOf(item).slice(0, 200), notes })
+    setSent({ itemId: item.id, kind: 'task', id: task.id })
+  })
+
+  const toNote = (item: FeedViewItem) => void run(`note:${item.id}`, async () => {
+    if (!workspaceId || !api?.createNote) throw new Error(t('feed.reader.noWorkspace'))
+    const title = titleOf(item).replace(/[\\/:*?"<>|#]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || t('feed.title')
+    const created = await api.createNote(workspaceId, title)
+    const body = [
+      created.content?.trimEnd() || `# ${title}`,
+      item.summary ?? '',
+      item.url ? `[${t('feed.reader.original')}](${item.url})` : '',
+      [item.sourceTitle ?? item.author, dateFmt.format(item.at)].filter(Boolean).join(' · '),
+      item.tags.length ? item.tags.map((x) => `#${x.replace(/\s+/g, '-')}`).join(' ') : '',
+    ].filter(Boolean).join('\n\n')
+    await api.saveNote(workspaceId, created.id, `${body}\n`)
+    setSent({ itemId: item.id, kind: 'note', id: created.id })
+  })
+
+  const onListKeys = useListKeys(ordered, selected && ordered.includes(selected) ? selected : null, (i) => select(i.id), openItem)
 
   // ── navigator ────────────────────────────────────────────────────────────
   const xConnected = data.x.state === 'connected'
@@ -224,57 +348,141 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
         {data.sources.map((s) => (
           <NavItem
             key={s.id}
-            label={sourceLabel(s)}
+            label={<span className="flex min-w-0 items-center gap-1"><ColorDot color={s.color} size={6} /><span className="truncate">{sourceLabel(s)}</span></span>}
             count={s.itemCount || null}
-            dot={sourceTone(s)}
+            dot={sourceHealth(s) === 'checking' ? 'accent' : s.paused ? 'muted' : sourceTone(s)}
             active={view === 'news' && sourceFilter === s.id}
             onClick={() => { switchView('news'); setSourceFilter(s.id) }}
           />
         ))}
-        <NavItem testId="feed-nav-sources" label={t('feed.nav.manageSources')} active={view === 'sources'} onClick={() => switchView('sources')} />
+        <NavItem testId="feed-nav-sources" label={data.sources.length ? t('feed.nav.manageSources') : t('feed.nav.addFirstSource')} active={view === 'sources'} onClick={() => switchView('sources')} />
       </NavSection>
+      {tabTags.length && view !== 'sources' ? (
+        <NavSection title={t('feed.nav.tags')}>
+          {tabTags.slice(0, 8).map((x) => (
+            <NavItem key={x.tag} label={`#${x.tag}`} count={x.count} active={tagFilter?.toLowerCase() === x.tag.toLowerCase()} onClick={() => setTagFilter(tagFilter?.toLowerCase() === x.tag.toLowerCase() ? null : x.tag)} />
+          ))}
+        </NavSection>
+      ) : null}
       <NavSection title={t('feed.nav.connections')}>
-        <NavItem
-          label={xConnected ? t('feed.x.connectedAs', { username: data.x.username ?? '' }) : t('feed.x.connect')}
-          dot={xConnected ? 'success' : data.x.state === 'error' ? 'danger' : 'muted'}
-          onClick={() => switchView('sources')}
-        />
-        <NavItem
-          label={syncStatusText(roster.sync, team.outbox?.length ?? 0, t)}
-          dot={roster.org ? 'warning' : 'muted'}
-          onClick={() => switchView('team')}
-        />
+        {/* Two-line rows: long states wrap instead of being cut off at 220 px. */}
+        <button type="button" onClick={() => switchView('sources')} className="flex w-full items-start gap-2 rounded-[6px] px-2 py-1 text-left outline-none hover:bg-foreground/[0.05]" data-testid="feed-conn-x">
+          <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', xConnected ? 'bg-success' : data.x.state === 'error' ? 'bg-destructive' : 'bg-text-muted')} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] text-text-secondary">X</span>
+            <span className="block break-words text-[11px] leading-4 text-text-muted">{xConnected ? `@${data.x.username ?? ''}` : t('feed.x.notConnected')}</span>
+          </span>
+        </button>
+        <button type="button" onClick={() => switchView('team')} className="flex w-full items-start gap-2 rounded-[6px] px-2 py-1 text-left outline-none hover:bg-foreground/[0.05]" data-testid="feed-conn-team">
+          <span aria-hidden className={cn('mt-2 size-1.5 shrink-0 rounded-full', roster.org ? 'bg-[var(--warning,#d9a13b)]' : 'bg-text-muted')} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] text-text-secondary">{t('feed.tab.team')}</span>
+            <span className="block break-words text-[11px] leading-4 text-text-muted">{roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg')}</span>
+          </span>
+        </button>
       </NavSection>
     </>
   )
 
   // ── list: feed tabs ──────────────────────────────────────────────────────
-  const row = (item: FeedItem) => {
+  const metaOf = (item: FeedViewItem) => {
     const src = item.sourceId ? sourceById.get(item.sourceId) : undefined
-    const meta = item.kind === 'automation-run'
+    return item.kind === 'automation-run'
       ? t('feed.kind.automation-run')
       : item.kind === 'session'
         ? t('feed.kind.session')
         : item.author ?? (src ? sourceLabel(src) : item.sourceTitle) ?? t(`feed.kind.${item.kind}`)
+  }
+
+  const leading = (item: FeedViewItem, size: number) => {
+    const src = item.sourceId ? sourceById.get(item.sourceId) : undefined
+    return src
+      ? <SourceIcon source={src} size={size} />
+      : <span aria-hidden className="grid shrink-0 place-items-center rounded-[6px] bg-foreground/[0.05] text-text-muted" style={{ width: size, height: size }}>{KIND_GLYPH[item.kind]}</span>
+  }
+
+  const starIcon = (on: boolean, cls = 'size-3') => <Star aria-hidden className={cn(cls, on && 'fill-current')} style={on ? { color: STAR } : undefined} />
+
+  const row = (item: FeedViewItem) => {
+    const unread = readable && !item.read
+    const isSel = item.id === currentId
+    const colorBar = item.color ? <span aria-hidden className="absolute inset-y-2 left-0 w-1 rounded-full" style={{ background: FEED_COLOR_HEX[item.color] }} /> : null
+    const unreadDot = unread ? <span role="img" aria-label={t('feed.mark.unread')} className="size-1.5 shrink-0 rounded-full bg-accent" /> : null
+    if (prefs.density === 'cards') {
+      return (
+        <div
+          key={item.id}
+          role="option"
+          aria-selected={isSel}
+          tabIndex={isSel ? 0 : -1}
+          data-testid={`feed-row-${item.kind}`}
+          data-color={item.color}
+          onClick={() => select(item.id)}
+          className={cn(
+            'relative mx-2 mb-2 flex cursor-default gap-3 rounded-[8px] py-3 pl-4 pr-3 outline-none',
+            isSel ? 'bg-foreground/[0.09] shadow-[inset_0_0_0_2px_var(--accent)]' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
+          )}
+        >
+          {colorBar}
+          {leading(item, 28)}
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="flex min-w-0 items-center gap-1 text-[11px] text-text-muted">
+              {unreadDot}
+              <span className="truncate">{metaOf(item)}</span>
+              <span className="ml-auto shrink-0 tabular-nums">{when(item.at)}</span>
+            </span>
+            <span className={cn('line-clamp-2 text-[14px] leading-5', unread && 'font-semibold', item.status === 'error' && 'text-destructive')}>{titleOf(item)}</span>
+            {item.summary ? <span className="line-clamp-3 text-[12px] leading-4 text-text-secondary">{item.summary}</span> : null}
+            {item.tags.length || item.starred || (item.status && item.status !== 'ok') ? (
+              <span className="flex min-w-0 flex-wrap items-center gap-1 pt-1">
+                {item.starred ? <span role="img" aria-label={t('feed.mark.starred')}>{starIcon(true)}</span> : null}
+                {item.status && item.status !== 'ok' ? <Badge tone={STATUS_TONE[item.status]}>{t(`feed.status.${item.status}`)}</Badge> : null}
+                {item.tags.slice(0, 5).map((x) => <TagChip key={x} tag={x} muted={!item.ownTags.includes(x)} />)}
+              </span>
+            ) : null}
+          </span>
+        </div>
+      )
+    }
     return (
-      <ListRow key={item.id} testId={`feed-row-${item.kind}`} selected={item.id === currentId} onClick={() => select(item.id)}>
-        <span aria-hidden className="w-4 shrink-0 pt-px text-center text-text-muted">{KIND_GLYPH[item.kind]}</span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[12px] text-text-muted">{meta}</span>
-          <span className={`block truncate ${item.status === 'error' ? 'text-destructive' : ''}`}>{titleOf(item)}</span>
+      <div
+        key={item.id}
+        role="option"
+        aria-selected={isSel}
+        tabIndex={isSel ? 0 : -1}
+        data-testid={`feed-row-${item.kind}`}
+        data-color={item.color}
+        onClick={() => select(item.id)}
+        className={cn(
+          'relative mx-1 flex cursor-default items-start gap-2 rounded-[6px] py-2 pl-3 pr-2 outline-none',
+          isSel ? 'bg-foreground/[0.08] shadow-[inset_0_0_0_1px_var(--accent)]' : 'hover:bg-foreground/[0.04]',
+        )}
+      >
+        {colorBar}
+        {leading(item, 20)}
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="flex min-w-0 items-center gap-1 text-[11px] text-text-muted">
+            {unreadDot}
+            <span className="truncate">{metaOf(item)}</span>
+            {item.tags.slice(0, 2).map((x) => <span key={x} className="max-w-[96px] shrink-0 truncate">#{x}</span>)}
+          </span>
+          <span className={cn('block truncate text-[13px]', unread && 'font-semibold', item.status === 'error' && 'text-destructive')}>{titleOf(item)}</span>
           {item.summary ? <span className="block truncate text-[12px] text-text-secondary">{item.summary}</span> : null}
         </span>
-        <span className="flex shrink-0 flex-col items-end gap-0.5">
+        <span className="flex shrink-0 flex-col items-end gap-1">
           <span className="text-[11px] tabular-nums text-text-muted">{when(item.at)}</span>
-          {item.status && item.status !== 'ok' ? <Badge tone={STATUS_TONE[item.status]}>{t(`feed.status.${item.status}`)}</Badge> : null}
+          <span className="flex items-center gap-1">
+            {item.starred ? <span role="img" aria-label={t('feed.mark.starred')}>{starIcon(true)}</span> : null}
+            {item.status && item.status !== 'ok' ? <Badge tone={STATUS_TONE[item.status]}>{t(`feed.status.${item.status}`)}</Badge> : null}
+          </span>
         </span>
-      </ListRow>
+      </div>
     )
   }
 
   const emptyForTab = () => {
     if (!loaded) return <EmptyState title={t('feed.loading')} />
-    if (query || chip !== 'all' || sourceFilter) return <EmptyState testId="feed-empty" title={t('feed.empty.filteredTitle')} action={<Button onClick={() => { setChip('all'); setQuery(''); setSourceFilter(null) }}>{t('feed.empty.resetFilters')}</Button>} />
+    if (filtersActive) return <EmptyState testId="feed-empty" title={t('feed.empty.filteredTitle')} action={<Button onClick={resetFilters}>{t('feed.empty.resetFilters')}</Button>} />
     switch (tab) {
       case 'agents':
         return <EmptyState testId="feed-empty" title={t('feed.empty.agentsTitle')} body={t('feed.empty.agentsBody')} />
@@ -291,40 +499,119 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     }
   }
 
+  const refreshTarget = tab === 'subscriptions' ? 'x' : tab === 'news' ? sourceFilter : undefined
   const feedList = (
     <>
-      <ListHeader
-        title={sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}
-        subtitle={data.generatedAt ? t('feed.updatedAt', { time: timeFmt.format(data.generatedAt) }) : undefined}
-        actions={
-          <>
-            {tab === 'news' || tab === 'subscriptions' ? (
-              <Button variant="ghost" disabled={busy === 'refresh'} onClick={() => void run('refresh', async () => { await api?.feedRefresh(tab === 'subscriptions' ? 'x' : sourceFilter); await load() })}>
-                {busy === 'refresh' ? t('feed.refreshing') : t('feed.refresh')}
-              </Button>
-            ) : (
-              <Button variant="ghost" onClick={() => void load()}>{t('feed.refresh')}</Button>
-            )}
-          </>
-        }
-      />
-      <div className="flex flex-wrap items-center gap-1 px-3 pb-2">
-        {TAB_CHIPS[tab].map((c) => (
-          <Chip key={c} active={chip === c} onClick={() => setChip(c)}>{t(`feed.chip.${c}`)}</Chip>
-        ))}
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('feed.search')}
-          aria-label={t('feed.search')}
-          className="ml-auto h-6 w-32 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
-        />
+      <header className="flex min-h-[44px] shrink-0 items-center gap-2 px-3 pt-2">
+        <h2 className="min-w-0 truncate text-[15px] font-semibold">{sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}</h2>
+        {data.generatedAt ? <span className="hidden shrink-0 text-[11px] text-text-muted min-[1600px]:inline">{t('feed.updatedAt', { time: timeFmt.format(data.generatedAt) })}</span> : null}
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          {readable && unreadCount ? (
+            <Button variant="ghost" className="px-2" title={t('feed.markAllRead')} aria-label={t('feed.markAllRead')} onClick={() => annotate(visible.filter((i) => !i.read).map((i) => i.id), { read: true })} data-testid="feed-mark-all-read">
+              <CheckCheck aria-hidden className="size-3.5" />
+            </Button>
+          ) : null}
+          <div role="group" aria-label={t('feed.density.label')} className="flex items-center rounded-[6px] bg-foreground/[0.05]">
+            {(['list', 'cards'] as const).map((d) => (
+              <button
+                key={d}
+                type="button"
+                aria-pressed={prefs.density === d}
+                aria-label={t(`feed.density.${d}`)}
+                title={t(`feed.density.${d}`)}
+                data-testid={`feed-density-${d}`}
+                onClick={() => setPrefs((p) => ({ ...p, density: d }))}
+                className={cn('grid h-7 w-7 place-items-center rounded-[6px] outline-none', prefs.density === d ? 'bg-accent/15 text-foreground' : 'text-text-muted hover:text-foreground')}
+              >
+                {d === 'list' ? <ListIcon aria-hidden className="size-3.5" /> : <LayoutGrid aria-hidden className="size-3.5" />}
+              </button>
+            ))}
+          </div>
+          <Button
+            variant="ghost"
+            className="px-2"
+            disabled={busy === 'refresh'}
+            title={t('feed.refresh')}
+            aria-label={t('feed.refresh')}
+            onClick={() => void run('refresh', async () => { if (refreshTarget !== undefined) await api?.feedRefresh(refreshTarget); await load() })}
+          >
+            <RefreshCw aria-hidden className={cn('size-3.5', busy === 'refresh' && 'animate-spin')} />
+          </Button>
+        </div>
+      </header>
+      <div className="flex flex-col gap-2 px-3 pb-2" data-testid="feed-toolbar">
+        <div className="flex items-center gap-2">
+          <label className="relative flex min-w-0 flex-1 items-center">
+            <Search aria-hidden className="pointer-events-none absolute left-2 size-3.5 text-text-muted" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('feed.searchContent')}
+              aria-label={t('feed.searchContent')}
+              data-testid="feed-search"
+              className={cn(INPUT, 'w-full pl-7')}
+            />
+          </label>
+          <Button
+            variant="secondary"
+            data-testid="feed-sort"
+            aria-label={t('feed.sort.label')}
+            title={t('feed.sort.label')}
+            onClick={() => { setPrefs((p) => ({ ...p, order: p.order === 'newest' ? 'oldest' : 'newest' })); setPerDay({}) }}
+          >
+            {prefs.order === 'newest' ? <ArrowDownWideNarrow aria-hidden className="size-3.5" /> : <ArrowUpNarrowWide aria-hidden className="size-3.5" />}
+            {t(`feed.sort.${prefs.order}`)}
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          {TAB_CHIPS[tab].map((c) => (
+            <Chip key={c} active={chip === c} onClick={() => setChip(c)}>{t(`feed.chip.${c}`)}</Chip>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <ColorFilter value={colors} counts={colorCounts} onToggle={(c) => setColors((cur) => { const n = new Set(cur); if (n.has(c)) n.delete(c); else n.add(c); return n })} />
+          <div role="group" aria-label={t('feed.mark.label')} className="flex items-center gap-1">
+            {readable ? <Chip active={mark === 'unread'} onClick={() => setMark(mark === 'unread' ? 'all' : 'unread')}>{t('feed.mark.unread')}{unreadCount ? ` · ${unreadCount}` : ''}</Chip> : null}
+            <Chip active={mark === 'starred'} onClick={() => setMark(mark === 'starred' ? 'all' : 'starred')}>
+              <span className="inline-flex items-center gap-1">{starIcon(mark === 'starred')}{t('feed.mark.starred')}{starredCount ? ` · ${starredCount}` : ''}</span>
+            </Chip>
+          </div>
+          {tabTags.length ? (
+            <select aria-label={t('feed.filter.tag')} value={tagFilter ?? ''} onChange={(e) => setTagFilter(e.target.value || null)} className={cn(INPUT, 'h-6 max-w-[140px] px-1')} data-testid="feed-tag-filter">
+              <option value="">{t('feed.filter.anyTag')}</option>
+              {tabTags.map((x) => <option key={x.tag} value={x.tag}>#{x.tag} · {x.count}</option>)}
+            </select>
+          ) : null}
+          {tab === 'news' && data.sources.length > 1 ? (
+            <select aria-label={t('feed.filter.source')} value={sourceFilter ?? ''} onChange={(e) => setSourceFilter(e.target.value || null)} className={cn(INPUT, 'h-6 max-w-[140px] px-1')} data-testid="feed-source-filter">
+              <option value="">{t('feed.filter.anySource')}</option>
+              {data.sources.map((s) => <option key={s.id} value={s.id}>{sourceLabel(s)}</option>)}
+            </select>
+          ) : null}
+          {filtersActive ? <button type="button" onClick={resetFilters} className="ml-auto text-[11px] text-text-muted underline-offset-2 outline-none hover:text-foreground hover:underline">{t('feed.empty.resetFilters')}</button> : null}
+        </div>
       </div>
-      {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[6px] bg-destructive/10 px-2.5 py-1.5 text-[12px] text-destructive">{t('feed.loadError')}</div> : null}
-      <div role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list">
+      {loadError ? <div role="alert" className="mx-3 mb-1 rounded-[6px] bg-destructive/10 px-2 py-1 text-[12px] text-destructive">{t('feed.loadError')}</div> : null}
+      <div role="listbox" aria-label={t(`feed.tab.${tab}`)} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="feed-list" data-density={prefs.density}>
         {visible.length === 0 ? emptyForTab() : groups.map((g) => (
           <div key={g.key}>
-            <GroupLabel>{g.label === 'earlier' ? dayFmt.format(g.day) : t(`feed.day.${g.label}`)}</GroupLabel>
+            <div className="flex items-center gap-2 px-3 pb-1 pt-3 text-[11px] uppercase tracking-wide text-text-muted" data-testid="feed-day">
+              <span className="truncate">{g.label === 'earlier' ? dayFmt.format(g.day) : t(`feed.day.${g.label}`)}</span>
+              <span className="tabular-nums">{g.items.length}</span>
+              {g.items.length > 1 ? (
+                <button
+                  type="button"
+                  data-testid="feed-day-order"
+                  aria-label={t('feed.sort.dayToggle', { order: t(`feed.sort.${g.order === 'newest' ? 'oldest' : 'newest'}`) })}
+                  title={t('feed.sort.dayToggle', { order: t(`feed.sort.${g.order === 'newest' ? 'oldest' : 'newest'}`) })}
+                  onClick={() => setPerDay((m) => ({ ...m, [g.key]: g.order === 'newest' ? 'oldest' : 'newest' }))}
+                  className="ml-auto inline-flex h-5 items-center gap-1 rounded-[4px] px-1 normal-case tracking-normal outline-none hover:bg-foreground/[0.06] hover:text-foreground"
+                >
+                  {g.order === 'newest' ? <ArrowDownWideNarrow aria-hidden className="size-3" /> : <ArrowUpNarrowWide aria-hidden className="size-3" />}
+                  {t(`feed.sort.short.${g.order}`)}
+                </button>
+              ) : null}
+            </div>
             {g.items.map(row)}
           </div>
         ))}
@@ -332,180 +619,123 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     </>
   )
 
-  // ── list: «Источники ленты» ──────────────────────────────────────────────
-  const [newUrl, setNewUrl] = useState('')
-  const [newInterval, setNewInterval] = useState<number>(FEED_DEFAULT_INTERVAL_MIN)
-  const [addError, setAddError] = useState<string | null>(null)
+  // ── X connection panel (sources side pane) ───────────────────────────────
   const [xToken, setXToken] = useState('')
   const [xResult, setXResult] = useState<XConnectionStatus | null>(null)
-  const detected = useMemo(() => (newUrl.trim() ? detectFeedSource(newUrl) : null), [newUrl])
-
-  const addSource = () => void run('add', async () => {
-    setAddError(null)
-    const res = await api!.feedAddSource(newUrl, newInterval)
-    if (!res.ok) { setAddError(t(`feed.sources.addError.${res.error}`)); return }
-    setNewUrl('')
-    setSelectedSource(res.source.id)
-    await load()
-  })
-
-  const intervalLabel = (m: number) => (m < 60 ? t('feed.interval.minutes', { count: m }) : m < 1440 ? t('feed.interval.hours', { count: m / 60 }) : t('feed.interval.days', { count: m / 1440 }))
-  const intervalOptions = (value: number) => (FEED_INTERVALS_MIN.includes(value) ? FEED_INTERVALS_MIN : [...FEED_INTERVALS_MIN, value].sort((a, b) => a - b))
-
-  const sourcesList = (
-    <>
-      <ListHeader
-        title={t('feed.sources.title')}
-        subtitle={t('feed.sources.subtitle', { count: data.sources.length })}
-        actions={<Button variant="ghost" disabled={busy === 'refresh-all' || !data.sources.length} onClick={() => void run('refresh-all', async () => { await api?.feedRefresh(null); await load() })}>{busy === 'refresh-all' ? t('feed.refreshing') : t('feed.sources.refreshAll')}</Button>}
-      />
-      <div className="min-h-0 flex-1 overflow-y-auto pb-3" data-testid="feed-sources">
-        <form className="flex flex-col gap-1.5 px-3 pb-3" onSubmit={(e) => { e.preventDefault(); if (detected) addSource() }}>
-          <div className="flex gap-1.5">
-            <input
-              data-testid="feed-source-url"
-              value={newUrl}
-              onChange={(e) => { setNewUrl(e.target.value); setAddError(null) }}
-              placeholder={t('feed.sources.placeholder')}
-              aria-label={t('feed.sources.placeholder')}
-              className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]"
-            />
-            <select aria-label={t('feed.sources.interval')} value={newInterval} onChange={(e) => setNewInterval(Number(e.target.value))} className="h-7 rounded-[6px] bg-foreground/[0.05] px-1.5 text-[12px] outline-none">
-              {FEED_INTERVALS_MIN.map((m) => <option key={m} value={m}>{intervalLabel(m)}</option>)}
-            </select>
-            <Button type="submit" variant="primary" disabled={!detected || busy === 'add' || !api?.feedAddSource}>{t('feed.sources.add')}</Button>
+  const xPanel = (
+    <div data-testid="feed-x">
+      <Card>
+        {xConnected ? (
+          <div className="flex items-center gap-2">
+            <span className="flex-1 text-[13px]">{t('feed.x.connectedAs', { username: data.x.username ?? '' })}</span>
+            <Button variant="danger" disabled={busy === 'x'} onClick={() => void run('x', async () => { setXResult(await api!.feedClearX()); await load() })}>{t('feed.x.disconnect')}</Button>
           </div>
-          <p className="text-[11px] text-text-muted">
-            {newUrl.trim()
-              ? detected ? t('feed.sources.detected', { kind: t(`feed.sourceKind.${detected.kind}`) }) : t('feed.sources.addError.invalid-url')
-              : t('feed.sources.hint')}
-          </p>
-          {addError ? <p role="alert" className="text-[12px] text-destructive">{addError}</p> : null}
-        </form>
-
-        {data.sources.length ? <GroupLabel>{t('feed.sources.tracked')}</GroupLabel> : null}
-        {data.sources.map((s) => (
-          <ListRow key={s.id} testId="feed-source-row" selected={selectedSource === s.id} onClick={() => setSelectedSource(s.id)}>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate">{sourceLabel(s)}</span>
-              <span className="block truncate text-[12px] text-text-muted">{s.url}</span>
-            </span>
-            <span className="flex shrink-0 flex-col items-end gap-0.5">
-              <Badge tone="muted">{t(`feed.sourceKind.${s.kind}`)}</Badge>
-              <span className="text-[11px] text-text-muted">
-                <Badge tone={sourceTone(s)}>{t(`feed.sourceStatus.${s.lastStatus}`)}</Badge>{' '}
-                {s.lastFetchAt ? when(s.lastFetchAt) : ''} · {intervalLabel(s.intervalMin)}
-              </span>
-            </span>
-          </ListRow>
-        ))}
-
-        <GroupLabel>{t('feed.x.title')}</GroupLabel>
-        <div className="px-3" data-testid="feed-x">
-          <Card>
-            {xConnected ? (
-              <div className="flex items-center gap-2">
-                <span className="flex-1 text-[13px]">{t('feed.x.connectedAs', { username: data.x.username ?? '' })}</span>
-                <Button variant="danger" disabled={busy === 'x'} onClick={() => void run('x', async () => { setXResult(await api!.feedClearX()); await load() })}>{t('feed.x.disconnect')}</Button>
-              </div>
-            ) : (
-              <form className="flex flex-col gap-1.5" onSubmit={(e) => { e.preventDefault(); void run('x', async () => { const r = await api!.feedSetXToken(xToken); setXResult(r); if (r.state === 'connected') setXToken(''); await load() }) }}>
-                <p className="text-[12px] text-text-secondary">{t('feed.x.connectBody')}</p>
-                <div className="flex gap-1.5">
-                  <input type="password" autoComplete="off" value={xToken} onChange={(e) => setXToken(e.target.value)} placeholder={t('feed.x.tokenPlaceholder')} aria-label={t('feed.x.tokenPlaceholder')} className="h-7 min-w-0 flex-1 rounded-[6px] bg-foreground/[0.05] px-2 text-[12px] outline-none placeholder:text-text-muted focus:bg-foreground/[0.08]" />
-                  <Button type="submit" variant="primary" disabled={!xToken.trim() || busy === 'x' || !api?.feedSetXToken}>{busy === 'x' ? t('feed.x.checking') : t('feed.x.connect')}</Button>
-                </div>
-                <p className="text-[11px] text-text-muted">{t('feed.x.privacy')}</p>
-              </form>
-            )}
-            {xResult?.state === 'error' ? <p role="alert" className="pt-1.5 text-[12px] text-destructive">{t('feed.x.error', { message: xResult.message ?? '' })}</p> : null}
-          </Card>
-        </div>
-      </div>
-    </>
-  )
-
-  // ── detail ───────────────────────────────────────────────────────────────
-  const source = selectedSource ? sourceById.get(selectedSource) ?? null : null
-  const sourceDetail = source ? (
-    <div className="flex flex-col px-5 py-4" data-testid="feed-source-detail">
-      <div className="flex items-center gap-2 text-[12px] text-text-muted">
-        <Badge tone="muted">{t(`feed.sourceKind.${source.kind}`)}</Badge>
-        <Badge tone={sourceTone(source)}>{t(`feed.sourceStatus.${source.lastStatus}`)}</Badge>
-      </div>
-      <h2 className="pt-2 text-[17px] font-semibold">{sourceLabel(source)}</h2>
-      <p className="break-all pt-1 text-[12px] text-text-muted">{source.url}</p>
-      {source.feedUrl && source.feedUrl !== source.url ? <p className="break-all text-[12px] text-text-muted">{t('feed.sources.feedUrl')}: {source.feedUrl}</p> : null}
-      <SectionLabel>{t('feed.sources.state')}</SectionLabel>
-      <p className="text-[13px] text-text-secondary">
-        {source.lastFetchAt ? t('feed.sources.lastFetch', { time: when(source.lastFetchAt) }) : t('feed.sources.neverFetched')}
-        {' · '}{t('feed.sources.items', { count: source.itemCount ?? 0 })}
-      </p>
-      {source.kind === 'page' ? <p className="pt-1 text-[12px] text-text-muted">{t('feed.sources.pageDiffNote')}</p> : null}
-      {source.lastError ? <p role="alert" className="pt-1 text-[12px] text-destructive">{sourceErrorText(source.lastError, t)}</p> : null}
-      <SectionLabel>{t('feed.sources.interval')}</SectionLabel>
-      <select
-        aria-label={t('feed.sources.interval')}
-        value={source.intervalMin}
-        onChange={(e) => void run('interval', async () => { await api?.feedUpdateSource(source.id, { intervalMin: Number(e.target.value) }); await load() })}
-        className="h-7 w-40 rounded-[6px] bg-foreground/[0.05] px-1.5 text-[12px] outline-none"
-      >
-        {intervalOptions(source.intervalMin).map((m) => <option key={m} value={m}>{intervalLabel(m)}</option>)}
-      </select>
-      <div className="flex flex-wrap gap-1.5 pt-4">
-        <Button variant="primary" disabled={busy === `poll:${source.id}`} onClick={() => void run(`poll:${source.id}`, async () => { await api?.feedRefresh(source.id); await load() })}>{busy === `poll:${source.id}` ? t('feed.refreshing') : t('feed.sources.checkNow')}</Button>
-        <Button onClick={() => { switchView('news'); setSourceFilter(source.id) }}>{t('feed.sources.showItems')}</Button>
-        <Button variant="ghost" onClick={() => void api?.openUrl?.(source.url)}>{t('feed.openLink')}</Button>
-        <Button variant="danger" disabled={busy === `rm:${source.id}`} onClick={() => void run(`rm:${source.id}`, async () => { await api?.feedRemoveSource(source.id); setSelectedSource(null); await load() })}>{t('feed.sources.remove')}</Button>
-      </div>
-      {actionError ? <p role="alert" className="pt-2 text-[12px] text-destructive">{actionError}</p> : null}
+        ) : (
+          <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); void run('x', async () => { const r = await api!.feedSetXToken(xToken); setXResult(r); if (r.state === 'connected') setXToken(''); await load() }) }}>
+            <p className="text-[12px] text-text-secondary">{t('feed.x.connectBody')}</p>
+            <div className="flex gap-1">
+              <input type="password" autoComplete="off" value={xToken} onChange={(e) => setXToken(e.target.value)} placeholder={t('feed.x.tokenPlaceholder')} aria-label={t('feed.x.tokenPlaceholder')} className={cn(INPUT, 'min-w-0 flex-1')} />
+              <Button type="submit" variant="primary" disabled={!xToken.trim() || busy === 'x' || !api?.feedSetXToken}>{busy === 'x' ? t('feed.x.checking') : t('feed.x.connectShort')}</Button>
+            </div>
+            <p className="text-[11px] text-text-muted">{t('feed.x.privacy')}</p>
+          </form>
+        )}
+        {xResult?.state === 'error' ? <p role="alert" className="pt-2 text-[12px] text-destructive">{t('feed.x.error', { message: xResult.message ?? '' })}</p> : null}
+      </Card>
     </div>
-  ) : (
-    <EmptyState title={t('feed.sources.selectTitle')} body={t('feed.sources.selectBody')} />
   )
 
+  // ── reading pane ─────────────────────────────────────────────────────────
   const retryState = selected?.automationId ? automations.automationTestResults[selected.automationId]?.state : undefined
+  const selSource = selected?.sourceId ? sourceById.get(selected.sourceId) : undefined
   const itemDetail = selected ? (
-    <div className="flex flex-col px-5 py-4" data-testid="feed-detail" data-kind={selected.kind}>
-      <div className="flex items-center gap-2 text-[12px] text-text-muted">
+    <div className="flex flex-col px-6 py-4" data-testid="feed-detail" data-kind={selected.kind}>
+      <div className="flex min-w-0 items-center gap-2 text-[12px] text-text-muted">
+        {selSource ? <SourceIcon source={selSource} size={20} /> : null}
+        <span className="min-w-0 truncate">{selected.author ?? (selSource ? sourceLabel(selSource) : selected.sourceTitle) ?? ''}</span>
         <Badge tone={selected.status ? STATUS_TONE[selected.status] : 'muted'}>{t(`feed.kind.${selected.kind}`)}</Badge>
         {selected.status && selected.status !== 'ok' ? <Badge tone={STATUS_TONE[selected.status]}>{t(`feed.status.${selected.status}`)}</Badge> : null}
-        <span className="truncate">{selected.author ?? selected.sourceTitle ?? ''}</span>
-        <span className="ml-auto tabular-nums">{dateFmt.format(selected.at)}</span>
+        <span className="ml-auto shrink-0 tabular-nums">{longFmt.format(selected.at)}</span>
       </div>
-      <h2 className="pt-2 text-[17px] font-semibold">{titleOf(selected)}</h2>
-      {selected.summary ? <p className="whitespace-pre-wrap pt-2 text-[13px] text-text-secondary">{selected.summary}</p> : null}
-      {selected.error ? <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded-[6px] bg-destructive/10 p-2.5 font-mono text-[12px] text-destructive">{selected.error}</pre> : null}
-      {selected.url ? <p className="break-all pt-2 text-[12px] text-text-muted">{selected.url}</p> : null}
-      <div className="flex flex-wrap gap-1.5 pt-4">
+      <h2 className="max-w-[720px] pt-3 text-[20px] font-semibold leading-7">{titleOf(selected)}</h2>
+
+      <div className="flex flex-wrap items-center gap-1 pt-3" data-testid="feed-reader-actions">
+        {selected.url ? (
+          <Button variant="primary" onClick={() => void api?.openUrl?.(selected.url!)} data-testid="feed-open-original"><ExternalLink aria-hidden className="size-3.5" />{t('feed.reader.openOriginal')}</Button>
+        ) : null}
         {selected.kind === 'session' || (selected.kind === 'team-activity' && selected.sessionId) ? (
-          <Button variant="primary" onClick={() => openItem(selected)}>{t('feed.openSession')}</Button>
+          <Button variant={selected.url ? 'secondary' : 'primary'} onClick={() => openItem(selected)}>{t('feed.openSession')}</Button>
         ) : null}
-        {selected.kind === 'automation-run' ? (
-          <>
-            {selected.status === 'error' ? (
-              <Button
-                variant="primary"
-                data-testid="feed-retry"
-                disabled={!selected.automationId || !automationNames.has(selected.automationId) || retryState === 'running'}
-                onClick={() => automations.handleTestAutomation(selected.automationId!)}
-              >
-                {retryState === 'running' ? t('feed.retrying') : t('feed.retry')}
-              </Button>
-            ) : null}
-            {selected.sessionId ? <Button onClick={() => navigate(routes.view.allSessions(selected.sessionId!))}>{t('feed.openSession')}</Button> : null}
-            <Button variant="ghost" onClick={() => navigate(routes.view.automations({ automationId: selected.automationId! }))}>{t('feed.openAutomation')}</Button>
-          </>
+        <Button disabled={busy === `task:${selected.id}`} onClick={() => toTask(selected)} data-testid="feed-to-task"><ListTodo aria-hidden className="size-3.5" />{t('feed.reader.toTask')}</Button>
+        <Button disabled={busy === `note:${selected.id}` || !workspaceId} onClick={() => toNote(selected)} data-testid="feed-to-note"><NotebookPen aria-hidden className="size-3.5" />{t('feed.reader.toNote')}</Button>
+        <Button variant="ghost" aria-pressed={selected.starred} data-testid="feed-star" onClick={() => annotate([selected.id], { starred: !selected.starred })}>
+          {starIcon(selected.starred, 'size-3.5')}
+          {selected.starred ? t('feed.reader.unstar') : t('feed.reader.star')}
+        </Button>
+        {READABLE_TABS.has(selected.tab) ? (
+          <Button variant="ghost" onClick={() => annotate([selected.id], { read: !selected.read })} data-testid="feed-toggle-read">
+            {selected.read ? t('feed.reader.markUnread') : t('feed.reader.markRead')}
+          </Button>
         ) : null}
-        {selected.url ? <Button variant={selected.tab === 'news' || selected.tab === 'subscriptions' ? 'primary' : 'secondary'} onClick={() => void api?.openUrl?.(selected.url!)}>{t('feed.openLink')}</Button> : null}
-        {selected.sourceId && sourceById.has(selected.sourceId) ? <Button variant="ghost" onClick={() => { switchView('sources'); setSelectedSource(selected.sourceId!) }}>{t('feed.source')}</Button> : null}
       </div>
+      {sent && sent.itemId === selected.id ? (
+        <p className="pt-2 text-[12px] text-success" role="status" data-testid="feed-sent">
+          {sent.kind === 'task' ? t('feed.reader.taskCreated') : t('feed.reader.noteCreated')}{' '}
+          <button type="button" className="underline underline-offset-2" onClick={() => navigate(sent.kind === 'task' ? routes.view.tasks(sent.id) : routes.view.notes(sent.id))}>
+            {sent.kind === 'task' ? t('feed.reader.openTask') : t('feed.reader.openNote')}
+          </button>
+        </p>
+      ) : null}
+
+      <div className="grid max-w-[720px] grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 pt-4 text-[12px]" data-testid="feed-labels">
+        <span className="pt-0.5 text-text-muted">{t('feed.color.label')}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <ColorPicker value={selected.ownColor} onChange={(c) => annotate([selected.id], { color: c })} testId="feed-item-color" />
+          {!selected.ownColor && selected.color ? <span className="text-[11px] text-text-muted">{t('feed.color.inherited', { color: t(`feed.color.${selected.color}`) })}</span> : null}
+        </div>
+        <span className="pt-1 text-text-muted">{t('feed.tags.label')}</span>
+        <TagEditor value={selected.ownTags} inherited={selSource?.tags} onChange={(tags) => annotate([selected.id], { tags })} suggestions={suggestions} testId="feed-item-tags" />
+      </div>
+
+      {selected.summary ? (
+        <div className="max-w-[720px] pt-4">
+          <SectionLabel>{t('feed.reader.summary')}</SectionLabel>
+          <p className="whitespace-pre-wrap text-[14px] leading-6 text-foreground">{selected.summary}</p>
+        </div>
+      ) : selected.url ? (
+        <p className="max-w-[720px] pt-4 text-[12px] text-text-muted">{t('feed.reader.noSummary')}</p>
+      ) : null}
+      {selected.error ? <pre className="mt-2 max-w-[720px] overflow-x-auto whitespace-pre-wrap rounded-[6px] bg-destructive/10 p-2 font-mono text-[12px] text-destructive">{selected.error}</pre> : null}
+      {selected.url ? <p className="max-w-[720px] break-all pt-3 text-[11px] text-text-muted">{selected.url}</p> : null}
+
+      {selected.kind === 'automation-run' ? (
+        <div className="flex flex-wrap gap-1 pt-4">
+          {selected.status === 'error' ? (
+            <Button
+              variant="primary"
+              data-testid="feed-retry"
+              disabled={!selected.automationId || !automationNames.has(selected.automationId) || retryState === 'running'}
+              onClick={() => automations.handleTestAutomation(selected.automationId!)}
+            >
+              {retryState === 'running' ? t('feed.retrying') : t('feed.retry')}
+            </Button>
+          ) : null}
+          {selected.sessionId ? <Button onClick={() => navigate(routes.view.allSessions(selected.sessionId!))}>{t('feed.openSession')}</Button> : null}
+          <Button variant="ghost" onClick={() => navigate(routes.view.automations({ automationId: selected.automationId! }))}>{t('feed.openAutomation')}</Button>
+        </div>
+      ) : null}
+      {selSource ? (
+        <div className="pt-4">
+          <Button variant="ghost" onClick={() => { switchView('sources'); setSelectedSource(selSource.id) }}>{t('feed.reader.sourceSettings')}</Button>
+        </div>
+      ) : null}
       {retryState === 'success' ? <p className="pt-2 text-[12px] text-success">{t('feed.retryOk')}</p> : retryState === 'error' ? <p role="alert" className="pt-2 text-[12px] text-destructive">{t('feed.retryFailed')}</p> : null}
       {selected.kind === 'automation-run' && selected.automationId && !automationNames.has(selected.automationId) ? <p className="pt-2 text-[12px] text-text-muted">{t('feed.automationGone')}</p> : null}
       {actionError ? <p role="alert" className="pt-2 text-[12px] text-destructive">{actionError}</p> : null}
+      <p className="pt-6 text-[11px] text-text-muted">{t('feed.reader.keys')}</p>
     </div>
   ) : (
-    <EmptyState title={t('feed.selectTitle')} body={t('feed.selectBody')} />
+    <EmptyState title={t('feed.selectTitle')} body={t('feed.reader.keys')} />
   )
 
   useEffect(() => {
@@ -513,7 +743,11 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
       if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (view === 'sources') return
       if (event.key === 'Escape' && selected) select(null)
+      else if (event.key === 's' && selected) annotate([selected.id], { starred: !selected.starred })
+      else if (event.key === 'u' && selected && READABLE_TABS.has(selected.tab)) annotate([selected.id], { read: !selected.read })
+      else if (event.key === 'o' && selected?.url) void api?.openUrl?.(selected.url)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -529,12 +763,40 @@ export default function FeedPage({ selectedId }: { selectedId?: string | null })
     </>
   )
 
+  const source = selectedSource ? sourceById.get(selectedSource) ?? null : null
+  const showItems = (id: string) => { switchView('news'); setSourceFilter(id) }
   return (
     <ModeScreenLayout
       testId="feed-page"
       navigator={navigator}
-      list={view === 'sources' ? sourcesList : feedList}
-      detail={view === 'sources' ? sourceDetail : itemDetail}
+      wideList={view === 'sources'}
+      list={view === 'sources' ? (
+        <SourcesView
+          api={api}
+          sources={data.sources}
+          items={data.items}
+          now={now}
+          x={data.x}
+          suggestions={suggestions}
+          selectedId={selectedSource}
+          onSelect={setSelectedSource}
+          onShowItems={showItems}
+          reload={load}
+          fmt={when}
+        />
+      ) : feedList}
+      detail={view === 'sources' ? (
+        <SourceEditor
+          api={api}
+          source={source}
+          suggestions={suggestions}
+          reload={load}
+          onShowItems={showItems}
+          onRemoved={() => setSelectedSource(null)}
+          fmt={when}
+          xPanel={xPanel}
+        />
+      ) : itemDetail}
       status={status}
     />
   )

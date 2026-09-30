@@ -44,6 +44,7 @@ import type { RemoteServerConfig } from '@craft-agent/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
 import { isSshBacked } from '../shared/ssh'
 import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'
+import { MAIL_IPC, type MailLocalApi } from '../shared/mail-local'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
 
@@ -572,6 +573,34 @@ client.onConnectionStateChanged((state) => {
     },
   }
   ;(api as ElectronAPI).meetingsLocal = meetingsLocal
+}
+
+// Rox Mail — direct IPC: the mailbox credential and JMAP connection live in
+// the main process (see main/mail/local-ipc.ts).
+{
+  const C = MAIL_IPC
+  const mailLocal: MailLocalApi = {
+    status: () => ipcRenderer.invoke(C.STATUS),
+    ensureMailbox: () => ipcRenderer.invoke(C.ENSURE),
+    setServer: (url) => ipcRenderer.invoke(C.SET_SERVER, url),
+    folders: () => ipcRenderer.invoke(C.FOLDERS),
+    list: (query) => ipcRenderer.invoke(C.LIST, query),
+    get: (id) => ipcRenderer.invoke(C.GET, id),
+    setFlags: (ids, flags) => ipcRenderer.invoke(C.SET_FLAGS, ids, flags),
+    move: (ids, target) => ipcRenderer.invoke(C.MOVE, ids, target),
+    remove: (ids) => ipcRenderer.invoke(C.REMOVE, ids),
+    send: (input) => ipcRenderer.invoke(C.SEND, input),
+    saveDraft: (input) => ipcRenderer.invoke(C.SAVE_DRAFT, input),
+    pickFiles: () => ipcRenderer.invoke(C.PICK_FILES),
+    saveAttachment: (emailId, attachment) => ipcRenderer.invoke(C.SAVE_ATTACHMENT, emailId, attachment),
+    reveal: (path) => ipcRenderer.invoke(C.REVEAL, path),
+    onChanged: (cb) => {
+      const handler = (_e: unknown, event: { at: number; status?: Parameters<Parameters<MailLocalApi['onChanged']>[0]>[0]['status'] }) => cb(event)
+      ipcRenderer.on(C.CHANGED, handler)
+      return () => { ipcRenderer.removeListener(C.CHANGED, handler) }
+    },
+  }
+  ;(api as ElectronAPI).mailLocal = mailLocal
 }
 
 // webUtils.getPathForFile: returns the absolute OS path of a File object obtained

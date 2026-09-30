@@ -5,7 +5,6 @@ import { join } from 'node:path'
 const credentials = readFileSync(join(import.meta.dir, '../CredentialsStep.tsx'), 'utf8')
 const localModel = readFileSync(join(import.meta.dir, '../LocalModelStep.tsx'), 'utf8')
 const primitives = readFileSync(join(import.meta.dir, '../primitives.tsx'), 'utf8')
-const environment = readFileSync(join(import.meta.dir, '../EnvironmentSetupStep.tsx'), 'utf8')
 const fields = readFileSync(join(import.meta.dir, '../EnvironmentFields.tsx'), 'utf8')
 
 describe('onboarding i18n and empty states', () => {
@@ -25,12 +24,6 @@ describe('onboarding i18n and empty states', () => {
     expect(primitives).not.toContain("children = 'Back'")
     expect(primitives).not.toContain("loadingText = 'Loading...'")
     expect(primitives).not.toContain("children = 'Continue'")
-  })
-
-  it('shows a loading status while environment prefs are unresolved', () => {
-    expect(environment).toContain('role="status"')
-    expect(environment).toContain("t('common.loading')")
-    expect(environment).not.toContain('if (pending === null || pending.length === 0)')
   })
 
   it('uses PremiumMenuSelect for agent-rule labels', () => {

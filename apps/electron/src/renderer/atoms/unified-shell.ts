@@ -162,11 +162,11 @@ export const featureWorkbenchConationSessionApplyAtom = atomWithStorage<boolean>
 
 /**
  * Activity rail collapsed to icons only (tooltips carry the labels).
- * Default false = expanded with icon + text labels. Stored under the v2 key
- * so legacy `activity-rail-collapsed` values never collapse the new rail.
+ * Default false = expanded with icon + text labels. Existing saved preferences
+ * remain authoritative; this upgrade does not reset an explicit collapse.
  */
 export const activityRailCollapsedAtom = atomWithStorage<boolean>(
-  getKeyString(KEYS.activityRailCollapsedV2),
+  getKeyString(KEYS.activityRailCollapsed),
   false,
   undefined,
   { getOnInit: true },

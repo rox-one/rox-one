@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { subscribePersonalTasks } from '@/lib/personal-tasks'
 import { listPersonalTasks } from './personal-task-bridge'
@@ -16,6 +17,8 @@ export function useWorkspaceSessions(workspaceId: string | null | undefined): Se
     const out: SessionMeta[] = []
     for (const meta of map.values()) {
       if (meta.hidden) continue
+      // Rox-internal one-shot runs (memory distiller…) are not agent work.
+      if (isInternalAgentSession(meta)) continue
       if (workspaceId && meta.workspaceId !== workspaceId) continue
       out.push(meta)
     }

@@ -17,7 +17,7 @@ import type { ActionId } from './definitions'
 export function useAction(
   actionId: ActionId,
   handler: () => void,
-  options?: { enabled?: () => boolean },
+  options?: { enabled?: () => boolean; priority?: number },
   deps: unknown[] = []
 ) {
   const { register } = useActionRegistry()
@@ -36,6 +36,7 @@ export function useAction(
       actionId,
       handler: () => handlerRef.current(),
       enabled: optionsRef.current?.enabled ? () => optionsRef.current?.enabled?.() ?? false : undefined,
+      ...(optionsRef.current?.priority ? { priority: optionsRef.current.priority } : {}),
     })
   }, [actionId, register])
 }

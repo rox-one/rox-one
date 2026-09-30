@@ -9,6 +9,7 @@ export * from '@craft-agent/shared/protocol'
 
 // Core types
 import type { MeetingsLocalApi } from './meetings-local'
+import type { MailLocalApi } from './mail-local'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import type {
   Message as CoreMessage,
@@ -917,6 +918,8 @@ export interface ElectronAPI {
   getFilePath(file: File): string | null
   /** Local meeting recordings (device-local IPC, Electron only). */
   meetingsLocal?: MeetingsLocalApi
+  /** Rox Mail over JMAP (local Stalwart pilot). */
+  mailLocal?: MailLocalApi
 
   // Filesystem search (for @ mention file selection)
   searchFiles(basePath: string, query: string): Promise<FileSearchResult[]>
@@ -2116,12 +2119,14 @@ export interface ElectronAPI {
   onPersonalTasksChanged(callback: (payload: { at: number }) => void): () => void
   // Лента (feed:*)
   feedList(workspaceId?: string | null): Promise<import('@craft-agent/shared/feed').FeedListResult>
-  feedAddSource(url: string, intervalMin?: number): Promise<{ ok: true; source: import('@craft-agent/shared/feed').FeedSource } | { ok: false; error: 'invalid-url' | 'duplicate' | 'too-many' }>
+  feedAddSource(url: string, intervalMin?: number, opts?: import('@craft-agent/shared/feed').FeedAddSourceOptions): Promise<{ ok: true; source: import('@craft-agent/shared/feed').FeedSource } | { ok: false; error: 'invalid-url' | 'duplicate' | 'too-many' }>
   feedRemoveSource(id: string): Promise<{ removed: boolean }>
-  feedUpdateSource(id: string, patch: { intervalMin?: number; title?: string }): Promise<import('@craft-agent/shared/feed').FeedSource | null>
+  feedUpdateSource(id: string, patch: import('@craft-agent/shared/feed').FeedSourcePatch): Promise<import('@craft-agent/shared/feed').FeedSource | null>
   feedRefresh(id?: string | null): Promise<{ ok: boolean }>
   feedSetXToken(token: string): Promise<import('@craft-agent/shared/feed').XConnectionStatus>
   feedClearX(): Promise<import('@craft-agent/shared/feed').XConnectionStatus>
+  feedPreviewSource(url: string): Promise<import('@craft-agent/shared/feed').FeedPreviewResult>
+  feedAnnotate(ids: string[], patch: import('@craft-agent/shared/feed').FeedAnnotationPatch): Promise<{ updated: number }>
   onFeedChanged(callback: (payload: { at: number }) => void): () => void
 
   // Kanban board config (workspace-scoped)
