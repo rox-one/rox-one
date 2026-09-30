@@ -29,7 +29,7 @@ import { join } from 'path';
 import { createLogger } from '../utils/debug.ts';
 import { executeWebhookRequest, createWebhookHistoryEntry } from './webhook-utils.ts';
 import { AUTOMATIONS_RETRY_QUEUE_FILE } from './constants.ts';
-import { appendAutomationHistoryEntry } from './history-store.ts';
+import { appendAutomationHistoryEntryExact } from './history-store.ts';
 import type { WebhookAction, WebhookActionResult } from './types.ts';
 
 const log = createLogger('retry-scheduler');
@@ -58,7 +58,8 @@ export interface RetryQueueEntry {
   nextRetryAt: number;
   createdAt: number;
   lastError?: string;
-  state?: 'ready' | 'in_flight';
+  state?: 'ready' | 'in_flight' | 'terminal_pending';
+  terminalHistory?: Record<string, unknown>;
   scheduledAt?: string;
   scheduledTimezone?: string;
   occurrenceKey?: string;
@@ -74,6 +75,8 @@ export interface RetrySchedulerOptions {
   tickIntervalMs?: number;
   /** Invoked after the HTTP effect, immediately before the JSONL ack. */
   beforeAck?: () => Promise<void>;
+  afterTerminalPersist?: () => Promise<void>;
+  afterHistoryPersist?: () => Promise<void>;
 }
 
 type HistoryInput = Parameters<typeof createWebhookHistoryEntry>[0];
@@ -88,6 +91,8 @@ export class RetryScheduler {
   private readonly bootstrapDelayMs: number;
   private readonly tickIntervalMs: number;
   private readonly beforeAck?: () => Promise<void>;
+  private readonly afterTerminalPersist?: () => Promise<void>;
+  private readonly afterHistoryPersist?: () => Promise<void>;
   private timer: ReturnType<typeof setInterval> | null = null;
   private bootstrapTimer: ReturnType<typeof setTimeout> | null = null;
   private processing = false;
@@ -103,6 +108,8 @@ export class RetryScheduler {
     this.bootstrapDelayMs = options.bootstrapDelayMs ?? BOOTSTRAP_DELAY_MS;
     this.tickIntervalMs = options.tickIntervalMs ?? TICK_INTERVAL_MS;
     this.beforeAck = options.beforeAck;
+    this.afterTerminalPersist = options.afterTerminalPersist;
+    this.afterHistoryPersist = options.afterHistoryPersist;
   }
 
   start(): void {
@@ -178,6 +185,7 @@ export class RetryScheduler {
       const now = Date.now();
 
       for (const entry of snapshot) {
+        if (entry.state === 'terminal_pending') continue;
         if (this.pendingAcks.has(entry.id)) continue;
         if (entry.state === 'in_flight') {
           this.pendingAcks.set(entry.id, {
@@ -193,6 +201,9 @@ export class RetryScheduler {
               scheduledAt: entry.scheduledAt,
               scheduledTimezone: entry.scheduledTimezone,
               occurrenceKey: entry.occurrenceKey,
+              matcherRevision: entry.matcherRevision,
+              actionIndex: entry.actionIndex,
+              runId: entry.runId,
               outcome: 'unknown_external_outcome',
               error: 'The previous request may have reached the endpoint; automatic replay was suppressed.',
             },
@@ -227,29 +238,34 @@ export class RetryScheduler {
       }
 
       if (this.isStale(generation)) return;
-      if (this.pendingAcks.size === 0) return;
+      if (this.pendingAcks.size === 0 && !snapshot.some(entry => entry.state === 'terminal_pending')) return;
 
       await this.withQueueLock(async () => {
         if (this.isStale(generation)) return;
         await this.beforeAck?.();
         if (this.isStale(generation)) return;
         const current = await this.readEntries();
-        const remaining: RetryQueueEntry[] = [];
-        const ackedHistory: HistoryInput[] = [];
-        for (const entry of current) {
+        const staged: RetryQueueEntry[] = current.map(entry => {
           const outcome = this.pendingAcks.get(entry.id);
-          if (!outcome) {
-            remaining.push(entry);
-            continue;
-          }
-          if (outcome.kind === 'keep') remaining.push(outcome.entry);
-          else ackedHistory.push(outcome.history);
-        }
-        await this.writeEntriesAtomic(remaining);
+          if (!outcome) return entry;
+          if (outcome.kind === 'keep') return outcome.entry;
+          return { ...entry, state: 'terminal_pending', terminalHistory: {
+            ...createWebhookHistoryEntry(outcome.history),
+            retryHistoryKey: JSON.stringify([entry.id, entry.deferredAttempt]),
+          } };
+        });
+        await this.writeEntriesAtomic(staged);
         this.pendingAcks.clear();
-        for (const history of ackedHistory) {
-          await this.writeHistory(history);
+        await this.afterTerminalPersist?.();
+        if (this.isStale(generation)) return;
+        for (const entry of staged) {
+          if (entry.state !== 'terminal_pending') continue;
+          if (!entry.terminalHistory || entry.terminalHistory.retryHistoryKey !== JSON.stringify([entry.id, entry.deferredAttempt])) throw new Error('Invalid terminal retry history');
+          await appendAutomationHistoryEntryExact(this.workspaceRootPath, entry.terminalHistory);
+          await this.afterHistoryPersist?.();
+          if (this.isStale(generation)) return;
         }
+        await this.writeEntriesAtomic(staged.filter(entry => entry.state !== 'terminal_pending'));
       });
     } catch (err) {
       log.debug(`[RetryScheduler] Tick error: ${err}`);
@@ -343,15 +359,6 @@ export class RetryScheduler {
     return this.stopped || generation !== this.generation;
   }
 
-  private async writeHistory(input: HistoryInput): Promise<void> {
-    const historyEntry = createWebhookHistoryEntry(input);
-    try {
-      await appendAutomationHistoryEntry(this.workspaceRootPath, historyEntry);
-    } catch (e) {
-      log.debug(`[RetryScheduler] Failed to write history: ${e}`);
-    }
-  }
-
   private withQueueLock<T>(fn: () => Promise<T>): Promise<T> {
     const run = this.queueLock.then(fn, fn);
     this.queueLock = run.then(() => undefined, () => undefined);
@@ -366,17 +373,14 @@ export class RetryScheduler {
     let raw: string;
     try {
       raw = await readFile(this.queuePath(), 'utf-8');
-    } catch {
-      return [];
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+      throw error;
     }
     const lines = raw.trim().split('\n').filter(Boolean);
     const entries: RetryQueueEntry[] = [];
     for (const line of lines) {
-      try {
-        entries.push(JSON.parse(line) as RetryQueueEntry);
-      } catch {
-        // Skip malformed lines
-      }
+      entries.push(JSON.parse(line) as RetryQueueEntry);
     }
     return entries;
   }

@@ -8663,9 +8663,10 @@
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
-            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
           ],
-          "summary": "Target-session/occurrence identity, parser timezone/actions and failure-preserving local runtime mechanisms have bounded evidence. Actual scheduled execution, DST, persistence/retry and recipient delivery must satisfy the untouched original criteria."
+          "summary": "Same-version terminal history recovery, exact append and retained queue intent have real process-loss evidence. Full original UI/provider/schedule/DST criteria remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -8673,7 +8674,8 @@
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
-            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -8750,9 +8752,10 @@
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
-            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
           ],
-          "summary": "Target-session/occurrence identity, parser timezone/actions and failure-preserving local runtime mechanisms have bounded evidence. Actual scheduled execution, DST, persistence/retry and recipient delivery must satisfy the untouched original criteria."
+          "summary": "Same-version terminal history recovery, exact append and retained queue intent have real process-loss evidence. Full original UI/provider/schedule/DST criteria remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -8760,7 +8763,8 @@
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
             "RUNTIME-LOCAL-MECHANISMS-20260930",
-            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -8942,7 +8946,7 @@
       "title": "[Sep-runtime] Связать session streaming, Stop, cancel и восстановление worker",
       "area": "runtime",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerRuntime",
       "dependsOn": [
         "DATA-01",
@@ -8995,16 +8999,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
+          ],
+          "summary": "Existing OMP worker timeout/retry/escalation is exercised using actual spawn/PIDs with corrected fixture readiness. No new production timeout behavior; complete streaming/Stop/provider recovery remains pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -9809,9 +9817,10 @@
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-CREATE-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
-            "NATIVE-CALLER-INVENTORY-20260930"
+            "NATIVE-CALLER-INVENTORY-20260930",
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
           ],
-          "summary": "Runtime follow-up has unchanged-source shared/server unions and independent reviews; renderer follow-up is a separate candidate, complete integration/platform acceptance pending."
+          "summary": "Same-version terminal history recovery, exact append and retained queue intent have real process-loss evidence. Full original UI/provider/schedule/DST criteria remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -9843,7 +9852,8 @@
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
             "NATIVE-NOTES-CREATE-20260930",
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
-            "NATIVE-CALLER-INVENTORY-20260930"
+            "NATIVE-CALLER-INVENTORY-20260930",
+            "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10015,7 +10025,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T14:08:40.065Z",
+    "asOf": "2026-09-30T15:10:46.564Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10058,7 +10068,7 @@
       ],
       "committedSourceMatchesTestedManifest": true
     },
-    "finalFullGateRefresh": "RUNTIME_SHARED_SERVER_UNIONS_PASSING_AT_C1C81E66; ELECTRON_IDENTICAL_TO_VERIFIED_47F4E336; SUBSEQUENT_RENDERER_PENDING",
+    "finalFullGateRefresh": "SHARED_SERVER_ELECTRON_UNIONS_PASSING_ON_FROZEN_SCHEDULER_OMP_CANDIDATE; validate:ci_INCOMPLETE_DEPENDENCY_INTERRUPTION",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
       "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
@@ -10094,12 +10104,12 @@
     },
     "facetCounts": {
       "implementation": {
-        "IN_PROGRESS": 25,
-        "NOT_RUN": 84
+        "IN_PROGRESS": 26,
+        "NOT_RUN": 83
       },
       "verification": {
-        "IN_PROGRESS": 23,
-        "NOT_RUN": 86
+        "IN_PROGRESS": 24,
+        "NOT_RUN": 85
       },
       "fullAccepted": 0
     },
@@ -10121,6 +10131,13 @@
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Explicit Electron/UI/core/shared-src/server-core-src package gate scope. Subsequent scheduler terminal recovery and OMP fixture are excluded. Runtime shared/server gates bind separately to c1c81e66; complete desktop/platform acceptance pending."
     },
-    "latestPublishedSourceRevision": "07907f909838253eb011e4e27a510c4ba5b5a9df"
+    "latestPublishedSourceRevision": "07907f909838253eb011e4e27a510c4ba5b5a9df",
+    "schedulerTerminalEvidence": "scheduler-terminal-20260930.json",
+    "schedulerTerminalCandidate": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "sourceCount": 4849,
+      "manifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+      "fullTasksAccepted": 0
+    }
   }
 }

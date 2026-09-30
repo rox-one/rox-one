@@ -404,5 +404,9 @@
     "manifestFileSha256": "706d82787a44bc9b31ee489aa0bd40cc6ba05721a557bb5fe5bad7caa81e2843",
     "committedSourceMatchesTestedManifest": true,
     "bindingLimit": "Explicit Electron/UI/core/shared-src/server-core-src package gate scope. Subsequent scheduler terminal recovery and OMP fixture are excluded. Runtime shared/server gates bind separately to c1c81e66; complete desktop/platform acceptance pending."
+  },
+  "schedulerTerminalFollowupPublication": {
+    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING"
   }
 }

@@ -185,3 +185,31 @@ describe('history-store', () => {
     });
   });
 });
+
+it('exact retry history rejects conflicts/corruption and pins pending records during retention', async () => {
+  const { appendAutomationHistoryEntryExact, compactAutomationHistorySync } = await import('./history-store.ts');
+  const { AUTOMATIONS_RETRY_QUEUE_FILE } = await import('./constants.ts');
+  const dir = mkdtempSync(join(tmpdir(), 'exact-retry-history-'));
+  const history = join(dir, AUTOMATIONS_HISTORY_FILE);
+  const record = { id: 'fixture', ts: 1, retryHistoryKey: 'retry-attempt', outcome: 'success' };
+  try {
+    await appendAutomationHistoryEntryExact(dir, record);
+    const original = readFileSync(history, 'utf8');
+    await appendAutomationHistoryEntryExact(dir, record);
+    expect(readFileSync(history, 'utf8')).toBe(original);
+    await expect(appendAutomationHistoryEntryExact(dir, { ...record, outcome: 'error' })).rejects.toThrow('Conflicting');
+    expect(readFileSync(history, 'utf8')).toBe(original);
+    writeFileSync(join(dir, AUTOMATIONS_RETRY_QUEUE_FILE), JSON.stringify({ state: 'terminal_pending' }) + '\n');
+    await appendAutomationHistoryEntry(dir, { id: 'fixture', ts: 2 });
+    const pending = readFileSync(history, 'utf8');
+    await compactAutomationHistory(dir, 1, 1);
+    compactAutomationHistorySync(dir, 1, 1);
+    expect(readFileSync(history, 'utf8')).toBe(pending);
+    writeFileSync(join(dir, AUTOMATIONS_RETRY_QUEUE_FILE), '');
+    await compactAutomationHistory(dir, 1, 1);
+    expect(readHistory(dir)).toEqual([{ id: 'fixture', ts: 2 }]);
+    writeFileSync(history, '{broken\n');
+    await expect(appendAutomationHistoryEntryExact(dir, record)).rejects.toThrow();
+    expect(readFileSync(history, 'utf8')).toBe('{broken\n');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

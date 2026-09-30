@@ -1,3 +1,4 @@
+import { atomicWriteFileSync } from '../utils/files.ts';
 /**
  * History Store — single source of truth for automations-history.jsonl writes
  * and compaction.
@@ -14,10 +15,11 @@
 
 import { appendFile, readFile, writeFile } from 'fs/promises';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { createLogger } from '../utils/debug.ts';
 import {
   AUTOMATIONS_HISTORY_FILE,
+  AUTOMATIONS_RETRY_QUEUE_FILE,
   AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER,
   AUTOMATION_HISTORY_MAX_ENTRIES,
 } from './constants.ts';
@@ -73,6 +75,32 @@ export async function appendAutomationHistoryEntry(
   });
 }
 
+/** Exact retry terminal append; single-process mutex ownership, not a multi-writer transaction. */
+export async function appendAutomationHistoryEntryExact(workspaceRootPath: string, entry: Record<string, unknown>): Promise<void> {
+  if (typeof entry.retryHistoryKey !== 'string' || !entry.retryHistoryKey) throw new Error('Retry history key required');
+  await withMutex(workspaceRootPath, async () => {
+    const path = join(workspaceRootPath, AUTOMATIONS_HISTORY_FILE);
+    let content = '';
+    try { content = await readFile(path, 'utf-8'); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    const records = content.split('\n').filter(Boolean).map(line => JSON.parse(line) as Record<string, unknown>);
+    const matching = records.filter(record => record.retryHistoryKey === entry.retryHistoryKey);
+    if (matching.length) {
+      if (matching.length !== 1 || JSON.stringify(matching[0]) !== JSON.stringify(entry)) throw new Error('Conflicting retry history');
+      return;
+    }
+    atomicWriteFileSync(path, content + (content && !content.endsWith('\n') ? '\n' : '') + JSON.stringify(entry) + '\n');
+  });
+}
+
+/** Retention waits while exact terminal intents still need their deduplication records. */
+function hasPendingRetryHistory(historyPath: string): boolean {
+  try {
+    const rows = readFileSync(join(dirname(historyPath), AUTOMATIONS_RETRY_QUEUE_FILE), 'utf-8').split('\n').filter(Boolean).map(line => JSON.parse(line) as {state?: string});
+    return rows.some(row => row.state === 'terminal_pending');
+  } catch (error) { return (error as NodeJS.ErrnoException).code !== 'ENOENT'; }
+}
+
 // ============================================================================
 // Compaction
 // ============================================================================
@@ -101,7 +129,7 @@ export function compactAutomationHistorySync(
   maxTotal: number = AUTOMATION_HISTORY_MAX_ENTRIES,
 ): void {
   const historyPath = join(workspaceRootPath, AUTOMATIONS_HISTORY_FILE);
-  if (!existsSync(historyPath)) return;
+  if (!existsSync(historyPath) || hasPendingRetryHistory(historyPath)) return;
 
   let content: string;
   try { content = readFileSync(historyPath, 'utf-8'); } catch { return; }
@@ -123,7 +151,7 @@ async function runCompaction(
 ): Promise<void> {
   let content: string;
   try {
-    if (!existsSync(historyPath)) return;
+    if (!existsSync(historyPath) || hasPendingRetryHistory(historyPath)) return;
     content = await readFile(historyPath, 'utf-8');
   } catch {
     return;

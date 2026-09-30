@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-09-30T11:25:02.924Z",
+  "asOf": "2026-09-30T15:10:46.564Z",
   "purpose": "Sanitized bounded implementation/verification reconciliation; no complete task, requirement, contract freeze or code delivery accepted.",
   "sourceState": {
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -1813,6 +1813,98 @@
         "Independent Bun CredentialManager could not obtain the custody key; encrypted receipt presence is observed, but its body was not decrypted or independently matched to the exact server receipt.",
         "Actual offline/conflict/revocation/workspace-switch UI, complete Notes/editor and DATA/SHARED frozen criteria, recipient/platform matrix and delivery remain pending."
       ]
+    },
+    {
+      "id": "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
+      "basis": "Independent production-function, actual subprocess/SQLite/filesystem review and frozen full package gates",
+      "summary": "Bounded terminal history recovery and deterministic real-spawn OMP lifecycle acceptance; original criteria retained.",
+      "result": {
+        "status": "PASSED_BOUNDED_RUNTIME",
+        "fullTaskAccepted": false
+      },
+      "sources": [
+        {
+          "path": "packages/shared/src/automations/retry-scheduler.ts",
+          "sha256": "4f22474e1db49f26fe147ea4a1355be0ad81934ad8bf003fea24044ab8192f47"
+        },
+        {
+          "path": "packages/shared/src/automations/history-store.ts",
+          "sha256": "7e45f72a2a40e406ca241556e3c433a422499ff8159c11e008f7759d468871f9"
+        },
+        {
+          "path": "packages/shared/src/automations/history-store.test.ts",
+          "sha256": "cf9b3e40af8932c2ec0212784e642892971dbfce3c326a403890ef534b0de748"
+        },
+        {
+          "path": "packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts",
+          "sha256": "1172a241652fe5369fc8bb9754bc550210977bbf60650bdc3c8772c0893270c5"
+        },
+        {
+          "path": "packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts",
+          "sha256": "a443344c3874fb153dfc9a40a47d2824bbf6e446bbfa74363e122cd95e99d41c"
+        }
+      ],
+      "limits": [
+        "Single-process scheduler ownership and same-version recovery only; the history mutex is not a cross-process lock.",
+        "Old binaries do not recognize terminal_pending and can dispatch its action again. Complete recovery with this version before downgrade, or preserve/isolate the private queue for explicit migration; automatic old-reader rollback is unsafe.",
+        "SIGKILL tests establish process-loss behavior, not power-loss durability. Existing macOS atomic helpers do not fsync file/directory.",
+        "Owned loopback network effects use the existing executeRequest injection; production SSRF/provider acceptance and recipient evidence remain pending.",
+        "OMP first PID reaping is asserted; second is cleaned through agent.destroy/fixture cleanup without a separate reaping assertion.",
+        "Full schedule/DST/UI/provider/reminder/platform acceptance remains pending. REMINDERS-01 is not accepted or newly executed by this wave.",
+        "Full native creation/banner/private custody UI remains pending; prior runtime and package gates retain their own source binding."
+      ],
+      "retainedEvidence": [
+        {
+          "id": "scheduler-terminal-independent-review.md",
+          "sha256": "d246e0e1e872fadb687dcc5c5fe1125cfb7d6714df112b29f28deac4437213fe",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-terminal-independent.focused.txt",
+          "sha256": "693a71305f9f8f4559f58e5244a11ffc1444983a66e5a767aac22fb7fcef741b",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-terminal.final4.txt",
+          "sha256": "41eccbf0728f0ee30cdcf016a71556b4dbbdff3a2e1c0551be22d149acf1ebac",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "omp-hardening-independent-bound-final.txt",
+          "sha256": "bbffca0871b5d5b165b86c159020b4ccc5365be3870fa7db92f20c9b4d1cbd37",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "omp-a2-fixture-review.md",
+          "sha256": "69ce8247ec1bd60733b8c3c680c1a914cda20e84cea954b8c32ce9dd261a7c58",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "omp-a2-final-shared.txt",
+          "sha256": "25297b4ecd4506752f7d66af97cb21608255cdaa1e794d2905df393ee0247fcd",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-server-final.txt",
+          "sha256": "230f4f27fa82e83ed3574c12101f6778994c3b259f40e8cebff467a0579a08a6",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "scheduler-electron-final.txt",
+          "sha256": "86757bb7dfb3eea5ab7664ab24608600d27a844105433279c4dd407994929462",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "validate-final-report.md",
+          "sha256": "51098708da5d5c63b16a444e00e1e85e7eb7c8b1bb8006291f031742ab239a67",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        },
+        {
+          "id": "validate-final-result.json",
+          "sha256": "ba1b5af726f865312a49d2df2821628e7e3a0d32552aa70d2778076a48ab2ed6",
+          "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+        }
+      ]
     }
   ],
   "taskEvidence": [
@@ -2800,6 +2892,159 @@
       "Actual Notes authorization denials remain unchanged",
       "Subsequent scheduler terminal-history sources are excluded from this publication and have independent pending gates",
       "Complete native creation/private receipt UI, all providers/platforms and eligible self-hosted CI remain pending"
+    ],
+    "fullTasksAccepted": 0
+  },
+  "schedulerTerminalFollowup": {
+    "schemaVersion": 1,
+    "id": "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
+    "observedAt": "2026-09-30T15:10:46.564Z",
+    "inputSourceRevision": "ea083e387e170552ee6102e29c2cf31adc8b6973",
+    "publication": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING"
+    },
+    "sourceBinding": {
+      "sourceCount": 4849,
+      "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+      "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+      "excluded": [
+        "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+        "apps/electron/.impeccable/hook.cache.json"
+      ],
+      "beforeAfterIdentical": true,
+      "committedSourceMatchesTestedManifest": false
+    },
+    "sources": [
+      {
+        "path": "packages/shared/src/automations/retry-scheduler.ts",
+        "sha256": "4f22474e1db49f26fe147ea4a1355be0ad81934ad8bf003fea24044ab8192f47"
+      },
+      {
+        "path": "packages/shared/src/automations/history-store.ts",
+        "sha256": "7e45f72a2a40e406ca241556e3c433a422499ff8159c11e008f7759d468871f9"
+      },
+      {
+        "path": "packages/shared/src/automations/history-store.test.ts",
+        "sha256": "cf9b3e40af8932c2ec0212784e642892971dbfce3c326a403890ef534b0de748"
+      },
+      {
+        "path": "packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts",
+        "sha256": "1172a241652fe5369fc8bb9754bc550210977bbf60650bdc3c8772c0893270c5"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-lifecycle-hardening.test.ts",
+        "sha256": "a443344c3874fb153dfc9a40a47d2824bbf6e446bbfa74363e122cd95e99d41c"
+      }
+    ],
+    "behavior": {
+      "metadata": "In-flight recovery preserves runId, matcherRevision and actionIndex after a real process kill.",
+      "terminal": "Persist exact terminal_pending history intent before append; append exact key/payload idempotently under existing workspace mutex; remove queue intent only after history confirmation. Failed append retains intent. Same-version restart performs no network action for terminal_pending.",
+      "retention": "Both retention entry points preserve pending, corrupt or unreadable terminal queues; resume compaction after acknowledgement.",
+      "failureControls": "Real SIGKILL after terminal persistence and after history persistence before queue removal; directory obstruction; conflicting/corrupt history; exact duplicate append; dispose fences; fresh-child recovery.",
+      "omp": "Fixture records real parent ChildProcess PID and waits for post-SIGTERM-handler marker before returning spawn; artificial handshake deadline remains 80ms, deterministic child cold-start lag 120ms. Production timeout/cancel/retry/escalation unchanged."
+    },
+    "reviews": {
+      "scheduler": "82 pass / 0 fail / 240 assertions; independent real subprocess and filesystem probes",
+      "omp": "4 pass / 0 fail / 23 assertions; independent production spawn/helper review"
+    },
+    "gates": {
+      "shared": {
+        "pass": 4914,
+        "skip": 12,
+        "fail": 0,
+        "assertions": 21547,
+        "files": 471,
+        "seconds": 110.24
+      },
+      "serverCore": {
+        "pass": 1504,
+        "fail": 0,
+        "skip": 8
+      },
+      "electronUiCore": {
+        "pass": 4203,
+        "fail": 0,
+        "skip": 0
+      },
+      "typecheckAll": "PASS on frozen five-path candidate",
+      "i18n": "Parity/sorted/coverage PASS independently; 11 locales/7097 keys",
+      "validateCi": {
+        "exitCode": 1,
+        "selectedBunPass": 242,
+        "selectedBunFail": 0,
+        "documentPass": 17,
+        "documentInterrupted": 2,
+        "status": "INCOMPLETE; owned uv dependency download stalled then controlled SIGTERM. Not confirmed product defects. Later recovery recorded separately."
+      }
+    },
+    "history": [
+      "Initial metadata repair retained terminal history-loss gap.",
+      "First shared union retained two 5s fixture timeouts; isolated controls passed.",
+      "Second shared union retained OMP A2 child-log race; focused controls passed.",
+      "Overload facade TypeScript failure retained before correction.",
+      "Final corrected shared union green; no production timeout widening."
+    ],
+    "artifacts": [
+      {
+        "id": "scheduler-terminal-independent-review.md",
+        "sha256": "d246e0e1e872fadb687dcc5c5fe1125cfb7d6714df112b29f28deac4437213fe",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-terminal-independent.focused.txt",
+        "sha256": "693a71305f9f8f4559f58e5244a11ffc1444983a66e5a767aac22fb7fcef741b",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-terminal.final4.txt",
+        "sha256": "41eccbf0728f0ee30cdcf016a71556b4dbbdff3a2e1c0551be22d149acf1ebac",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "omp-hardening-independent-bound-final.txt",
+        "sha256": "bbffca0871b5d5b165b86c159020b4ccc5365be3870fa7db92f20c9b4d1cbd37",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "omp-a2-fixture-review.md",
+        "sha256": "69ce8247ec1bd60733b8c3c680c1a914cda20e84cea954b8c32ce9dd261a7c58",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "omp-a2-final-shared.txt",
+        "sha256": "25297b4ecd4506752f7d66af97cb21608255cdaa1e794d2905df393ee0247fcd",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-server-final.txt",
+        "sha256": "230f4f27fa82e83ed3574c12101f6778994c3b259f40e8cebff467a0579a08a6",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "scheduler-electron-final.txt",
+        "sha256": "86757bb7dfb3eea5ab7664ab24608600d27a844105433279c4dd407994929462",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "validate-final-report.md",
+        "sha256": "51098708da5d5c63b16a444e00e1e85e7eb7c8b1bb8006291f031742ab239a67",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      },
+      {
+        "id": "validate-final-result.json",
+        "sha256": "ba1b5af726f865312a49d2df2821628e7e3a0d32552aa70d2778076a48ab2ed6",
+        "distribution": "SANITIZED_RUN_LOG_OR_REVIEW; no private profile or credentials included"
+      }
+    ],
+    "limits": [
+      "Single-process scheduler ownership and same-version recovery only; the history mutex is not a cross-process lock.",
+      "Old binaries do not recognize terminal_pending and can dispatch its action again. Complete recovery with this version before downgrade, or preserve/isolate the private queue for explicit migration; automatic old-reader rollback is unsafe.",
+      "SIGKILL tests establish process-loss behavior, not power-loss durability. Existing macOS atomic helpers do not fsync file/directory.",
+      "Owned loopback network effects use the existing executeRequest injection; production SSRF/provider acceptance and recipient evidence remain pending.",
+      "OMP first PID reaping is asserted; second is cleaned through agent.destroy/fixture cleanup without a separate reaping assertion.",
+      "Full schedule/DST/UI/provider/reminder/platform acceptance remains pending. REMINDERS-01 is not accepted or newly executed by this wave.",
+      "Full native creation/banner/private custody UI remains pending; prior runtime and package gates retain their own source binding."
     ],
     "fullTasksAccepted": 0
   }

@@ -179,3 +179,11 @@ The native shell must not request unclassified legacy host session inventory. Ab
 Only confirmed local authority may read legacy host session inventory, messages or permission state. Native and unresolved callers mark that inventory unavailable, clear stale host metadata/options/error and establish startup readiness without a denied host request. Initial loading, metadata refresh, session-created fallback and permission reconciliation recheck authority at their asynchronous application boundaries. A late local response or transport-state failure cannot restore host state after a native switch. This restriction does not grant a native session or R1 capability and does not suppress actual Notes authorization failures.
 
 Acceptance combines actual helper callback/race behavior, independent App boundary review, Electron source/UI/core union, TypeScript and renderer rebuild. Native desktop creation/banner readback, private receipt custody and original platform criteria remain separate pending gates. A later scheduler terminal-history candidate is outside this source publication.
+
+## Scheduler terminal recovery and OMP evidence (2026-09-30)
+
+After a webhook effect, persist an exact terminal history intent in the durable queue before history append. Append by exact entry/attempt key and payload, rejecting conflicts or corruption; remove the intent only after acknowledgement. Same-version restart must recover history without executing the action again. Preserve run, matcher and action identity and block retention while terminal intent, corruption or unreadable queue state could remove recovery evidence.
+
+This contract covers a single scheduler owner and process loss. Existing atomic helpers do not establish power-loss durability. Older binaries cannot read terminal_pending safely: finish recovery using the current version before rollback, or preserve/isolate the private queue for explicit migration. No automatic downgrade is accepted.
+
+OMP acceptance must count actual parent spawn results and establish child readiness before testing the 80ms artificial handshake deadline. Production timeout/cancel/retry/escalation remain unchanged. Full provider, schedule/DST, reminder, UI and platform criteria retain their original scope.
