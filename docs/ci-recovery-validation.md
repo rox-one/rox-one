@@ -17,6 +17,8 @@ bun test packages/server/src/__tests__/smoke.test.ts packages/server-core/src/we
 bun run validate:ci
 ```
 
+For a separately built integration checkout, set `ROX_SERVER_SMOKE_REPO_ROOT` to its absolute root along with absolute `ROX_SERVER_SMOKE_ENTRY` and `ROX_SERVER_SMOKE_WEBUI_DIR`. The helper then uses that checkout's config-defaults, bundled resources and working directory. The default remains the test's own checkout. This test-only option keeps runtime proof bound to the source revision that supplied all artifacts.
+
 ## Results
 
 | Check | Result | External log |

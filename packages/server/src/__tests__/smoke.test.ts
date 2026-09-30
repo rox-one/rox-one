@@ -11,7 +11,9 @@ import type { Subprocess } from 'bun'
 import WebSocket from 'ws'
 import { PROTOCOL_VERSION } from '@craft-agent/shared/protocol'
 
-const REPO_ROOT = resolve(import.meta.dir, '../../../..')
+const REPO_ROOT = process.env.ROX_SERVER_SMOKE_REPO_ROOT
+  ? resolve(process.env.ROX_SERVER_SMOKE_REPO_ROOT)
+  : resolve(import.meta.dir, '../../../..')
 const SERVER_ENTRY = process.env.ROX_SERVER_SMOKE_ENTRY
   ? resolve(REPO_ROOT, process.env.ROX_SERVER_SMOKE_ENTRY)
   : join(import.meta.dir, '..', 'index.ts')
