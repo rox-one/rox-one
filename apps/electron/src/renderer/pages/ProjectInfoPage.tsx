@@ -630,18 +630,20 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   }, [workspaceId, project, onCreateSession, t])
 
   const patchProject = useCallback(async (patch: Partial<Omit<LoadedProject['config'], 'id' | 'slug' | 'createdAt'>>) => {
-    if (!workspaceId || !project) return
+    if (!workspaceId || !project) return false
     const act = soupProjectActResult({
       source: 'native',
       action: 'write',
       nativeId: project.config.slug,
     })
-    if (!isClaimableLive(act)) return
+    if (!isClaimableLive(act)) return false
     try {
       await window.electronAPI.updateProject(workspaceId, project.config.slug, patch)
+      return true
     } catch (err) {
       console.error('[ProjectInfoPage] Save failed:', err)
       toast.error(t('projectInfo.saveFailed'))
+      return false
     }
   }, [workspaceId, project, t])
 
@@ -649,12 +651,12 @@ function LocalProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     if (!project) return
     setSaving(true)
     try {
-      await patchProject({
+      const saved = await patchProject({
         workingDirectory: editWorkingDir.trim() || undefined,
         details: editDetails.trim() || undefined,
         color: editColor.trim() || undefined,
       })
-      toast.success(t('projectInfo.saved'))
+      if (saved) toast.success(t('projectInfo.saved'))
     } finally {
       setSaving(false)
     }

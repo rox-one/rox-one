@@ -47,6 +47,76 @@ function actualLoad(environment: Record<string, unknown>): () => () => void {
   return new Function(...Object.keys(environment), `${code}; return actual;`)(...Object.values(environment));
 }
 
+it('actual settings save keeps the draft and never reports success after a rejected native update', async () => {
+  const errors: string[] = [];
+  const successes: string[] = [];
+  const saving: boolean[] = [];
+  const patches: unknown[] = [];
+  const environment = {
+    workspaceId: 'owned-workspace', project: { config: { slug: 'owned-project' } },
+    editWorkingDir: ' /retained/path ', editDetails: ' retained details ', editColor: ' blue ',
+    soupProjectActResult: () => ({}), isClaimableLive: () => true,
+    window: { electronAPI: { updateProject: async (_workspace: string, _slug: string, patch: unknown) => {
+      patches.push(patch);
+      throw new Error('controlled update refusal');
+    } } },
+    toast: { error: (key: string) => errors.push(key), success: (key: string) => successes.push(key) },
+    t: (key: string) => key, setSaving: (value: boolean) => saving.push(value),
+  };
+  const patchProject = actualCallback(environment, 'patchProject');
+  const consoleError = spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    await actualCallback({ ...environment, patchProject }, 'handleSaveSettings')();
+    expect(patches).toEqual([{ workingDirectory: '/retained/path', details: 'retained details', color: 'blue' }]);
+    expect(errors).toEqual(['projectInfo.saveFailed']);
+    expect(successes).toEqual([]);
+    expect(saving).toEqual([true, false]);
+    expect([environment.editWorkingDir, environment.editDetails, environment.editColor])
+      .toEqual([' /retained/path ', ' retained details ', ' blue ']);
+    // Inline callers can safely ignore the refusal without an unhandled rejection.
+    await expect(patchProject({ details: 'another retained edit' })).resolves.toBe(false);
+  } finally { consoleError.mockRestore(); }
+});
+
+it('actual settings save reports success only after its native update receipt', async () => {
+  let release!: () => void;
+  const successes: string[] = [];
+  const saving: boolean[] = [];
+  const environment = {
+    workspaceId: 'owned-workspace', project: { config: { slug: 'owned-project' } },
+    editWorkingDir: '', editDetails: 'details', editColor: '',
+    soupProjectActResult: () => ({}), isClaimableLive: () => true,
+    window: { electronAPI: { updateProject: () => new Promise<void>(resolve => { release = resolve; }) } },
+    toast: { error: () => {}, success: (key: string) => successes.push(key) },
+    t: (key: string) => key, setSaving: (value: boolean) => saving.push(value),
+  };
+  const pending = actualCallback({ ...environment, patchProject: actualCallback(environment, 'patchProject') }, 'handleSaveSettings')();
+  await Promise.resolve();
+  expect(successes).toEqual([]);
+  expect(saving).toEqual([true]);
+  release();
+  await pending;
+  expect(successes).toEqual(['projectInfo.saved']);
+  expect(saving).toEqual([true, false]);
+});
+
+it('actual settings save does not report success when native write authority is unavailable', async () => {
+  let updates = 0;
+  const successes: string[] = [];
+  const environment = {
+    workspaceId: 'owned-workspace', project: { config: { slug: 'owned-project' } },
+    editWorkingDir: '', editDetails: 'retained details', editColor: '',
+    soupProjectActResult: () => ({}), isClaimableLive: () => false,
+    window: { electronAPI: { updateProject: async () => { updates++; } } },
+    toast: { error: () => {}, success: (key: string) => successes.push(key) },
+    t: (key: string) => key, setSaving: () => {},
+  };
+  await actualCallback({ ...environment, patchProject: actualCallback(environment, 'patchProject') }, 'handleSaveSettings')();
+  expect(updates).toBe(0);
+  expect(successes).toEqual([]);
+  expect(environment.editDetails).toBe('retained details');
+});
+
 it('actual renderer autosave waits for each receipt, retains a newer draft and persists it using the acknowledged revision', async () => {
   const root = mkdtempSync(join(tmpdir(), 'rox-roadmap-caller-'));
   roots.push(root);

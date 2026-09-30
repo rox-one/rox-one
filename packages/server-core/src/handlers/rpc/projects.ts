@@ -271,6 +271,18 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
   ): Promise<import('@craft-agent/shared/projects').RoadmapAiResponse> => {
     const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
     if (!workspace) return { ok: false, error: `Workspace not found: ${workspaceId}` }
+    const principal = ctx.principal
+    const authority = deps.nativeData?.authority
+    // Keep the exact grant generations through both asynchronous input seams.
+    // Regranting access must not revive an in-flight export to a provider.
+    const authorizationFences = principal ? (['read', 'write'] as const).map(action => {
+      if (!authority?.authorize(principal, workspaceId, action, workspace.rootPath)) {
+        throw new CodedError('AUTH_FAILED', `Project roadmap AI ${action} is unauthorized`)
+      }
+      const fence = authority.permissionFence(principal, workspaceId, action)
+      if (!fence) throw new CodedError('AUTH_FAILED', `Project roadmap AI ${action} is unauthorized`)
+      return { action, fence }
+    }) : []
     const text = typeof request?.text === 'string' ? request.text.trim() : ''
     if (!text) return { ok: false, error: 'empty' }
     if (!['clarify', 'spec', 'improve'].includes(request.mode) || text.length > 20_000) throw new Error('PROJECT_ROADMAP_INVALID_AI_REQUEST')
@@ -301,7 +313,16 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
         ? shared.buildImprovePrompt(aiContext, text)
         : shared.buildSpecPrompt(aiContext, text, Array.isArray(request.answers) ? request.answers : [])
     try {
-      requireCallerWorkspace(ctx, deps, workspaceId)
+      const currentWorkspace = requireCallerWorkspace(ctx, deps, workspaceId)
+      if (ctx.principal !== principal || currentWorkspace.rootPath !== workspace.rootPath) {
+        throw new CodedError('AUTH_FAILED', 'Project roadmap AI caller scope changed during operation')
+      }
+      for (const { action, fence } of authorizationFences) {
+        if (!principal || !authority || authority.permissionFence(principal, workspaceId, action) !== fence ||
+          !authority.authorize(principal, workspaceId, action, workspace.rootPath)) {
+          throw new CodedError('AUTH_FAILED', `Project roadmap AI ${action} permission changed during operation`)
+        }
+      }
       const result = await query.call(deps.sessionManager, workspaceId, {
         systemPrompt: prompt.systemPrompt,
         prompt: prompt.prompt,
