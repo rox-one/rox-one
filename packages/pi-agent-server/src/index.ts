@@ -509,7 +509,6 @@ function registerCustomEndpointModels(
       id,
       {
         supportsImages: initConfig?.customEndpoint?.supportsImages === true,
-        reasoning: api === 'openai-responses',
       },
       customModelOverrides.get(id),
       api,

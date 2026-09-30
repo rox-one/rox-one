@@ -312,17 +312,6 @@ export function startWorker(options: WorkerOptions = {}): {
           return
         }
         case 'call': {
-          // Basic permission presence check: if permissions array is provided
-          // empty, reject. Missing permissions is allowed for internal ping-style
-          // calls from trusted main (main is the broker). Non-function methods reject.
-          if (Array.isArray(msg.permissions) && msg.permissions.length === 0) {
-            send(port, {
-              id: msg.id,
-              type: 'error',
-              error: 'Permission check failed: empty permissions',
-            })
-            return
-          }
           const ext = loaded.get(msg.extensionId)
           if (!ext) {
             send(port, {

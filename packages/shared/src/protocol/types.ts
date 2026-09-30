@@ -107,6 +107,8 @@ export type ErrorCode =
   | 'UNSUPPORTED_OPERATION'
   | 'NOT_FOUND'
   | 'HASH_CONFLICT'
+  // Native journal revision conflicts (Notes/canonical entity mutations).
+  | 'CONFLICT'
   | 'INVALID_REF'
   | 'CAPABILITY_DISABLED'
   | 'TLS_REQUIRED'
@@ -142,6 +144,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'UNSUPPORTED_OPERATION',
   'NOT_FOUND',
   'HASH_CONFLICT',
+  'CONFLICT',
   'INVALID_REF',
   'CAPABILITY_DISABLED',
   'TLS_REQUIRED',
@@ -167,6 +170,17 @@ export class CodedError extends Error {
     super(message)
     this.code = code
     this.name = 'CodedError'
+  }
+}
+
+/** Enforce confidentiality before either native client opens a socket or sends a secret. */
+export function assertNativeCredentialTransport(url: string, token?: string): void {
+  if (!token?.startsWith('na_') && !token?.startsWith('ne_')) return
+  const target = new URL(url)
+  const loopback = target.hostname === '127.0.0.1' || target.hostname === '[::1]'
+    || target.hostname === 'localhost'
+  if (target.protocol !== 'wss:' && !(target.protocol === 'ws:' && loopback)) {
+    throw new CodedError('TLS_REQUIRED', 'Native credentials require TLS')
   }
 }
 

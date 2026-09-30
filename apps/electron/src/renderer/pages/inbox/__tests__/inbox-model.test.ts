@@ -48,6 +48,37 @@ describe('inbox aggregation', () => {
     // processing plan sessions and read sessions are not items
     expect(items.some((i) => i.sessionId === 's3' || i.sessionId === 's5')).toBe(false)
   })
+  it('preserves delivered team request identity and exact target revision', () => {
+    const request = {
+      id: 'team-recipient:org-a:req-1',
+      kind: 'recipient-request' as const,
+      fromUserId: 'subject-a',
+      organizationId: 'org-a',
+      requestId: 'req-1',
+      target: { kind: 'mapNode' as const, id: 'node-7', revision: 'map-rev-4', title: 'Milestone' },
+      at: NOW - 30,
+      delivery: 'delivered' as const,
+    }
+    const items = buildInboxItems({ ...sources(), teamInbox: [request, { ...request, at: NOW - 20 }] })
+    const [item] = items.filter((entry) => entry.kind === 'team-recipient')
+    expect(items.filter((entry) => entry.kind === 'team-recipient')).toHaveLength(1)
+    expect(item).toMatchObject({
+      id: 'team-recipient:org-a:req-1',
+      kind: 'team-recipient',
+      group: 'decision',
+      sourceRef: {
+        domain: 'team-recipient',
+        organizationId: 'org-a',
+        requestId: 'req-1',
+        targetKind: 'mapNode',
+        targetId: 'node-7',
+        targetRevision: 'map-rev-4',
+      },
+      data: request,
+    })
+    expect(buildInboxItems({ ...sources(), teamInbox: [] }).some((entry) => entry.kind === 'team-recipient')).toBe(false)
+  })
+
 
   it('orders blocking requests by longest wait, then decisions, then newest messages', () => {
     const items = buildInboxItems(sources())

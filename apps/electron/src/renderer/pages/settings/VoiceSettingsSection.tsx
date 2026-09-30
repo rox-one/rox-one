@@ -6,15 +6,16 @@ import {
   SettingsSection,
   SettingsToggle,
 } from '@/components/settings'
-import type {
-  AudioRetention,
-  EnhancementMode,
-  HotkeyMode,
-  OverlayPosition,
-  SttEngine,
-  TtsEngine,
-  VoiceHealth,
-  VoicePrefs,
+import {
+  ROCKS_T1_MODEL_ID,
+  type AudioRetention,
+  type EnhancementMode,
+  type HotkeyMode,
+  type OverlayPosition,
+  type SttEngine,
+  type TtsEngine,
+  type VoiceHealth,
+  type VoicePrefs,
 } from '@craft-agent/shared/voice'
 
 export function VoiceSettingsSection() {
@@ -72,13 +73,14 @@ export function VoiceSettingsSection() {
         <SettingsCard>
           <SettingsMenuSelectRow
             label={t('settings.input.sttEngine')}
-            description={`${t('settings.input.sttEngineDesc')} · ${brand}`}
+            description={prefs.sttEngine === 'cloud-rox'
+              ? `${t('settings.input.sttEngineDesc')} · ${t('settings.input.voiceModelEvidenceDesc', { model: ROCKS_T1_MODEL_ID })}`
+              : `${t('settings.input.sttEngineDesc')} · ${t('settings.input.voiceLocalModelEvidenceDesc', { model: prefs.asrModelId })}`}
             value={prefs.sttEngine}
-            onValueChange={(value) => void save({ sttEngine: value as SttEngine, cloudAsrConsent: value !== 'local-whisper' })}
+            onValueChange={(value) => void save({ sttEngine: value as SttEngine })}
             options={[
               { value: 'local-whisper', label: t('settings.input.sttLocal'), description: t('settings.input.sttLocalDesc') },
               { value: 'cloud-rox', label: t('settings.input.voiceRocksT1'), description: t('settings.input.sttCloudRoxDesc') },
-              { value: 'cloud-deepgram', label: t('settings.input.sttCloudDeepgram'), description: t('settings.input.sttCloudDeepgramDesc') },
             ]}
           />
           <SettingsMenuSelectRow
@@ -113,7 +115,7 @@ export function VoiceSettingsSection() {
             label={t('settings.input.voiceAsrConsent')}
             description={t('settings.input.voiceAsrConsentDesc')}
             checked={prefs.cloudAsrConsent}
-            onCheckedChange={(cloudAsrConsent) => void save({ cloudAsrConsent })}
+            onCheckedChange={(cloudAsrConsent) => void save({ cloudAsrConsent, privacyMigrationPending: false })}
           />
           <SettingsToggle
             label={t('settings.input.voiceAutoSubmit')}
@@ -127,8 +129,7 @@ export function VoiceSettingsSection() {
             value={prefs.ttsEngine}
             onValueChange={(value) => void save({ ttsEngine: value as TtsEngine })}
             options={[
-              { value: 'edge', label: t('settings.input.ttsEdge'), description: t('settings.input.ttsEdgeDesc') },
-              { value: 'fish-speech', label: t('settings.input.ttsFishSpeech'), description: t('settings.input.ttsFishSpeechDesc') },
+              { value: 'system', label: t('settings.input.ttsSystem'), description: t('settings.input.ttsSystemDesc') },
             ]}
           />
           <SettingsMenuSelectRow

@@ -135,52 +135,77 @@ export function formatBytes(bytes: number): string {
 
 export interface SummaryExtraction {
   summary: string
-  decisions: Array<{ title: string; why: string; who: string[] }>
-  actions: string[]
+  summarySourceSegmentIds: string[]
+  decisions: Array<{ title: string; why: string; who: string[]; sourceSegmentIds: string[] }>
+  actions: Array<{ text: string; sourceSegmentIds: string[] }>
+  questions: Array<{ text: string; sourceSegmentIds: string[] }>
 }
 
-export function buildSummaryPrompt(input: { title: string; participants: readonly string[]; transcript: string; language: 'ru' | 'en' }): string {
-  const clipped = input.transcript.length > 30000 ? `…\n${input.transcript.slice(-30000)}` : input.transcript
+export function buildSummaryPrompt(input: {
+  title: string
+  participants: readonly string[]
+  segments: readonly Pick<LocalTranscriptSegment, 'id' | 'startMs' | 'endMs' | 'text'>[]
+  language: 'ru' | 'en'
+}): string {
+  const transcript = input.segments
+    .map((s) => `[segmentId=${s.id} ${formatDuration(s.startMs)}–${formatDuration(s.endMs)}] ${s.text}`)
+    .join('\n')
+  const clipped = transcript.length > 30000 ? `…\n${transcript.slice(-30000)}` : transcript
   const head = input.language === 'ru'
     ? [
         `Подведи итоги встречи «${input.title}»${input.participants.length ? ` (участники: ${input.participants.join(', ')})` : ''} по транскрипту ниже.`,
         'Ничего не отправляй и не меняй — только прочитай и ответь.',
-        'Ответь ОДНИМ блоком ```json: {"summary": "3–6 предложений", "decisions": [{"title": "что решили", "why": "почему", "who": ["кто"]}], "actions": ["конкретное действие — кто, до когда"]}.',
-        'Только то, что есть в тексте; если решений или действий нет — пустые списки.',
+        'Ответь ОДНИМ блоком ```json: {"summary":"3–6 предложений","summarySourceSegmentIds":["id"],"decisions":[{"title":"что решили","why":"почему","who":["кто"],"sourceSegmentIds":["id"]}],"actions":[{"text":"конкретное действие — кто, до когда","sourceSegmentIds":["id"]}],"questions":[{"text":"открытый вопрос","sourceSegmentIds":["id"]}]}.',
+        'Каждый пункт обязан ссылаться хотя бы на один существующий segmentId из транскрипта. Не выдумывай ID, решения, действия или вопросы; если данных нет — используй пустые списки и пустое summary.',
         '',
         '--- Транскрипт ---',
       ]
     : [
         `Summarize the meeting “${input.title}”${input.participants.length ? ` (participants: ${input.participants.join(', ')})` : ''} from the transcript below.`,
         'Do not send or change anything — only read and answer.',
-        'Answer with ONE ```json block: {"summary": "3–6 sentences", "decisions": [{"title": "what was decided", "why": "why", "who": ["who"]}], "actions": ["concrete action — who, by when"]}.',
-        'Only what is in the text; empty lists when there are no decisions or actions.',
+        'Answer with ONE ```json block: {"summary":"3–6 sentences","summarySourceSegmentIds":["id"],"decisions":[{"title":"what was decided","why":"why","who":["who"],"sourceSegmentIds":["id"]}],"actions":[{"text":"concrete action — who, by when","sourceSegmentIds":["id"]}],"questions":[{"text":"open question","sourceSegmentIds":["id"]}]}.',
+        'Every item must cite at least one existing transcript segmentId. Never invent IDs, decisions, actions, or questions; use empty lists and an empty summary when evidence is absent.',
         '',
         '--- Transcript ---',
       ]
   return [...head, clipped].join('\n')
 }
 
-export function parseSummaryExtraction(parsed: unknown): SummaryExtraction | null {
+export function parseSummaryExtraction(parsed: unknown, allowedSegmentIds: readonly string[]): SummaryExtraction | null {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
   const o = parsed as Record<string, unknown>
-  const summary = typeof o.summary === 'string' ? o.summary.trim() : ''
+  const allowed = new Set(allowedSegmentIds)
+  const citations = (value: unknown): string[] => Array.isArray(value)
+    ? [...new Set(value.filter((id): id is string => typeof id === 'string' && allowed.has(id)))]
+    : []
+  const summarySourceSegmentIds = citations(o.summarySourceSegmentIds)
+  const summary = summarySourceSegmentIds.length && typeof o.summary === 'string' ? o.summary.trim() : ''
   const decisions = Array.isArray(o.decisions)
     ? o.decisions.flatMap((d) => {
         if (!d || typeof d !== 'object') return []
         const r = d as Record<string, unknown>
         const title = typeof r.title === 'string' ? r.title.trim() : ''
-        if (!title) return []
+        const sourceSegmentIds = citations(r.sourceSegmentIds)
+        if (!title || sourceSegmentIds.length === 0) return []
         return [{
           title,
           why: typeof r.why === 'string' ? r.why.trim() : '',
           who: Array.isArray(r.who) ? r.who.filter((w): w is string => typeof w === 'string' && !!w.trim()).map((w) => w.trim()) : [],
+          sourceSegmentIds,
         }]
       }).slice(0, 20)
     : []
-  const actions = Array.isArray(o.actions)
-    ? o.actions.map((a) => (typeof a === 'string' ? a.trim() : a && typeof a === 'object' && typeof (a as { text?: unknown }).text === 'string' ? String((a as { text: string }).text).trim() : '')).filter(Boolean).slice(0, 30)
+  const citedTextItems = (value: unknown): Array<{ text: string; sourceSegmentIds: string[] }> => Array.isArray(value)
+    ? value.flatMap((item) => {
+        if (!item || typeof item !== 'object') return []
+        const r = item as Record<string, unknown>
+        const text = typeof r.text === 'string' ? r.text.trim() : ''
+        const sourceSegmentIds = citations(r.sourceSegmentIds)
+        return text && sourceSegmentIds.length ? [{ text, sourceSegmentIds }] : []
+      }).slice(0, 30)
     : []
-  if (!summary && decisions.length === 0 && actions.length === 0) return null
-  return { summary, decisions, actions }
+  const actions = citedTextItems(o.actions)
+  const questions = citedTextItems(o.questions)
+  if (!summary && decisions.length === 0 && actions.length === 0 && questions.length === 0) return null
+  return { summary, summarySourceSegmentIds, decisions, actions, questions }
 }

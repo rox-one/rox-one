@@ -88,6 +88,17 @@ export function TaskDetail(props: TaskDetailProps) {
   const source = deriveTaskSource(task)
   const progress = checklistProgress(task)
   const trashed = task.trashedAt != null
+  const reminderStatus = task.reminderDeliveredFor === task.reminderAt
+    ? t('tasks.reminder.shown')
+    : task.reminderError === 'permission-denied'
+      ? t('tasks.reminder.permissionDenied')
+      : task.reminderError === 'permission-required'
+        ? t('tasks.reminder.permissionRequired')
+        : task.reminderError
+          ? t('tasks.reminder.deliveryFailed')
+          : task.reminderAt != null && task.reminderAt < now
+            ? t('tasks.reminder.past')
+            : t('tasks.reminder.scheduled')
 
   const whenLabel = (() => {
     if (task.startAt != null && task.startAt >= startOfLocalDay(now) + 86400000) return dateFmt.format(task.startAt) + (task.evening ? ` · ${t('tasks.when.evening')}` : '')
@@ -364,13 +375,13 @@ export function TaskDetail(props: TaskDetailProps) {
                   value={task.reminderAt != null ? toLocalInput(task.reminderAt) : ''}
                   onChange={(event) => {
                     const value = event.target.value
-                    update({ reminderAt: value ? new Date(value).getTime() : undefined })
+                    update(value ? { reminderAt: new Date(value).getTime(), reminderTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, reminderDeliveredFor: undefined, reminderRetryAt: undefined, reminderError: undefined } : { reminderAt: undefined, reminderTimeZone: undefined, reminderDeliveredFor: undefined, reminderRetryAt: undefined, reminderError: undefined })
                   }}
                 />
                 {task.reminderAt != null ? (
                   <>
-                    <span className={cn('text-[11px]', task.reminderAt < now ? 'text-text-muted' : 'text-text-secondary')}>{task.reminderAt < now ? t('tasks.reminder.past') : t('tasks.reminder.scheduled')}</span>
-                    <Button variant="ghost" onClick={() => update({ reminderAt: undefined })}>{t('tasks.clearDate')}</Button>
+                    <span className={cn('text-[11px]', task.reminderError ? 'text-destructive' : task.reminderAt < now ? 'text-text-muted' : 'text-text-secondary')}>{reminderStatus}</span>
+                    <Button variant="ghost" onClick={() => update({ reminderAt: undefined, reminderTimeZone: undefined, reminderDeliveredFor: undefined, reminderRetryAt: undefined, reminderError: undefined })}>{t('tasks.clearDate')}</Button>
                   </>
                 ) : null}
               </>
@@ -382,7 +393,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     key={rule}
                     type="button"
                     aria-pressed={(task.recurrence?.rule ?? 'none') === rule}
-                    onClick={() => update({ recurrence: rule === 'none' ? undefined : { rule, interval: task.recurrence?.interval ?? 1, mode: task.recurrence?.mode, weekdays: rule === 'weekly' ? task.recurrence?.weekdays : undefined } })}
+                    onClick={() => update({ recurrence: rule === 'none' ? undefined : { rule, interval: task.recurrence?.interval ?? 1, mode: task.recurrence?.mode, weekdays: rule === 'weekly' ? task.recurrence?.weekdays : undefined, timeZone: task.recurrence?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone } })}
                     className={cn('h-6 rounded-[6px] px-2 text-[12px]', (task.recurrence?.rule ?? 'none') === rule ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]')}
                   >
                     {t(`tasks.recurrence.${rule}`)}

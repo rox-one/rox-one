@@ -20,6 +20,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 
+import { CAPABILITY_PACKS, CAPABILITY_TOOLS, buildOfflineCapabilityReport } from '@craft-agent/shared/capabilities'
 import { routes } from '@/lib/navigate'
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
@@ -32,15 +33,11 @@ import type {
   MarketplaceLockRecord,
 } from '@craft-agent/shared/marketplace'
 import {
-  CAPABILITY_PACKS,
-  CAPABILITY_TOOLS,
-  buildOfflineCapabilityReport,
-} from '@craft-agent/shared/capabilities'
-import {
   isHighRiskMarketplacePermission,
   groupExtensionPermissions,
   permissionsForMarketplaceKind,
 } from '@craft-agent/shared/extensions/browser'
+import { filterMarketplaceEntries } from '@craft-agent/shared/marketplace'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -52,6 +49,58 @@ type BusyState = Record<string, 'busy' | undefined>
 
 /** UI tabs map onto catalog kinds (+ rules = context-doc). */
 type MarketplaceTab = 'skillpack' | 'tool' | 'service' | 'rule' | ''
+type MarketplaceSavedGroup = { id: string; name: string; entryIds: string[] }
+type MarketplacePreferences = {
+  query?: string
+  tab?: MarketplaceTab
+  tags?: string[]
+  sort?: SortKey
+  installedOnly?: boolean
+  selectedGroupId?: string
+  groups?: MarketplaceSavedGroup[]
+}
+
+const MARKETPLACE_PREFERENCES_KEY = 'craft.marketplace.filters.v1'
+
+function readMarketplacePreferences(): MarketplacePreferences {
+  try {
+    const raw = localStorage.getItem(MARKETPLACE_PREFERENCES_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    const tab = ['', 'skillpack', 'tool', 'service', 'rule'].includes(String(parsed.tab))
+      ? (parsed.tab as MarketplaceTab)
+      : ''
+    const sort = ['stars', 'downloads', 'updated', 'name'].includes(String(parsed.sort))
+      ? (parsed.sort as SortKey)
+      : 'stars'
+    const groups = Array.isArray(parsed.groups)
+      ? parsed.groups.flatMap((item): MarketplaceSavedGroup[] => {
+          if (!item || typeof item !== 'object' || Array.isArray(item)) return []
+          const group = item as Record<string, unknown>
+          if (
+            typeof group.id !== 'string' ||
+            typeof group.name !== 'string' ||
+            !group.name.trim() ||
+            !Array.isArray(group.entryIds) ||
+            !group.entryIds.every((id) => typeof id === 'string')
+          ) return []
+          return [{ id: group.id, name: group.name, entryIds: [...new Set(group.entryIds as string[])] }]
+        })
+      : []
+    return {
+      query: typeof parsed.query === 'string' ? parsed.query : '',
+      tab,
+      tags: Array.isArray(parsed.tags) ? parsed.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+      sort,
+      installedOnly: parsed.installedOnly === true,
+      selectedGroupId: typeof parsed.selectedGroupId === 'string' ? parsed.selectedGroupId : '',
+      groups,
+    }
+  } catch {
+    return {}
+  }
+}
 
 const KIND_ICONS: Record<MarketplaceEntryKind, typeof Package> = {
   skillpack: Package,
@@ -118,15 +167,23 @@ function githubTreeUrl(repo: string, ref: string): string | null {
   return `https://github.com/${repo}/tree/${ref}`
 }
 
+function isArtifactInstalled(lock: MarketplaceLockRecord): boolean {
+  return lock.status === 'installed' && (lock.kind === 'tool' || lock.targets.length > 0)
+}
 export default function MarketplaceSettingsPage() {
   const { t, i18n } = useTranslation()
+  const [initialPreferences] = useState(readMarketplacePreferences)
   const [view, setView] = useState<MarketplaceCatalogResult | null>(null)
   const [statsMap, setStatsMap] = useState<Record<string, MarketplaceEntryStats>>({})
   const [busy, setBusy] = useState<BusyState>({})
-  const [query, setQuery] = useState('')
-  const [tab, setTab] = useState<MarketplaceTab>('')
-  const [tagFilter, setTagFilter] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('stars')
+  const [query, setQuery] = useState(initialPreferences.query ?? '')
+  const [tab, setTab] = useState<MarketplaceTab>(initialPreferences.tab ?? '')
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialPreferences.tags ?? [])
+  const [sortKey, setSortKey] = useState<SortKey>(initialPreferences.sort ?? 'stars')
+  const [installedOnly, setInstalledOnly] = useState(initialPreferences.installedOnly ?? false)
+  const [groups, setGroups] = useState<MarketplaceSavedGroup[]>(initialPreferences.groups ?? [])
+  const [selectedGroupId, setSelectedGroupId] = useState(initialPreferences.selectedGroupId ?? '')
+  const [groupName, setGroupName] = useState('')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -136,6 +193,16 @@ export default function MarketplaceSettingsPage() {
   /** Live install phase text per entry id (from marketplace:progress). */
   const [progressById, setProgressById] = useState<Record<string, string>>({})
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        MARKETPLACE_PREFERENCES_KEY,
+        JSON.stringify({ query, tab, tags: selectedTags, sort: sortKey, installedOnly, selectedGroupId, groups }),
+      )
+    } catch {
+      // The marketplace remains usable when browser storage is unavailable.
+    }
+  }, [query, tab, selectedTags, sortKey, installedOnly, selectedGroupId, groups])
   const progressLabel = useCallback(
     (phase: string, detail?: string): string => {
       const key = `marketplace.progress.${phase}`
@@ -270,7 +337,7 @@ export default function MarketplaceSettingsPage() {
 
   const copyOfflineReport = useCallback(async () => {
     const installedIds = Object.entries(view?.installs ?? {})
-      .filter(([, lock]) => lock.status === 'installed')
+      .filter(([, lock]) => isArtifactInstalled(lock))
       .map(([id]) => id)
     const report = buildOfflineCapabilityReport({
       installedIds,
@@ -308,48 +375,102 @@ export default function MarketplaceSettingsPage() {
     return counts
   }, [view])
 
+  const installs: Record<string, MarketplaceLockRecord> = view?.installs ?? {}
+  const selectedGroup = groups.find((group) => group.id === selectedGroupId)
   const entries = useMemo(() => {
     if (!view) return []
-    const q = query.trim().toLowerCase()
-    const filtered = view.catalog.entries.filter((e) => {
-      if (q && !e.title.toLowerCase().includes(q) && !e.descriptionRu.toLowerCase().includes(q))
-        return false
-      if (!entryMatchesTab(e, tab)) return false
-      if (tagFilter && !(e.tags ?? []).includes(tagFilter)) return false
-      return true
+    const installedIds = new Set(
+      Object.entries(installs)
+        .filter(([, lock]) => isArtifactInstalled(lock))
+        .map(([id]) => id),
+    )
+    return filterMarketplaceEntries(view.catalog.entries, {
+      query,
+      kind: tab,
+      tags: selectedTags,
+      installedOnly,
+      installedIds,
+      groupIds: selectedGroup ? new Set(selectedGroup.entryIds) : undefined,
+      sort: sortKey,
+      stats: statsMap,
+      locale: i18n.language,
     })
-    const statsVal = (id: string, sel: (s: MarketplaceEntryStats) => number): number => {
-      const s = statsMap[id]
-      return s ? sel(s) : 0
-    }
-    /** Combined download signal: npm weekly + GitHub release asset totals. */
-    const totalDownloads = (s: MarketplaceEntryStats): number =>
-      (s.npmWeeklyDownloads ?? 0) + (s.githubReleaseDownloads ?? 0)
-    return [...filtered].sort((a, b) => {
-      switch (sortKey) {
-        case 'name':
-          return a.title.localeCompare(b.title, 'ru')
-        case 'downloads':
-          return statsVal(b.id, totalDownloads) - statsVal(a.id, totalDownloads)
-        case 'updated': {
-          const pa = statsMap[a.id]?.pushedAt ? new Date(statsMap[a.id]!.pushedAt!).getTime() : 0
-          const pb = statsMap[b.id]?.pushedAt ? new Date(statsMap[b.id]!.pushedAt!).getTime() : 0
-          return pb - pa
-        }
-        default:
-          return statsVal(b.id, (s) => s.stars ?? 0) - statsVal(a.id, (s) => s.stars ?? 0)
-      }
-    })
-  }, [view, query, tab, tagFilter, sortKey, statsMap])
-
-  const installs: Record<string, MarketplaceLockRecord> = view?.installs ?? {}
-
+  }, [view, installs, query, tab, selectedTags, installedOnly, selectedGroup, sortKey, statsMap, i18n.language])
   const entryState = (e: MarketplaceEntry): 'available' | 'installed' | 'update' | 'deferred' => {
     const lock = installs[e.id]
     if (!lock) return 'available'
+    if (lock.status === 'installed' && !isArtifactInstalled(lock)) return 'available'
     if (lock.status === 'deferred') return 'deferred'
     return lock.ref === e.source.ref ? 'installed' : 'update'
   }
+  const saveVisibleGroup = () => {
+    const name = groupName.trim()
+    if (!name || entries.length === 0) return
+    const group: MarketplaceSavedGroup = {
+      id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name,
+      entryIds: entries.map((entry) => entry.id),
+    }
+    setGroups((previous) => [...previous.filter((item) => item.name !== name), group])
+    setSelectedGroupId(group.id)
+    setGroupName('')
+  }
+
+  const runGroupAction = async (action: 'install' | 'uninstall') => {
+    const group = groups.find((item) => item.id === selectedGroupId)
+    if (!group || !view) return
+    const byId = new Map(view.catalog.entries.map((entry) => [entry.id, entry]))
+    const targets = group.entryIds
+      .map((id) => byId.get(id))
+      .filter((entry): entry is MarketplaceEntry => Boolean(entry))
+      .filter((entry) => {
+        const lock = installs[entry.id]
+        const installed = lock ? isArtifactInstalled(lock) : false
+        return action === 'install'
+          ? !installed || lock?.status === 'deferred' || lock?.ref !== entry.source.ref
+          : Boolean(lock)
+      })
+    if (!targets.length) return
+    const operationId = `group:${group.id}`
+    setBusy((previous) => ({ ...previous, [operationId]: 'busy' }))
+    setError(null)
+    setActionSuccess(null)
+    const failures: string[] = []
+    try {
+      for (const entry of targets) {
+        try {
+          if (action === 'uninstall') {
+            await window.electronAPI.removeMarketplaceEntry(entry.id)
+          } else if (installs[entry.id]) {
+            await window.electronAPI.updateMarketplaceEntry(entry.id)
+          } else {
+            await window.electronAPI.installMarketplaceEntry(entry.id)
+          }
+        } catch (err) {
+          failures.push(`${entry.title}: ${err instanceof Error ? err.message : String(err)}`)
+        }
+      }
+      await load()
+      if (failures.length) setError(t('marketplace.groupPartialFailure', { failures: failures.join('; ') }))
+      else setActionSuccess(t(action === 'install' ? 'marketplace.groupInstalled' : 'marketplace.groupRemoved'))
+    } finally {
+      setBusy((previous) => {
+        const next = { ...previous }
+        delete next[operationId]
+        return next
+      })
+    }
+  }
+
+  const resetFilters = () => {
+    setQuery('')
+    setTab('')
+    setSelectedTags([])
+    setSortKey('stars')
+    setInstalledOnly(false)
+    setSelectedGroupId('')
+  }
+
 
   const tabs: Array<{ id: MarketplaceTab; labelKey: string }> = [
     { id: '', labelKey: 'marketplace.tabAll' },
@@ -495,30 +616,36 @@ export default function MarketplaceSettingsPage() {
         </div>
 
         {/* Controls: search/tags left, sort right */}
-        <div className="flex flex-wrap gap-2 mb-4 items-center text-sm">
+        <div className="flex flex-wrap gap-2 mb-3 items-center text-sm">
           <input
-            className="border border-border/60 rounded-md px-3 py-1.5 outline-none focus:ring-1 focus:ring-ring bg-background"
+            className="border border-border/60 rounded-md px-3 py-1.5 outline-none focus:ring-1 focus:ring-ring bg-background min-w-[12rem]"
             placeholder={t('marketplace.search')}
+            aria-label={t('marketplace.search')}
             value={query}
             onChange={(ev) => setQuery(ev.target.value)}
           />
-          {allTags.length > 0 && (
-            <PremiumMenuSelect
-              aria-label={t('marketplace.filterAllTags')}
-              className="h-8 max-w-[180px]"
-              items={[
-                { id: '__all__', label: t('marketplace.filterAllTags') },
-                ...allTags.map((tag) => ({ id: tag, label: `#${tag}` })),
-              ]}
-              placeholder={t('marketplace.filterAllTags')}
-              selectedId={tagFilter || '__all__'}
-              onSelect={(item) => setTagFilter(item.id === '__all__' ? '' : item.id)}
+          <label className="inline-flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={installedOnly}
+              onChange={(event) => setInstalledOnly(event.target.checked)}
             />
-          )}
-          <div className="flex-1 min-w-[1rem]" />
+            {t('marketplace.installedOnly')}
+          </label>
+          <PremiumMenuSelect
+            aria-label={t('marketplace.savedGroup')}
+            className="h-8 max-w-[200px]"
+            items={[
+              { id: '__all__', label: t('marketplace.allGroups') },
+              ...groups.map((group) => ({ id: group.id, label: group.name })),
+            ]}
+            placeholder={t('marketplace.savedGroup')}
+            selectedId={selectedGroupId || '__all__'}
+            onSelect={(item) => setSelectedGroupId(item.id === '__all__' ? '' : item.id)}
+          />
           <PremiumMenuSelect
             aria-label={t('marketplace.sortLabel')}
-            className="h-8 max-w-[180px] ml-auto"
+            className="h-8 max-w-[180px]"
             items={[
               { id: 'stars', label: t('marketplace.sortStars') },
               { id: 'downloads', label: t('marketplace.sortDownloads') },
@@ -529,7 +656,91 @@ export default function MarketplaceSettingsPage() {
             selectedId={sortKey}
             onSelect={(item) => setSortKey(item.id as SortKey)}
           />
+          <button
+            type="button"
+            className="text-xs px-2 py-1.5 rounded-md border border-border/50 hover:bg-muted"
+            onClick={resetFilters}
+          >
+            {t('marketplace.resetFilters')}
+          </button>
         </div>
+        {allTags.length > 0 ? (
+          <fieldset className="flex flex-wrap gap-x-3 gap-y-1 mb-3 text-xs">
+            <legend className="sr-only">{t('marketplace.filterAllTags')}</legend>
+            {allTags.map((tag) => (
+              <label key={tag} className="inline-flex items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={selectedTags.includes(tag)}
+                  onChange={() =>
+                    setSelectedTags((previous) =>
+                      previous.includes(tag)
+                        ? previous.filter((selected) => selected !== tag)
+                        : [...previous, tag].sort((a, b) => a.localeCompare(b)),
+                    )
+                  }
+                />
+                <span>#{tag}</span>
+              </label>
+            ))}
+          </fieldset>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <input
+            className="border border-border/60 rounded-md px-3 py-1.5 text-xs bg-background"
+            aria-label={t('marketplace.groupName')}
+            placeholder={t('marketplace.groupName')}
+            value={groupName}
+            onChange={(event) => setGroupName(event.target.value)}
+          />
+          <button
+            type="button"
+            className="text-xs px-2.5 py-1.5 rounded-md border border-border/50 hover:bg-muted disabled:opacity-40"
+            disabled={!groupName.trim() || entries.length === 0}
+            onClick={saveVisibleGroup}
+          >
+            {t('marketplace.saveVisibleGroup')}
+          </button>
+          {selectedGroup ? (
+            <>
+              <button
+                type="button"
+                className="text-xs px-2.5 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-40"
+                disabled={Boolean(busy[`group:${selectedGroup.id}`])}
+                onClick={() => void runGroupAction('install')}
+              >
+                {t('marketplace.groupInstall')}
+              </button>
+              <button
+                type="button"
+                className="text-xs px-2.5 py-1.5 rounded-md border border-border/50 hover:bg-muted disabled:opacity-40"
+                disabled={Boolean(busy[`group:${selectedGroup.id}`])}
+                onClick={() => void runGroupAction('uninstall')}
+              >
+                {t('marketplace.groupUninstall')}
+              </button>
+              <button
+                type="button"
+                className="text-xs px-2.5 py-1.5 rounded-md border border-border/50 hover:bg-muted"
+                onClick={() => {
+                  setGroups((previous) => previous.filter((group) => group.id !== selectedGroup.id))
+                  setSelectedGroupId('')
+                }}
+              >
+                {t('marketplace.groupDelete')}
+              </button>
+            </>
+          ) : null}
+        </div>
+        <div className="text-xs text-muted-foreground mb-2" aria-live="polite">
+          {t('marketplace.resultsCount', { count: entries.length })}
+          {view ? ` · ${t('marketplace.catalogOrigin', { origin: t(`marketplace.origin.${view.origin}`) })}` : null}
+        </div>
+        {view?.error ? (
+          <div className="text-xs text-amber-700 dark:text-amber-300 mb-3" role="status">
+            {t('marketplace.catalogStale', { error: view.error })}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex-1 min-h-0 mask-fade-y">

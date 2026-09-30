@@ -33,6 +33,14 @@ function imported(spec: ImportMediaSpec): Meeting {
 }
 
 describe('meetings import RPC client', () => {
+  it('hashes only the supplied shared-buffer byte view', async () => {
+    const backing = new SharedArrayBuffer(6)
+    new Uint8Array(backing).set([99, 1, 2, 3, 4, 88])
+    const spec = await specFromBytes(new Uint8Array(backing, 1, 4))
+    expect(spec).toEqual(await specFromBytes(new Uint8Array([1, 2, 3, 4])))
+    expect(spec.byteLength).toBe(4)
+  })
+
   it('maps import fail-closed codes', () => {
     expect(i18nKeyForImportError('grant-required')).toBe('meetings.grantRequired')
     expect(i18nKeyForImportError('archive-denied')).toBe('meetings.archiveDenied')

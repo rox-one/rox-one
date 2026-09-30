@@ -1419,7 +1419,8 @@ import {
   getSourcePermissionsPath,
   getAppPermissionsDir,
 } from '../agent/permissions-config.ts';
-import { validateAutomationsContent, validateAutomations, AUTOMATIONS_CONFIG_FILE } from '../automations/index.ts';
+import { validateAutomationsContent, validateAutomations } from '../automations/validation.ts';
+import { AUTOMATIONS_CONFIG_FILE } from '../automations/constants.ts';
 
 /**
  * Internal: Validate a single permissions.json file
@@ -1611,6 +1612,10 @@ const ThemeDarkOverrideSchema = z.object({
   input: CSSColorSchema.optional(),
   popover: CSSColorSchema.optional(),
   popoverSolid: CSSColorSchema.optional(),
+  terminalBackground: CSSColorSchema.optional(),
+  terminalForeground: CSSColorSchema.optional(),
+  terminalCursor: CSSColorSchema.optional(),
+  terminalSelection: CSSColorSchema.optional(),
 }).strict();
 
 /**
@@ -1631,8 +1636,12 @@ export const ThemeOverrideSchema = z.object({
   input: CSSColorSchema.optional(),
   popover: CSSColorSchema.optional(),
   popoverSolid: CSSColorSchema.optional(),
+  terminalBackground: CSSColorSchema.optional(),
+  terminalForeground: CSSColorSchema.optional(),
+  terminalCursor: CSSColorSchema.optional(),
+  terminalSelection: CSSColorSchema.optional(),
   // Scenic mode
-  mode: z.enum(['solid', 'scenic']).optional(),
+  mode: z.enum(['solid', 'scenic', 'blurred']).optional(),
   backgroundImage: z.string().optional(),
   // Dark mode overrides
   dark: ThemeDarkOverrideSchema.optional(),
@@ -1673,11 +1682,15 @@ export const PresetThemeSchema = z.object({
   input: CSSColorSchema.optional(),
   popover: CSSColorSchema.optional(),
   popoverSolid: CSSColorSchema.optional(),
+  terminalBackground: CSSColorSchema.optional(),
+  terminalForeground: CSSColorSchema.optional(),
+  terminalCursor: CSSColorSchema.optional(),
+  terminalSelection: CSSColorSchema.optional(),
   // Scenic mode
-  mode: z.enum(['solid', 'scenic']).optional(),
+  mode: z.enum(['solid', 'scenic', 'blurred']).optional(),
   backgroundImage: z.string().optional(),
   // Dark mode overrides
-  dark: z.object({}).passthrough().optional(),
+  dark: ThemeDarkOverrideSchema.optional(),
   // Shiki theme for syntax highlighting
   shikiTheme: z.object({
     light: z.string().optional(),

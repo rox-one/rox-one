@@ -9,13 +9,15 @@ import {
 
 const CONNECTION_FIELDS = ['id', 'workspaceId', 'provider', 'accountLabel', 'credentialRef', 'status', 'readOnly'] as const;
 const INPUT_FIELDS = ['kind', 'providerId', 'locator', 'now'] as const;
+const LOCATOR_FIELDS = ['type', 'key', 'service', 'account', 'path', 'host', 'registry', 'profile', 'source', 'fingerprint', 'projectId', 'environment', 'secretPath', 'secretKey', 'provider', 'locator'] as const;
 
 function assertAllowedFields(value: unknown, allowed: readonly string[], label: string): void {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) {
     throw new Error(`Invalid credential metadata: ${label}`);
   }
   for (const key of Reflect.ownKeys(value)) {
-    if (typeof key !== 'string' || !allowed.includes(key) || Object.getOwnPropertyDescriptor(value, key)?.enumerable !== true) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (typeof key !== 'string' || !allowed.includes(key) || descriptor?.enumerable !== true || !('value' in descriptor)) {
       throw new Error(`Invalid credential metadata field: ${String(key)}`);
     }
   }
@@ -35,6 +37,7 @@ export function attachCredentialRef(
 ): ServiceConnection {
   assertAllowedFields(connection, CONNECTION_FIELDS, 'connection');
   assertAllowedFields(input, INPUT_FIELDS, 'input');
+  assertAllowedFields(input.locator, LOCATOR_FIELDS, 'locator');
   if (!isCredentialRefRegistry(registry)) {
     throw new Error('Invalid credential metadata: registry');
   }

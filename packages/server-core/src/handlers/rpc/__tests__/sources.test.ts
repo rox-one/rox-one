@@ -28,6 +28,7 @@ import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-c
 import type { HandlerDeps } from '../../handler-deps'
 import { KnowledgeConnectionsStore } from '../../../knowledge'
 import { registerSourcesHandlers } from '../sources'
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
@@ -58,7 +59,7 @@ mock.module('@craft-agent/shared/config', () => ({
 }))
 
 function writeConfigDefaults(): void {
-  writeFileSync(join(process.env.CRAFT_CONFIG_DIR!, 'config-defaults.json'), JSON.stringify({
+  writeFileSync(join(resolveConfigDir(), 'config-defaults.json'), JSON.stringify({
     version: 'test',
     workspaceDefaults: {
       permissionMode: 'ask',

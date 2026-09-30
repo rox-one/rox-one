@@ -20,7 +20,8 @@ export type CredentialKind =
   | 'ssh_agent_identity'
   | 'x509_identity'
   | 'opaque_bundle'
-  | 'browser_session';
+  | 'browser_session'
+  | 'account_replica_key';
 
 export type CredentialRefId = `cred_${string}`;
 
@@ -111,6 +112,7 @@ const CREDENTIAL_KINDS: readonly CredentialKind[] = [
   'x509_identity',
   'opaque_bundle',
   'browser_session',
+  'account_replica_key',
 ];
 
 const VERSION_STATUSES: readonly CredentialVersionStatus[] = [

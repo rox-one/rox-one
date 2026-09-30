@@ -215,7 +215,7 @@ const instance = await (async () => {
       }),
       createSessionManager: () => new SessionManager(),
       bindRpcServer: (sm, server) => sm.setRpcServer(server),
-      createHandlerDeps: ({ sessionManager, platform, oauthFlowStore }) => {
+      createHandlerDeps: ({ sessionManager, platform, oauthFlowStore, nativeAuthority, nativeJournal, collaborationSync }) => {
         if (vpsBrowserManager) sessionManager.setBrowserPaneManager(vpsBrowserManager)
         messagingHandle = createMessagingBootstrap({
           sessionManager,
@@ -239,6 +239,7 @@ const instance = await (async () => {
           oauthFlowStore,
           browserPaneManager: vpsBrowserManager ?? undefined,
           messagingRegistry: messagingHandle.registry,
+          nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
         }
       },
       registerAllRpcHandlers: registerCoreRpcHandlers,

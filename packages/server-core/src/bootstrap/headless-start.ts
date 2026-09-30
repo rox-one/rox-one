@@ -1,7 +1,10 @@
-import { writeFileSync, readFileSync, unlinkSync, existsSync, readlinkSync } from 'node:fs'
+import { writeFileSync, readFileSync, unlinkSync, existsSync, readlinkSync, realpathSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { uptime as osUptime } from 'node:os'
+import { NativeAuthority } from '../authority/native-authority.ts'
+import { NativeJournal } from '../authority/native-journal.ts'
+import { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
 import { OAuthFlowStore } from '@craft-agent/shared/auth'
@@ -33,12 +36,17 @@ export interface ServerBootstrapOptions<TSessionManager, THandlerDeps> {
   rpcPort?: number
   bundledAssetsRoot?: string
   platformFactory?: () => PlatformServices
+  /** Private isolated authority/journal storage override for host maintenance and tests. */
+  nativeStateDir?: string
   applyPlatformToSubsystems?: (platform: PlatformServices) => void
   createSessionManager: () => TSessionManager
   createHandlerDeps: (ctx: {
     sessionManager: TSessionManager
     platform: PlatformServices
     oauthFlowStore: OAuthFlowStore
+    nativeAuthority: NativeAuthority
+    nativeJournal: NativeJournal
+    collaborationSync: CollaborationSyncService
   }) => THandlerDeps
   registerAllRpcHandlers: (server: RpcServer, deps: THandlerDeps, serverCtx: ServerHandlerContext) => void
   initializeSessionManager: (sessionManager: TSessionManager) => Promise<void>
@@ -434,11 +442,39 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     throw new Error(`Invalid RPC port: ${rpcPortRaw}`)
   }
   const rpcPort = Math.trunc(rpcPortRaw)
+  const nativeStateDir = options.nativeStateDir ?? process.env.CRAFT_NATIVE_STATE_DIR ?? join(realpathSync(resolveConfigDir()), 'native-data')
+  let nativeAuthority: NativeAuthority
+  try {
+    nativeAuthority = new NativeAuthority({ stateDir: nativeStateDir })
+  } catch (error) {
+    releaseServerLock()
+    throw error
+  }
+  let nativeJournal: NativeJournal
+  try {
+    nativeJournal = new NativeJournal({
+      stateDir: nativeStateDir,
+      authorize: (principal, workspaceId, action, nativeRoot) =>
+        nativeAuthority.authorize(principal, workspaceId, action, nativeRoot),
+      permissionFence: (principal, workspaceId, action) =>
+        nativeAuthority.permissionFence(principal, workspaceId, action),
+      authorizePreparedRecovery: (principal, workspaceId, action, expectedFence, nativeRoot) =>
+        nativeAuthority.authorizePreparedRecovery(principal, workspaceId, action, expectedFence, nativeRoot),
+    })
+  } catch (error) {
+    nativeAuthority.close()
+    try { modelRefreshService.stopAll?.() } catch { /* preserve startup failure */ }
+    try { await options.cleanupSessionManager?.(sessionManager) } catch { /* preserve startup failure */ }
+    releaseServerLock()
+    throw error
+  }
+  const collaborationSync = new CollaborationSyncService(nativeAuthority, nativeJournal)
 
   const wsServer = new WsRpcServer({
     host: rpcHost,
     port: rpcPort,
     requireAuth: true,
+    nativeAuthority,
     validateToken: async (t) => secureTokenCompare(t, serverToken),
     validateSessionCookie: options.validateSessionCookie,
     serverId: options.serverId ?? 'headless',
@@ -462,7 +498,9 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     },
   })
 
-  await wsServer.listen()
+  const oauthFlowStore = new OAuthFlowStore()
+  try {
+    await wsServer.listen()
 
   try {
     await startNativeSidecar(platform.logger)
@@ -472,11 +510,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
 
   options.bindRpcServer?.(sessionManager, wsServer)
 
-  const oauthFlowStore = new OAuthFlowStore()
-
   const deps = options.createHandlerDeps({
     sessionManager,
     platform,
+    nativeAuthority,
+    nativeJournal,
+    collaborationSync,
     oauthFlowStore,
   })
 
@@ -546,6 +585,18 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     } catch (error) {
       platform.logger.error('[bootstrap] Failed to close WS server:', error)
     }
+    try {
+      nativeJournal.close()
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to close native journal:', error)
+    }
+
+    try {
+      nativeAuthority.close()
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to close native authority:', error)
+    }
+
 
     try {
       oauthFlowStore.dispose()
@@ -567,6 +618,18 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     token: serverToken,
     serverHandlerContext,
     stop,
+  }
+  } catch (error) {
+    try { wsServer.close() } catch { /* preserve startup failure */ }
+    try { nativeJournal.close() } catch { /* preserve startup failure */ }
+    try { await stopNativeSidecar() } catch { /* preserve startup failure */ }
+    try { stopAllSourceIndexWatches() } catch { /* preserve startup failure */ }
+    try { modelRefreshService.stopAll?.() } catch { /* preserve startup failure */ }
+    try { await options.cleanupSessionManager?.(sessionManager) } catch { /* preserve startup failure */ }
+    try { nativeAuthority.close() } catch { /* preserve startup failure */ }
+    try { oauthFlowStore.dispose() } catch { /* preserve startup failure */ }
+    try { releaseServerLock() } catch { /* preserve startup failure */ }
+    throw error
   }
 }
 

@@ -18,6 +18,9 @@ export interface DecisionSource {
   kind: DecisionSourceKind
   id?: string
   label?: string
+  /** Optional stable source passage for audio-backed meeting decisions. */
+  segmentId?: string
+  startMs?: number
 }
 
 export interface Decision {
@@ -79,7 +82,14 @@ function normSource(v: unknown): DecisionSource {
   if (!v || typeof v !== 'object') return { kind: 'manual' }
   const o = v as Record<string, unknown>
   const kind = o.kind === 'session' || o.kind === 'meeting' ? o.kind : 'manual'
-  return { kind, id: str(o.id) || undefined, label: str(o.label) || undefined }
+  const startMs = num(o.startMs)
+  return {
+    kind,
+    id: str(o.id) || undefined,
+    label: str(o.label) || undefined,
+    segmentId: str(o.segmentId) || undefined,
+    startMs: startMs != null && startMs >= 0 ? startMs : undefined,
+  }
 }
 
 function normRejected(v: unknown, prefix: string): RejectedOption[] {

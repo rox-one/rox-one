@@ -202,4 +202,34 @@ describe('OmpAgent startup — abort and recovery', () => {
     expectCleanTerminal(second);
     expect(agent.isProcessing()).toBe(false);
   });
+
+  it('handles a late stdin pipe error from a reconnected child without poisoning its successor', async () => {
+    const { agent } = setup('healthy');
+    expect((await chatEvents(agent, 'one', 8_000)).some((event) => event.type === 'text_complete')).toBe(true);
+    const previous = (agent as unknown as { subprocess: import('node:child_process').ChildProcess }).subprocess;
+    await agent.reconnect();
+    // Writable emits this asynchronously, independently of ChildProcess's
+    // error event. Reproduce the exact event boundary observed in union runs.
+    expect(() => previous.stdin!.emit('error', Object.assign(new Error('broken pipe'), { code: 'EPIPE' }))).not.toThrow();
+    const events = await chatEvents(agent, 'two', 8_000);
+    expect(events.some((event) => event.type === 'text_complete')).toBe(true);
+    expect(events.some((event) => event.type === 'error' || event.type === 'typed_error')).toBe(false);
+    expectCleanTerminal(events);
+  });
+
+  it('surfaces a current stdin error during startup as a bounded typed failure', async () => {
+    const { agent } = setup('slow-ready');
+    const eventsPromise = chatEvents(agent, 'one', 8_000);
+    const currentChild = () => (agent as unknown as { subprocess: import('node:child_process').ChildProcess | null }).subprocess;
+    for (let attempt = 0; !currentChild() && attempt < 100; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    const child = currentChild();
+    expect(child).not.toBeNull();
+    child!.stdin!.emit('error', Object.assign(new Error('broken pipe'), { code: 'EPIPE' }));
+    const events = await eventsPromise;
+    expect(typedError(events).error.code).toBe('OMP_START_FAILED');
+    expectCleanTerminal(events);
+    expect(agent.isProcessing()).toBe(false);
+  });
 });

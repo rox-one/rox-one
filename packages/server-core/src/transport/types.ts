@@ -3,11 +3,14 @@
  */
 
 import type { PushTarget } from '@craft-agent/shared/protocol'
+import type { NativeAuthorityAction, NativePrincipal } from '../authority/native-authority'
 
 export interface RequestContext {
   clientId: string
   workspaceId: string | null
   webContentsId: number | null
+  /** Server-minted capability, never taken from request arguments. */
+  principal?: NativePrincipal
 }
 
 export type HandlerFn = (ctx: RequestContext, ...args: any[]) => Promise<any> | any
@@ -18,6 +21,8 @@ export type HandlerFn = (ctx: RequestContext, ...args: any[]) => Promise<any> | 
  */
 export interface RpcHandlerOptions {
   readonly access?: 'localElectron'
+  /** Native clients are denied unless a handler explicitly declares its grant. */
+  readonly nativeAction?: Exclude<NativeAuthorityAction, 'manage'>
 }
 
 export interface RpcServer {

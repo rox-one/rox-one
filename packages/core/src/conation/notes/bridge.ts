@@ -107,9 +107,12 @@ export function createNotesBridge(options: NotesBridgeOptions): NotesBridge | nu
   const importsAcl = options.importsAcl
 
   async function lookupNote(id: string): Promise<NotesLookup> {
-    if (!(await allowed(id, claimLocker, importsAcl))) return { status: 'denied' }
     let cursor: string | null | undefined
+    const seenCursors = new Set<string>()
     for (let pageIndex = 0; pageIndex < NOTES_BRIDGE_MAX_PAGES; pageIndex += 1) {
+      const cursorKey = cursor ?? ''
+      if (seenCursors.has(cursorKey)) return { status: 'incomplete' }
+      seenCursors.add(cursorKey)
       let page: NotesPage
       try {
         page = await loadDocuments(soup, { cursor, limit: NOTES_BRIDGE_PAGE_LIMIT })
@@ -117,8 +120,13 @@ export function createNotesBridge(options: NotesBridgeOptions): NotesBridge | nu
         return { status: 'unavailable', message: errorMessage(err) }
       }
       const hit = page.items.find((doc) => doc.id === id)
-      if (hit) return { status: 'ok', document: hit }
+
+      if (hit) {
+        if (!(await allowed(id, claimLocker, importsAcl))) return { status: 'denied' }
+        return { status: 'ok', document: hit }
+      }
       if (!page.nextCursor) return { status: 'not_found' }
+      if (seenCursors.has(page.nextCursor)) return { status: 'incomplete' }
       cursor = page.nextCursor
     }
     return { status: 'incomplete' }

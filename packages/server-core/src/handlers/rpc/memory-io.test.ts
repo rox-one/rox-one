@@ -35,9 +35,13 @@ import { MemoryFileStore } from '../../memory/MemoryFileStore'
 
 function createHarness() {
   const handlers = new Map<string, HandlerFn>()
+  const handlerOptions = new Map<string, { nativeAction?: string }>()
   const pushCalls: Array<{ channel: string; target: unknown; args: unknown[] }> = []
   const server: RpcServer = {
-    handle(channel, handler) { handlers.set(channel, handler) },
+    handle(channel, handler, options) {
+      handlers.set(channel, handler)
+      if (options) handlerOptions.set(channel, options)
+    },
     push(channel, target, ...args) { pushCalls.push({ channel, target, args }) },
     async invokeClient() { return undefined },
     hasClientCapability() { return false },
@@ -57,12 +61,17 @@ function createHarness() {
     },
   }
   registerMemoryIoHandlers(server, deps)
-  const invoke = (channel: string, ...args: unknown[]) => {
+  const invokeWithContext = (context: RequestContext, channel: string, ...args: unknown[]) => {
     const handler = handlers.get(channel)
     if (!handler) throw new Error(`No handler for ${channel}`)
-    return handler({ clientId: 'c1', workspaceId: null } as unknown as RequestContext, ...args)
+    return handler(context, ...args)
   }
-  return { invoke, pushCalls }
+  const invoke = (channel: string, ...args: unknown[]) => invokeWithContext(
+    { clientId: 'c1', workspaceId: null, webContentsId: null },
+    channel,
+    ...args,
+  )
+  return { invoke, invokeWithContext, handlerOptions, pushCalls }
 }
 
 const EXPORT_CH = RPC_CHANNELS.memory.EXPORT

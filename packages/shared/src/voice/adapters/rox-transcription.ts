@@ -1,6 +1,5 @@
 import {
   ROCKS_T1_MODEL_ID,
-  ROCKS_T1_UPSTREAM_MODEL,
   VOICE_ENDPOINTS,
   voiceUrl,
 } from '../contracts.ts'
@@ -36,7 +35,7 @@ export interface TranscriptionRequest {
   signal?: AbortSignal
 }
 
-export interface TranscriptionHttp { fetch(input: string, init: RequestInit): Promise<Response> }
+export interface TranscriptionHttp { fetch(input: string, init?: RequestInit): Promise<Response> }
 
 export interface RoxTranscriptionOptions {
   baseUrl?: string
@@ -110,7 +109,7 @@ export class RoxTranscriptionAdapter {
   ): Promise<NormalizedTranscript> {
     const token = await this.options.identity.bearer()
     const form = new FormData()
-    form.append('file', new Blob([audio as BlobPart], { type: mime }), 'audio')
+    form.append('file', new Blob([new Uint8Array(audio)], { type: mime }), 'audio')
     form.append('model', ROCKS_T1_MODEL_ID)
     form.append('response_format', 'verbose_json')
     const granularities = wordTimestamps && this.options.capabilities.timestampGranularities.includes('word') ? ['segment', 'word'] : ['segment']
@@ -132,9 +131,14 @@ export class RoxTranscriptionAdapter {
     if (response.status >= 500) throw new RoxTranscriptionError('upstream', `Upstream ${response.status}`, { status: response.status })
     if (!response.ok) throw new RoxTranscriptionError('upstream', `Transcription failed (${response.status})`, { status: response.status })
     const json = await response.json()
+    const providerModel = json && typeof json === 'object' && 'model' in json
+      ? json.model
+      : undefined
     const result = normalizeVerboseJson(json, {
       requestedModelId: ROCKS_T1_MODEL_ID,
-      resolvedModelId: typeof (json as { model?: string }).model === 'string' ? (json as { model: string }).model : ROCKS_T1_UPSTREAM_MODEL,
+      resolvedModelId: typeof providerModel === 'string' && providerModel.trim()
+        ? providerModel.trim()
+        : undefined,
       routeVersion: this.options.capabilities.routeVersion,
       requestId,
     })

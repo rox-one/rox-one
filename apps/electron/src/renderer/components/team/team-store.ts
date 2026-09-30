@@ -41,14 +41,20 @@ export function readTeamState(): TeamLocalState {
   return cache
 }
 
-function writeTeamState(next: TeamLocalState): void {
+function writeTeamState(next: TeamLocalState): boolean {
   cache = next
+  let persisted = false
   try {
-    storage()?.setItem(TEAM_STATE_STORAGE_KEY, JSON.stringify(next))
+    const store = storage()
+    if (store) {
+      store.setItem(TEAM_STATE_STORAGE_KEY, JSON.stringify(next))
+      persisted = true
+    }
   } catch {
-    // quota / private mode — keep in memory
+    // Keep the in-memory draft, but do not report it as saved.
   }
   for (const l of listeners) l()
+  return persisted
 }
 
 export function subscribeTeamState(listener: Listener): () => void {
@@ -65,9 +71,9 @@ export function teamActionContext(selfUserId: string): TeamActionContext {
   return { selfUserId, now: Date.now(), newId }
 }
 
-/** Apply a pure reducer from @craft-agent/shared/team and persist. Throws on invalid input. */
-export function dispatchTeam(fn: (state: TeamLocalState) => TeamLocalState): void {
-  writeTeamState(fn(readTeamState()))
+/** Apply a pure reducer and persist it locally. Returns false when only memory was updated. */
+export function dispatchTeam(fn: (state: TeamLocalState) => TeamLocalState): boolean {
+  return writeTeamState(fn(readTeamState()))
 }
 
 export function useTeamState(): TeamLocalState {

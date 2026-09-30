@@ -20,6 +20,7 @@ type FunctionKeys<T> = {
 type BrowserPaneApi = ElectronAPI['browserPane']
 // Knowledge (P1 read-only) nests like browserPane via dotted CHANNEL_MAP keys.
 type KnowledgeApi = ElectronAPI['knowledge']
+type NativeDataApi = ElectronAPI['nativeData']
 type WorkgraphApi = ElectronAPI['workgraph']
 // SiYuan engine surfaces (P2) nest the same way.
 type SiyuanEngineApi = ElectronAPI['siyuanEngine']
@@ -27,6 +28,7 @@ type SiyuanEngineApi = ElectronAPI['siyuanEngine']
 type ExtensionSurfaceApi = ElectronAPI['extensionSurface']
 type BrowserPaneKeys = `browserPane.${FunctionKeys<BrowserPaneApi>}`
 type KnowledgeKeys = `knowledge.${FunctionKeys<KnowledgeApi>}`
+type NativeDataKeys = `nativeData.${FunctionKeys<NativeDataApi>}`
 type WorkgraphKeys = `workgraph.${FunctionKeys<WorkgraphApi>}`
 type SiyuanEngineKeys = `siyuanEngine.${FunctionKeys<SiyuanEngineApi>}`
 type ExtensionSurfaceKeys = `extensionSurface.${FunctionKeys<ExtensionSurfaceApi>}`
@@ -126,8 +128,11 @@ type ApiToChannelMapKeys = Exclude<
   | 'onOmniboxOpen' // direct IPC listener — embedded BrowserView ⌘K bridge
   | 'remoteTlsInspect' // direct IPC — inspect peer cert before token handshake
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
+  | 'exitMiniWindow' // direct IPC — native window lifecycle
+  | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
 > | BrowserPaneKeys
   | KnowledgeKeys
+  | NativeDataKeys
   | WorkgraphKeys
   | SiyuanEngineKeys
   | ExtensionSurfaceKeys

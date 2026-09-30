@@ -1,9 +1,9 @@
 import { describe, test, expect, afterEach } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Buffer } from 'node:buffer'
-import { getFileType, getMimeType, readFileAttachment } from '../files'
+import { atomicWriteFileSync, getFileType, getMimeType, readFileAttachment } from '../files'
 
 const cleanups: Array<() => void> = []
 
@@ -20,6 +20,20 @@ afterEach(() => {
     } catch {
       // best-effort
     }
+  }
+})
+
+describe('atomicWriteFileSync on Windows', () => {
+  if (process.platform === 'win32') {
+    test('replaces an existing JSON snapshot without truncating Unicode content', () => {
+      const filePath = join(makeTmp(), 'settings.json')
+      writeFileSync(filePath, '{"revision":1,"value":"old"}')
+      const value = { revision: 2, value: '新しい設定'.repeat(128 * 1024) }
+
+      atomicWriteFileSync(filePath, JSON.stringify(value))
+
+      expect(JSON.parse(readFileSync(filePath, 'utf-8'))).toEqual(value)
+    })
   }
 })
 

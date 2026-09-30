@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { EventEmitter } from 'node:events'
 
-import type { ExtensionHostStatus } from '@craft-agent/shared/extensions'
+import { isExtensionPermission, type ExtensionHostStatus, type ExtensionPermission } from '@craft-agent/shared/extensions'
 import {
   getCredentialManager,
   type CredentialId,
@@ -155,8 +155,10 @@ export class ExtensionHostManager {
   private pid: number | undefined
   private readonly pending = new Map<string, PendingRequest>()
   private readonly loadedExtensions = new Set<string>()
-  /** grantedPermissions per extensionId (defaults for broker mint). */
+  /** Granted permissions per extensionId (sole authority for broker mint). */
   private readonly grantedByExtension = new Map<string, readonly string[]>()
+  /** Explicit per-method requirements loaded from the package manifest. */
+  private readonly operationsByExtension = new Map<string, ReadonlyMap<string, readonly ExtensionPermission[]>>()
   private readonly forkFn: ExtensionHostForkFn | null
   private readonly workerPath: string
   private readonly configDir: string
@@ -289,14 +291,28 @@ export class ExtensionHostManager {
     extensionId: string,
     entryPath: string,
     grantedPermissions?: readonly string[],
+    operations: Readonly<Record<string, readonly string[]>> = {},
   ): Promise<void> {
     if (!extensionId) throw new Error('extensionId is required')
+    // A failed reload must not leave the previous code or grants active.
+    await this.unloadExtension(extensionId)
+    const grants = grantedPermissions ?? []
+    const approvedOperations = new Map<string, readonly ExtensionPermission[]>()
+    for (const [method, permissions] of Object.entries(operations)) {
+      if (!method || !Array.isArray(permissions)) throw new Error('Invalid extension operation contract')
+      const required = permissions.map((permission) => {
+        if (!isExtensionPermission(permission) || !grants.includes(permission)) {
+          throw new Error(`Operation '${method}' requires ungranted permission '${permission}'`)
+        }
+        return permission
+      })
+      approvedOperations.set(method, required)
+    }
     const roots = resolveSandboxRoots({
       configDir: this.configDir,
       sandboxRootEnv: this.sandboxRootEnv,
     })
     const resolved = assertPathAllowlisted(entryPath, roots)
-
     await this.ensureRunning()
     await this.request({
       id: nextId(),
@@ -305,16 +321,14 @@ export class ExtensionHostManager {
       entryPath: resolved,
     })
     this.loadedExtensions.add(extensionId)
-    if (grantedPermissions) {
-      this.grantedByExtension.set(extensionId, [...grantedPermissions])
-    } else if (!this.grantedByExtension.has(extensionId)) {
-      this.grantedByExtension.set(extensionId, [])
-    }
+    this.grantedByExtension.set(extensionId, [...grants])
+    this.operationsByExtension.set(extensionId, approvedOperations)
   }
 
   async unloadExtension(extensionId: string): Promise<void> {
     this.broker.revokeExtension(extensionId)
     this.grantedByExtension.delete(extensionId)
+    this.operationsByExtension.delete(extensionId)
     if (this.lifecycle !== 'running' || !this.child) {
       this.loadedExtensions.delete(extensionId)
       return
@@ -366,21 +380,24 @@ export class ExtensionHostManager {
   }
 
   /**
-   * Call a method on a loaded extension module inside the worker.
-   * Basic permission gate: rejects empty permissions arrays when provided.
+   * Call an explicitly declared method on a loaded extension. The operation
+   * map was loaded by main from its package manifest, never from RPC arguments.
    */
   async callExtension(
     extensionId: string,
     method: string,
     args?: unknown[],
-    permissions?: string[],
   ): Promise<unknown> {
     if (!extensionId) throw new Error('extensionId is required')
     if (!method) throw new Error('method is required')
-    if (Array.isArray(permissions) && permissions.length === 0) {
-      throw new Error('Permission check failed: empty permissions')
+    const operation = this.operationsByExtension.get(extensionId)?.get(method)
+    if (!operation) throw new Error(`Permission check failed: undeclared operation '${method}'`)
+    const granted = this.requireStoredGrants(extensionId)
+    for (const permission of operation) {
+      if (!isExtensionPermission(permission) || !granted.includes(permission)) {
+        throw new Error(`Permission check failed: '${permission}' is not granted`)
+      }
     }
-
     await this.ensureRunning()
     return this.request({
       id: nextId(),
@@ -388,7 +405,6 @@ export class ExtensionHostManager {
       extensionId,
       method,
       args,
-      permissions,
     })
   }
 

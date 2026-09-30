@@ -60,6 +60,11 @@ export interface ForeignRegistryRecord {
   kind: ForeignSessionKind
   importedAt: number
   sourcePath: string
+  /** Last source modification time observed when its imported snapshot was saved. */
+  sourceMtimeMs?: number
+  /** SHA-256 of the normalized imported message snapshot, not source-file bytes. */
+  contentHash?: string
+  messageCount?: number
 }
 
 export interface ForeignPersistResult {
@@ -75,27 +80,26 @@ export interface ForeignDiscoverResult {
   scannedAt: number
   cachePath: string
   truncated?: boolean
+  aborted?: boolean
 }
 
 /** Background (automatic) foreign chat import status. */
-export type ForeignAutoImportState = 'idle' | 'scanning' | 'importing' | 'done' | 'error' | 'disabled'
+export type ForeignAutoImportState = 'idle' | 'scanning' | 'importing' | 'partial' | 'done' | 'error' | 'disabled'
 
 export interface ForeignAutoImportStatus {
   workspaceId: string | null
   enabled: boolean
   state: ForeignAutoImportState
-  /** Chats found in local sources (non-empty). */
   found: number
-  /** Chats already present in Rox. */
   alreadyImported: number
-  /** Created in the last run. */
   imported: number
-  /** Appended with new turns in the last run. */
   updated: number
-  /** Older (or over-limit) chats not imported automatically. */
   remaining: number
-  /** Per-source counts of found chats. */
   bySource: Record<string, number>
+  failed: number
+  failureReasons: Record<string, number>
+  truncated: boolean
+  partialReason?: 'source-failure' | 'scan-truncated' | 'consent-revoked'
   lastRunAt: number | null
   error?: string
 }

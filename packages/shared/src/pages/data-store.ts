@@ -73,7 +73,19 @@ export class PageDataStore {
     // first makes the WAL switch (and every later write) wait instead of failing
     // (refresh script vs. agent write_page_data).
     this.db.exec('PRAGMA busy_timeout = 5000;');
-    this.db.exec('PRAGMA journal_mode = WAL;');
+    const walDeadline = Date.now() + 5000;
+    for (;;) {
+      try {
+        this.db.exec('PRAGMA journal_mode = WAL;');
+        break;
+      } catch (error) {
+        if (!(error && typeof error === 'object' && 'code' in error && error.code === 'SQLITE_BUSY') || Date.now() >= walDeadline) {
+          this.db.close();
+          throw error;
+        }
+        Bun.sleepSync(10);
+      }
+    }
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS kv (
         key TEXT PRIMARY KEY,

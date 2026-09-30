@@ -56,6 +56,8 @@ export const RPC_CHANNELS = {
     BULK_CHANGED: 'sessions:bulkChanged',
     GET_PENDING_PLAN_EXECUTION: 'sessions:getPendingPlanExecution',
     GET_PERMISSION_MODE_STATE: 'sessions:getPermissionModeState',
+    GET_BUDGET: 'sessions:getBudget',
+    SET_BUDGET: 'sessions:setBudget',
     SET_MEMORY_MODE: 'sessions:setMemoryMode',
     GET_PROVENANCE: 'sessions:getProvenance',
     EVENT: 'session:event',
@@ -173,6 +175,7 @@ export const RPC_CHANNELS = {
     SAVE: 'notes:save',
     CREATE: 'notes:create',
     RENAME: 'notes:rename',
+    MOVE: 'notes:move',
     DELETE: 'notes:delete',
     RENAME_FOLDER: 'notes:renameFolder',
     DELETE_FOLDER: 'notes:deleteFolder',
@@ -191,6 +194,12 @@ export const RPC_CHANNELS = {
     WATCH: 'notes:watch',
     UNWATCH: 'notes:unwatch',
     CHANGED: 'notes:changed',
+  },
+  nativeData: {
+    GET_CONTEXT: 'nativeData:getContext',
+    READ_ENTITY: 'nativeData:readEntity',
+    MUTATE: 'nativeData:mutate',
+    PULL_CHANGES: 'nativeData:pullChanges',
   },
   notesImport: {
     PREVIEW: 'notesImport:preview',
@@ -448,6 +457,7 @@ export const RPC_CHANNELS = {
   llmConnections: {
     LIST: 'LLM_Connection:list',
     LIST_WITH_STATUS: 'LLM_Connection:listWithStatus',
+    GET_STARTUP_SUMMARY: 'LLM_Connection:getStartupSummary',
     GET: 'LLM_Connection:get',
     GET_API_KEY: 'LLM_Connection:getApiKey',
     SAVE: 'LLM_Connection:save',
@@ -610,6 +620,8 @@ export const RPC_CHANNELS = {
   },
   memory: {
     LIST_LESSONS: 'memory:listLessons',
+    LIST_ARCHIVE: 'memory:listArchive',
+    RESTORE_ARCHIVE: 'memory:restoreArchive',
     ADD_LESSON: 'memory:addLesson',
     UPDATE_LESSON: 'memory:updateLesson',
     DELETE_LESSON: 'memory:deleteLesson',
@@ -679,6 +691,9 @@ export const RPC_CHANNELS = {
     GET_IDENTITY: 'orgs:getIdentity',
     UPDATE_IDENTITY: 'orgs:updateIdentity',
     SET_WORKSPACE_ORG: 'orgs:setWorkspaceOrg',
+    UPDATE_MEMBER_ROLE: 'orgs:updateMemberRole',
+    REMOVE_MEMBER: 'orgs:removeMember',
+    REVOKE_INVITE: 'orgs:revokeInvite',
   },
   views: {
     LIST: 'views:list',
@@ -818,6 +833,8 @@ export const RPC_CHANNELS = {
     UPLOAD_ASSET: 'projects:uploadAsset',
     DELETE_ASSET: 'projects:deleteAsset',
     CHANGED: 'projects:changed',
+    GET_OKR: 'projects:getOkr',
+    SAVE_OKR: 'projects:saveOkr',
   },
   pages: {
     GET: 'pages:get',

@@ -1,32 +1,60 @@
-import { describe, expect, test } from 'bun:test'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { afterEach, describe, expect, test } from 'bun:test'
+import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import type { RpcServer } from '@craft-agent/server-core/transport'
+import { registerMeetingHandlers, resetMeetingHandlerStateForTests } from '../meetings.ts'
 
-const ROOT = join(import.meta.dir, '../../../../../../')
+type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 
-function source(rel: string): string {
-  return readFileSync(join(ROOT, rel), 'utf8')
+const occurrence = {
+  accountId: 'acct-1',
+  calendarId: 'cal-1',
+  eventId: 'event-1',
+  occurrenceId: 'occ-1',
+  timeZone: 'UTC',
 }
 
-describe('meetings.ts Mail/CRM/calendar/room shells stay fail-closed', () => {
-  test('RPC handlers gate mail/crm/calendar/room and do not embed Conation iframe', () => {
-    const rpc = source('packages/server-core/src/handlers/rpc/meetings.ts')
-    expect(rpc).toContain('gateMeetingConationShell')
-    expect(rpc).toContain("gateMeetingConationShell('mail'")
-    expect(rpc).toMatch(/gateMeetingConationShell\(\s*'crm'/)
-    expect(rpc).toMatch(/gateMeetingConationShell\(\s*'calendar'/)
-    expect(rpc).toContain("gateMeetingConationShell('room'")
-    expect(rpc).not.toContain('conation.dev')
-    expect(rpc).not.toMatch(/<iframe\b/i)
-    expect(rpc).not.toContain('CompleteMutationRoot')
+function calendarBindHandler(): Handler {
+  const handlers = new Map<string, Handler>()
+  const server = {
+    handle: (channel: string, handler: Handler) => handlers.set(channel, handler),
+    push: () => {},
+    invokeClient: async () => undefined,
+    hasClientCapability: () => false,
+    findClientsWithCapability: () => [],
+  }
+  registerMeetingHandlers(server as unknown as RpcServer, { platform: { logger: console } } as never)
+  const handler = handlers.get(RPC_CHANNELS.meetings.CALENDAR_BIND)
+  if (!handler) throw new Error('Calendar bind handler was not registered')
+  return handler
+}
+
+describe('calendar binding RPC authorization', () => {
+  afterEach(() => resetMeetingHandlerStateForTests())
+
+
+  test('rejects a workspace different from the authenticated RPC context', async () => {
+    const result = await calendarBindHandler()(
+      { clientId: 'client-1', workspaceId: 'ws-1', webContentsId: 1 },
+      'ws-2',
+      occurrence,
+      true,
+    ) as { status: string; reason: string; live: boolean }
+
+    expect(result.status).toBe('denied')
+    expect(result.reason).toBe('workspace-mismatch')
+    expect(result.live).toBe(false)
   })
 
-  test('electronAPI has no fake-live mailSend method', () => {
-    const types = source('apps/electron/src/shared/types.ts')
-    expect(types).not.toMatch(/\bmailSend\s*\(/)
-    expect(types).not.toMatch(/\bmailSend\s*:/)
-    const rpc = source('packages/server-core/src/handlers/rpc/meetings.ts')
-    expect(rpc).toContain('MAIL_SEND')
-    expect(rpc).toContain('gateMeetingConationShell')
+  test('does not claim a calendar binding from client-supplied occurrence credentials', async () => {
+    const result = await calendarBindHandler()(
+      { clientId: 'client-1', workspaceId: 'ws-1', webContentsId: 1 },
+      'ws-1',
+      occurrence,
+      true,
+    ) as { status: string; reason: string; live: boolean }
+
+    expect(result.status).toBe('blocked')
+    expect(result.reason).toBe('calendar-conation-unconfirmed')
+    expect(result.live).toBe(false)
   })
 })

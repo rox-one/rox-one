@@ -23,6 +23,7 @@ import { RoutedClient } from '../transport/routed-client'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
 import { createCallbackServer } from '@craft-agent/shared/auth/callback-server'
+import { createNativeReplicaBridge } from './native-replica'
 import { CHATGPT_OAUTH_CONFIG } from '@craft-agent/shared/auth/chatgpt-oauth-config'
 import {
   isOAuthFlowCancelledError,
@@ -118,15 +119,17 @@ if (isClientOnly) {
   // whichever server owns the workspace (local or remote).
 
   const wsPort: number = ipcRenderer.sendSync('__get-ws-port')
-  const wsToken: string = ipcRenderer.sendSync('__get-ws-token')
   const workspaceId: string = ipcRenderer.sendSync('__get-workspace-id')
   const localClientProof: string = ipcRenderer.sendSync('__get-local-client-proof')
 
   const localClient = new WsRpcClient(`ws://127.0.0.1:${wsPort}`, {
-    token: wsToken,
     workspaceId,
     webContentsId,
     localClientProof,
+    resolveTarget: async () => ({
+      url: `ws://127.0.0.1:${wsPort}`,
+      token: await ipcRenderer.invoke('__resolve-local-ws-token', workspaceId),
+    }),
     autoReconnect: true,
     mode: 'local',
     clientCapabilities: [...LOCAL_CLIENT_CAPABILITIES],
@@ -217,6 +220,11 @@ client.handleCapability(CLIENT_BROWSER_INVOKE, async (req: BrowserCapabilityRequ
 // ---------------------------------------------------------------------------
 
 const api = buildClientApi(client, CHANNEL_MAP, (ch) => client.isChannelAvailable(ch))
+const nativeReplicaBridge = createNativeReplicaBridge({ client, invokeIpc: (channel, input) => ipcRenderer.invoke(channel, input) })
+;(api as ElectronAPI).nativeReplica = nativeReplicaBridge.nativeReplica
+;(api as ElectronAPI).nativeData.readEntity = nativeReplicaBridge.readEntity
+;(api as ElectronAPI).nativeData.mutate = nativeReplicaBridge.mutate
+;(api as ElectronAPI).readNote = nativeReplicaBridge.readNote
 
 let cancelPendingChatGptOAuth: (() => void) | null = null
 let pendingChatGptOAuthState: string | undefined
@@ -523,6 +531,14 @@ client.onConnectionStateChanged((state) => {
   vcredistMissing: process.env.CRAFT_VCREDIST_MISSING === '1',
   downloadUrl: process.env.CRAFT_VCREDIST_URL,
 })
+;(api as ElectronAPI).exitMiniWindow = () => ipcRenderer.invoke('window:exit-mini')
+;(api as ElectronAPI).onPanelFocusDirection = (callback) => {
+  const handler = (_event: unknown, direction: unknown) => {
+    if (direction === 'left' || direction === 'right' || direction === 'up' || direction === 'down') callback(direction)
+  }
+  ipcRenderer.on('window:panel-focus-direction', handler)
+  return () => ipcRenderer.removeListener('window:panel-focus-direction', handler)
+}
 
 // i18n: sync language changes to main process (for native menus/dialogs)
 ;(api as ElectronAPI).changeLanguage = (lang: string) => ipcRenderer.invoke('i18n:changeLanguage', lang)
@@ -557,9 +573,14 @@ client.onConnectionStateChanged((state) => {
     recStop: (id, input) => ipcRenderer.invoke(M.REC_STOP, id, input),
     recover: () => ipcRenderer.invoke(M.RECOVER),
     importAudio: (input) => ipcRenderer.invoke(M.IMPORT_AUDIO, input),
+    cancelImport: (requestId) => ipcRenderer.invoke(M.IMPORT_CANCEL, requestId),
     readAudio: (id) => ipcRenderer.invoke(M.READ_AUDIO, id),
     readTranscript: (id) => ipcRenderer.invoke(M.READ_TRANSCRIPT, id),
+    readTranscriptRevision: (id, revision) => ipcRenderer.invoke(M.READ_TRANSCRIPT_REVISION, id, revision),
+    restoreTranscriptRevision: (id, input) => ipcRenderer.invoke(M.RESTORE_TRANSCRIPT_REVISION, id, input),
     transcribe: (id) => ipcRenderer.invoke(M.TRANSCRIBE, id),
+    cancelTranscription: (id) => ipcRenderer.invoke(M.TRANSCRIBE_CANCEL, id),
+    updateTranscriptSegment: (id, input) => ipcRenderer.invoke(M.TRANSCRIPT_SEGMENT_UPDATE, id, input),
     engine: () => ipcRenderer.invoke(M.ENGINE),
     micAccess: (ask) => ipcRenderer.invoke(M.MIC_ACCESS, ask),
     attach: (id, paths) => ipcRenderer.invoke(M.ATTACH, id, paths),
@@ -586,6 +607,7 @@ client.onConnectionStateChanged((state) => {
     folders: () => ipcRenderer.invoke(C.FOLDERS),
     list: (query) => ipcRenderer.invoke(C.LIST, query),
     get: (id) => ipcRenderer.invoke(C.GET, id),
+    getThread: (threadId) => ipcRenderer.invoke(C.GET_THREAD, threadId),
     setFlags: (ids, flags) => ipcRenderer.invoke(C.SET_FLAGS, ids, flags),
     move: (ids, target) => ipcRenderer.invoke(C.MOVE, ids, target),
     remove: (ids) => ipcRenderer.invoke(C.REMOVE, ids),

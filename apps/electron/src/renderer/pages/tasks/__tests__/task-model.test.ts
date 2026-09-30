@@ -7,6 +7,7 @@ import {
   parseAgentMention,
   splitEvening,
 } from '../task-model'
+import { dueReminders } from '../../../lib/task-reminders'
 
 const task = (extra: Partial<PersonalTask> = {}): PersonalTask => ({
   id: 'task-1', title: 'Согласовать макеты', notes: '', list: 'today', tags: [], priority: 'none',
@@ -52,5 +53,25 @@ describe('Задачи view-model', () => {
     const { day, evening } = splitEvening([task(), task({ id: 'e', evening: true })])
     expect(day.map((t) => t.id)).toEqual(['task-1'])
     expect(evening.map((t) => t.id)).toEqual(['e'])
+  })
+})
+describe('Task reminder eligibility', () => {
+  const now = Date.UTC(2026, 8, 30, 12)
+  const reminderTask = (extra: Partial<PersonalTask> = {}): PersonalTask => task({
+    reminderAt: now - 13 * 60 * 60 * 1000,
+    ...extra,
+  })
+
+  it('recovers overdue reminders after a long shutdown but never re-presents acknowledged or terminal tasks', () => {
+    const due = reminderTask()
+    const delivered = reminderTask({ id: 'delivered', reminderDeliveredFor: now - 13 * 60 * 60 * 1000 })
+    const completed = reminderTask({ id: 'completed', completedAt: now - 1 })
+    expect(dueReminders([due, delivered, completed], now)).toEqual([due])
+  })
+
+  it('honors a persisted retry deadline rather than presenting a failed attempt early', () => {
+    const failed = reminderTask({ reminderError: 'presentation-failed', reminderRetryAt: now + 1 })
+    expect(dueReminders([failed], now)).toEqual([])
+    expect(dueReminders([failed], now + 1)).toEqual([failed])
   })
 })

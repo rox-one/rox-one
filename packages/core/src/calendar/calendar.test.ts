@@ -68,7 +68,7 @@ describe('calendar connectors (issue 18)', () => {
     const merged = mergeTodayUpcoming(tasks, events, morning)
     expect(merged.some((item) => item.kind === 'task' && item.id === 't1')).toBe(true)
     expect(merged.some((item) => item.kind === 'event' && item.event.kind === 'event')).toBe(true)
-    expect(merged.filter((item) => item.kind === 'event').every((item) => item.kind !== 'task')).toBe(true)
+    expect(merged.filter((item) => item.kind === 'event').map((item) => item.id)).not.toContain('t1')
   })
 
   it('creates editable reminder proposals and never auto-spams tasks', async () => {
@@ -83,7 +83,7 @@ describe('calendar connectors (issue 18)', () => {
     }])
     await store.sync(account.id, adapter, morning)
     expect(store.proposals()).toHaveLength(0)
-    const proposal = store.proposeReminder('ev-1')
+    const proposal = store.proposeReminder(store.events()[0]!)
     expect(proposal.accepted).toBe(false)
     store.acceptProposal(proposal.id)
     expect(store.proposals()[0]?.accepted).toBe(true)
@@ -96,13 +96,141 @@ describe('calendar connectors (issue 18)', () => {
     store.markConnected(account.id)
     const first = new FixtureCalendarAdapter('mailru', [{ id: 'e1', title: 'A', startAt: morning, endAt: morning + 1000, etag: '1' }])
     await store.sync(account.id, first, morning)
-    store.markLocalDirty(account.id, 'e1')
+    store.markLocalDirty(store.events()[0]!)
     const second = new FixtureCalendarAdapter('mailru', [{ id: 'e1', title: 'A2', startAt: morning, endAt: morning + 1000, etag: '2' }])
     await store.sync(account.id, second, morning + 1000)
     expect(store.conflicts().some((conflict) => conflict.kind === 'update')).toBe(true)
     expect(store.uiStatus('UTC')).toBe('conflict')
     expect(store.events().find((event) => event.id === 'e1')?.title).toBe('A')
   })
+
+  it('selects duplicate remote event ids by account and calendar identity', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [
+      { id: 'shared', calendarId: 'primary', title: 'Primary', startAt: morning, endAt: morning + 1000, etag: 'p1' },
+      { id: 'shared', calendarId: 'secondary', title: 'Secondary', startAt: morning + 2000, endAt: morning + 3000, etag: 's1' },
+    ]), morning)
+
+    const primary = store.events().find((event) => event.calendarId === 'primary')!
+    const secondary = store.events().find((event) => event.calendarId === 'secondary')!
+    store.markLocalDirty(primary)
+
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [
+      { id: 'shared', calendarId: 'primary', title: 'Remote primary', startAt: morning, endAt: morning + 1000, etag: 'p2' },
+      { id: 'shared', calendarId: 'secondary', title: 'Remote secondary', startAt: morning + 2000, endAt: morning + 3000, etag: 's2' },
+    ]), morning + 1)
+
+    expect(store.events().find((event) => event.calendarId === 'primary')?.title).toBe('Primary')
+    expect(store.events().find((event) => event.calendarId === 'secondary')?.title).toBe('Remote secondary')
+    const proposal = store.proposeReminder(secondary)
+    expect(proposal.title).toBe('Remote secondary')
+    const merged = mergeTodayUpcoming([], store.events(), morning).filter((item) => item.kind === 'event')
+    expect(new Set(merged.map((item) => item.id)).size).toBe(merged.length)
+  })
+
+  it('records one fully scoped conflict across repeated syncs', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    const seed = { id: 'shared', calendarId: 'secondary', title: 'Local', startAt: morning, endAt: morning + 1000, etag: '1' }
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [seed]), morning)
+    const event = store.events()[0]!
+    store.markLocalDirty(event)
+    const update = { ...seed, title: 'Remote', etag: '2' }
+
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [update]), morning + 1)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [update]), morning + 2)
+
+    expect(store.conflicts()).toEqual([
+      expect.objectContaining({
+        kind: 'update',
+        eventId: 'shared',
+        eventIdentity: JSON.stringify([account.id, 'secondary', 'shared']),
+      }),
+    ])
+    expect(store.events()[0]?.title).toBe('Local')
+  })
+  it('updates one scoped conflict when the remote event is subsequently deleted', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    const local = { id: 'delete-conflict', calendarId: 'primary', title: 'Local draft', startAt: morning, endAt: morning + 1000, etag: '1' }
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [local]), morning)
+    store.markLocalDirty(store.events()[0]!)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{ ...local, title: 'Remote', etag: '2' }]), morning + 1)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{ ...local, deleted: true, etag: '3' }]), morning + 2)
+
+    expect(store.conflicts()).toHaveLength(1)
+    expect(store.conflicts()[0]?.kind).toBe('delete')
+    expect(store.conflicts()[0]?.remoteEvent?.deleted).toBe(true)
+    store.resolveConflict(store.conflicts()[0]!.id, 'remote')
+    expect(store.events()).toHaveLength(0)
+  })
+
+  it('retains a local draft when sync repeats its unchanged base revision', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    const remote = { id: 'draft', title: 'Original', startAt: morning, endAt: morning + 1000, etag: '1' }
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [remote]), morning)
+    const local = store.events()[0]!
+    local.title = 'Local draft'
+    store.markLocalDirty(local)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [remote]), morning + 1)
+
+    expect(store.events()[0]?.title).toBe('Local draft')
+    expect(store.events()[0]?.localDirty).toBe(true)
+    expect(store.conflicts()).toHaveLength(0)
+  })
+
+
+  it('persists remote conflict data and resolves to either chosen calendar version', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    const local = { id: 'resolve-me', calendarId: 'primary', title: 'Local draft', startAt: morning, endAt: morning + 1000, etag: '1' }
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [local]), morning)
+    store.markLocalDirty(store.events()[0]!)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{
+      ...local,
+      title: 'Remote update',
+      startAt: morning + 5000,
+      endAt: morning + 6000,
+      etag: '2',
+    }]), morning + 1)
+
+    const conflict = store.conflicts()[0]!
+    expect(conflict.remoteEvent?.title).toBe('Remote update')
+    const restored = CalendarStore.fromJson(store.exportJson())
+    restored.resolveConflict(conflict.id, 'remote')
+    expect(restored.conflicts()).toHaveLength(0)
+    expect(restored.events()[0]?.title).toBe('Remote update')
+    expect(restored.events()[0]?.startAt).toBe(morning + 5000)
+    expect(restored.events()[0]?.localDirty).toBe(false)
+    expect(restored.uiStatus('UTC')).toBe('connected')
+  })
+
+  it('keeps a locally chosen draft through repeated reads of the acknowledged remote revision', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    const local = { id: 'keep-local', calendarId: 'primary', title: 'Local draft', startAt: morning, endAt: morning + 1000, etag: '1' }
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [local]), morning)
+    store.markLocalDirty(store.events()[0]!)
+    const remote = { ...local, title: 'Remote update', etag: '2' }
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [remote]), morning + 1)
+
+    store.resolveConflict(store.conflicts()[0]!.id, 'local')
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [remote]), morning + 2)
+
+    expect(store.events()[0]?.title).toBe('Local draft')
+    expect(store.events()[0]?.localDirty).toBe(true)
+    expect(store.uiStatus('UTC')).toBe('localChanges')
+    expect(store.conflicts()).toHaveLength(0)
+  })
+
 
   it('keeps same remote event ids from two accounts and delete is scoped', async () => {
     const store = new CalendarStore()

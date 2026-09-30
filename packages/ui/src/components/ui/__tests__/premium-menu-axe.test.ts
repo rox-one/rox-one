@@ -1,39 +1,51 @@
 import { describe, expect, it } from 'bun:test'
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { auditPremiumMenuAxe } from '../premium-menu-model'
 
-const dir = join(import.meta.dir, '..')
-const menu = readFileSync(join(dir, 'PremiumMenu.tsx'), 'utf8')
-const select = readFileSync(join(dir, 'PremiumMenuSelect.tsx'), 'utf8')
-
-describe('premium menu axe source contract', () => {
-  it('wires listbox/option ARIA and focus return', () => {
-    expect(menu).toContain('role="listbox"')
-    expect(menu).toContain('role="option"')
-    expect(menu).toContain('aria-selected={selected}')
-    expect(menu).toContain('aria-activedescendant=')
-    expect(menu).toContain('aria-controls={LIST_ID}')
-    expect(menu).toContain('aria-autocomplete="list"')
-    expect(menu).toContain('id={`premium-menu-option-${item.id}`}')
-    expect(menu).toContain('previousFocusRef.current?.focus()')
-    expect(menu).toContain('scrollTopToRevealIndex')
-    expect(menu).toContain('reduceMenuKey')
-    expect(menu).toContain('handleTypeahead')
-    expect(menu).toContain('searchable')
-    expect(menu).toContain('tokens.surfaceClass')
+describe('premium menu accessibility audit', () => {
+  it('accepts a keyboard-focused list with one selected enabled option', () => {
+    expect(auditPremiumMenuAxe({
+      listbox: {
+        role: 'listbox',
+        ariaActivedescendant: 'premium-menu-option-edit',
+        tabIndex: 0,
+      },
+      search: {
+        role: 'searchbox',
+        ariaControls: 'premium-menu-options',
+        ariaAutocomplete: 'list',
+      },
+      options: [
+        { id: 'premium-menu-option-edit', role: 'option', ariaSelected: true },
+        { id: 'premium-menu-option-delete', role: 'option', ariaSelected: false },
+      ],
+    })).toEqual([])
   })
 
-  it('keeps typeahead on the list when search is off', () => {
-    expect(menu).toContain('if (searchable) return')
-    expect(menu).toContain('typeaheadIndex')
-    expect(menu).toContain("tabIndex={searchable ? -1 : 0}")
+  it('rejects ambiguous option identity and simultaneous selection', () => {
+    expect(auditPremiumMenuAxe({
+      listbox: {
+        role: 'listbox',
+        ariaActivedescendant: 'premium-menu-option-edit',
+        tabIndex: 0,
+      },
+      options: [
+        { id: 'premium-menu-option-edit', role: 'option', ariaSelected: true },
+        { id: 'premium-menu-option-edit', role: 'option', ariaSelected: true },
+      ],
+    })).toEqual([
+      'duplicate-id:premium-menu-option-edit',
+      'multiple-aria-selected',
+    ])
   })
 
-  it('exposes a compact select trigger with listbox semantics', () => {
-    expect(select).toContain('aria-haspopup="listbox"')
-    expect(select).toContain('aria-expanded={open}')
-    expect(select).toContain('aria-label={ariaLabel ?? placeholder}')
-    expect(select).toContain('searchable ?? items.length > 12')
-    expect(select).toContain('variant = \'compact\'')
+  it('rejects a focused option removed from the available list', () => {
+    expect(auditPremiumMenuAxe({
+      listbox: {
+        role: 'listbox',
+        ariaActivedescendant: 'premium-menu-option-removed',
+        tabIndex: 0,
+      },
+      options: [{ id: 'premium-menu-option-current', role: 'option', ariaSelected: false }],
+    })).toContain('activedescendant-missing-target')
   })
 })

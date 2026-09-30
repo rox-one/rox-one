@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "productStatus": "NOT_STARTED",
+  "productStatus": "IN_PROGRESS",
   "packetStatus": "PUBLISHED_VERIFIED",
   "sourceBaseline": "f63294ba4fffa7238b46b24e918925a313ad0b12",
   "plan": "../plan.md",
@@ -12,7 +12,7 @@
       "title": "[Sep-program] Единая программа передачи, исполнения и приёмки Rox/Conation/RMA/Golden Gate",
       "area": "program",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "ProgramLead",
       "dependsOn": [],
       "sourceRefs": [
@@ -111,14 +111,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1157",
-      "issueNumber": 1157
+      "issueNumber": 1157,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [],
+          "summary": "Canonical registry reconciliation now separates implementation, bounded verification and delivery without changing original IDs, dependencies, source refs or acceptance criteria."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RECON-01",
       "title": "[Sep-program] Сверить владельцев источников, активные работы и текущие issues без дубликатов",
       "area": "program",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "ReconciliationOwner",
       "dependsOn": [
         "PROGRAM-01"
@@ -196,7 +221,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1158",
-      "issueNumber": 1158
+      "issueNumber": 1158,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [],
+          "summary": "Canonical registry reconciliation now separates implementation, bounded verification and delivery without changing original IDs, dependencies, source refs or acceptance criteria."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "AUDIT-01",
@@ -285,14 +335,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1159",
-      "issueNumber": 1159
+      "issueNumber": 1159,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DATA-01",
       "title": "[Sep-backend] Единый контракт идентичности сущностей и синхронизации данных",
       "area": "backend",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "SharedIntegrator",
       "dependsOn": [
         "RECON-01",
@@ -339,14 +414,58 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1212",
-      "issueNumber": 1212
+      "issueNumber": 1212,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SHARED-01",
       "title": "[Sep-architecture] Зафиксировать общие контракты и назначить единственного владельца общих файлов",
       "area": "architecture",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "SharedIntegrator",
       "dependsOn": [
         "DATA-01"
@@ -393,7 +512,51 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1160",
-      "issueNumber": 1160
+      "issueNumber": 1160,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CHAT-01",
@@ -447,7 +610,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1121",
-      "issueNumber": 1121
+      "issueNumber": 1121,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "TEAMS-01",
@@ -508,14 +696,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1123",
-      "issueNumber": 1123
+      "issueNumber": 1123,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SYNC-01",
       "title": "[Sep-sync] Реализовать реальную многопользовательскую синхронизацию и concurrent-write semantics",
       "area": "sync",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerSync",
       "dependsOn": [
         "DATA-01",
@@ -571,7 +784,43 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1133",
-      "issueNumber": 1133
+      "issueNumber": 1133,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CHAT-02",
@@ -648,7 +897,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1122",
-      "issueNumber": 1122
+      "issueNumber": 1122,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "TEAMS-02",
@@ -704,7 +978,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1124",
-      "issueNumber": 1124
+      "issueNumber": 1124,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "TEAMS-03",
@@ -761,14 +1060,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1125",
-      "issueNumber": 1125
+      "issueNumber": 1125,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "COLLAB-01",
       "title": "[Sep-collaboration] Комментарии к сообщениям и узлам карты с ACL, thread и версионированной привязкой",
       "area": "collaboration",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerCollaboration",
       "dependsOn": [
         "DATA-01",
@@ -827,14 +1151,45 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1126",
-      "issueNumber": 1126
+      "issueNumber": 1126,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "NATIVE-SELF-PROFILE-20260930"
+          ],
+          "summary": "Viewer-scoped collaboration and revision-bound queued changes survive local cold-cache reload. Server-delivered comments, consent and observed recipient Inbox remain unaccepted."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "NATIVE-SELF-PROFILE-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "COLLAB-02",
       "title": "[Sep-collaboration] Упоминания людей/агентов, согласие адресата и доставляемый Recipient Inbox",
       "area": "collaboration",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerCollaboration",
       "dependsOn": [
         "DATA-01",
@@ -882,7 +1237,38 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1127",
-      "issueNumber": 1127
+      "issueNumber": 1127,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "NATIVE-SELF-PROFILE-20260930"
+          ],
+          "summary": "Viewer-scoped collaboration and revision-bound queued changes survive local cold-cache reload. Server-delivered comments, consent and observed recipient Inbox remain unaccepted."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
+            "NATIVE-SELF-PROFILE-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "COLLAB-03",
@@ -937,7 +1323,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1128",
-      "issueNumber": 1128
+      "issueNumber": 1128,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "COLLAB-04",
@@ -997,7 +1408,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1129",
-      "issueNumber": 1129
+      "issueNumber": 1129,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "COLLAB-05",
@@ -1056,7 +1492,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1130",
-      "issueNumber": 1130
+      "issueNumber": 1130,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "INTEGRATIONS-03",
@@ -1111,7 +1572,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1135",
-      "issueNumber": 1135
+      "issueNumber": 1135,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "INTEGRATIONS-01",
@@ -1169,7 +1655,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1131",
-      "issueNumber": 1131
+      "issueNumber": 1131,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "INTEGRATIONS-02",
@@ -1230,7 +1741,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1132",
-      "issueNumber": 1132
+      "issueNumber": 1132,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CALENDAR-01",
@@ -1308,14 +1844,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1199",
-      "issueNumber": 1199
+      "issueNumber": 1199,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "VOICE-01",
       "title": "[Sep-voice] Установить точную модель распознавания речи в сессии",
       "area": "voice",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerVoice",
       "dependsOn": [
         "RECON-01",
@@ -1361,7 +1922,38 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1185",
-      "issueNumber": 1185
+      "issueNumber": 1185,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "GATE-SHARED-20260930"
+          ],
+          "summary": "Consent and actual engine/model evidence handling are source-backed; production ASR adapters do not return fixture transcripts. Real microphone/audio/model/provider acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "GATE-SHARED-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "TRANSCRIPTIONS-01",
@@ -1420,7 +2012,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1188",
-      "issueNumber": 1188
+      "issueNumber": 1188,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MEETINGS-01",
@@ -1496,7 +2113,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1187",
-      "issueNumber": 1187
+      "issueNumber": 1187,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CALLS-01",
@@ -1550,7 +2192,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1134",
-      "issueNumber": 1134
+      "issueNumber": 1134,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "UX-01",
@@ -1618,7 +2285,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1136",
-      "issueNumber": 1136
+      "issueNumber": 1136,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "UX-02",
@@ -1672,7 +2364,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1137",
-      "issueNumber": 1137
+      "issueNumber": 1137,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DESIGN-01",
@@ -1733,7 +2450,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1138",
-      "issueNumber": 1138
+      "issueNumber": 1138,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "ONBOARD-01",
@@ -1791,7 +2533,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1139",
-      "issueNumber": 1139
+      "issueNumber": 1139,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "THEME-01",
@@ -1848,14 +2615,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1140",
-      "issueNumber": 1140
+      "issueNumber": 1140,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "PROFILE-01",
       "title": "[Sep-profile] Аккаунт, privacy и профиль: состояния и безопасные действия",
       "area": "profile",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerProfile",
       "dependsOn": [
         "AUDIT-01",
@@ -1900,7 +2692,46 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1141",
-      "issueNumber": 1141
+      "issueNumber": 1141,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-PRIVACY-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-CONFIGURATION-HELPER-20260930",
+            "PRIVACY-COOKIE-CUSTODY-20260930",
+            "PRIVACY-COOKIE-CONSENT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Local provider-scope consent and replica-purpose enforcement have partial source/unit evidence; complete profile/privacy UI and remote lifecycle criteria remain pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-PRIVACY-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-CONFIGURATION-HELPER-20260930",
+            "PRIVACY-COOKIE-CUSTODY-20260930",
+            "PRIVACY-COOKIE-CONSENT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "L10N-01",
@@ -1979,7 +2810,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1142",
-      "issueNumber": 1142
+      "issueNumber": 1142,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "A11Y-01",
@@ -2052,7 +2908,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1143",
-      "issueNumber": 1143
+      "issueNumber": 1143,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SETTINGS-01",
@@ -2113,7 +2994,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1144",
-      "issueNumber": 1144
+      "issueNumber": 1144,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "NATIVE-01",
@@ -2173,7 +3079,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1145",
-      "issueNumber": 1145
+      "issueNumber": 1145,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "WINDOWS-01",
@@ -2228,7 +3159,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1146",
-      "issueNumber": 1146
+      "issueNumber": 1146,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "GG-01",
@@ -2286,7 +3242,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1147",
-      "issueNumber": 1147
+      "issueNumber": 1147,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "GG-02",
@@ -2346,7 +3327,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1148",
-      "issueNumber": 1148
+      "issueNumber": 1148,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "GG-03",
@@ -2414,7 +3420,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1149",
-      "issueNumber": 1149
+      "issueNumber": 1149,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RMA-01",
@@ -2477,7 +3508,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1150",
-      "issueNumber": 1150
+      "issueNumber": 1150,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RMA-02",
@@ -2541,7 +3597,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1151",
-      "issueNumber": 1151
+      "issueNumber": 1151,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RMA-03",
@@ -2607,7 +3688,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1152",
-      "issueNumber": 1152
+      "issueNumber": 1152,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CONATION-DELIVERY-01",
@@ -2668,7 +3774,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1155",
-      "issueNumber": 1155
+      "issueNumber": 1155,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CONATION-AUTH-01",
@@ -2753,7 +3884,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1153",
-      "issueNumber": 1153
+      "issueNumber": 1153,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CONATION-E2E-01",
@@ -2908,7 +4064,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1154",
-      "issueNumber": 1154
+      "issueNumber": 1154,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DECISION-01",
@@ -2958,14 +4139,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1156",
-      "issueNumber": 1156
+      "issueNumber": 1156,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "NOTES-01",
       "title": "[Sep-notes] Довести редактирование заметки и преобразование форматов сквозным сценарием",
       "area": "notes",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerNotes",
       "dependsOn": [
         "RECON-01",
@@ -3024,7 +4230,43 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1163",
-      "issueNumber": 1163
+      "issueNumber": 1163,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "NOTES-02",
@@ -3077,7 +4319,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1164",
-      "issueNumber": 1164
+      "issueNumber": 1164,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "NOTES-03",
@@ -3135,7 +4402,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1165",
-      "issueNumber": 1165
+      "issueNumber": 1165,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CANVAS-01",
@@ -3200,7 +4492,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1166",
-      "issueNumber": 1166
+      "issueNumber": 1166,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CANVAS-02",
@@ -3272,7 +4589,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1167",
-      "issueNumber": 1167
+      "issueNumber": 1167,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MEMORY-01",
@@ -3333,7 +4675,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1168",
-      "issueNumber": 1168
+      "issueNumber": 1168,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MEMORY-02",
@@ -3390,7 +4757,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1169",
-      "issueNumber": 1169
+      "issueNumber": 1169,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SKILLS-01",
@@ -3448,7 +4840,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1170",
-      "issueNumber": 1170
+      "issueNumber": 1170,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "PLUGINS-01",
@@ -3504,7 +4921,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1171",
-      "issueNumber": 1171
+      "issueNumber": 1171,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MARKETPLACE-01",
@@ -3565,7 +5007,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1172",
-      "issueNumber": 1172
+      "issueNumber": 1172,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "IMPORTS-01",
@@ -3624,7 +5091,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1173",
-      "issueNumber": 1173
+      "issueNumber": 1173,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SEARCH-01",
@@ -3691,7 +5183,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1174",
-      "issueNumber": 1174
+      "issueNumber": 1174,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DRIVE-01",
@@ -3760,14 +5277,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1175",
-      "issueNumber": 1175
+      "issueNumber": 1175,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "PAGES-01",
       "title": "[Sep-pages] Подтвердить права Pages и полноценный безопасный preview документов",
       "area": "pages",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerPages",
       "dependsOn": [
         "RECON-01",
@@ -3835,7 +5377,36 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1176",
-      "issueNumber": 1176
+      "issueNumber": 1176,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930"
+          ],
+          "summary": "Bun child-process Page data writes, atomic host-readable snapshots, growth caps and reopen pass. Actual preview/ACL/viewer surface acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SPREADSHEET-01",
@@ -3900,14 +5471,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1178",
-      "issueNumber": 1178
+      "issueNumber": 1178,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "PDF-01",
       "title": "[Sep-documents] Довести PDF viewer до надёжного чтения, поиска и восстановления позиции",
       "area": "documents",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerDocuments",
       "dependsOn": [
         "RECON-01",
@@ -3958,7 +5554,38 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1179",
-      "issueNumber": 1179
+      "issueNumber": 1179,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "GATE-ELECTRON-UI-CORE-20260930"
+          ],
+          "summary": "Normalized search and viewer harness have partial automated evidence; full real PDF read/search/navigation/position recovery criteria remain pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "GATE-ELECTRON-UI-CORE-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SPLIT-01",
@@ -4016,7 +5643,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1180",
-      "issueNumber": 1180
+      "issueNumber": 1180,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DOCUMENTS-01",
@@ -4075,7 +5727,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1177",
-      "issueNumber": 1177
+      "issueNumber": 1177,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MAIL-01",
@@ -4156,7 +5833,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1181",
-      "issueNumber": 1181
+      "issueNumber": 1181,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MAIL-02",
@@ -4212,7 +5914,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1182",
-      "issueNumber": 1182
+      "issueNumber": 1182,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MAIL-03",
@@ -4272,7 +5999,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1183",
-      "issueNumber": 1183
+      "issueNumber": 1183,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MAIL-04",
@@ -4344,14 +6096,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1184",
-      "issueNumber": 1184
+      "issueNumber": 1184,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "VOICE-02",
       "title": "[Sep-voice] Русская озвучка сообщений с остановкой и автономным резервом",
       "area": "voice",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerVoice",
       "dependsOn": [
         "RECON-01",
@@ -4403,7 +6180,36 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1186",
-      "issueNumber": 1186
+      "issueNumber": 1186,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "summary": "Message TTS cancellation, fallback denial and late-start ordering have bounded adapter evidence. Real Russian native/system playback and offline acceptance remain pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "TRANSCRIPTIONS-02",
@@ -4458,7 +6264,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1189",
-      "issueNumber": 1189
+      "issueNumber": 1189,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MEETINGS-02",
@@ -4518,7 +6349,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1190",
-      "issueNumber": 1190
+      "issueNumber": 1190,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "MEETINGS-03",
@@ -4574,7 +6430,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1191",
-      "issueNumber": 1191
+      "issueNumber": 1191,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "PROJECTS-01",
@@ -4648,7 +6529,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1194",
-      "issueNumber": 1194
+      "issueNumber": 1194,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "OKR-01",
@@ -4704,7 +6610,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1193",
-      "issueNumber": 1193
+      "issueNumber": 1193,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "TASKS-01",
@@ -4802,7 +6733,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1195",
-      "issueNumber": 1195
+      "issueNumber": 1195,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "HOME-01",
@@ -4861,7 +6817,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1196",
-      "issueNumber": 1196
+      "issueNumber": 1196,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DASHBOARD-01",
@@ -4940,7 +6921,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1197",
-      "issueNumber": 1197
+      "issueNumber": 1197,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "INBOX-01",
@@ -5010,7 +7016,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1198",
-      "issueNumber": 1198
+      "issueNumber": 1198,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CRM-01",
@@ -5098,7 +7129,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1200",
-      "issueNumber": 1200
+      "issueNumber": 1200,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "REMINDERS-01",
@@ -5162,7 +7218,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1201",
-      "issueNumber": 1201
+      "issueNumber": 1201,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "FEED-01",
@@ -5221,14 +7302,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1202",
-      "issueNumber": 1202
+      "issueNumber": 1202,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "QUEST-01",
       "title": "[Sep-quest] Связать Quest прогресс, награды и streak с проверяемыми событиями",
       "area": "quest",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerQuest",
       "dependsOn": [
         "RECON-01",
@@ -5277,7 +7383,36 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1203",
-      "issueNumber": 1203
+      "issueNumber": 1203,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-QUEST-COMPLETION-20260930"
+          ],
+          "summary": "Existing production completion path persists XP and survives subscriber failure. Full Quest rewards/streak/criteria UI and source event matrix remain pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-QUEST-COMPLETION-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "ARENA-01",
@@ -5328,7 +7463,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1204",
-      "issueNumber": 1204
+      "issueNumber": 1204,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "COUNCIL-01",
@@ -5378,7 +7538,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1205",
-      "issueNumber": 1205
+      "issueNumber": 1205,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "ACTIVITY-01",
@@ -5438,7 +7623,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1206",
-      "issueNumber": 1206
+      "issueNumber": 1206,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DECISIONS-01",
@@ -5496,7 +7706,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1207",
-      "issueNumber": 1207
+      "issueNumber": 1207,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RADAR-01",
@@ -5549,7 +7784,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1208",
-      "issueNumber": 1208
+      "issueNumber": 1208,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "DOSSIER-01",
@@ -5610,7 +7870,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1209",
-      "issueNumber": 1209
+      "issueNumber": 1209,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RUNTIME-01",
@@ -5672,14 +7957,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1221",
-      "issueNumber": 1221
+      "issueNumber": 1221,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "AGENT-BUDGET-01",
       "title": "[Sep-agents] Применять бюджет к реальным и фоновым запускам Agent Center",
       "area": "agents",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerAgents",
       "dependsOn": [
         "DATA-01",
@@ -5728,7 +8038,36 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1213",
-      "issueNumber": 1213
+      "issueNumber": 1213,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930"
+          ],
+          "summary": "Durable workspace daily allowance reservation/settlement/unresolved crash recovery is implemented and tested. Full actual foreground/background worker-stop and provider usage criteria remain pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "FOCUS-01",
@@ -5784,7 +8123,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1214",
-      "issueNumber": 1214
+      "issueNumber": 1214,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "OKR-02",
@@ -5842,7 +8206,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1192",
-      "issueNumber": 1192
+      "issueNumber": 1192,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "AGENTCENTER-01",
@@ -5907,7 +8296,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1210",
-      "issueNumber": 1210
+      "issueNumber": 1210,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "PAYMENTS-01",
@@ -5967,14 +8381,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1211",
-      "issueNumber": 1211
+      "issueNumber": 1211,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "AUTOMATION-01",
       "title": "[Sep-automations] Продолжать Automation в существующей сессии с явной привязкой",
       "area": "automations",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerAutomations",
       "dependsOn": [
         "DATA-01",
@@ -6025,7 +8464,38 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1215",
-      "issueNumber": 1215
+      "issueNumber": 1215,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "summary": "Target-session/occurrence identity, parser timezone/actions and failure-preserving local runtime mechanisms have bounded evidence. Actual scheduled execution, DST, persistence/retry and recipient delivery must satisfy the untouched original criteria."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "AUTOMATION-02",
@@ -6079,14 +8549,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1216",
-      "issueNumber": 1216
+      "issueNumber": 1216,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SCHEDULED-01",
       "title": "[Sep-scheduled] Исполнять расписания по выбранному часовому поясу и корректно проходить DST",
       "area": "scheduled",
       "kind": "proposal-audit",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerScheduled",
       "dependsOn": [
         "DATA-01",
@@ -6130,14 +8625,45 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1217",
-      "issueNumber": 1217
+      "issueNumber": 1217,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "summary": "Target-session/occurrence identity, parser timezone/actions and failure-preserving local runtime mechanisms have bounded evidence. Actual scheduled execution, DST, persistence/retry and recipient delivery must satisfy the untouched original criteria."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SCHEDULED-02",
       "title": "[Sep-scheduled] Сохранять историю расписаний и безопасно повторять run",
       "area": "scheduled",
       "kind": "proposal-audit",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerScheduled",
       "dependsOn": [
         "DATA-01",
@@ -6186,7 +8712,38 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1218",
-      "issueNumber": 1218
+      "issueNumber": 1218,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "summary": "Target-session/occurrence identity, parser timezone/actions and failure-preserving local runtime mechanisms have bounded evidence. Actual scheduled execution, DST, persistence/retry and recipient delivery must satisfy the untouched original criteria."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "RUNTIME-LOCAL-MECHANISMS-20260930",
+            "RUNTIME-TEAM-AUTOMATION-TTS-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "REMOTE-01",
@@ -6243,7 +8800,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1219",
-      "issueNumber": 1219
+      "issueNumber": 1219,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "REMOTE-02",
@@ -6298,7 +8880,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1220",
-      "issueNumber": 1220
+      "issueNumber": 1220,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RUNTIME-02",
@@ -6354,7 +8961,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1222",
-      "issueNumber": 1222
+      "issueNumber": 1222,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CLI-01",
@@ -6406,14 +9038,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1223",
-      "issueNumber": 1223
+      "issueNumber": 1223,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "BACKEND-01",
       "title": "[Sep-backend] Обеспечить авторизованную sync границу для shared Rox data",
       "area": "backend",
       "kind": "proposal-audit",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerBackend",
       "dependsOn": [
         "DATA-01",
@@ -6461,14 +9118,56 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1224",
-      "issueNumber": 1224
+      "issueNumber": 1224,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "BACKEND-02",
       "title": "[Sep-backend] Защитить shared identity, provider credentials и cross-surface authorization",
       "area": "backend",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerBackend",
       "dependsOn": [
         "DATA-01",
@@ -6516,7 +9215,59 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1225",
-      "issueNumber": 1225
+      "issueNumber": 1225,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-CONFIGURATION-HELPER-20260930",
+            "PRIVACY-COOKIE-CUSTODY-20260930",
+            "PRIVACY-COOKIE-CONSENT-20260930",
+            "OMP-EXACT-PUBLIC-CATALOG-20260930",
+            "OMP-PRIVATE-RUNTIME-LIFECYCLE-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "NATIVE-NOTES-BOUNDARY-20260930",
+            "REVIEW-NATIVE-20260930",
+            "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-CONFIGURATION-HELPER-20260930",
+            "PRIVACY-COOKIE-CUSTODY-20260930",
+            "PRIVACY-COOKIE-CONSENT-20260930",
+            "OMP-EXACT-PUBLIC-CATALOG-20260930",
+            "OMP-PRIVATE-RUNTIME-LIFECYCLE-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "ORCHESTRATION-01",
@@ -6573,7 +9324,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1226",
-      "issueNumber": 1226
+      "issueNumber": 1226,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "SESSIONS-01",
@@ -6629,7 +9405,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1227",
-      "issueNumber": 1227
+      "issueNumber": 1227,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CODING-01",
@@ -6684,7 +9485,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1228",
-      "issueNumber": 1228
+      "issueNumber": 1228,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "CONATION-SHARE-01",
@@ -6738,14 +9564,39 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1229",
-      "issueNumber": 1229
+      "issueNumber": 1229,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "INTEGRATE-01",
       "title": "[Sep-integration] Последовательно объединить атомарные потоки без потери пользовательских overlay",
       "area": "integration",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "ProgramLead",
       "dependsOn": [
         "SHARED-01",
@@ -6897,7 +9748,79 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1161",
-      "issueNumber": 1161
+      "issueNumber": 1161,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "GATE-SHARED-20260930",
+            "GATE-ELECTRON-UI-CORE-20260930",
+            "TYPECHECK-SHARED-20260930",
+            "TYPECHECK-CORE-20260930",
+            "TYPECHECK-UI-20260930",
+            "TYPECHECK-SERVER-20260930",
+            "GATE-SERVER-20260930",
+            "TYPECHECK-ELECTRON-BOOTSTRAP-20260930",
+            "BUILD-ELECTRON-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-CONFIGURATION-HELPER-20260930",
+            "PRIVACY-COOKIE-CUSTODY-20260930",
+            "PRIVACY-COOKIE-CONSENT-20260930",
+            "OMP-EXACT-PUBLIC-CATALOG-20260930",
+            "OMP-PRIVATE-RUNTIME-LIFECYCLE-20260930",
+            "BUILD-MAIN-NATIVE-ENTRY-20260930",
+            "BUILD-RENDERER-NATIVE-ENTRY-20260930",
+            "TYPECHECK-ELECTRON-NATIVE-ENTRY-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930"
+          ],
+          "summary": "Passing uncommitted broad union precedes later workspace/lifecycle edits. Later actual WS, helper, natural-exit checks plus main/renderer/typecheck refresh are bounded evidence; final revision-bound acceptance/delivery remains pending."
+        },
+        "verification": {
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [
+            "GATE-SHARED-20260930",
+            "GATE-ELECTRON-UI-CORE-20260930",
+            "TYPECHECK-SHARED-20260930",
+            "TYPECHECK-CORE-20260930",
+            "TYPECHECK-UI-20260930",
+            "TYPECHECK-SERVER-20260930",
+            "GATE-SERVER-20260930",
+            "TYPECHECK-ELECTRON-BOOTSTRAP-20260930",
+            "BUILD-ELECTRON-20260930",
+            "NATIVE-SELF-PROFILE-20260930",
+            "NATIVE-STARTUP-LIVE-BINDING-20260930",
+            "NATIVE-WORKSPACE-STARTUP-20260930",
+            "NATURAL-SHUTDOWN-RECONNECT-20260930",
+            "NATIVE-CONFIGURATION-HELPER-20260930",
+            "PRIVACY-COOKIE-CUSTODY-20260930",
+            "PRIVACY-COOKIE-CONSENT-20260930",
+            "OMP-EXACT-PUBLIC-CATALOG-20260930",
+            "OMP-PRIVATE-RUNTIME-LIFECYCLE-20260930",
+            "BUILD-MAIN-NATIVE-ENTRY-20260930",
+            "BUILD-RENDERER-NATIVE-ENTRY-20260930",
+            "TYPECHECK-ELECTRON-NATIVE-ENTRY-20260930",
+            "NATIVE-NOTES-UI-BOUNDED-20260930",
+            "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930"
+          ],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     },
     {
       "id": "RELEASE-01",
@@ -6995,7 +9918,32 @@
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
       },
       "issueURL": "https://github.com/rox-one/rox-one/issues/1162",
-      "issueNumber": 1162
+      "issueNumber": 1162,
+      "executionProgress": {
+        "schemaVersion": 1,
+        "implementation": {
+          "status": "NOT_RUN",
+          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
+          "evidenceRefs": [],
+          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+        },
+        "verification": {
+          "status": "NOT_RUN",
+          "scope": "NOT_RUN",
+          "acceptanceStatus": "NOT_ACCEPTED",
+          "evidenceRefs": [],
+          "originalCriteriaRetained": true,
+          "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
+        },
+        "delivery": {
+          "status": "NOT_DELIVERED",
+          "codeRevision": null,
+          "publishedIssueIsCodeDelivery": false,
+          "evidenceRefs": [],
+          "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
+        },
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+      }
     }
   ],
   "scheduling": {
@@ -7028,5 +9976,46 @@
       "all dependency links"
     ],
     "creationPreserved": true
+  },
+  "executionProgress": {
+    "schemaVersion": 1,
+    "asOf": "2026-09-30T11:25:02.924Z",
+    "evidence": "evidence-20260930.json",
+    "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
+    "sourceState": "UNCOMMITTED_WORKING_UNION",
+    "deliveryRevision": null,
+    "taskCount": 109,
+    "dependencyEdges": 464,
+    "historicalRequirementRows": 484,
+    "additiveRequirementRows": 5,
+    "totalRequirementRows": 489,
+    "originalContractsSha256": "2874fdb94bbe761000aebefaacaeab01d999a86ef607913341aaa51408d4a52d",
+    "requirementContractFiles": [
+      {
+        "path": "docs/september-program/requirements-full.json",
+        "sha256": "5e5f5834a8971d5d4ad79acd585e4932b2dc9a0991067738aa9867e9ff545ca3",
+        "binding": "CURRENT_UNCOMMITTED_SOURCE_OBSERVED_AT_RECONCILIATION"
+      },
+      {
+        "path": "docs/september-program/requirements-addendum.json",
+        "sha256": "9d36876ba7e9a94ce856f3ec08dd3133c60f13f30e4e0bf74c63cfd7206cc776",
+        "binding": "CURRENT_UNCOMMITTED_SOURCE_OBSERVED_AT_RECONCILIATION"
+      }
+    ],
+    "fullTaskAcceptance": "NOT_ACCEPTED",
+    "dataContractFreeze": "NOT_ACCEPTED",
+    "sharedContractFreeze": "NOT_ACCEPTED",
+    "build": "COMPLETE_STARTUP_BUILD_PASSED; LATER_MAIN_RENDERER_REFRESH_PASSED; FINAL_REVISION_REFRESH_PENDING",
+    "fullPlatformMatrix": "PENDING",
+    "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
+    "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
+    "codeCurrent": {
+      "status": "UNCOMMITTED_WORKING_UNION",
+      "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
+      "observedAt": "2026-09-30T11:25:02.924Z",
+      "sourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
+      "scope": "NAMED_SOURCE_PATHS_ONLY; NOT_ALL_REPOSITORY_FILES"
+    },
+    "finalFullGateRefresh": "PENDING_REVISION_BOUND_INTEGRATION"
   }
 }

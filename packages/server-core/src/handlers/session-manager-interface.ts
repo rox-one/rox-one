@@ -28,6 +28,7 @@ import type {
 } from '@craft-agent/shared/protocol'
 import type { SessionBundle, DispatchMode } from '@craft-agent/shared/sessions'
 import type { SessionProvenance } from '@craft-agent/shared/memory/types'
+import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
 import type { EventSink } from '../transport'
 
 export interface ISessionManager {
@@ -44,6 +45,9 @@ export interface ISessionManager {
   // ---------------------------------------------------------------------------
   // Session CRUD
   // ---------------------------------------------------------------------------
+
+  getAgentBudget(workspaceId: string, now?: number): AgentBudgetSnapshot
+  setAgentDailyBudget(workspaceId: string, limitUsd: number | null): AgentBudgetSnapshot
 
   getSessions(workspaceId?: string): Session[]
   getSession(sessionId: string): Promise<Session | null>

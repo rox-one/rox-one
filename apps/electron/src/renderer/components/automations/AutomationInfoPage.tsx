@@ -56,7 +56,8 @@ export function AutomationInfoPage({
 }: AutomationInfoPageProps) {
   const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
-  const nextRuns = automation.cron ? computeNextRuns(automation.cron) : []
+  const scheduleTimezone = automation.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+  const nextRuns = automation.cron ? computeNextRuns(automation.cron, 3, scheduleTimezone) : []
 
   // Lightweight per-mount fetch — mirrors the pattern used in MessagingSettingsPage.
   // Only fired when the matcher actually declares a topic to avoid unnecessary IPC.
@@ -155,12 +156,13 @@ export function AutomationInfoPage({
                   <Info_Table.Row label={t('automations.labelNextRuns')}>
                     <div className="flex flex-col gap-0.5">
                       {(() => {
-                        const spansYears = nextRuns.length > 1 && nextRuns[0].getFullYear() !== nextRuns[nextRuns.length - 1].getFullYear()
+                        const year = new Intl.DateTimeFormat('en', { timeZone: scheduleTimezone, year: 'numeric' })
+                        const spansYears = nextRuns.length > 1 && year.format(nextRuns[0]!) !== year.format(nextRuns[nextRuns.length - 1]!)
                         const locale = i18n.language || 'ru'
                         return nextRuns.map((date, i) => (
                           <span key={i} className="text-sm text-foreground/70">
-                            {date.toLocaleDateString(locale, { month: 'short', day: 'numeric', ...(spansYears && { year: 'numeric' }) })}{' '}
-                            {date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            {date.toLocaleDateString(locale, { timeZone: scheduleTimezone, month: 'short', day: 'numeric', ...(spansYears && { year: 'numeric' })})}{' '}
+                            {date.toLocaleTimeString(locale, { timeZone: scheduleTimezone, hour: '2-digit', minute: '2-digit', hour12: false })}
                           </span>
                         ))
                       })()}

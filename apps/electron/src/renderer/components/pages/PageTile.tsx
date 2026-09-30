@@ -12,6 +12,7 @@ import {
 import type { LoadedPage } from '@craft-agent/shared/pages/types'
 import { PAGE_KIND_ICONS, PageFreshness, PageKindBadge } from './page-visuals'
 import { useInView } from '@/hooks/useInView'
+import { useAppShellContext } from '@/context/AppShellContext'
 
 export interface PageTileProject {
   name: string
@@ -36,6 +37,7 @@ interface PageTileProps {
  */
 export function PageTile({ page, project, onOpen, onDelete }: PageTileProps) {
   const { t } = useTranslation()
+  const { activeWorkspaceId } = useAppShellContext()
   const { config } = page
   const KindIcon = PAGE_KIND_ICONS[config.kind]
   const monogram = (config.name.trim()[0] ?? '?').toUpperCase()
@@ -51,31 +53,35 @@ export function PageTile({ page, project, onOpen, onDelete }: PageTileProps) {
 
   React.useEffect(() => {
     // Reset when the page has no fresh poster (e.g. content just changed).
-    if (!posterDigest) {
+    if (!posterDigest || !activeWorkspaceId) {
       setPosterUrl(null)
       return
     }
     if (!inView) return
     let cancelled = false
     void window.electronAPI
-      .getPageThumbnail(page.workspaceId, config.slug)
+      .getPageThumbnail(activeWorkspaceId, config.slug)
       .then((result) => {
         // Guard against a stale response after another content change.
         if (!cancelled && result && result.digest === posterDigest) setPosterUrl(result.dataUrl)
       })
       .catch(() => { /* posterless → placeholder stays */ })
     return () => { cancelled = true }
-  }, [page.workspaceId, config.slug, posterDigest, inView])
+  }, [activeWorkspaceId, config.slug, posterDigest, inView])
 
   const refreshPreview = React.useCallback(() => {
+    if (!activeWorkspaceId) {
+      toast.error(t('toast.pagePreviewFailed'))
+      return
+    }
     void window.electronAPI
-      .regeneratePageThumbnail(page.workspaceId, config.slug)
+      .regeneratePageThumbnail(activeWorkspaceId, config.slug)
       .then((queued) => {
         if (queued) toast.success(t('toast.pagePreviewQueued'))
         else toast.error(t('toast.pagePreviewFailed'))
       })
       .catch(() => toast.error(t('toast.pagePreviewFailed')))
-  }, [page.workspaceId, config.slug, t])
+  }, [activeWorkspaceId, config.slug, t])
 
   return (
     <ContextMenu>

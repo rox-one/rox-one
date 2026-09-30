@@ -5,7 +5,9 @@
  * new messenger senders, unread agent replies). No I/O here.
  */
 
-export type InboxKind = 'permission' | 'credential' | 'plan' | 'memory' | 'skill' | 'sender' | 'reply' | 'error' | 'mail'
+import type { TeamInboxItem } from '@craft-agent/shared/team'
+
+export type InboxKind = 'permission' | 'credential' | 'plan' | 'memory' | 'skill' | 'sender' | 'reply' | 'error' | 'mail' | 'team-recipient'
 export type InboxGroup = 'decision' | 'message'
 export type InboxView = 'all' | 'decisions' | 'messages' | 'snoozed' | 'done'
 export type InboxFilter = InboxView | { kind: InboxKind }
@@ -21,6 +23,8 @@ export interface InboxItem {
   source: string
   at: number
   sessionId?: string
+  /** Stable source-object identity retained through aggregation and actions. */
+  sourceRef?: { domain: 'team-recipient'; organizationId: string; requestId: string; targetKind: string; targetId: string; targetRevision: string }
   data?: unknown
 }
 
@@ -31,8 +35,8 @@ export interface InboxState {
 
 export const EMPTY_INBOX_STATE: InboxState = { done: {}, snoozed: {} }
 
-export const DECISION_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender']
-export const ALL_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'mail']
+export const DECISION_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'team-recipient']
+export const ALL_KINDS: readonly InboxKind[] = ['permission', 'credential', 'plan', 'memory', 'skill', 'sender', 'reply', 'error', 'mail', 'team-recipient']
 
 export interface SessionLike {
   id: string
@@ -98,6 +102,8 @@ export interface InboxSources {
   memoryProposals?: readonly MemoryProposalLike[]
   pendingSkills?: readonly PendingSkillLike[]
   pendingSenders?: readonly PendingSenderLike[]
+  /** Only server-confirmed addressed requests from the team domain. */
+  teamInbox?: readonly TeamInboxItem[]
   /** First-seen timestamps for items without their own time (keeps order stable). */
   firstSeen?: ReadonlyMap<string, number>
   now: number
@@ -193,6 +199,32 @@ export function buildInboxItems(src: InboxSources): InboxItem[] {
       title: sender.displayName || (sender.username ? `@${sender.username}` : sender.userId),
       source: sender.platform,
       at: sender.lastAttemptAt || seen(id), data: sender,
+    })
+  }
+  const seenTeamRecipientIds = new Set<string>()
+  for (const item of src.teamInbox ?? []) {
+    if (item.kind !== 'recipient-request' || item.delivery !== 'delivered' || !item.organizationId || !item.requestId || !item.target.revision) continue
+    const id = `team-recipient:${item.organizationId}:${item.requestId}`
+    if (seenTeamRecipientIds.has(id)) continue
+    seenTeamRecipientIds.add(id)
+    const source = item.target.title?.trim() || `${item.target.kind}:${item.target.id}`
+    items.push({
+      id,
+      kind: 'team-recipient',
+      group: 'decision',
+      blocking: false,
+      title: item.target.title?.trim() || item.target.id,
+      source,
+      at: item.at,
+      sourceRef: {
+        domain: 'team-recipient',
+        organizationId: item.organizationId,
+        requestId: item.requestId,
+        targetKind: item.target.kind,
+        targetId: item.target.id,
+        targetRevision: item.target.revision,
+      },
+      data: item,
     })
   }
   return sortInbox(items)

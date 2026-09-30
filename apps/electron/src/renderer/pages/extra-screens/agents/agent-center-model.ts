@@ -1,3 +1,5 @@
+import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
+
 /**
  * Центр агентов — pure aggregation of sessions, pending permission/credential
  * prompts, cloud runs and automations into one picture: running, waiting for
@@ -12,7 +14,6 @@ export interface CenterSession {
   isProcessing?: boolean
   lastMessageAt?: number
   createdAt?: number
-  costUsd?: number
   permissionMode?: string
 }
 
@@ -45,7 +46,7 @@ export interface CenterInput {
   cloudRuns: readonly CenterCloudRun[]
   automations: readonly CenterAutomation[]
   now: number
-  dailyBudgetUsd: number | null
+  budget: AgentBudgetSnapshot | null
 }
 
 export interface WaitingItem {
@@ -62,9 +63,7 @@ export interface AgentCenter {
   cloudFailed: CenterCloudRun[]
   automationsEnabled: CenterAutomation[]
   automationsPaused: CenterAutomation[]
-  costToday: number
-  topCostToday: CenterSession[]
-  budget: { limit: number; spent: number; ratio: number; over: boolean; near: boolean } | null
+  budget: AgentBudgetSnapshot | null
 }
 
 export function startOfLocalDay(now: number): number {
@@ -96,15 +95,6 @@ export function buildAgentCenter(input: CenterInput): AgentCenter {
   }
   waiting.sort((a, b) => (b.session.lastMessageAt ?? 0) - (a.session.lastMessageAt ?? 0))
 
-  const activeToday = input.sessions.filter((s) => (s.lastMessageAt ?? s.createdAt ?? 0) >= dayStart)
-  const costToday = activeToday.reduce((sum, s) => sum + (s.costUsd ?? 0), 0)
-  const topCostToday = [...activeToday].filter((s) => (s.costUsd ?? 0) > 0).sort((a, b) => (b.costUsd ?? 0) - (a.costUsd ?? 0)).slice(0, 5)
-
-  const limit = input.dailyBudgetUsd
-  const budget = limit != null && limit > 0
-    ? { limit, spent: costToday, ratio: costToday / limit, over: costToday >= limit, near: costToday >= limit * 0.8 }
-    : null
-
   return {
     running: processing.filter((s) => !stuckIds.has(s.id) && !waitingIds.has(s.id)).sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0)),
     stuck: stuck.filter((s) => !waitingIds.has(s.id)),
@@ -113,9 +103,7 @@ export function buildAgentCenter(input: CenterInput): AgentCenter {
     cloudFailed: input.cloudRuns.filter((r) => r.state === 'failed' && r.createdAt >= dayStart - 86400000),
     automationsEnabled: input.automations.filter((a) => a.enabled),
     automationsPaused: input.automations.filter((a) => !a.enabled),
-    costToday,
-    topCostToday,
-    budget,
+    budget: input.budget,
   }
 }
 

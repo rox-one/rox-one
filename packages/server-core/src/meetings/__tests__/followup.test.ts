@@ -85,12 +85,11 @@ describe('followup schedules (#374)', () => {
   })
 
   it('refuses simulator executor and send without a fresh grant check', () => {
-    const runtime = createFollowupRuntime()
-    runtime.executor = 'simulator'
+    const runtime = { ...createFollowupRuntime(), executor: 'simulator' as const }
     upsertSchedule(runtime, schedule())
     expect(runFollowup(runtime, 'sched-1', 'prepare').reason).toBe('simulator-not-production')
-    runtime.executor = 'production'
-    expect(runFollowup(runtime, 'sched-1', 'send').reason).toBe('send-requires-fresh-grant')
+    const productionRuntime = { ...runtime, executor: 'production' as const }
+    expect(runFollowup(productionRuntime, 'sched-1', 'send').reason).toBe('send-requires-fresh-grant')
   })
 
   it('rollback disables schedules while keeping the ledger', () => {

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
@@ -34,6 +35,38 @@ function withConfigMutex<T>(workspaceRoot: string, fn: () => Promise<T>): Promis
 
 // Shared helper: resolve workspace, read automations.json, validate matcher, mutate, write back
 interface AutomationsConfigJson { automations?: Record<string, Record<string, unknown>[]>; [key: string]: unknown }
+function redactWebhookCredentials(raw: AutomationsConfigJson): AutomationsConfigJson {
+  const config = JSON.parse(JSON.stringify(raw)) as AutomationsConfigJson
+  for (const matchers of Object.values(config.automations ?? {})) {
+    for (const matcher of matchers) {
+      matcher._editorRevision = createHash('sha256').update(JSON.stringify(matcher)).digest('hex')
+      if (!Array.isArray(matcher.actions)) continue
+      matcher.actions = matcher.actions.map((value) => {
+        const action = value as Record<string, unknown>
+        if (action.type !== 'webhook' || !action.auth || typeof action.auth !== 'object') return action
+        const auth = action.auth as { type?: unknown }
+        delete action.auth
+        action.authConfigured = true
+        action.authType = auth.type
+        return action
+      })
+    }
+  }
+  return config
+}
+
+function redactWebhookGraphCredentials<T>(projection: T): T {
+  const result = JSON.parse(JSON.stringify(projection)) as Record<string, unknown>
+  const graph = result.graph as { nodes?: Array<{ kind?: string; data?: Record<string, unknown> }> } | undefined
+  for (const node of graph?.nodes ?? []) {
+    if (node.kind !== 'webhook' || !node.data?.auth || typeof node.data.auth !== 'object') continue
+    const auth = node.data.auth as { type?: unknown }
+    delete node.data.auth
+    node.data.authConfigured = true
+    node.data.authType = auth.type
+  }
+  return result as T
+}
 async function withAutomationMatcher<T = void>(workspaceId: string, eventName: string, matcherIndex: number, mutate: (matchers: Record<string, unknown>[], index: number, config: AutomationsConfigJson, genId: () => string) => T): Promise<T> {
   const workspace = getWorkspaceByNameOrId(workspaceId)
   if (!workspace) throw new Error('Workspace not found')
@@ -80,14 +113,15 @@ const KNOWN_EVENTS = new Set<string>([
   'PermissionRequest', 'Setup',
 ])
 
-interface AutomationEditPayload { event: string; matcher: Record<string, unknown> }
+interface AutomationEditPayload { event: string; matcher: Record<string, unknown>; expectedRevision?: string }
 
 function parseEditPayload(raw: unknown): AutomationEditPayload {
   if (!raw || typeof raw !== 'object') throw new Error('Invalid automation payload')
-  const { event, matcher } = raw as { event?: unknown; matcher?: unknown }
+  const { event, matcher, expectedRevision } = raw as { event?: unknown; matcher?: unknown; expectedRevision?: unknown }
   if (typeof event !== 'string' || !KNOWN_EVENTS.has(event)) throw new Error(`Unknown automation event: ${String(event)}`)
   if (!matcher || typeof matcher !== 'object' || Array.isArray(matcher)) throw new Error('Invalid automation matcher')
-  return { event, matcher: matcher as Record<string, unknown> }
+  if (expectedRevision !== undefined && typeof expectedRevision !== 'string') throw new Error('Invalid automation revision')
+  return { event, matcher: matcher as Record<string, unknown>, expectedRevision }
 }
 
 /** Merge editable fields onto `base` (undefined / empty removes the key). */
@@ -106,6 +140,23 @@ function applyMatcherEdit(base: Record<string, unknown>, edit: Record<string, un
   if (event === 'SchedulerTick') delete next.matcher
   else { delete next.cron; delete next.timezone }
   return next
+}
+
+function applyWebhookCredentialEdit(
+  current: Record<string, unknown>,
+  next: Record<string, unknown>,
+  mode: unknown,
+): void {
+  if (!Array.isArray(next.actions) || !Array.isArray(current.actions)) return
+  for (let index = 0; index < next.actions.length; index += 1) {
+    const action = next.actions[index] as Record<string, unknown>
+    if (action.type !== 'webhook') continue
+    const oldAction = current.actions[index] as Record<string, unknown> | undefined
+    if (mode === 'keep' && !action.auth && oldAction?.type === 'webhook') action.auth = oldAction.auth
+    if (mode === 'none') delete action.auth
+    delete action.authConfigured
+    delete action.authType
+  }
 }
 
 /** Validate a single matcher in isolation so an unrelated legacy entry elsewhere
@@ -179,7 +230,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
         const parsed = JSON.parse(content)
         const eventCount = parsed?.automations ? Object.keys(parsed.automations).length : 0
         log.info(`AUTOMATIONS_GET: Loaded ${eventCount} event type(s) from ${configPath}`)
-        return parsed
+        return redactWebhookCredentials(parsed)
       })
     } catch (error) {
       if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -202,7 +253,7 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     return withConfigMutex(workspace.rootPath, async () => {
       const configPath = resolveAutomationsConfigPath(workspace.rootPath)
       try {
-        return getAutomationGraphProjection(JSON.parse(await readFile(configPath, 'utf-8')))
+        return redactWebhookGraphCredentials(getAutomationGraphProjection(JSON.parse(await readFile(configPath, 'utf-8'))))
       } catch (error) {
         if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
           return getAutomationGraphProjection(null)
@@ -259,7 +310,22 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     const { parsePromptReferences } = await import('@craft-agent/shared/automations')
     const { executeWebhookRequest, createWebhookHistoryEntry, createPromptHistoryEntry } = await import('@craft-agent/shared/automations/webhook-utils')
 
-    for (const action of payload.actions) {
+    let actionsToTest = payload.actions
+    if (payload.automationId) {
+      const saved = await readConfigOrEmpty(resolveAutomationsConfigPath(workspace.rootPath))
+      const matcher = Object.values(saved.automations ?? {}).flat().find((candidate) => candidate.id === payload.automationId)
+      const savedActions = Array.isArray(matcher?.actions) ? matcher.actions : []
+      actionsToTest = payload.actions.map((action, index) => {
+        const requested = action as typeof action & { authConfigured?: boolean; authType?: string }
+        if (requested.type !== 'webhook' || !requested.authConfigured) return action
+        const savedAction = savedActions[index] as Record<string, unknown> | undefined
+        if (savedAction?.type !== 'webhook' || !savedAction.auth) throw new Error('Saved webhook credential is unavailable; reload before testing')
+        const { authConfigured: _configured, authType: _authType, ...safeAction } = requested
+        return { ...safeAction, auth: savedAction.auth } as typeof action
+      })
+    }
+
+    for (const action of actionsToTest) {
       const start = Date.now()
 
       if (action.type === 'webhook') {
@@ -443,7 +509,11 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     const payload = parseEditPayload(rawPayload)
     const result = await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, config, genId) => {
       const current = matchers[idx]!
+      if (payload.expectedRevision !== undefined && createHash('sha256').update(JSON.stringify(current)).digest('hex') !== payload.expectedRevision) {
+        throw new Error('Automation changed since it was loaded; reload before saving')
+      }
       const next = applyMatcherEdit(current, payload.matcher, payload.event)
+      applyWebhookCredentialEdit(current, next, payload.matcher.webhookAuthMode)
       if (!next.id) next.id = genId()
       assertValidMatcher(payload.event, next)
       if (payload.event === eventName) {

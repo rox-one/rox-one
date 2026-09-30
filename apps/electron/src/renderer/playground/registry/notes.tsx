@@ -50,6 +50,8 @@ function NotesPlayground({ view }: { view: 'table' | 'canvas' | 'graph' | 'outli
         onOpenNote={setActiveNoteId}
         onCreateNote={() => undefined}
         onConvert={() => undefined}
+        onEditNote={() => undefined}
+        onDeleteNote={() => undefined}
       />
     </div>
   )
@@ -66,6 +68,8 @@ function NotesEmptyPlayground({ view }: { view: 'table' | 'canvas' | 'graph' | '
         onOpenNote={() => undefined}
         onCreateNote={() => undefined}
         onConvert={() => undefined}
+        onEditNote={() => undefined}
+        onDeleteNote={() => undefined}
       />
     </div>
   )

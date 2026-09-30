@@ -1,6 +1,8 @@
 # Unified Rox / Conation / RMA / Golden Gate behavioral specification
 
-**Status:** NOT STARTED; specification and source audit only. No implementation or acceptance is claimed. See [`september-program/PRD.md`](september-program/PRD.md) for full domain catalog, all U01–U31 and the verbatim-scope 16-item U26 checklist.
+**Status:** implementation of the existing 109-task program is authorized and in progress; product acceptance remains NOT COMPLETE. This specification does not claim any feature accepted. See [`september-program/PRD.md`](september-program/PRD.md) for full domain catalog, all U01–U31 and the verbatim-scope 16-item U26 checklist; [`september-program/recon-evidence.json`](september-program/recon-evidence.json) and [`september-program/shared-contract-freeze.json`](september-program/shared-contract-freeze.json) for current discovery-only source evidence and open acceptance.
+
+The resumed overall scope retains the original 297 remaining rows, including the September program and the already counted compound packages. [The reconciled evidence packet](september-program/evidence-20260930.json) reports implementation, bounded verification and Git delivery independently. Passing package tests or an Electron build does not close a complete issue, accept DATA/SHARED, or substitute for the original native/platform/provider matrix.
 
 ## 1. Contract
 
@@ -139,3 +141,17 @@ Daily monitoring is explicitly enabled per project with local time/timezone, sou
 Notifications consume the same saved check-in and deep-link to it, respect Focus/quiet hours, and distinguish queued/sent/failed/unknown/read according to actual sink capability. Delivery acceptance requires observing the recipient surface, not a queued job or reminder record. External sinks require explicit configured consent; authoring starts neither monitoring nor external sends.
 
 Verification: real two-project persistence/ACL/keyboard/narrow-view checks; exact weighted examples 87.5% and 72.5%; zero/negative/nonfinite/direction/unknown controls; a real scheduled worker plus saved check-in and recipient observation; duplicate/restart/permission/source failure/quiet-hours/pause/stop paths. Missing runtime/source/sink remains a precise blocker, never simulated PASS.
+
+## 10. September implementation status and evidence boundary
+
+Use the existing 109-task DAG (464 dependency edges); do not create a duplicate plan. Preserve the original 484 requirement rows plus 5 additive OKR rows, all 16 Conation seq703 rows, and separate Linux/cloud, macOS native, Windows native, and supported native Conation iOS target/device/runner acceptance. U25 remains FALSE and decision-reconciliation only until reliable independent authorization. Proposals and Macro/Conation source artifacts do not authorize implementation or copying; preserve provenance and rights boundaries. Production cloud provisioning, DNS/MX changes, unauthorized external sends, provider writes, auth bypass, and unapproved user-data migration remain out of scope.
+
+The 32 source reports are discovery-only. The recorded native Notes flow is the RPC producer to workspace filesystem, through the shared channel registry to the Electron channel-map; the Rox2 notes Map is separate. Org RPC persists local `orgs.json`; account-replica uses in-memory queues; Conation Soup/DSS ingestion is read-only. This evidence does not demonstrate entity authorization, durable remote sync, or two live accepted consumers. DATA-01 (#1212) and SHARED-01 (#1160) remain NOT_RUN; neither is frozen or satisfied by its inventory document. Pending live AUDIT-01, DATA-01, and SHARED-01 rows and their exact boundaries are maintained in the linked JSON evidence.
+
+Observed baseline evidence: Electron build passed at `a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2`, build-only. Isolated native launch failed before app startup because the Electron dependency lacked `path.txt` or `dist`. A separate lead observation saw Rox 0.11.5 at Connections / Policies with a visible legacy MORE label; this is not a full UI audit. Do not present any of these as product acceptance.
+
+## Native local startup and bounded Notes acceptance (2026-09-30)
+
+A registered native principal starts from its own durable display name and the currently proved Electron window/workspace. Native startup observes only a four-field configuration-only runtime summary and its own workspace metadata. It does not read or mutate the host account roster, setup credentials, provider auth state or default connection. The server renews the original private window proof before requests and after awaited responses; workspace changes, renderer replacement, window destruction and credential revocation deny subsequent access. Session authorization remains independent: a denied session load is visible while Notes remains available.
+
+The integration must retain actual UI creation/edit/save, canonical file readback, an independently enrolled reader, renderer reload and cold restart evidence. These bounded observations do not accept all original Notes conversion/views, offline/conflict/revoke/workspace-switch UI, DATA/SHARED consumers or platform criteria. Creation and edit must be distinguished when only edit traverses the durable replica outbox. Exact encrypted receipt inspection has a separate evidence limit.

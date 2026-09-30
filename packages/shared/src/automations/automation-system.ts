@@ -386,7 +386,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
     this.scheduler = new SchedulerService(async (payload: SchedulerTickPayload) => {
       await this.eventBus.emit('SchedulerTick', {
         workspaceId: this.options.workspaceId,
-        timestamp: Date.now(),
+        timestamp: Date.parse(payload.timestamp),
         localTime: payload.localTime,
         utcTime: payload.timestamp,
       });

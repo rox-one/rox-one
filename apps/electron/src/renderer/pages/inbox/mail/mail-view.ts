@@ -2,7 +2,7 @@
  * Pure helpers for the «Почта» section of Входящие: labels, reply/forward
  * drafts, «Все» rows and status copy keys. No I/O (unit-tested).
  */
-import type { MailAddress, MailMessage, MailStatus, MailSummary } from '../../../../shared/mail-local'
+import type { MailAddress, MailAttachment, MailMessage, MailStatus, MailSummary } from '../../../../shared/mail-local'
 import type { InboxItem } from '../inbox-model'
 
 export function addressLabel(a: MailAddress | undefined | null): string {
@@ -51,8 +51,11 @@ export interface ComposeDraft {
   draftId?: string
   to: string
   cc: string
+  bcc: string
   subject: string
   text: string
+  /** Server-stored JMAP blobs survive closing and reopening the composer. */
+  attachments?: MailAttachment[]
 }
 
 function prefixed(subject: string, prefix: 'Re' | 'Fwd'): string {
@@ -79,12 +82,12 @@ export function plainText(m: Pick<MailMessage, 'text' | 'html' | 'preview'>): st
 }
 
 export function buildDraft(mode: ComposeMode, source: MailMessage | null, me: string | null, header: (m: MailMessage) => string): ComposeDraft {
-  if (mode === 'new' || !source) return { mode: 'new', to: '', cc: '', subject: '', text: '' }
+  if (mode === 'new' || !source) return { mode: 'new', to: '', cc: '', bcc: '', subject: '', text: '' }
   const mine = (me ?? '').toLowerCase()
   const notMe = (a: MailAddress) => a.email.toLowerCase() !== mine
   const body = `\n\n${header(source)}\n${quote(plainText(source))}`
   if (mode === 'forward') {
-    return { mode, sourceId: source.id, to: '', cc: '', subject: prefixed(source.subject, 'Fwd'), text: `\n\n${header(source)}\n\n${plainText(source)}` }
+    return { mode, sourceId: source.id, to: '', cc: '', bcc: '', subject: prefixed(source.subject, 'Fwd'), text: `\n\n${header(source)}\n\n${plainText(source)}`, attachments: source.attachments }
   }
   const replyTarget = source.replyTo.length ? source.replyTo : source.from
   const to = replyTarget.filter(notMe)
@@ -94,16 +97,16 @@ export function buildDraft(mode: ComposeMode, source: MailMessage | null, me: st
     const seen = new Set(toFinal.map((a) => a.email.toLowerCase()))
     cc = [...source.to, ...source.cc].filter((a) => notMe(a) && !seen.has(a.email.toLowerCase()) && (seen.add(a.email.toLowerCase()), true))
   }
-  return { mode, sourceId: source.id, to: addressLine(toFinal), cc: addressLine(cc), subject: prefixed(source.subject, 'Re'), text: body }
+  return { mode, sourceId: source.id, to: addressLine(toFinal), cc: addressLine(cc), bcc: '', subject: prefixed(source.subject, 'Re'), text: body }
 }
 
 /** Reopen a saved draft in the composer. */
 export function draftFromMessage(m: MailMessage): ComposeDraft {
-  return { mode: 'new', draftId: m.id, to: addressLine(m.to), cc: addressLine(m.cc), subject: m.subject, text: plainText(m) }
+  return { mode: 'new', draftId: m.id, to: addressLine(m.to), cc: addressLine(m.cc), bcc: addressLine(m.bcc), subject: m.subject, text: plainText(m), attachments: m.attachments }
 }
 
 export function draftHasContent(d: ComposeDraft): boolean {
-  return !!(d.to.trim() || d.cc.trim() || d.subject.trim() || d.text.replace(/^[\s>]*$/gm, '').trim())
+  return !!(d.to.trim() || d.cc.trim() || d.bcc.trim() || d.subject.trim() || d.attachments?.length || d.text.replace(/^[\s>]*$/gm, '').trim())
 }
 
 /** i18n key for the one-line status (status bar / banner). */

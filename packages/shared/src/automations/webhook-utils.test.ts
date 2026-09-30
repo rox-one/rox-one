@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'bun:test';
-import { expandWebhookAction, blockedWebhookDestination, blockedWebhookResolvedAddresses, executeWebhookRequest } from './webhook-utils.ts';
+import { expandWebhookAction, blockedWebhookDestination, blockedWebhookResolvedAddresses, executeWebhookRequest, createWebhookHistoryEntry, createPromptHistoryEntry } from './webhook-utils.ts';
 import type { WebhookAction } from './types.ts';
 
 const env = {
@@ -147,5 +147,63 @@ describe('blockedWebhookDestination', () => {
       async () => [{ address: '8.8.8.8', family: 4 }],
     );
     expect(blocked).toBeNull();
+  });
+});
+
+describe('automation occurrence history metadata', () => {
+  it('records stable run, matcher revision, action index, schedule and external outcome', () => {
+    const entry = createPromptHistoryEntry({
+      matcherId: 'matcher-1',
+      ok: false,
+      sessionId: 'session-1',
+      scheduledAt: '2026-09-30T10:15:00.000Z',
+      scheduledTimezone: 'Europe/Budapest',
+      occurrenceKey: 'matcher-1:2026-09-30T10:15:00.000Z:2',
+      matcherRevision: 'revision-1',
+      actionIndex: 2,
+      runId: 'run-1',
+      attempt: 1,
+      outcome: 'unknown_external_outcome',
+    });
+
+    expect(entry).toMatchObject({
+      id: 'matcher-1',
+      sessionId: 'session-1',
+      scheduledAt: '2026-09-30T10:15:00.000Z',
+      timezone: 'Europe/Budapest',
+      occurrenceKey: 'matcher-1:2026-09-30T10:15:00.000Z:2',
+      matcherRevision: 'revision-1',
+      actionIndex: 2,
+      runId: 'run-1',
+      attempt: 1,
+      outcome: 'unknown_external_outcome',
+    });
+  });
+
+  it('keeps scheduled webhook retries linked to the durable run and action identity', () => {
+    const entry = createWebhookHistoryEntry({
+      matcherId: 'matcher-1',
+      ok: false,
+      url: 'https://example.com/hook',
+      statusCode: 500,
+      durationMs: 10,
+      scheduledAt: '2026-09-30T10:15:00.000Z',
+      scheduledTimezone: 'UTC',
+      occurrenceKey: 'matcher-1:2026-09-30T10:15:00.000Z:0',
+      matcherRevision: 'revision-1',
+      actionIndex: 0,
+      runId: 'run-1',
+      outcome: 'error',
+    });
+
+    expect(entry).toMatchObject({
+      scheduledAt: '2026-09-30T10:15:00.000Z',
+      timezone: 'UTC',
+      occurrenceKey: 'matcher-1:2026-09-30T10:15:00.000Z:0',
+      matcherRevision: 'revision-1',
+      actionIndex: 0,
+      runId: 'run-1',
+      outcome: 'error',
+    });
   });
 });

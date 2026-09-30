@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { FEED_STATE_FILE, FeedService } from '../feed-service'
@@ -96,5 +96,47 @@ describe('FeedService v2 (labels, preview, pause)', () => {
     svc.annotate([`news:${res.source.id}:abc`, 'session:1'], { starred: true })
     svc.removeSource(res.source.id)
     expect(Object.keys(svc.listAnnotations())).toEqual(['session:1'])
+  })
+  it('keeps the prior durable and in-memory annotations when an annotation write fails', () => {
+    const { svc } = make({})
+    svc.annotate(['item-1'], { starred: true })
+    const stateFile = join(dir, FEED_STATE_FILE)
+    const backupFile = `${stateFile}.backup`
+    renameSync(stateFile, backupFile)
+    mkdirSync(stateFile)
+    expect(() => svc.annotate(['item-1'], { starred: false, read: true })).toThrow()
+    expect(svc.listAnnotations()['item-1']).toEqual({ starred: true })
+    rmSync(stateFile, { recursive: true, force: true })
+    renameSync(backupFile, stateFile)
+    expect(new FeedService({ configDir: dir }).listAnnotations()['item-1']).toEqual({ starred: true })
+    expect(svc.annotate(['item-1'], { starred: false, read: true })).toBe(1)
+    expect(svc.listAnnotations()['item-1']?.readAt).toBeNumber()
+  })
+
+  it('does not expose source updates or removals when their state writes fail', () => {
+    writeFileSync(join(dir, FEED_STATE_FILE), JSON.stringify({
+      version: 2,
+      sources: [{ id: 'source-1', url: 'https://b.example/feed', kind: 'rss', intervalMin: 60, addedAt: 1, lastStatus: 'ok' }],
+      items: [],
+      annotations: {},
+    }))
+    const { svc } = make({})
+    expect(svc.listSources().map((source) => source.id)).toEqual(['source-1'])
+    const stateFile = join(dir, FEED_STATE_FILE)
+    const backupFile = `${stateFile}.backup`
+    renameSync(stateFile, backupFile)
+    mkdirSync(stateFile)
+    expect(() => svc.updateSource('source-1', { title: 'Not saved' })).toThrow()
+    expect(svc.listSources()[0]?.title).toBeUndefined()
+    rmSync(stateFile, { recursive: true, force: true })
+    renameSync(backupFile, stateFile)
+
+    renameSync(stateFile, backupFile)
+    mkdirSync(stateFile)
+    expect(() => svc.removeSource('source-1')).toThrow()
+    expect(svc.listSources()).toHaveLength(1)
+    rmSync(stateFile, { recursive: true, force: true })
+    renameSync(backupFile, stateFile)
+    expect(new FeedService({ configDir: dir }).listSources()).toHaveLength(1)
   })
 })

@@ -35,6 +35,7 @@ import { SETTINGS_PAGES, type SettingsSubpage } from '../../shared/settings-regi
 import { isSettingsPageHidden } from '../../shared/settings-presentation'
 import {
   searchKnowledge,
+  searchHitRoute,
   resolveKnowledgeApi,
 } from '@/knowledge/KnowledgeHome'
 import {
@@ -226,7 +227,7 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
     source: 'craft',
     keywords: ['knowledge', 'search', 'find', 'docs'],
     async execute() {
-      navigate(routes.view.knowledge())
+      navigate(routes.view.search())
     },
   }
   const openCompat: CommandContribution = {
@@ -484,13 +485,13 @@ function registerResourceProviders(
         const hits = await searchKnowledge(api, ws, query)
         if (!hits) return null
         return hits.map((hit) => ({
-          ref: { kind: hit.ref.kind, id: hit.ref.id },
+          ref: hit.ref,
           title: hit.title,
           snippet: hit.snippet,
           notebookPath: hit.notebookPath,
           score: hit.score,
         }))
-      }),
+      }, (hit) => searchHitRoute(hit)),
     ),
   )
 }

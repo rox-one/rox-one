@@ -17,31 +17,68 @@ function storage(): Storage | null {
   }
 }
 
+export interface WorkspaceJsonSnapshot<T> {
+  value: T
+  raw: string | null
+  available: boolean
+  valid: boolean
+}
+
+export function readWorkspaceJsonSnapshot<T>(
+  namespace: string,
+  workspaceId: string | null | undefined,
+  normalize: (raw: unknown) => T,
+): WorkspaceJsonSnapshot<T> {
+  const store = storage()
+  if (!store) return { value: normalize(undefined), raw: null, available: false, valid: false }
+  const raw = store.getItem(workspaceStorageKey(namespace, workspaceId))
+  if (raw === null) return { value: normalize(undefined), raw, available: true, valid: true }
+  try {
+    return { value: normalize(JSON.parse(raw)), raw, available: true, valid: true }
+  } catch {
+    return { value: normalize(undefined), raw, available: true, valid: false }
+  }
+}
+
 export function loadWorkspaceJson<T>(
   namespace: string,
   workspaceId: string | null | undefined,
   normalize: (raw: unknown) => T,
 ): T {
-  const store = storage()
-  const raw = store?.getItem(workspaceStorageKey(namespace, workspaceId))
-  if (!raw) return normalize(undefined)
-  try {
-    return normalize(JSON.parse(raw))
-  } catch {
-    return normalize(undefined)
-  }
+  return readWorkspaceJsonSnapshot(namespace, workspaceId, normalize).value
 }
 
-export function saveWorkspaceJson(namespace: string, workspaceId: string | null | undefined, value: unknown): void {
-  const store = storage()
-  if (!store) return
-  const key = workspaceStorageKey(namespace, workspaceId)
-  store.setItem(key, JSON.stringify(value))
+function announceWorkspaceJsonChange(key: string): void {
   try {
     window.dispatchEvent(new CustomEvent(EXTRA_SCREEN_STORAGE_EVENT, { detail: { key } }))
   } catch {
     // non-DOM test environment
   }
+}
+
+export function saveWorkspaceJson(namespace: string, workspaceId: string | null | undefined, value: unknown): boolean {
+  const store = storage()
+  if (!store) return false
+  const key = workspaceStorageKey(namespace, workspaceId)
+  store.setItem(key, JSON.stringify(value))
+  announceWorkspaceJsonChange(key)
+  return true
+}
+
+/** Save only if the persisted bytes are still the snapshot the editor opened. */
+export function saveWorkspaceJsonIfUnchanged(
+  namespace: string,
+  workspaceId: string | null | undefined,
+  expectedRaw: string | null,
+  value: unknown,
+): boolean {
+  const store = storage()
+  if (!store) return false
+  const key = workspaceStorageKey(namespace, workspaceId)
+  if (store.getItem(key) !== expectedRaw) return false
+  store.setItem(key, JSON.stringify(value))
+  announceWorkspaceJsonChange(key)
+  return true
 }
 
 export function subscribeWorkspaceJson(

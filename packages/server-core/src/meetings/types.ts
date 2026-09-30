@@ -25,31 +25,35 @@ export type MeetingOpResult<TReason extends string = string, TPayload = unknown>
   readonly payload?: TPayload
 }
 
+/** A rejected/unconfirmed operation cannot carry an invented success payload. */
+export type MeetingOpFailure<TReason extends string, TStatus extends 'unsupported' | 'blocked' | 'denied' | 'unknown'> =
+  MeetingOpResult<TReason, never> & { readonly status: TStatus; readonly live: false }
+
 export function unsupported<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpFailure<T, 'unsupported'> {
   return { status: 'unsupported', reason, live: false, evidenceLevel }
 }
 
 export function blocked<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpFailure<T, 'blocked'> {
   return { status: 'blocked', reason, live: false, evidenceLevel }
 }
 
 export function denied<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpFailure<T, 'denied'> {
   return { status: 'denied', reason, live: false, evidenceLevel }
 }
 
 export function unknownEffect<T extends string>(
   reason: T,
   evidenceLevel: EvidenceLevel = 'U1',
-): MeetingOpResult<T> {
+): MeetingOpFailure<T, 'unknown'> {
   return { status: 'unknown', reason, live: false, evidenceLevel }
 }
 

@@ -44,6 +44,7 @@ let hostToolResultSeen = false
 let promptSeen = false
 let turnFinished = false
 let backstop = null
+let selectedModel = { provider: 'fixture', id: 'test-model' }
 
 function finishTurn() {
   if (turnFinished) return
@@ -89,8 +90,21 @@ rl.on('line', (line) => {
       type: 'response',
       id: msg.id,
       success: true,
-      data: { sessionId: 'fake-omp-session', sessionFile: null },
+      data: { sessionId: 'fake-omp-session', sessionFile: null, model: selectedModel },
     })
+    return
+  }
+
+  if (msg.type === 'get_available_models') {
+    send({ type: 'response', id: msg.id, success: true, data: [{ provider: 'fixture', id: 'test-model' }] })
+    return
+  }
+
+  if (msg.type === 'set_model') {
+    const valid = msg.provider === 'fixture' && msg.modelId === 'test-model'
+    if (valid) selectedModel = { provider: msg.provider, id: msg.modelId }
+    send({ type: 'response', id: msg.id, success: valid, data: selectedModel,
+      ...(valid ? {} : { error: 'Model not found' }) })
     return
   }
 

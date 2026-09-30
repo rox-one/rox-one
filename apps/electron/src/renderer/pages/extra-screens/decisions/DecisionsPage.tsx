@@ -10,6 +10,7 @@ import { useActiveWorkspace } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { newLocalId, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
 import { sessionTitle, useMeetings, useWorkspaceSessions } from '@/lib/extra-screens/use-rox-sources'
+import { MEETING_SOURCE_SEEK_SESSION_KEY } from '../../../../shared/meetings-local'
 import { cn } from '@/lib/utils'
 import {
   Card,
@@ -56,7 +57,18 @@ const PERIODS: (number | null)[] = [7, 30, 90, null]
 
 function openSource(source: DecisionSource) {
   if (source.kind === 'session' && source.id) navigate(routes.view.allSessions(source.id))
-  else if (source.kind === 'meeting' && source.id) navigate(routes.view.meetings(source.id))
+  else if (source.kind === 'meeting' && source.id) {
+    try {
+      if (source.segmentId && typeof source.startMs === 'number') {
+        sessionStorage.setItem(MEETING_SOURCE_SEEK_SESSION_KEY, JSON.stringify({ meetingId: source.id, segmentId: source.segmentId, startMs: source.startMs }))
+      } else {
+        sessionStorage.removeItem(MEETING_SOURCE_SEEK_SESSION_KEY)
+      }
+    } catch {
+      // The meeting remains navigable when storage is unavailable.
+    }
+    navigate(routes.view.meetings(source.id))
+  }
 }
 
 export default function DecisionsPage({ itemId }: { itemId: string | null }) {

@@ -8,8 +8,11 @@ import {
   type LocalMeetingAction,
   type LocalMeetingDocument,
   type LocalMeetingPatch,
+  type LocalMeetingQuestion,
   type LocalTranscript,
+  type LocalTranscriptProvenance,
   type LocalTranscriptSegment,
+  type LocalTranscriptRevision,
   type TranscriptStatus,
 } from '../../shared/meetings-local'
 
@@ -29,7 +32,67 @@ export function newMeetingId(now: number, rand: () => number = Math.random): str
 
 const str = (v: unknown, fallback = ''): string => (typeof v === 'string' ? v : fallback)
 const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined)
-const TRANSCRIPT_STATUSES: TranscriptStatus[] = ['none', 'queued', 'running', 'done', 'failed', 'unavailable']
+const TRANSCRIPT_STATUSES: TranscriptStatus[] = ['none', 'queued', 'running', 'done', 'failed', 'unavailable', 'cancelled', 'partial']
+
+function normalizeTranscriptProvenance(v: unknown): LocalTranscriptProvenance | undefined {
+  if (!v || typeof v !== 'object') return undefined
+  const o = v as Record<string, unknown>
+  const sourceKind = o.sourceKind
+  if (sourceKind !== 'microphone' && sourceKind !== 'import' && sourceKind !== 'none') return undefined
+  return {
+    sourceKind,
+    sourceHash: str(o.sourceHash) || undefined,
+    engine: str(o.engine) || undefined,
+    model: str(o.model) || undefined,
+    generatedAt: num(o.generatedAt),
+  }
+}
+
+function normalizeTranscriptRevision(v: unknown): LocalTranscriptRevision | null {
+  if (!v || typeof v !== 'object') return null
+  const o = v as Record<string, unknown>
+  const revision = num(o.revision)
+  const createdAt = num(o.createdAt)
+  if (revision == null || createdAt == null || (o.reason !== 'transcribed' && o.reason !== 'corrected' && o.reason !== 'restored')) return null
+  return { revision: Math.max(0, Math.floor(revision)), createdAt, reason: o.reason }
+}
+
+/** Tolerant reader for transcript.json, including pre-revision transcripts. */
+export function normalizeTranscript(raw: unknown): LocalTranscript | null {
+  if (!raw || typeof raw !== 'object') return null
+  const o = raw as Record<string, unknown>
+  if (!Array.isArray(o.segments)) return null
+  const segments = o.segments.flatMap((value, index): LocalTranscriptSegment[] => {
+    if (!value || typeof value !== 'object') return []
+    const segment = value as Record<string, unknown>
+    const text = str(segment.text).trim()
+    const startMs = num(segment.startMs)
+    const endMs = num(segment.endMs)
+    if (!text || startMs == null || endMs == null || startMs < 0 || endMs < startMs) return []
+    return [{
+      id: str(segment.id) || `s${index}`,
+      startMs,
+      endMs,
+      text,
+      speakerId: segment.speakerId === null ? null : str(segment.speakerId).trim() || undefined,
+    }]
+  })
+  const history = Array.isArray(o.history) ? o.history.flatMap((entry) => {
+    const normalized = normalizeTranscriptRevision(entry)
+    return normalized ? [normalized] : []
+  }) : undefined
+  return {
+    engine: str(o.engine, 'unknown'),
+    model: str(o.model, 'unknown'),
+    language: str(o.language) || null,
+    createdAt: num(o.createdAt) ?? 0,
+    elapsedMs: Math.max(0, num(o.elapsedMs) ?? 0),
+    revision: Math.max(0, Math.floor(num(o.revision) ?? 0)),
+    history,
+    provenance: normalizeTranscriptProvenance(o.provenance),
+    segments,
+  }
+}
 
 function normActions(v: unknown): LocalMeetingAction[] {
   if (!Array.isArray(v)) return []
@@ -38,14 +101,29 @@ function normActions(v: unknown): LocalMeetingAction[] {
     const o = a as Record<string, unknown>
     const text = str(o.text).trim()
     if (!text) return []
+    const sourceSegmentIds = Array.isArray(o.sourceSegmentIds) ? [...new Set(o.sourceSegmentIds.filter((id): id is string => typeof id === 'string' && id.length > 0))] : undefined
     return [{
       id: str(o.id) || `a-${i}`,
       text,
       done: o.done === true,
       taskId: str(o.taskId) || undefined,
       generated: o.generated === true || undefined,
+      sourceSegmentIds,
+      sourceTranscriptRevision: num(o.sourceTranscriptRevision),
       createdAt: num(o.createdAt) ?? 0,
     }]
+  })
+}
+
+function normQuestions(v: unknown): LocalMeetingQuestion[] {
+  if (!Array.isArray(v)) return []
+  return v.flatMap((item, i): LocalMeetingQuestion[] => {
+    if (!item || typeof item !== 'object') return []
+    const o = item as Record<string, unknown>
+    const text = str(o.text).trim()
+    const sourceSegmentIds = Array.isArray(o.sourceSegmentIds) ? [...new Set(o.sourceSegmentIds.filter((id): id is string => typeof id === 'string' && id.length > 0))] : []
+    if (!text || sourceSegmentIds.length === 0) return []
+    return [{ id: str(o.id) || `q-${i}`, text, sourceSegmentIds, createdAt: num(o.createdAt) ?? 0 }]
   })
 }
 
@@ -92,12 +170,15 @@ export function normalizeMeeting(raw: unknown, id: string): LocalMeeting | null 
           mimeType: str(a?.mimeType, 'audio/webm'),
           bytes: num(a?.bytes) ?? 0,
           originalName: str(a?.originalName) || undefined,
+          sourceHash: str(a?.sourceHash) || undefined,
           recovered: a?.recovered === true || undefined,
         }
       : null,
     transcript: {
       status: tStatus,
       progress: Math.min(100, Math.max(0, num(t.progress) ?? 0)),
+      generation: Math.max(0, Math.floor(num(t.generation) ?? 0)),
+      attempt: num(t.attempt),
       engine: str(t.engine) || undefined,
       model: str(t.model) || undefined,
       language: str(t.language) || undefined,
@@ -105,11 +186,21 @@ export function normalizeMeeting(raw: unknown, id: string): LocalMeeting | null 
       segments: num(t.segments),
       startedAt: num(t.startedAt),
       finishedAt: num(t.finishedAt),
+      revision: Math.max(0, Math.floor(num(t.revision) ?? 0)),
+      provenance: normalizeTranscriptProvenance(t.provenance),
     },
     summary: s && str(s.text).trim()
-      ? { text: str(s.text), generated: s.generated === true, sessionId: str(s.sessionId) || undefined, updatedAt: num(s.updatedAt) ?? 0 }
+      ? {
+          text: str(s.text),
+          generated: s.generated === true,
+          sessionId: str(s.sessionId) || undefined,
+          sourceSegmentIds: Array.isArray(s.sourceSegmentIds) ? [...new Set(s.sourceSegmentIds.filter((item): item is string => typeof item === 'string' && item.length > 0))] : undefined,
+          sourceTranscriptRevision: num(s.sourceTranscriptRevision),
+          questions: normQuestions(s.questions),
+          updatedAt: num(s.updatedAt) ?? 0,
+        }
       : null,
-    summaryRun: run && str(run.sessionId) ? { sessionId: str(run.sessionId), startedAt: num(run.startedAt) ?? 0 } : undefined,
+    summaryRun: run && str(run.sessionId) ? { sessionId: str(run.sessionId), startedAt: num(run.startedAt) ?? 0, transcriptRevision: num(run.transcriptRevision) } : undefined,
     actions: normActions(o.actions),
     documents: normDocuments(o.documents),
     updatedAt: num(o.updatedAt) ?? createdAt,
@@ -152,7 +243,15 @@ export function applyPatch(meeting: LocalMeeting, patch: LocalMeetingPatch, now:
   if ('summary' in patch) {
     const s = patch.summary
     next.summary = s && typeof s.text === 'string' && s.text.trim()
-      ? { text: s.text.slice(0, 100_000), generated: s.generated === true, sessionId: s.sessionId, updatedAt: now }
+      ? {
+          text: s.text.slice(0, 100_000),
+          generated: s.generated === true,
+          sessionId: s.sessionId,
+          sourceSegmentIds: s.sourceSegmentIds,
+          sourceTranscriptRevision: s.sourceTranscriptRevision,
+          questions: normQuestions(s.questions),
+          updatedAt: now,
+        }
       : null
   }
   if ('summaryRun' in patch) {
@@ -256,10 +355,12 @@ export function transcriptMarkdown(meeting: Pick<LocalMeeting, 'title' | 'starte
     `- language: ${transcript.language ?? 'auto'}`,
     '',
   ]
-  for (const seg of transcript.segments) lines.push(`[${formatClock(seg.startMs)}] ${seg.text}`)
+  for (const seg of transcript.segments) {
+    const speaker = seg.speakerId?.trim()
+    lines.push(`[${formatClock(seg.startMs)}] ${speaker ? `${speaker}: ` : ''}${seg.text}`)
+  }
   return `${lines.join('\n')}\n`
 }
-
 const MODEL_PREFERENCE = [
   /large-v3-turbo-q5/,
   /large-v3-turbo-q8/,

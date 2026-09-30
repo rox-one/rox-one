@@ -139,7 +139,7 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   server.handle(RPC_CHANNELS.messaging.GET_BINDINGS, async (ctx) => {
-    const read = rpcMessagingReadResult({ source: 'native', nativeId: ctx.workspaceId })
+    const read = rpcMessagingReadResult({ source: 'native', nativeId: ctx.workspaceId ?? undefined })
     if (!isClaimableLive(read.result)) return []
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
     return registry.getBindings(ctx.workspaceId)

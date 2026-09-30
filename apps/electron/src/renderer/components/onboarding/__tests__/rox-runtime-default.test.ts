@@ -30,24 +30,105 @@ describe('ensureRoxRuntimeDefault (first run → Rox runtime)', () => {
     expect(calls.setDefault).toHaveLength(0)
   })
 
-  it('promotes an existing Rox connection over another default', async () => {
+  it('preserves a custom default instead of replacing an existing user choice', async () => {
     const { api, calls } = fakeApi([
       { slug: 'claude-max', providerType: 'anthropic', isDefault: true },
       { slug: 'rox-kimi', providerType: 'omp' },
     ])
-    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'set-default', slug: 'rox-kimi' })
-    expect(calls.setDefault).toEqual(['rox-kimi'])
+    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'preserved-default', slug: 'claude-max' })
+    expect(calls.setup).toHaveLength(0)
+    expect(calls.setDefault).toHaveLength(0)
   })
 
-  it('creates the same connection the old «Rox» provider option did', async () => {
-    const { api, calls } = fakeApi([{ slug: 'omp', providerType: 'pi', isDefault: true }])
+  it('creates the same connection the old «Rox» provider option did when no default exists', async () => {
+    const { api, calls } = fakeApi([{ slug: 'omp', providerType: 'pi' }])
     expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'created', slug: 'omp-2' })
     expect(calls.setup).toEqual([{ slug: 'omp-2', name: 'Rox', providerType: 'omp' }])
     expect(calls.setDefault).toEqual(['omp-2'])
   })
 
+  it('preserves the selected provider even when it is the only connection', async () => {
+    const { api, calls } = fakeApi([{ slug: 'omp', providerType: 'pi', isDefault: true }])
+    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'preserved-default', slug: 'omp' })
+    expect(calls.setup).toHaveLength(0)
+    expect(calls.setDefault).toHaveLength(0)
+  })
+
   it('never throws: failures are reported so the app still opens', async () => {
     expect((await ensureRoxRuntimeDefault(fakeApi([], { setupFails: true }).api)).status).toBe('failed')
     expect((await ensureRoxRuntimeDefault(fakeApi([], { listThrows: true }).api)).status).toBe('failed')
+  })
+})
+
+describe('ensureRoxRuntimeDefault native configuration-only boundary', () => {
+  function nativeApi(summary: unknown) {
+    const calls: string[] = []
+    const api: RoxRuntimeDefaultApi = {
+      getOrgIdentity: async () => { calls.push('identity'); return { authority: 'native' } },
+      // JSON RPC input is deliberately checked at runtime, including malformed payloads.
+      getStartupRuntimeSummary: async () => { calls.push('summary'); return JSON.parse(JSON.stringify(summary)) },
+      listLlmConnectionsWithStatus: async () => { calls.push('legacy-list'); throw Error('native must not read host account roster') },
+      setupLlmConnection: async () => { calls.push('create'); throw Error('native must not create host connections') },
+      setDefaultLlmConnection: async () => { calls.push('set-default'); throw Error('native must not change host default') },
+    }
+    return { api, calls }
+  }
+  it('observes exact OMP default using only identity and configuration metadata', async () => {
+    const { api, calls } = nativeApi({ kind: 'configuration-only', slug: 'rox-kimi', providerType: 'omp', isDefault: true })
+    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'already-default', slug: 'rox-kimi' })
+    expect(calls).toEqual(['identity', 'summary'])
+  })
+  it('preserves a non-OMP host default without inspecting or changing its credentials', async () => {
+    const { api, calls } = nativeApi({ kind: 'configuration-only', slug: 'selected-provider', providerType: 'pi', isDefault: true })
+    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'preserved-default', slug: 'selected-provider' })
+    expect(calls).toEqual(['identity', 'summary'])
+  })
+  for (const [name, summary] of [
+    ['null', null], ['wrong projection', { kind: 'authenticated', slug: 'rox', providerType: 'omp', isDefault: true }],
+    ['not default', { kind: 'configuration-only', slug: 'rox', providerType: 'omp', isDefault: false }],
+    ['missing slug', { kind: 'configuration-only', providerType: 'omp', isDefault: true }],
+    ['numeric slug', { kind: 'configuration-only', slug: 123, providerType: 'omp', isDefault: true }],
+    ['blank slug', { kind: 'configuration-only', slug: '   ', providerType: 'omp', isDefault: true }],
+    ['missing provider', { kind: 'configuration-only', slug: 'rox', isDefault: true }],
+    ['numeric provider', { kind: 'configuration-only', slug: 'rox', providerType: 123, isDefault: true }],
+    ['object provider', { kind: 'configuration-only', slug: 'rox', providerType: {}, isDefault: true }],
+    ['unknown provider', { kind: 'configuration-only', slug: 'rox', providerType: 'unknown-runtime', isDefault: true }],
+    ['nonboolean default', { kind: 'configuration-only', slug: 'rox', providerType: 'omp', isDefault: 'yes' }],
+  ] as const) {
+    it(`fails closed for ${name} summary without legacy fallback`, async () => {
+      const { api, calls } = nativeApi(summary)
+      expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'failed', error: 'runtime-configuration-unavailable' })
+      expect(calls).toEqual(['identity', 'summary'])
+    })
+  }
+  it('fails closed if the native metadata API is absent or its request fails', async () => {
+    const absent = nativeApi(null)
+    delete absent.api.getStartupRuntimeSummary
+    expect((await ensureRoxRuntimeDefault(absent.api)).status).toBe('failed')
+    expect(absent.calls).toEqual(['identity'])
+    const unavailable = nativeApi(null)
+    unavailable.api.getStartupRuntimeSummary = async () => { throw Error('workspace permission changed') }
+    expect(await ensureRoxRuntimeDefault(unavailable.api)).toEqual({ status: 'failed', error: 'workspace permission changed' })
+    expect(unavailable.calls).toEqual(['identity'])
+  })
+  it('does not fall back to legacy host APIs for an unknown identity authority', async () => {
+    const { api, calls } = nativeApi(null)
+    api.getOrgIdentity = async () => { calls.push('identity'); return JSON.parse('{"authority":"unknown"}') }
+    expect((await ensureRoxRuntimeDefault(api)).status).toBe('failed')
+    expect(calls).toEqual(['identity'])
+  })
+  it('does not read host accounts when a present identity endpoint returns null', async () => {
+    const { api, calls } = nativeApi(null)
+    api.getOrgIdentity = async () => { calls.push('identity'); return JSON.parse('null') }
+    expect((await ensureRoxRuntimeDefault(api)).status).toBe('failed')
+    expect(calls).toEqual(['identity'])
+  })
+  it('retains the legacy setup behavior for a confirmed local identity', async () => {
+    const { api, calls } = fakeApi([])
+    api.getOrgIdentity = async () => ({ authority: 'local' })
+    api.getStartupRuntimeSummary = async () => { throw Error('local branch must use legacy flow') }
+    expect(await ensureRoxRuntimeDefault(api)).toEqual({ status: 'created', slug: 'omp' })
+    expect(calls.setup).toEqual([{ slug: 'omp', name: 'Rox', providerType: 'omp' }])
+    expect(calls.setDefault).toEqual(['omp'])
   })
 })

@@ -1,3 +1,7 @@
+import type { NativeAuthority } from '../authority/native-authority.ts'
+import type { NativeJournal } from '../authority/native-journal.ts'
+import type { PendingCommandsStore } from '../command-gateway'
+import type { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import type { PlatformServices } from '../runtime/platform'
 import type { ISessionManager } from './session-manager-interface'
 import type { IOAuthFlowStore } from './oauth-flow-store-interface'
@@ -67,6 +71,11 @@ export interface HandlerDeps<
   messagingRegistry?: IMessagingGatewayRegistry
   /** Optional because standalone/headless hosts do not compose a managed OpenClaw runtime. */
   openClawSecurity?: OpenClawSecurityService
-  /** RX-DOC-0032 phase 0: restart-safe pending-command store. */
-  commandGateway?: import('../command-gateway').PendingCommandsStore
+  commandGateway?: PendingCommandsStore
+  /** Server-composed native capability boundary and durable canonical-file data plane. */
+  nativeData?: {
+    authority: NativeAuthority
+    journal: NativeJournal
+    sync: CollaborationSyncService
+  }
 }

@@ -52,9 +52,10 @@ import {
   persistPersonalTaskStore,
   personalTasksLoadStatus,
   personalTasksSyncState,
+  personalTasksSyncConflicts,
+  resolvePersonalTaskConflict,
   subscribePersonalTasks,
 } from '@/lib/personal-tasks'
-import { useTaskReminders } from '@/lib/task-reminders'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import {
@@ -192,10 +193,6 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const pending = timers.current
     return () => { for (const timer of pending.values()) window.clearTimeout(timer) }
   }, [])
-  const onReminder = useCallback((task: PersonalTask) => {
-    toast(t('tasks.reminder.toast', { title: task.title }))
-  }, [t])
-  useTaskReminders(onReminder)
 
   const persist = useCallback((next: PersonalTaskStore) => {
     setStore(next)
@@ -348,7 +345,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
     return t(`tasks.projection.${d.list}`)
   })()
 
-  const createFromEntry = useCallback((parsed: ParsedTaskEntry, opts: { notes?: string; context?: SectionContext; afterId?: string; open?: boolean } = {}) => {
+  const createFromEntry = useCallback((parsed: ParsedTaskEntry, opts: { notes?: string; context?: SectionContext; afterId?: string; open?: boolean; projectId?: string | null; areaId?: string | null; checklistItems?: string[] } = {}) => {
     const mention = parseAgentMention(parsed.title)
     if (!mention.title) return null
     const d = viewDefaults()
@@ -359,13 +356,15 @@ export default function TasksPage(props: TasksPageProps = {}) {
         title: mention.title,
         notes: opts.notes ?? '',
         list: d.list,
-        projectId: ctx.projectId ?? d.projectId,
-        areaId: ctx.areaId ?? d.areaId,
+        projectId: opts.projectId !== undefined ? opts.projectId ?? undefined : ctx.projectId ?? d.projectId,
+        areaId: opts.areaId !== undefined ? opts.areaId ?? undefined : ctx.areaId ?? d.areaId,
         headingId: ctx.headingId ?? undefined,
         tags: [...new Set([...(d.tag ? [d.tag] : []), ...parsed.tags])],
-        recurrence: parsed.recurrence,
+        recurrence: parsed.recurrence ? { ...parsed.recurrence, timeZone: parsed.recurrence.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone } : undefined,
         reminderAt: parsed.reminderAt,
+        reminderTimeZone: parsed.reminderAt != null ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined,
       })
+      for (const title of opts.checklistItems ?? []) current.addChecklistItem(task.id, title)
       let when: TaskWhen | undefined = d.when
       if (ctx.date != null) when = { kind: 'date', at: ctx.date }
       if (ctx.evening) when = { kind: 'evening' }
@@ -386,7 +385,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [delegate, mutate, selectTask, viewDefaults])
 
   const onQuickEntry = (result: QuickEntryResult) => {
-    const created = createFromEntry(result.parsed, { notes: result.notes, open: true })
+    const created = createFromEntry(result.parsed, { notes: result.notes, open: result.open, projectId: result.projectId, areaId: result.areaId, checklistItems: result.checklistItems })
     setQuickEntry(null)
     if (created && result.open) window.setTimeout(() => titleRef.current?.focus(), 30)
   }
@@ -1262,6 +1261,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
     else if (link.kind === 'meeting') navigate(routes.view.meetings(link.id))
     else if (link.kind === 'feed') navigate(routes.view.feed(link.id))
     else if (link.kind === 'mail') navigate(routes.view.inbox(link.id))
+    else if (link.kind === 'note') navigate(routes.view.notes(link.id))
   }
 
   const onExport = () => {
@@ -1353,6 +1353,18 @@ export default function TasksPage(props: TasksPageProps = {}) {
           {t('tasks.quarantineBanner')}
         </div>
       ) : null}
+      {personalTasksSyncConflicts().length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 border-b border-warning/30 bg-warning/10 px-3 py-2 text-[12px]" role="alert" data-testid="tasks-sync-conflicts">
+          <span>{t('tasks.sync.conflict')}</span>
+          {personalTasksSyncConflicts().map((conflict) => (
+            <span key={conflict.id} className="inline-flex items-center gap-1">
+              <span className="max-w-40 truncate">{conflict.current?.task.title ?? store.get(conflict.id)?.title ?? conflict.id}</span>
+              <Button variant="secondary" onClick={() => resolvePersonalTaskConflict(conflict.id, 'local')}>{t('tasks.sync.keepLocal')}</Button>
+              <Button variant="ghost" onClick={() => resolvePersonalTaskConflict(conflict.id, 'server')}>{t('tasks.sync.useServer')}</Button>
+            </span>
+          ))}
+        </div>
+      ) : null}
       <ModeScreenLayout
         testId="tasks-page"
         navigator={navigator}
@@ -1387,6 +1399,10 @@ export default function TasksPage(props: TasksPageProps = {}) {
           now={now}
           initialText={quickEntry.initial}
           destinationLabel={destinationLabel}
+          projects={personalProjects}
+          areas={areas}
+          initialProjectId={viewDefaults().projectId}
+          initialAreaId={viewDefaults().areaId}
           onClose={() => { setQuickEntry(null); listRef.current?.focus() }}
           onSubmit={onQuickEntry}
         />

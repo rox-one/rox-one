@@ -6,10 +6,12 @@ import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
 import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import matter from 'gray-matter'
 import yaml from 'js-yaml'
-import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteDocument, type NoteIndexHealth, type NoteLink, type NoteRenameImpact, type NoteSummary } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteDocument, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary } from '@craft-agent/shared/protocol'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
+import type { NativePrincipal } from '../../authority/native-authority.ts'
+import type { JournalEntitySnapshot, JournalReceipt } from '../../authority/native-journal.ts'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
 import {
   contentHash,
@@ -53,6 +55,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.SAVE,
   RPC_CHANNELS.notes.CREATE,
   RPC_CHANNELS.notes.RENAME,
+  RPC_CHANNELS.notes.MOVE,
   RPC_CHANNELS.notes.DELETE,
   RPC_CHANNELS.notes.RENAME_FOLDER,
   RPC_CHANNELS.notes.DELETE_FOLDER,
@@ -970,30 +973,231 @@ async function deleteFolder(notesRoot: string, folder: string): Promise<{ delete
   await rm(dir, { recursive: true, force: true })
   return { deletedNotes }
 }
+type NativeNoteOperation = NoteMutationOptions
+
+type NativeNotesContext = {
+  principal: NativePrincipal
+  workspaceId: string
+  notesRoot: string
+  authorizationFences: Array<{ action: 'read' | 'write' | 'delete'; fence: string }>
+}
+
+function nativeNotesContext(
+  deps: HandlerDeps,
+  ctx: { workspaceId: string | null; principal?: NativePrincipal },
+  workspaceId: string,
+  actions: 'read' | 'write' | 'delete' | readonly ('read' | 'write' | 'delete')[],
+): NativeNotesContext {
+  if (!ctx.principal || !ctx.workspaceId || ctx.workspaceId !== workspaceId) {
+    throw new Error('notes workspace does not match authenticated client')
+  }
+  const native = deps.nativeData
+  if (!native) throw new Error('native Notes dependencies are unavailable')
+  const requiredActions: Array<'read' | 'write' | 'delete'> = [...new Set<'read' | 'write' | 'delete'>(['read', ...(Array.isArray(actions) ? actions : [actions])])]
+  const authorizationFences: NativeNotesContext['authorizationFences'] = []
+  for (const action of requiredActions) {
+    if (!native.authority.authorize(ctx.principal, workspaceId, action)) {
+      throw new Error(`native notes ${action} is unauthorized`)
+    }
+    const fence = native.authority.permissionFence(ctx.principal, workspaceId, action)
+    if (!fence) throw new Error(`native notes ${action} is unauthorized`)
+    authorizationFences.push({ action, fence })
+  }
+  const workspace = native.authority.resolveWorkspace(workspaceId)
+  if (!workspace) throw new Error('registered notes workspace root is unavailable')
+  assertNativeNotesFences(deps, { principal: ctx.principal, workspaceId, notesRoot: '', authorizationFences })
+  return { principal: ctx.principal, workspaceId, notesRoot: join(workspace.nativeRoot, NOTES_DIR), authorizationFences }
+}
+
+function assertNativeNotesFences(deps: HandlerDeps, context: NativeNotesContext): void {
+  const authority = deps.nativeData!.authority
+  for (const { action, fence } of context.authorizationFences) {
+    if (authority.permissionFence(context.principal, context.workspaceId, action) !== fence ||
+      !authority.authorize(context.principal, context.workspaceId, action)) {
+      throw new Error(`native notes ${action} permission changed during operation`)
+    }
+  }
+}
+
+function nativeOperation(operation: NativeNoteOperation | undefined): NativeNoteOperation {
+  if (!operation || !operation.operationId || operation.schemaVersion !== 1 ||
+    (operation.expectedRevision !== null && (!Number.isSafeInteger(operation.expectedRevision) || operation.expectedRevision < 1))) {
+    throw new Error('native notes operation metadata is required')
+  }
+  return operation
+}
+
+async function nativeNoteEntities(deps: HandlerDeps, context: NativeNotesContext): Promise<JournalEntitySnapshot[]> {
+  const native = deps.nativeData!
+  const entities = new Map<string, JournalEntitySnapshot>()
+  let afterSequence = 0
+  while (true) {
+    assertNativeNotesFences(deps, context)
+    const page = native.sync.pull(context.principal, context.workspaceId, afterSequence, 100)
+    assertNativeNotesFences(deps, context)
+    for (const entity of page.entities) {
+      if (!entity.deleted && entity.kind === 'notes') entities.set(entity.nativeId, entity)
+    }
+    if (!page.hasMore || page.nextSequence <= afterSequence) break
+    afterSequence = page.nextSequence
+  }
+  return [...entities.values()]
+}
+
+async function nativeNoteDocument(
+  deps: HandlerDeps,
+  context: NativeNotesContext,
+  entity: JournalEntitySnapshot,
+  file: { path: string; content: string },
+  allEntities: readonly JournalEntitySnapshot[],
+): Promise<NoteDocument & { nativeRevision: number }> {
+  const notesRoot = context.notesRoot
+  assertNativeNotesFences(deps, context)
+  const relativePath = file.path.slice(`${NOTES_DIR}/`.length)
+  const id = noteIdFromRelativePath(relativePath)
+  const filePath = notePathFromId(notesRoot, id)
+  const parsed = parseNoteContent(file.content)
+  const info = await stat(filePath)
+  assertNativeNotesFences(deps, context)
+  const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
+    ? parsed.properties.title.trim()
+    : titleFromId(id)
+  const summary: NoteSummary = {
+    id,
+    title,
+    path: filePath,
+    relativePath,
+    tags: parsed.tags,
+    properties: parsed.properties,
+    links: parsed.links,
+    assetRefs: parsed.assetRefs,
+    updatedAt: info.mtimeMs,
+    createdAt: info.birthtimeMs,
+    size: Buffer.byteLength(file.content, 'utf8'),
+  }
+  const backlinks = allEntities.flatMap(candidate => candidate.files.flatMap(candidateFile => {
+    if (!candidateFile.path.startsWith(`${NOTES_DIR}/`) || candidateFile.path === file.path || !candidateFile.path.endsWith('.md')) return []
+    const candidateId = noteIdFromRelativePath(candidateFile.path.slice(`${NOTES_DIR}/`.length))
+    const candidateContent = parseNoteContent(candidateFile.content)
+    return candidateContent.links.filter(link => noteMatchesTarget({ ...summary, id, title }, link.target)).map(link => ({
+      noteId: candidateId,
+      title: typeof candidateContent.properties.title === 'string' ? candidateContent.properties.title : titleFromId(candidateId),
+      path: join(notesRoot, candidateFile.path.slice(`${NOTES_DIR}/`.length)),
+      line: link.line,
+      preview: (candidateFile.content.split(/\r?\n/)[link.line - 1] ?? '').trim(),
+    }))
+  }))
+  return { ...summary, content: file.content, backlinks, nativeRevision: entity.revision, nativeId: entity.nativeId }
+}
+
+async function findNativeNote(
+  deps: HandlerDeps,
+  context: NativeNotesContext,
+  noteId: string,
+): Promise<{ entity: JournalEntitySnapshot; file: { path: string; content: string }; entities: JournalEntitySnapshot[] }> {
+  const safeId = assertSafeNoteId(noteId)
+  const relativePath = `${NOTES_DIR}/${safeId}.md`
+  const entities = await nativeNoteEntities(deps, context)
+  for (const entity of entities) {
+    const file = entity.files.find(item => item.path === relativePath)
+    if (file) return { entity, file, entities }
+  }
+  throw new Error('note not found in native journal')
+}
+
+async function commitNativeNote(
+  deps: HandlerDeps,
+  context: NativeNotesContext,
+  entityId: string,
+  operation: NativeNoteOperation | undefined,
+  changes: Array<{ path: string; content: string | null }>,
+): Promise<JournalReceipt> {
+  const metadata = nativeOperation(operation)
+  return deps.nativeData!.sync.commit(context.principal, context.workspaceId, {
+    kind: 'notes',
+    nativeId: entityId,
+    operationId: metadata.operationId,
+    expectedRevision: metadata.expectedRevision,
+    schemaVersion: metadata.schemaVersion,
+    changes,
+  })
+}
+
+function movedNoteId(title: string, targetFolder: string): string {
+  const normalizedFolder = targetFolder.trim().replace(/^\/+|\/+$/g, '')
+  const safeFolder = normalizedFolder ? assertSafeNoteId(normalizedFolder) : ''
+  const filename = stripMdExtension(safeNoteFilename(title))
+  return safeFolder ? `${safeFolder}/${filename}` : filename
+}
+
+async function moveNoteInFilesystem(notesRoot: string, noteId: string, targetFolder: string): Promise<NoteDocument> {
+  const sourcePath = notePathFromId(notesRoot, noteId)
+  const source = await readNote(notesRoot, noteId)
+  const nextId = movedNoteId(source.title, targetFolder)
+  const targetPath = notePathFromId(notesRoot, nextId)
+  if (sourcePath === targetPath) return source
+  if (existsSync(targetPath)) throw new Error(`A note named "${source.title}" already exists in the target folder`)
+  await mkdir(dirname(targetPath), { recursive: true })
+  await rename(sourcePath, targetPath)
+  return readNote(notesRoot, nextId)
+}
 
 export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): void {
   const changed = (payload: NoteChangedPayload, target: { to: 'workspace'; workspaceId: string } | { to: 'client'; clientId: string } = { to: 'workspace', workspaceId: payload.workspaceId }) => {
     pushTyped(server, RPC_CHANNELS.notes.CHANGED, target, payload)
   }
 
-  server.handle(RPC_CHANNELS.notes.LIST, async (_ctx, workspaceId: string) => {
+  server.handle(RPC_CHANNELS.notes.LIST, async (ctx, workspaceId: string) => {
     const listed = rpcNotesListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'read')
+      const entities = await nativeNoteEntities(deps, context)
+      const documents = await Promise.all(entities.flatMap(entity =>
+        entity.files.filter(file => file.path.startsWith(`${NOTES_DIR}/`) && file.path.endsWith('.md'))
+          .map(file => nativeNoteDocument(deps, context, entity, file, entities))))
+      return documents.sort((a, b) => b.updatedAt - a.updatedAt || a.title.localeCompare(b.title))
+    }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureDailyNotes(notesRoot, sessionsFromDeps(deps, workspaceId))
     refreshVaultIndex(notesRoot)
     return listNotes(notesRoot)
-  })
+  }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.notes.READ, async (_ctx, workspaceId: string, noteId: string) => {
+  server.handle(RPC_CHANNELS.notes.READ, async (ctx, workspaceId: string, noteId: string) => {
     const read = rpcNotesReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) throw new Error('note read is not live')
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'read')
+      const found = await findNativeNote(deps, context, noteId)
+      return nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
+    }
     return readNote(getWorkspaceNotesRoot(workspaceId), noteId)
-  })
+  }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.notes.SAVE, async (_ctx, workspaceId: string, noteId: string, content: string, expectedRevision?: string) => {
+  server.handle(RPC_CHANNELS.notes.SAVE, async (
+    ctx,
+    workspaceId: string,
+    noteId: string,
+    content: string,
+    expectedRevision?: string,
+    operation?: NativeNoteOperation,
+  ) => {
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: noteId })
     if (!isClaimableLive(act)) throw new Error('note save is not live')
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
+      const found = await findNativeNote(deps, context, noteId)
+      if (found.entity.files.length !== 1) throw new Error('native Notes save requires one canonical Markdown file')
+      await commitNativeNote(deps, context, found.entity.nativeId, operation, [{
+        path: found.file.path,
+        content,
+      }])
+      const updated = await findNativeNote(deps, context, noteId)
+      const note = await nativeNoteDocument(deps, context, updated.entity, updated.file, updated.entities)
+      changed({ workspaceId, reason: 'save', noteId: note.id })
+      return note
+    }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     let previousLinkCount = 0
     try {
@@ -1005,40 +1209,105 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const note = await saveNote(notesRoot, noteId, content, expectedRevision)
     refreshVaultIndex(notesRoot)
     const nextLinkCount = note.links?.length ?? 0
-    if (nextLinkCount > previousLinkCount) {
-      awardXpSafe('note_linked')
-    }
+    if (nextLinkCount > previousLinkCount) awardXpSafe('note_linked')
     changed({ workspaceId, reason: 'save', noteId: note.id })
     return note
-  })
+  }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.notes.CREATE, async (_ctx, workspaceId: string, title: string, folder?: string) => {
+  server.handle(RPC_CHANNELS.notes.CREATE, async (ctx, workspaceId: string, title: string, folder?: string, operation?: NativeNoteOperation) => {
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: title || 'untitled' })
     if (!isClaimableLive(act)) throw new Error('note create is not live')
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
+      const safeFolder = folder ? assertSafeNoteId(folder) : ''
+      const filename = safeNoteFilename(title || 'Untitled')
+      const relativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
+      const path = `${NOTES_DIR}/${relativeId}.md`
+      const metadata = nativeOperation(operation)
+      if (metadata.expectedRevision !== null) throw new Error('native note create requires expectedRevision:null')
+      const initialContent = buildInitialNoteContent(title || 'Untitled')
+      await commitNativeNote(deps, context, relativeId, metadata, [{ path, content: initialContent }])
+      const created = await findNativeNote(deps, context, relativeId)
+      const note = await nativeNoteDocument(deps, context, created.entity, created.file, created.entities)
+      changed({ workspaceId, reason: 'create', noteId: note.id })
+      return note
+    }
     const note = await createNote(getWorkspaceNotesRoot(workspaceId), title, folder)
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'create', noteId: note.id })
     return note
-  })
+  }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.notes.RENAME, async (_ctx, workspaceId: string, noteId: string, nextTitle: string) => {
+  server.handle(RPC_CHANNELS.notes.RENAME, async (ctx, workspaceId: string, noteId: string, nextTitle: string, operation?: NativeNoteOperation) => {
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, ['write', 'delete'])
+      const found = await findNativeNote(deps, context, noteId)
+      if (found.entity.files.length !== 1) throw new Error('native Notes rename requires one canonical Markdown file')
+      const parent = dirname(noteId)
+      const nextId = `${parent === '.' ? '' : `${parent}/`}${stripMdExtension(safeNoteFilename(nextTitle))}`
+      const nextPath = `${NOTES_DIR}/${nextId}.md`
+      const content = updateFrontmatterTitle(found.file.content, nextTitle)
+      await commitNativeNote(deps, context, found.entity.nativeId, operation, [
+        { path: found.file.path, content: null },
+        { path: nextPath, content },
+      ])
+      const renamed = await findNativeNote(deps, context, nextId)
+      const note = await nativeNoteDocument(deps, context, renamed.entity, renamed.file, renamed.entities)
+      changed({ workspaceId, reason: 'rename', noteId: note.id })
+      return { note, updatedNotes: [] }
+    }
     const result = await renameNote(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle)
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'rename', noteId: result.note.id })
     return result
-  })
+  }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.notes.DELETE, async (_ctx, workspaceId: string, noteId: string) => {
+  server.handle(RPC_CHANNELS.notes.MOVE, async (ctx, workspaceId: string, noteId: string, targetFolder: string, operation?: NativeNoteOperation) => {
+    if (typeof targetFolder !== 'string') throw new Error('notes.move: targetFolder is required')
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, ['write', 'delete'])
+      const found = await findNativeNote(deps, context, noteId)
+      if (found.entity.files.length !== 1) throw new Error('native Notes move requires one canonical Markdown file')
+      const current = await nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
+      const nextId = movedNoteId(current.title, targetFolder)
+      const nextPath = `${NOTES_DIR}/${nextId}.md`
+      if (found.file.path === nextPath) return { note: current }
+      await commitNativeNote(deps, context, found.entity.nativeId, operation, [
+        { path: found.file.path, content: null },
+        { path: nextPath, content: found.file.content },
+      ])
+      const moved = await findNativeNote(deps, context, nextId)
+      const note = await nativeNoteDocument(deps, context, moved.entity, moved.file, moved.entities)
+      changed({ workspaceId, reason: 'move', noteId: note.id })
+      return { note }
+    }
+    const note = await moveNoteInFilesystem(getWorkspaceNotesRoot(workspaceId), noteId, targetFolder)
+    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
+    changed({ workspaceId, reason: 'move', noteId: note.id })
+    return { note }
+  }, { nativeAction: 'write' })
+
+  server.handle(RPC_CHANNELS.notes.DELETE, async (ctx, workspaceId: string, noteId: string, operation?: NativeNoteOperation) => {
     if (!noteId) throw new Error('notes.delete: noteId is required')
     const act = rpcNotesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: noteId })
     if (!isClaimableLive(act)) throw new Error('note delete is not live')
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, ['write', 'delete'])
+      const found = await findNativeNote(deps, context, noteId)
+      await commitNativeNote(deps, context, found.entity.nativeId, operation, found.entity.files.map(file => ({
+        path: file.path,
+        content: null,
+      })))
+      changed({ workspaceId, reason: 'delete', noteId })
+      return true
+    }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureNotesDirs(notesRoot)
     await unlink(notePathFromId(notesRoot, noteId))
     refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'delete', noteId })
     return true
-  })
+  }, { nativeAction: 'delete' })
 
   server.handle(RPC_CHANNELS.notes.RENAME_FOLDER, async (_ctx, workspaceId: string, folder: string, nextName: string) => {
     const result = await renameFolder(getWorkspaceNotesRoot(workspaceId), folder, nextName)
@@ -1057,7 +1326,18 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return result
   })
 
-  server.handle(RPC_CHANNELS.notes.SEARCH, async (_ctx, workspaceId: string, query: string) => {
+  server.handle(RPC_CHANNELS.notes.SEARCH, async (ctx, workspaceId: string, query: string) => {
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'read')
+      const entities = await nativeNoteEntities(deps, context)
+      const docs = await Promise.all(entities.flatMap(entity =>
+        entity.files.filter(file => file.path.startsWith(`${NOTES_DIR}/`) && file.path.endsWith('.md'))
+          .map(file => nativeNoteDocument(deps, context, entity, file, entities))))
+      const q = query.trim().toLowerCase()
+      return docs.filter(note => !q || note.title.toLowerCase().includes(q) ||
+        note.tags.some(tag => tag.toLowerCase().includes(q)) || note.content.toLowerCase().includes(q))
+        .map(({ content: _content, backlinks: _backlinks, nativeRevision: _revision, ...summary }) => summary)
+    }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     const indexed = tryQueryFromVaultIndex(notesRoot, query)
     if (indexed) return indexed
@@ -1068,9 +1348,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
 
     const results = await Promise.allSettled(
       notes.map(async note => {
-        if (note.title.toLowerCase().includes(q) || note.tags.some(tag => tag.toLowerCase().includes(q))) {
-          return note
-        }
+        if (note.title.toLowerCase().includes(q) || note.tags.some(tag => tag.toLowerCase().includes(q))) return note
         const content = await readFile(join(notesRoot, note.relativePath), 'utf-8').catch(() => '')
         return content.toLowerCase().includes(q) ? note : null
       })
@@ -1079,11 +1357,17 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return results
       .filter((r): r is PromiseFulfilledResult<NoteSummary> => r.status === 'fulfilled' && r.value !== null)
       .map(r => r.value)
-  })
+  }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.notes.GET_BACKLINKS, async (_ctx, workspaceId: string, noteId: string) => {
+  server.handle(RPC_CHANNELS.notes.GET_BACKLINKS, async (ctx, workspaceId: string, noteId: string) => {
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'read')
+      const found = await findNativeNote(deps, context, noteId)
+      const note = await nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
+      return note.backlinks
+    }
     return getBacklinks(getWorkspaceNotesRoot(workspaceId), noteId)
-  })
+  }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.notes.GET_INSIGHTS, async (_ctx, workspaceId: string, noteId: string) => {
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
@@ -1166,13 +1450,30 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return result
   })
 
-  server.handle(RPC_CHANNELS.notes.UPDATE_PROPERTIES, async (_ctx, workspaceId: string, noteId: string, properties: Record<string, unknown>) => {
+  server.handle(RPC_CHANNELS.notes.UPDATE_PROPERTIES, async (
+    ctx,
+    workspaceId: string,
+    noteId: string,
+    properties: Record<string, unknown>,
+    operation?: NativeNoteOperation,
+  ) => {
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
+      const found = await findNativeNote(deps, context, noteId)
+      if (found.entity.files.length !== 1) throw new Error('native Notes properties require one canonical Markdown file')
+      const content = updateFrontmatterProperties(found.file.content, properties)
+      await commitNativeNote(deps, context, found.entity.nativeId, operation, [{ path: found.file.path, content }])
+      const updated = await findNativeNote(deps, context, noteId)
+      const note = await nativeNoteDocument(deps, context, updated.entity, updated.file, updated.entities)
+      changed({ workspaceId, reason: 'properties', noteId: note.id })
+      return note
+    }
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     const note = await updateNoteProperties(notesRoot, noteId, properties)
     refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'properties', noteId: note.id })
     return note
-  })
+  }, { nativeAction: 'write' })
 
   server.handle(RPC_CHANNELS.notes.WATCH, async (ctx, workspaceId: string) => {
     const clientId = ctx.clientId

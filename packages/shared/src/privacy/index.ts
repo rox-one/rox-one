@@ -17,6 +17,7 @@ export type {
   ExportReceipt,
   PrivacyDto,
   PrivacyState,
+  ProviderAccessConsent,
 } from './types.ts'
 export {
   aiIndexingAllowed,
@@ -42,6 +43,8 @@ export {
   requestDeletion,
   requestExport,
   savePrivacyState,
+  setProviderAccessConsent,
   setPurpose,
+  providerScopeAllowed,
   toPrivacyDto,
 } from './store.ts'

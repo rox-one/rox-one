@@ -140,6 +140,17 @@ describe('pages/storage', () => {
 
       expect(loadPageById(workspaceDir, config.id)?.config.slug).toBe('revenue-dashboard');
     });
+    it('does not infer a workspace identity from the local directory name', () => {
+      const page = createPage(workspaceDir, { name: 'Local only' });
+
+      expect(loadPage(workspaceDir, page.slug)?.workspaceId).toBeUndefined();
+      expect(loadPage(workspaceDir, page.slug, 'workspace-canonical-id')?.workspaceId)
+        .toBe('workspace-canonical-id');
+      expect(loadWorkspacePages(workspaceDir, 'workspace-canonical-id')[0]?.workspaceId)
+        .toBe('workspace-canonical-id');
+      expect(loadPageById(workspaceDir, page.id, 'workspace-canonical-id')?.workspaceId)
+        .toBe('workspace-canonical-id');
+    });
 
     it('generates unique slugs', () => {
       createPage(workspaceDir, { name: 'My Page' });

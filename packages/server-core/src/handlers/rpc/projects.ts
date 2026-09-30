@@ -2,10 +2,17 @@ import { mkdirSync } from 'fs'
 import { join } from 'path'
 import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import type { RequestContext } from '../../transport/types'
+import {
+  ProjectOkrConflictError,
+  loadProjectOkr,
+  saveProjectOkr,
+  type ProjectOkrDocument,
+} from '@craft-agent/shared/projects'
 import {
   isClaimableLive,
   rpcProjectsActResult,
@@ -22,6 +29,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.projects.LIST_ASSETS,
   RPC_CHANNELS.projects.UPLOAD_ASSET,
   RPC_CHANNELS.projects.DELETE_ASSET,
+  RPC_CHANNELS.projects.GET_OKR,
+  RPC_CHANNELS.projects.SAVE_OKR,
 ] as const
 
 export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -169,4 +178,56 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     deleteProjectAsset(workspace.rootPath, projectSlug, filename)
     await broadcastChanged(workspaceId, workspace.rootPath)
   })
+
+  // Project OKR data has the same workspace boundary as project metadata.
+  server.handle(RPC_CHANNELS.projects.GET_OKR, async (ctx, workspaceId: string, projectSlug: string) => {
+    const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
+    if (!projectSlug) throw new Error('projectSlug is required')
+    return loadProjectOkr(workspace.rootPath, projectSlug)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.projects.SAVE_OKR, async (
+    ctx,
+    workspaceId: string,
+    projectSlug: string,
+    expectedRevision: number,
+    document: Pick<ProjectOkrDocument, 'cycles'>,
+  ) => {
+    const workspace = requireCallerWorkspace(ctx, deps, workspaceId)
+    if (!projectSlug) throw new Error('projectSlug is required')
+    if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) {
+      throw new Error('expectedRevision must be a non-negative safe integer')
+    }
+    if (!document || !Array.isArray(document.cycles)) throw new Error('document.cycles is required')
+    try {
+      return saveProjectOkr(workspace.rootPath, projectSlug, expectedRevision, { cycles: document.cycles })
+    } catch (error) {
+      if (error instanceof ProjectOkrConflictError) {
+        return {
+          conflict: true as const,
+          expectedRevision: error.expectedRevision,
+          actualRevision: error.actualRevision,
+        }
+      }
+      throw error
+    }
+  }, { nativeAction: 'write' })
+}
+
+function requireCallerWorkspace(
+  ctx: RequestContext,
+  deps: HandlerDeps,
+  requestedWorkspaceId: string,
+) {
+  const callerWorkspaceId = ctx.workspaceId ?? (
+    ctx.webContentsId === null
+      ? undefined
+      : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+  )
+  if (!requestedWorkspaceId || callerWorkspaceId !== requestedWorkspaceId) {
+    throw new CodedError('AUTH_FAILED', 'Workspace access denied')
+  }
+  const workspace = getWorkspaceByNameOrId(requestedWorkspaceId)
+  if (!workspace) throw new CodedError('NOT_FOUND', `Workspace not found: ${requestedWorkspaceId}`)
+  return workspace
 }

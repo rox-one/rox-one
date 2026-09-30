@@ -10,6 +10,8 @@
 
 import { describe, it, expect, afterEach } from 'bun:test'
 import { join } from 'node:path'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import type { Subprocess } from 'bun'
 import WebSocket from 'ws'
 
@@ -28,14 +30,21 @@ interface SpawnedServer {
 async function spawnTestServer(extraEnv?: Record<string, string>): Promise<SpawnedServer> {
   const token = crypto.randomUUID() + crypto.randomUUID() // 72 chars, well above 16 minimum
   const { CLAUDECODE: _, ...parentEnv } = process.env
+  const configDir = mkdtempSync(join(tmpdir(), 'rox-server-smoke-'))
 
   const proc = Bun.spawn(['bun', 'run', SERVER_ENTRY], {
     env: {
       ...parentEnv,
       ...extraEnv,
+      ROX_CONFIG_DIR: configDir,
+      CRAFT_CONFIG_DIR: configDir,
+      ROX_SERVER_TOKEN: token,
       CRAFT_SERVER_TOKEN: token,
+      ROX_RPC_PORT: '0',
       CRAFT_RPC_PORT: '0',
+      ROX_RPC_HOST: '127.0.0.1',
       CRAFT_RPC_HOST: '127.0.0.1',
+      ROX_HEALTH_PORT: '0',
       CRAFT_HEALTH_PORT: '0', // random port
     },
     stdout: 'pipe',
@@ -43,9 +52,24 @@ async function spawnTestServer(extraEnv?: Record<string, string>): Promise<Spawn
   })
 
   return new Promise<SpawnedServer>((resolve, reject) => {
+    let diagnostics = ''
+    const redact = (text: string) => text.replaceAll(token, '[REDACTED]').replace(/(?:na_|ne_)[A-Za-z0-9_-]+/g, '[REDACTED]')
+    const stderrDone = (async () => {
+      const reader = proc.stderr!.getReader()
+      const decoder = new TextDecoder()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        diagnostics = (diagnostics + redact(decoder.decode(value, { stream: true }))).slice(-4000)
+      }
+    })()
     const timer = setTimeout(() => {
       proc.kill()
-      reject(new Error(`Server did not start within ${STARTUP_TIMEOUT}ms`))
+      void proc.exited.then(async (code) => {
+        await stderrDone
+        rmSync(configDir, { recursive: true, force: true })
+        reject(new Error(`Server did not start within ${STARTUP_TIMEOUT}ms (exit ${code}): ${diagnostics}`))
+      })
     }, STARTUP_TIMEOUT)
 
     let url = ''
@@ -68,6 +92,8 @@ async function spawnTestServer(extraEnv?: Record<string, string>): Promise<Spawn
             stop: async () => {
               proc.kill('SIGTERM')
               await proc.exited
+              await stderrDone
+              rmSync(configDir, { recursive: true, force: true })
             },
           })
           return
@@ -90,7 +116,10 @@ async function spawnTestServer(extraEnv?: Record<string, string>): Promise<Spawn
       }
       clearTimeout(timer)
       if (!url) {
-        reject(new Error('Server exited before printing CRAFT_SERVER_URL'))
+        const code = await proc.exited
+        await stderrDone
+        rmSync(configDir, { recursive: true, force: true })
+        reject(new Error(`Server exited before printing CRAFT_SERVER_URL (exit ${code}): ${diagnostics}`))
       }
     })()
   })

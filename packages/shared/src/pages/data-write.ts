@@ -154,7 +154,19 @@ const db = new Database(INPUT.dbPath);
 // lock to flip journal_mode, which contends immediately as SQLITE_BUSY without
 // a timeout set first. (Kept in lockstep with pages/data-store.ts.)
 db.exec('PRAGMA busy_timeout = 5000;');
-db.exec('PRAGMA journal_mode = WAL;');
+// SQLite can return BUSY immediately for the journal-mode transition even
+// with busy_timeout. Retry only this idempotent initialization within that
+// same timeout; patch execution itself is never blindly repeated.
+const walDeadline = Date.now() + 5000;
+for (;;) {
+  try {
+    db.exec('PRAGMA journal_mode = WAL;');
+    break;
+  } catch (error) {
+    if (!(error && typeof error === 'object' && 'code' in error && error.code === 'SQLITE_BUSY') || Date.now() >= walDeadline) throw error;
+    Bun.sleepSync(10);
+  }
+}
 db.exec(\`
   CREATE TABLE IF NOT EXISTS kv (
     key TEXT PRIMARY KEY,

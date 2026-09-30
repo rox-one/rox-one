@@ -164,13 +164,15 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const { navigate } = useNavigation()
   const sessionMap = useAtomValue(sessionMetaMapAtom)
   const [lessons, setLessons] = React.useState<Lesson[] | null>(null)
+  const [archivedLessons, setArchivedLessons] = React.useState<Array<{ id: string; lesson: Lesson }>>([])
   const [candidates, setCandidates] = React.useState<PromotionCandidate[]>([])
   const [filter, setFilter] = React.useState<MemoryFilter>({})
   const [sort, setSort] = React.useState<MemorySort>('usage')
   const [grouped, setGrouped] = React.useState(false)
   const [filesView, setFilesView] = React.useState(false)
-  const [selectedId, setSelectedId] = React.useState<string | null>(null)
+  const [archiveView, setArchiveView] = React.useState(false)
   const [checked, setChecked] = React.useState<ReadonlySet<string>>(new Set())
+  const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [editing, setEditing] = React.useState(false)
   const [draft, setDraft] = React.useState('')
   const [tagDraft, setTagDraft] = React.useState('')
@@ -189,6 +191,11 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
 
   const load = React.useCallback(() => {
     window.electronAPI.listMemoryLessons('both', workspaceId).then(setLessons).catch(() => setLessons([]))
+    window.electronAPI.listMemoryArchive('global', workspaceId).then((global) => {
+      window.electronAPI.listMemoryArchive('workspace', workspaceId).then((workspace) => setArchivedLessons([...global, ...workspace])).catch(() => setArchivedLessons(global))
+    }).catch(() => {
+      window.electronAPI.listMemoryArchive('workspace', workspaceId).then(setArchivedLessons).catch(() => setArchivedLessons([]))
+    })
     window.electronAPI.listPromotionCandidates().then(setCandidates).catch(() => setCandidates([]))
   }, [workspaceId])
   React.useEffect(() => {
@@ -217,7 +224,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       negative: all.filter((l) => l.negative).length,
       disabled: all.filter((l) => l.disabled).length,
       conflicts: all.filter((l) => l.conflicts?.length).length,
-      merged: all.filter((l) => l.mergedFrom?.length).length,
+      merged: all.filter((l) => l.mergedFrom?.length || l.mergedInto).length,
     } as Record<StatusFacet, number>,
   }), [all, inContext])
   const customCategories = [...counts.category.keys()].filter((c) => !BUILTIN.includes(c as LessonCategory)).sort()
@@ -235,9 +242,10 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
 
   const setFacet = (key: FacetKey, value: string | null) => {
     setFilesView(false)
+    setArchiveView(false)
     setFilter((prev) => ({ ...prev, [key]: prev[key] === value ? null : value }))
   }
-  const clearFacets = () => { setFilesView(false); setFilter((prev) => ({ query: prev.query })) }
+  const clearFacets = () => { setFilesView(false); setArchiveView(false); setFilter((prev) => ({ query: prev.query })) }
   const activeFacets = (Object.keys(filter) as Array<keyof MemoryFilter>).filter((k) => k !== 'query' && filter[k] != null).length
 
   const wsFor = (lesson: Lesson) => (lesson.scope === 'global' ? null : workspaceId ?? null)
@@ -248,6 +256,19 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       if (okKey) toast.success(t(okKey))
     } catch (error) {
       toast.error(t('memory.lessonUpdateFailed'), { description: error instanceof Error ? error.message : String(error) })
+    } finally {
+      setBusy(false)
+      load()
+    }
+  }
+  const restoreArchived = async (entry: { id: string; lesson: Lesson }) => {
+    setBusy(true)
+    try {
+      const restored = await window.electronAPI.restoreMemoryArchive(wsFor(entry.lesson), entry.lesson.scope, entry.id)
+      if (!restored) throw new Error('Archived lesson was not restored')
+      toast.success(t('memory.screen.archiveRestore'))
+    } catch {
+      toast.error(t('memory.screen.archiveRestoreFailed'))
     } finally {
       setBusy(false)
       load()
@@ -317,16 +338,49 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     const rule = mergeText.trim()
     if (!keeper || !rule) return
     const others = ids.filter((id) => id !== mergeKeeper).map((id) => byId.get(id)).filter((l): l is Lesson => Boolean(l))
+    if (others.some((lesson) => lesson.scope !== keeper.scope || lesson.mergeHistory || lesson.mergedInto)) return
     setConfirm(null)
     void run(async () => {
-      // Keeper first (so nothing is lost if a later delete fails), then the rest.
+      // Keep source rows disabled instead of deleting them; the keeper stores
+      // their complete pre-merge records for a later restore.
       await patch(keeper, mergePatch(keeper, others, rule))
       for (const other of others) {
-        if (other.rule.trim().toLowerCase() === rule.toLowerCase()) continue
-        await window.electronAPI.deleteMemoryLesson(wsFor(other), other.scope, other.rule)
+        await patch(other, { disabled: true, mergedInto: lessonId(keeper) })
       }
       setChecked(new Set())
       setSelectedId(lessonId({ scope: keeper.scope, rule }))
+    }, 'memory.screen.toast.merged')
+  }
+
+  const restoreMerge = (lesson: Lesson) => {
+    const originals = lesson.mergeHistory?.version === 1 ? lesson.mergeHistory.lessons : []
+    if (originals.length === 0) return
+    void run(async () => {
+      const restorePatch = (original: Lesson): Partial<Omit<Lesson, 'scope'>> => {
+        const { scope: originalScope, ...fields } = original
+        if (originalScope !== lesson.scope) throw new Error('Merged lessons do not share a scope')
+        return {
+          ...fields,
+          usageCount: original.usageCount,
+          lastUsedAt: original.lastUsedAt,
+          usedAt: original.usedAt,
+          tags: original.tags,
+          pinned: original.pinned,
+          negative: original.negative,
+          mergedFrom: original.mergedFrom,
+          mergedInto: undefined,
+          mergeHistory: undefined,
+          editedAt: original.editedAt,
+        }
+      }
+      for (const original of originals.slice(1)) {
+        const current = byId.get(lessonId(original))
+        if (!current) throw new Error(`Merged source is missing: ${original.rule}`)
+        await patch(current, { ...restorePatch(original), disabled: original.disabled })
+      }
+      const keeperOriginal = originals[0]!
+      await patch(lesson, restorePatch(keeperOriginal))
+      setSelectedId(lessonId(keeperOriginal))
     }, 'memory.screen.toast.merged')
   }
 
@@ -372,12 +426,12 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const categoryLabel = (c: string) => (BUILTIN.includes(c as LessonCategory) ? t(`memory.category.${c}`) : c)
   const facets = (
     <nav className="flex w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2" aria-label={t('memory.screen.facets')} data-testid="memory-facets">
-      <FacetItem label={t('memory.screen.all')} count={all.length} active={!activeFacets && !filesView} onClick={clearFacets} testId="memory-facet-all" />
+      <FacetItem label={t('memory.screen.all')} count={all.length} active={!activeFacets && !filesView && !archiveView} onClick={clearFacets} testId="memory-facet-all" />
       <FacetTitle>{t('memory.screen.scope')}</FacetTitle>
       <FacetItem label={t('memory.screen.scopeGlobal')} count={counts.scope.get('global') ?? 0} active={filter.scope === 'global'} onClick={() => setFacet('scope', 'global')} testId="memory-facet-global" />
       <FacetItem label={t('memory.screen.scopeWorkspace')} count={counts.scope.get('workspace') ?? 0} active={filter.scope === 'workspace'} onClick={() => setFacet('scope', 'workspace')} testId="memory-facet-workspace" />
-      <FacetItem label={t('memory.screen.files')} active={filesView} onClick={() => setFilesView((v) => !v)} testId="memory-facet-files" />
-      <FacetTitle>{t('memory.screen.status')}</FacetTitle>
+      <FacetItem label={t('memory.screen.files')} active={filesView} onClick={() => { setArchiveView(false); setFilesView((v) => !v) }} testId="memory-facet-files" />
+      <FacetItem label={t('memory.screen.archiveTitle')} count={archivedLessons.length} active={archiveView} onClick={() => { setFilesView(false); setArchiveView((v) => !v) }} testId="memory-facet-archive" />
       {STATUSES.map((id) => (
         <FacetItem
           key={id}
@@ -639,6 +693,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           <Btn onClick={() => void run(() => patch(selected, { pinned: !selected.pinned }))} testId="memory-pin">{selected.pinned ? t('memory.screen.unpin') : t('memory.screen.pin')}</Btn>
           <Btn onClick={() => void run(() => patch(selected, { disabled: !selected.disabled }))} testId="memory-disable">{selected.disabled ? t('memory.screen.enable') : t('memory.screen.disable')}</Btn>
           {selected.scope === 'workspace' ? <Btn onClick={() => void promote([id])} testId="memory-promote">{t('memory.screen.promote')}</Btn> : null}
+          {selected.mergeHistory?.lessons.length ? <Btn disabled={busy} onClick={() => restoreMerge(selected)} testId="memory-merge-restore">{t('memory.screen.undoMerge')}</Btn> : null}
           <span className="flex-1" />
           <Btn danger onClick={() => setConfirm({ kind: 'delete', ids: [id] })} testId="memory-delete">{t('memory.screen.delete')}</Btn>
         </div>
@@ -813,6 +868,25 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       {filesView ? (
         <section className="min-w-0 flex-1 overflow-y-auto px-2 py-2" data-testid="memory-files">
           <MemoryListPanel workspaceId={workspaceId} variant="files" />
+        </section>
+      ) : archiveView ? (
+        <section className="min-w-0 flex-1 overflow-y-auto px-4 py-3" data-testid="memory-archive">
+          <h2 className="mb-3 text-[14px] font-semibold">{t('memory.screen.archiveTitle')}</h2>
+          {archivedLessons.length === 0 ? (
+            <p className="text-text-muted" data-testid="memory-archive-empty">{t('memory.screen.archiveEmpty')}</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {archivedLessons.map((entry) => (
+                <li key={entry.id} data-testid="memory-archive-row" className="flex items-start gap-3 rounded-[8px] bg-foreground/[0.04] p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="whitespace-pre-wrap break-words">{entry.lesson.rule}</p>
+                    <p className="mt-1 text-[11px] text-text-muted">{t(entry.lesson.scope === 'global' ? 'memory.screen.scopeGlobal' : 'memory.screen.scopeWorkspace')} · {fmt(entry.lesson.ts)}</p>
+                  </div>
+                  <Btn disabled={busy} onClick={() => void restoreArchived(entry)}>{t('memory.screen.archiveRestore')}</Btn>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       ) : (
         <>

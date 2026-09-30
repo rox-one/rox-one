@@ -14,7 +14,7 @@ describe('ROX2-191 Cloud Runs are native, not Conation', () => {
     expect(page).toContain("pageId: 'cloudRuns'")
     expect(page).toContain("action: 'config-read'")
     expect(page).toContain("action: 'pref-write'")
-    expect(page).toContain('settingsPageActionResult')
+    expect(page).toContain('settingsPageActionAllowed')
     expect(page).not.toContain("action: 'spend'")
     expect(page).not.toContain('conation.dev')
     expect(page).not.toMatch(/<iframe\b/i)

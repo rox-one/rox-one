@@ -55,6 +55,88 @@ export interface ProjectConfig {
   /** Per-project Kanban columns. Absent → the board uses the default 3 columns. */
   kanbanColumns?: KanbanColumnDef[];
 }
+/**
+ * Project-scoped OKR data. Weights are raw nonnegative values; each objective
+ * and the objective collection are normalized independently for calculation.
+ */
+export type OkrCycleStatus = 'draft' | 'published' | 'archived';
+
+export interface OkrEvidence {
+  id: string;
+  label: string;
+  source?: string;
+  uri?: string;
+  observedAt?: string;
+}
+
+export type OkrMeasurement =
+  | {
+      kind: 'numeric';
+      direction: 'increase' | 'decrease';
+      baseline: number;
+      target: number;
+      current: number | null;
+      unit: string;
+      evidence?: OkrEvidence[];
+      source?: string;
+      measuredAt?: string;
+      freshness?: 'fresh' | 'stale' | 'unknown';
+      freshnessCheckedAt?: string;
+    }
+  | {
+      kind: 'binary';
+      achieved: boolean | null;
+      evidence: OkrEvidence[];
+      source?: string;
+      measuredAt?: string;
+      freshness?: 'fresh' | 'stale' | 'unknown';
+      freshnessCheckedAt?: string;
+    };
+
+export interface OkrKeyResult {
+  id: string;
+  title: string;
+  weight: number;
+  measurement: OkrMeasurement;
+  owner?: string;
+  status?: string;
+}
+
+export interface OkrObjective {
+  id: string;
+  title: string;
+  description?: string;
+  weight: number;
+  owner?: string;
+  keyResults: OkrKeyResult[];
+}
+
+export interface OkrCycle {
+  id: string;
+  projectId: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  timezone: string;
+  status: OkrCycleStatus;
+  revision: number;
+  objectives: OkrObjective[];
+  publishedAt?: string;
+  archivedAt?: string;
+}
+
+export interface ProjectOkrDocument {
+  projectId: string;
+  revision: number;
+  cycles: OkrCycle[];
+}
+
+/** A missing score is deliberately distinct from zero progress. */
+export interface OkrProgress {
+  knownContribution: number;
+  coverage: number;
+  score: number | null;
+}
 
 /**
  * Project asset (resolved at read time from the assets folder)

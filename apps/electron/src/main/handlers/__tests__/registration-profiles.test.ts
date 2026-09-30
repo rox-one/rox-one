@@ -4,7 +4,10 @@ import type { HandlerDeps } from '../handler-deps'
 
 const registeredChannels: string[] = []
 
+import { electronMockExports } from '../../__tests__/electron-mock-exports'
+
 mock.module('electron', () => ({
+  ...electronMockExports,
   ipcMain: {
     handle: () => {},
     on: () => {},
@@ -195,7 +198,16 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@craft-agent/server-core/handlers/rpc/messaging'),
   ])
 
+  const [meetings, personalTasks, feed] = await Promise.all([
+    import('@craft-agent/server-core/handlers/rpc/meetings'),
+    import('@craft-agent/server-core/handlers/rpc/personal-tasks'),
+    import('@craft-agent/server-core/handlers/rpc/feed'),
+  ])
+
   return new Set([
+    ...meetings.MEETING_HANDLED_CHANNELS,
+    ...personalTasks.PERSONAL_TASKS_HANDLED_CHANNELS,
+    ...feed.FEED_HANDLED_CHANNELS,
     ...auth.HANDLED_CHANNELS,
     ...automations.HANDLED_CHANNELS,
     ...browserPane.HANDLED_CHANNELS,

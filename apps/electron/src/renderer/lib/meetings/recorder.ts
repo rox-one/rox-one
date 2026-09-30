@@ -68,6 +68,7 @@ type Session = {
   heartbeat: ReturnType<typeof setInterval> | null
   chain: Promise<unknown>
   failedChunks: number
+  failureCode: string | null
 }
 
 let session: Session | null = null
@@ -120,6 +121,18 @@ function teardown(s: Session): void {
   s.stream.getTracks().forEach((track) => track.stop())
   void s.audioCtx?.close().catch(() => {})
 }
+async function stopMediaRecorder(recorder: MediaRecorder): Promise<void> {
+  if (recorder.state === 'inactive') return
+  await new Promise<void>((resolve) => {
+    recorder.addEventListener('stop', () => resolve(), { once: true })
+    try {
+      recorder.stop()
+    } catch {
+      resolve()
+    }
+  })
+}
+
 
 export type StartResult = { ok: true; meeting: LocalMeeting } | { ok: false; code: string }
 
@@ -128,13 +141,14 @@ export async function startRecording(input: { meetingId?: string; title: string;
   if (!api) return { ok: false, code: 'unavailable' }
   if (session || state.status !== 'idle') return { ok: false, code: 'already-recording' }
   set({ ...IDLE, status: 'starting', title: input.title })
+  let stream: MediaStream | null = null
+  let startedMeetingId: string | null = null
   try {
     const access = await api.micAccess(true)
     if (access === 'denied' || access === 'restricted') {
       set({ ...IDLE, error: 'mic-denied' })
       return { ok: false, code: 'mic-denied' }
     }
-    let stream: MediaStream
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true, channelCount: 1 },
@@ -149,22 +163,42 @@ export async function startRecording(input: { meetingId?: string; title: string;
     const started = await api.recStart({ meetingId: input.meetingId, title: input.title, workspaceId: input.workspaceId, mimeType: recorder.mimeType || mimeType || 'audio/webm' })
     if (!started.ok) {
       stream.getTracks().forEach((track) => track.stop())
+      stream = null
       set({ ...IDLE, error: started.code })
       return { ok: false, code: started.code }
     }
-    const s: Session = { api, meetingId: started.value.id, stream, recorder, audioCtx: null, meter: null, heartbeat: null, chain: Promise.resolve(), failedChunks: 0 }
+    startedMeetingId = started.value.id
+    const s: Session = { api, meetingId: started.value.id, stream, recorder, audioCtx: null, meter: null, heartbeat: null, chain: Promise.resolve(), failedChunks: 0, failureCode: null }
     session = s
+    stream = null
     recorder.ondataavailable = (event) => {
       if (!event.data || event.data.size === 0) return
       const blob = event.data
       s.chain = s.chain.then(async () => {
-        const ok = await api.recChunk(s.meetingId, new Uint8Array(await blob.arrayBuffer())).catch(() => false)
-        if (!ok) s.failedChunks += 1
+        try {
+          const bytes = new Uint8Array(await blob.arrayBuffer())
+          if (!await api.recChunk(s.meetingId, bytes)) {
+            s.failedChunks += 1
+            s.failureCode ??= 'recording-save-failed'
+          }
+        } catch {
+          s.failedChunks += 1
+          s.failureCode ??= 'recording-save-failed'
+        }
       })
     }
-    // A mic unplugged mid-meeting ends the track: keep what we have.
-    stream.getAudioTracks().forEach((track) => {
-      track.onended = () => { if (session === s && state.status !== 'stopping') void stopRecording() }
+    recorder.onerror = () => {
+      s.failureCode ??= 'mic-unavailable'
+      if (session === s && (state.status === 'recording' || state.status === 'paused')) void stopRecording()
+    }
+    // A mic unplugged mid-meeting ends the track: preserve the recording, but
+    // report that capture was interrupted rather than claiming a clean stop.
+    s.stream.getAudioTracks().forEach((track) => {
+      track.onended = () => {
+        if (session !== s || (state.status !== 'recording' && state.status !== 'paused')) return
+        s.failureCode ??= 'mic-unavailable'
+        void stopRecording()
+      }
     })
     recorder.start(1000)
     startMeter(s)
@@ -174,8 +208,17 @@ export async function startRecording(input: { meetingId?: string; title: string;
     set({ status: 'recording', meetingId: s.meetingId, title: started.value.title, accumulatedMs: 0, runningSince: Date.now(), error: null })
     return { ok: true, meeting: started.value }
   } catch (error) {
-    if (session) teardown(session)
-    session = null
+    const active = session
+    if (active) {
+      await stopMediaRecorder(active.recorder)
+      await active.chain
+      teardown(active)
+      session = null
+      if (startedMeetingId) {
+        await active.api.recStop(startedMeetingId, { durationMs: recordedMs() }).catch(() => {})
+      }
+    }
+    stream?.getTracks().forEach((track) => track.stop())
     set({ ...IDLE, error: error instanceof Error ? error.message : String(error) })
     return { ok: false, code: 'start-failed' }
   }
@@ -202,17 +245,22 @@ export async function stopRecording(): Promise<{ ok: true; meeting: LocalMeeting
   if (!s || (state.status !== 'recording' && state.status !== 'paused')) return { ok: false, code: 'not-recording' }
   const durationMs = recordedMs()
   set({ status: 'stopping', accumulatedMs: durationMs, runningSince: null, level: 0 })
-  await new Promise<void>((resolve) => {
-    if (s.recorder.state === 'inactive') return resolve()
-    s.recorder.addEventListener('stop', () => resolve(), { once: true })
-    try { s.recorder.stop() } catch { resolve() }
-  })
+  await stopMediaRecorder(s.recorder)
   await s.chain
+  if (s.failedChunks > 0) s.failureCode ??= 'recording-save-failed'
   teardown(s)
   session = null
   const result = await s.api.recStop(s.meetingId, { durationMs }).catch((error: unknown) => ({ ok: false as const, code: error instanceof Error ? error.message : 'stop-failed' }))
-  set({ ...IDLE, error: result.ok ? null : result.code })
-  return result.ok ? { ok: true, meeting: result.value } : { ok: false, code: result.code }
+  if (!result.ok) {
+    set({ ...IDLE, error: result.code })
+    return { ok: false, code: result.code }
+  }
+  if (s.failureCode) {
+    set({ ...IDLE, error: s.failureCode })
+    return { ok: false, code: s.failureCode }
+  }
+  set({ ...IDLE, error: null })
+  return { ok: true, meeting: result.value }
 }
 
 export function clearRecorderError(): void {

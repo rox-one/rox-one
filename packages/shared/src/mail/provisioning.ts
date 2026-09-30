@@ -106,7 +106,19 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
     const found = await admin.findAccount(handle, domainId)
     if (!found) {
       const password = generateMailboxPassword()
-      const accountId = await admin.createAccount({ name: handle, domainId, description: marker, password })
+      let accountId: string
+      try {
+        accountId = await admin.createAccount({ name: handle, domainId, description: marker, password })
+      } catch (error) {
+        const raced = await admin.findAccount(handle, domainId).catch(() => null)
+        if (!raced) throw error
+        if (raced.description === marker) {
+          chosen = { handle, accountId: raced.id, created: false }
+          break
+        }
+        log(`[mail] ${handle}@${input.domain} was claimed by another owner; trying the next handle`)
+        continue
+      }
       chosen = { handle, accountId, created: true }
       // Mint the device credential while we still hold the password, then drop it.
       const address = `${handle}@${input.domain}`
