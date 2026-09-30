@@ -2735,5 +2735,58 @@
     "requirements": 489,
     "dependencyEdges": 464,
     "fullTasksAccepted": 0
+  },
+  "rendererCallerFollowup": {
+    "schemaVersion": 1,
+    "id": "NATIVE-CALLER-INVENTORY-20260930",
+    "observedAt": "2026-09-30T14:38:42.131Z",
+    "inputSourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+    "publication": {
+      "status": "VERIFIED_CANDIDATE; SOURCE_PUSH_READBACK_PENDING",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "fullProductDelivery": "PENDING"
+    },
+    "sourceBinding": {
+      "scope": "3588 Electron-src/UI/core/shared-src/server-core-src Git-listed plus nonignored untracked paths; generated empty module excluded. Defined package gate scope, not entire repository.",
+      "sourceCount": 3588,
+      "manifestArtifact": "caller-session-union.after.json",
+      "manifestFileSha256": "706d82787a44bc9b31ee489aa0bd40cc6ba05721a557bb5fe5bad7caa81e2843",
+      "unchangedAcrossGates": true,
+      "selectedSources": {
+        "apps/electron/src/renderer/App.tsx": "8cc0ca99b5a0af8e3b5415645d4f3ea2c32ab40a7d2778c0b2959024f482e4ac",
+        "apps/electron/src/renderer/lib/caller-session-loading.ts": "26dd14d78519cb2e1063a41f274f6ca45528a622b2e567cd7c9911d0b9ec510c",
+        "apps/electron/src/renderer/lib/__tests__/caller-session-loading.test.ts": "9f18e6c4c336e1b7916fb487739b0ef8a8910e7a7780c5114f24c2a507624172"
+      }
+    },
+    "behavior": "Only confirmed local callers request legacy host session inventory or permission state. Native/unresolved callers clear stale host metadata/options/error and mark inventory readiness. Initial/refresh/session-created application and transport/reconciliation continuations reject late local responses after a native switch.",
+    "review": {
+      "independent": "PASSING_BOUNDED",
+      "initialRaceRetained": true,
+      "transportErrorCleared": true,
+      "permissionApplied": 0,
+      "focusedTests": "5 pass / 0 fail / 33 assertions"
+    },
+    "gates": {
+      "electronUiCore": "4203 pass / 0 fail / 20022 assertions / 609 files / 30.44s",
+      "electronTypeScript": "PASS",
+      "rendererBuild": "PASS; production Vite 78s",
+      "mainBuild": "PASS; runtime follow-up sources plus bounded scheduler metadata candidate at build time"
+    },
+    "desktop": {
+      "status": "PENDING",
+      "observation": "Task Electron rebuilt/restarted; native AX and PID-specific window capture recovered. Exact native creation/banner readback remains pending due foreground contention. An open workspace wizard was observed and no creation claim is made.",
+      "limits": [
+        "Bundle name is ambiguous across concurrent Electron apps; recompute System Events process index from raw PID array and validate exact PID before every action",
+        "Full-screen capture may show managed Computer Use curtain; task window capture is separate",
+        "No native session or R1 capability is established"
+      ]
+    },
+    "limits": [
+      "No session handler/nativeAction/grant/schema expansion",
+      "Actual Notes authorization denials remain unchanged",
+      "Subsequent scheduler terminal-history sources are excluded from this publication and have independent pending gates",
+      "Complete native creation/private receipt UI, all providers/platforms and eligible self-hosted CI remain pending"
+    ],
+    "fullTasksAccepted": 0
   }
 }

@@ -194,6 +194,14 @@ Root restarted the preserved sole native profile and recovered a supported Apple
 
 Draft PR #1316 publishes only an isolated, independently reviewed, unwired legacy Markdown inventory against the existing compound branch. It always denies native activation; concurrent overlays and complete migration are excluded. All 297 remaining rows, 109 September tasks, 489 requirements and 464 dependency edges remain in scope; no full task is accepted by this follow-up.
 
+## Caller inventory renderer follow-up (2026-09-30)
+
+Recovery producer owns only App, the caller-aware inventory/capability helper and its behavior test; independent reviewer owns fresh deferred-response probes; root owns documentation, rebuild, native UI and Git. The initial candidate passed its helper tests, but independent App-shaped probes reproduced an error returning after a native switch during the transport-state await. Preserve that red evidence. The final candidate fences initial/refresh/session-created application and transport/permission continuations. It preserves local results/errors and actual Notes denials without classifying any session handler or expanding grants.
+
+Final combined Electron src + entire UI/core: **4,203 pass / 0 fail**, 20,022 assertions across 609 files; Electron TypeScript and production renderer rebuild pass. Its 3,588-file package gate manifest is unchanged before/after and distinct from the broader 4,846-file runtime publication manifest. Independent actual helper probes pass: delayed transport error stays cleared, delayed permission result applies zero callbacks. Root binds only the three reviewed renderer paths and their scoped evidence; the subsequent scheduler recovery work is excluded.
+
+Native app restarted in the sole preserved task profile. Root recovered exact PID/index binding across multiple Electron apps, native AX and a task-window screenshot; an open workspace wizard was observed. Positive creation/banner/receipt readback remains pending because foreground ownership changed. No creation or complete desktop acceptance is inferred from source tests or startup. All 109 original tasks/489 requirements/464 edges are unchanged. Current facets are 25 implementation-in-progress and 23 verification-in-progress, zero full tasks accepted.
+
 ## Current native publication runtime recovery (2026-09-30)
 
 This additive technical recovery does not replace any of the existing 109 program tasks or mark their product acceptance complete. The published dependency is native PR #1293 head `c358bd0ce0670cf6baaf0b3579933956c7009eb5`; previously tested old WIP stack PR #1315 is historical portability evidence.
@@ -206,3 +214,5 @@ This additive technical recovery does not replace any of the existing 109 progra
 | Independently review, publish and read back exact hosted execution | Root / GatesReviewer; CloudRecovery delivers after approval | Frozen source manifest plus local logs | Runtime recovery receipt; draft stacked PR based on `feat/september-program-20260930` | Review before commit/push; exact remote head; Ubuntu/macOS job logs, actual checkout SHAs/parents, counts and preserved failure history |
 
 The scoped workflow preserves frozen install scripts, contents:read permission, package checks, actual builds and assertions. Existing ephemeral install token and bounded 4096MiB Node compiler/build heap settings repeat the already observed hosted remedies. No runner registration, account credential, network policy or original active-worktree change is part of this recovery.
+
+Real PR integration follow-up: merge exact published07907f909838253eb011e4e27a510c4ba5b5a9df into the reviewed8f302b20 recovery branch, preserve both native caller-session and runtime scopes in spec/plan, and keep all production runtime/fixture/helper bytes unchanged. Root owns the new native App/caller loader producer; CloudRecovery owns only this isolated integration, existing caller-session-loading test inclusion, final manifest and repeated affected gates. Independent review and exact hosted push/PR source evidence bind the new merge commit. No future source is adopted automatically.

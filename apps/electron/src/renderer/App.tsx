@@ -39,6 +39,7 @@ import { stripMarkdown } from './utils/text'
 import { coerceInputText } from './lib/input-text'
 import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recovery'
 import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
+import { readLocalSessionCapability, loadCallerSessionInventory } from './lib/caller-session-loading'
 import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
 import { extractWorkspaceSlugFromPath } from '@craft-agent/shared/utils/workspace-slug'
 import { DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
@@ -303,6 +304,8 @@ export default function App() {
   const [appState, setAppState] = useState<AppState>('loading')
   const [setupNeeds, setSetupNeeds] = useState<SetupNeeds | null>(null)
   const [callerAuthority, setCallerAuthority] = useState<'native' | 'local' | null>(null)
+  const callerAuthorityRef = useRef(callerAuthority)
+  callerAuthorityRef.current = callerAuthority
 
   // Per-session Jotai atom setters for isolated updates
   // NOTE: No sessionsAtom - we don't store a Session[] array anywhere to prevent memory leaks
@@ -490,8 +493,14 @@ export default function App() {
   }, [])
 
   const reconcilePermissionModeState = useCallback(async (sessionId: string) => {
+    if (callerAuthorityRef.current !== 'local') return
     try {
-      const state = await window.electronAPI.getSessionPermissionModeState(sessionId)
+      const result = await readLocalSessionCapability({
+        getAuthority: () => callerAuthorityRef.current,
+        request: () => window.electronAPI.getSessionPermissionModeState(sessionId),
+      })
+      if (result.kind === 'unavailable' || callerAuthorityRef.current !== 'local') return
+      const state = result.value
       if (!state) return
       applyPermissionModeState(sessionId, state, 'reconcile')
     } catch (error) {
@@ -530,8 +539,10 @@ export default function App() {
   }, [])
 
   const refreshSessionFromServer = useCallback(async (sessionId: string): Promise<'refreshed' | 'preserved_stale_messages' | 'failed'> => {
+    if (callerAuthorityRef.current !== 'local') return 'failed'
     try {
       const fresh = await window.electronAPI.getSessionMessages(sessionId)
+      if (callerAuthorityRef.current !== 'local') return 'failed'
       if (!fresh) return 'failed'
 
       const prevSession = store.get(sessionAtomFamily(sessionId))
@@ -551,11 +562,26 @@ export default function App() {
     }
   }, [clearStreamingState, replaceLoadedSession, syncSessionOptionsFromSession, reconcilePermissionModeState, store])
 
+  const markHostSessionsUnavailable = useCallback(() => {
+    initializeSessions([])
+    setSessionOptions(new Map())
+    setSessionLoadError(null)
+    setSessionsLoaded(true)
+  }, [initializeSessions])
+
+  const readCallerSessionInventory = useCallback(() => loadCallerSessionInventory({
+    getAuthority: () => callerAuthorityRef.current,
+    request: () => window.electronAPI.getSessions(),
+    markUnavailable: markHostSessionsUnavailable,
+  }), [markHostSessionsUnavailable])
+
   const loadSessionsFromServer = useCallback(async () => {
     setSessionLoadError(null)
 
     try {
-      const loadedSessions = await window.electronAPI.getSessions()
+      const inventory = await readCallerSessionInventory()
+      if (inventory.kind === 'unavailable' || callerAuthorityRef.current !== 'local') return
+      const loadedSessions = inventory.sessions
 
       // Initialize per-session atoms and metadata map
       // NOTE: No sessionsAtom used - sessions are only in per-session atoms
@@ -595,7 +621,15 @@ export default function App() {
       }
     } catch (err) {
       console.error('[App] Failed to load sessions:', err)
-      const transportState = await window.electronAPI.getTransportConnectionState().catch(() => null)
+      const transport = await readLocalSessionCapability({
+        getAuthority: () => callerAuthorityRef.current,
+        request: () => window.electronAPI.getTransportConnectionState().catch(() => null),
+      })
+      if (transport.kind === 'unavailable' || callerAuthorityRef.current !== 'local') {
+        markHostSessionsUnavailable()
+        return
+      }
+      const transportState = transport.value
 
       if (shouldTreatSessionLoadFailureAsTransportFallback(transportState)) {
         console.error('[App] Treating session load failure as transport fallback:', transportState)
@@ -607,7 +641,7 @@ export default function App() {
       setSessionLoadError(formatSessionLoadFailure(err))
       setSessionsLoaded(true)
     }
-  }, [initializeSessions, initialSessionId, reconcilePermissionModeState, windowWorkspaceId])
+  }, [initializeSessions, initialSessionId, reconcilePermissionModeState, windowWorkspaceId, readCallerSessionInventory, markHostSessionsUnavailable])
 
   const refreshSessionListMetadataFromServer = useCallback(async (options: SessionListRefreshOptions = {}): Promise<Map<string, SessionMeta> | null> => {
     const {
@@ -620,7 +654,9 @@ export default function App() {
     const transportState = await window.electronAPI.getTransportConnectionState().catch(() => null)
 
     try {
-      const sessions = await window.electronAPI.getSessions()
+      const inventory = await readCallerSessionInventory()
+      if (inventory.kind === 'unavailable' || callerAuthorityRef.current !== 'local') return null
+      const sessions = inventory.sessions
       const returnedIds = new Set(sessions.map(s => s.id))
       const missingIds = Array.from(beforeIds).filter(id => !returnedIds.has(id))
       const addedIds = sessions.map(s => s.id).filter(id => !beforeIds.has(id))
@@ -675,7 +711,7 @@ export default function App() {
       })
       return null
     }
-  }, [store, syncSessionOptionsFromSession, reconcilePermissionModeState, windowWorkspaceId, windowRemoteWorkspaceId])
+  }, [store, syncSessionOptionsFromSession, reconcilePermissionModeState, windowWorkspaceId, windowRemoteWorkspaceId, readCallerSessionInventory])
 
   // Stale session watchdog — catches stuck sessions that the reconnect protocol misses
   const { trackSessionActivity } = useStaleSessionRecovery({
@@ -869,8 +905,8 @@ export default function App() {
     window.electronAPI.getWorkspaces().then(setWorkspaces).catch(() => {})
     if (callerAuthority === 'native') {
       void refreshLlmConnections().catch(() => {})
-      // Session authorization is independent of Notes. The normal loader
-      // preserves a denied result as a visible error rather than inventing an empty list.
+      // Native grants do not authorize legacy host session inventory. The caller
+      // loader marks that capability unavailable without an unauthorized RPC.
       void loadSessionsFromServer()
       return
     }
@@ -1047,6 +1083,7 @@ export default function App() {
     }
 
     const cleanup = window.electronAPI.onSessionEvent((event: SessionEvent) => {
+      if (callerAuthorityRef.current !== 'local') return
       if (!('sessionId' in event)) return
 
       const sessionId = event.sessionId
@@ -1056,6 +1093,7 @@ export default function App() {
       if (event.type === 'session_created') {
         window.electronAPI.getSessionMessages(sessionId)
           .then((createdSession: Session | null) => {
+            if (callerAuthorityRef.current !== 'local') return
             if (createdSession) {
               const existingMeta = store.get(sessionMetaMapAtom).has(sessionId)
               if (existingMeta) {
@@ -1066,7 +1104,9 @@ export default function App() {
               syncSessionOptionsFromSession(createdSession)
               return
             }
-            return window.electronAPI.getSessions().then(initializeSessions)
+            return readCallerSessionInventory().then(inventory => {
+              if (inventory.kind === 'available' && callerAuthorityRef.current === 'local') initializeSessions(inventory.sessions)
+            })
           })
           .catch((error: unknown) => console.error('Failed to handle session_created event:', error))
         return
@@ -1231,6 +1271,7 @@ export default function App() {
     syncSessionOptionsFromSession,
     applyPermissionModeState,
     reconcilePermissionModeState,
+    readCallerSessionInventory,
   ])
 
   useEffect(() => {

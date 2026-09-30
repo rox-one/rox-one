@@ -79,7 +79,8 @@ jobs:
             packages/server-core/src/handlers/rpc/__tests__/browser-protected-cookie-key.test.ts \
             packages/server-core/src/handlers/rpc/__tests__/memory-native-acceptance.test.ts \
             packages/shared/src/agent/core/__tests__/budget-process-loss-acceptance.test.ts \
-            packages/shared/src/browser/__tests__/profile-import-key-custody-recovery.test.ts
+            packages/shared/src/browser/__tests__/profile-import-key-custody-recovery.test.ts \
+            apps/electron/src/renderer/lib/__tests__/caller-session-loading.test.ts
       - name: Build actual subprocess, WebUI and server
         env:
           NODE_OPTIONS: --max-old-space-size=4096

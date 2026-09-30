@@ -429,7 +429,8 @@
             "NATIVE-WORKSPACE-STARTUP-20260930",
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "NATIVE-CALLER-INVENTORY-20260930"
           ],
           "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
         },
@@ -447,7 +448,8 @@
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "NATIVE-CALLER-INVENTORY-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -529,7 +531,8 @@
             "NATIVE-WORKSPACE-STARTUP-20260930",
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "NATIVE-CALLER-INVENTORY-20260930"
           ],
           "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
         },
@@ -547,7 +550,8 @@
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
-            "NATIVE-NOTES-CREATE-20260930"
+            "NATIVE-NOTES-CREATE-20260930",
+            "NATIVE-CALLER-INVENTORY-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -9804,7 +9808,8 @@
             "TYPECHECK-ELECTRON-NATIVE-ENTRY-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+            "RUNTIME-ACCEPTANCE-WAVE-20260930",
+            "NATIVE-CALLER-INVENTORY-20260930"
           ],
           "summary": "Runtime follow-up has unchanged-source shared/server unions and independent reviews; renderer follow-up is a separate candidate, complete integration/platform acceptance pending."
         },
@@ -9837,7 +9842,8 @@
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "RUNTIME-ACCEPTANCE-WAVE-20260930"
+            "RUNTIME-ACCEPTANCE-WAVE-20260930",
+            "NATIVE-CALLER-INVENTORY-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10096,6 +10102,13 @@
         "NOT_RUN": 86
       },
       "fullAccepted": 0
+    },
+    "rendererCallerEvidence": "renderer-caller-20260930.json",
+    "rendererCallerCandidate": {
+      "status": "VERIFIED_CANDIDATE; SOURCE_PUSH_READBACK_PENDING",
+      "manifestFileSha256": "706d82787a44bc9b31ee489aa0bd40cc6ba05721a557bb5fe5bad7caa81e2843",
+      "sourceCount": 3588,
+      "fullTasksAccepted": 0
     }
   }
 }
