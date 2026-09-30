@@ -9,10 +9,10 @@
     "deliveredRevision": null,
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
-      "observedAt": "2026-09-30T16:18:32.688Z",
-      "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
-      "sourceCount": 4851,
+      "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "observedAt": "2026-09-30T17:27:29.813Z",
+      "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "sourceCount": 4870,
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
@@ -21,7 +21,7 @@
       "committedSourceMatchesTestedManifest": true
     },
     "publishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "latestPublishedSourceRevision": "0b15f5de8b36ffe1cc04907a84005d12ea952cbc",
+    "latestPublishedSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
     "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -4106,9 +4106,21 @@
     "observedAt": "2026-09-30T17:26:06.713Z",
     "inputSourceRevision": "bac082301aed341fe078cb5bd539c4ba074560eb",
     "publication": {
-      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "revision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "pullRequestHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "observedAt": "2026-09-30T17:27:29.813Z",
       "fullProductDelivery": "PENDING",
-      "fullOriginalTasksAccepted": 0
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceCount": 4870,
+      "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head."
     },
     "sourceBinding": {
       "sourceCount": 4870,
@@ -4119,7 +4131,8 @@
         "apps/electron/.impeccable/hook.cache.json"
       ],
       "beforeAfterIdentical": true,
-      "committedSourceMatchesTestedManifest": false
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75"
     },
     "lineage": {
       "roadmap": {
