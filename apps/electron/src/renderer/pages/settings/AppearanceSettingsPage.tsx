@@ -58,6 +58,7 @@ import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/proje
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
 import type { PresetTheme } from '@config/theme'
+import { readDesktopAppearance, saveDesktopAppearance } from '@/lib/desktop-appearance'
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
 import { ZenShellSettings } from './ZenShellSettings'
@@ -125,6 +126,8 @@ const getToolIconColumns = (t: (key: string) => string): ColumnDef<ToolIconMappi
 export default function AppearanceSettingsPage() {
   const { t, i18n } = useTranslation()
   const toolIconColumns = useMemo(() => getToolIconColumns(t), [t])
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
 
   const {
     mode,
@@ -342,14 +345,21 @@ export default function AppearanceSettingsPage() {
 
   // Default zoom level (persisted in config.json and applied to every app window)
   const [defaultZoomLevel, setDefaultZoomLevel] = useState(90)
+  const [desktopZoomAvailable, setDesktopZoomAvailable] = useState(false)
+  const [savingZoom, setSavingZoom] = useState(false)
   useEffect(() => {
-    window.electronAPI?.getDefaultZoomLevel?.().then(setDefaultZoomLevel)
+    return readDesktopAppearance(window.electronAPI, () => window.electronAPI.getDefaultZoomLevel(), level => {
+      setDefaultZoomLevel(level)
+      setDesktopZoomAvailable(true)
+    }, error => { setDesktopZoomAvailable(false); if (error) console.warn('Desktop zoom setting unavailable:', error) })
   }, [])
   const handleDefaultZoomLevelChange = useCallback(async (level: number) => {
-    if (!appearancePrefLive()) return
-    setDefaultZoomLevel(level)
-    await window.electronAPI?.setDefaultZoomLevel?.(level)
-  }, [])
+    if (!appearancePrefLive() || !desktopZoomAvailable || savingZoom) return
+    setSavingZoom(true)
+    await saveDesktopAppearance(window.electronAPI, () => window.electronAPI.setDefaultZoomLevel(level), () => setDefaultZoomLevel(level),
+      error => { setDesktopZoomAvailable(false); if (error) console.warn('Failed to save desktop zoom:', error) }, () => !mounted.current)
+    if (mounted.current) setSavingZoom(false)
+  }, [desktopZoomAvailable, savingZoom])
 
   // "Background session finished" chip toggle (renderer-only appearance pref,
   // persisted in localStorage via atomWithStorage — read by App.tsx + ChatPage).
@@ -357,14 +367,21 @@ export default function AppearanceSettingsPage() {
 
   // Rich tool descriptions toggle (persisted in config.json, read by SDK subprocess)
   const [richToolDescriptions, setRichToolDescriptions] = useState(true)
+  const [desktopToolDescriptionsAvailable, setDesktopToolDescriptionsAvailable] = useState(false)
+  const [savingToolDescriptions, setSavingToolDescriptions] = useState(false)
   useEffect(() => {
-    window.electronAPI?.getRichToolDescriptions?.().then(setRichToolDescriptions)
+    return readDesktopAppearance(window.electronAPI, () => window.electronAPI.getRichToolDescriptions(), value => {
+      setRichToolDescriptions(value)
+      setDesktopToolDescriptionsAvailable(true)
+    }, error => { setDesktopToolDescriptionsAvailable(false); if (error) console.warn('Desktop tool descriptions unavailable:', error) })
   }, [])
   const handleRichToolDescriptionsChange = useCallback(async (checked: boolean) => {
-    if (!appearancePrefLive()) return
-    setRichToolDescriptions(checked)
-    await window.electronAPI?.setRichToolDescriptions?.(checked)
-  }, [])
+    if (!appearancePrefLive() || !desktopToolDescriptionsAvailable || savingToolDescriptions) return
+    setSavingToolDescriptions(true)
+    await saveDesktopAppearance(window.electronAPI, () => window.electronAPI.setRichToolDescriptions(checked), () => setRichToolDescriptions(checked),
+      error => { setDesktopToolDescriptionsAvailable(false); if (error) console.warn('Failed to save desktop tool descriptions:', error) }, () => !mounted.current)
+    if (mounted.current) setSavingToolDescriptions(false)
+  }, [desktopToolDescriptionsAvailable, savingToolDescriptions])
 
 
   // Load preset themes on mount
@@ -682,6 +699,7 @@ export default function AppearanceSettingsPage() {
                         max={150}
                         step={10}
                         value={defaultZoomLevel}
+                        disabled={!desktopZoomAvailable || savingZoom}
                         onChange={(event) => handleDefaultZoomLevelChange(Number(event.target.value))}
                         className="w-44 accent-primary"
                         aria-label={t("settings.appearance.defaultZoomLevel")}
@@ -708,6 +726,7 @@ export default function AppearanceSettingsPage() {
                     description={t("settings.appearance.richToolDescriptionsDesc")}
                     checked={richToolDescriptions}
                     onCheckedChange={handleRichToolDescriptionsChange}
+                    disabled={!desktopToolDescriptionsAvailable || savingToolDescriptions}
                   />
                   <SettingsToggle
                     label={t("settings.appearance.backgroundFinishedChip")}

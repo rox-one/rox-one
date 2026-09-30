@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   SettingsCard,
@@ -8,6 +8,7 @@ import {
   SettingsToggle,
 } from '@/components/settings'
 import type { ShellMaterialPreference, ZenShellSnapshot } from '../../../shared/shell-appearance'
+import { readDesktopAppearance, saveDesktopAppearance } from '@/lib/desktop-appearance'
 
 const DEFAULT_SNAPSHOT: ZenShellSnapshot = {
   flag: 'shell.zen.v1',
@@ -21,27 +22,36 @@ const DEFAULT_SNAPSHOT: ZenShellSnapshot = {
 export function ZenShellSettings() {
   const { t } = useTranslation()
   const [snapshot, setSnapshot] = useState<ZenShellSnapshot>(DEFAULT_SNAPSHOT)
+  const [nativeAvailable, setNativeAvailable] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const mounted = useRef(true)
 
   useEffect(() => {
+    mounted.current = true
     const api = window.electronAPI
-    if (!api?.getShellSnapshot) return undefined
-    void api.getShellSnapshot().then((next) => {
-      if (next) setSnapshot(next)
+    if (!api?.getShellSnapshot || api.getRuntimeEnvironment?.() !== 'electron') return () => { mounted.current = false }
+    let cancelled = false
+    const cancelRead = readDesktopAppearance(api, () => api.getShellSnapshot(), next => {
+      if (next) { setSnapshot(next); setNativeAvailable(true) }
+    }, error => { setNativeAvailable(false); if (error) console.warn('Desktop shell settings unavailable:', error) })
+    const unsubscribe = api.onShellChanged?.((next) => {
+      if (!cancelled) { setSnapshot(next); setNativeAvailable(true) }
     })
-    return api.onShellChanged?.((next) => setSnapshot(next))
+    return () => { mounted.current = false; cancelled = true; cancelRead(); unsubscribe?.() }
   }, [])
 
   const persist = useCallback(async (patch: { enabled?: boolean; materialPreference?: ShellMaterialPreference }) => {
     const api = window.electronAPI
-    if (!api?.setZenShell) return
-    const next = await api.setZenShell(patch)
-    if (next) setSnapshot(next)
-  }, [])
-
-  const nativeAvailable = Boolean(
-    typeof window.electronAPI?.getShellSnapshot === 'function'
-      && typeof window.electronAPI?.setZenShell === 'function',
-  )
+    if (!nativeAvailable || saving || api?.getRuntimeEnvironment?.() !== 'electron' || !api.setZenShell) return
+    setSaving(true)
+    await saveDesktopAppearance(api, () => api.setZenShell(patch), next => {
+      if (next) setSnapshot(next)
+    }, error => {
+      setNativeAvailable(false)
+      if (error) console.warn('Failed to save desktop shell settings:', error)
+    }, () => !mounted.current)
+    if (mounted.current) setSaving(false)
+  }, [nativeAvailable, saving])
 
   return (
     <SettingsSection
@@ -54,7 +64,7 @@ export function ZenShellSettings() {
           description={t('settings.appearance.zenShellEnableDesc')}
           checked={snapshot.enabled}
           onCheckedChange={(enabled) => { void persist({ enabled }) }}
-          disabled={!nativeAvailable}
+          disabled={!nativeAvailable || saving}
         />
         <SettingsRow
           label={t('settings.appearance.zenShellMaterial')}
@@ -65,7 +75,7 @@ export function ZenShellSettings() {
             onValueChange={(value) => {
               void persist({ materialPreference: value as ShellMaterialPreference })
             }}
-            disabled={!nativeAvailable || !snapshot.enabled}
+            disabled={!nativeAvailable || saving || !snapshot.enabled}
             options={[
               { value: 'system', label: t('settings.appearance.zenShellMaterialSystem') },
               { value: 'glass', label: t('settings.appearance.zenShellMaterialGlass') },

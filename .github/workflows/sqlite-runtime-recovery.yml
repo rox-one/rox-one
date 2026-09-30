@@ -103,6 +103,7 @@ jobs:
             apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \
             apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \
             apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \
+            apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts \
             apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts \
             packages/shared/src/projects/__tests__ \
             apps/webui/__tests__
