@@ -322,3 +322,26 @@ Decisions:Project-first Channels, CRM Досье, Calendar Meetings, Inbox exist
 Стратегии сравнения: копирование Macro services (лицензионный и эксплуатационный риск); отдельное Macro приложение (не удовлетворяет цели); расширение native ROX через существующий Rox2 seam и единый domain authority (основной кандидат). Уточненные tradeoffs и окончательное решение — в 19.
 
 Исследование завершено: 52 WPs / 154 edges, 38 surfaces / 162 capabilities / 38 entity mappings; Revision 2 и domain amendments интегрированы. 104 schemas, 30 diagrams, 612 commit source links, 308 evidence records, 7 rejected negative controls проходят artifact validator. Product runtime tests — NOT_RUN, future gates в22. Git delivery receipt фиксируется completion checkpoint после push/readback.
+
+---
+
+## Original UTB starter and strict V1 contract
+
+The following original contract is retained from `8c1b8d95944cc21c4745484ba45edd0cf0afbb73`. Its bounded reference/codec proof does not accept durable Base persistence, CRUD, native renderer, host CAS, two-client/restart, or the remaining UTB product packages. Those gates stay pending.
+
+# UTB reference strictness recovery plan
+
+| Task | Owner | Depends on | Verification | State |
+|---|---|---|---|---|
+| Bind exact published head and isolated checkout | repo_audit | Root assignment | a428eb42, detached baseline, original branch unchanged | Complete |
+| Rerun declared unit/type/export gates | repo_audit | Pinned binaries; borrowed frozen external dependencies | Bun54, Node22 54; actual canonical closure; additive export; baseline comparison | Complete / baseline downstream gates retained |
+| Reproduce hidden property and getter defects | repo_audit | Published codec | Actual published API: 54 existing pass, 18 adverse failures | Complete |
+| Repair inert own-property validation | repo_audit | Adverse RED | Two production helpers and one adverse test file | Complete |
+| Verify positive, negative and baseline controls | repo_audit | Repair | Bun/Node22 each72/0; canonical closure/export0; old codec mutation58/14; full core13 unchanged | Complete / global failures retained |
+| Independent review | terminal_history | Frozen source and receipts | Spec+Standards on exact three-file diff; independent Bun72/0 | Complete; bounded source accepted |
+| Local commit preparation | repo_audit | Independent acceptance | Exact source hashes, scoped documents and hashed receipts | Complete; source commit4ba5f6d2 |
+| Stacked draft delivery | root / repo_audit | Root exact revision review | Correct base branch, remote head/readback; no close/merge | Complete; draft1318 exact source4ba5f6d2 and body read back |
+
+Shared registrations, Base owners, editor/native/provider work stay with their active owners. UTB-02 requires canonical persistence/query/ACL and host-CAS dependencies; this repair supplies only the reference contract.
+
+The separate publication receipt records observed source revision and remote state before this documentation follow-up. Draft publication does not accept queued legacy validate, blocked Vercel deployment, native or full program gates.
