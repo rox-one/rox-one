@@ -173,3 +173,9 @@ Cookie-key rollback/deletion must permit retry when the protected key was delete
 Daily budget recovery must preserve unresolved reservations after actual process loss, block retries conservatively across midnight, isolate workspaces and settle an exact receipt idempotently. Native local work and ledger recovery do not establish paid-provider cancellation or complete runtime enforcement.
 
 The native shell must not request unclassified legacy host session inventory. Absence of that capability is distinct from an authorized Notes operation being denied; genuine authorization failures stay visible. Source contracts and all original task/requirement criteria remain unchanged. The new runtime evidence is bounded by its source hashes and explicit platform limits.
+
+## Native caller inventory continuations (2026-09-30)
+
+Only confirmed local authority may read legacy host session inventory, messages or permission state. Native and unresolved callers mark that inventory unavailable, clear stale host metadata/options/error and establish startup readiness without a denied host request. Initial loading, metadata refresh, session-created fallback and permission reconciliation recheck authority at their asynchronous application boundaries. A late local response or transport-state failure cannot restore host state after a native switch. This restriction does not grant a native session or R1 capability and does not suppress actual Notes authorization failures.
+
+Acceptance combines actual helper callback/race behavior, independent App boundary review, Electron source/UI/core union, TypeScript and renderer rebuild. Native desktop creation/banner readback, private receipt custody and original platform criteria remain separate pending gates. A later scheduler terminal-history candidate is outside this source publication.
