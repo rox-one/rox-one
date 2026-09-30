@@ -1,0 +1,142 @@
+{
+  "selectedCommand": "python3 -m unittest apps.electron.resources.scripts.tests.test_pdf_tool_smoke apps.electron.resources.scripts.tests.test_xlsx_tool_smoke apps.electron.resources.scripts.tests.test_docx_tool_smoke apps.electron.resources.scripts.tests.test_pptx_tool_smoke apps.electron.resources.scripts.tests.test_img_tool_smoke apps.electron.resources.scripts.tests.test_ical_tool_smoke apps.electron.resources.scripts.tests.test_doc_diff_smoke apps.electron.resources.scripts.tests.test_markitdown_smoke",
+  "declarations": [
+    {
+      "file": "apps/electron/resources/scripts/tests/test_pdf_tool_smoke.py",
+      "class": "PdfToolSmokeTests",
+      "method": "test_invalid_pages_out_of_range_fails",
+      "line": 70,
+      "id": "apps.electron.resources.scripts.tests.test_pdf_tool_smoke.PdfToolSmokeTests.test_invalid_pages_out_of_range_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_pdf_tool_smoke.py",
+      "class": "PdfToolSmokeTests",
+      "method": "test_reorder_conflicting_flags_fails",
+      "line": 75,
+      "id": "apps.electron.resources.scripts.tests.test_pdf_tool_smoke.PdfToolSmokeTests.test_reorder_conflicting_flags_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_pdf_tool_smoke.py",
+      "class": "PdfToolSmokeTests",
+      "method": "test_duplicate_copies_lower_bound_fails",
+      "line": 89,
+      "id": "apps.electron.resources.scripts.tests.test_pdf_tool_smoke.PdfToolSmokeTests.test_duplicate_copies_lower_bound_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_pdf_tool_smoke.py",
+      "class": "PdfToolSmokeTests",
+      "method": "test_to_pptx_invalid_selection_fails_gracefully",
+      "line": 104,
+      "id": "apps.electron.resources.scripts.tests.test_pdf_tool_smoke.PdfToolSmokeTests.test_to_pptx_invalid_selection_fails_gracefully"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_pdf_tool_smoke.py",
+      "class": "PdfToolSmokeTests",
+      "method": "test_sanitize_happy_path",
+      "line": 118,
+      "id": "apps.electron.resources.scripts.tests.test_pdf_tool_smoke.PdfToolSmokeTests.test_sanitize_happy_path"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_xlsx_tool_smoke.py",
+      "class": "XlsxToolSmokeTests",
+      "method": "test_write_read_info_export_and_add_sheet",
+      "line": 38,
+      "id": "apps.electron.resources.scripts.tests.test_xlsx_tool_smoke.XlsxToolSmokeTests.test_write_read_info_export_and_add_sheet"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_xlsx_tool_smoke.py",
+      "class": "XlsxToolSmokeTests",
+      "method": "test_invalid_sheet_errors",
+      "line": 76,
+      "id": "apps.electron.resources.scripts.tests.test_xlsx_tool_smoke.XlsxToolSmokeTests.test_invalid_sheet_errors"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_docx_tool_smoke.py",
+      "class": "DocxToolSmokeTests",
+      "method": "test_create_extract_template_and_replace",
+      "line": 24,
+      "id": "apps.electron.resources.scripts.tests.test_docx_tool_smoke.DocxToolSmokeTests.test_create_extract_template_and_replace"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_docx_tool_smoke.py",
+      "class": "DocxToolSmokeTests",
+      "method": "test_template_invalid_json_fails",
+      "line": 78,
+      "id": "apps.electron.resources.scripts.tests.test_docx_tool_smoke.DocxToolSmokeTests.test_template_invalid_json_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_pptx_tool_smoke.py",
+      "class": "PptxToolSmokeTests",
+      "method": "test_create_info_extract",
+      "line": 25,
+      "id": "apps.electron.resources.scripts.tests.test_pptx_tool_smoke.PptxToolSmokeTests.test_create_info_extract"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_pptx_tool_smoke.py",
+      "class": "PptxToolSmokeTests",
+      "method": "test_extract_invalid_slide_fails",
+      "line": 49,
+      "id": "apps.electron.resources.scripts.tests.test_pptx_tool_smoke.PptxToolSmokeTests.test_extract_invalid_slide_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_img_tool_smoke.py",
+      "class": "ImgToolSmokeTests",
+      "method": "test_info_resize_convert",
+      "line": 32,
+      "id": "apps.electron.resources.scripts.tests.test_img_tool_smoke.ImgToolSmokeTests.test_info_resize_convert"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_img_tool_smoke.py",
+      "class": "ImgToolSmokeTests",
+      "method": "test_invalid_resize_fails",
+      "line": 48,
+      "id": "apps.electron.resources.scripts.tests.test_img_tool_smoke.ImgToolSmokeTests.test_invalid_resize_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_ical_tool_smoke.py",
+      "class": "IcalToolSmokeTests",
+      "method": "test_create_read_filter",
+      "line": 25,
+      "id": "apps.electron.resources.scripts.tests.test_ical_tool_smoke.IcalToolSmokeTests.test_create_read_filter"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_ical_tool_smoke.py",
+      "class": "IcalToolSmokeTests",
+      "method": "test_read_malformed_fails",
+      "line": 60,
+      "id": "apps.electron.resources.scripts.tests.test_ical_tool_smoke.IcalToolSmokeTests.test_read_malformed_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_doc_diff_smoke.py",
+      "class": "DocDiffSmokeTests",
+      "method": "test_diff_summary_works",
+      "line": 24,
+      "id": "apps.electron.resources.scripts.tests.test_doc_diff_smoke.DocDiffSmokeTests.test_diff_summary_works"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_doc_diff_smoke.py",
+      "class": "DocDiffSmokeTests",
+      "method": "test_missing_file_fails",
+      "line": 35,
+      "id": "apps.electron.resources.scripts.tests.test_doc_diff_smoke.DocDiffSmokeTests.test_missing_file_fails"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_markitdown_smoke.py",
+      "class": "MarkitdownSmokeTests",
+      "method": "test_plain_text_passthrough",
+      "line": 27,
+      "id": "apps.electron.resources.scripts.tests.test_markitdown_smoke.MarkitdownSmokeTests.test_plain_text_passthrough"
+    },
+    {
+      "file": "apps/electron/resources/scripts/tests/test_markitdown_smoke.py",
+      "class": "MarkitdownSmokeTests",
+      "method": "test_docx_fallback_path",
+      "line": 35,
+      "id": "apps.electron.resources.scripts.tests.test_markitdown_smoke.MarkitdownSmokeTests.test_docx_fallback_path"
+    }
+  ],
+  "declaredMethods": 19,
+  "actualAggregateResult": "Ran19tests/OK",
+  "individualOutcomesNotPrinted": true,
+  "noAdditionalExecution": true
+}

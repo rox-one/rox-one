@@ -1,0 +1,501 @@
+{
+  "builtAndExecutedRevision": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+  "finalRepositoryRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "sourceEquivalence": {
+    "changedPaths": [
+      "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "scripts/build-server.ts"
+    ],
+    "onlyTestFixtureAndPackagingScriptChanged": true,
+    "rendererServerAuthorityHookApplicationSourcesUnchanged": true,
+    "currentProductionFingerprintsAllEqual": true,
+    "productionFilesChecked": 30,
+    "optimizedSourceMapClosureExactMatchCount": 26,
+    "artifactsUnchangedAfterRun": true,
+    "scope": "Actual execution remains a4cacaa1; final HEAD equivalence does not relabel built/executed revision"
+  },
+  "command": [
+    "node",
+    "/tmp/rox-ui-surface-discovery-20260930/ui-runtime/mounted-ui-union.cjs",
+    "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+    "a4cacaa1d91c205de5d2c543d565e7edb79edd0e"
+  ],
+  "helperSha256": "19bbb4245ca862bbfdf39123ee4e04de7a64bd40867f90b229f5aefb2367d6fc",
+  "privateProvisionerSha256": "c52bcbb1a2d11ced10f8eb5b0df072efe4f5c4bac666ff1982fdf6655cc9f5ba",
+  "actualBuiltEntry": "apps/webui/dist/assets/main-CdNrFgjS.js",
+  "runtime": {
+    "bun": "1.3.14",
+    "node": "v24.19.0",
+    "playwright": "1.49.1",
+    "chromium": "151.0.7922.173"
+  },
+  "result": {
+    "trueExit": 0,
+    "pass": 99,
+    "fail": 0,
+    "phaseErrors": 0,
+    "lifetimePageExceptionCount": 0,
+    "rootRoutes": 22,
+    "settingsRoutes": 22,
+    "modeClicks": 7
+  },
+  "realTransport": {
+    "authoritativeWorkspaceMatchesRealAck": true,
+    "newRestartConnectionAcknowledgments": {
+      "newSocketCount": 1,
+      "actualWorkspaceIds": [
+        "0fb4092b-bfa5-dc0a-41e8-466b8bd010d7"
+      ]
+    },
+    "nativePrincipalClaimed": false
+  },
+  "capabilitiesNotExecuted": [
+    {
+      "surface": "genuine-project-roadmap",
+      "status": "NOT EXECUTED: actual unavailable UI observed",
+      "reason": "HTTP/ACK proves workspace ID; no trusted local Workspace metadata or native project context is invented",
+      "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+    },
+    {
+      "surface": "pre-existing-private-note",
+      "status": "NOT EXECUTED: actual unavailable UI observed",
+      "reason": "Real nativeReplica/nativeData preload is absent; native editor/controller not mounted",
+      "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+    },
+    {
+      "surface": "browser",
+      "required": "real browser instanceId/backend",
+      "source": "MainContentPanel.tsx:354"
+    },
+    {
+      "surface": "terminal",
+      "required": "real terminalId/native terminal backend",
+      "source": "MainContentPanel.tsx:403"
+    },
+    {
+      "surface": "cloud-run",
+      "required": "real runId/cloud provider",
+      "source": "MainContentPanel.tsx:414"
+    },
+    {
+      "surface": "extension",
+      "required": "installed extensionId/viewId",
+      "source": "MainContentPanel.tsx:383"
+    },
+    {
+      "surface": "diff",
+      "required": "real write proposalId",
+      "source": "MainContentPanel.tsx:425"
+    }
+  ],
+  "functionalPrivatePages": {
+    "createdViaRealUIClick": true,
+    "persisted": {
+      "id": "page_84f49ea5",
+      "slug": "new-page",
+      "name": "New Page",
+      "kind": "interactive"
+    },
+    "reloadVerified": true,
+    "sameProfileRestartVerified": true,
+    "noLlmOrSourceActionRequested": true
+  },
+  "notesUnavailableControl": {
+    "disabled": true,
+    "realMouseClickAttempted": true,
+    "realEnterPressed": true,
+    "mutationChannels": [],
+    "nativeEditorMounted": false,
+    "status": "explicit missing-capability refusal; no native functional acceptance"
+  },
+  "cleanup": {
+    "browserClosed": true,
+    "childAudits": [],
+    "profilesDeleted": [],
+    "errors": [],
+    "shortBrowserTmpDeleted": true,
+    "remainingChildren": 0,
+    "remainingProfiles": 0,
+    "independentPostRunCheck": {
+      "ownServerPidProfilesRemaining": [],
+      "ownRunnerTmpAbsent": true
+    }
+  },
+  "serverAudits": [
+    {
+      "label": "empty",
+      "pid": 98789,
+      "profile": "/tmp/rox-ui-surface-discovery-20260930/ui-runtime/run-union/empty-profile-DZnEpH",
+      "origin": "http://127.0.0.1:36635",
+      "sentSigterm": true,
+      "usedSigkill": false,
+      "preStopExitCode": null,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "fullEphemeralTokenLogged": false
+    },
+    {
+      "label": "shell",
+      "pid": 98964,
+      "profile": "/tmp/rox-ui-surface-discovery-20260930/ui-runtime/run-union/shell-profile-ei2x5p",
+      "origin": "http://127.0.0.1:36345",
+      "sentSigterm": true,
+      "usedSigkill": false,
+      "preStopExitCode": null,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "fullEphemeralTokenLogged": false
+    },
+    {
+      "label": "shell-restart",
+      "pid": 100286,
+      "profile": "/tmp/rox-ui-surface-discovery-20260930/ui-runtime/run-union/shell-profile-ei2x5p",
+      "origin": "http://127.0.0.1:36345",
+      "sentSigterm": true,
+      "usedSigkill": false,
+      "preStopExitCode": null,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "fullEphemeralTokenLogged": false
+    }
+  ],
+  "trackedStatusAfter": "",
+  "retainedAssetCount": 10,
+  "safeLogEvidence": {
+    "fullEphemeralTokenLoggedByAnyServer": false,
+    "generatedSecretRedactionAppliedToWrittenLogsJSONHTML": true,
+    "rawCookieAuthorizationValuesOmittedFromObserverMetadata": true,
+    "actualCookieProofRetainsFlagsOnly": true
+  },
+  "infrastructure": {
+    "fontDnsFailures": [
+      {
+        "label": "fresh-empty-profile",
+        "failures": [
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          }
+        ]
+      },
+      {
+        "label": "private-provisioned-shell",
+        "failures": [
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          },
+          {
+            "url": "https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap",
+            "method": "GET",
+            "error": "net::ERR_NAME_NOT_RESOLVED"
+          }
+        ]
+      }
+    ]
+  },
+  "historicalRedComparison": {
+    "b841": {
+      "pass": 87,
+      "fail": 12,
+      "phaseErrors": 0,
+      "lifetimePageExceptions": 6
+    },
+    "currentA4": {
+      "pass": 99,
+      "fail": 0,
+      "phaseErrors": 0,
+      "lifetimePageExceptions": 0
+    },
+    "resolvedSourceDefects": [
+      "Notes uncaught denied reads and missing native transport editor startup",
+      "Project optional preload subscription crash",
+      "Environment/Voice uncaught local-only settings reads",
+      "Messaging blank pane and local Project loading without trusted Workspace metadata"
+    ],
+    "observerCorrections": [
+      "44px rail width intentionally unchanged: verify visible controls/preferences instead",
+      "Native context explicit unavailable is rendered state, not functional native acceptance",
+      "Same-profile restart ACK restricted to newly opened connection"
+    ]
+  },
+  "intermediateFixtureRevision": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba"
+}

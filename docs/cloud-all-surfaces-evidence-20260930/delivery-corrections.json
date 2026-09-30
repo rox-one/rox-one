@@ -1,0 +1,10 @@
+{
+  "capturedAt": "2026-09-30T20:50:13.867219+00:00",
+  "scope": "Delivery metadata correction only; application/test/build source unchanged",
+  "uniqueNewRestartSocketAckCount": 1,
+  "rawNewSocketCount": 1,
+  "rawWorkspaceIdObservationCount": 1,
+  "rawResultsSha256": "b0a57d004307d36e66897ff456cc6023a7a76d59db0b7218b04df3ae76eda4ed",
+  "producerStagingReceiptHash": "19bec7b7c1fca3d7570dfd55e5bdb28965cc6db5401cc31e24e81b2ee1f711f4",
+  "reason": "Two assertions referenced the same single new-socket ACK. Producer staging count2 is superseded; no duplicate ACK count or additional capability proof is claimed."
+}

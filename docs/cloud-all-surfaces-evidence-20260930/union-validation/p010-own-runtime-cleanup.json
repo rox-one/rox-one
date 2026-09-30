@@ -1,0 +1,7 @@
+{
+  "owned_probe_pids": [],
+  "whole_built_main_profiles_removed": 6,
+  "remaining_whole_built_main_profiles": 0,
+  "canonical_test_profiles_removed": true,
+  "delivery_retained_until_root_signal": true
+}

@@ -1,0 +1,2801 @@
+{
+  "kind": "R15 revision-bound published delivery report",
+  "createdAt": "2026-09-30T20:42:15.620157+00:00",
+  "branch": "cloud/all-surfaces-20260930",
+  "draftPR": {
+    "number": 1322,
+    "url": "https://github.com/rox-one/rox-one/pull/1322",
+    "existingReadback": "integration-root/pr1322-readback-b841.json",
+    "finalUpdatedDelivery": "docs-only publication of this receipt; exact publication SHA and remote readback recorded after commit in external delivery-readback.json"
+  },
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "sourceParents": {
+    "010": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+    "daa7": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+    "a4": "b8416534b6cf571ac6b18c38b3845bb92218a1a5"
+  },
+  "frozenInputs": {
+    "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "sqlitePublishedOwner": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+  },
+  "initialInputs": {
+    "september": "ea083e387e170552ee6102e29c2cf31adc8b6973",
+    "compound": "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd",
+    "sqliteProductionOwner": "da78e3e79f5c268a33fc429d2913e8b8d59adeac",
+    "UTBPublished": "8c1b8d95944cc21c4745484ba45edd0cf0afbb73"
+  },
+  "ordinaryMerges": [
+    {
+      "commit": "b30b4c67e00ca43d945076f471809278ced33363",
+      "parents": [
+        "ea083e387e170552ee6102e29c2cf31adc8b6973",
+        "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd"
+      ],
+      "subject": "feat(integration): assemble September authority and scoped Compound surfaces"
+    },
+    {
+      "commit": "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+      "parents": [
+        "b30b4c67e00ca43d945076f471809278ced33363",
+        "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+      ],
+      "subject": "merge: include published September SQLite recovery owner result"
+    },
+    {
+      "commit": "19ee83bf4ef52140d6478395ccb984eef7eaf96f",
+      "parents": [
+        "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+        "8c1b8d95944cc21c4745484ba45edd0cf0afbb73"
+      ],
+      "subject": "merge: retain published UTB strict V1 starter and pending criteria"
+    },
+    {
+      "commit": "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+      "parents": [
+        "ff75a6421607efc18c165cac578216ef8808e449",
+        "bac082301aed341fe078cb5bd539c4ba074560eb"
+      ],
+      "subject": "merge: include published September scheduler and budget recovery"
+    },
+    {
+      "commit": "944662346b87020349f085a0a4d72d007db7ae44",
+      "parents": [
+        "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+        "3027028c6c8cb420efe3ea4b255ac725747de9e5"
+      ],
+      "subject": "merge: include published Compound project intents and licensed resources"
+    }
+  ],
+  "conflicts": {
+    "initialInstances": 28,
+    "laterSeptemberInstances": 2,
+    "laterCompoundInstances": 5,
+    "totalInstances": 35,
+    "uniquePaths": 31,
+    "stageBlobManifest": "integration-root/frozen-delivery-provenance.json",
+    "bulkOursTheirsAuthorityResolution": false
+  },
+  "rootApprovedScopeRepair": {
+    "sourceCommit": "260daf5c38d70cd833ae9413123bb03a5900cf61",
+    "sourceParent": "4413e4ae352a6844b498b31f239ffc6c3676d7a7",
+    "cherryPick": "65547d788eebdf5d39b8f4180880f5abba580d93",
+    "sourcePath": "apps/electron/src/renderer/hooks/useProjects.ts",
+    "beforeSha256": "13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31",
+    "afterSha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac",
+    "afterEqualsCherryAndB841": true,
+    "contract": "Per-committed-workspace lease/request generation; deferred result and post-cleanup callback cannot update local or Jotai projection after scope replacement/unmount. Live event supersedes stale query.",
+    "references": [
+      {
+        "line": 30,
+        "reason": "lease per committed scope"
+      },
+      {
+        "line": 34,
+        "reason": "layout-effect activation/cleanup"
+      },
+      {
+        "line": 49,
+        "reason": "post-await current-request fence"
+      },
+      {
+        "line": 69,
+        "reason": "scope-bound subscribed event"
+      }
+    ],
+    "acceptance": "Callback/lease and integration test scope; not native DOM acceptance."
+  },
+  "managedRuntime": {
+    "capturedAt": "2026-09-30T20:32:12.766Z",
+    "instrument": "cloud_environment.environment_status",
+    "provider": "cloud",
+    "desiredPhase": "running",
+    "observedPhase": "running",
+    "connectivity": "connected",
+    "observationsCurrent": true,
+    "specRevision": "3",
+    "observedSpecRevision": "3",
+    "failure": null,
+    "networkPolicy": {
+      "mode": "restricted",
+      "state": "unknown",
+      "allowedHosts": [
+        "api.github.com",
+        "codeload.github.com",
+        "github.com"
+      ],
+      "presets": [
+        "package_managers"
+      ]
+    },
+    "changesPerformed": false
+  },
+  "modelEffort": {
+    "requestedModel": "GPT-6.1 Sol",
+    "requestedEffort": "Ultra",
+    "executorModelEffortAttested": false,
+    "reason": "environment_status exposes no model/effort fields; requested/inherited agent invocation is separate from executor attestation"
+  },
+  "executorVersions": {
+    "checksBun": "1.3.14",
+    "Node": "v24.19.0",
+    "canonicalShippedBun": "1.3.9",
+    "Playwright": "1.49.1",
+    "Chromium": "151.0.7922.173"
+  },
+  "sourceIntegrity": {
+    "original": {
+      "head": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+      "status": "",
+      "locks": {
+        "bun.lock": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+      }
+    },
+    "isolatedPublishedLockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+    "canonical010": {
+      "head_before": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "head_after": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "status_after": "?? dist-server/\n",
+      "tracked_files_before_after": 6178,
+      "tracked_hashes_unchanged": true,
+      "dotenv_absent": true,
+      "script_sha256": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a",
+      "owner_adapter_sha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831"
+    },
+    "finalLocalBatch": {
+      "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+      "currentHead": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "sourceFiles": 6178,
+      "sourceManifestBefore": "b5d85f9e7350e8643addfda6a49de8e4e7cfe41bf5bbad4897bcbabb0894689c",
+      "sourceManifestAfter": "8765a0423382d9d4c2190c5e1529941eb4ce1763b1932063410ca54912aecf14",
+      "changedTrackedFilesDuringValidation": {
+        "scripts/build-server.ts": {
+          "before": "4af971974a41a509f1a3c4149e6c53f2d7bfd923bbb93266eaca1f5b4d9cd60e",
+          "after": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a"
+        }
+      },
+      "thisAgentSourceWritesDuringFinalGates": false,
+      "rootAuthorizedPackagingOnlyChange": true,
+      "typeInputScope": {
+        "excludedPackagingSource": "scripts/build-server.ts",
+        "basis": "All ten checked package/app tsconfig roots include their src trees. No static import of scripts/build-server.ts exists. The SSH artifact helper refers to it only as an exists/spawn path, so the packaging file is outside TS compilation inputs.",
+        "gatesCarryTo010ViaUnchangedTypeApplicationAndTestBytes": true,
+        "coverageException": "coverage scans scripts; reran exact lint:i18n:coverage on010 because its input changed, PASS0/3.217s."
+      }
+    },
+    "applicationSourcesNotRelabeled": true,
+    "finalWholeCleanupStatusPendingRoot": false,
+    "prepublicationCleanStatus": {
+      "capturedAt": "2026-09-30T20:46:37.551864+00:00",
+      "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "isolatedStatusBeforeReport": "",
+      "isolatedLockSha256": "47a54e33fcd528780b47b62d481b501414a1877c0cc77e5071db76e29297dac1",
+      "original": {
+        "head": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "status": "",
+        "lockSha256": "b29cf0eb0eaa357069172fe728123d1bd56ab77ef18d90e426f1f42cf85fb79b"
+      },
+      "ownRuntimeProcessesRemaining": 0,
+      "removedGeneratedDeliveryAndBundle": [
+        "/tmp/rox-ui-surface-discovery-20260930/all-surfaces/dist-server",
+        "/workspace/rox-union-server-dist-final-20260930"
+      ],
+      "temporaryCheckoutDisposition": "remove after docs publication/readback; retained report evidence copied outside checkout"
+    }
+  },
+  "gates": {
+    "historicalExactRevisions": {
+      "d1eb": [
+        {
+          "label": "r19-frozen-install",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "install",
+            "--frozen-lockfile"
+          ],
+          "reproduce": "bun --no-env-file install --frozen-lockfile",
+          "exit": 0,
+          "seconds": 1.698,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r19-frozen-final/r19-frozen-install.log",
+          "logSha256": "528925d616df3f24d17953803d25bb8d8f8be46a5773cc000a585cad00dadb8c",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "childBunSummaryBlocks": [],
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r19-validate-ci",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "run",
+            "validate:ci"
+          ],
+          "reproduce": "bun --no-env-file run validate:ci",
+          "exit": 0,
+          "seconds": 144.517,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r19-frozen-final/r19-validate-ci.log",
+          "logSha256": "1a64c551a1a52ff7b03cea695ba3490a627b682a8d9c77b1f327171548c166b7",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "childBunSummaryBlocks": [
+            {
+              "pass": 21,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 28,
+              "tests": 21,
+              "files": 1
+            },
+            {
+              "pass": 11,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 22,
+              "tests": 11,
+              "files": 1
+            },
+            {
+              "pass": 103,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 262,
+              "tests": 103,
+              "files": 4
+            },
+            {
+              "pass": 112,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 394,
+              "tests": 112,
+              "files": 13
+            },
+            {
+              "pass": 1,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 2,
+              "tests": 1,
+              "files": 1
+            }
+          ],
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r19-webui-typecheck",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "run",
+            "webui:typecheck"
+          ],
+          "reproduce": "bun --no-env-file run webui:typecheck",
+          "exit": 0,
+          "seconds": 46.017,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r19-frozen-final/r19-webui-typecheck.log",
+          "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "childBunSummaryBlocks": [],
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r19-workflow-durable",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "packages/core",
+            "packages/server-core/src/webui",
+            "packages/shared/src/utils/__tests__/sqlite-runtime.test.ts",
+            "packages/server-core/src/authority/__tests__/native-authority.test.ts",
+            "packages/server-core/src/authority/__tests__/native-journal.test.ts",
+            "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+            "packages/shared/src/agent/core/__tests__/agent-budget.test.ts",
+            "packages/shared/src/automations/occurrence-ledger.test.ts",
+            "packages/server-core/src/handlers/rpc/native-data.test.ts",
+            "packages/server-core/src/handlers/rpc/__tests__/native-create.test.ts",
+            "packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts",
+            "packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts",
+            "packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts",
+            "apps/electron/src/preload/openclaw-host-control.test.ts",
+            "apps/electron/src/transport/__tests__/channel-map-parity.test.ts",
+            "packages/server-core/src/handlers/rpc/__tests__/browser-protected-cookie-key.test.ts",
+            "packages/server-core/src/handlers/rpc/__tests__/memory-native-acceptance.test.ts",
+            "packages/shared/src/agent/core/__tests__/budget-process-loss-acceptance.test.ts",
+            "packages/shared/src/browser/__tests__/profile-import-key-custody-recovery.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/caller-session-loading.test.ts"
+          ],
+          "reproduce": "bun --no-env-file test packages/core packages/server-core/src/webui packages/shared/src/utils/__tests__/sqlite-runtime.test.ts packages/server-core/src/authority/__tests__/native-authority.test.ts packages/server-core/src/authority/__tests__/native-journal.test.ts packages/shared/src/account-replica/__tests__/account-replica.test.ts packages/shared/src/agent/core/__tests__/agent-budget.test.ts packages/shared/src/automations/occurrence-ledger.test.ts packages/server-core/src/handlers/rpc/native-data.test.ts packages/server-core/src/handlers/rpc/__tests__/native-create.test.ts packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts apps/electron/src/preload/openclaw-host-control.test.ts apps/electron/src/transport/__tests__/channel-map-parity.test.ts packages/server-core/src/handlers/rpc/__tests__/browser-protected-cookie-key.test.ts packages/server-core/src/handlers/rpc/__tests__/memory-native-acceptance.test.ts packages/shared/src/agent/core/__tests__/budget-process-loss-acceptance.test.ts packages/shared/src/browser/__tests__/profile-import-key-custody-recovery.test.ts apps/electron/src/renderer/lib/__tests__/caller-session-loading.test.ts",
+          "exit": 0,
+          "seconds": 9.952,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r19-frozen-final/r19-workflow-durable/r19-workflow-durable.log",
+          "logSha256": "01f7d2d3b0950bf775f009f1b07e6a131ddcf25fbe0ee485996b7efbd89bec83",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "childBunSummaryBlocks": [
+            {
+              "pass": 1002,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 7441,
+              "tests": 1002,
+              "files": 101
+            }
+          ],
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r19-workflow-integrated",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+            "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+            "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+            "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+            "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+            "scripts/electron-main-cjs.test.ts",
+            "scripts/__tests__/check-i18n-coverage.test.ts",
+            "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+            "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+            "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+            "packages/shared/src/projects/__tests__",
+            "apps/webui/__tests__"
+          ],
+          "reproduce": "bun --no-env-file test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts packages/server-core/src/transport/__tests__/before-response-authority.test.ts packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts scripts/electron-main-cjs.test.ts scripts/__tests__/check-i18n-coverage.test.ts packages/pi-agent-server/src/custom-endpoint-registration.test.ts apps/electron/src/main/__tests__/native-notes-runtime.test.ts apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts packages/shared/src/projects/__tests__ apps/webui/__tests__",
+          "exit": 0,
+          "seconds": 7.905,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r19-frozen-final/r19-workflow-integrated/r19-workflow-integrated.log",
+          "logSha256": "d260e4c74f5b473def1f863c26b8f8bb6e7c7b301a7a26001c96d9f9ce5254b5",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "childBunSummaryBlocks": [
+            {
+              "pass": 160,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 769,
+              "tests": 160,
+              "files": 22
+            }
+          ],
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r19-workflow-september",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts",
+            "packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts",
+            "packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts",
+            "packages/server-core/src/transport/__tests__/native-authorization.test.ts"
+          ],
+          "reproduce": "bun --no-env-file test packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts packages/server-core/src/transport/__tests__/native-authorization.test.ts",
+          "exit": 0,
+          "seconds": 2.137,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r19-frozen-final/r19-workflow-september/r19-workflow-september.log",
+          "logSha256": "0929d156d2c7ac1d4927f060fb2310198581368444bbf7e75d848dd5443cad77",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "childBunSummaryBlocks": [
+            {
+              "pass": 24,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 147,
+              "tests": 24,
+              "files": 4
+            }
+          ],
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r19-final-built-smoke",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "packages/server/src/__tests__/smoke.test.ts"
+          ],
+          "reproduce": "bun --no-env-file test packages/server/src/__tests__/smoke.test.ts",
+          "exit": 0,
+          "seconds": 8.71,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r19-frozen-final/r19-final-built-smoke.log",
+          "logSha256": "25692edddbce65c6ea12524c4c26c867598a7b062dab5f9f280e452fe3102841",
+          "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+          "childBunSummaryBlocks": [
+            {
+              "pass": 4,
+              "fail": 0,
+              "skip": 0,
+              "errors": 0,
+              "expect": 37,
+              "tests": 4,
+              "files": 1
+            }
+          ],
+          "dotenvAbsent": true
+        }
+      ],
+      "b841": [
+        {
+          "label": "r20-electron-typecheck",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "run",
+            "typecheck:electron"
+          ],
+          "reproduce": "bun --no-env-file run typecheck:electron",
+          "exit": 0,
+          "seconds": 48.617,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-electron-typecheck.log",
+          "logSha256": "71228a274898dd4fa50280c05b5fdb2dce28aa3a991cd9816aca89d2989b8d39",
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "actualTestCounts": null,
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r20-webui-typecheck",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "run",
+            "webui:typecheck"
+          ],
+          "reproduce": "bun --no-env-file run webui:typecheck",
+          "exit": 0,
+          "seconds": 46.192,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-webui-typecheck.log",
+          "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092",
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "actualTestCounts": null,
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r20-integrated-controls",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+            "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+            "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+            "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+            "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+            "scripts/electron-main-cjs.test.ts",
+            "scripts/__tests__/check-i18n-coverage.test.ts",
+            "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+            "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+            "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+            "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+            "packages/shared/src/projects/__tests__",
+            "apps/webui/__tests__"
+          ],
+          "reproduce": "bun --no-env-file test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts packages/server-core/src/transport/__tests__/before-response-authority.test.ts packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts scripts/electron-main-cjs.test.ts scripts/__tests__/check-i18n-coverage.test.ts packages/pi-agent-server/src/custom-endpoint-registration.test.ts apps/electron/src/main/__tests__/native-notes-runtime.test.ts apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts packages/shared/src/projects/__tests__ apps/webui/__tests__",
+          "exit": 0,
+          "seconds": 9.344,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/integrated/r20-integrated-controls.log",
+          "logSha256": "b2ad2d4cd589d7b7d1181c59874343661c8d7d19585ad605a5d43bd3608c03bd",
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "actualTestCounts": {
+            "pass": 167,
+            "fail": 0,
+            "expect": 789,
+            "tests": 167,
+            "files": 23
+          },
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r20-i18n-coverage",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "run",
+            "lint:i18n:coverage"
+          ],
+          "reproduce": "bun --no-env-file run lint:i18n:coverage",
+          "exit": 0,
+          "seconds": 3.287,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-i18n-coverage.log",
+          "logSha256": "ab5c3567844f6284f8bbacc1543029b290a940522b24f7d8513e70780e0e06ba",
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "actualTestCounts": null,
+          "dotenvAbsent": true
+        },
+        {
+          "label": "r20-final-built-smoke",
+          "command": [
+            "bun",
+            "--no-env-file",
+            "test",
+            "packages/server/src/__tests__/smoke.test.ts"
+          ],
+          "reproduce": "bun --no-env-file test packages/server/src/__tests__/smoke.test.ts",
+          "exit": 0,
+          "seconds": 8.781,
+          "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r20-appearance-final/r20-final-built-smoke.log",
+          "logSha256": "21227644e84289bf2ac3b8f7f2f7a6e26938a6896c9acdd05aa871499a42c573",
+          "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+          "actualTestCounts": {
+            "pass": 4,
+            "fail": 0,
+            "expect": 37,
+            "tests": 4,
+            "files": 1
+          },
+          "dotenvAbsent": true
+        }
+      ],
+      "b841ElectronBuild": {
+        "label": "b841-electron-build",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "run",
+          "electron:build"
+        ],
+        "reproduce": "bun --no-env-file run electron:build",
+        "exit": 0,
+        "seconds": 93.69,
+        "revision": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+        "dotenvAbsent": true
+      },
+      "doNotAggregateOverlap": true
+    },
+    "freshFinalBatch": [
+      {
+        "label": "r24-final-validate-ci",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "run",
+          "validate:ci"
+        ],
+        "reproduce": "bun --no-env-file run validate:ci",
+        "exit": 0,
+        "seconds": 157.018,
+        "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "individualCommandStartEndHeadNotRecorded": true,
+        "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+        "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-validate-ci.log",
+        "logSha256": "06abd5ecba6bc17bdf43c32b9af29a3ab2fb899718fdde090c26e1ef0782ba37",
+        "actualBunSubInvocations": [
+          {
+            "pass": 21,
+            "fail": 0,
+            "expect": 28,
+            "tests": 21,
+            "files": 1
+          },
+          {
+            "pass": 11,
+            "fail": 0,
+            "expect": 22,
+            "tests": 11,
+            "files": 1
+          },
+          {
+            "pass": 103,
+            "fail": 0,
+            "expect": 262,
+            "tests": 103,
+            "files": 4
+          },
+          {
+            "pass": 112,
+            "fail": 0,
+            "expect": 394,
+            "tests": 112,
+            "files": 13
+          },
+          {
+            "pass": 1,
+            "fail": 0,
+            "expect": 2,
+            "tests": 1,
+            "files": 1
+          }
+        ],
+        "actualPythonDocTests": {
+          "tests": 19,
+          "fail": 0,
+          "seconds": 11.772,
+          "individualNamesNotPrinted": true,
+          "staticMethodDeclarationReceipt": "doc-test-declarations.json"
+        },
+        "overlappingCountsNotAggregated": true
+      },
+      {
+        "label": "r24-final-webui-typecheck",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "run",
+          "webui:typecheck"
+        ],
+        "reproduce": "bun --no-env-file run webui:typecheck",
+        "exit": 0,
+        "seconds": 43.174,
+        "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "individualCommandStartEndHeadNotRecorded": true,
+        "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+        "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-webui-typecheck.log",
+        "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092",
+        "actualBunSubInvocations": [],
+        "overlappingCountsNotAggregated": true
+      },
+      {
+        "label": "r24-final-integrated-controls",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "test",
+          "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+          "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+          "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+          "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+          "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+          "scripts/electron-main-cjs.test.ts",
+          "scripts/__tests__/check-i18n-coverage.test.ts",
+          "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+          "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+          "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+          "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+          "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+          "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+          "packages/shared/src/projects/__tests__",
+          "apps/webui/__tests__"
+        ],
+        "reproduce": "bun --no-env-file test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts packages/server-core/src/transport/__tests__/before-response-authority.test.ts packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts scripts/electron-main-cjs.test.ts scripts/__tests__/check-i18n-coverage.test.ts packages/pi-agent-server/src/custom-endpoint-registration.test.ts apps/electron/src/main/__tests__/native-notes-runtime.test.ts apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts packages/shared/src/projects/__tests__ apps/webui/__tests__",
+        "exit": 0,
+        "seconds": 6.695,
+        "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "individualCommandStartEndHeadNotRecorded": true,
+        "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+        "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-integrated-controls.log",
+        "logSha256": "46dacbe06d96125b2f23930357d92d807e41f53c493179ca17f9d22b795b813f",
+        "actualBunSubInvocations": [
+          {
+            "pass": 198,
+            "fail": 0,
+            "expect": 930,
+            "tests": 198,
+            "files": 26
+          }
+        ],
+        "overlappingCountsNotAggregated": true
+      },
+      {
+        "label": "r24-final-built-smoke",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "test",
+          "packages/server/src/__tests__/smoke.test.ts"
+        ],
+        "reproduce": "bun --no-env-file test packages/server/src/__tests__/smoke.test.ts",
+        "exit": 0,
+        "seconds": 8.799,
+        "sourceCheckpoint": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "individualCommandStartEndHeadNotRecorded": true,
+        "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+        "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-final-built-smoke.log",
+        "logSha256": "4e5489639654fa7adc1f8a12c47064f31d1d5d75924b3748a028f074da439846",
+        "actualBunSubInvocations": [
+          {
+            "pass": 4,
+            "fail": 0,
+            "expect": 37,
+            "tests": 4,
+            "files": 1
+          }
+        ],
+        "builtEntry": "dist-server/index.js",
+        "builtWebuiDir": "apps/webui/dist",
+        "artifactProducerSource": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+        "overlappingCountsNotAggregated": true
+      },
+      {
+        "label": "r24-packaging-head-i18n-coverage",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "run",
+          "lint:i18n:coverage"
+        ],
+        "reproduce": "bun --no-env-file run lint:i18n:coverage",
+        "exit": 0,
+        "seconds": 3.217,
+        "sourceCheckpoint": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "observedHeadBeforeBatch": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedHeadAfterBatch": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "individualCommandStartEndHeadNotRecorded": true,
+        "applicationAndTestInputBytesUnchangedAcrossBatch": true,
+        "log": "/tmp/rox-ui-surface-discovery-20260930/union-validation/r24-daa7-final/r24-packaging-head-i18n-coverage.log",
+        "logSha256": "a63ddb51c803f4654f2e9214bd96724b8e46eb7744899b65ce7ff3bbe20e70fc",
+        "actualBunSubInvocations": [],
+        "overlappingCountsNotAggregated": true
+      }
+    ],
+    "typecheckPackagesPassed": [
+      "core",
+      "shared",
+      "server-core",
+      "server",
+      "session-tools-core",
+      "pi-agent-server",
+      "Electron",
+      "ui",
+      "workspace-service",
+      "WebUI"
+    ],
+    "i18n": {
+      "parityLocales": 11,
+      "keysEach": 7449,
+      "sorted": true,
+      "coverageLiteralReferences": 7165,
+      "coverageUniqueKeys": 5256,
+      "coverageEnglishKeys": 7449,
+      "missingKeyNegativeIncludedInIntegratedStep": true
+    },
+    "skippedScopes": [
+      {
+        "scope": "workers/pages",
+        "reason": "Not present inOSSexport",
+        "outcome": "SKIPPED, not typecheck PASS"
+      }
+    ],
+    "carriedPriorProof": {
+      "base": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+      "durable": {
+        "pass": 1002,
+        "fail": 0,
+        "expect": 7441,
+        "files": 101
+      },
+      "September": {
+        "pass": 24,
+        "fail": 0,
+        "expect": 147,
+        "files": 4
+      },
+      "receipt": "../r19-frozen-final/final-validation.json",
+      "repeated": false,
+      "coreSharedServerNativeElectronAndRelevantCaseFileBytesUnchanged": true,
+      "diffVsBase": [
+        ".github/workflows/sqlite-runtime-recovery.yml",
+        "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+        "apps/electron/src/renderer/components/projects/ProjectAuthorityConnectionPanel.tsx",
+        "apps/electron/src/renderer/components/projects/SharedProjectProjection.tsx",
+        "apps/electron/src/renderer/hooks/useShellAppearance.ts",
+        "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+        "apps/electron/src/renderer/lib/desktop-appearance.ts",
+        "apps/electron/src/renderer/lib/notes-capability.ts",
+        "apps/electron/src/renderer/lib/scoped-capability-read.ts",
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+        "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+        "apps/electron/src/renderer/pages/settings/EnvironmentSettingsSection.tsx",
+        "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx",
+        "apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx",
+        "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx",
+        "apps/electron/src/renderer/pages/settings/__tests__/AppearanceSettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+        "apps/electron/src/renderer/pages/settings/desktop-settings-session.ts"
+      ],
+      "finalPackagingScriptChangeOutsideTheseInputs": true
+    },
+    "executedCaseReceipt": "union-validation/r24-daa7-final/executed-cases.json",
+    "caseFileLineResolved": true,
+    "noUniqueAggregateTestCountClaimed": true,
+    "actualBuildCommands": [
+      {
+        "contextualSource": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+        "sourceContextReceipt": "union-validation/r19-frozen-final/final-validation.json",
+        "individualGateSourceShaFieldPresent": false,
+        "label": "r19-subprocess-build",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "run",
+          "server:build:subprocess"
+        ],
+        "reproduce": "bun --no-env-file run server:build:subprocess",
+        "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+        "exit": 0,
+        "seconds": 2.42,
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HOME",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "dotenvAbsent": true
+      },
+      {
+        "contextualSource": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+        "sourceContextReceipt": "ui-runtime/run-union/revision-bound-green-summary.json",
+        "individualGateSourceShaFieldPresent": false,
+        "label": "r23-webui-build",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "run",
+          "webui:build"
+        ],
+        "reproduce": "bun --no-env-file run webui:build",
+        "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+        "exit": 0,
+        "seconds": 77.551,
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HOME",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "dotenvAbsent": true
+      },
+      {
+        "contextualSource": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+        "sourceContextReceipt": "ui-runtime/run-union/revision-bound-green-summary.json",
+        "individualGateSourceShaFieldPresent": false,
+        "label": "r23-bun-server-build",
+        "command": [
+          "bun",
+          "--no-env-file",
+          "build",
+          "packages/server/src/index.ts",
+          "--target",
+          "bun",
+          "--outdir",
+          "dist-server",
+          "--external",
+          "xlsx"
+        ],
+        "reproduce": "bun --no-env-file build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx",
+        "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+        "exit": 0,
+        "seconds": 1.231,
+        "envKeys": [
+          "BUN_INSTALL_CACHE_DIR",
+          "CRAFT_CONFIG_DIR",
+          "ELECTRON_SKIP_BINARY_DOWNLOAD",
+          "HOME",
+          "HTTPS_PROXY",
+          "HTTP_PROXY",
+          "LANG",
+          "LC_ALL",
+          "NODE_EXTRA_CA_CERTS",
+          "NODE_OPTIONS",
+          "NO_PROXY",
+          "PATH",
+          "REQUESTS_CA_BUNDLE",
+          "ROX_CONFIG_DIR",
+          "SSL_CERT_FILE",
+          "TMPDIR",
+          "XDG_CACHE_HOME",
+          "http_proxy",
+          "https_proxy",
+          "no_proxy",
+          "npm_config_cache"
+        ],
+        "dotenvAbsent": true
+      }
+    ]
+  },
+  "actualA4Builds": {
+    "source": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+    "fullElectron": {
+      "label": "a4ca-electron-build",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "electron:build"
+      ],
+      "reproduce": "bun --no-env-file run electron:build",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 96.769,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true
+    },
+    "rendererChunksAndMaps": 408,
+    "htmlEntries": [
+      "browser-empty-state.html",
+      "browser-toolbar.html",
+      "index.html",
+      "playground.html",
+      "voice-overlay.html"
+    ],
+    "textualSourceComparison": {
+      "count": 1192,
+      "exact_matches": 1192,
+      "all_exact": true
+    },
+    "generatedAssetImports": 23,
+    "sourceMapScope": "408 renderer maps; no main/preload source maps are emitted by those build scripts. Their provenance is the unchanged production source hashes before/after the actual build, plus output hashes and actual built-module require probes.",
+    "compiledSQLite": {
+      "label": "a4ca-compiled-sqlite-node24",
+      "command": [
+        "node",
+        "--disable-warning=ExperimentalWarning",
+        "/tmp/rox-ui-surface-discovery-20260930/union-validation/r15-final-compiled-sqlite-probe.cjs"
+      ],
+      "reproduce": "node --disable-warning=ExperimentalWarning /tmp/rox-ui-surface-discovery-20260930/union-validation/r15-final-compiled-sqlite-probe.cjs",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 0.595,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "log_sha256": "c7c810a730420ec529c83ff8b33fb2b9e77194866449bb48ea59f9ec0cd70b6e",
+      "observed": {
+        "actualNode": "24.19.0",
+        "builtInitializerLoaded": true,
+        "fileUrlExact": true,
+        "rows": 1,
+        "rollback": true,
+        "readonlyRefusal": true,
+        "closedRefusal": true,
+        "restartPersistence": true,
+        "assertions": 16,
+        "runtimeAssertions": 14,
+        "extractionAssertions": 2,
+        "bundleSha256": "c18f109ed52c09c5b7cf2b131e4ab3bfd01c116c55a10a8799454fc27cd4f261",
+        "initializerSha256": "325b0b150cc1c33e6f740d86af7c395d4702b52d44e2c5541f76fc6755fb3b75",
+        "compiledStartLine": 437408
+      }
+    },
+    "gatedWholeMainHostProbe": {
+      "label": "a4ca-built-main-host-probe",
+      "command": [
+        "node",
+        "--disable-warning=ExperimentalWarning",
+        "/tmp/rox-ui-surface-discovery-20260930/union-validation/r15-final-main-host-probe.cjs"
+      ],
+      "reproduce": "node --disable-warning=ExperimentalWarning /tmp/rox-ui-surface-discovery-20260930/union-validation/r15-final-main-host-probe.cjs",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 1.922,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true,
+      "log_sha256": "2c87ddfd6ec6ecc29bc76d42d67d2529354a4ba88af292246b62cae847fe6478",
+      "observed": {
+        "bundleSha256": "c18f109ed52c09c5b7cf2b131e4ab3bfd01c116c55a10a8799454fc27cd4f261",
+        "actualNode": "24.19.0",
+        "mockedElectronHost": true,
+        "declaredMockElectronVersion": "39.2.7",
+        "installedElectronOrMacAcceptance": false,
+        "readinessHeld": true,
+        "electronRequires": 46,
+        "whenReadyCalls": 2,
+        "windowConstructions": 0,
+        "networkAttempts": 0,
+        "childAttempts": 0,
+        "outsideReads": 0,
+        "outsideWrites": 0,
+        "publicSystemMetadataReads": 2,
+        "outsideFileDetails": [],
+        "protocolRegistrations": 2,
+        "ipcHandlers": 1,
+        "requireReturned": true,
+        "error": null
+      }
+    },
+    "runtimeScopeLimit": "Actual Node24 loaded the entire built main.cjs and its real external JS dependencies under an explicitly mocked Electron host. app.whenReady remained unresolved; no real windows, provider requests, native bootstrap, server listening, installed Electron or Mac acceptance was exercised. Independently, the actual bundled SQLite module ran real database controls on Node24.",
+    "buildShaRelabeled010": false,
+    "ownerSQLiteAdapterSha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+    "WebUIBuildSeconds": 77.551,
+    "BunServerBuildSeconds": 1.231
+  },
+  "browser": {
+    "actualBuiltAndExecutedRevision": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+    "equivalentFinalApplicationRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "sourceEquivalence": {
+      "changedPaths": [
+        "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+        "scripts/build-server.ts"
+      ],
+      "onlyTestFixtureAndPackagingScriptChanged": true,
+      "rendererServerAuthorityHookApplicationSourcesUnchanged": true,
+      "currentProductionFingerprintsAllEqual": true,
+      "productionFilesChecked": 30,
+      "optimizedSourceMapClosureExactMatchCount": 26,
+      "artifactsUnchangedAfterRun": true,
+      "scope": "Actual execution remains a4cacaa1; final HEAD equivalence does not relabel built/executed revision"
+    },
+    "command": [
+      "node",
+      "/tmp/rox-ui-surface-discovery-20260930/ui-runtime/mounted-ui-union.cjs",
+      "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "a4cacaa1d91c205de5d2c543d565e7edb79edd0e"
+    ],
+    "helperSha256": "19bbb4245ca862bbfdf39123ee4e04de7a64bd40867f90b229f5aefb2367d6fc",
+    "privateProvisionerSha256": "c52bcbb1a2d11ced10f8eb5b0df072efe4f5c4bac666ff1982fdf6655cc9f5ba",
+    "actualBuiltEntry": "apps/webui/dist/assets/main-CdNrFgjS.js",
+    "runtime": {
+      "bun": "1.3.14",
+      "node": "v24.19.0",
+      "playwright": "1.49.1",
+      "chromium": "151.0.7922.173"
+    },
+    "result": {
+      "trueExit": 0,
+      "pass": 99,
+      "fail": 0,
+      "phaseErrors": 0,
+      "lifetimePageExceptionCount": 0,
+      "rootRoutes": 22,
+      "settingsRoutes": 22,
+      "modeClicks": 7
+    },
+    "trueExitWallSeconds": 598.753,
+    "realTransport": {
+      "authoritativeWorkspaceMatchesRealAck": true,
+      "nativePrincipalClaimed": false,
+      "newRestartConnectionAcknowledgmentCount": 1,
+      "ackCountCorrection": "Unique new socket ACK; two checks observed the same receipt. See evidence/delivery-corrections.json."
+    },
+    "functionalPrivatePages": {
+      "realNewPageUIClick": true,
+      "persistedPrivatePageVerified": true,
+      "reloadVerified": true,
+      "sameProfileRestartAndFreshAck": true,
+      "mismatchNegativeExecuted": true,
+      "LLMOrSourceActionsExecuted": false
+    },
+    "notesUnavailableControl": {
+      "disabled": true,
+      "realMouseClickAttempted": true,
+      "realEnterPressed": true,
+      "mutationChannels": [],
+      "nativeEditorMounted": false,
+      "status": "explicit missing-capability refusal; no native functional acceptance"
+    },
+    "capabilitiesNotExecuted": [
+      {
+        "surface": "genuine-project-roadmap",
+        "status": "NOT EXECUTED: actual unavailable UI observed",
+        "reason": "HTTP/ACK proves workspace ID; no trusted local Workspace metadata or native project context is invented",
+        "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+      },
+      {
+        "surface": "pre-existing-private-note",
+        "status": "NOT EXECUTED: actual unavailable UI observed",
+        "reason": "Real nativeReplica/nativeData preload is absent; native editor/controller not mounted",
+        "note": "Unavailable rendering is not functional native/Project/Roadmap/RepositorySnapshot acceptance"
+      },
+      {
+        "surface": "browser",
+        "required": "real browser instanceId/backend",
+        "source": "MainContentPanel.tsx:354"
+      },
+      {
+        "surface": "terminal",
+        "required": "real terminalId/native terminal backend",
+        "source": "MainContentPanel.tsx:403"
+      },
+      {
+        "surface": "cloud-run",
+        "required": "real runId/cloud provider",
+        "source": "MainContentPanel.tsx:414"
+      },
+      {
+        "surface": "extension",
+        "required": "installed extensionId/viewId",
+        "source": "MainContentPanel.tsx:383"
+      },
+      {
+        "surface": "diff",
+        "required": "real write proposalId",
+        "source": "MainContentPanel.tsx:425"
+      }
+    ],
+    "safeLogEvidence": {
+      "fullEphemeralTokenLoggedByAnyServer": false,
+      "generatedSecretRedactionAppliedToWrittenLogsJSONHTML": true,
+      "rawCookieAuthorizationValuesOmittedFromObserverMetadata": true,
+      "actualCookieProofRetainsFlagsOnly": true
+    },
+    "cleanup": {
+      "browserClosed": true,
+      "shortBrowserTmpDeleted": true,
+      "remainingChildren": 0,
+      "remainingProfiles": 0,
+      "errors": [],
+      "independentOwnPidsRemaining": 0,
+      "independentOwnTmpAbsent": true
+    },
+    "serverAudits": [
+      {
+        "label": "empty",
+        "sentSigterm": true,
+        "usedSigkill": false,
+        "preStopExitCode": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullEphemeralTokenLogged": false
+      },
+      {
+        "label": "shell",
+        "sentSigterm": true,
+        "usedSigkill": false,
+        "preStopExitCode": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullEphemeralTokenLogged": false
+      },
+      {
+        "label": "shell-restart",
+        "sentSigterm": true,
+        "usedSigkill": false,
+        "preStopExitCode": null,
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "fullEphemeralTokenLogged": false
+      }
+    ],
+    "historicalRedComparison": {
+      "b841": {
+        "pass": 87,
+        "fail": 12,
+        "phaseErrors": 0,
+        "lifetimePageExceptions": 6
+      },
+      "currentA4": {
+        "pass": 99,
+        "fail": 0,
+        "phaseErrors": 0,
+        "lifetimePageExceptions": 0
+      },
+      "resolvedSourceDefects": [
+        "Notes uncaught denied reads and missing native transport editor startup",
+        "Project optional preload subscription crash",
+        "Environment/Voice uncaught local-only settings reads",
+        "Messaging blank pane and local Project loading without trusted Workspace metadata"
+      ],
+      "observerCorrections": [
+        "44px rail width intentionally unchanged: verify visible controls/preferences instead",
+        "Native context explicit unavailable is rendered state, not functional native acceptance",
+        "Same-profile restart ACK restricted to newly opened connection"
+      ]
+    },
+    "retainedAssetCount": 10,
+    "assetHashes": {
+      "apps/webui/dist/assets/main-CdNrFgjS.js": {
+        "sha256": "1edc630af4a8a6cbd878602eaa1a7d0b5c7d538f8ce970808917a3b68200e9a6",
+        "bytes": 32945
+      },
+      "apps/webui/dist/assets/main-CdNrFgjS.js.map": {
+        "sha256": "398d5519d437a63098515fb0f1baf653a853363606877d230c68da4643b8aa79",
+        "bytes": 119561
+      },
+      "apps/webui/dist/assets/browser-main-IINMPDA2.js": {
+        "sha256": "f27f93fc7961a2b240d111b159340824d6f75f3de77ea74395c577e9d34ca844",
+        "bytes": 10368966
+      },
+      "apps/webui/dist/assets/browser-main-IINMPDA2.js.map": {
+        "sha256": "b7166a52c22e2e630348bf9d720e454a3a30a5539210ff3732e9d0d7e4cb89f8",
+        "bytes": 18438238
+      },
+      "apps/webui/dist/assets/App-DWPMZl3t.js": {
+        "sha256": "002125dfaa66ca5f3aefa03859c5167a606c947f9ef4bfb2b6573dac523de042",
+        "bytes": 4425525
+      },
+      "apps/webui/dist/assets/App-DWPMZl3t.js.map": {
+        "sha256": "b244da9e2d50e697e844957720f85abe2a42cceea8a498b7003e72132cdc4226",
+        "bytes": 12097682
+      },
+      "apps/webui/dist/assets/NotesPage-BJ7j43ps.js": {
+        "sha256": "70f524bf0cffb202b306a40d33e658e28acbee8aeb3a16e34daa58b8439c490b",
+        "bytes": 281415
+      },
+      "apps/webui/dist/assets/NotesPage-BJ7j43ps.js.map": {
+        "sha256": "fc7c4254b9e45a2fb1659d33339950115ff88bd3b2f1e3d2fa422868e984446d",
+        "bytes": 1047201
+      },
+      "apps/webui/dist/assets/AppearanceSettingsPage-CCDYk9iv.js": {
+        "sha256": "66069be46e9a5e13c156ee44a6470a4c7d3bdf5d36148e17efa8f537d987d3c1",
+        "bytes": 23602
+      },
+      "apps/webui/dist/assets/AppearanceSettingsPage-CCDYk9iv.js.map": {
+        "sha256": "536df4b955bd041f91aabd5c142f588c1fa78e4433ae3dc77d4c2579794ae49b",
+        "bytes": 90492
+      }
+    },
+    "old450UserAssetEqualityVerified": false
+  },
+  "canonicalDelivery": {
+    "packagingBuildRevision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "actualElectronAndWebUIBuildRevision": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+    "build": {
+      "label": "p010-canonical-server-build",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "run",
+        "server:build",
+        "--output=../../../workspace/rox-union-server-dist-final-20260930"
+      ],
+      "reproduce": "bun --no-env-file run server:build --output=../../../workspace/rox-union-server-dist-final-20260930",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 9.859,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true
+    },
+    "smoke": {
+      "label": "p010-canonical-delivery-smoke",
+      "command": [
+        "bun",
+        "--no-env-file",
+        "test",
+        "/tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-smoke.test.ts"
+      ],
+      "reproduce": "bun --no-env-file test /tmp/rox-ui-surface-discovery-20260930/union-validation/canonical-delivery-smoke.test.ts",
+      "cwd": "/tmp/rox-ui-surface-discovery-20260930/all-surfaces",
+      "exit": 0,
+      "seconds": 9.793,
+      "envKeys": [
+        "BUN_INSTALL_CACHE_DIR",
+        "CRAFT_CONFIG_DIR",
+        "ELECTRON_SKIP_BINARY_DOWNLOAD",
+        "HOME",
+        "HTTPS_PROXY",
+        "HTTP_PROXY",
+        "LANG",
+        "LC_ALL",
+        "NODE_EXTRA_CA_CERTS",
+        "NODE_OPTIONS",
+        "NO_PROXY",
+        "PATH",
+        "REQUESTS_CA_BUNDLE",
+        "ROX_CONFIG_DIR",
+        "SSL_CERT_FILE",
+        "TMPDIR",
+        "XDG_CACHE_HOME",
+        "http_proxy",
+        "https_proxy",
+        "no_proxy",
+        "npm_config_cache"
+      ],
+      "dotenvAbsent": true
+    },
+    "counts": {
+      "pass": 2,
+      "fail": 0,
+      "expect": 56
+    },
+    "phases": {
+      "compilerTestBun": "1.3.14",
+      "observedShippedBun": "1.3.9",
+      "launcher": "sh bin/craft-server",
+      "assertions": 56,
+      "phases": [
+        {
+          "name": "canonical launcher/runtime/UI artifacts present",
+          "pass": true
+        },
+        {
+          "name": "shipped Bun runtime is source-pinned 1.3.9",
+          "pass": true
+        },
+        {
+          "name": "shipped launcher bound reserved loopback port",
+          "pass": true
+        },
+        {
+          "name": "first start: health 200/status ok",
+          "pass": true
+        },
+        {
+          "name": "first start: exact staged login HTML",
+          "pass": true
+        },
+        {
+          "name": "first start: unauthorized config rejected",
+          "pass": true
+        },
+        {
+          "name": "first start: unauthorized HTML redirects to login",
+          "pass": true
+        },
+        {
+          "name": "first start: bad authentication rejected",
+          "pass": true
+        },
+        {
+          "name": "first start: valid authentication and HttpOnly cookie",
+          "pass": true
+        },
+        {
+          "name": "first start: authenticated config matches live WS URL",
+          "pass": true
+        },
+        {
+          "name": "first start: exact staged application HTML",
+          "pass": true
+        },
+        {
+          "name": "first start: invalid authenticated WebSocket rejected",
+          "pass": true
+        },
+        {
+          "name": "first stop: child live before requested SIGTERM",
+          "pass": true
+        },
+        {
+          "name": "first stop: authenticated WebSocket open before SIGTERM",
+          "pass": true
+        },
+        {
+          "name": "first stop: graceful exit code zero",
+          "pass": true
+        },
+        {
+          "name": "first stop: SIGTERM sent without SIGKILL fallback",
+          "pass": true
+        },
+        {
+          "name": "first stop: authenticated WebSocket closed",
+          "pass": true
+        },
+        {
+          "name": "first stop: stopped /health refused",
+          "pass": true
+        },
+        {
+          "name": "first stop: stopped /login refused",
+          "pass": true
+        },
+        {
+          "name": "first stop: stopped /api/config refused",
+          "pass": true
+        },
+        {
+          "name": "first stop: stopped / refused",
+          "pass": true
+        },
+        {
+          "name": "first stop: stopped raw WebSocket refused",
+          "pass": true
+        },
+        {
+          "name": "server created isolated persisted config",
+          "pass": true
+        },
+        {
+          "name": "shipped launcher bound reserved loopback port",
+          "pass": true
+        },
+        {
+          "name": "restart: health 200/status ok",
+          "pass": true
+        },
+        {
+          "name": "restart: exact staged login HTML",
+          "pass": true
+        },
+        {
+          "name": "restart: unauthorized config rejected",
+          "pass": true
+        },
+        {
+          "name": "restart: unauthorized HTML redirects to login",
+          "pass": true
+        },
+        {
+          "name": "restart: bad authentication rejected",
+          "pass": true
+        },
+        {
+          "name": "restart: valid authentication and HttpOnly cookie",
+          "pass": true
+        },
+        {
+          "name": "restart: authenticated config matches live WS URL",
+          "pass": true
+        },
+        {
+          "name": "restart: exact staged application HTML",
+          "pass": true
+        },
+        {
+          "name": "restart: invalid authenticated WebSocket rejected",
+          "pass": true
+        },
+        {
+          "name": "restart accepts previous cookie for config",
+          "pass": true
+        },
+        {
+          "name": "restart accepts previous cookie for HTML",
+          "pass": true
+        },
+        {
+          "name": "restart retains persisted config values",
+          "pass": true
+        },
+        {
+          "name": "restart stop: child live before requested SIGTERM",
+          "pass": true
+        },
+        {
+          "name": "restart stop: authenticated WebSocket open before SIGTERM",
+          "pass": true
+        },
+        {
+          "name": "restart stop: graceful exit code zero",
+          "pass": true
+        },
+        {
+          "name": "restart stop: SIGTERM sent without SIGKILL fallback",
+          "pass": true
+        },
+        {
+          "name": "restart stop: authenticated WebSocket closed",
+          "pass": true
+        },
+        {
+          "name": "restart stop: stopped /health refused",
+          "pass": true
+        },
+        {
+          "name": "restart stop: stopped /login refused",
+          "pass": true
+        },
+        {
+          "name": "restart stop: stopped /api/config refused",
+          "pass": true
+        },
+        {
+          "name": "restart stop: stopped / refused",
+          "pass": true
+        },
+        {
+          "name": "restart stop: stopped raw WebSocket refused",
+          "pass": true
+        },
+        {
+          "name": "both complete child logs omit test token",
+          "pass": true
+        },
+        {
+          "name": "short-token launch exits exactly one",
+          "pass": true
+        },
+        {
+          "name": "short-token diagnostic is exact",
+          "pass": true
+        },
+        {
+          "name": "short-token launch never signals readiness",
+          "pass": true
+        },
+        {
+          "name": "short-token child log omits test token",
+          "pass": true
+        },
+        {
+          "name": "short token: stopped /health refused",
+          "pass": true
+        },
+        {
+          "name": "short token: stopped /login refused",
+          "pass": true
+        },
+        {
+          "name": "short token: stopped /api/config refused",
+          "pass": true
+        },
+        {
+          "name": "short token: stopped / refused",
+          "pass": true
+        },
+        {
+          "name": "short token: stopped raw WebSocket refused",
+          "pass": true
+        }
+      ],
+      "profilesRemoved": true,
+      "nativeOrProviderAcceptance": false
+    },
+    "serverExits": [
+      0,
+      0,
+      1
+    ],
+    "delivery": {
+      "path": "/workspace/rox-union-server-dist-final-20260930",
+      "bytes": 1060657173,
+      "files": 56499,
+      "copied_workspace_source_files": 2059,
+      "copied_workspace_source_exact": true,
+      "staged_webui_files": 855,
+      "staged_webui_exact": true,
+      "all_symlinks_inside_delivery": true,
+      "runtime_and_entry_artifacts": [
+        {
+          "path": "start.sh",
+          "bytes": 130,
+          "sha256": "6a55e9dea67ed586ee1935f67bb647cb81998a71f6d5d3f1ec2ec3df9ebbc529"
+        },
+        {
+          "path": "packages/cloud-runner/src/index.ts",
+          "bytes": 2370,
+          "sha256": "98118ec9e9ab2ef1ae761d30426a7bc6a9b1fdc25e3416e660b635164fff06d9"
+        },
+        {
+          "path": "vendor/bun/bun",
+          "bytes": 101921176,
+          "sha256": "cf498b35746be44efd512a06c884e1c7fd9868de70b9a28dd428c1d232f456c3"
+        },
+        {
+          "path": "resources/bin/uv",
+          "bytes": 55582176,
+          "sha256": "1cec0cda74b129b3e15ed7ff80d0ce303c5e3446cd0dbc47675e908052587419"
+        },
+        {
+          "path": "bin/craft-server",
+          "bytes": 679,
+          "sha256": "79f75df6caac78a1b7166c6caf4ed15d63837aa3e3249cdcc75aa515b6c54d49"
+        }
+      ]
+    },
+    "runtimeArtifactIntegrity": {
+      "artifact_file_count": 56499,
+      "same_path_and_hash_manifest_before_after_runtime": true,
+      "same_symlinks_before_after_runtime": true
+    },
+    "sourceEquivalence": {
+      "actual_electron_build_input": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+      "final_packaging_revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "all_tracked_delta": [
+        {
+          "path": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+          "a4ca": "5dfa7b7008b2596eca0307e448ac775549609003ab9627e30509565d71b38c07",
+          "p010": "13759cfe24b4075ec87935ef4d488d27f7b19a8b58a1a57c67fd9435bfff8b49"
+        },
+        {
+          "path": "scripts/build-server.ts",
+          "a4ca": "4af971974a41a509f1a3c4149e6c53f2d7bfd923bbb93266eaca1f5b4d9cd60e",
+          "p010": "d737fe594be9b0f20c1e42f39852ddd52245e9c86ac8481dc837b8ac8005b36a"
+        }
+      ],
+      "all_other_tracked_files_exact": true,
+      "renderer_textual_source_entries_exact": 1192,
+      "all_renderer_textual_source_entries_exact": true,
+      "build_sha_relabelled": false
+    },
+    "cleanup": {
+      "owned_probe_pids": [],
+      "whole_built_main_profiles_removed": 6,
+      "remaining_whole_built_main_profiles": 0,
+      "canonical_test_profiles_removed": true,
+      "delivery_retained_until_root_signal": true
+    },
+    "fullOutputManifestAfter": "union-validation/p010-canonical-delivery-after.json",
+    "fullOutputManifestSha256": "26c9b6d2d96ac23e772b3a898d235c885f14e0967fff63d8fe6d791824f6e25a",
+    "repairScope": "scripts/build-server.ts:384 and487 add cloud-runner to dependency source seed and workspace copy list; existing canonical packaging defect also present in original f632.",
+    "limits": "Actual Linux shipped standalone server launcher, authentication/config/HTML/WebSocket/lifecycle controls only. Full Electron target compilation and actual Node24 SQLite + whole-main mocked-host require are separate a4ca receipts; no installed Electron, macOS, native IPC, provider calls or full DoD acceptance. No install.sh/service/permissions/env/network-policy/credentials configuration changes."
+  },
+  "mainComparison": {
+    "revision": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "report": "/workspace/rox-one-cloud-validation-2026-09-30.md",
+    "reportSha256": "611df5cdadc41209d2384113a52a926487eb6d9f0974cffbd650675708737618",
+    "reportLines": [
+      55,
+      57,
+      73,
+      75,
+      77
+    ],
+    "counts": {
+      "pass": 817,
+      "fail": 3,
+      "tests": 820,
+      "files": 79,
+      "expect": 3519,
+      "corePass": 804,
+      "coreFail": 3,
+      "webuiPass": 13,
+      "webuiFail": 0
+    },
+    "types": {
+      "webuiDiagnostics": 52,
+      "serverDiagnostics": 8
+    },
+    "failures": [
+      {
+        "test": "attachCredentialRef > rejects non-enumerable declared fields before registration",
+        "file": "packages/core/src/platform/identity/attach-credential-ref.test.ts",
+        "line": 93,
+        "assertionLine": 132,
+        "assertionColumn": 9,
+        "rootCause": "Hidden declared locator field admitted before registry mutation",
+        "classification": "Source runtime-validation defect"
+      },
+      {
+        "test": "attachCredentialRef > rejects prototype-derived locators before registry mutation",
+        "file": "packages/core/src/platform/identity/attach-credential-ref.test.ts",
+        "line": 136,
+        "assertionLine": 148,
+        "assertionColumn": 18,
+        "rootCause": "Inherited locator field admitted before registry mutation",
+        "classification": "Source runtime-validation defect"
+      },
+      {
+        "test": "Things lists > upcomingByDay keeps 7 calendar days and groups later by month",
+        "file": "packages/core/src/tasks/personal/things.test.ts",
+        "line": 111,
+        "assertionLine": 119,
+        "assertionColumn": 53,
+        "rootCause": "Fixed fixture clock mixed with implicit Date.now in setWhen; date-dependent classification",
+        "classification": "Source API/test determinism defect, not cloud clock failure"
+      }
+    ],
+    "mainReproduce": "bun --no-env-file test packages/core packages/server-core/src/webui",
+    "unionProof": {
+      "revision": "d1ebc477abc9961264e479a05e5638c3c7010f21",
+      "sameInvocationSubset": true,
+      "pass": 917,
+      "fail": 0,
+      "skip": 0,
+      "files": 83,
+      "subsetExpectCount": null,
+      "subsetExpectQualification": "Per-subset assertions are not emitted in this combined invocation;7441 is entire durable invocation. Do not substitute older standalone counts.",
+      "locatorFile": "packages/core/src/platform/identity/credential-types.ts",
+      "locatorLines": [
+        233,
+        239,
+        241
+      ],
+      "clockFile": "packages/core/src/tasks/personal/store.ts",
+      "clockLine": 498,
+      "fixtureFile": "packages/core/src/tasks/personal/things.test.ts",
+      "fixtureLines": [
+        130,
+        132,
+        139
+      ],
+      "perFailureNamesPass": [
+        {
+          "status": "pass",
+          "name": "attachCredentialRef > rejects non-enumerable declared fields before registration"
+        },
+        {
+          "status": "pass",
+          "name": "attachCredentialRef > rejects prototype-derived locators before registry mutation"
+        },
+        {
+          "status": "pass",
+          "name": "Things lists > upcomingByDay keeps 7 calendar days and groups later by month"
+        }
+      ]
+    },
+    "countQualification": "Different inventories/revisions. No aggregate delta817→1002 and no summation of overlapping validateCI/workflow invocations."
+  },
+  "historicalResolvedFailures": [
+    {
+      "source": "b8416534b6cf571ac6b18c38b3845bb92218a1a5",
+      "receipt": "ui-runtime/run-union-b841-surface-red/revision-bound-red-findings.json",
+      "counts": {
+        "pass": 87,
+        "fail": 12
+      },
+      "resolution": "Bounded read/error/capability UI repair; actuala4browser99/0/0; no fullnativeacceptance"
+    },
+    {
+      "source": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "line": 226,
+      "column": 78,
+      "classification": "Typed fixture DTO source defect",
+      "resolution": "daa7 fixture-only change; finalvalidateCI0 and exact010all4hostedSQLiteSUCCESS"
+    },
+    {
+      "source": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+      "file": "packages/server-core/src/handlers/rpc/cloud-runs.ts",
+      "line": 49,
+      "classification": "Source packaging omission",
+      "historicalCounts": {
+        "pass": 0,
+        "fail": 2,
+        "expect": 4
+      },
+      "resolution": "010 seedbuild-server384/copy487; actualcanonical2/0/56"
+    }
+  ],
+  "remainingGatesAppendix": "integration-notes/r15-final-remaining-gates.json",
+  "hostedScope": {
+    "source": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "observedSQLite": [
+      {
+        "runId": 36771257478,
+        "name": "SQLite Runtime Recovery",
+        "event": "push",
+        "headSha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "observedAt": "2026-09-30T20:33:27.223443+00:00",
+        "jobs": [
+          {
+            "id": 110077945095,
+            "name": "durable-runtime (macos-15)",
+            "run_id": 36771257478,
+            "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:14:57Z",
+            "completed_at": "2026-09-30T20:21:10Z",
+            "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771257478/job/110077945095",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:14:57Z",
+                "completed_at": "2026-09-30T20:14:59Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:14:59Z",
+                "completed_at": "2026-09-30T20:15:05Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:15:05Z",
+                "completed_at": "2026-09-30T20:15:06Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:15:06Z",
+                "completed_at": "2026-09-30T20:15:07Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:15:07Z",
+                "completed_at": "2026-09-30T20:15:07Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:15:07Z",
+                "completed_at": "2026-09-30T20:15:41Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:15:41Z",
+                "completed_at": "2026-09-30T20:17:35Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:17:35Z",
+                "completed_at": "2026-09-30T20:17:49Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:17:49Z",
+                "completed_at": "2026-09-30T20:17:58Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:17:58Z",
+                "completed_at": "2026-09-30T20:18:00Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:18:00Z",
+                "completed_at": "2026-09-30T20:20:49Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:20:49Z",
+                "completed_at": "2026-09-30T20:21:01Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:21:01Z",
+                "completed_at": "2026-09-30T20:21:03Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:21:03Z",
+                "completed_at": "2026-09-30T20:21:03Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:21:03Z",
+                "completed_at": "2026-09-30T20:21:03Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:21:03Z",
+                "completed_at": "2026-09-30T20:21:04Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:21:04Z",
+                "completed_at": "2026-09-30T20:21:08Z"
+              }
+            ]
+          },
+          {
+            "id": 110077945500,
+            "name": "durable-runtime (ubuntu-24.04)",
+            "run_id": 36771257478,
+            "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:14:53Z",
+            "completed_at": "2026-09-30T20:17:52Z",
+            "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771257478/job/110077945500",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:14:54Z",
+                "completed_at": "2026-09-30T20:14:55Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:14:55Z",
+                "completed_at": "2026-09-30T20:15:00Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:15:00Z",
+                "completed_at": "2026-09-30T20:15:00Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:15:00Z",
+                "completed_at": "2026-09-30T20:15:02Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:15:02Z",
+                "completed_at": "2026-09-30T20:15:02Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:15:02Z",
+                "completed_at": "2026-09-30T20:15:12Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:15:12Z",
+                "completed_at": "2026-09-30T20:16:25Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:16:25Z",
+                "completed_at": "2026-09-30T20:16:34Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:16:34Z",
+                "completed_at": "2026-09-30T20:16:40Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:16:40Z",
+                "completed_at": "2026-09-30T20:16:42Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:16:42Z",
+                "completed_at": "2026-09-30T20:17:41Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:17:41Z",
+                "completed_at": "2026-09-30T20:17:49Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:17:49Z",
+                "completed_at": "2026-09-30T20:17:50Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:17:50Z",
+                "completed_at": "2026-09-30T20:17:50Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:17:50Z",
+                "completed_at": "2026-09-30T20:17:50Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:17:50Z",
+                "completed_at": "2026-09-30T20:17:50Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:17:50Z",
+                "completed_at": "2026-09-30T20:17:50Z"
+              }
+            ]
+          }
+        ],
+        "url": "https://github.com/rox-one/rox-one/actions/runs/36771257478"
+      },
+      {
+        "runId": 36771265843,
+        "name": "SQLite Runtime Recovery",
+        "event": "pull_request",
+        "headSha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "observedAt": "2026-09-30T20:32:12.923029+00:00",
+        "jobs": [
+          {
+            "id": 110078565538,
+            "name": "durable-runtime (ubuntu-24.04)",
+            "run_id": 36771265843,
+            "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:16:25Z",
+            "completed_at": "2026-09-30T20:20:03Z",
+            "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265843/job/110078565538",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:16:25Z",
+                "completed_at": "2026-09-30T20:16:27Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:16:27Z",
+                "completed_at": "2026-09-30T20:16:31Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:16:31Z",
+                "completed_at": "2026-09-30T20:16:32Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:16:32Z",
+                "completed_at": "2026-09-30T20:16:33Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:16:33Z",
+                "completed_at": "2026-09-30T20:16:33Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:16:33Z",
+                "completed_at": "2026-09-30T20:16:44Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:16:44Z",
+                "completed_at": "2026-09-30T20:18:19Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:18:19Z",
+                "completed_at": "2026-09-30T20:18:30Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:18:30Z",
+                "completed_at": "2026-09-30T20:18:37Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:18:37Z",
+                "completed_at": "2026-09-30T20:18:39Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:18:39Z",
+                "completed_at": "2026-09-30T20:19:50Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:19:50Z",
+                "completed_at": "2026-09-30T20:19:59Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:19:59Z",
+                "completed_at": "2026-09-30T20:20:00Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:20:00Z",
+                "completed_at": "2026-09-30T20:20:00Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:20:00Z",
+                "completed_at": "2026-09-30T20:20:00Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:20:00Z",
+                "completed_at": "2026-09-30T20:20:01Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:20:01Z",
+                "completed_at": "2026-09-30T20:20:01Z"
+              }
+            ]
+          },
+          {
+            "id": 110078565927,
+            "name": "durable-runtime (macos-15)",
+            "run_id": 36771265843,
+            "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:18:43Z",
+            "completed_at": "2026-09-30T20:24:34Z",
+            "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265843/job/110078565927",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:18:44Z",
+                "completed_at": "2026-09-30T20:18:46Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:18:46Z",
+                "completed_at": "2026-09-30T20:18:51Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:18:51Z",
+                "completed_at": "2026-09-30T20:18:52Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:18:52Z",
+                "completed_at": "2026-09-30T20:18:54Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:18:54Z",
+                "completed_at": "2026-09-30T20:18:54Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:18:54Z",
+                "completed_at": "2026-09-30T20:19:20Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:19:20Z",
+                "completed_at": "2026-09-30T20:20:50Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:20:50Z",
+                "completed_at": "2026-09-30T20:21:07Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:21:07Z",
+                "completed_at": "2026-09-30T20:21:19Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:21:19Z",
+                "completed_at": "2026-09-30T20:21:23Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:21:23Z",
+                "completed_at": "2026-09-30T20:24:12Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:24:12Z",
+                "completed_at": "2026-09-30T20:24:25Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:24:25Z",
+                "completed_at": "2026-09-30T20:24:26Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:24:26Z",
+                "completed_at": "2026-09-30T20:24:26Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:24:26Z",
+                "completed_at": "2026-09-30T20:24:27Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:24:27Z",
+                "completed_at": "2026-09-30T20:24:28Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:24:28Z",
+                "completed_at": "2026-09-30T20:24:32Z"
+              }
+            ]
+          }
+        ],
+        "url": "https://github.com/rox-one/rox-one/actions/runs/36771265843"
+      }
+    ],
+    "counts": {
+      "jobs": 4,
+      "success": 4,
+      "failure": 0,
+      "pending": 0,
+      "steps": 68,
+      "stepsSuccess": 68,
+      "testPass": null,
+      "testFail": null,
+      "testAssertions": null
+    },
+    "printedCheckoutAndCounts": {
+      "status": "UNVERIFIED",
+      "printedSourceSha": null,
+      "printedRuntimeTestCounts": null,
+      "newLogRedirectRequests": false,
+      "prior403LogEvidence": "r15 hosted official run/job redirect routes denied; no new logredirect attempt. Metadata jobs/head_sha cannot supply printed checkout or exact test assertions.",
+      "qualification": "Local198/0/930 and4/0/37 are deliberately excluded from hosted counts."
+    },
+    "codeQL": {
+      "capturedAt": "2026-09-30T20:32:12.923275+00:00",
+      "id": 110078183669,
+      "name": "CodeQL",
+      "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-09-30T20:15:26Z",
+      "completed_at": "2026-09-30T20:15:30Z",
+      "html_url": "https://github.com/rox-one/rox-one/runs/110078183669",
+      "details_url": "https://github.com/rox-one/rox-one/runs/110078183669",
+      "output": {
+        "title": "96 new alerts including 64 high severity security vulnerabilities",
+        "summary": "### New alerts in code changed by this pull request\n\nSecurity Alerts:\n * 64 high\n * 32 medium\n\n\n_Alerts not introduced by this pull request might have been detected because the code changes were too large._\n\nSee annotations below for details.\n\n[View all branch alerts](/rox-one/rox-one/security/code-scanning?query=pr%3A1322+tool%3ACodeQL+is%3Aopen).",
+        "annotations_count": 96
+      },
+      "securityAcceptance": false,
+      "annotationValidationPerformed": false,
+      "qualification": "96 raw CodeQL annotations (64 high /32 medium) require independent triage; not96 validated vulnerabilities. Earlier missingSwiftconfiguration warning was transient and is absent from this latest snapshot.",
+      "transientHistoricalConfigurationWarning": "Earlier20:22 snapshot reported1 configuration not found; latest20:32:12 title/summary contain no missingconfiguration warning.",
+      "annotationsReceipt": "codeql-review-pending-010.json"
+    },
+    "selfHostedAndBudgets": [
+      {
+        "id": 110077982764,
+        "name": "native (self-hosted, linux-toolchain)",
+        "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "status": "queued",
+        "conclusion": null,
+        "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265837/job/110077982764"
+      },
+      {
+        "id": 110077982348,
+        "name": "native (self-hosted, macos-toolchain)",
+        "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "status": "queued",
+        "conclusion": null,
+        "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265837/job/110077982348"
+      },
+      {
+        "id": 110077972240,
+        "name": "budgets",
+        "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "status": "queued",
+        "conclusion": null,
+        "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265860/job/110077972240"
+      }
+    ],
+    "vercel": {
+      "capturedAt": "2026-09-30T20:33:27.223720+00:00",
+      "statuses": [
+        {
+          "id": 55304695227,
+          "context": "Vercel",
+          "state": "failure",
+          "description": "Account is blocked.",
+          "created_at": "2026-09-30T20:14:51Z",
+          "updated_at": "2026-09-30T20:14:51Z",
+          "target_url": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked"
+        }
+      ],
+      "classification": "Infrastructure: Vercel Account is blocked; no deployment acceptance."
+    },
+    "sourceEquivalence": {
+      "direct": {
+        "capturedAt": "2026-09-30T20:16:43.142202+00:00",
+        "sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "tree": "c21b2fa0acacf489194dc6ca61f3ffc3191eba14",
+        "parents": [
+          "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba"
+        ]
+      },
+      "synthetic": {
+        "capturedAt": "2026-09-30T20:16:43.142202+00:00",
+        "sha": "70b1bf757bfccd7260d96507bf75df91776b943b",
+        "tree": "c21b2fa0acacf489194dc6ca61f3ffc3191eba14",
+        "parents": [
+          "f63294ba4fffa7238b46b24e918925a313ad0b12",
+          "010fa8c040e3a84cd40cd8195473f52d8582f159"
+        ]
+      },
+      "treesEqual": true,
+      "qualification": "Only Git source tree equivalence. Printed checkoutSHA remainsUNVERIFIED."
+    },
+    "historicalDaa7IsSeparate": true,
+    "securityAcceptance": false
+  },
+  "acceptance": {
+    "localManagedCloudValidationBounded": true,
+    "actualBrowserRoutesAndSettingsBounded": true,
+    "realPrivatePagesCreateReloadRestart": true,
+    "canonicalLinuxServerLauncherAuthLifecycle": true,
+    "all4HostedSQLiteMetadataSuccess": true,
+    "genuineProjectRoadmapUI": false,
+    "nativeNotesMutationUI": false,
+    "contextualBrowserTerminalCloudExtensionDiff": false,
+    "full109": false,
+    "full143": false,
+    "UTB": false,
+    "DATA_SHARED_full": false,
+    "installedMacNative": false,
+    "WindowsNative": false,
+    "provider": false,
+    "nativeIOS": false,
+    "fullUI": false,
+    "securityTriage": false,
+    "fullDoDAccepted": false
+  },
+  "finalPending": {
+    "remoteDocsHead": "self-referential commit SHA recorded outside this immutable commit in delivery-readback.json and PR1322",
+    "rootWholeTemporaryCheckoutCleanup": "after publication/readback; runtime processes and private profiles already zero",
+    "fullProgramAcceptance": "NOT ACCEPTED; see acceptance and remainingGatesAppendix"
+  },
+  "reportPath": "docs/cloud-all-surfaces-validation-20260930.md",
+  "secretsPolicy": "No token/cookie/Authorization/credential values/privateprofilecontents/signedredirectURLs included; configured env/network/settings unchanged.",
+  "references": [
+    {
+      "path": "integration-root/frozen-delivery-provenance.json",
+      "sha256": "450c22c8ae375fcf1d9495d1bda223e78c3af0e5d26673d512063fbda13915e9",
+      "bytes": 21757
+    },
+    {
+      "path": "integration-root/final-staging-managed-runtime.json",
+      "sha256": "3658223878e4245bd8a07050752e8d24479aa68dce53eabdd463fbdc14944f39",
+      "bytes": 574
+    },
+    {
+      "path": "integration-root/conflict-map-initial.json",
+      "sha256": "1e9b8944630f4a5ea0877137f24a45b5bf66413743b2adfcede497e2bdefe9d8",
+      "bytes": 9626
+    },
+    {
+      "path": "integration-root/new-september-conflict-map.json",
+      "sha256": "4b6e9ad789eaf18b68c0c21dc4cc23bc27af66d70c43a5bb4720a4659dc3aab9",
+      "bytes": 832
+    },
+    {
+      "path": "integration-root/new-compound-conflict-map.json",
+      "sha256": "5eb6657b20b1d7b60cb713ff4620307844e65da4ed300dba8cccffac9fe585d8",
+      "bytes": 2036
+    },
+    {
+      "path": "docs-provenance/independent-final-review.json",
+      "sha256": "e920fe1d6a11cbf8a96785f4179649e4b30dacfb871e47b0f21c1287c669ff64",
+      "bytes": 40517
+    },
+    {
+      "path": "docs-provenance/bounded-ui-capability-review.json",
+      "sha256": "bd3699aa145ed6629c2abbef47e261d3b0c2facf989e83e2a0484c3466b58d9c",
+      "bytes": 31790
+    },
+    {
+      "path": "union-validation/r19-frozen-final/final-validation.json",
+      "sha256": "2c7cf8e15a7624a1da695b4878ebefab44fdc126c7ee66760ca3142968a9be37",
+      "bytes": 259259
+    },
+    {
+      "path": "union-validation/r20-appearance-final/final-validation.json",
+      "sha256": "2d876fddb72d5ef2834258e833c16329272a5bdfee83002bc0c242fc5fc28fef",
+      "bytes": 11926
+    },
+    {
+      "path": "union-validation/b841-electron-summary.json",
+      "sha256": "af15a256f7a86e4a94677092038cf231ae438ff20f07775d3f312f691225190d",
+      "bytes": 695156
+    },
+    {
+      "path": "union-validation/a4ca-electron-summary.json",
+      "sha256": "e82132f9ee02579d9e3fc1bd127c0f335a0e6773c1a69ab65cf94e8cf7bf73f0",
+      "bytes": 696920
+    },
+    {
+      "path": "union-validation/a4ca-canonical-failure-summary.json",
+      "sha256": "0fc48cc772530e70cdcb3b52e5035cf38ad168c7cb2904f075a73d5231db3521",
+      "bytes": 3944
+    },
+    {
+      "path": "union-validation/a4ca-to-p010-source-equivalence.json",
+      "sha256": "9e5468025e41c6108e4eff741b492801832c22dc1cff65993689df083be8141f",
+      "bytes": 854
+    },
+    {
+      "path": "union-validation/p010-canonical-delivery-summary.json",
+      "sha256": "105bf3574695fac856c9970666d53aaacb6bc23e051293740539424ea7ca8701",
+      "bytes": 16472
+    },
+    {
+      "path": "union-validation/p010-canonical-delivery-after.json",
+      "sha256": "26c9b6d2d96ac23e772b3a898d235c885f14e0967fff63d8fe6d791824f6e25a",
+      "bytes": 13546631
+    },
+    {
+      "path": "union-validation/p010-runtime-artifact-integrity.json",
+      "sha256": "589f90b19cae84eaba1d03b3b77709c4ed4814a343af40bb43b299337a7c39bd",
+      "bytes": 141
+    },
+    {
+      "path": "union-validation/p010-own-runtime-cleanup.json",
+      "sha256": "326337b347c7ec17cd8bd66d52aa35486849022c2ee083949dcb0b6b25922569",
+      "bytes": 205
+    },
+    {
+      "path": "union-validation/p010-original-after.json",
+      "sha256": "9bacfa6f9e1329fc9698d29bc1109771fc7b5b828fb6f1395b0a0e5b0adbf7cf",
+      "bytes": 174
+    },
+    {
+      "path": "union-validation/r24-daa7-final/final-validation.json",
+      "sha256": "8b172de04f8d94cb43ad128148f9ac7e013e06613ff6c45a6f71451f0a3d4334",
+      "bytes": 21908
+    },
+    {
+      "path": "union-validation/r24-daa7-final/executed-cases.json",
+      "sha256": "3621c1824c2f5590ef28e4fc76e6793b787a4d7d268869b8b0324b6f3a2628a1",
+      "bytes": 174256
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/hosted-receipts-010.json",
+      "sha256": "e1b310fc3a8e737c9e04f2354512302ee6a0473a8ddae355c35c1d38a2a08ef1",
+      "bytes": 57084
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/codeql-review-pending-010.json",
+      "sha256": "4cfcc16cc5213ebde859a8a265a342c4a39a6297cc0b31a5e52d0e21ec80e4cd",
+      "bytes": 40971
+    },
+    {
+      "path": "ui-runtime/run-union/revision-bound-green-summary.json",
+      "sha256": "e901a6c5556fb5f3f47adaaa676cca65ef8c335fe959247847cff3beeaa49823",
+      "bytes": 22437
+    },
+    {
+      "path": "ui-runtime/run-union/revision-bound-green-report.md",
+      "sha256": "d561bb1d7023dc6d9924f0da3a630b33ee248bb25c6a2ad41c25802c39734395",
+      "bytes": 5872
+    },
+    {
+      "path": "ui-runtime/run-union/built-assets/sha256.json",
+      "sha256": "3bd9e3580e4f64d68e77dbffa2f335f1310176d793f04bfe19ff507e33804b63",
+      "bytes": 1628
+    },
+    {
+      "path": "integration-notes/r15-final-remaining-gates.json",
+      "sha256": "fca5f12378d579e31de54633e0ababdd858a3a8f55a9b6cf6d2f2dbe176f889a",
+      "bytes": 27573
+    },
+    {
+      "path": "integration-notes/r15-final-remaining-gates.md",
+      "sha256": "b6d32f4fcb14b2f177669c97e12fedebab46e43d931f51fd01bf8c9e2fdfc406",
+      "bytes": 4108
+    },
+    {
+      "path": "integration-root/r15-delivery-report.final-staging.md",
+      "sha256": "e8e4491f3a4308167507e501fed2748c9e48936675b92fb9b20e11df7814adc7",
+      "bytes": 19025
+    },
+    {
+      "path": "union-validation/r19-subprocess-build.json",
+      "sha256": "35c05a89b983cf7fcb78a4cce0d293f4f805eb01a45df58de8b4067156c07677",
+      "bytes": 756
+    },
+    {
+      "path": "union-validation/r23-webui-build.json",
+      "sha256": "c0a2fb8949b6630e8551f05c61be1e20c31156b411e7d9942b3f5e02b15389cb",
+      "bytes": 729
+    },
+    {
+      "path": "union-validation/r23-bun-server-build.json",
+      "sha256": "64f8eac1722c951060299df4ef6427403c92db8ed1e41d0762461d635e17dd6a",
+      "bytes": 913
+    }
+  ],
+  "evidenceLocation": "docs/cloud-all-surfaces-evidence-20260930 (selected); /workspace/rox-r15-evidence-20260930 (complete retained evidence)"
+}

@@ -1,0 +1,4436 @@
+{
+  "cases": [
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > finds haiku for anthropic provider",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 15,
+      "sourceDeclarationLine": 26
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > finds mini for pi provider",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 16,
+      "sourceDeclarationLine": 37
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > skips denied codex-mini-latest alias for pi provider",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 17,
+      "sourceDeclarationLine": 45
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > skips denied pi/codex-mini-latest alias for pi provider",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 18,
+      "sourceDeclarationLine": 54
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > finds mini for pi_compat provider",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 19,
+      "sourceDeclarationLine": 63
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > finds mini for Pi list with mixed models",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 20,
+      "sourceDeclarationLine": 73
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > finds mini even when model name has \"mini\" in different position",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 21,
+      "sourceDeclarationLine": 83
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > falls back to last model when Pi list has no mini/flash model",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 22,
+      "sourceDeclarationLine": 92
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > returns undefined for empty model list",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 23,
+      "sourceDeclarationLine": 103
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > returns undefined for undefined models",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 24,
+      "sourceDeclarationLine": 108
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > falls back to last model when no keyword match",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 25,
+      "sourceDeclarationLine": 113
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > prefers rox/fast for omp public catalog",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 26,
+      "sourceDeclarationLine": 122
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > fallback ignores denied alias and returns last allowed model",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 27,
+      "sourceDeclarationLine": 133
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() > handles single-model list",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 28,
+      "sourceDeclarationLine": 142
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getSummarizationModel() > returns same result as getMiniModel (shared implementation)",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 29,
+      "sourceDeclarationLine": 153
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() \u2014 auth-flavor awareness > skips *codex-mini* variants under openai-codex auth",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 30,
+      "sourceDeclarationLine": 168
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() \u2014 auth-flavor awareness > still returns *codex-mini* variants under regular openai (API-key) auth",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 31,
+      "sourceDeclarationLine": 181
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "getMiniModel() \u2014 auth-flavor awareness > falls back to last allowed model when every mini candidate is denied",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 32,
+      "sourceDeclarationLine": 190
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "isDeniedMiniModelId() > always denies codex-mini-latest",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 33,
+      "sourceDeclarationLine": 208
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "isDeniedMiniModelId() > denies *codex-mini* variants only under openai-codex auth",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 34,
+      "sourceDeclarationLine": 214
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "isDeniedMiniModelId() > does not deny non-codex-mini models",
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "logLine": 35,
+      "sourceDeclarationLine": 221
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > excludes codex-mini-latest for openai models",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 45,
+      "sourceDeclarationLine": 5
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > excludes all gpt-4* models for openai models",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 46,
+      "sourceDeclarationLine": 11
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > keeps Claude Opus 4.6 models in Anthropic catalogs",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 47,
+      "sourceDeclarationLine": 17
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > includes DeepSeek in the Pi API key provider list with a human-readable label",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 48,
+      "sourceDeclarationLine": 26
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > returns current DeepSeek models from the Pi SDK catalog",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 49,
+      "sourceDeclarationLine": 31
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > returns current Kimi Code models with K3 first-class metadata",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 50,
+      "sourceDeclarationLine": 38
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > includes Moonshot AI in the Pi API key provider list with human-readable labels",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 51,
+      "sourceDeclarationLine": 55
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > returns Claude Opus 5 from the Pi SDK catalog for Anthropic and Bedrock",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 52,
+      "sourceDeclarationLine": 61
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > returns the DeepSeek V4 Flash vision model from the Pi SDK catalog",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 53,
+      "sourceDeclarationLine": 70
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > returns GPT-6 Astra from the Pi SDK catalog for OpenAI API keys and ChatGPT accounts",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 54,
+      "sourceDeclarationLine": 75
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "outcome": "pass",
+      "actualName": "models-pi filtering > returns Kimi K3 from the Pi SDK catalog for both Moonshot providers",
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "logLine": 55,
+      "sourceDeclarationLine": 81
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > migrates legacy anthropic_compat connections into anthropic_compat with endpoint metadata",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 65,
+      "sourceDeclarationLine": 97
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > upgrades temporary pi_compat anthropic-messages connections into anthropic_compat",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 66,
+      "sourceDeclarationLine": 123
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > repairs broken pi-api-key openai-codex provider on startup migration",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 67,
+      "sourceDeclarationLine": 150
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > preserves userDefined3Tier model subsets during startup migration",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 68,
+      "sourceDeclarationLine": 174
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > normalizes auto mode model set back to provider defaults",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 69,
+      "sourceDeclarationLine": 203
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > repairs userDefined3Tier lists by removing invalid IDs and fixing default model",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 70,
+      "sourceDeclarationLine": 231
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > falls back to provider defaults when userDefined3Tier becomes empty after filtering",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 71,
+      "sourceDeclarationLine": 257
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "startup migration (integration) > normalizes legacy unprefixed userDefined3Tier model IDs instead of resetting",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 72,
+      "sourceDeclarationLine": 286
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > keeps direct Anthropic Opus 4.6 default/model entries intact",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 73,
+      "sourceDeclarationLine": 338
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > restores Opus 4.6 once to direct Anthropic connections and respects a later removal",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 74,
+      "sourceDeclarationLine": 370
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > migrates direct Anthropic Opus 4.5 defaults straight to Opus 4.8",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 75,
+      "sourceDeclarationLine": 412
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > migrates previous direct Anthropic Opus 4.7 defaults to Opus 4.8 while keeping 4.7 selectable",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 76,
+      "sourceDeclarationLine": 436
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > keeps workspace default Opus 4.6 unchanged",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 77,
+      "sourceDeclarationLine": 474
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > migrates workspace default Opus 4.7 to Opus 4.8",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 78,
+      "sourceDeclarationLine": 499
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > keeps Pi Anthropic Opus 4.6 IDs unchanged",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 79,
+      "sourceDeclarationLine": 524
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > keeps Pi Bedrock Opus 4.6 native IDs unchanged",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 80,
+      "sourceDeclarationLine": 552
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > migrates legacy unprefixed Pi Anthropic Opus 4.6 IDs to pi-prefixed Opus 4.6",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 81,
+      "sourceDeclarationLine": 580
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > migrates legacy Bedrock provider Opus 4.6 IDs to Pi Bedrock native Opus 4.6 IDs",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 82,
+      "sourceDeclarationLine": 604
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "legacy Opus migration to default Opus (integration) > migrates seeded rox-kimi kimi-K3 connections onto the public ROX plane",
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "logLine": 83,
+      "sourceDeclarationLine": 629
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldMigratePiOpenAiProvider > migrates legacy Pi OAuth OpenAI connections to openai-codex",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 86,
+      "sourceDeclarationLine": 5
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldMigratePiOpenAiProvider > does not migrate Pi API key OpenAI connections",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 87,
+      "sourceDeclarationLine": 13
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldMigratePiOpenAiProvider > does not migrate Pi custom endpoint connections",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 88,
+      "sourceDeclarationLine": 21
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldMigratePiOpenAiProvider > does not migrate already-correct openai-codex connections",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 89,
+      "sourceDeclarationLine": 30
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldRepairPiApiKeyCodexProvider > repairs Pi API key connections that were incorrectly set to openai-codex",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 90,
+      "sourceDeclarationLine": 40
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldRepairPiApiKeyCodexProvider > repairs Pi API key with endpoint connections that were incorrectly set to openai-codex",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 91,
+      "sourceDeclarationLine": 48
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldRepairPiApiKeyCodexProvider > does not repair OAuth openai-codex connections",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 92,
+      "sourceDeclarationLine": 56
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "shouldRepairPiApiKeyCodexProvider > does not repair non-OpenAI-Codex providers",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 93,
+      "sourceDeclarationLine": 64
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "inferModelSelectionMode > infers automaticallySyncedFromProvider when model list equals provider defaults",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 94,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "inferModelSelectionMode > infers userDefined3Tier when model list is a custom subset",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 95,
+      "sourceDeclarationLine": 80
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "inferModelSelectionMode > infers automaticallySyncedFromProvider for empty model lists",
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "logLine": 96,
+      "sourceDeclarationLine": 86
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelsForConnection > anthropic returns ANTHROPIC_MODELS (ModelDefinition[])",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 99,
+      "sourceDeclarationLine": 22
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelsForConnection > pi with piAuthProvider returns filtered models including Opus 4.6",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 100,
+      "sourceDeclarationLine": 32
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelsForConnection > pi without piAuthProvider returns all Pi models",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 101,
+      "sourceDeclarationLine": 43
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > returns first model ID for anthropic",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 102,
+      "sourceDeclarationLine": 55
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > regression: Pi anthropic default is in its own model list",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 103,
+      "sourceDeclarationLine": 64
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > Pi anthropic keeps Opus 4.8 as default with Opus 5 ranked directly below it",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 104,
+      "sourceDeclarationLine": 71
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > never ranks a deprecated catalog entry as the Pi default",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 105,
+      "sourceDeclarationLine": 81
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > Pi openai default is in its own model list",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 106,
+      "sourceDeclarationLine": 104
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > Pi openai and openai-codex default to GPT-6 Astra with GPT-5.6 Sol ranked next",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 107,
+      "sourceDeclarationLine": 111
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > Pi deepseek default is in its own model list",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 108,
+      "sourceDeclarationLine": 120
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > Pi moonshotai defaults to Kimi K3 from its own model list",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 109,
+      "sourceDeclarationLine": 127
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > returns empty string for pi_compat (dynamic provider)",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 110,
+      "sourceDeclarationLine": 137
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > returns empty string for anthropic_compat (dynamic provider)",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 111,
+      "sourceDeclarationLine": 142
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "getDefaultModelForConnection > omp defaults to the public ROX catalog with rox/standard as default",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 112,
+      "sourceDeclarationLine": 147
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isCompatProvider > returns true for pi_compat",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 113,
+      "sourceDeclarationLine": 160
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isCompatProvider > returns true for anthropic_compat",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 114,
+      "sourceDeclarationLine": 164
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isCompatProvider > returns false for anthropic",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 115,
+      "sourceDeclarationLine": 168
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isCompatProvider > returns false for pi",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 116,
+      "sourceDeclarationLine": 172
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isAnthropicProvider > returns true for anthropic",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 117,
+      "sourceDeclarationLine": 178
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isAnthropicProvider > returns true for anthropic_compat",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 118,
+      "sourceDeclarationLine": 182
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isAnthropicProvider > returns false for pi",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 119,
+      "sourceDeclarationLine": 186
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isPiProvider > returns true for pi",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 120,
+      "sourceDeclarationLine": 192
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isPiProvider > returns true for pi_compat",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 121,
+      "sourceDeclarationLine": 196
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isPiProvider > returns false for anthropic_compat",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 122,
+      "sourceDeclarationLine": 200
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "isPiProvider > returns false for anthropic",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 123,
+      "sourceDeclarationLine": 204
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > maps bare Anthropic IDs to US inference profile IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 124,
+      "sourceDeclarationLine": 214
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > keeps Opus 4.7 mapped and selectable",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 125,
+      "sourceDeclarationLine": 220
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > maps Sonnet 5 forward and reverse across regions and base IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 126,
+      "sourceDeclarationLine": 225
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > normalizes deprecated Opus IDs to Opus 4.8 before mapping, keeping Opus 4.6",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 127,
+      "sourceDeclarationLine": 234
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > maps base Bedrock IDs to US inference profile IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 128,
+      "sourceDeclarationLine": 241
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > passes through already US-prefixed IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 129,
+      "sourceDeclarationLine": 246
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > passes through unknown IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 130,
+      "sourceDeclarationLine": 250
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > maps to EU inference profiles when regionPrefix is eu",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 131,
+      "sourceDeclarationLine": 255
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > defaults to US when regionPrefix is omitted or us",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 132,
+      "sourceDeclarationLine": 260
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "toBedrockNativeId > passes through unknown IDs regardless of regionPrefix",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 133,
+      "sourceDeclarationLine": 265
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "deriveBedrockRegionPrefix > returns us for US regions",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 134,
+      "sourceDeclarationLine": 271
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "deriveBedrockRegionPrefix > returns eu for EU regions",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 135,
+      "sourceDeclarationLine": 276
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "deriveBedrockRegionPrefix > returns us for other regions (fallback)",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 136,
+      "sourceDeclarationLine": 281
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "deriveBedrockRegionPrefix > returns us when undefined",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 137,
+      "sourceDeclarationLine": 286
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Bedrock preferred defaults ordering > sorts preferred models first for amazon-bedrock",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 138,
+      "sourceDeclarationLine": 292
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Kimi preferred defaults ordering > uses Kimi K3 as the default Kimi Code model",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 139,
+      "sourceDeclarationLine": 302
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "fromBedrockNativeId > maps US inference profile IDs back to bare Anthropic",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 140,
+      "sourceDeclarationLine": 312
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "fromBedrockNativeId > maps EU/Global inference profile IDs back to bare",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 141,
+      "sourceDeclarationLine": 318
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "fromBedrockNativeId > maps base Bedrock IDs back to bare",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 142,
+      "sourceDeclarationLine": 323
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "fromBedrockNativeId > passes through bare IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 143,
+      "sourceDeclarationLine": 327
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "fromBedrockNativeId > maps Opus 4.6 native IDs back to the bare ID",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 144,
+      "sourceDeclarationLine": 331
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "normalizeBedrockModelId > strips pi/ prefix and maps to US inference profile",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 145,
+      "sourceDeclarationLine": 337
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "normalizeBedrockModelId > maps bare IDs to US inference profile",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 146,
+      "sourceDeclarationLine": 342
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "normalizeBedrockModelId > maps Opus 4.6 IDs to their own native IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 147,
+      "sourceDeclarationLine": 346
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "normalizeBedrockModelId > maps base Bedrock IDs to US inference profile",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 148,
+      "sourceDeclarationLine": 351
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "normalizeBedrockModelId > is idempotent for already US-prefixed IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 149,
+      "sourceDeclarationLine": 355
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "normalizeBedrockModelId > handles empty/undefined",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 150,
+      "sourceDeclarationLine": 359
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "normalizeBedrockModelId > respects regionPrefix for EU",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 151,
+      "sourceDeclarationLine": 364
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Bedrock-native model display > getModelDisplayName resolves US inference profile IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 152,
+      "sourceDeclarationLine": 375
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Bedrock-native model display > getModelDisplayName resolves EU/base Bedrock IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 153,
+      "sourceDeclarationLine": 381
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Bedrock-native model display > getModelShortName resolves Bedrock IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 154,
+      "sourceDeclarationLine": 386
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Bedrock-native model display > getModelContextWindow resolves Bedrock IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 155,
+      "sourceDeclarationLine": 391
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Bedrock-native model display > isClaudeModel recognizes Bedrock IDs",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 156,
+      "sourceDeclarationLine": 396
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5 > is registered as an Anthropic model with the expected metadata",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 157,
+      "sourceDeclarationLine": 408
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5 > resolves display/short name, context window, and Claude detection",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 158,
+      "sourceDeclarationLine": 418
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5 > does NOT become the Anthropic default (Opus 4.8 stays default)",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 159,
+      "sourceDeclarationLine": 425
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5 > round-trips through the Bedrock inference-profile mapping",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 160,
+      "sourceDeclarationLine": 429
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5.1 > is registered as an Anthropic model with the expected metadata",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 161,
+      "sourceDeclarationLine": 446
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5.1 > is listed before Fable 5 so the newest Fable wins shortName resolution",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 162,
+      "sourceDeclarationLine": 456
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5.1 > resolves display/short name, context window, and Claude detection",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 163,
+      "sourceDeclarationLine": 462
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5.1 > does NOT become the Anthropic default (Opus 4.8 stays default)",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 164,
+      "sourceDeclarationLine": 469
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5.1 > round-trips through the Bedrock inference-profile mapping",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 165,
+      "sourceDeclarationLine": 473
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "Claude Fable 5.1 > the 5.1 and 5.0 ids never cross-map through the Bedrock tables",
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "logLine": 166,
+      "sourceDeclarationLine": 484
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "default thinking level storage > falls back to bundled default when no app-level default is set",
+      "file": "packages/shared/src/config/__tests__/default-thinking-level.test.ts",
+      "logLine": 169,
+      "sourceDeclarationLine": 89
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "default thinking level storage > persists defaultThinkingLevel to config.json",
+      "file": "packages/shared/src/config/__tests__/default-thinking-level.test.ts",
+      "logLine": 170,
+      "sourceDeclarationLine": 95
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "default thinking level storage > round-trips persisted value across get/set in a fresh process",
+      "file": "packages/shared/src/config/__tests__/default-thinking-level.test.ts",
+      "logLine": 171,
+      "sourceDeclarationLine": 107
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "default thinking level storage > supports every thinking level",
+      "file": "packages/shared/src/config/__tests__/default-thinking-level.test.ts",
+      "logLine": 172,
+      "sourceDeclarationLine": 118
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "outcome": "pass",
+      "actualName": "default thinking level storage > migrates legacy \"think\" value to \"medium\"",
+      "file": "packages/shared/src/config/__tests__/default-thinking-level.test.ts",
+      "logLine": 173,
+      "sourceDeclarationLine": 133
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "SecureStorageBackend CF-2 recovery > quarantines a corrupt store instead of deleting the evidence",
+      "file": "packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts",
+      "logLine": 183,
+      "sourceDeclarationLine": 15
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "SecureStorageBackend CF-2 recovery > blocks writes after repair_required and does not plant an empty store",
+      "file": "packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts",
+      "logLine": 184,
+      "sourceDeclarationLine": 46
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "SecureStorageBackend CF-2 recovery > keeps a last-good backup and restores it",
+      "file": "packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts",
+      "logLine": 185,
+      "sourceDeclarationLine": 60
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "SecureStorageBackend CF-2 recovery > does not rewrite the file when a legacy-key store is only read",
+      "file": "packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts",
+      "logLine": 186,
+      "sourceDeclarationLine": 78
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "SecureStorageBackend CF-2 recovery > writes a payload-free migration manifest on explicit cutover",
+      "file": "packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts",
+      "logLine": 187,
+      "sourceDeclarationLine": 92
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > round-trips a scalar credential payload and records a stable fingerprint",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 190,
+      "sourceDeclarationLine": 12
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > fingerprints equivalent payload key order identically",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 191,
+      "sourceDeclarationLine": 22
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > rejects mappings and lists where a scalar payload is required",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 192,
+      "sourceDeclarationLine": 29
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > fails closed for tampering and malformed envelopes",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 193,
+      "sourceDeclarationLine": 34
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > wraps a legacy payload in memory without rewriting it",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 194,
+      "sourceDeclarationLine": 41
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > rejects an invalid kind for legacy wrapping",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 195,
+      "sourceDeclarationLine": 48
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > rejects empty value and kind-illegal fields",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 196,
+      "sourceDeclarationLine": 54
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > rejects unapproved GCP ADC metadata",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 197,
+      "sourceDeclarationLine": 62
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > accepts oauth refresh metadata and requires aws access key id",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 198,
+      "sourceDeclarationLine": 71
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "credential envelope v1 > does not wrap a bare token string as legacy",
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "logLine": 199,
+      "sourceDeclarationLine": 88
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 ConnectionWorkGraph > creates a metadata-only connection and rejects secret fields",
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "logLine": 202,
+      "sourceDeclarationLine": 11
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 ConnectionWorkGraph > binds consumers and closes over one workspace only",
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "logLine": 203,
+      "sourceDeclarationLine": 47
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 ConnectionWorkGraph > appends an immutable metadata-only audit ledger with readable fields",
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "logLine": 204,
+      "sourceDeclarationLine": 93
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 ConnectionWorkGraph > rolls back a failed transaction",
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "logLine": 205,
+      "sourceDeclarationLine": 127
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 ConnectionWorkGraph persistence > persists connections, bindings, and audit then reloads",
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "logLine": 206,
+      "sourceDeclarationLine": 155
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 ConnectionWorkGraph persistence > rolls back persisted files when a transaction fails",
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "logLine": 207,
+      "sourceDeclarationLine": 204
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 ConnectionWorkGraph persistence > keeps workspace isolation across reload",
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "logLine": 208,
+      "sourceDeclarationLine": 236
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 revoke, closure, revalidate > invalidates leases, audits, and revalidates only the same workspace",
+      "file": "packages/core/src/platform/identity/revalidation.test.ts",
+      "logLine": 211,
+      "sourceDeclarationLine": 10
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-5 revoke, closure, revalidate > rejects an unknown connection without touching the broker",
+      "file": "packages/core/src/platform/identity/revalidation.test.ts",
+      "logLine": 212,
+      "sourceDeclarationLine": 105
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 discovery parsers > extracts dotenv keys without values or shell expansion",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 215,
+      "sourceDeclarationLine": 46
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 discovery parsers > parses git helpers from config text only",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 216,
+      "sourceDeclarationLine": 53
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 discovery parsers > parses docker credsStore and per-registry helpers",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 217,
+      "sourceDeclarationLine": 59
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 discovery parsers > parses named AWS profiles without inventing a default section",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 218,
+      "sourceDeclarationLine": 69
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 discovery parsers > redacts ADC JSON so private_key never appears",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 219,
+      "sourceDeclarationLine": 78
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 discovery parsers > builds stable metadata fingerprints",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 220,
+      "sourceDeclarationLine": 89
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 importers > discovers metadata-only candidates for every P0 source",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 221,
+      "sourceDeclarationLine": 98
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 importers > masks preview and never returns helper or env values",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 222,
+      "sourceDeclarationLine": 146
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 importers > rejects dotenv traversal and ssh copy mode",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 223,
+      "sourceDeclarationLine": 158
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 importers > commits copy material as a sealed handle and rolls it back",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 224,
+      "sourceDeclarationLine": 175
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "P0 importers > round-trips sealed secrets without exposing plaintext on the handle brand alone",
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "logLine": 225,
+      "sourceDeclarationLine": 235
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > lists dotenv files from cwd and home without traversal",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 228,
+      "sourceDeclarationLine": 61
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > reads git/docker/aws config text from the fixture home only",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 229,
+      "sourceDeclarationLine": 73
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > returns GCP ADC metadata without private_key",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 230,
+      "sourceDeclarationLine": 81
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > prefers GOOGLE_APPLICATION_CREDENTIALS when set",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 231,
+      "sourceDeclarationLine": 92
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > fail-softs ssh identities without SSH_AUTH_SOCK",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 232,
+      "sourceDeclarationLine": 110
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > returns empty keychain unless items are injected",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 233,
+      "sourceDeclarationLine": 116
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > approveCopy seals dotenv values and never leaks them via inspect/preview",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 234,
+      "sourceDeclarationLine": 131
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createOsDiscoveryHost > fail-softs missing home config files",
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "logLine": 235,
+      "sourceDeclarationLine": 171
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-8 InfisicalFabricProvider > write + inspect exposes hasMaterial without token material",
+      "file": "packages/core/src/platform/identity/infisical-fabric-provider.test.ts",
+      "logLine": 238,
+      "sourceDeclarationLine": 27
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-8 InfisicalFabricProvider > health fails closed on 401",
+      "file": "packages/core/src/platform/identity/infisical-fabric-provider.test.ts",
+      "logLine": 239,
+      "sourceDeclarationLine": 63
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-8 InfisicalFabricProvider > discoverAccount reports connected without leaking the token",
+      "file": "packages/core/src/platform/identity/infisical-fabric-provider.test.ts",
+      "logLine": 240,
+      "sourceDeclarationLine": 87
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-8 InfisicalFabricProvider > rotate without fetch fails closed; revoke without fetch clears local metadata",
+      "file": "packages/core/src/platform/identity/infisical-fabric-provider.test.ts",
+      "logLine": 241,
+      "sourceDeclarationLine": 99
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-8 InfisicalFabricProvider > rotate with stub fetch succeeds and still returns no raw secret",
+      "file": "packages/core/src/platform/identity/infisical-fabric-provider.test.ts",
+      "logLine": 242,
+      "sourceDeclarationLine": 122
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "createInfisicalImporter > discovers locator metadata from env and never returns the token",
+      "file": "packages/core/src/platform/identity/infisical-fabric-provider.test.ts",
+      "logLine": 243,
+      "sourceDeclarationLine": 156
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportSession > walks discover \u2192 access \u2192 preview \u2192 validate \u2192 commit",
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "logLine": 246,
+      "sourceDeclarationLine": 34
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportSession > denies preview before OS/provider access",
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "logLine": 247,
+      "sourceDeclarationLine": 46
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportSession > denies access from the access_requested phase",
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "logLine": 248,
+      "sourceDeclarationLine": 56
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportSession > rejects unknown candidates and illegal transitions",
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "logLine": 249,
+      "sourceDeclarationLine": 68
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportSession > fails closed on a different fingerprint without an explicit decision",
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "logLine": 250,
+      "sourceDeclarationLine": 77
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportSession > keeps same-fingerprint conflicts and explicit decisions open",
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "logLine": 251,
+      "sourceDeclarationLine": 93
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportSession > returns clones so callers cannot mutate session state",
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "logLine": 252,
+      "sourceDeclarationLine": 120
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportService > denies renderer, remote, and headless before importer dispatch",
+      "file": "packages/core/src/platform/identity/import-service.test.ts",
+      "logLine": 255,
+      "sourceDeclarationLine": 37
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportService > commits a copy import on main and stores metadata only",
+      "file": "packages/core/src/platform/identity/import-service.test.ts",
+      "logLine": 256,
+      "sourceDeclarationLine": 57
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportService > reuses an existing same-fingerprint reference",
+      "file": "packages/core/src/platform/identity/import-service.test.ts",
+      "logLine": 257,
+      "sourceDeclarationLine": 67
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportService > fails closed on a different fingerprint",
+      "file": "packages/core/src/platform/identity/import-service.test.ts",
+      "logLine": 258,
+      "sourceDeclarationLine": 90
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "ImportService > rolls back when the provider write fails",
+      "file": "packages/core/src/platform/identity/import-service.test.ts",
+      "logLine": 259,
+      "sourceDeclarationLine": 119
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "JsonAccessGrantStore > lists grants for a consumer within one workspace",
+      "file": "packages/core/src/platform/identity/grants.test.ts",
+      "logLine": 262,
+      "sourceDeclarationLine": 11
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "JsonAccessGrantStore > lists all grants without a workspace filter",
+      "file": "packages/core/src/platform/identity/grants.test.ts",
+      "logLine": 263,
+      "sourceDeclarationLine": 40
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "JsonAccessGrantStore > lists all grants filtered by workspace",
+      "file": "packages/core/src/platform/identity/grants.test.ts",
+      "logLine": 264,
+      "sourceDeclarationLine": 66
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "JsonAccessGrantStore persistence > persists grants as JSON and reloads them",
+      "file": "packages/core/src/platform/identity/grants.test.ts",
+      "logLine": 265,
+      "sourceDeclarationLine": 108
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "JsonAccessGrantStore persistence > keeps workspace isolation after reload",
+      "file": "packages/core/src/platform/identity/grants.test.ts",
+      "logLine": 266,
+      "sourceDeclarationLine": 132
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-7 GitHub vertical > importGithubFromEnv commits dotenv candidate without storing the token",
+      "file": "packages/core/src/platform/identity/github-vertical.test.ts",
+      "logLine": 269,
+      "sourceDeclarationLine": 33
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-7 GitHub vertical > importGithubFromEnv accepts injectedToken when no env candidate exists",
+      "file": "packages/core/src/platform/identity/github-vertical.test.ts",
+      "logLine": 270,
+      "sourceDeclarationLine": 62
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-7 GitHub vertical > runGithubVertical sends Authorization Bearer and returns metadata only",
+      "file": "packages/core/src/platform/identity/github-vertical.test.ts",
+      "logLine": 271,
+      "sourceDeclarationLine": 76
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-7 GitHub vertical > denies when AccessGrant is missing",
+      "file": "packages/core/src/platform/identity/github-vertical.test.ts",
+      "logLine": 272,
+      "sourceDeclarationLine": 105
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CF-7 GitHub vertical > fails closed when GitHub returns 401",
+      "file": "packages/core/src/platform/identity/github-vertical.test.ts",
+      "logLine": 273,
+      "sourceDeclarationLine": 126
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > creates opaque stable refs and stores metadata only",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 276,
+      "sourceDeclarationLine": 17
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > keeps the ref identity while replacing provider metadata",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 277,
+      "sourceDeclarationLine": 37
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > tracks versions as metadata and clears the current version on revoke",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 278,
+      "sourceDeclarationLine": 63
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects an invalid version status at runtime",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 279,
+      "sourceDeclarationLine": 92
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects malformed metadata instead of accepting a secret payload",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 280,
+      "sourceDeclarationLine": 110
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects locator prototype-derived fields before registration or provider replacement",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 281,
+      "sourceDeclarationLine": 138
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects locator non-enumerable fields before registration or provider replacement",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 282,
+      "sourceDeclarationLine": 138
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects locator symbol fields before registration or provider replacement",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 283,
+      "sourceDeclarationLine": 138
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects locator type accessors without executing them",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 284,
+      "sourceDeclarationLine": 159
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects locator key accessors without executing them",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 285,
+      "sourceDeclarationLine": 159
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > accepts enumerable readonly and frozen locator data fields",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 286,
+      "sourceDeclarationLine": 176
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects hidden and nested secret fields at the registry boundary",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 287,
+      "sourceDeclarationLine": 186
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects a duplicate CredentialRef id and keeps the first record",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 288,
+      "sourceDeclarationLine": 220
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects register with an orphan currentVersionId",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 289,
+      "sourceDeclarationLine": 240
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects reviving a revoked version to active",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 290,
+      "sourceDeclarationLine": 252
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects reviving an invalid version to active",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 291,
+      "sourceDeclarationLine": 271
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > keeps terminal version statuses irreversible",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 292,
+      "sourceDeclarationLine": 290
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > makes a reactivated superseded version the sole current active version",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 293,
+      "sourceDeclarationLine": 307
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > leaves version state unchanged when reactivation cannot read the clock",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 294,
+      "sourceDeclarationLine": 331
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects a version fingerprint that is not 64 hex characters",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 295,
+      "sourceDeclarationLine": 360
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects infisical locators with empty projectId or secretKey",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 296,
+      "sourceDeclarationLine": 380
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects unknown version payload fields",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 297,
+      "sourceDeclarationLine": 428
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > generates browser-safe cred UUID identifiers",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 298,
+      "sourceDeclarationLine": 453
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > returns clones instead of mutable registry state",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 299,
+      "sourceDeclarationLine": 458
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > accepts P0 locators and still rejects unknown locator types",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 300,
+      "sourceDeclarationLine": 474
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > rejects an expiry before creation",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 301,
+      "sourceDeclarationLine": 505
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > does not silently replace the current version with an older active version",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 302,
+      "sourceDeclarationLine": 525
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > keeps ref timestamps monotonic by clamping instead of blocking revocation",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 303,
+      "sourceDeclarationLine": 555
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > revokes a version whose createdAt is far in the future",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 304,
+      "sourceDeclarationLine": 577
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > moves ref updatedAt forward only when provider metadata changes",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 305,
+      "sourceDeclarationLine": 600
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > does not let an untrimmed id overwrite an existing version",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 306,
+      "sourceDeclarationLine": 620
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > treats credential ref ids as case-sensitive",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 307,
+      "sourceDeclarationLine": 651
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > bounds caller-controlled text interpolated into errors",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 308,
+      "sourceDeclarationLine": 667
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "CredentialRefRegistry > lists versions deterministically by creation time and id",
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "logLine": 309,
+      "sourceDeclarationLine": 681
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "InProcessCredentialBroker > denies by default when no grant exists",
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "logLine": 312,
+      "sourceDeclarationLine": 47
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "InProcessCredentialBroker > denies wrong workspace, action, or resource even with a grant",
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "logLine": 313,
+      "sourceDeclarationLine": 61
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "InProcessCredentialBroker > issues a metadata-only lease and never returns payload",
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "logLine": 314,
+      "sourceDeclarationLine": 107
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "InProcessCredentialBroker > rejects env-legacy unless the consumer declares it",
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "logLine": 315,
+      "sourceDeclarationLine": 136
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "InProcessCredentialBroker > revokes an active lease so a later acquire cannot reuse it",
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "logLine": 316,
+      "sourceDeclarationLine": 173
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "InProcessCredentialBroker > executeTrustedHttp injects Authorization from sealed copy and never returns the secret",
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "logLine": 317,
+      "sourceDeclarationLine": 196
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "outcome": "pass",
+      "actualName": "InProcessCredentialBroker > executeTrustedHttp denies a revoked lease before fetch",
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "logLine": 318,
+      "sourceDeclarationLine": 237
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 4,
+      "outcome": "pass",
+      "actualName": "test config isolation > resolves the config root outside the real ~/.craft-agent",
+      "file": "packages/shared/src/config/__tests__/config-isolation.test.ts",
+      "logLine": 328,
+      "sourceDeclarationLine": 23
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "Electron main CommonJS flags cold-load the unchanged SQLite adapter on Node with durable runtime controls",
+      "file": "scripts/electron-main-cjs.test.ts",
+      "logLine": 4,
+      "sourceDeclarationLine": 64
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "Electron main CommonJS module URL follows a relocated bundle with spaces and non-ASCII path characters",
+      "file": "scripts/electron-main-cjs.test.ts",
+      "logLine": 5,
+      "sourceDeclarationLine": 79
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual CLI skips concatenated key expressions while detecting completed literal arguments",
+      "file": "scripts/__tests__/check-i18n-coverage.test.ts",
+      "logLine": 8,
+      "sourceDeclarationLine": 28
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual CLI retains missing complete keys and exact source lines for all supported reference forms",
+      "file": "scripts/__tests__/check-i18n-coverage.test.ts",
+      "logLine": 9,
+      "sourceDeclarationLine": 43
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual CLI preserves escaped literals and plural key resolution",
+      "file": "scripts/__tests__/check-i18n-coverage.test.ts",
+      "logLine": 10,
+      "sourceDeclarationLine": 61
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual CLI still rejects invalid locale interpolation independently of key coverage",
+      "file": "scripts/__tests__/check-i18n-coverage.test.ts",
+      "logLine": 11,
+      "sourceDeclarationLine": 70
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > uses only the authoritative HTTP default, including an exact URL match",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 14,
+      "sourceDeclarationLine": 29
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses missing or malformed default null",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 15,
+      "sourceDeclarationLine": 35
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses missing or malformed default {}",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 16,
+      "sourceDeclarationLine": 35
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses missing or malformed default {\"defaultWorkspaceId\":null}",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 17,
+      "sourceDeclarationLine": 35
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses missing or malformed default {\"defaultWorkspaceId\":\"\"}",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 18,
+      "sourceDeclarationLine": 35
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses missing or malformed default {\"defaultWorkspaceId\":\" \"}",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 19,
+      "sourceDeclarationLine": 35
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses missing or malformed default {\"defaultWorkspaceId\":\" ws \"}",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 20,
+      "sourceDeclarationLine": 35
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses missing or malformed default {\"defaultWorkspaceId\":42}",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 21,
+      "sourceDeclarationLine": 35
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses mismatched and empty URL workspace rather than replacing the default",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 22,
+      "sourceDeclarationLine": 40
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > requires a real connected ACK with the exact workspace",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 23,
+      "sourceDeclarationLine": 45
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses connected ACK with missing workspace",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 24,
+      "sourceDeclarationLine": 56
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses connected ACK with mismatched workspace",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 25,
+      "sourceDeclarationLine": 56
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses denied handshakes and bounds an unanswered handshake",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 26,
+      "sourceDeclarationLine": 65
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > cancels an active waiter and ignores a late ACK",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 27,
+      "sourceDeclarationLine": 76
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > removes an immediately satisfied subscription",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 28,
+      "sourceDeclarationLine": 86
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > checks browser runtime and actual adapter binding without desktop/provider/native calls",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 29,
+      "sourceDeclarationLine": 93
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses a stale fetch completion and permits a separate retry without leaked clients",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 30,
+      "sourceDeclarationLine": 110
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > destroys the owned client when an acknowledged workspace is rejected",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 31,
+      "sourceDeclarationLine": 137
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > cancels during the handshake and destroys the owned client",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 32,
+      "sourceDeclarationLine": 149
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > refuses a stale adapter validation after cancellation",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 33,
+      "sourceDeclarationLine": 162
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > does not create an adapter for denied HTTP config or mismatched URL scope",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 34,
+      "sourceDeclarationLine": 180
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > finishes renderer readiness through unavailable-host callback before mounting the bound workspace",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 35,
+      "sourceDeclarationLine": 193
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated WebUI workspace bootstrap > does not apply stale renderer readiness callbacks after cancellation",
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "logLine": 36,
+      "sourceDeclarationLine": 215
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "WebUI browser bootstrap > installs browser globals in a cold JavaScript realm before shared initializers",
+      "file": "apps/webui/__tests__/browser-bootstrap.test.ts",
+      "logLine": 39,
+      "sourceDeclarationLine": 9
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "WebUI browser builtins bundle > cold-imports the real renderer stub with a working browser Buffer",
+      "file": "apps/webui/__tests__/node-builtins-bundle.test.ts",
+      "logLine": 42,
+      "sourceDeclarationLine": 11
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "WebUI browser builtins bundle > refuses a browser bundle that requests an unavailable native SQLite API",
+      "file": "apps/webui/__tests__/node-builtins-bundle.test.ts",
+      "logLine": 43,
+      "sourceDeclarationLine": 76
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual custom endpoint provider registration > preserves main openai-completions reasoning and model defaults",
+      "file": "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+      "logLine": 46,
+      "sourceDeclarationLine": 47
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual custom endpoint provider registration > preserves main openai-responses reasoning and model defaults",
+      "file": "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+      "logLine": 47,
+      "sourceDeclarationLine": 47
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual custom endpoint provider registration > preserves main anthropic-messages reasoning and model defaults",
+      "file": "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+      "logLine": 48,
+      "sourceDeclarationLine": 47
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated Notes producer and two independent transport consumers retain a durable offline operation through renderer loss and receipt loss",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 51,
+      "sourceDeclarationLine": 130
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real preload source cache permits durable known-note authoring after socket loss, then reauthorizes and flushes the exact draft",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 52,
+      "sourceDeclarationLine": 195
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "moved and renamed Notes retain immutable identity for durable saves, while a stale cached path conflicts without recreating bytes",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 53,
+      "sourceDeclarationLine": 242
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "renderer-fabricated receipts cannot acknowledge an unsubmitted draft or alter an observed trusted response",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 54,
+      "sourceDeclarationLine": 286
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "closing custody during a committed but delayed RPC response fences receipt registration until stable server replay",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 55,
+      "sourceDeclarationLine": 318
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "preload native creation persists before the first server write and retains exact revision-one receipt and ACK",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 56,
+      "sourceDeclarationLine": 357
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "durable native creation recovers before-submit through renderer loss and stable authenticated replay",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 57,
+      "sourceDeclarationLine": 403
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "durable native creation recovers after-commit through renderer loss and stable authenticated replay",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 58,
+      "sourceDeclarationLine": 403
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "creation plan loses authority after grant change and after managed workspace switch without enqueue or file writes",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 59,
+      "sourceDeclarationLine": 455
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "concurrent same-path native creation rejects the losing mutation, retaining its outbox without overwrite",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 60,
+      "sourceDeclarationLine": 494
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing preload while an actual creation plan response is in flight cannot enqueue or commit",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 61,
+      "sourceDeclarationLine": 527
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "private creation custody rejects foreign owners and malformed plans while public save enqueue remains snapshot-only",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 62,
+      "sourceDeclarationLine": 558
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing creation during context-open cannot submit and preserves only already-persisted intent",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 63,
+      "sourceDeclarationLine": 581
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing creation during ipc-open cannot submit and preserves only already-persisted intent",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 64,
+      "sourceDeclarationLine": 581
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing creation during enqueue cannot submit and preserves only already-persisted intent",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 65,
+      "sourceDeclarationLine": 581
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > rejects traversal and project symlinks outside the authorized workspace projects directory",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 68,
+      "sourceDeclarationLine": 25
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > rejects a stale second writer and preserves the first canonical and derived bytes",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 69,
+      "sourceDeclarationLine": 45
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > refuses an escaped projects-directory symlink and retains the external canonical and Markdown bytes",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 70,
+      "sourceDeclarationLine": 57
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > permits only one of two real processes released with the same observed revision",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 71,
+      "sourceDeclarationLine": 75
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > detects an external edit even when updatedAt is unchanged",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 72,
+      "sourceDeclarationLine": 124
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > does not overwrite corrupt bytes or an existing backup when backup creation fails",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 73,
+      "sourceDeclarationLine": 136
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > refuses a busy writer lock without removing its bytes",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 74,
+      "sourceDeclarationLine": 151
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > returns an exact revision through normal and corrupt reloads",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 75,
+      "sourceDeclarationLine": 160
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "roadmap persistence recovery > keeps unversioned callers compatible while rejecting an invalid observed token",
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "logLine": 76,
+      "sourceDeclarationLine": 182
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "integrated project roadmap AI persistence gate > a refused native save stops AI before any provider request",
+      "file": "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts",
+      "logLine": 79,
+      "sourceDeclarationLine": 27
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "integrated project roadmap AI persistence gate > AI waits for the current queued native receipt even when debounce has already fired",
+      "file": "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts",
+      "logLine": 80,
+      "sourceDeclarationLine": 37
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "integrated project roadmap AI persistence gate > accepting a proposal remains pending until its native receipt and fails after refusal",
+      "file": "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts",
+      "logLine": 81,
+      "sourceDeclarationLine": 53
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual settings save keeps the draft and never reports success after a rejected native update",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 84,
+      "sourceDeclarationLine": 50
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual settings save reports success only after its native update receipt",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 85,
+      "sourceDeclarationLine": 81
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual settings save does not report success when native write authority is unavailable",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 86,
+      "sourceDeclarationLine": 103
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual renderer autosave waits for each receipt, retains a newer draft and persists it using the acknowledged revision",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 87,
+      "sourceDeclarationLine": 120
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual autosave keeps the draft after failure and ignores a late receipt after scope changes",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 88,
+      "sourceDeclarationLine": 161
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual load effect clears an old project and does not arm autosave after a failed read",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 89,
+      "sourceDeclarationLine": 196
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "queue does not advance its observed revision after a refusal or missing receipt",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 90,
+      "sourceDeclarationLine": 227
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual route cleanup flushes the pending draft through the captured old project scope",
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "logLine": 91,
+      "sourceDeclarationLine": 243
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project roadmap > normalizes missing/garbled data without throwing",
+      "file": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+      "logLine": 94,
+      "sourceDeclarationLine": 18
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project roadmap > parses spec answers with fences and applies items one by one",
+      "file": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+      "logLine": 95,
+      "sourceDeclarationLine": 30
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project roadmap > parses clarify questions from JSON or bullet fallback",
+      "file": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+      "logLine": 96,
+      "sourceDeclarationLine": 47
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project roadmap > shifts milestones and computes a timeline window",
+      "file": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+      "logLine": 97,
+      "sourceDeclarationLine": 52
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project roadmap > persists roadmap.json + roadmap.md next to config.json and backs up corrupt files",
+      "file": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+      "logLine": 98,
+      "sourceDeclarationLine": 61
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project roadmap > renders markdown export",
+      "file": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+      "logLine": 99,
+      "sourceDeclarationLine": 84
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "sanitizeAssetFilename > strips control chars and NUL bytes (the literal-NUL regex fix)",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 102,
+      "sourceDeclarationLine": 38
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "sanitizeAssetFilename > strips path separators and leading dots so an upload stays in the assets dir",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 103,
+      "sourceDeclarationLine": 43
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "sanitizeAssetFilename > falls back to a generated name when the input reduces to empty",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 104,
+      "sourceDeclarationLine": 47
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "uploadProjectAsset sourcePath > refuses to read a sourcePath outside the workspace",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 105,
+      "sourceDeclarationLine": 53
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "loadProjectMemory > returns null when MEMORY.md does not exist",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 106,
+      "sourceDeclarationLine": 67
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "loadProjectMemory > returns null when MEMORY.md is whitespace-only",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 107,
+      "sourceDeclarationLine": 72
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "loadProjectMemory > returns content verbatim when under the token cap",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 108,
+      "sourceDeclarationLine": 78
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "loadProjectMemory > head-truncates and appends a marker when over the cap, staying within budget",
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "logLine": 109,
+      "sourceDeclarationLine": 85
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR calculation > normalizes objective and KR weights independently and preserves partial unknown contribution",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 112,
+      "sourceDeclarationLine": 18
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR calculation > calculates published weighted progress independently of input order",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 113,
+      "sourceDeclarationLine": 29
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR calculation > matches the 60/40 project oracle when objective scores are 87.5% and 50%",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 114,
+      "sourceDeclarationLine": 40
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR calculation > scores decrease targets in the selected direction and rejects an opposing target",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 115,
+      "sourceDeclarationLine": 52
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR calculation > rejects invalid cycle dates and timezones",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 116,
+      "sourceDeclarationLine": 71
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR calculation > returns unknown for invalid weights, zero denominators, and missing binary evidence",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 117,
+      "sourceDeclarationLine": 76
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR persistence > survives reload with stable IDs and rejects a stale writer without replacing the winner",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 118,
+      "sourceDeclarationLine": 88
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "project OKR persistence > keeps published cycles immutable and retains them through archive instead of deletion",
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "logLine": 119,
+      "sourceDeclarationLine": 105
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real server ACK workspace is visible before connected state callbacks",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 122,
+      "sourceDeclarationLine": 59
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real missing ACK workspace cannot become the requested workspace",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 123,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real null ACK workspace cannot become the requested workspace",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 124,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real number ACK workspace cannot become the requested workspace",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 125,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real object ACK workspace cannot become the requested workspace",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 126,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real empty ACK workspace cannot become the requested workspace",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 127,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real whitespace ACK workspace cannot become the requested workspace",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 128,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "mismatched actual ACK retains the server value and never substitutes requested scope",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 129,
+      "sourceDeclarationLine": 85
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "reconnect clears old ACK before state publication and waits for the new actual ACK",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 130,
+      "sourceDeclarationLine": 95
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "automatic retry clears ACK while the next wire handshake remains unacknowledged",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 131,
+      "sourceDeclarationLine": 114
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "error clears actual ACK before non-connected state and event callbacks",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 132,
+      "sourceDeclarationLine": 130
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "shutdown clears actual ACK before non-connected state and event callbacks",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 133,
+      "sourceDeclarationLine": 130
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "destroy clears actual ACK before non-connected state and event callbacks",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 134,
+      "sourceDeclarationLine": 130
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "late wire ACK after error cannot restore cleared workspace scope",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 135,
+      "sourceDeclarationLine": 151
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "late wire ACK after shutdown cannot restore cleared workspace scope",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 136,
+      "sourceDeclarationLine": 151
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "response and event workspace fields cannot overwrite received ACK scope",
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "logLine": 137,
+      "sourceDeclarationLine": 169
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native response Resource guard runs with verified principal and preserves authorized result after its await",
+      "file": "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+      "logLine": 140,
+      "sourceDeclarationLine": 80
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native revoke and regrant during beforeResponse await retracts bytes before serialization and permits a fresh request",
+      "file": "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+      "logLine": 141,
+      "sourceDeclarationLine": 93
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "fresh WorkspaceActor revalidation precedes Resource guard and preserves an authorized response",
+      "file": "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+      "logLine": 142,
+      "sourceDeclarationLine": 169
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "Resource read revoke during third WorkspaceActor revalidation retracts private bytes before the final guard and serialization",
+      "file": "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+      "logLine": 143,
+      "sourceDeclarationLine": 185
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual GET and GET_ONE return canonical registry IDs for a custom workspace folder",
+      "file": "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+      "logLine": 146,
+      "sourceDeclarationLine": 82
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual project changed broadcast uses canonical ID and retains current records",
+      "file": "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+      "logLine": 147,
+      "sourceDeclarationLine": 95
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a mixed current and foreign-root list fails closed before response or broadcast",
+      "file": "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+      "logLine": 148,
+      "sourceDeclarationLine": 106
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a registry root change across the actual import await refuses the stale projection",
+      "file": "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+      "logLine": 149,
+      "sourceDeclarationLine": 114
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual roadmap AI dispatch refuses a revoked and regranted native permission during shared import",
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "logLine": 152,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual roadmap AI dispatch refuses a revoked and regranted native permission during project inputs",
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "logLine": 153,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual roadmap AI preserves dispatch for an unchanged native read/write fence",
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "logLine": 154,
+      "sourceDeclarationLine": 97
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual roadmap AI checks the read grant generation independently",
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "logLine": 155,
+      "sourceDeclarationLine": 105
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual roadmap AI checks the write grant generation independently",
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "logLine": 156,
+      "sourceDeclarationLine": 105
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual roadmap AI preserves the standalone caller path without granting native permissions",
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "logLine": 157,
+      "sourceDeclarationLine": 121
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual roadmap AI refuses a replaced principal before provider dispatch",
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "logLine": 158,
+      "sourceDeclarationLine": 129
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual NotesPage read callbacks and committed workspace lease > uncommitted render cannot publish or read; committed successful list/assets retain actual data",
+      "file": "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+      "logLine": 161,
+      "sourceDeclarationLine": 55
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual NotesPage read callbacks and committed workspace lease > actual list/assets denial is explicit unavailable and never an available empty result",
+      "file": "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+      "logLine": 162,
+      "sourceDeclarationLine": 66
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual NotesPage read callbacks and committed workspace lease > A \u2192 B \u2192 A without another list call cannot revive the old A success or denial",
+      "file": "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+      "logLine": 163,
+      "sourceDeclarationLine": 73
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "actual NotesPage read callbacks and committed workspace lease > dispose fences deferred list/assets success and refusal; newer same-workspace request wins",
+      "file": "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+      "logLine": 164,
+      "sourceDeclarationLine": 85
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "scoped UI capability reads > denied notes/assets stay unavailable instead of publishing an available empty list",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 167,
+      "sourceDeclarationLine": 13
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "scoped UI capability reads > real successful data and retry are retained; actual empty is available only after successful read",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 168,
+      "sourceDeclarationLine": 25
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "scoped UI capability reads > a newer request, workspace switch or unmount suppresses late success and denial",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 169,
+      "sourceDeclarationLine": 38
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "scoped UI capability reads > an obsolete request does not call the transport; synchronous read failures remain explicit",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 170,
+      "sourceDeclarationLine": 56
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "scoped UI capability reads > genuine onAvailable programming errors are not disguised as capability denials",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 171,
+      "sourceDeclarationLine": 68
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "optional real preload subscription > missing subscription installs no event or capability and cleanup is safe",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 172,
+      "sourceDeclarationLine": 77
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "optional real preload subscription > real Electron subscription is preserved and disposed once; late events are ignored",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 173,
+      "sourceDeclarationLine": 83
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "coded subscription refusal is unavailable; synchronous listener bugs remain visible",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 174,
+      "sourceDeclarationLine": 97
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "committed workspace/request lease fences old A after A \u2192 B \u2192 A and unmount",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 175,
+      "sourceDeclarationLine": 109
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "Notes native transport presence is not document authority > web/missing/partial bridges cannot mount the Notes editor or start its native queue",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 176,
+      "sourceDeclarationLine": 131
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "Notes native transport presence is not document authority > the full real interface is supported without executing operations or granting principal",
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "logLine": 177,
+      "sourceDeclarationLine": 141
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "browser appearance never reads host preferences or pretends to have a native snapshot",
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "logLine": 180,
+      "sourceDeclarationLine": 4
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a partial bridge without runtime metadata is unavailable and never executes host callbacks",
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "logLine": 181,
+      "sourceDeclarationLine": 12
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "desktop denial and missing channel become unavailable, while a separate retry preserves actual values",
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "logLine": 182,
+      "sourceDeclarationLine": 20
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "cancelled appearance initialization ignores late success and refusal",
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "logLine": 183,
+      "sourceDeclarationLine": 39
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "synchronous desktop read failures are observed as unavailable without unhandled promises",
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "logLine": 184,
+      "sourceDeclarationLine": 55
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "browser and failed host persistence cannot advance the saved UI value",
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "logLine": 185,
+      "sourceDeclarationLine": 64
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a host write finishing after disposal cannot publish a saved UI value",
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "logLine": 186,
+      "sourceDeclarationLine": 80
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native metadata routes only to the durable writer even when a legacy callback exists",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 189,
+      "sourceDeclarationLine": 12
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native writer failure never falls back to the MarkdownCommit file writer",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 190,
+      "sourceDeclarationLine": 22
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "missing native revision, switched source, read-only projection, stale hash and other workspace refuse before either writer",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 191,
+      "sourceDeclarationLine": 31
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "an explicit bound non-native document retains the Compound CAS writer",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 192,
+      "sourceDeclarationLine": 42
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "confirmed quick creation consumes the real native revision-aware receipt and survives reopen",
+      "file": "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+      "logLine": 195,
+      "sourceDeclarationLine": 26
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a lost create ACK reconciles the same persisted ID after restart without another revision",
+      "file": "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+      "logLine": 196,
+      "sourceDeclarationLine": 32
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "an old same-ID retry refuses a changed canonical payload and preserves the foreign update",
+      "file": "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+      "logLine": 197,
+      "sourceDeclarationLine": 54
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "an empty or rejected native receipt never clears the retained create attempt",
+      "file": "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+      "logLine": 198,
+      "sourceDeclarationLine": 63
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "workspace switch during authoritative read never queues the old snapshot",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 201,
+      "sourceDeclarationLine": 32
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "workspace switch while loading the durable queue never submits the old mutation",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 202,
+      "sourceDeclarationLine": 45
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "stop fences an in-flight server receipt and leaves it for idempotent retry",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 203,
+      "sourceDeclarationLine": 60
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "overlapping workspace starts keep the last requested workspace and close obsolete opens",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 204,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a canonical read for another native identity cannot enter the durable Notes outbox",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 205,
+      "sourceDeclarationLine": 88
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a concurrent canonical revision discovered after the await preserves the opened draft",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 206,
+      "sourceDeclarationLine": 98
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "missing opened native revision cannot be upgraded to a fresh write grant",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 207,
+      "sourceDeclarationLine": 112
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a matching opened identity and revision uses the existing main-owned enqueue and receipt ACK",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 208,
+      "sourceDeclarationLine": 122
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "only an observed main ACK advances the same opened draft through its own queued revision chain",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 209,
+      "sourceDeclarationLine": 136
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "an unacknowledged or mismatched receipt cannot grant revision progression",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 210,
+      "sourceDeclarationLine": 174
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > clears A from the atom and returned view at B commit before B RPC completes",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 213,
+      "sourceDeclarationLine": 131
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > late A success cannot overwrite an already loaded B",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 214,
+      "sourceDeclarationLine": 142
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > obsolete A failure neither clears B nor reports a current load error",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 215,
+      "sourceDeclarationLine": 153
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > the newest same-workspace refresh wins over an older load",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 216,
+      "sourceDeclarationLine": 164
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > same-workspace broadcast supersedes an older pending query",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 217,
+      "sourceDeclarationLine": 175
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > queued callback from a disposed A subscription cannot alter B",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 218,
+      "sourceDeclarationLine": 185
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > an obsolete refresh closure cannot start a request for the old scope",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 219,
+      "sourceDeclarationLine": 196
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > unmount cancels late RPC and queued broadcasts without atom writes",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 220,
+      "sourceDeclarationLine": 204
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > A-to-B-to-A does not revive the first A lease",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 221,
+      "sourceDeclarationLine": 215
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > effect replay does not revive callbacks from the disposed subscription",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 222,
+      "sourceDeclarationLine": 225
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > RPC and broadcast payloads retain only current-workspace LoadedProjects",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 223,
+      "sourceDeclarationLine": 237
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > null scope clears previous projects and invalidates pending load",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 224,
+      "sourceDeclarationLine": 248
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > same-workspace success, broadcast and current failure retain their supported behavior",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 225,
+      "sourceDeclarationLine": 260
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "useProjects workspace and load generations > actual projectCatalogAtom wrapper preserves shared metadata during local clear and load",
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "logLine": 226,
+      "sourceDeclarationLine": 275
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "routed Electron API follows native Notes authority; marker writes use only journal CAS and survive real reopen",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 229,
+      "sourceDeclarationLine": 77
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native projection never reads or recovers legacy WAL; persisted descriptors remain readable by another authorized principal",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 230,
+      "sourceDeclarationLine": 131
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "revocation and regrant while descriptor lookup awaits cannot return native bytes or edit capabilities",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 231,
+      "sourceDeclarationLine": 165
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "active native authority denies missing-principal legacy requests before any read or write",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 232,
+      "sourceDeclarationLine": 185
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 233,
+      "sourceDeclarationLine": 196
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "web and partial bridges never read, save, or subscribe to desktop settings",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 236,
+      "sourceDeclarationLine": 14
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "desktop read and save publish only the actual successful callback values",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 237,
+      "sourceDeclarationLine": 25
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "sync missing methods and async transport refusals are observed without advancing saved state",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 238,
+      "sourceDeclarationLine": 42
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a newer reload or save supersedes both late successful and refused results",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 239,
+      "sourceDeclarationLine": 58
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposal suppresses pending success, pending refusal, and calls not yet dispatched",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 240,
+      "sourceDeclarationLine": 75
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "runtime changes block later saves and prevent pending desktop values from becoming browser state",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 241,
+      "sourceDeclarationLine": 97
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "runtime loss before queued dispatch prevents the host operation itself",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 242,
+      "sourceDeclarationLine": 114
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "desktop subscriptions dispatch only live events and unsubscribe exactly once on disposal",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 243,
+      "sourceDeclarationLine": 125
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "synchronous subscription refusal is reported and a disposed session cannot register another listener",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 244,
+      "sourceDeclarationLine": 139
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "renderer publication faults remain visible and are never reclassified as transport refusal",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 245,
+      "sourceDeclarationLine": 151
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "an unavailable callback fault remains visible without duplicate unavailable publication",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 246,
+      "sourceDeclarationLine": 160
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a refused or absent optional history preserves actual voice prefs and health with honest unavailable history",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 247,
+      "sourceDeclarationLine": 169
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "voice history publishes actual rows and treats malformed rows as unavailable without inventing empty success",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 248,
+      "sourceDeclarationLine": 190
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "required voice read refusal is reported even when another getter throws synchronously",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 249,
+      "sourceDeclarationLine": 200
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "runtime getter errors are observed as capability refusal without dispatching any host callback",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 250,
+      "sourceDeclarationLine": 209
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "pending optional history cannot delay actual core prefs or a successful preference save",
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "logLine": 251,
+      "sourceDeclarationLine": 220
+    },
+    {
+      "invocation": "r24-final-built-smoke",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "headless server lifecycle smoke > serves health/login, enforces HTTP and WebSocket auth, and restarts the same isolated profile",
+      "file": "packages/server/src/__tests__/smoke.test.ts",
+      "logLine": 4,
+      "sourceDeclarationLine": 193
+    },
+    {
+      "invocation": "r24-final-built-smoke",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "headless server lifecycle smoke > rejects short token at startup",
+      "file": "packages/server/src/__tests__/smoke.test.ts",
+      "logLine": 5,
+      "sourceDeclarationLine": 243
+    },
+    {
+      "invocation": "r24-final-built-smoke",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "headless server lifecycle smoke > rejects a child already exited with 0 as graceful shutdown",
+      "file": "packages/server/src/__tests__/smoke.test.ts",
+      "logLine": 6,
+      "sourceDeclarationLine": 248
+    },
+    {
+      "invocation": "r24-final-built-smoke",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "headless server lifecycle smoke > rejects a child already exited with 17 as graceful shutdown",
+      "file": "packages/server/src/__tests__/smoke.test.ts",
+      "logLine": 7,
+      "sourceDeclarationLine": 248
+    }
+  ],
+  "perFile": [
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 0,
+      "file": "packages/shared/tests/llm-connections.test.ts",
+      "pass": 21,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 1,
+      "file": "packages/shared/tests/models-pi.test.ts",
+      "pass": 11,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "file": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+      "pass": 19,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "file": "packages/shared/src/config/__tests__/storage-migrations.test.ts",
+      "pass": 11,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "file": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "pass": 68,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 2,
+      "file": "packages/shared/src/config/__tests__/default-thinking-level.test.ts",
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/shared/src/credentials/__tests__/secure-storage-recovery.test.ts",
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/shared/src/credentials/__tests__/envelope.test.ts",
+      "pass": 10,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/workgraph.test.ts",
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/revalidation.test.ts",
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/p0-adapters.test.ts",
+      "pass": 11,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/os-discovery-host.test.ts",
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/infisical-fabric-provider.test.ts",
+      "pass": 6,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/import-session.test.ts",
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/import-service.test.ts",
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/grants.test.ts",
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/github-vertical.test.ts",
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/credential-types.test.ts",
+      "pass": 34,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 3,
+      "file": "packages/core/src/platform/identity/broker.test.ts",
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-validate-ci",
+      "subInvocationIndex": 4,
+      "file": "packages/shared/src/config/__tests__/config-isolation.test.ts",
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "scripts/electron-main-cjs.test.ts",
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "scripts/__tests__/check-i18n-coverage.test.ts",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/webui/__tests__/transport-bootstrap.test.ts",
+      "pass": 23,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/webui/__tests__/browser-bootstrap.test.ts",
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/webui/__tests__/node-builtins-bundle.test.ts",
+      "pass": 2,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/pi-agent-server/src/custom-endpoint-registration.test.ts",
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "pass": 15,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts",
+      "pass": 9,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts",
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts",
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/shared/src/projects/__tests__/roadmap.test.ts",
+      "pass": 6,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/shared/src/projects/__tests__/okr.test.ts",
+      "pass": 8,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts",
+      "pass": 16,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/server-core/src/transport/__tests__/before-response-authority.test.ts",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts",
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts",
+      "pass": 11,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts",
+      "pass": 7,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "pass": 10,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "pass": 14,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "pass": 5,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "file": "apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts",
+      "pass": 16,
+      "fail": 0,
+      "skip": 0
+    },
+    {
+      "invocation": "r24-final-built-smoke",
+      "subInvocationIndex": 0,
+      "file": "packages/server/src/__tests__/smoke.test.ts",
+      "pass": 4,
+      "fail": 0,
+      "skip": 0
+    }
+  ],
+  "sourceDeclarationLinesResolved": 450,
+  "remainingFailureCases": [],
+  "noCrossInvocationTotalsClaimed": true,
+  "recordedCaseRows": 450
+}

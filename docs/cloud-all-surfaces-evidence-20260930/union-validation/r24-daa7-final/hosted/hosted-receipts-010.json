@@ -1,0 +1,1495 @@
+{
+  "kind": "EXACT_010_HOSTED_METADATA_NOT_LOCAL_GATE_INFERENCE",
+  "normalizedAt": "2026-09-30T20:34:27.422980+00:00",
+  "sourceCommit": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "currentSQLiteRecovery": [
+    {
+      "runId": 36771257478,
+      "name": "SQLite Runtime Recovery",
+      "event": "push",
+      "headSha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "observedAt": "2026-09-30T20:33:27.223443+00:00",
+      "jobs": [
+        {
+          "id": 110077945095,
+          "name": "durable-runtime (macos-15)",
+          "run_id": 36771257478,
+          "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-30T20:14:57Z",
+          "completed_at": "2026-09-30T20:21:10Z",
+          "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771257478/job/110077945095",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-30T20:14:57Z",
+              "completed_at": "2026-09-30T20:14:59Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-30T20:14:59Z",
+              "completed_at": "2026-09-30T20:15:05Z"
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-30T20:15:05Z",
+              "completed_at": "2026-09-30T20:15:06Z"
+            },
+            {
+              "name": "Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-30T20:15:06Z",
+              "completed_at": "2026-09-30T20:15:07Z"
+            },
+            {
+              "name": "Confirm tested source and runtimes",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-30T20:15:07Z",
+              "completed_at": "2026-09-30T20:15:07Z"
+            },
+            {
+              "name": "Install exact lockfile",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-30T20:15:07Z",
+              "completed_at": "2026-09-30T20:15:41Z"
+            },
+            {
+              "name": "Check SQLite consumers and WebUI types",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-30T20:15:41Z",
+              "completed_at": "2026-09-30T20:17:35Z"
+            },
+            {
+              "name": "Verify real SQLite durability, authorization and adverse controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-30T20:17:35Z",
+              "completed_at": "2026-09-30T20:17:49Z"
+            },
+            {
+              "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-30T20:17:49Z",
+              "completed_at": "2026-09-30T20:17:58Z"
+            },
+            {
+              "name": "Verify published September process-loss recovery",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-30T20:17:58Z",
+              "completed_at": "2026-09-30T20:18:00Z"
+            },
+            {
+              "name": "Build actual subprocess, WebUI and server",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-30T20:18:00Z",
+              "completed_at": "2026-09-30T20:20:49Z"
+            },
+            {
+              "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-30T20:20:49Z",
+              "completed_at": "2026-09-30T20:21:01Z"
+            },
+            {
+              "name": "Verify tracked source and lockfile stayed unchanged",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-30T20:21:01Z",
+              "completed_at": "2026-09-30T20:21:03Z"
+            },
+            {
+              "name": "Post Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-09-30T20:21:03Z",
+              "completed_at": "2026-09-30T20:21:03Z"
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-09-30T20:21:03Z",
+              "completed_at": "2026-09-30T20:21:03Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-09-30T20:21:03Z",
+              "completed_at": "2026-09-30T20:21:04Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-09-30T20:21:04Z",
+              "completed_at": "2026-09-30T20:21:08Z"
+            }
+          ]
+        },
+        {
+          "id": 110077945500,
+          "name": "durable-runtime (ubuntu-24.04)",
+          "run_id": 36771257478,
+          "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-30T20:14:53Z",
+          "completed_at": "2026-09-30T20:17:52Z",
+          "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771257478/job/110077945500",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-30T20:14:54Z",
+              "completed_at": "2026-09-30T20:14:55Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-30T20:14:55Z",
+              "completed_at": "2026-09-30T20:15:00Z"
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-30T20:15:00Z",
+              "completed_at": "2026-09-30T20:15:00Z"
+            },
+            {
+              "name": "Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-30T20:15:00Z",
+              "completed_at": "2026-09-30T20:15:02Z"
+            },
+            {
+              "name": "Confirm tested source and runtimes",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-30T20:15:02Z",
+              "completed_at": "2026-09-30T20:15:02Z"
+            },
+            {
+              "name": "Install exact lockfile",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-30T20:15:02Z",
+              "completed_at": "2026-09-30T20:15:12Z"
+            },
+            {
+              "name": "Check SQLite consumers and WebUI types",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-30T20:15:12Z",
+              "completed_at": "2026-09-30T20:16:25Z"
+            },
+            {
+              "name": "Verify real SQLite durability, authorization and adverse controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-30T20:16:25Z",
+              "completed_at": "2026-09-30T20:16:34Z"
+            },
+            {
+              "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-30T20:16:34Z",
+              "completed_at": "2026-09-30T20:16:40Z"
+            },
+            {
+              "name": "Verify published September process-loss recovery",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-30T20:16:40Z",
+              "completed_at": "2026-09-30T20:16:42Z"
+            },
+            {
+              "name": "Build actual subprocess, WebUI and server",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-30T20:16:42Z",
+              "completed_at": "2026-09-30T20:17:41Z"
+            },
+            {
+              "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-30T20:17:41Z",
+              "completed_at": "2026-09-30T20:17:49Z"
+            },
+            {
+              "name": "Verify tracked source and lockfile stayed unchanged",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-30T20:17:49Z",
+              "completed_at": "2026-09-30T20:17:50Z"
+            },
+            {
+              "name": "Post Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-09-30T20:17:50Z",
+              "completed_at": "2026-09-30T20:17:50Z"
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-09-30T20:17:50Z",
+              "completed_at": "2026-09-30T20:17:50Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-09-30T20:17:50Z",
+              "completed_at": "2026-09-30T20:17:50Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-09-30T20:17:50Z",
+              "completed_at": "2026-09-30T20:17:50Z"
+            }
+          ]
+        }
+      ],
+      "url": "https://github.com/rox-one/rox-one/actions/runs/36771257478"
+    },
+    {
+      "runId": 36771265843,
+      "name": "SQLite Runtime Recovery",
+      "event": "pull_request",
+      "headSha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "observedAt": "2026-09-30T20:32:12.923029+00:00",
+      "jobs": [
+        {
+          "id": 110078565538,
+          "name": "durable-runtime (ubuntu-24.04)",
+          "run_id": 36771265843,
+          "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-30T20:16:25Z",
+          "completed_at": "2026-09-30T20:20:03Z",
+          "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265843/job/110078565538",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-30T20:16:25Z",
+              "completed_at": "2026-09-30T20:16:27Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-30T20:16:27Z",
+              "completed_at": "2026-09-30T20:16:31Z"
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-30T20:16:31Z",
+              "completed_at": "2026-09-30T20:16:32Z"
+            },
+            {
+              "name": "Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-30T20:16:32Z",
+              "completed_at": "2026-09-30T20:16:33Z"
+            },
+            {
+              "name": "Confirm tested source and runtimes",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-30T20:16:33Z",
+              "completed_at": "2026-09-30T20:16:33Z"
+            },
+            {
+              "name": "Install exact lockfile",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-30T20:16:33Z",
+              "completed_at": "2026-09-30T20:16:44Z"
+            },
+            {
+              "name": "Check SQLite consumers and WebUI types",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-30T20:16:44Z",
+              "completed_at": "2026-09-30T20:18:19Z"
+            },
+            {
+              "name": "Verify real SQLite durability, authorization and adverse controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-30T20:18:19Z",
+              "completed_at": "2026-09-30T20:18:30Z"
+            },
+            {
+              "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-30T20:18:30Z",
+              "completed_at": "2026-09-30T20:18:37Z"
+            },
+            {
+              "name": "Verify published September process-loss recovery",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-30T20:18:37Z",
+              "completed_at": "2026-09-30T20:18:39Z"
+            },
+            {
+              "name": "Build actual subprocess, WebUI and server",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-30T20:18:39Z",
+              "completed_at": "2026-09-30T20:19:50Z"
+            },
+            {
+              "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-30T20:19:50Z",
+              "completed_at": "2026-09-30T20:19:59Z"
+            },
+            {
+              "name": "Verify tracked source and lockfile stayed unchanged",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-30T20:19:59Z",
+              "completed_at": "2026-09-30T20:20:00Z"
+            },
+            {
+              "name": "Post Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-09-30T20:20:00Z",
+              "completed_at": "2026-09-30T20:20:00Z"
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-09-30T20:20:00Z",
+              "completed_at": "2026-09-30T20:20:00Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-09-30T20:20:00Z",
+              "completed_at": "2026-09-30T20:20:01Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-09-30T20:20:01Z",
+              "completed_at": "2026-09-30T20:20:01Z"
+            }
+          ]
+        },
+        {
+          "id": 110078565927,
+          "name": "durable-runtime (macos-15)",
+          "run_id": 36771265843,
+          "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-09-30T20:18:43Z",
+          "completed_at": "2026-09-30T20:24:34Z",
+          "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265843/job/110078565927",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-30T20:18:44Z",
+              "completed_at": "2026-09-30T20:18:46Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-30T20:18:46Z",
+              "completed_at": "2026-09-30T20:18:51Z"
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-30T20:18:51Z",
+              "completed_at": "2026-09-30T20:18:52Z"
+            },
+            {
+              "name": "Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-30T20:18:52Z",
+              "completed_at": "2026-09-30T20:18:54Z"
+            },
+            {
+              "name": "Confirm tested source and runtimes",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-30T20:18:54Z",
+              "completed_at": "2026-09-30T20:18:54Z"
+            },
+            {
+              "name": "Install exact lockfile",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-30T20:18:54Z",
+              "completed_at": "2026-09-30T20:19:20Z"
+            },
+            {
+              "name": "Check SQLite consumers and WebUI types",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-30T20:19:20Z",
+              "completed_at": "2026-09-30T20:20:50Z"
+            },
+            {
+              "name": "Verify real SQLite durability, authorization and adverse controls",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-30T20:20:50Z",
+              "completed_at": "2026-09-30T20:21:07Z"
+            },
+            {
+              "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-30T20:21:07Z",
+              "completed_at": "2026-09-30T20:21:19Z"
+            },
+            {
+              "name": "Verify published September process-loss recovery",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-30T20:21:19Z",
+              "completed_at": "2026-09-30T20:21:23Z"
+            },
+            {
+              "name": "Build actual subprocess, WebUI and server",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-30T20:21:23Z",
+              "completed_at": "2026-09-30T20:24:12Z"
+            },
+            {
+              "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-30T20:24:12Z",
+              "completed_at": "2026-09-30T20:24:25Z"
+            },
+            {
+              "name": "Verify tracked source and lockfile stayed unchanged",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-30T20:24:25Z",
+              "completed_at": "2026-09-30T20:24:26Z"
+            },
+            {
+              "name": "Post Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-09-30T20:24:26Z",
+              "completed_at": "2026-09-30T20:24:26Z"
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-09-30T20:24:26Z",
+              "completed_at": "2026-09-30T20:24:27Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-09-30T20:24:27Z",
+              "completed_at": "2026-09-30T20:24:28Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-09-30T20:24:28Z",
+              "completed_at": "2026-09-30T20:24:32Z"
+            }
+          ]
+        }
+      ],
+      "url": "https://github.com/rox-one/rox-one/actions/runs/36771265843"
+    }
+  ],
+  "currentValidateAlias": {
+    "runId": 36771265937,
+    "name": "CI Validate Alias",
+    "event": "pull_request",
+    "headSha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "observedAt": "2026-09-30T20:19:24.289103+00:00",
+    "jobs": [
+      {
+        "id": 110077973005,
+        "name": "validate",
+        "run_id": 36771265937,
+        "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+        "status": "in_progress",
+        "conclusion": null,
+        "started_at": "2026-09-30T20:16:28Z",
+        "completed_at": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1,
+            "started_at": "2026-09-30T20:16:29Z",
+            "completed_at": "2026-09-30T20:16:32Z"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2,
+            "started_at": "2026-09-30T20:16:32Z",
+            "completed_at": "2026-09-30T20:16:38Z"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3,
+            "started_at": "2026-09-30T20:16:38Z",
+            "completed_at": "2026-09-30T20:16:38Z"
+          },
+          {
+            "name": "Run oven-sh/setup-bun@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4,
+            "started_at": "2026-09-30T20:16:38Z",
+            "completed_at": "2026-09-30T20:16:39Z"
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5,
+            "started_at": "2026-09-30T20:16:39Z",
+            "completed_at": "2026-09-30T20:16:41Z"
+          },
+          {
+            "name": "Run bun install --frozen-lockfile",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6,
+            "started_at": "2026-09-30T20:16:41Z",
+            "completed_at": "2026-09-30T20:17:08Z"
+          },
+          {
+            "name": "Run bun run validate:ci",
+            "status": "in_progress",
+            "conclusion": null,
+            "number": 7,
+            "started_at": "2026-09-30T20:17:08Z",
+            "completed_at": null
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v5",
+            "status": "pending",
+            "conclusion": null,
+            "number": 11,
+            "started_at": null,
+            "completed_at": null
+          },
+          {
+            "name": "Post Run oven-sh/setup-bun@v2",
+            "status": "pending",
+            "conclusion": null,
+            "number": 12,
+            "started_at": null,
+            "completed_at": null
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "pending",
+            "conclusion": null,
+            "number": 13,
+            "started_at": null,
+            "completed_at": null
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "pending",
+            "conclusion": null,
+            "number": 14,
+            "started_at": null,
+            "completed_at": null
+          }
+        ]
+      }
+    ],
+    "url": "https://github.com/rox-one/rox-one/actions/runs/36771265937"
+  },
+  "currentCounts": {
+    "jobs": 4,
+    "success": 4,
+    "failure": 0,
+    "pending": 0,
+    "steps": 68,
+    "stepsSuccess": 68,
+    "testPass": null,
+    "testFail": null,
+    "testAssertions": null
+  },
+  "historicalDaa7": {
+    "sourceCommit": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+    "runs": [
+      {
+        "runId": 36770342944,
+        "name": "SQLite Runtime Recovery",
+        "event": "push",
+        "headSha": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedAt": "2026-09-30T20:19:24.476917+00:00",
+        "jobs": [
+          {
+            "id": 110074815426,
+            "name": "durable-runtime (ubuntu-24.04)",
+            "run_id": 36770342944,
+            "head_sha": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:06:53Z",
+            "completed_at": "2026-09-30T20:09:22Z",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:06:54Z",
+                "completed_at": "2026-09-30T20:06:55Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:06:55Z",
+                "completed_at": "2026-09-30T20:07:00Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:07:00Z",
+                "completed_at": "2026-09-30T20:07:00Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:07:00Z",
+                "completed_at": "2026-09-30T20:07:01Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:07:01Z",
+                "completed_at": "2026-09-30T20:07:01Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:07:01Z",
+                "completed_at": "2026-09-30T20:07:12Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:07:12Z",
+                "completed_at": "2026-09-30T20:08:08Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:08:08Z",
+                "completed_at": "2026-09-30T20:08:15Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:08:15Z",
+                "completed_at": "2026-09-30T20:08:21Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:08:21Z",
+                "completed_at": "2026-09-30T20:08:22Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:08:22Z",
+                "completed_at": "2026-09-30T20:09:12Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:09:12Z",
+                "completed_at": "2026-09-30T20:09:20Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:09:20Z",
+                "completed_at": "2026-09-30T20:09:20Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:09:20Z",
+                "completed_at": "2026-09-30T20:09:20Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:09:20Z",
+                "completed_at": "2026-09-30T20:09:20Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:09:20Z",
+                "completed_at": "2026-09-30T20:09:20Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:09:20Z",
+                "completed_at": "2026-09-30T20:09:20Z"
+              }
+            ]
+          },
+          {
+            "id": 110074815532,
+            "name": "durable-runtime (macos-15)",
+            "run_id": 36770342944,
+            "head_sha": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:06:57Z",
+            "completed_at": "2026-09-30T20:12:50Z",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:06:58Z",
+                "completed_at": "2026-09-30T20:06:59Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:06:59Z",
+                "completed_at": "2026-09-30T20:07:05Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:07:05Z",
+                "completed_at": "2026-09-30T20:07:06Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:07:06Z",
+                "completed_at": "2026-09-30T20:07:08Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:07:08Z",
+                "completed_at": "2026-09-30T20:07:08Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:07:08Z",
+                "completed_at": "2026-09-30T20:07:37Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:07:37Z",
+                "completed_at": "2026-09-30T20:09:29Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:09:29Z",
+                "completed_at": "2026-09-30T20:09:42Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:09:42Z",
+                "completed_at": "2026-09-30T20:09:50Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:09:50Z",
+                "completed_at": "2026-09-30T20:09:52Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:09:52Z",
+                "completed_at": "2026-09-30T20:12:26Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:12:26Z",
+                "completed_at": "2026-09-30T20:12:39Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:12:39Z",
+                "completed_at": "2026-09-30T20:12:40Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:12:40Z",
+                "completed_at": "2026-09-30T20:12:42Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:12:42Z",
+                "completed_at": "2026-09-30T20:12:42Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:12:42Z",
+                "completed_at": "2026-09-30T20:12:43Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:12:43Z",
+                "completed_at": "2026-09-30T20:12:47Z"
+              }
+            ]
+          }
+        ],
+        "url": "https://github.com/rox-one/rox-one/actions/runs/36770342944"
+      },
+      {
+        "runId": 36770352515,
+        "name": "SQLite Runtime Recovery",
+        "event": "pull_request",
+        "headSha": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+        "observedAt": "2026-09-30T20:19:24.376810+00:00",
+        "jobs": [
+          {
+            "id": 110074849150,
+            "name": "durable-runtime (ubuntu-24.04)",
+            "run_id": 36770352515,
+            "head_sha": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:06:58Z",
+            "completed_at": "2026-09-30T20:10:45Z",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:07:00Z",
+                "completed_at": "2026-09-30T20:07:01Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:07:01Z",
+                "completed_at": "2026-09-30T20:07:05Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:07:05Z",
+                "completed_at": "2026-09-30T20:07:09Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:07:09Z",
+                "completed_at": "2026-09-30T20:07:11Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:07:11Z",
+                "completed_at": "2026-09-30T20:07:11Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:07:11Z",
+                "completed_at": "2026-09-30T20:07:24Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:07:24Z",
+                "completed_at": "2026-09-30T20:08:59Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:08:59Z",
+                "completed_at": "2026-09-30T20:09:10Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:09:10Z",
+                "completed_at": "2026-09-30T20:09:17Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:09:17Z",
+                "completed_at": "2026-09-30T20:09:20Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:09:20Z",
+                "completed_at": "2026-09-30T20:10:31Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:10:31Z",
+                "completed_at": "2026-09-30T20:10:40Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:10:40Z",
+                "completed_at": "2026-09-30T20:10:41Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:10:41Z",
+                "completed_at": "2026-09-30T20:10:41Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:10:41Z",
+                "completed_at": "2026-09-30T20:10:41Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:10:41Z",
+                "completed_at": "2026-09-30T20:10:41Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:10:41Z",
+                "completed_at": "2026-09-30T20:10:41Z"
+              }
+            ]
+          },
+          {
+            "id": 110074849904,
+            "name": "durable-runtime (macos-15)",
+            "run_id": 36770352515,
+            "head_sha": "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-09-30T20:10:52Z",
+            "completed_at": "2026-09-30T20:16:21Z",
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1,
+                "started_at": "2026-09-30T20:10:52Z",
+                "completed_at": "2026-09-30T20:10:54Z"
+              },
+              {
+                "name": "Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2,
+                "started_at": "2026-09-30T20:10:54Z",
+                "completed_at": "2026-09-30T20:11:00Z"
+              },
+              {
+                "name": "Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 3,
+                "started_at": "2026-09-30T20:11:00Z",
+                "completed_at": "2026-09-30T20:11:01Z"
+              },
+              {
+                "name": "Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4,
+                "started_at": "2026-09-30T20:11:01Z",
+                "completed_at": "2026-09-30T20:11:04Z"
+              },
+              {
+                "name": "Confirm tested source and runtimes",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 5,
+                "started_at": "2026-09-30T20:11:04Z",
+                "completed_at": "2026-09-30T20:11:04Z"
+              },
+              {
+                "name": "Install exact lockfile",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 6,
+                "started_at": "2026-09-30T20:11:04Z",
+                "completed_at": "2026-09-30T20:11:34Z"
+              },
+              {
+                "name": "Check SQLite consumers and WebUI types",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 7,
+                "started_at": "2026-09-30T20:11:34Z",
+                "completed_at": "2026-09-30T20:13:17Z"
+              },
+              {
+                "name": "Verify real SQLite durability, authorization and adverse controls",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8,
+                "started_at": "2026-09-30T20:13:17Z",
+                "completed_at": "2026-09-30T20:13:30Z"
+              },
+              {
+                "name": "Verify integrated single writer, caller ACK and browser builtin boundaries",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9,
+                "started_at": "2026-09-30T20:13:30Z",
+                "completed_at": "2026-09-30T20:13:38Z"
+              },
+              {
+                "name": "Verify published September process-loss recovery",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 10,
+                "started_at": "2026-09-30T20:13:38Z",
+                "completed_at": "2026-09-30T20:13:41Z"
+              },
+              {
+                "name": "Build actual subprocess, WebUI and server",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 11,
+                "started_at": "2026-09-30T20:13:41Z",
+                "completed_at": "2026-09-30T20:16:03Z"
+              },
+              {
+                "name": "Verify built HTTP, WebSocket auth, graceful stop and persistent restart",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 12,
+                "started_at": "2026-09-30T20:16:03Z",
+                "completed_at": "2026-09-30T20:16:14Z"
+              },
+              {
+                "name": "Verify tracked source and lockfile stayed unchanged",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 13,
+                "started_at": "2026-09-30T20:16:14Z",
+                "completed_at": "2026-09-30T20:16:15Z"
+              },
+              {
+                "name": "Post Run oven-sh/setup-bun@v2",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 24,
+                "started_at": "2026-09-30T20:16:15Z",
+                "completed_at": "2026-09-30T20:16:15Z"
+              },
+              {
+                "name": "Post Run actions/setup-node@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 25,
+                "started_at": "2026-09-30T20:16:15Z",
+                "completed_at": "2026-09-30T20:16:15Z"
+              },
+              {
+                "name": "Post Run actions/checkout@v4",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 26,
+                "started_at": "2026-09-30T20:16:15Z",
+                "completed_at": "2026-09-30T20:16:16Z"
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 27,
+                "started_at": "2026-09-30T20:16:16Z",
+                "completed_at": "2026-09-30T20:16:19Z"
+              }
+            ]
+          }
+        ],
+        "url": "https://github.com/rox-one/rox-one/actions/runs/36770352515"
+      }
+    ],
+    "fourJobsAllCompletedSuccess": true,
+    "qualification": "Separate prior revision. Historical success is not inherited by010."
+  },
+  "sourceEquivalence": {
+    "direct": {
+      "capturedAt": "2026-09-30T20:16:43.142202+00:00",
+      "sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "tree": "c21b2fa0acacf489194dc6ca61f3ffc3191eba14",
+      "parents": [
+        "daa7bdf35f803f4fbf2c748d1495a9d558b5b9ba"
+      ]
+    },
+    "synthetic": {
+      "capturedAt": "2026-09-30T20:16:43.142202+00:00",
+      "sha": "70b1bf757bfccd7260d96507bf75df91776b943b",
+      "tree": "c21b2fa0acacf489194dc6ca61f3ffc3191eba14",
+      "parents": [
+        "f63294ba4fffa7238b46b24e918925a313ad0b12",
+        "010fa8c040e3a84cd40cd8195473f52d8582f159"
+      ]
+    },
+    "treesEqual": true,
+    "qualification": "Only Git source tree equivalence. Printed checkoutSHA remainsUNVERIFIED."
+  },
+  "printedCheckoutAndCounts": {
+    "status": "UNVERIFIED",
+    "printedSourceSha": null,
+    "printedRuntimeTestCounts": null,
+    "newLogRedirectRequests": false,
+    "prior403LogEvidence": "r15 hosted official run/job redirect routes denied; no new logredirect attempt. Metadata jobs/head_sha cannot supply printed checkout or exact test assertions.",
+    "qualification": "Local198/0/930 and4/0/37 are deliberately excluded from hosted counts."
+  },
+  "codeQL": {
+    "capturedAt": "2026-09-30T20:32:12.923275+00:00",
+    "id": 110078183669,
+    "name": "CodeQL",
+    "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+    "status": "completed",
+    "conclusion": "failure",
+    "started_at": "2026-09-30T20:15:26Z",
+    "completed_at": "2026-09-30T20:15:30Z",
+    "html_url": "https://github.com/rox-one/rox-one/runs/110078183669",
+    "details_url": "https://github.com/rox-one/rox-one/runs/110078183669",
+    "output": {
+      "title": "96 new alerts including 64 high severity security vulnerabilities",
+      "summary": "### New alerts in code changed by this pull request\n\nSecurity Alerts:\n * 64 high\n * 32 medium\n\n\n_Alerts not introduced by this pull request might have been detected because the code changes were too large._\n\nSee annotations below for details.\n\n[View all branch alerts](/rox-one/rox-one/security/code-scanning?query=pr%3A1322+tool%3ACodeQL+is%3Aopen).",
+      "annotations_count": 96
+    },
+    "securityAcceptance": false,
+    "annotationValidationPerformed": false,
+    "qualification": "96 raw CodeQL annotations (64 high /32 medium) require independent triage; not96 validated vulnerabilities. Earlier missingSwiftconfiguration warning was transient and is absent from this latest snapshot.",
+    "transientHistoricalConfigurationWarning": "Earlier20:22 snapshot reported1 configuration not found; latest20:32:12 title/summary contain no missingconfiguration warning.",
+    "annotationsReceipt": "codeql-review-pending-010.json"
+  },
+  "vercel": {
+    "capturedAt": "2026-09-30T20:33:27.223720+00:00",
+    "statuses": [
+      {
+        "id": 55304695227,
+        "context": "Vercel",
+        "state": "failure",
+        "description": "Account is blocked.",
+        "created_at": "2026-09-30T20:14:51Z",
+        "updated_at": "2026-09-30T20:14:51Z",
+        "target_url": "https://vercel.com/knowledge/why-is-my-account-deployment-blocked"
+      }
+    ],
+    "classification": "Infrastructure: Vercel Account is blocked; no deployment acceptance."
+  },
+  "selfHostedAndBudgets": [
+    {
+      "id": 110077982764,
+      "name": "native (self-hosted, linux-toolchain)",
+      "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "status": "queued",
+      "conclusion": null,
+      "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265837/job/110077982764"
+    },
+    {
+      "id": 110077982348,
+      "name": "native (self-hosted, macos-toolchain)",
+      "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "status": "queued",
+      "conclusion": null,
+      "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265837/job/110077982348"
+    },
+    {
+      "id": 110077972240,
+      "name": "budgets",
+      "head_sha": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+      "status": "queued",
+      "conclusion": null,
+      "html_url": "https://github.com/rox-one/rox-one/actions/runs/36771265860/job/110077972240"
+    }
+  ],
+  "metadataReadOnly": true,
+  "scope": "Exact010fourhostedSQLitejobs completedSUCCESS. Hostedmetadata is separatefromlocalruntime andtestcounts; no printed checkout attestation.",
+  "references": [
+    {
+      "path": "union-validation/r24-daa7-final/hosted/daa7-latest-jobs-36770342944.json",
+      "sha256": "00406fbf4c5e084e6c334e7c427d075eccbddfec00162e4620ba3acb72b26564"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/010-latest-checks.json",
+      "sha256": "b8393f3b33ecf8aacfa4bb1ce025a91cfd02858d139718c8cb7e1d2cee3df71c"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/010-latest-jobs-36771265843.json",
+      "sha256": "6cdf0cc3023089e5acd708971ed38288a71bdd35b1c95ec953ac27d44e0d96c4"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/daa7-latest-jobs-36770352515.json",
+      "sha256": "2ad640ecc2dfc97335241dafa4e68a7ed4c1eb0445e732b99a3c7f457bb4612f"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/010-latest-jobs-36771257478.json",
+      "sha256": "3477ea63c33b6bfe16494b6dc6287da7304902a701b3d0e38fceb851662661c4"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/010-latest-statuses.json",
+      "sha256": "a5e29c7e3dd42b2532b1b620aded0157ccb9ff43992ca8ad3c0403b7d02c1304"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/010-latest-jobs-36771265937.json",
+      "sha256": "e4b896524769f26394fc3ed5c1635af767afd51e5cf18c4142472cdc825e92b6"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/010-synthetic-commit.json",
+      "sha256": "27b4c4889601b38dc19ff9ff541c300f76f13436bc1b1d767ae5949c7945b44e"
+    },
+    {
+      "path": "union-validation/r24-daa7-final/hosted/010-direct-commit.json",
+      "sha256": "989b77d701a965bc980ff0bdce6ea5724e36922060523303f8a64635e01633a7"
+    }
+  ]
+}

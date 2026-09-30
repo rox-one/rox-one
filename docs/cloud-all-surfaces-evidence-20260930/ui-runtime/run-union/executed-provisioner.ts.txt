@@ -1,0 +1,40 @@
+/** Temporary test-data provisioning; imports real revision config code, no application mocks. */
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join, resolve } from 'node:path'
+import { execFileSync } from 'node:child_process'
+
+const checkout = resolve(process.argv[2]!)
+const root = resolve(process.env.ROX_CONFIG_DIR!)
+if (!root.startsWith('/tmp/rox-ui-surface-discovery-20260930/ui-runtime/')) throw new Error('Foreign config root refused')
+mkdirSync(root, { recursive: true })
+const { saveConfig, createAndActivateLocalWorkspace, addLlmConnection, setDefaultLlmConnection } = await import(join(checkout, 'packages/shared/src/config/storage.ts'))
+const { updatePreferences, ensureLocalUserIdentity } = await import(join(checkout, 'packages/shared/src/config/preferences.ts'))
+saveConfig({ workspaces: [], activeWorkspaceId: null, activeSessionId: null, llmConnections: [] })
+updatePreferences({ name: 'Cloud UI Baseline', username: 'cloud-ui-baseline', uiLanguage: 'en' })
+ensureLocalUserIdentity()
+const activation = await createAndActivateLocalWorkspace({
+  name: 'Cloud UI Baseline',
+  rootPath: join(root, 'workspaces', 'cloud-ui-baseline'),
+  kind: 'personal',
+})
+const { createProject } = await import(join(checkout, 'packages/shared/src/projects/storage.ts'))
+const { loadWorkspaceConfig, saveWorkspaceConfig } = await import(join(checkout, 'packages/shared/src/workspaces/storage.ts'))
+const repository = join(root, 'private-repository')
+mkdirSync(repository, { recursive: true })
+writeFileSync(join(repository, 'README.md'), '# Cloud UI private repository fixture\n')
+writeFileSync(join(repository, 'example.ts'), 'export const cloudFixture = 1\n')
+execFileSync('git', ['init', '-b', 'main', repository], { stdio: 'pipe' })
+execFileSync('git', ['-C', repository, 'add', '.'], { stdio: 'pipe' })
+execFileSync('git', ['-C', repository, '-c', 'user.name=Cloud UI Fixture', '-c', 'user.email=cloud-ui-fixture@example.invalid', 'commit', '-m', 'Private browser fixture'], { stdio: 'pipe' })
+const project = createProject(activation.workspace.rootPath, { name: 'Cloud UI Genuine Project', description: 'Private real persisted project data; no authority claims.', workingDirectory: repository })
+const notesRoot = join(root, 'private-existing-notes')
+mkdirSync(notesRoot, { recursive: true })
+const noteId = 'cloud-ui-existing-note'
+writeFileSync(join(notesRoot, noteId + '.md'), '---\ntitle: Cloud UI Existing Note\ntags: [cloud-fixture]\n---\n\n# Cloud UI Existing Note\n\nPrivate pre-existing Markdown fixture. No native adoption or receipt is claimed.\n')
+const workspaceConfig = loadWorkspaceConfig(activation.workspace.rootPath)
+if (!workspaceConfig) throw new Error('Private workspace configuration missing')
+saveWorkspaceConfig(activation.workspace.rootPath, { ...workspaceConfig, notesPath: notesRoot })
+if (!addLlmConnection({ slug: 'omp', name: 'Rox', providerType: 'omp', authType: 'none', createdAt: Date.now() })) throw new Error('Private runtime config not persisted')
+if (!setDefaultLlmConnection('omp')) throw new Error('Private default not persisted')
+writeFileSync(join(root, 'fixture-info.json'), JSON.stringify({ kind: 'real-config-utility-private-test-data', workspaceId: activation.workspace.id, workspaceSlug: activation.workspace.slug, sessionId: activation.session.id, projectId: project.id, projectSlug: project.slug, noteId, noteDisposition: 'pre-existing private Markdown; no native adoption/receipt', privateRepositoryCommit: execFileSync('git', ['-C', repository, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), noCredentials: true, noLlmCalls: true, nativePrincipal: false }, null, 2))
+console.log('PRIVATE_PROFILE_PROVISIONED')
