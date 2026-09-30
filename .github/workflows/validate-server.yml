@@ -3,13 +3,25 @@ name: Validate Server (Integration)
 on:
   pull_request:
     paths:
-      - packages/server/**
-      - packages/server-core/**
+      - packages/**
+      - apps/webui/**
+      - apps/electron/src/renderer/**
+      - apps/electron/resources/**
+      - scripts/test-*.ts
+      - package.json
+      - bun.lock
+      - bunfig.toml
       - .github/workflows/validate-server.yml
   push:
     paths:
-      - packages/server/**
-      - packages/server-core/**
+      - packages/**
+      - apps/webui/**
+      - apps/electron/src/renderer/**
+      - apps/electron/resources/**
+      - scripts/test-*.ts
+      - package.json
+      - bun.lock
+      - bunfig.toml
       - .github/workflows/validate-server.yml
   workflow_dispatch:
 
@@ -18,8 +30,7 @@ concurrency:
 
 jobs:
   lifecycle:
-    # GitHub-hosted not provisioned; linux runner disk-quota blocks bun install — use macOS self-hosted.
-    runs-on: [self-hosted, macos-toolchain]
+    runs-on: macos-15
     timeout-minutes: 45
     strategy:
       matrix:
@@ -31,28 +42,29 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.3.10'
+          bun-version: '1.3.14'
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - name: Build agent subprocess
+        run: bun run server:build:subprocess
 
+      - name: Build WebUI assets
+        run: bun run webui:build
 
-
-      # Fork-server integration leg needs a live Claude auth token as of 2025-05;
-      # stdio fork server auth-later path relies on @anthropic-ai/claude-call-proxy or similar helper internal for now
       - name: Build server bundle
         # xlsx stays external — its ESM build has no default export, so bundling fails;
         # markitdown-js requires() it at runtime from node_modules instead.
         run: bun build packages/server/src/index.ts --target bun --outdir dist-server --external xlsx
 
       - name: Start server and run lifecycle smoke
-        run: |
-          # placeholder for real smoke test entry: reuse shared smoke infra if present, otherwise skip
-          echo "lifecycle smoke for beta path not implemented yet"
-
-      # TODO restore validate-server tests for client-facing ws server smoke (tsx-based with full env)
+        run: bun test packages/server/src/__tests__/smoke.test.ts
+        env:
+          ROX_SERVER_SMOKE_ENTRY: dist-server/index.js
+          ROX_SERVER_SMOKE_WEBUI_DIR: apps/webui/dist
