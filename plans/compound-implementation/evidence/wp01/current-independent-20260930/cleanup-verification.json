@@ -1,0 +1,45 @@
+{
+  "recordedAt": "2026-09-30T14:23:31.919Z",
+  "protectedLoaderUsed": true,
+  "credentialsPrinted": false,
+  "databaseConnectionClosed": true,
+  "ownedSchemasOnly": true,
+  "schemas": [
+    {
+      "schema": "holdout_baseline_6881833f997f4534",
+      "remaining": 0
+    },
+    {
+      "schema": "holdout_mutation_5230e0dd6efa4c80",
+      "remaining": 0
+    }
+  ],
+  "runs": [
+    {
+      "variant": "baseline",
+      "pid": 17373,
+      "wsClientsDestroyed": true,
+      "listenerCloseRequested": true,
+      "remainingOwnedSchemas": 0,
+      "accountsRemovedWithSchema": 3,
+      "poolClosed": true,
+      "ownedIssuerStateRemoved": true,
+      "listenerAliveAfterClose": false,
+      "processAlive": false,
+      "issuerStateExists": false
+    },
+    {
+      "variant": "mutation",
+      "pid": 17425,
+      "wsClientsDestroyed": true,
+      "listenerCloseRequested": true,
+      "remainingOwnedSchemas": 0,
+      "accountsRemovedWithSchema": 3,
+      "poolClosed": true,
+      "ownedIssuerStateRemoved": true,
+      "listenerAliveAfterClose": false,
+      "processAlive": false,
+      "issuerStateExists": false
+    }
+  ]
+}

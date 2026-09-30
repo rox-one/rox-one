@@ -18,7 +18,9 @@ import {
   safeProjectAuthorityCode,
   type ProjectAuthorityState,
 } from '../../../shared/project-authority'
-import type { CreateSharedProject, RoxCommand, SharedProject } from '../../../../../../packages/shared/src/workspace-domain/identity/contracts.ts'
+import type { SharedProject } from '../../../../../../packages/shared/src/workspace-domain/identity/contracts.ts'
+
+import type { ProjectCreateIntentView, ProjectCreateAttempt } from '../../../shared/project-create-intent'
 
 /** Additional projection within the existing projects catalog; local folder entries are retained. */
 export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) {
@@ -36,10 +38,10 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
   const [visibility, setVisibility] = useState<'private' | 'members'>('private')
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  const pendingIntent = useRef<RoxCommand<CreateSharedProject> | null>(null)
+  const [pendingIntent, setPendingIntent] = useState<ProjectCreateIntentView>({ state: 'none', eligible: false })
   const closeCreate = useCallback(() => {
     if (creating) return
-    setCreateOpen(false); setNewName(''); setCreateError(null); pendingIntent.current = null
+    setCreateOpen(false); setNewName(''); setCreateError(null)
   }, [creating])
   useRegisterModal(createOpen, closeCreate)
 
@@ -49,9 +51,11 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
     setReadError(null)
     setCatalog(previous => ({ ...previous, sharedWorkspaceId: workspaceId, shared: [], sharedState: 'connecting' }))
     try {
-      const [state, configuration] = await Promise.all([window.electronAPI.getProjectAuthorityState(),
-        window.electronAPI.getProjectAuthorityConfiguration(workspaceId)])
+      const [state, configuration, intent] = await Promise.all([window.electronAPI.getProjectAuthorityState(),
+        window.electronAPI.getProjectAuthorityConfiguration(workspaceId), window.electronAPI.getSharedProjectCreateIntent(workspaceId)])
       if (generation !== requestGeneration.current) return
+      setPendingIntent(intent)
+      if (intent.state === 'blocked' || !intent.eligible) { setCreateOpen(false); setNewName('') }
       setAuthorityWorkspaceName(configuration?.workspaceName ?? null)
       setAuthorityWorkspaceId(configuration?.workspaceId ?? null)
       if (state !== 'ready') {
@@ -81,10 +85,11 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
   useEffect(() => {
     ++scopeGeneration.current
     void refresh()
-    pendingIntent.current = null; setCreateOpen(false); setCreateError(null); setNewName(''); setCreating(false)
+    setPendingIntent({ state: 'none', eligible: false }); setCreateOpen(false); setCreateError(null); setNewName(''); setCreating(false)
     const unsubscribe = window.electronAPI.onProjectAuthorityChanged(() => {
       ++scopeGeneration.current
-      pendingIntent.current = null; setCreateOpen(false); setCreateError(null); setNewName(''); setCreating(false)
+      // A transport outage preserves the local draft; main independently hides a foreign/quiesced durable intent.
+      setCreateError(null); setCreating(false)
       void refresh()
     })
     return () => { ++requestGeneration.current; ++scopeGeneration.current; unsubscribe() }
@@ -92,22 +97,50 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
 
   const state = catalog.sharedWorkspaceId === workspaceId && verifiedWorkspace === workspaceId ? catalog.sharedState : 'connecting'
   const entries = state === 'ready' ? catalog.shared : []
-  const canCreate = state === 'ready' && !!authorityWorkspaceName
-    && window.electronAPI.isChannelAvailable('domain.project.createShared')
+  const canCreate = pendingIntent.state === 'none' && pendingIntent.eligible && !!authorityWorkspaceName
+    && state !== 'denied' && state !== 'unconfigured'
+  const acceptAttempt = async (attempt: ProjectCreateAttempt, generation: number, commandId?: string) => {
+    if (generation !== scopeGeneration.current) return
+    if (attempt.state !== 'applied') { setPendingIntent(attempt); setCreateError(attempt.state === 'blocked' ? attempt.code : null); return }
+    const result = requireSharedProjectResult(attempt.result, commandId ?? attempt.result.commandId)
+    if (result.data.entity.workspaceId !== authorityWorkspaceId) throw new Error('Unexpected canonical project scope')
+    setPendingIntent({ state: 'none', eligible: true }); setCreateOpen(false); setNewName('')
+    await refresh()
+    if (generation === scopeGeneration.current) navigate(routes.view.projects(result.entity.entityId))
+  }
+  const retryCreate = async () => {
+    if (creating || (pendingIntent.state !== 'queued' && pendingIntent.state !== 'uncertain')) return
+    const generation = scopeGeneration.current
+    const commandId = pendingIntent.command.commandId
+    setCreating(true); setCreateError(null)
+    try { await acceptAttempt(await window.electronAPI.retrySharedProjectCreate(workspaceId), generation, commandId) }
+    catch (error) { if (generation === scopeGeneration.current) setCreateError(safeProjectAuthorityCode(error)) }
+    finally { if (generation === scopeGeneration.current) setCreating(false) }
+  }
+  const cancelQueued = async () => {
+    if (creating) return
+    const generation = scopeGeneration.current
+    setCreating(true)
+    try {
+      const result = await window.electronAPI.cancelSharedProjectCreate(workspaceId)
+      if (generation !== scopeGeneration.current) return
+      setPendingIntent(result); setCreateError(result.state === 'blocked' ? result.code : null)
+      await refresh()
+    } finally { if (generation === scopeGeneration.current) setCreating(false) }
+  }
   const submitCreate = async () => {
     if (!canCreate || !authorityWorkspaceName || creating || !newName.trim()) return
     const generation = scopeGeneration.current
-    const intent = pendingIntent.current ?? createSharedProjectIntent(workspaceId, authorityWorkspaceName, newName, visibility)
-    pendingIntent.current = intent
+    const intent = createSharedProjectIntent(workspaceId, authorityWorkspaceName, newName, visibility)
     setCreating(true); setCreateError(null)
     try {
-      const result = requireSharedProjectResult(await window.electronAPI.createSharedProject(workspaceId, intent), intent.commandId)
+      const queued = await window.electronAPI.queueSharedProjectCreate(workspaceId, intent)
       if (generation !== scopeGeneration.current) return
-      if (result.data.entity.workspaceId !== authorityWorkspaceId || result.data.name !== intent.payload.name) throw new Error('Unexpected canonical project result')
-      pendingIntent.current = null; setCreateOpen(false); setNewName('')
-      await refresh()
-      if (generation !== scopeGeneration.current) return
-      navigate(routes.view.projects(result.entity.entityId))
+      setPendingIntent(queued)
+      if (queued.state === 'blocked') { setCreateError(queued.code); return }
+      // Persisted in main before the first outbound CREATE. Offline enqueue performs no send.
+      setCreateOpen(false); setNewName('')
+      if (state === 'ready') await acceptAttempt(await window.electronAPI.retrySharedProjectCreate(workspaceId), generation, intent.commandId)
     } catch (error) {
       if (generation === scopeGeneration.current) setCreateError(safeProjectAuthorityCode(error))
     } finally { if (generation === scopeGeneration.current) setCreating(false) }
@@ -121,6 +154,21 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
     {state !== 'ready' && <p className="mt-2 text-sm" role="status">{t(readError ? projectAuthorityErrorMessageKey(readError) : messageKey(state))}
       {readError && <span className="mt-1 block text-xs">{readError}</span>}
     </p>}
+    {(pendingIntent.state === 'queued' || pendingIntent.state === 'uncertain') && <div className="mt-2 rounded-md border border-foreground/10 p-2" role="status"
+      data-testid="shared-project-queued" data-state={pendingIntent.state} data-command-id={pendingIntent.command.commandId} data-idempotency-key={pendingIntent.command.idempotencyKey}>
+      <p className="text-sm">{t(pendingIntent.state === 'queued' ? 'sharedProjects.offlineQueued' : 'sharedProjects.uncertainQueued')}</p>
+      <p className="mt-1 truncate text-sm">{pendingIntent.command.payload.name}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{t('sharedProjects.singlePendingHelp')}</p>
+      <div className="mt-2 flex gap-2">
+        <Button size="sm" data-testid="shared-project-queued-retry" disabled={creating} onClick={() => { void retryCreate() }}>{t('sharedProjects.retry')}</Button>
+        <Button size="sm" variant="outline" data-testid="shared-project-queued-cancel" disabled={creating} onClick={() => { void cancelQueued() }}>{t('sharedProjects.cancelQueued')}</Button>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{t('sharedProjects.cancelQueuedHelp')}</p>
+    </div>}
+    {pendingIntent.state === 'blocked' && <div className="mt-2 text-sm" role="alert" data-testid="shared-project-queued-blocked" data-error-code={pendingIntent.code}>
+      <p>{t('sharedProjects.queuedBlocked')}</p>
+      <Button size="sm" variant="outline" data-testid="shared-project-queued-cancel" disabled={creating} onClick={() => { void cancelQueued() }}>{t('sharedProjects.cancelQueued')}</Button>
+    </div>}
     {state === 'ready' && entries.length === 0 && <p className="mt-2 text-sm">{t('sharedProjects.empty')}</p>}
     {entries.map(({ project }) => <button key={project.entity.entityId} type="button" data-testid="shared-project-row" data-entity-ref={project.entity.entityId}
       className="mt-2 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-foreground/5"
@@ -137,11 +185,11 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
       <DialogContent className="sm:max-w-md" data-testid="shared-project-create-dialog">
         <DialogHeader><DialogTitle>{t('sharedProjects.create')}</DialogTitle></DialogHeader>
         <label className="grid gap-1 text-sm" htmlFor="shared-project-name">{t('sharedProjects.name')}
-          <Input id="shared-project-name" data-testid="shared-project-name" value={newName} maxLength={PROJECT_AUTHORITY_NAME_MAX_LENGTH} disabled={creating || pendingIntent.current !== null}
+          <Input id="shared-project-name" data-testid="shared-project-name" value={newName} maxLength={PROJECT_AUTHORITY_NAME_MAX_LENGTH} disabled={creating || pendingIntent.state !== 'none'}
             onChange={event => setNewName(event.target.value)} autoFocus />
         </label>
         <label className="grid gap-1 text-sm" htmlFor="shared-project-visibility">{t('sharedProjects.visibility')}
-          <select id="shared-project-visibility" data-testid="shared-project-visibility" value={visibility} disabled={creating || pendingIntent.current !== null}
+          <select id="shared-project-visibility" data-testid="shared-project-visibility" value={visibility} disabled={creating || pendingIntent.state !== 'none'}
             className="h-9 rounded-md border border-foreground/10 bg-background px-2" onChange={event => setVisibility(event.target.value === 'members' ? 'members' : 'private')}>
             <option value="private">{t('sharedProjects.private')}</option><option value="members">{t('sharedProjects.members')}</option>
           </select>
@@ -151,7 +199,7 @@ export function SharedProjectsSection({ workspaceId }: { workspaceId: string }) 
         <DialogFooter>
           <Button variant="outline" disabled={creating} onClick={closeCreate}>{t('common.cancel')}</Button>
           <Button data-testid="shared-project-create-submit" disabled={creating || !newName.trim() || !canCreate} onClick={() => { void submitCreate() }}>
-            {t(creating ? 'sharedProjects.creating' : createError ? 'sharedProjects.retry' : 'sharedProjects.create')}
+            {t(creating ? 'sharedProjects.creating' : state === 'ready' ? 'sharedProjects.create' : 'sharedProjects.queueOffline')}
           </Button>
         </DialogFooter>
       </DialogContent>

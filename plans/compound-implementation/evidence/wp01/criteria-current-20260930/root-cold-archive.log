@@ -1,0 +1,12 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-01-archive.test.ts:
+WP01 cold archive evidence: /Users/t/Pictures/Shots/Agents/rox-wp01-archive-1790777973571
+(pass) WP01 cold final archive, actual executable and protected PostgreSQL > exact six-member archive runs cold; real two users, HTTP/WS private403, original receipt/counts/issuer survive restart [6131.74ms]
+(pass) WP01 cold final archive, actual executable and protected PostgreSQL > tampered real bundle archive is denied before cold launch; direct negative control executes changed bytes [100.91ms]
+(pass) WP01 cold final archive, actual executable and protected PostgreSQL > missing migration archive is denied; actual cold runtime cannot fall back to checkout migrations [529.22ms]
+
+ 3 pass
+ 0 fail
+ 93 expect() calls
+Ran 3 tests across 1 file. [7.92s]

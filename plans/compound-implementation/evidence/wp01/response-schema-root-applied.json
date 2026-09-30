@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "state": "ROOT_REVIEWED_APPLIED_ACTUAL_PG_HTTP_WS_VERIFIED",
+  "manifestSha256": "f5db069099b91903284c49c0828dd5a75ce2febe6a7563c873a952d40e8880c4",
+  "entries": [
+    {
+      "path": "plans/macro-integration/work-packages.json",
+      "baseSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+      "proposedSha256": "f35f93b138670131da4a0c8a56926974b89f3f477f995e69cbe26106b7cb13c5",
+      "newFile": false,
+      "source": "/private/tmp/rox-wp01-response-schema-proposal/proposed/plans/macro-integration/work-packages.json"
+    },
+    {
+      "path": "tests/macro-integration/wp-01-response-schema.test.ts",
+      "baseSha256": null,
+      "proposedSha256": "b024d963607c17baf6e3ca2f47c0bfabed698df07d7e6abd53a252e4b1136da6",
+      "newFile": true,
+      "source": "/private/tmp/rox-wp01-response-schema-proposal/proposed/tests/macro-integration/wp-01-response-schema.test.ts"
+    },
+    {
+      "path": "docs/decisions/2026-09-30-wp01-response-schema-reconciliation.md",
+      "baseSha256": null,
+      "proposedSha256": "204e43b67af7f24cfcbf1b86c6e6fb6cdbf15bdeb092461cb1266a991b19e0fc",
+      "newFile": true,
+      "source": "/private/tmp/rox-wp01-response-schema-proposal/proposed/docs/decisions/2026-09-30-wp01-response-schema-reconciliation.md"
+    },
+    {
+      "path": "evidence/wp01/response-schema-probe.json",
+      "baseSha256": null,
+      "proposedSha256": "12a9659104253f3904fca09f012bcdd1c969574ac996188cf06f6b219fdc8eee",
+      "newFile": true,
+      "source": "/private/tmp/rox-wp01-response-schema-proposal/proposed/evidence/wp01/response-schema-probe.json"
+    }
+  ],
+  "noDoDOrDependencyChanges": true,
+  "nativePass": false,
+  "verification": {
+    "passed": 29,
+    "failed": 0,
+    "assertions": 282,
+    "log": "/tmp/rox-wp01-response-schema-root-test.log",
+    "sha256": "155b5ae8d7babca4f3c57f8dcb0550aa93200d85401edc0f6f523f5ce0e1b04a"
+  }
+}

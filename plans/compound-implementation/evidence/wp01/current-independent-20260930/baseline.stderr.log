@@ -1,0 +1,13 @@
+
+rox-wp01-current-independent-ultra-20260930/holdout.test.ts:
+(pass) owner reads exact private Project and recovers identical receipt after service and pool restart [86.69ms]
+(pass) HTTP member paginated list must expose only members-visible Projects, never private titles or IDs after restart [98.26ms]
+(pass) WS member paginated list must expose only members-visible Projects, never private titles or IDs after restart [45.91ms]
+(pass) member cannot open private detail, cannot forge owner and cannot create even with members visibility [45.82ms]
+(pass) nonmember receives HTTP 403 and established WS denies after live bootstrap membership disappears [38.39ms]
+(pass) client cannot substitute authorized workspace through route or native RPC context [29.22ms]
+
+ 6 pass
+ 0 fail
+ 64 expect() calls
+Ran 6 tests across 1 file. [2.37s]

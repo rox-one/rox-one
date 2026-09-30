@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-30T15:18:08.496859+00:00",
+  "programCount": 143,
+  "notStarted": 130,
+  "fullDoDClosed": 0,
+  "historicalPreflightLaunches": 137,
+  "historicalImplementationWorkers": 7,
+  "preflightIsCompletion": false,
+  "liveWorkers": [
+    {
+      "id": "/root/implementation_runtime_scout",
+      "actualState": "PREPARING_PASSIVE_LIFECYCLE_DIAGNOSTIC_AFTER_NATIVE14_FAILURE",
+      "lastExitedSessionId": 38114,
+      "lastFailure": "~/Pictures/Shots/Agents/rox-wp01-offline-electron-1790781015037/result.json"
+    },
+    {
+      "id": "/root/legacy_mixed_list_fix",
+      "actualState": "RUNNING_WP48_V3_CORRECTIONS_AND_NATIVE_OUTSIDE_PROPOSAL"
+    },
+    {
+      "id": "/root/wp01_closure_ultra",
+      "actualState": "RUNNING_WP48_INDEPENDENT_ADVERSE_REVIEW",
+      "model": "gpt-6.1-sol",
+      "reasoning": "ultra"
+    }
+  ],
+  "previousResultReconciliation": [
+    {
+      "worker": "WP01 offline producer",
+      "state": "EXACT24PATHS_ROOT_INTEGRATED_MECHANISM_VERIFIED_NATIVE_PENDING"
+    },
+    {
+      "worker": "WP01 independent reviewer",
+      "state": "CURRENT6/0/64_BASELINE_4/2/41_MUTANT_SCHEMA29/0/282_ROOT_VERIFIED"
+    },
+    {
+      "worker": "WP48 CLI producer",
+      "state": "ROOT63/0/157_COMMITTED_PUSHED_8106_FULLDOD_OPEN"
+    },
+    {
+      "worker": "WP48 backend producer",
+      "state": "V1_REJECTED_IDENTITY_ROUTE_REGRESSION_V2_HELD_AFTER4DEFECT_CLASSES7VARIANTS_V3_IN_PROGRESS"
+    }
+  ],
+  "unreviewedSurfaceProposals": "RSADM/AUT/DRV/MSG/MTG and content adapters remain untouched; no phantom active execution",
+  "nextDependencyAdmission": "No descendant until declared own foundation acceptance and exact delivery; full143 scope retained"
+}

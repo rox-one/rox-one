@@ -1,0 +1,39 @@
+
+rox-wp01-current-independent-ultra-20260930/holdout.test.ts:
+(pass) owner reads exact private Project and recovers identical receipt after service and pool restart [398.34ms]
+178 |         page = pageResult(response.data);
+179 |       } else page = pageResult(await invoke(member, 'domain.project.list', { limit: 1, ...(cursor ? { cursor } : {}) }));
+180 |       observations.push({ label: transport + '-member-page', pageIndex, page });
+181 |       const serialized = JSON.stringify(page);
+182 |       for (const hidden of created.filter(item => item.data.visibility === 'private')) {
+183 |         expect(serialized.includes(hidden.data.name), transport + ' list leaked private Project title').toBe(false);
+                                                                                                              ^
+error: HTTP list leaked private Project title
+
+Expected: false
+Received: true
+
+      at <anonymous> (/private/tmp/rox-wp01-current-independent-ultra-20260930/holdout.test.ts:183:105)
+(fail) HTTP member paginated list must expose only members-visible Projects, never private titles or IDs after restart [124.85ms]
+178 |         page = pageResult(response.data);
+179 |       } else page = pageResult(await invoke(member, 'domain.project.list', { limit: 1, ...(cursor ? { cursor } : {}) }));
+180 |       observations.push({ label: transport + '-member-page', pageIndex, page });
+181 |       const serialized = JSON.stringify(page);
+182 |       for (const hidden of created.filter(item => item.data.visibility === 'private')) {
+183 |         expect(serialized.includes(hidden.data.name), transport + ' list leaked private Project title').toBe(false);
+                                                                                                              ^
+error: WS list leaked private Project title
+
+Expected: false
+Received: true
+
+      at <anonymous> (/private/tmp/rox-wp01-current-independent-ultra-20260930/holdout.test.ts:183:105)
+(fail) WS member paginated list must expose only members-visible Projects, never private titles or IDs after restart [53.82ms]
+(pass) member cannot open private detail, cannot forge owner and cannot create even with members visibility [155.53ms]
+(pass) nonmember receives HTTP 403 and established WS denies after live bootstrap membership disappears [111.64ms]
+(pass) client cannot substitute authorized workspace through route or native RPC context [85.57ms]
+
+ 4 pass
+ 2 fail
+ 41 expect() calls
+Ran 6 tests across 1 file. [3.72s]

@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "rootAcceptedAt": "2026-09-30T14:31:57.606057+00:00",
+  "reportSha256": "da338c3c446fa5c20929395f5e53a598f3acead691792a747c8a7b4934397bd5",
+  "artifactsVerified": 20,
+  "inputRevision": "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd",
+  "functionalSourceGeneration": "Integrated24-path durablequeue; type-only parity registration and implementation docs changed afterwards, not test runtime/domain source.",
+  "baseline": {
+    "variant": "baseline",
+    "pass": 6,
+    "fail": 0,
+    "assertions": 64,
+    "exitCode": 0,
+    "pid": 17373,
+    "startedAt": "2026-09-30T14:21:05.068Z",
+    "finishedAt": "2026-09-30T14:21:07.452Z",
+    "testSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+    "executionPath": "baseline.execution.json",
+    "evidencePath": "baseline.evidence.json",
+    "stdoutPath": "baseline.stdout.log",
+    "stderrPath": "baseline.stderr.log",
+    "schema": "holdout_baseline_6881833f997f4534",
+    "seed": "wp01-independent-list-privacy-20260930-7c31e952",
+    "runId": "6881833f-997f-4534-ae07-3f09f7755d21",
+    "counters": {
+      "http": 16,
+      "rpc": 15,
+      "accountsProvisioned": 3,
+      "projectsCreated": 4
+    },
+    "restarts": 1,
+    "cleanup": {
+      "wsClientsDestroyed": true,
+      "listenerCloseRequested": true,
+      "remainingOwnedSchemas": 0,
+      "accountsRemovedWithSchema": 3,
+      "poolClosed": true,
+      "ownedIssuerStateRemoved": true,
+      "listenerAliveAfterClose": false,
+      "processAlive": false,
+      "issuerStateExists": false
+    }
+  },
+  "mutation": {
+    "variant": "mutation",
+    "pass": 4,
+    "fail": 2,
+    "assertions": 41,
+    "exitCode": 1,
+    "pid": 17425,
+    "startedAt": "2026-09-30T14:21:07.455Z",
+    "finishedAt": "2026-09-30T14:21:11.185Z",
+    "testSha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+    "executionPath": "mutation.execution.json",
+    "evidencePath": "mutation.evidence.json",
+    "stdoutPath": "mutation.stdout.log",
+    "stderrPath": "mutation.stderr.log",
+    "schema": "holdout_mutation_5230e0dd6efa4c80",
+    "seed": "wp01-independent-list-privacy-20260930-7c31e952",
+    "runId": "5230e0dd-6efa-4c80-bf6b-ad36c94ff53f",
+    "counters": {
+      "http": 15,
+      "rpc": 14,
+      "accountsProvisioned": 3,
+      "projectsCreated": 4
+    },
+    "restarts": 1,
+    "cleanup": {
+      "wsClientsDestroyed": true,
+      "listenerCloseRequested": true,
+      "remainingOwnedSchemas": 0,
+      "accountsRemovedWithSchema": 3,
+      "poolClosed": true,
+      "ownedIssuerStateRemoved": true,
+      "listenerAliveAfterClose": false,
+      "processAlive": false,
+      "issuerStateExists": false
+    }
+  },
+  "claim": "Independent secondvariant mechanism only; native DoD pending",
+  "sourceOriginalsPreserved": true
+}

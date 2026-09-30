@@ -1,0 +1,61 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-01-native-routing.test.ts:
+(pass) WP-01 actual native project authority routing > A creates and reloads a canonical private DTO while actual local folder storage stays host-routed [190.46ms]
+(pass) WP-01 actual native project authority routing > B without membership gets HTTP403 and a denied native authority while local folder B remains usable [90.45ms]
+(pass) WP-01 actual native project authority routing > main sign-in uses the actual issuer and membership query and returns coded denial for wrong credentials or scope [357.67ms]
+(pass) WP-01 actual native project authority routing > an actual unresponsive loopback issuer returns a coded timeout without internal details [10006.70ms]
+(pass) WP-01 actual native project authority routing > wrong-password replacement preserves the actual encrypted credential and durable public configuration [137.59ms]
+(pass) WP-01 actual native project authority routing > disconnect during real HTTP authentication fences the late login and cannot resurrect private credentials [179.55ms]
+(pass) WP-01 actual native project authority routing > a newer same-workspace login wins after two actual HTTP authentications finish out of order [262.67ms]
+(pass) WP-01 actual native project authority routing > credential writes reread disk metadata and a superseded write rolls back before disconnect commits [28.88ms]
+(pass) WP-01 actual native project authority routing > native and HTTP accept the full Project text boundary and reject overflow without a persisted effect [55.76ms]
+(pass) WP-01 actual native project authority routing > a late A credential resolution cannot replace the live B authority connection or return A private titles [21.60ms]
+(pass) WP-01 actual native project authority routing > missing credentials, arbitrary domain channels and forged scope never fall back to host or another principal [33.22ms]
+
+tests/macro-integration/wp-01-authority-crash.test.ts:
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers old pair after SIGKILL at prepared [3134.93ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers old pair after SIGKILL at credential_written [2905.53ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers new pair after SIGKILL at configuration_written [2906.95ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers new pair after SIGKILL at journal_removed [2882.09ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > disconnect never resurrects prior credentials after SIGKILL at prepared [3168.75ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > disconnect never resurrects prior credentials after SIGKILL at disconnect_credential_deleted [1470.96ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > disconnect never resurrects prior credentials after SIGKILL at disconnect_configuration_deleted [1425.17ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > recovery itself can be killed between rollback stores and retry still restores the original pair [1883.66ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > concurrent unrelated config metadata survives an incomplete replacement and recovery [1802.92ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > late invalidation rolls back its credential and a subsequent explicit disconnect removes both stores [2585.33ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > real wrong-password HTTP authentication leaves the exact durable files and creates no journal [1435.35ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > corrupt encrypted storage fails closed instead of being treated as absent or overwritten [1386.37ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > unexpected authority metadata conflicts fail closed and preserve the encrypted journal for explicit repair [1407.80ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > target resolution performs durable recovery before reading either half of the authority pair [1867.96ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > failed rollback blocks configuration and private target resolution until strict recovery plus explicit disconnect succeeds [1517.67ms]
+
+apps/electron/src/transport/__tests__/channel-map-parity.test.ts:
+(pass) CHANNEL_MAP runtime contract > has valid entry kinds and channels [0.52ms]
+(pass) CHANNEL_MAP runtime contract > contains at least one listener and one invoke entry [0.05ms]
+(pass) CHANNEL_MAP runtime contract > exposes only the remote-safe OpenClaw data channels [0.04ms]
+(pass) CHANNEL_MAP runtime contract > excludes native host-control IPC channels [0.09ms]
+
+apps/electron/src/transport/__tests__/routed-client.test.ts:
+(pass) RoutedClient > routing > routes LOCAL_ONLY invokes to localClient [0.21ms]
+(pass) RoutedClient > routing > routes REMOTE_ELIGIBLE invokes to workspaceClient [0.06ms]
+(pass) RoutedClient > routing > routes LOCAL_ONLY listeners to localClient [0.06ms]
+(pass) RoutedClient > routing > routes REMOTE_ELIGIBLE listeners to workspaceClient [0.03ms]
+(pass) RoutedClient > workspace id mapping > translates local workspace ids to remote on REMOTE_ELIGIBLE invoke [0.10ms]
+(pass) RoutedClient > workspace id mapping > reverse-maps remote workspace ids to local on push payloads [0.10ms]
+(pass) RoutedClient > workspace id mapping > passes push args through when no workspace mapping is set [0.04ms]
+(pass) RoutedClient > workspace switch > swaps workspaceClient when SWITCH_WORKSPACE returns remoteServer [0.17ms]
+(pass) RoutedClient > workspace switch > reverts to localClient when switching to local workspace [0.07ms]
+(pass) RoutedClient > workspace switch > re-subscribes REMOTE_ELIGIBLE listeners on swap (make-before-break) [0.11ms]
+(pass) RoutedClient > workspace switch > re-registers capabilities on swap [0.09ms]
+(pass) RoutedClient > connection state > delegates getConnectionState to workspaceClient [0.04ms]
+(pass) RoutedClient > connection state > notifies connection state listeners on change [0.07ms]
+(pass) RoutedClient > connection state > delegates reconnectNow to workspaceClient [0.02ms]
+(pass) RoutedClient > cleanup > unsubscribes listeners when cleanup function is called [0.04ms]
+(pass) isLocalOnly consistency > correctly classifies window channels as LOCAL_ONLY
+(pass) isLocalOnly consistency > correctly classifies session channels as REMOTE_ELIGIBLE
+
+ 47 pass
+ 0 fail
+ 3478 expect() calls
+Ran 47 tests across 4 files. [46.66s]

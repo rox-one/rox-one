@@ -1,0 +1,85 @@
+{
+  "recordedAt": "2026-09-30T14:32:05.041Z",
+  "runId": "4a8f2d20-4f7d-4e27-aa68-2c1a929ff5c4",
+  "schema": "response_probe_4a8f2d204f7d4e27",
+  "sourceManifestPath": "current-source-manifest.json",
+  "normativePath": "plans/macro-integration/work-packages.json",
+  "normativeSha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0",
+  "operation": "project.createShared",
+  "field": "operations[0].responseSchema",
+  "additionalProperties": false,
+  "declaredKeys": [
+    "commandId",
+    "data",
+    "entity",
+    "observedRevision",
+    "receiptId",
+    "requestHash",
+    "status",
+    "verifiedAt"
+  ],
+  "actualHttpStatus": 200,
+  "actualHttpKeys": [
+    "commandId",
+    "data",
+    "entity",
+    "entityId",
+    "executionMode",
+    "lifecycle",
+    "observedRevision",
+    "ok",
+    "receipt",
+    "receiptId",
+    "requestHash",
+    "status",
+    "verification",
+    "verifiedAt"
+  ],
+  "actualWsKeys": [
+    "commandId",
+    "data",
+    "entity",
+    "entityId",
+    "executionMode",
+    "lifecycle",
+    "observedRevision",
+    "ok",
+    "receipt",
+    "receiptId",
+    "requestHash",
+    "status",
+    "verification",
+    "verifiedAt"
+  ],
+  "unsupportedHttpKeys": [
+    "entityId",
+    "executionMode",
+    "lifecycle",
+    "ok",
+    "receipt",
+    "verification"
+  ],
+  "unsupportedWsKeys": [
+    "entityId",
+    "executionMode",
+    "lifecycle",
+    "ok",
+    "receipt",
+    "verification"
+  ],
+  "equalCanonicalReceipt": true,
+  "actualCounts": {
+    "projects": 1,
+    "receipts": 1,
+    "events": 1
+  },
+  "canonicalPayloadOrCredentialsPrinted": false,
+  "conclusion": "ACTUAL_RESPONSE_REJECTED_BY_DECLARED_ADDITIONAL_PROPERTIES_FALSE",
+  "cleanup": {
+    "wsDestroyed": true,
+    "listenerCloseRequested": true,
+    "remainingOwnedSchemas": 0,
+    "poolClosed": true,
+    "ownedIssuerStateRemoved": true
+  }
+}

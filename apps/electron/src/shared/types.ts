@@ -2095,6 +2095,10 @@ export interface ElectronAPI {
   getSharedProjects(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').ProjectPage>
   getSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProject>
   createSharedProject(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').SharedProjectResult>
+  getSharedProjectCreateIntent(workspaceId: string): Promise<import('./project-create-intent').ProjectCreateIntentView>
+  queueSharedProjectCreate(workspaceId: string, body: unknown): Promise<import('./project-create-intent').ProjectCreateIntentView>
+  retrySharedProjectCreate(workspaceId: string): Promise<import('./project-create-intent').ProjectCreateAttempt>
+  cancelSharedProjectCreate(workspaceId: string): Promise<import('./project-create-intent').ProjectCreateIntentView>
   getSharedProjectEvents(workspaceId: string, body: unknown): Promise<import('@craft-agent/shared/workspace-domain/identity/contracts').IdentityEventPage>
 
   // Projects (workspace-scoped)

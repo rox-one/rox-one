@@ -173,7 +173,7 @@ export function createWorkspaceHttpHandler(options: WorkspaceHttpOptions): (req:
       send(res, 200, await localIssuer.authenticate(login, password))
       return
     }
-    const matched = /^\/v1\/workspaces\/([^/]+)\/(commands\/project\.createShared|projects(?:\/([^/]+))?|events)$/.exec(path)
+    const matched = /^\/v1\/workspaces\/([^/]+)\/(commands\/project\.createShared|projects(?:\/([^/]+))?|events|identity)$/.exec(path)
     if (!matched) throw new HttpFailure('NOT_FOUND', 404)
     const workspaceSegment = matched[1]
     const routeSegment = matched[2]
@@ -188,24 +188,26 @@ export function createWorkspaceHttpHandler(options: WorkspaceHttpOptions): (req:
         projectId = requireUuid(id.startsWith('project:') ? id.slice(8) : id)
       }
     } catch { throw new IdentityDomainError('INVALID_PAYLOAD') }
+    const identity = routeSegment === 'identity'
     const command = routeSegment === 'commands/project.createShared'
     const method = command ? 'POST' : 'GET'
     if (req.method !== method) throw new HttpFailure('METHOD_NOT_ALLOWED', 405, method)
-    const input = query(params, !command && !projectId)
+    const input = query(params, !command && !projectId && !identity)
     let bound = await actorResolver.authenticate(bearer(req))
     const bytes = await readBody(req, maxBytes, timeoutMs)
     if (!command && bytes.length) throw new IdentityDomainError('INVALID_PAYLOAD')
     const body = command ? jsonBody(bytes, req) : projectId ? { entityId: 'project:' + projectId } : input
     bound = await actorResolver.revalidate(bound)
     requireActor(bound.actor, workspaceId)
-    const result = command ? await authority.createSharedProject(bound.actor, workspaceId, body)
+    const result = identity ? null : command ? await authority.createSharedProject(bound.actor, workspaceId, body)
       : projectId ? await authority.getProject(bound.actor, workspaceId, body)
       : routeSegment === 'events' ? await authority.replayEvents(bound.actor, workspaceId, body)
       : await authority.listProjects(bound.actor, workspaceId, body)
     // Suppress private results if session or membership was revoked while the query/command awaited I/O.
     bound = await actorResolver.revalidate(bound)
     requireActor(bound.actor, workspaceId)
-    send(res, 200, result)
+    send(res, 200, identity ? { issuer: bound.identity.issuer, principalId: bound.identity.principalId,
+      sessionId: bound.identity.sessionId, deviceId: bound.identity.deviceId, workspaceId, expiresAt: bound.identity.expiresAt } : result)
   }
 
   return (req, res) => {

@@ -1,0 +1,24 @@
+{
+  "task": "WP-01-current-independent",
+  "evaluator": "/root/wp01_closure_ultra",
+  "artifact": {
+    "path": "/private/tmp/rox-wp01-current-independent-ultra-20260930/report.json",
+    "sha256": "da338c3c446fa5c20929395f5e53a598f3acead691792a747c8a7b4934397bd5",
+    "bytes": 8343
+  },
+  "verification": {
+    "accepted": true,
+    "baseline": {
+      "pass": 6,
+      "fail": 0,
+      "assertions": 64
+    },
+    "mutation": {
+      "pass": 4,
+      "fail": 2,
+      "assertions": 41
+    },
+    "cleanup": true
+  },
+  "recordedAt": "2026-09-30T14:23:32.003Z"
+}

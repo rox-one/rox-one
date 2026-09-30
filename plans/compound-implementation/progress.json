@@ -5,7 +5,7 @@
   "sourceBase": "b922e52ed96425732776ff771fdb4fec09fc99b6",
   "specRevision": "242492868a11b4d9af1c1011f20b31a346875f0a",
   "branch": "feat/rox-compound-workspace-20260930",
-  "updatedAt": "2026-09-30T14:14:34.280640+00:00",
+  "updatedAt": "2026-09-30T15:12:47.524353+00:00",
   "packageCount": 143,
   "packages": [
     {
@@ -34,6 +34,31 @@
           "artifact": "plans/compound-implementation/wp01-integration-verification.json",
           "sourceParentRevision": "b9b8aa7197f5d25304ec377a049a8f375eccf3e5",
           "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_DURABLE_ENCRYPTED_CREATE_INTENT_PG_HTTP_WS_VERIFIED",
+          "artifact": "plans/compound-implementation/evidence/wp01/offline-root-applied.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_STRICT_RESPONSE_SCHEMA_PG_HTTP_WS_VERIFIED",
+          "artifact": "plans/compound-implementation/evidence/wp01/response-schema-root-applied.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "CURRENT_INDEPENDENT_SECOND_FAILURE_VARIANT_CAUGHT",
+          "artifact": "plans/compound-implementation/evidence/wp01/current-independent-20260930/root-artifact-readback.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "CURRENT_COLD_BUILT_ARCHIVE_PROCESS_VERIFIED",
+          "artifact": "plans/compound-implementation/evidence/wp01/cold-archive-current.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "CURRENT54CRITERIA32VERIFIED17NATIVE_PENDING5DECLARED_DOWNSTREAM",
+          "artifact": "plans/compound-implementation/evidence/wp01/criteria-current-20260930/matrix.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
@@ -45,11 +70,10 @@
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-01.json",
       "preflightRunId": "rox-compound-20260930T083916Z",
       "remainingAcceptance": [
-        "Native two-profile UI acceptance, exact DOM/IME boundaries, restart/revoke/themes/200-percent/narrow and viewed screenshots",
-        "Durable offline create intent with principal/session/workspace fencing and native queue/retry/cancel",
-        "Independent second-variant holdout result and provenance",
-        "Current cold artifact byte readback and source-bound Git delivery",
-        "Every WP01 normative criterion independently verified"
+        "Fresh actual primary native two-profile IME/privacy/restart/revocation/theme/200-percent/narrow + viewed pixel/DOM receipts",
+        "Fresh actual offline native queue/uncertain/retry/cancel/revoke/new-session + immutable original receipt",
+        "All own54normative criteria mapping after native evidence; five explicitly downstream capabilities remain program gates",
+        "Source-bound Git delivery and remote exact readback; full143final acceptance remains"
       ]
     },
     {

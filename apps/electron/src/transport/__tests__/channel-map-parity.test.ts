@@ -92,8 +92,8 @@ void _auditAcceptanceSignatureIsCanonical
 void _auditRevokeSignatureIsSafeWorkspaceInput
 
 
-// Methods excluded from CHANNEL_MAP because they are implemented directly in the preload
-// (no IPC round-trip to the main process). Each reads local state or orchestrates client-side.
+// Direct preload methods use local state or window-bound Electron IPC; they
+// must not enter the remote WS channel map and expose host-owned storage.
 type ApiToChannelMapKeys = Exclude<
   FunctionKeys<ElectronAPI>,
   | 'performOAuth'
@@ -103,6 +103,10 @@ type ApiToChannelMapKeys = Exclude<
   | 'getProjectAuthorityConfiguration' // metadata-only direct IPC
   | 'connectProjectAuthority' // main-owned credential exchange
   | 'disconnectProjectAuthority' // main-owned encrypted credential deletion
+  | 'getSharedProjectCreateIntent' // window-bound encrypted intent read
+  | 'queueSharedProjectCreate' // main persists intent before remote delivery
+  | 'retrySharedProjectCreate' // main revalidates the stored session and command
+  | 'cancelSharedProjectCreate' // local intent deletion, no remote command
   | 'getRuntimeEnvironment'
   | 'onTransportConnectionStateChanged'
   | 'reconnectTransport'

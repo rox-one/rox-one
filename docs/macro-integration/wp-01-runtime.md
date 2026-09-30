@@ -155,3 +155,26 @@ bun test tests/macro-integration/wp-01-observability.test.ts
 ```
 
 Тест использует actual composed service, real JWT/Argon2 accounts, защищённый локальный PostgreSQL, concurrent command repeats, SQL-trigger rollback, effect exception→retry, inbox/watermark readback, и source CLI subprocess shutdown. Отдельные mutants должны провалить oracle при преждевременном счётчике commit и потерянном retry attribution. Исходные падения и hashes сохраняются в revision-bound receipt.
+
+
+## WP-01: durable create-only offline intent в native Projects
+
+В существующих Connections пользователь вводит адрес workspace-service, UUID server workspace, точное имя workspace, login и password. После реального login main получает `/v1/workspaces/{UUID}/identity` с Bearer credential: HTTP facade проверяет криптографический Actor, текущую session и membership перед ответом. Renderer не читает JWT claims и не сохраняет JWT/password. Проверенный scope содержит issuer, principal/session/device/workspace UUID и срок действия; его fingerprint привязан к точным encrypted credential и конфигурации. Старый direct-provisioned credential без такого login не получает offline eligibility автоматически.
+
+Создание Project сначала сохраняет один encrypted intent для локального workspace через существующий strict CredentialManager. Intent содержит неизменяемые commandId, idempotencyKey, payload и привязку к проверенному scope. Запись durable завершается до первой отправки. Это ограниченный механизм `domain.project.createShared`, а не общая command queue. Второй draft не заменяет retained intent; UI показывает явное предупреждение и предлагает повтор или отмену повтора.
+
+При потере сети или после перезапуска Electron собственный непросроченный intent отображается как `offline_queued` либо `uncertain`. Автоматической отправки после reconnect/restart нет. Пользователь нажимает «Повторить»: main заново запрашивает проверенный identity, сверяет полный scope и текущую operation generation, durable записывает uncertain, затем отправляет исходную command через существующий WS transport. Перед локальным acknowledgement проверяется свежая session/membership. PostgreSQL receipt обеспечивает тот же результат для того же idempotencyKey; uncertain reply не создаёт новый commandId/key.
+
+Cached scope позволяет сохранить intent в offline UI, но не разрешает server side effect. Offline клиент не может узнать о remote revoke до восстановления связи. При online retry revoke/membership removal, смена session/principal/workspace, expired proof или auth rejection дают blocked без title/payload. Wrong-password replacement сохраняет canonical credential/config bytes, но quiesces live connection и текущий create scope до успешной replacement authentication. Explicit disconnect удаляет recognized pending/proof и canonical credential/config через существующий generation lock/journal. Unknown encrypted record formats сохраняются byte-for-byte и блокируют операции.
+
+«Отменить повтор» удаляет retained intent после строгой проверки формата. Эта операция не отменяет уже committed server Project, если reply был потерян. Для разблокирования quarantined intent другой сессии доступно явное удаление повтора, без показа приватного названия. Credentials, proof и intent используют те же canonical encrypted store/backend и локальную journal recovery; дополнительной identity authority или plaintext secret storage нет.
+
+Main IPC привязан к actual local window workspace. `getSharedProjectCreateIntent`, `queueSharedProjectCreate`, `retrySharedProjectCreate`, `cancelSharedProjectCreate` возвращают safe typed states: none, queued, uncertain, blocked или applied. Только queued/uncertain содержит command; blocked не содержит private title или scope. Identity HTTP route не принимает query/body, чужой scope, Actor/principal claims.
+
+Проверка механизма:
+
+```sh
+bun test tests/macro-integration/wp-01-offline.test.ts
+```
+
+Тест использует actual workspace-service composition, isolated PostgreSQL schema и две migration, Argon2 accounts/JWT, HTTP/WS, encrypted v3 profile без OS keychain CLI, реальные Bun main-child process и SIGKILL. Test-owned checkpoint оборачивает existing durable credential write после записи, не добавляет production hook. Transparent test proxy теряет actual WS reply после server commit. Проверяются 0 SQL effects до retry, 1 Project/1 receipt/1 project.created после explicit retry, неизменные IDs/key/hash, cancel/restart, revoke/membership/session/principal fences, unknown format preservation и wrong-password quiesce. Process SIGKILL проверен; физический power loss и одновременные независимые main writers одного profile этой проверкой не подтверждены. Native Electron UI acceptance и final143 program gate имеют отдельные receipts.

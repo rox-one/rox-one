@@ -82,8 +82,8 @@ sequenceDiagram
 ## Что ещё требуется
 
 1. Закончить настоящую native приёмку A/B, просмотр снимков, theme/200%/narrow, restart, revoke и сохранение прежних local Projects.
-2. Закончить устойчивую очередь единственного Project create intent: текущий React ref не переживает restart и не считается `offline_queued`. Scope principal/session/workspace обязателен.
-3. Проверить актуальный cold standalone archive после завершения source изменений; package/lock уже интегрированы, frozen offline install dry-run прошёл. Юридическая release приёмка остаётся WP-48.
+2. Проверить в настоящем Electron уже интегрированную устойчивую очередь единственного Project create intent: зашифрованная запись до отправки, восстановление `queued`/`uncertain` после restart, исходные command/key/payload, явные retry/cancel и principal/session/workspace fences. Механизм прошёл реальные PostgreSQL/HTTP/WS/SIGKILL проверки; интерфейсная приёмка ещё открыта.
+3. Сохранить текущий cold standalone receipt и связать его с доставленной ревизией: три теста, 93 assertions, два аккаунта, HTTP/WS 403, restart с тем же receipt, изменённый bundle и отсутствующая migration. Evidence: `/Users/t/Pictures/Shots/Agents/rox-wp01-archive-1790777973571/result.json`. Юридическая release приёмка остаётся WP-48.
 4. Связать принятую ревизию, screenshots и каждый нормативный DoD пункт с доказательством; сделать commit/push/readback.
 
 Search, mentions, notifications, agent/MCP и общие grants имеют собственные зависимые slices. Bootstrap их не объявляет реализованными. Generic shared push остаётся недоступен до авторизованного durable consumer. Direct query/manual refresh не выдаётся за live notification engine. Полный финальный цикл всех 143 пакетов остаётся обязательным.

@@ -1161,6 +1161,18 @@ app.whenReady().then(async () => {
         if (event.sender.isDestroyed() || windowManager?.getWorkspaceForWindow(event.sender.id) !== bound) throw new Error('WORKSPACE_MISMATCH')
         return result
       })
+      ipcMain.handle('__project-create-intent', async (event, localWorkspaceId: unknown, action: unknown, input: unknown) => {
+        const senderId = event.sender.id
+        const bound = windowManager?.getWorkspaceForWindow(senderId)
+        if (!bound || localWorkspaceId !== bound || (typeof action !== 'string' || !['get', 'queue', 'retry', 'cancel'].includes(action))
+          || (action !== 'queue' && input !== undefined)) return { state: 'blocked', eligible: false, code: 'WORKSPACE_MISMATCH' }
+        const { storedProjectCreateIntent } = await import('./project-authority')
+        const intentAction = action === 'get' ? 'get' : action === 'queue' ? 'queue' : action === 'retry' ? 'retry' : 'cancel'
+        const result = await storedProjectCreateIntent(bound, intentAction, input, () => !event.sender.isDestroyed()
+          && windowManager?.getWorkspaceForWindow(senderId) === bound)
+        if (event.sender.isDestroyed() || windowManager?.getWorkspaceForWindow(senderId) !== bound) return { state: 'blocked', eligible: false, code: 'WORKSPACE_MISMATCH' }
+        return result
+      })
       ipcMain.handle('__project-authority:connect', async (event, localWorkspaceId: unknown, input: unknown) => {
         const senderId = event.sender.id
         const bound = windowManager?.getWorkspaceForWindow(senderId)

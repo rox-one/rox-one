@@ -1,0 +1,38 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-01-response-schema.test.ts:
+(pass) strict amended WP01 schema compiles and real HTTP/WS preserve complete typed canonical result and one receipt [28.32ms]
+(pass) complete canonical wire result survives real service/pool restart without schema relaxation [125.14ms]
+(pass) full wire contract rejects unknown top-level property; real HTTP/WS deny the corrupted retained receipt [33.57ms]
+(pass) full wire contract rejects unknown receipt property; real HTTP/WS deny the corrupted retained receipt [19.38ms]
+(pass) full wire contract rejects unknown Project DTO property; real HTTP/WS deny the corrupted retained receipt [13.64ms]
+(pass) full wire contract rejects unknown canonical ref property; real HTTP/WS deny the corrupted retained receipt [13.76ms]
+(pass) full wire contract rejects missing canonical receipt; real HTTP/WS deny the corrupted retained receipt [11.12ms]
+(pass) full wire contract rejects integer Project name; real HTTP/WS deny the corrupted retained receipt [15.51ms]
+(pass) full wire contract rejects wrong schema version; real HTTP/WS deny the corrupted retained receipt [15.84ms]
+(pass) full wire contract rejects invalid visibility; real HTTP/WS deny the corrupted retained receipt [9.35ms]
+(pass) full wire contract rejects invalid date-time; real HTTP/WS deny the corrupted retained receipt [15.25ms]
+(pass) full wire contract rejects invalid UUID; real HTTP/WS deny the corrupted retained receipt [8.18ms]
+(pass) full wire contract rejects invalid revision type; real HTTP/WS deny the corrupted retained receipt [9.09ms]
+(pass) full wire contract rejects invalid hash type; real HTTP/WS deny the corrupted retained receipt [7.72ms]
+(pass) full wire contract rejects invalid hash bytes; real HTTP/WS deny the corrupted retained receipt [8.69ms]
+(pass) full wire contract rejects false success boolean; real HTTP/WS deny the corrupted retained receipt [8.06ms]
+(pass) full wire contract rejects false verified fixture; real HTTP/WS deny the corrupted retained receipt [9.09ms]
+(pass) full wire contract rejects false verified queued command; real HTTP/WS deny the corrupted retained receipt [12.20ms]
+(pass) full wire contract rejects false receipt verification; real HTTP/WS deny the corrupted retained receipt [12.23ms]
+(pass) full wire contract rejects wrong receipt provider; real HTTP/WS deny the corrupted retained receipt [9.58ms]
+(pass) full wire contract rejects valid-format command hash mismatch; real HTTP/WS deny the corrupted retained receipt [11.75ms]
+(pass) full wire contract rejects valid-format workspace substitution; real HTTP/WS deny the corrupted retained receipt [10.34ms]
+(pass) full wire contract rejects valid-format owner substitution; real HTTP/WS deny the corrupted retained receipt [13.84ms]
+(pass) full wire contract rejects valid-format canonical entity mismatch; real HTTP/WS deny the corrupted retained receipt [10.21ms]
+(pass) full wire contract rejects valid-format receipt command mismatch; real HTTP/WS deny the corrupted retained receipt [7.68ms]
+(pass) full wire contract rejects valid-format receipt remote mismatch; real HTTP/WS deny the corrupted retained receipt [9.74ms]
+(pass) full wire contract rejects valid-format observed revision mismatch; real HTTP/WS deny the corrupted retained receipt [17.02ms]
+(pass) full wire contract rejects valid-format receipt timestamp mismatch; real HTTP/WS deny the corrupted retained receipt [8.71ms]
+(pass) negative control restoring the omitted-metadata schema rejects the actual canonical HTTP/WS response [20.82ms]
+WP01 response-schema cleanup: {"schema":"wp01_response_a881b58ac26746e7","remainingOwnedSchemas":0,"listenerPort":57227,"poolClosed":true,"ownedIssuerStateRemoved":true}
+
+ 29 pass
+ 0 fail
+ 282 expect() calls
+Ran 29 tests across 1 file. [1093.00ms]
