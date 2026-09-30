@@ -9,10 +9,10 @@
     "deliveredRevision": null,
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
-      "observedAt": "2026-09-30T12:31:07.030Z",
-      "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
-      "sourceCount": 4841,
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "observedAt": "2026-09-30T14:08:40.065Z",
+      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "sourceCount": 4846,
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
@@ -21,7 +21,7 @@
       "committedSourceMatchesTestedManifest": true
     },
     "publishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "latestPublishedSourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+    "latestPublishedSourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
     "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -437,7 +437,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "requirementAcceptance": "NOT_ACCEPTED",
     "codeDelivery": "SOURCE_PUBLISHED_FOR_REVIEW; ORIGINAL_PRODUCT_DELIVERY_PENDING",
-    "finalFullGateRefresh": "PASSING_LOCAL_UNIONS; 4841_SELECTED_SOURCE_FILES_MATCH_PUBLISHED_47F4E336",
+    "finalFullGateRefresh": "RUNTIME_SHARED_SERVER_UNIONS_PASSING_AT_C1C81E66; ELECTRON_IDENTICAL_TO_VERIFIED_47F4E336; SUBSEQUENT_RENDERER_PENDING",
     "shutdownTimerDefect": "NOT_REPRODUCED; PRIOR_CAUSAL_ATTRIBUTION_WITHDRAWN",
     "durableOutboxAcknowledgementAudit": "BOUNDED_UI_EDIT_ACK_OUTBOX_AUDITED; EXACT_ENCRYPTED_RECEIPT_BODY_NOT_DECRYPTED",
     "nativeCreation": "BOUNDED_ACTUAL_WS_SQLITE_VERIFIED; NEW_UI_PENDING_SKY_UNRESPONSIVE"
@@ -2587,9 +2587,21 @@
     "observedAt": "2026-09-30T13:11:26.806Z",
     "inputRevision": "3ea573a052efda5df1dceef26731942b302565c7",
     "publication": {
-      "status": "VERIFIED_CANDIDATE; SOURCE_PUSH_READBACK_PENDING",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "revision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "branch": "feat/september-program-20260930",
       "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
-      "fullProductDelivery": "PENDING"
+      "isDraft": true,
+      "remoteHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "pullRequestHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "observedAt": "2026-09-30T14:08:40.065Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "sourceCount": 4846,
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
     },
     "sourceBinding": {
       "sourceCount": 4846,
@@ -2633,7 +2645,9 @@
           "path": "packages/shared/src/agent/core/__tests__/budget-process-loss-acceptance.test.ts",
           "sha256": "e19e7156bccb049f80c7d0c0168c5d33bb40774c4c490ceb7f4347e6dbb4f37c"
         }
-      ]
+      ],
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "committedSourceMatchesTestedManifest": true
     },
     "memory": {
       "status": "BOUNDED_VERIFIED",

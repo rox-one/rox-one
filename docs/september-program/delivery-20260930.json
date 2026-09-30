@@ -370,5 +370,22 @@
     "committedSourceMatchesTestedManifest": true,
     "sourceCount": 4841,
     "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending."
+  },
+  "runtimeAcceptanceFollowupPublication": {
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+    "revision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+    "pullRequestHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+    "observedAt": "2026-09-30T14:08:40.065Z",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+    "sourceCount": 4846,
+    "committedSourceMatchesTestedManifest": true,
+    "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
   }
 }

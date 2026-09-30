@@ -10009,7 +10009,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T12:31:07.030Z",
+    "asOf": "2026-09-30T14:08:40.065Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10024,12 +10024,12 @@
       {
         "path": "docs/september-program/requirements-full.json",
         "sha256": "5e5f5834a8971d5d4ad79acd585e4932b2dc9a0991067738aa9867e9ff545ca3",
-        "binding": "SOURCE_CONTRACT_PRESENT_AT_PUBLISHED_47f4e336aeb4c238b18871374d4101f4ada40bdb"
+        "binding": "SOURCE_CONTRACT_PRESENT_AT_PUBLISHED_c1c81e66db2db42d53856af3205350ea5bb5fc68"
       },
       {
         "path": "docs/september-program/requirements-addendum.json",
         "sha256": "9d36876ba7e9a94ce856f3ec08dd3133c60f13f30e4e0bf74c63cfd7206cc776",
-        "binding": "SOURCE_CONTRACT_PRESENT_AT_PUBLISHED_47f4e336aeb4c238b18871374d4101f4ada40bdb"
+        "binding": "SOURCE_CONTRACT_PRESENT_AT_PUBLISHED_c1c81e66db2db42d53856af3205350ea5bb5fc68"
       }
     ],
     "fullTaskAcceptance": "NOT_ACCEPTED",
@@ -10041,10 +10041,10 @@
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
-      "observedAt": "2026-09-30T12:31:07.030Z",
-      "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
-      "sourceCount": 4841,
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "observedAt": "2026-09-30T14:08:40.065Z",
+      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "sourceCount": 4846,
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
@@ -10052,23 +10052,23 @@
       ],
       "committedSourceMatchesTestedManifest": true
     },
-    "finalFullGateRefresh": "PASSING_LOCAL_UNIONS; 4841_SELECTED_SOURCE_FILES_MATCH_PUBLISHED_47F4E336",
+    "finalFullGateRefresh": "RUNTIME_SHARED_SERVER_UNIONS_PASSING_AT_C1C81E66; ELECTRON_IDENTICAL_TO_VERIFIED_47F4E336; SUBSEQUENT_RENDERER_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
-      "revision": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "revision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
       "branch": "feat/september-program-20260930",
       "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
       "isDraft": true,
-      "remoteHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
-      "pullRequestHeadReadback": "47f4e336aeb4c238b18871374d4101f4ada40bdb",
-      "observedAt": "2026-09-30T12:31:07.030Z",
+      "remoteHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "pullRequestHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "observedAt": "2026-09-30T14:08:40.065Z",
       "fullProductDelivery": "PENDING",
       "originalCriteriaAcceptedByPublication": 0,
-      "sourceManifestSha256": "f7c9b5d87361810610697f3029609ab8bff3a29ac2357333b9cec3a46efcca60",
+      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "sourceCount": 4846,
       "committedSourceMatchesTestedManifest": true,
-      "sourceCount": 4841,
-      "bindingLimit": "Bounded local gates bind to the published source revision. Later documentation-only commits have a different head. Full original product acceptance remains pending."
+      "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
     },
     "nativeCreationEvidence": "native-create-20260930.json",
     "historicalNamedCandidateSnapshot": {
@@ -10080,10 +10080,22 @@
     },
     "runtimeAcceptanceEvidence": "runtime-acceptance-20260930.json",
     "runtimeAcceptanceCandidate": {
-      "status": "VERIFIED_CANDIDATE; SOURCE_PUSH_READBACK_PENDING",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
       "manifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
       "sourceCount": 4846,
       "fullTasksAccepted": 0
+    },
+    "facetCounts": {
+      "implementation": {
+        "IN_PROGRESS": 25,
+        "NOT_RUN": 84
+      },
+      "verification": {
+        "IN_PROGRESS": 23,
+        "NOT_RUN": 86
+      },
+      "fullAccepted": 0
     }
   }
 }
