@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test'
 import { mkdtempSync, writeFileSync, existsSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
+import { DatabaseSync } from '../../../utils/sqlite-runtime'
 const modulePath = join(import.meta.dir, '../agent-budget.ts')
 const now = Date.parse('2026-09-30T12:00:00Z')
 function spawn(root: string, body: string) {

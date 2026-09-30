@@ -7,6 +7,7 @@ import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { RequestContext } from '../../transport/types'
+import type { LoadedProject } from '@craft-agent/shared/projects'
 import {
   ProjectOkrConflictError,
   loadProjectOkr,
@@ -40,6 +41,21 @@ export const HANDLED_CHANNELS = [
 const TEXT_ASSET_RE = /\.(md|markdown|txt|csv|tsv|json|ya?ml|html?|xml|log)$/i
 const TEXT_ASSET_MAX_BYTES = 64 * 1024
 const TEXT_EXCERPT_CHARS = 1500
+
+/** Publish storage records in the current trusted registry namespace. Storage
+ * basenames are not workspace identities; the renderer never infers this map. */
+function projectWorkspaceProjection(
+  projects: LoadedProject[],
+  canonicalWorkspaceId: string,
+  capturedRootPath: string,
+): LoadedProject[] {
+  const current = getWorkspaceByNameOrId(canonicalWorkspaceId)
+  if (!current || current.id !== canonicalWorkspaceId || current.rootPath !== capturedRootPath ||
+    projects.some(project => !project || project.workspaceRootPath !== capturedRootPath)) {
+    throw new CodedError('AUTH_FAILED', 'Project workspace projection scope changed or is invalid')
+  }
+  return projects.map(project => ({ ...project, workspaceId: current.id }))
+}
 
 /** Short context lines about a project's inputs for the roadmap AI (names + small text excerpts). */
 async function projectInputLines(
@@ -88,9 +104,14 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
   const log = deps.platform.logger
 
   async function broadcastChanged(workspaceId: string, workspaceRootPath: string): Promise<void> {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace || workspace.rootPath !== workspaceRootPath) {
+      throw new CodedError('AUTH_FAILED', 'Project workspace projection scope changed or is invalid')
+    }
+    const canonicalWorkspaceId = workspace.id
     const { loadWorkspaceProjects } = await import('@craft-agent/shared/projects')
-    const projects = loadWorkspaceProjects(workspaceRootPath)
-    pushTyped(server, RPC_CHANNELS.projects.CHANGED, { to: 'workspace', workspaceId }, workspaceId, projects)
+    const projects = projectWorkspaceProjection(loadWorkspaceProjects(workspaceRootPath), canonicalWorkspaceId, workspaceRootPath)
+    pushTyped(server, RPC_CHANNELS.projects.CHANGED, { to: 'workspace', workspaceId: canonicalWorkspaceId }, canonicalWorkspaceId, projects)
   }
 
   // List all projects for a workspace
@@ -102,8 +123,9 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
       log.error(`PROJECTS_GET: Workspace not found: ${workspaceId}`)
       return []
     }
+    const { id, rootPath } = workspace
     const { loadWorkspaceProjects } = await import('@craft-agent/shared/projects')
-    return loadWorkspaceProjects(workspace.rootPath)
+    return projectWorkspaceProjection(loadWorkspaceProjects(rootPath), id, rootPath)
   })
 
   // Get one project (by id or slug)
@@ -112,9 +134,10 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     if (!isClaimableLive(read.result)) return null
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
+    const { id, rootPath } = workspace
     const { loadProject, loadProjectById } = await import('@craft-agent/shared/projects')
-    return loadProject(workspace.rootPath, projectIdOrSlug)
-      ?? loadProjectById(workspace.rootPath, projectIdOrSlug)
+    const project = loadProject(rootPath, projectIdOrSlug) ?? loadProjectById(rootPath, projectIdOrSlug)
+    return projectWorkspaceProjection(project ? [project] : [], id, rootPath)[0] ?? null
   })
 
   // Create a new project

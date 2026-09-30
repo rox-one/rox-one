@@ -552,5 +552,184 @@
     "DATA_SHARED": false,
     "provider": false,
     "iOS": false
+  },
+  "frozenOwnerInputs": {
+    "main": "f63294ba4fffa7238b46b24e918925a313ad0b12",
+    "september": "bac082301aed341fe078cb5bd539c4ba074560eb",
+    "compound": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+    "sqlitePublishedOwner": "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+  },
+  "ordinaryMerges": [
+    {
+      "commit": "b30b4c67e00ca43d945076f471809278ced33363",
+      "parents": [
+        "ea083e387e170552ee6102e29c2cf31adc8b6973",
+        "8106f22185fb3b3e9a6a585320d48b1bf5f10fbd"
+      ],
+      "subject": "feat(integration): assemble September authority and scoped Compound surfaces"
+    },
+    {
+      "commit": "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+      "parents": [
+        "b30b4c67e00ca43d945076f471809278ced33363",
+        "bdd28272856be5fdead6c7a93ca1b45eb13b17ed"
+      ],
+      "subject": "merge: include published September SQLite recovery owner result"
+    },
+    {
+      "commit": "19ee83bf4ef52140d6478395ccb984eef7eaf96f",
+      "parents": [
+        "8851e8f9bd7ede447524dbe4e77c4234bee31da5",
+        "8c1b8d95944cc21c4745484ba45edd0cf0afbb73"
+      ],
+      "subject": "merge: retain published UTB strict V1 starter and pending criteria"
+    },
+    {
+      "commit": "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+      "parents": [
+        "ff75a6421607efc18c165cac578216ef8808e449",
+        "bac082301aed341fe078cb5bd539c4ba074560eb"
+      ],
+      "subject": "merge: include published September scheduler and budget recovery"
+    },
+    {
+      "commit": "944662346b87020349f085a0a4d72d007db7ae44",
+      "parents": [
+        "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+        "3027028c6c8cb420efe3ea4b255ac725747de9e5"
+      ],
+      "subject": "merge: include published Compound project intents and licensed resources"
+    }
+  ],
+  "additionalConflictStages": [
+    {
+      "stage": "new-september",
+      "ours": "ff75a6421607efc18c165cac578216ef8808e449",
+      "theirs": "bac082301aed341fe078cb5bd539c4ba074560eb",
+      "conflicts": {
+        "docs/plan.md": {
+          "1": {
+            "mode": "100644",
+            "blob": "0e1633492d0a5da6dc76189e63fd6c7ee708f331"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "31ae88591de3741ecfefe96cb60d792ec30f4795"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "5ab2df07ef7fec91c6a993e18736e84fccfdd26b"
+          }
+        },
+        "docs/spec.md": {
+          "1": {
+            "mode": "100644",
+            "blob": "637fdb3d124f344b9bb769c1eefca2c6d725520e"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "1c9b06234c6c903cb2838e09ec6ba71d22e2cd68"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "05aba89a6d1c81cde0f75f39c35ac60d0b4285db"
+          }
+        }
+      }
+    },
+    {
+      "stage": "new-compound",
+      "ours": "04246ceffee0b54819a6c9bf170c8fbf4169b04e",
+      "theirs": "3027028c6c8cb420efe3ea4b255ac725747de9e5",
+      "conflicts": {
+        "packages/core/src/platform/identity/credential-types.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "ec964accaa4ec321d3345e6d8e44da70ce61cc22"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "7ab8134e08fb2e5e0f0381eee817862486bca65e"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "e87306826b2bbdd4b49363e901bb9d90476fa75b"
+          }
+        },
+        "packages/core/src/tasks/personal/things.test.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "48055167d5efce6507f9197dbe5ac25ae2984244"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "c6522a5d069d57457609d34b347bd4d5076f0ac3"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "30d09c2715e144cda8cea139412215e18e894be9"
+          }
+        },
+        "packages/server-core/src/transport/server.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "d8d7da55c12fe971b7fb917a40f75dfd8bf9dcbb"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "66c794602b12ed3633453062bf5551bd82197c32"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "3a923bac776a2e382f1642710b099628a964bedb"
+          }
+        },
+        "packages/server-core/src/transport/types.ts": {
+          "1": {
+            "mode": "100644",
+            "blob": "9d2025e8e22463af7886bfd7b38970d8aa66dec9"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "400f0630978a34248e866ca9fe38f9354373716a"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "b311bfc6462563a259e48184c403aa77142daa12"
+          }
+        },
+        "packages/shared/package.json": {
+          "1": {
+            "mode": "100644",
+            "blob": "8aef9290daf5eadbf0310340ee48c347b460e305"
+          },
+          "2": {
+            "mode": "100644",
+            "blob": "3ab345a488a31d7874446c407d033d40db2c78ac"
+          },
+          "3": {
+            "mode": "100644",
+            "blob": "0003aec8802eb7358d09e5fc2f12aa70dd1ddeec"
+          }
+        }
+      }
+    }
+  ],
+  "conflictInstances": 35,
+  "uniqueConflictPaths": 31,
+  "rootProjectScopeRepair": {
+    "remoteRef": "ops/use-projects-scope-repair-20260930",
+    "source": "260daf5c38d70cd833ae9413123bb03a5900cf61",
+    "docsOnlyHead": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
+    "parent": "4413e4ae352a6844b498b31f239ffc6c3676d7a7",
+    "isolatedCherryPick": "65547d788eebdf5d39b8f4180880f5abba580d93",
+    "beforeSha256": "13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31",
+    "afterSha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac",
+    "scope": "controlled React lifecycle and actual transpiled callbacks, real Jotai; actual DOM proof remains separately applicable"
+  },
+  "remoteDraft": {
+    "number": 1322,
+    "url": "https://github.com/rox-one/rox-one/pull/1322",
+    "mergeAuthorized": false
   }
 }

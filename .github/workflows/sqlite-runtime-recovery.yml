@@ -93,7 +93,9 @@ jobs:
         run: |
           bun test packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts \
             packages/server-core/src/transport/__tests__/before-response-authority.test.ts \
+            packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts \
             packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts \
+            packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts \
             scripts/electron-main-cjs.test.ts \
             scripts/__tests__/check-i18n-coverage.test.ts \
             packages/pi-agent-server/src/custom-endpoint-registration.test.ts \
@@ -101,8 +103,15 @@ jobs:
             apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts \
             apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts \
             apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts \
+            apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts \
             packages/shared/src/projects/__tests__ \
             apps/webui/__tests__
+      - name: Verify published September process-loss recovery
+        run: |
+          bun test packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts \
+            packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts \
+            packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts \
+            packages/server-core/src/transport/__tests__/native-authorization.test.ts
       - name: Build actual subprocess, WebUI and server
         env:
           NODE_OPTIONS: --max-old-space-size=4096

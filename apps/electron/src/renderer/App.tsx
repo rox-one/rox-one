@@ -97,8 +97,9 @@ import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
 import { toast } from 'sonner'
+import { initializeAuthenticatedWebRenderer, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
 
-type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready'
+type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
 /** Type for the Jotai store returned by useStore() */
 type JotaiStore = ReturnType<typeof getDefaultStore>
@@ -289,7 +290,7 @@ function SessionLoadErrorScreen({
   )
 }
 
-export default function App() {
+export default function App({ webTransportBootstrap }: { webTransportBootstrap?: AuthenticatedWebTransportBootstrap } = {}) {
   const { t } = useTranslation()
 
   // Initialize renderer perf tracking early (debug mode = running from source)
@@ -303,6 +304,7 @@ export default function App() {
   // App state: loading -> check auth -> onboarding or ready
   const [appState, setAppState] = useState<AppState>('loading')
   const [setupNeeds, setSetupNeeds] = useState<SetupNeeds | null>(null)
+  const [webBootstrapError, setWebBootstrapError] = useState('')
   const [callerAuthority, setCallerAuthority] = useState<'native' | 'local' | null>(null)
   const callerAuthorityRef = useRef(callerAuthority)
   callerAuthorityRef.current = callerAuthority
@@ -727,6 +729,9 @@ export default function App() {
 
   // Refresh LLM connections from config (called on workspace change and after connection updates)
   const refreshLlmConnections = useCallback(async () => {
+    // Cookie-authenticated web transport conveys no desktop/native identity
+    // and cannot read host provider credentials or seed a runtime default.
+    if (webTransportBootstrap) return
     const identity = await window.electronAPI.getOrgIdentity()
     if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
       throw new Error('runtime-identity-unavailable')
@@ -745,7 +750,7 @@ export default function App() {
       const settings = await window.electronAPI.getWorkspaceSettings(windowWorkspaceId)
       setWorkspaceDefaultLlmConnection(settings?.defaultLlmConnection)
     }
-  }, [resolveDefaultConnectionSlug, windowWorkspaceId])
+  }, [resolveDefaultConnectionSlug, windowWorkspaceId, webTransportBootstrap])
 
   // Enter Home only after the selected workspace is confirmed active.
   const handleOnboardingComplete = useCallback(async (): Promise<boolean> => {
@@ -827,8 +832,21 @@ export default function App() {
 
   // Check auth state and get window's workspace ID on mount
   useEffect(() => {
+    let cancelled = false
     const initialize = async () => {
       try {
+        if (webTransportBootstrap) {
+          await initializeAuthenticatedWebRenderer(window.electronAPI, webTransportBootstrap, {
+            isCancelled: () => cancelled,
+            markHostSessionsUnavailable,
+            onWorkspaceReady: workspaceId => {
+              setCallerAuthority(null)
+              setWindowWorkspaceId(workspaceId)
+              setAppState('ready')
+            },
+          })
+          return
+        }
         // Get this window's workspace ID (passed via URL query param from main process)
         const wsId = await window.electronAPI.getWindowWorkspace()
         setWindowWorkspaceId(wsId)
@@ -872,6 +890,13 @@ export default function App() {
           setAppState('ready')
         }
       } catch (error) {
+        if (cancelled) return
+        if (webTransportBootstrap) {
+          setCallerAuthority(null)
+          setWebBootstrapError(error instanceof Error ? error.message : String(error))
+          setAppState('transport-unavailable')
+          return
+        }
         console.error('Failed to check auth state:', error)
         toast.error(t('settings.account.loadFailed', { message: error instanceof Error ? error.message : String(error) }))
         setAppState('onboarding')
@@ -879,7 +904,8 @@ export default function App() {
     }
 
     void initialize()
-  }, [resolveDefaultConnectionSlug, t])
+    return () => { cancelled = true }
+  }, [resolveDefaultConnectionSlug, t, webTransportBootstrap, markHostSessionsUnavailable])
 
   // Session selection state
   const [sessionSelection, setSession] = useSession()
@@ -956,7 +982,7 @@ export default function App() {
   // Subscribe to LLM connections change events (live updates when models are fetched)
   useEffect(() => {
     const cleanup = window.electronAPI.onLlmConnectionsChanged(() => {
-      refreshLlmConnections()
+      void refreshLlmConnections().catch(error => console.error('Failed to refresh LLM connections:', error))
     })
     return () => { cleanup() }
   }, [refreshLlmConnections])
@@ -964,7 +990,7 @@ export default function App() {
   // Refresh LLM connections and workspace default when workspace changes
   useEffect(() => {
     if (windowWorkspaceId) {
-      refreshLlmConnections()
+      void refreshLlmConnections().catch(error => console.error('Failed to refresh LLM connections:', error))
     }
   }, [windowWorkspaceId, refreshLlmConnections])
 
@@ -1944,7 +1970,7 @@ export default function App() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  const showWorkspaceIconRail = shouldShowWorkspaceIconRail(workspaceSelectorRail, viewportWidth)
+  const showWorkspaceIconRail = !webTransportBootstrap && shouldShowWorkspaceIconRail(workspaceSelectorRail, viewportWidth)
 
   const handleReconnectTransport = useCallback(() => {
     void window.electronAPI.reconnectTransport().catch((error) => {
@@ -2194,6 +2220,15 @@ export default function App() {
     return <SplashScreen isExiting={false} />
   }
 
+  if (appState === 'transport-unavailable') {
+    return (
+      <div role="alert" className="flex h-screen flex-col items-center justify-center gap-3 px-4 text-center">
+        <h1>{t('webui.connectionFailed')}</h1>
+        <p>{webBootstrapError}</p>
+      </div>
+    )
+  }
+
   // Reauth state - session expired, need to re-login
   // ModalProvider + WindowCloseHandler ensures X button works on Windows
   if (appState === 'reauth') {
@@ -2334,6 +2369,11 @@ export default function App() {
                 />
               )}
               <ToolchainStatusBanner />
+              {webTransportBootstrap && (
+                <div role="status" data-host-session-capability="unavailable" className="border-b border-border px-4 py-2 text-sm text-muted-foreground">
+                  {t('sidebar.allSessions')}: {t('common.unavailable')}
+                </div>
+              )}
               {sessionLoadError && callerAuthority === 'native' && (
                 <div role="alert" className="flex items-center gap-3 border-b border-border bg-muted px-4 py-2 text-sm text-muted-foreground">
                   <span className="min-w-0 flex-1">{sessionLoadError}</span>
@@ -2353,7 +2393,7 @@ export default function App() {
                     defaultLayout={[20, 32, 48]}
                     menuNewChatTrigger={menuNewChatTrigger}
                     isFocusedMode={isFocusedMode}
-                    showTopBarWorkspaceSelector={!showWorkspaceIconRail}
+                    showTopBarWorkspaceSelector={!webTransportBootstrap && !showWorkspaceIconRail}
                     topBarLeftInset={getTopBarLeftInset(showWorkspaceIconRail)}
                     workbenchOperatorCapability={true}
                   />

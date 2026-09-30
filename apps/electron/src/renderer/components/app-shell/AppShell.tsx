@@ -2530,7 +2530,7 @@ function AppShellContent({
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
           isCompactSettingsMode={isWebUI && isAutoCompact && isSettingsNavigation(navState)}
           isCompact={isAutoCompact}
-          showWorkspaceSelector={showTopBarWorkspaceSelector || isAutoCompact}
+          showWorkspaceSelector={showTopBarWorkspaceSelector || (isAutoCompact && !isWebUI)}
           leftInset={topBarLeftInset}
         />
 
