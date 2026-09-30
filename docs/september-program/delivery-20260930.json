@@ -538,8 +538,23 @@
     "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head."
   },
   "portableElectronBridgePublication": {
-    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "observedAt": "2026-09-30T17:39:30.972Z",
+    "sourceCount": 4873,
+    "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+    "previous4870SourcesUnchanged": true,
+    "addedDeveloperScripts": 3,
     "fullProductDelivery": "PENDING",
-    "fullOriginalTasksAccepted": 0
+    "originalCriteriaAcceptedByPublication": 0,
+    "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head."
   }
 }

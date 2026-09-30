@@ -3568,7 +3568,28 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "observedAt": "2026-09-30T17:39:30.972Z",
+          "sourceCount": 4873,
+          "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "previous4870SourcesUnchanged": true,
+          "addedDeveloperScripts": 3,
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -4305,7 +4326,28 @@
           "evidenceRefs": [],
           "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "observedAt": "2026-09-30T17:39:30.972Z",
+          "sourceCount": 4873,
+          "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "previous4870SourcesUnchanged": true,
+          "addedDeveloperScripts": 3,
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -10022,20 +10064,23 @@
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
         "sourcePublication": {
           "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-          "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
-          "revision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
           "branch": "feat/september-program-20260930",
           "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
           "isDraft": true,
-          "remoteHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
-          "pullRequestHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
-          "observedAt": "2026-09-30T17:27:29.813Z",
+          "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "observedAt": "2026-09-30T17:39:30.972Z",
+          "sourceCount": 4873,
+          "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "previous4870SourcesUnchanged": true,
+          "addedDeveloperScripts": 3,
           "fullProductDelivery": "PENDING",
           "originalCriteriaAcceptedByPublication": 0,
-          "sourceCount": 4870,
-          "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
-          "committedSourceMatchesTestedManifest": true,
-          "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head.",
+          "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
           "fullTaskAccepted": false
         }
       }
@@ -10229,16 +10274,17 @@
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
-      "observedAt": "2026-09-30T17:27:29.813Z",
-      "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
-      "sourceCount": 4870,
+      "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "observedAt": "2026-09-30T17:39:30.972Z",
+      "sourceCount": 4873,
+      "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
         "apps/electron/.impeccable/hook.cache.json"
       ],
-      "committedSourceMatchesTestedManifest": true
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75"
     },
     "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_CI_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4870_ROADMAP_SQLITE_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
     "gitPublication": {
@@ -10303,7 +10349,7 @@
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Explicit Electron/UI/core/shared-src/server-core-src package gate scope. Subsequent scheduler terminal recovery and OMP fixture are excluded. Runtime shared/server gates bind separately to c1c81e66; complete desktop/platform acceptance pending."
     },
-    "latestPublishedSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+    "latestPublishedSourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
     "schedulerTerminalEvidence": "scheduler-terminal-20260930.json",
     "schedulerTerminalCandidate": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
@@ -10453,9 +10499,24 @@
     },
     "portableElectronBridgeEvidence": "portable-electron-bridge-20260930.json",
     "portableElectronBridgeCandidate": {
-      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
+      "observedAt": "2026-09-30T17:39:30.972Z",
+      "sourceCount": 4873,
+      "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+      "previous4870SourcesUnchanged": true,
+      "addedDeveloperScripts": 3,
       "fullProductDelivery": "PENDING",
-      "fullOriginalTasksAccepted": 0
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head."
     }
   }
 }
