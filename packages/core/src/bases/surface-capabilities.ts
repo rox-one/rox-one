@@ -8,9 +8,13 @@ function record(value: unknown): Record<string, unknown> {
   const proto = Object.getPrototypeOf(value)
   return proto === Object.prototype || proto === null ? value as Record<string, unknown> : {}
 }
+function ownData(value: Record<string, unknown>, key: string): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key)
+  return descriptor && 'value' in descriptor ? descriptor.value : undefined
+}
 function verifiedTrue(value: unknown, key: string): boolean {
   const v = record(value)
-  return Object.hasOwn(v, key) && v[key] === true
+  return ownData(v, key) === true
 }
 
 /**
@@ -34,9 +38,9 @@ export function getTableCapabilityAvailability(surface: unknown, evidence: unkno
   for (const capability of TABLE_CAPABILITIES) {
     let reason = common
     if (!reason && !READ_CAPABILITIES.has(capability) && snapshot) reason = 'snapshot-read-only'
-    if (!reason && !READ_CAPABILITIES.has(capability) && p.hostMode !== 'interactive') reason = 'host-read-only'
-    if (!reason && !verifiedTrue(p.runtime, capability)) reason = 'missing-runtime'
-    if (!reason && !verifiedTrue(p.grants, capability)) reason = 'not-permitted'
+    if (!reason && !READ_CAPABILITIES.has(capability) && ownData(p, 'hostMode') !== 'interactive') reason = 'host-read-only'
+    if (!reason && !verifiedTrue(ownData(p, 'runtime'), capability)) reason = 'missing-runtime'
+    if (!reason && !verifiedTrue(ownData(p, 'grants'), capability)) reason = 'not-permitted'
     result[capability] = reason ? { available: false, reason } : { available: true }
   }
   return result

@@ -23,10 +23,18 @@ function object(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return fail()
   const proto = Object.getPrototypeOf(value)
   if (proto !== Object.prototype && proto !== null) return fail()
-  return value as Record<string, unknown>
+  // Read inert own data only. Include hidden keys so validation cannot silently
+  // drop them; a detached null-prototype record also avoids inherited getters.
+  const result = Object.create(null) as Record<string, unknown>
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)
+    if (!descriptor || !('value' in descriptor)) return fail()
+    Object.defineProperty(result, key, { value: descriptor.value, enumerable: true })
+  }
+  return result
 }
 function keys(value: Record<string, unknown>, allowed: readonly string[]): void {
-  if (Object.keys(value).some(key => !allowed.includes(key))) fail()
+  if (Reflect.ownKeys(value).some(key => typeof key !== 'string' || !allowed.includes(key))) fail()
 }
 function id(value: unknown): string {
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_ID_LENGTH
