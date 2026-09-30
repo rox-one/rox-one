@@ -8,7 +8,9 @@
 | Repair inert own-property validation | repo_audit | Adverse RED | Two production helpers and one adverse test file | Complete |
 | Verify positive, negative and baseline controls | repo_audit | Repair | Bun/Node22 each72/0; canonical closure/export0; old codec mutation58/14; full core13 unchanged | Complete / global failures retained |
 | Independent review | terminal_history | Frozen source and receipts | Spec+Standards on exact three-file diff; independent Bun72/0 | Complete; bounded source accepted |
-| Local commit preparation | repo_audit | Independent acceptance | Exact source hashes, scoped documents and hashed receipts | Ready for authorized commit |
-| Stacked draft delivery | root / repo_audit | Root exact revision review | Correct base branch, remote head/readback; no close/merge | Pending |
+| Local commit preparation | repo_audit | Independent acceptance | Exact source hashes, scoped documents and hashed receipts | Complete; source commit4ba5f6d2 |
+| Stacked draft delivery | root / repo_audit | Root exact revision review | Correct base branch, remote head/readback; no close/merge | Complete; draft1318 exact source4ba5f6d2 and body read back |
 
 Shared registrations, Base owners, editor/native/provider work stay with their active owners. UTB-02 requires canonical persistence/query/ACL and host-CAS dependencies; this repair supplies only the reference contract.
+
+The separate publication receipt records observed source revision and remote state before this documentation follow-up. Draft publication does not accept queued legacy validate, blocked Vercel deployment, native or full program gates.

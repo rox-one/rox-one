@@ -75,7 +75,7 @@
     "globalTypes": "baseline failures retained",
     "nativeProduct": "not run",
     "independentReview": "accepted exact repair by independent Spec+Standards; actual Bun72/0",
-    "publication": "not yet delivered"
+    "publication": "source4ba5f6d2 delivered as draft1318; separate publication receipt records exact remote/source/body gate"
   },
   "remaining": {
     "issue1296": "open; full integration/native/owner authorization gates remain",
