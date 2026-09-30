@@ -23,9 +23,9 @@ describe('activity rail: expanded with labels by default', () => {
     expect(rail).toContain('activityRailWidth(collapsed)')
   })
 
-  it('persists under a v2 key defaulting to expanded (legacy collapsed flag ignored once)', () => {
-    expect(KEYS.activityRailCollapsedV2).toBe('activity-rail-collapsed-v2')
-    expect(atoms).toMatch(/activityRailCollapsedAtom = atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.activityRailCollapsedV2\),\s*false,/)
+  it('preserves the existing preference key and current expanded default', () => {
+    expect(KEYS.activityRailCollapsed).toBe('activity-rail-collapsed')
+    expect(atoms).toMatch(/activityRailCollapsedAtom = atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.activityRailCollapsed\),\s*false,/)
   })
 
   it('rows are 28px, radius 6, label visible when expanded, tooltip when collapsed', () => {
