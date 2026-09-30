@@ -58,7 +58,12 @@
     "packages/core/src/calendar/occurrences.ts",
     "packages/core/src/calendar/merge.ts",
     "packages/core/src/calendar/calendar.test.ts",
-    "plans/macro-integration/cloud/contract-amendments.json"
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/domain-forms.md",
+    "plans/macro-integration/resolved-operation-contracts.json"
   ],
   "goal": "Create+attendees+drag+resize changes provider state verified; stale etag surfaces conflict; event searchable/mentionable; DST/all-day correctness",
   "expectedResults": [
@@ -1143,5 +1148,1152 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [
+      {
+        "canonicalOperation": "calendar.updateEvent",
+        "ownerWorkPackage": "WP-28",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "event": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "providerEtag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "start": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "instant"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "all_day"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                }
+              ]
+            },
+            "end": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "instant"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "all_day"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                }
+              ]
+            },
+            "allDay": {
+              "type": "boolean"
+            },
+            "timeZone": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attendees": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "role": {
+                    "enum": [
+                      "organizer",
+                      "required",
+                      "optional",
+                      "resource"
+                    ]
+                  },
+                  "rsvp": {
+                    "enum": [
+                      "needs_action",
+                      "accepted",
+                      "tentative",
+                      "declined"
+                    ]
+                  },
+                  "principalRef": {
+                    "$ref": "#/$defs/Rox2EntityRef"
+                  },
+                  "contactRef": {
+                    "$ref": "#/$defs/Rox2EntityRef"
+                  }
+                },
+                "required": [
+                  "email",
+                  "role"
+                ]
+              }
+            },
+            "location": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "meetingLink": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 10000
+            }
+          },
+          "required": [
+            "event",
+            "providerEtag"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-07-SCHEMA-1"
+        ],
+        "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      },
+      {
+        "canonicalOperation": "calendar.createEvent",
+        "ownerWorkPackage": "WP-28",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "calendarRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "event": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "start": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "instant"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "all_day"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    }
+                  ]
+                },
+                "end": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "instant"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "all_day"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    }
+                  ]
+                },
+                "allDay": {
+                  "type": "boolean"
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "attendees": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "role": {
+                        "enum": [
+                          "organizer",
+                          "required",
+                          "optional",
+                          "resource"
+                        ]
+                      },
+                      "rsvp": {
+                        "enum": [
+                          "needs_action",
+                          "accepted",
+                          "tentative",
+                          "declined"
+                        ]
+                      },
+                      "principalRef": {
+                        "$ref": "#/$defs/Rox2EntityRef"
+                      },
+                      "contactRef": {
+                        "$ref": "#/$defs/Rox2EntityRef"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "role"
+                    ]
+                  }
+                },
+                "location": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "meetingLink": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "format": "uri",
+                      "pattern": "^https://"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 10000
+                }
+              },
+              "required": [
+                "title",
+                "start",
+                "end",
+                "allDay",
+                "timeZone",
+                "attendees"
+              ]
+            }
+          },
+          "required": [
+            "calendarRef",
+            "event"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-07-SCHEMA-2"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      },
+      {
+        "canonicalOperation": "calendar.event.rsvp",
+        "ownerWorkPackage": "WP-28",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "eventRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "attendeeAccountRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "response": {
+              "enum": [
+                "accepted",
+                "tentative",
+                "declined"
+              ]
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "providerEtag": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "eventRef",
+            "attendeeAccountRef",
+            "response",
+            "baseRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-08-SCHEMA-1"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      }
+    ],
+    "actionBindings": [
+      {
+        "formId": "DF-07",
+        "actionId": "save-existing",
+        "canonicalOperation": "calendar.updateEvent",
+        "ownerWorkPackage": "WP-28",
+        "schemaId": "DF-07-SCHEMA-1",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "event": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "providerEtag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "start": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "instant"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "all_day"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                }
+              ]
+            },
+            "end": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "instant"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "const": "all_day"
+                    },
+                    "value": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "timeZone": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "value",
+                    "timeZone"
+                  ]
+                }
+              ]
+            },
+            "allDay": {
+              "type": "boolean"
+            },
+            "timeZone": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attendees": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "role": {
+                    "enum": [
+                      "organizer",
+                      "required",
+                      "optional",
+                      "resource"
+                    ]
+                  },
+                  "rsvp": {
+                    "enum": [
+                      "needs_action",
+                      "accepted",
+                      "tentative",
+                      "declined"
+                    ]
+                  },
+                  "principalRef": {
+                    "$ref": "#/$defs/Rox2EntityRef"
+                  },
+                  "contactRef": {
+                    "$ref": "#/$defs/Rox2EntityRef"
+                  }
+                },
+                "required": [
+                  "email",
+                  "role"
+                ]
+              }
+            },
+            "location": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "meetingLink": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 10000
+            }
+          },
+          "required": [
+            "event",
+            "providerEtag"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "eventRef": "event",
+            "providerEtag": "providerEtag",
+            "startEnd": "resolved TemporalValue; allDay exclusiveend civil date",
+            "existingCalendarRef": "immutable; not submitted; movingcalendar unavailable",
+            "createCalendarRef": "CreateCalendarEvent.calendarRef",
+            "titleDescriptionLocation": "validated known patch fields; no hidden schema stripping"
+          },
+          "wireName": "calendar.updateEvent",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{receiptId,eventRef,revision?,operationState:committed|reconciling,status:CanonicalStatus,normalizedEvent?}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "invalid_interval",
+          "invalid_local_time",
+          "ambiguous_local_time",
+          "provider_conflict",
+          "provider_rejected",
+          "unsupported_capability"
+        ],
+        "semanticConstraints": [
+          "TemporalValue targetnormative union instant{valueRFC3339,timeZone}|all_day{valueYYYY-MM-DD,timeZone}; wall_time isform intermediate only untilDSTresolved.",
+          "Source CalendarEvent numeric startAt/endAt remains legacyprojectionadapter ofnormalized instants; all-day dates stored in targetDTO not reconstructed from24h.",
+          "Explicit schema extension requiredtitle/allDay/timeZone/description/location/link/calendarcreate; no duplicate calendar service."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-07",
+        "actionId": "create",
+        "canonicalOperation": "calendar.createEvent",
+        "ownerWorkPackage": "WP-28",
+        "schemaId": "DF-07-SCHEMA-2",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "calendarRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "event": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "start": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "instant"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "all_day"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    }
+                  ]
+                },
+                "end": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "instant"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "const": "all_day"
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "timeZone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value",
+                        "timeZone"
+                      ]
+                    }
+                  ]
+                },
+                "allDay": {
+                  "type": "boolean"
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "attendees": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "role": {
+                        "enum": [
+                          "organizer",
+                          "required",
+                          "optional",
+                          "resource"
+                        ]
+                      },
+                      "rsvp": {
+                        "enum": [
+                          "needs_action",
+                          "accepted",
+                          "tentative",
+                          "declined"
+                        ]
+                      },
+                      "principalRef": {
+                        "$ref": "#/$defs/Rox2EntityRef"
+                      },
+                      "contactRef": {
+                        "$ref": "#/$defs/Rox2EntityRef"
+                      }
+                    },
+                    "required": [
+                      "email",
+                      "role"
+                    ]
+                  }
+                },
+                "location": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "meetingLink": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "format": "uri",
+                      "pattern": "^https://"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 10000
+                }
+              },
+              "required": [
+                "title",
+                "start",
+                "end",
+                "allDay",
+                "timeZone",
+                "attendees"
+              ]
+            }
+          },
+          "required": [
+            "calendarRef",
+            "event"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "eventRef": "event",
+            "providerEtag": "providerEtag",
+            "startEnd": "resolved TemporalValue; allDay exclusiveend civil date",
+            "existingCalendarRef": "immutable; not submitted; movingcalendar unavailable",
+            "createCalendarRef": "CreateCalendarEvent.calendarRef",
+            "titleDescriptionLocation": "validated known patch fields; no hidden schema stripping"
+          },
+          "wireName": "calendar.createEvent",
+          "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+        },
+        "resultType": "{eventRef,receiptId,operationState:committed|reconciling,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "invalid_interval",
+          "provider_rejected"
+        ],
+        "semanticConstraints": [
+          "TemporalValue targetnormative union instant{valueRFC3339,timeZone}|all_day{valueYYYY-MM-DD,timeZone}; wall_time isform intermediate only untilDSTresolved.",
+          "Source CalendarEvent numeric startAt/endAt remains legacyprojectionadapter ofnormalized instants; all-day dates stored in targetDTO not reconstructed from24h.",
+          "Explicit schema extension requiredtitle/allDay/timeZone/description/location/link/calendarcreate; no duplicate calendar service."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-08",
+        "actionId": "respond",
+        "canonicalOperation": "calendar.event.rsvp",
+        "ownerWorkPackage": "WP-28",
+        "schemaId": "DF-08-SCHEMA-1",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "eventRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "attendeeAccountRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "response": {
+              "enum": [
+                "accepted",
+                "tentative",
+                "declined"
+              ]
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "providerEtag": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "eventRef",
+            "attendeeAccountRef",
+            "response",
+            "baseRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "eventRef": "eventRef",
+            "ownedAccount": "attendeeAccountRef; server resolves ownattendee email",
+            "response": "response",
+            "baseRevision": "leaf revision viaauthority mapping; notetag"
+          },
+          "wireName": "calendar.event.rsvp",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{eventRef,response:CalendarAttendeeResponse,revision?,receiptId,operationState:committed|reconciling,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "attendee_mismatch",
+          "account_binding_mismatch",
+          "unsupported_capability",
+          "provider_conflict",
+          "provider_rejected",
+          "account_revoked"
+        ],
+        "semanticConstraints": [
+          "One dedicated own-RSVP operation; never reuse organizer fullpatch updateEvent. Accountemail resolved onlyserver-side.",
+          "Provider-specific token scopes/capability required; no local success-only RSVP whenprovider unavailable."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      }
+    ]
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "CAL-02.save",
+      "CAL-02.rsvp",
+      "CAL-02.series"
+    ],
+    "featureControls": [
+      "CAL-01.range",
+      "CAL-01.calendars",
+      "CAL-01.move",
+      "CAL-02.save",
+      "CAL-02.rsvp",
+      "CAL-02.series"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/cal-02.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

@@ -62,7 +62,11 @@
     "packages/core/src/calendar/calendar.test.ts",
     "plans/macro-integration/cloud/contract-amendments.json",
     "apps/electron/src/renderer/pages/MeetingsPage.tsx",
-    "apps/electron/src/renderer/pages/ConnectionsPage.tsx"
+    "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/domain-forms.md"
   ],
   "goal": "Real sandbox event appears in existing ROX meeting/calendar context; token expiry full sync; duplicate watch dedup; disconnected provider remains unavailable",
   "expectedResults": [
@@ -1170,5 +1174,37 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "CAL-01.range",
+      "CAL-01.calendars",
+      "CAL-01.move"
+    ],
+    "featureControls": [
+      "CAL-01.range",
+      "CAL-01.calendars",
+      "CAL-01.move",
+      "CAL-03.hours",
+      "CAL-03.calculate",
+      "CAL-03.slot",
+      "MTG-02.plan",
+      "MTG-02.event-link",
+      "MTG-02.context-link",
+      "SH-11.connect",
+      "SH-11.probe",
+      "SH-11.mode"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/cal-01.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

@@ -56,7 +56,11 @@
     "packages/server-core/src/transport/server.ts",
     "plans/macro-integration/cloud/contract-amendments.json",
     "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
-    "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx"
+    "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/collaboration-walkthroughs.md"
   ],
   "goal": "A opens private Project in native ROX; B without membership gets 403 and no title through RPC/HTTP; client cannot forge principal/workspace",
   "expectedResults": [
@@ -1216,5 +1220,50 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "COL-19.name",
+      "COL-19.description",
+      "COL-19.directory",
+      "COL-19.access",
+      "COL-19.archive",
+      "COL-19.delete"
+    ],
+    "featureControls": [
+      "COL-07.create-channel",
+      "COL-07.dm",
+      "COL-07.group",
+      "COL-07.search",
+      "COL-09.send",
+      "COL-09.recipient",
+      "COL-09.add",
+      "COL-09.mute",
+      "COL-17.tabs",
+      "COL-17.progress",
+      "COL-17.new",
+      "COL-17.agent",
+      "COL-17.members",
+      "COL-19.name",
+      "COL-19.description",
+      "COL-19.directory",
+      "COL-19.access",
+      "COL-19.archive",
+      "COL-19.delete",
+      "SH-11.connect",
+      "SH-11.probe",
+      "SH-11.mode"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/col-19.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

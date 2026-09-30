@@ -69,7 +69,12 @@
     "apps/electron/src/shared/meetings-local.ts",
     "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
     "packages/server-core/src/meetings/__tests__/security.test.ts",
-    "plans/macro-integration/cloud/contract-amendments.json"
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/domain-forms.md",
+    "plans/macro-integration/resolved-operation-contracts.json"
   ],
   "goal": "Recording after consent stores playable media; duplicate webhook one record; killed preview worker retries; partial object unavailable; signed URL expires",
   "expectedResults": [
@@ -1325,5 +1330,990 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [
+      {
+        "canonicalOperation": "consent.record",
+        "ownerWorkPackage": "WP-33",
+        "effectivePayloadSchema": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "scope": {
+                  "const": "room_recording"
+                },
+                "callRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "audiencePolicyRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "audiencePolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "retentionPolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "scope",
+                "callRef",
+                "policyRevision",
+                "audiencePolicyRef",
+                "audiencePolicyRevision",
+                "retentionPolicyRevision"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "scope": {
+                  "const": "local_upload"
+                },
+                "meetingRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "artifactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "inputChecksum": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "artifactRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "deviceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "audiencePolicyRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "audiencePolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "retentionPolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "scope",
+                "meetingRef",
+                "artifactRef",
+                "inputChecksum",
+                "artifactRevision",
+                "deviceId",
+                "policyRevision",
+                "audiencePolicyRef",
+                "audiencePolicyRevision",
+                "retentionPolicyRevision"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "scope": {
+                  "const": "local_upload"
+                },
+                "meetingRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "localRecordingHandle": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "workspaceId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "deviceId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "localMeetingId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "captureGeneration": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "workspaceId",
+                    "deviceId",
+                    "localMeetingId",
+                    "captureGeneration"
+                  ]
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "audiencePolicyRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "audiencePolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "retentionPolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "scope",
+                "meetingRef",
+                "localRecordingHandle",
+                "policyRevision",
+                "audiencePolicyRef",
+                "audiencePolicyRevision",
+                "retentionPolicyRevision"
+              ]
+            }
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-11-SCHEMA-1"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      },
+      {
+        "canonicalOperation": "consent.bindLocalUpload",
+        "ownerWorkPackage": "WP-33",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "consentRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "baseConsentRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "localRecordingHandle": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "deviceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "localMeetingId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "captureGeneration": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "workspaceId",
+                "deviceId",
+                "localMeetingId",
+                "captureGeneration"
+              ]
+            },
+            "artifactRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "inputChecksum": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "artifactRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "manifestHash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "audiencePolicyRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "audiencePolicyRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "retentionPolicyRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "policyRevision": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "consentRef",
+            "baseConsentRevision",
+            "localRecordingHandle",
+            "artifactRef",
+            "inputChecksum",
+            "artifactRevision",
+            "manifestHash",
+            "audiencePolicyRef",
+            "audiencePolicyRevision",
+            "retentionPolicyRevision",
+            "policyRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-11-SCHEMA-2"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      },
+      {
+        "canonicalOperation": "call.startRecording",
+        "ownerWorkPackage": "WP-33",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "call": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "consentVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "consentingPrincipalIds": {
+              "type": "array",
+              "maxItems": 1000,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "call",
+            "consentVersion",
+            "consentingPrincipalIds"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-11-SCHEMA-3"
+        ],
+        "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      },
+      {
+        "canonicalOperation": "consent.revoke",
+        "ownerWorkPackage": "WP-33",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "consentRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "consentRef",
+            "baseRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-11-SCHEMA-4"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      }
+    ],
+    "actionBindings": [
+      {
+        "formId": "DF-11",
+        "actionId": "grant",
+        "canonicalOperation": "consent.record",
+        "ownerWorkPackage": "WP-33",
+        "schemaId": "DF-11-SCHEMA-1",
+        "payloadSchema": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "scope": {
+                  "const": "room_recording"
+                },
+                "callRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "audiencePolicyRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "audiencePolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "retentionPolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "scope",
+                "callRef",
+                "policyRevision",
+                "audiencePolicyRef",
+                "audiencePolicyRevision",
+                "retentionPolicyRevision"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "scope": {
+                  "const": "local_upload"
+                },
+                "meetingRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "artifactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "inputChecksum": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "artifactRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "deviceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "audiencePolicyRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "audiencePolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "retentionPolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "scope",
+                "meetingRef",
+                "artifactRef",
+                "inputChecksum",
+                "artifactRevision",
+                "deviceId",
+                "policyRevision",
+                "audiencePolicyRef",
+                "audiencePolicyRevision",
+                "retentionPolicyRevision"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "scope": {
+                  "const": "local_upload"
+                },
+                "meetingRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "localRecordingHandle": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "workspaceId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "deviceId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "localMeetingId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "captureGeneration": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "workspaceId",
+                    "deviceId",
+                    "localMeetingId",
+                    "captureGeneration"
+                  ]
+                },
+                "policyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "audiencePolicyRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "audiencePolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "retentionPolicyRevision": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "scope",
+                "meetingRef",
+                "localRecordingHandle",
+                "policyRevision",
+                "audiencePolicyRef",
+                "audiencePolicyRevision",
+                "retentionPolicyRevision"
+              ]
+            }
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "room": "RoomConsentInput",
+            "localDraft": "LocalDraftConsentInput→provisional",
+            "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+            "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+            "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+          },
+          "wireName": "consent.record",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{consentRef,revision,operationState:room_granted|provisional|artifact_bound,bindingDigest,receiptId,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "policy_stale",
+          "audience_policy_stale",
+          "source_denied",
+          "artifact_mismatch",
+          "capture_generation_mismatch",
+          "denied"
+        ],
+        "semanticConstraints": [
+          "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+          "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+          "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-11",
+        "actionId": "bind-final",
+        "canonicalOperation": "consent.bindLocalUpload",
+        "ownerWorkPackage": "WP-33",
+        "schemaId": "DF-11-SCHEMA-2",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "consentRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "baseConsentRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "localRecordingHandle": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "deviceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "localMeetingId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "captureGeneration": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "workspaceId",
+                "deviceId",
+                "localMeetingId",
+                "captureGeneration"
+              ]
+            },
+            "artifactRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "inputChecksum": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "artifactRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "manifestHash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "audiencePolicyRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "audiencePolicyRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "retentionPolicyRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "policyRevision": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "consentRef",
+            "baseConsentRevision",
+            "localRecordingHandle",
+            "artifactRef",
+            "inputChecksum",
+            "artifactRevision",
+            "manifestHash",
+            "audiencePolicyRef",
+            "audiencePolicyRevision",
+            "retentionPolicyRevision",
+            "policyRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "room": "RoomConsentInput",
+            "localDraft": "LocalDraftConsentInput→provisional",
+            "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+            "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+            "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+          },
+          "wireName": "consent.bindLocalUpload",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{consentRef,revision,bindingDigest,receiptId,operationState:artifact_bound,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "consent_revoked",
+          "policy_stale",
+          "audience_policy_stale",
+          "capture_generation_mismatch",
+          "artifact_mismatch",
+          "already_bound_different_artifact"
+        ],
+        "semanticConstraints": [
+          "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+          "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+          "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-11",
+        "actionId": "start",
+        "canonicalOperation": "call.startRecording",
+        "ownerWorkPackage": "WP-33",
+        "schemaId": "DF-11-SCHEMA-3",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "call": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "consentVersion": {
+              "type": "string",
+              "minLength": 1
+            },
+            "consentingPrincipalIds": {
+              "type": "array",
+              "maxItems": 1000,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "call",
+            "consentVersion",
+            "consentingPrincipalIds"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "room": "RoomConsentInput",
+            "localDraft": "LocalDraftConsentInput→provisional",
+            "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+            "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+            "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+          },
+          "wireName": "call.startRecording",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{recordingRef,receiptId,operationState:starting|active,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "consent_missing",
+          "consent_stale",
+          "denied",
+          "egress_unavailable"
+        ],
+        "semanticConstraints": [
+          "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+          "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+          "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-11",
+        "actionId": "revoke",
+        "canonicalOperation": "consent.revoke",
+        "ownerWorkPackage": "WP-33",
+        "schemaId": "DF-11-SCHEMA-4",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "consentRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "consentRef",
+            "baseRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "room": "RoomConsentInput",
+            "localDraft": "LocalDraftConsentInput→provisional",
+            "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+            "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+            "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+          },
+          "wireName": "consent.revoke",
+          "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+        },
+        "resultType": "{revision,receiptId,effect:stopping|upload_cancelled|policy_applied,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "conflict",
+          "denied"
+        ],
+        "semanticConstraints": [
+          "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+          "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+          "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      }
+    ]
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "MTG-06.grant",
+      "MTG-06.start",
+      "MTG-06.revoke"
+    ],
+    "featureControls": [
+      "MTG-06.grant",
+      "MTG-06.start",
+      "MTG-06.revoke",
+      "MTG-07.play",
+      "MTG-07.retry-artifact",
+      "MTG-07.share"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/mtg-06.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

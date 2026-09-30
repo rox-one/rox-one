@@ -735,7 +735,7 @@
     },
     {
       "id": "SH-01",
-      "title": "Shell / navigation / multi-panel",
+      "title": "Навигация и панели",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-40",
@@ -749,7 +749,7 @@
     },
     {
       "id": "SH-02",
-      "title": "Omnibox / unified search",
+      "title": "Единый поиск",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-06",
@@ -763,7 +763,7 @@
     },
     {
       "id": "SH-03",
-      "title": "Entity peek / backlinks / favorites",
+      "title": "Предпросмотр, связи и избранное",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-02",
@@ -778,7 +778,7 @@
     },
     {
       "id": "SH-04",
-      "title": "Sharing / grants / revoke",
+      "title": "Доступ и отзыв разрешений",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-03",
@@ -792,7 +792,7 @@
     },
     {
       "id": "SH-05",
-      "title": "Notifications / attention",
+      "title": "Уведомления и внимание",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-07",
@@ -807,7 +807,7 @@
     },
     {
       "id": "SH-06",
-      "title": "Activity / event provenance",
+      "title": "Активность и происхождение событий",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-04",
@@ -822,7 +822,7 @@
     },
     {
       "id": "SH-07",
-      "title": "Agent context / command preview",
+      "title": "Контекст агента и проверка команды",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-36",
@@ -836,7 +836,7 @@
     },
     {
       "id": "SH-08",
-      "title": "Session sharing / viewer",
+      "title": "Доступ к сессии и экспорт",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-50"
@@ -848,7 +848,7 @@
     },
     {
       "id": "SH-09",
-      "title": "Memory provenance / retraction",
+      "title": "Источники и исправление памяти",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-06",
@@ -861,7 +861,7 @@
     },
     {
       "id": "SH-10",
-      "title": "Automation rule editor / run receipt",
+      "title": "Правило автоматизации и результаты",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-37"
@@ -874,7 +874,7 @@
     },
     {
       "id": "SH-11",
-      "title": "Connections / workspace capabilities",
+      "title": "Соединения и возможности workspace",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-01",
@@ -891,7 +891,7 @@
     },
     {
       "id": "SH-12",
-      "title": "Files / upload / safe viewer",
+      "title": "Файлы и безопасный просмотр",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-39",
@@ -905,7 +905,7 @@
     },
     {
       "id": "SH-13",
-      "title": "Spreadsheet Page representation",
+      "title": "Таблица внутри Page",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-42"
@@ -917,7 +917,7 @@
     },
     {
       "id": "SH-14",
-      "title": "Canvas Page representation",
+      "title": "Холст внутри Page",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-43"
@@ -929,7 +929,7 @@
     },
     {
       "id": "SH-15",
-      "title": "Skills / Sources / coding PR review",
+      "title": "Навыки, источники и review кода",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-45",
@@ -943,7 +943,7 @@
     },
     {
       "id": "SH-16",
-      "title": "Sync/recovery status and mobile capability",
+      "title": "Синхронизация и возможности устройства",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-05",
@@ -957,7 +957,7 @@
     },
     {
       "id": "SH-17",
-      "title": "Cloud work packet review",
+      "title": "Пакет облачной реализации",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-45",
@@ -971,7 +971,7 @@
     },
     {
       "id": "SH-18",
-      "title": "Reminder detail / snooze / source",
+      "title": "Напоминание и его источник",
       "source": "plans/macro-integration/shared-screen-contracts.json",
       "workPackages": [
         "WP-14",

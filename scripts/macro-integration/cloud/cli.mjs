@@ -2,12 +2,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import cp from 'node:child_process';
 import {readJSON,ready,validateReceipt,safeProof,git,isAncestor,machinePreflight,sha256} from './gates.mjs';
+import {loadInputs,validateHandoff} from '../control-handoff.mjs';
 const root=process.cwd(),manifest=readJSON('plans/macro-integration/cloud/manifest.json');
 const [cmd,arg,...rest]=process.argv.slice(2);
 function verifyArtifactBytes(){for(const i of manifest.specInputs)if(sha256(fs.readFileSync(i.path))!==i.sha256)throw new Error('spec input drift '+i.path);for(const p of manifest.workPackages){if(sha256(fs.readFileSync(p.packet))!==p.packetSha256||sha256(fs.readFileSync(p.prompt))!==p.promptSha256)throw new Error('packet/prompt bytes drift '+p.id);}}
 if(['render','ready','validate'].includes(cmd))verifyArtifactBytes();
 if(cmd==='render'){const p=manifest.workPackages.find(p=>p.id===arg);if(!p)throw new Error('unknown WP');process.stdout.write(fs.readFileSync(p.prompt,'utf8'));}
 else if(cmd==='validate'){
+ const {catalogs,ownership}=loadInputs(root),handoff=readJSON('plans/macro-integration/control-handoff.json'),handoffErrors=validateHandoff(handoff,catalogs,ownership);if(handoffErrors.length)throw Error(handoffErrors.join('\n'));
+ for(const c of handoff.controls){const owner=manifest.workPackages.find(w=>w.id===c.primaryUiOwner);if(!owner?.allowedPaths.includes(c.testFile))throw Error('unallocated primary control test '+c.id);}
  for(const i of manifest.specInputs)if(sha256(fs.readFileSync(i.path))!==i.sha256)throw new Error('spec input drift '+i.path);
  const screens=readJSON('plans/macro-integration/cloud/screen-index.json').screens,ids=new Set(),wps=new Set(manifest.workPackages.map(p=>p.id));for(const s of screens){if(ids.has(s.id))throw new Error('duplicate screen');ids.add(s.id);if(new Set(s.controls).size!==s.controls.length)throw new Error('duplicate control');for(const w of s.workPackages)if(!wps.has(w))throw new Error('unknown screen WP');}
  const slices=readJSON('plans/macro-integration/cloud/ui-slices.json');for(const n of ['collaboration','domain','shared'])for(const s of readJSON(`plans/macro-integration/${n}-screen-contracts.json`).screenContracts){for(const f of [...(s.implementationFiles?.extend||[]),...(s.implementationFiles?.new||[])]){if(!manifest.workPackages.some(p=>s.workPackages.includes(p.id)&&p.allowedPaths.some(a=>f===a||f.startsWith(a+'/'))))throw new Error('unallocated screen implementation file '+s.id+' '+f);}const owner=slices.screenPrimaryUiOwners?.[s.id];if(owner&&!s.workPackages.includes(owner))throw new Error('unlinked screen owner '+s.id);}

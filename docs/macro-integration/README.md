@@ -1,6 +1,14 @@
 # Macro → ROX: навигация и доказательства
 
-## Detailed product / cloud pack — Revision 3
+## Revision 4 и новые ROX Suite issues
+
+[ROX Suite](../rox-suite/README.md) — 30 новых задач по Lark/ROX screenshots с UI/input/output/interaction/domain/DoD. [PRD Suite](../rox-suite/PRD.md) фиксирует общий placement и решения по canonical page/formats и Automations Draft/Published cutover.
+
+[Collaboration walkthroughs](product/collaboration-walkthroughs.md): 5 сценариев / 39 действий. [Domain forms](product/domain-forms.md): 12 форм / 62 поля / 18 actions. [Executor contract](../../cloud/macro-integration/EXECUTOR-CONTRACT.md): schema, attempts, fences, cancel/resume, independent proof lanes. [Revision4 review](product/revision-4-review.md): найденные и исправленные checks/alias ambiguity.
+
+Macro source recheck767a999; 308 refs303unchanged/5reviewed, 9 новых source ranges для cache upgrade recovery. 61screens/219controls/52WPs preserved, all-control handoff и17resolvedoperations/18payloadvariants добавлены. Новые RS requirements — отдельный scope, не автоматически запущенные старым WP manifest. Product runtime NOT_RUN; cloud PREPARED_NOT_LAUNCHED.
+
+## Detailed product / cloud pack — Revision 3 (история)
 
 Новый вход: [PRD](product/PRD.md), [UI/UX](product/UI-UX-CONTRACT.md), [50 current ROX screens](product/rox-screen-audit.md), [19 collaboration screens](product/collaboration-screens.md), [24 domain screens](product/domain-screens.md), [18 shared screens](product/shared-screens.md), [cloud execution pack](../../cloud/macro-integration/README.md).
 

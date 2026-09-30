@@ -43,6 +43,8 @@
     "packages/shared/src/workspace-domain/mail/contracts.ts",
     "packages/shared/src/workspace-domain/mail/send-receipt.ts",
     "tests/macro-integration/mail-submission-ambiguity.test.ts",
+    "tests/macro-integration/ui/mail-02.spec.ts",
+    "tests/macro-integration/ui/mail-03.spec.ts",
     "tests/macro-integration/wp-19.test.ts"
   ],
   "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
@@ -64,7 +66,12 @@
     "apps/electron/src/renderer/pages/inbox/mail/mail-view.ts",
     "apps/electron/src/renderer/pages/inbox/mail/__tests__/mail-view.test.ts",
     "packages/shared/src/mail/__tests__/mail.test.ts",
-    "plans/macro-integration/cloud/contract-amendments.json"
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/domain-forms.md",
+    "plans/macro-integration/resolved-operation-contracts.json"
   ],
   "goal": "Compose/reply/forward with durable draft and provider intent; reconcile provider acceptance or ambiguous effect without blind resend; verified attachment ownership",
   "expectedResults": [
@@ -1326,14 +1333,669 @@
   "uiSlice": {
     "goal": "Mail draft/compose/reply/forward/attachment/send controls and receipt/errors, never ambiguous retry sends blindly.",
     "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
-    "assignedUiPaths": [],
+    "assignedUiPaths": [
+      "tests/macro-integration/ui/mail-02.spec.ts",
+      "tests/macro-integration/ui/mail-03.spec.ts"
+    ],
     "existingUiSeams": [],
-    "newUiFiles": [],
+    "newUiFiles": [
+      "tests/macro-integration/ui/mail-02.spec.ts",
+      "tests/macro-integration/ui/mail-03.spec.ts"
+    ],
     "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
   },
   "contractSupplement": {
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [
+      {
+        "canonicalOperation": "mail.saveDraft",
+        "ownerWorkPackage": "WP-19",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "draftRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "accountRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "body": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "to": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "email"
+                    ]
+                  }
+                },
+                "cc": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "email"
+                    ]
+                  }
+                },
+                "bcc": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "email"
+                    ]
+                  }
+                },
+                "subject": {
+                  "type": "string",
+                  "maxLength": 998
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 1048576
+                },
+                "mode": {
+                  "enum": [
+                    "new",
+                    "reply",
+                    "replyAll",
+                    "forward"
+                  ]
+                },
+                "sourceRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                }
+              },
+              "required": [
+                "to",
+                "cc",
+                "bcc",
+                "subject",
+                "text",
+                "mode"
+              ]
+            },
+            "attachmentRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "accountRef",
+            "body",
+            "attachmentRefs"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-04-SCHEMA-1"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      },
+      {
+        "canonicalOperation": "mail.sendDraft",
+        "ownerWorkPackage": "WP-19",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "account": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "draft": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "draftRevision": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "account",
+            "draft",
+            "draftRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-04-SCHEMA-2"
+        ],
+        "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      },
+      {
+        "canonicalOperation": "mail.reconcileSend",
+        "ownerWorkPackage": "WP-19",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "submissionRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            }
+          },
+          "required": [
+            "submissionRef"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-06-SCHEMA-1"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      }
+    ],
+    "actionBindings": [
+      {
+        "formId": "DF-04",
+        "actionId": "save",
+        "canonicalOperation": "mail.saveDraft",
+        "ownerWorkPackage": "WP-19",
+        "schemaId": "DF-04-SCHEMA-1",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "draftRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "accountRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "baseRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "body": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "to": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "email"
+                    ]
+                  }
+                },
+                "cc": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "email"
+                    ]
+                  }
+                },
+                "bcc": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "email"
+                    ]
+                  }
+                },
+                "subject": {
+                  "type": "string",
+                  "maxLength": 998
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 1048576
+                },
+                "mode": {
+                  "enum": [
+                    "new",
+                    "reply",
+                    "replyAll",
+                    "forward"
+                  ]
+                },
+                "sourceRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                }
+              },
+              "required": [
+                "to",
+                "cc",
+                "bcc",
+                "subject",
+                "text",
+                "mode"
+              ]
+            },
+            "attachmentRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "maxItems": 1000
+            }
+          },
+          "required": [
+            "accountRef",
+            "body",
+            "attachmentRefs"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "accountRef": "SaveDraft.accountRef / SendDraft.account",
+            "body": "SaveDraft.body immutable acksnapshot",
+            "attachments": "SaveDraft.attachmentRefs account-owned finalizedrefs",
+            "draftRef": "SaveDraft.draftRef / SendDraft.draft",
+            "savedRevision": "SendDraft.draftRevision"
+          },
+          "wireName": "mail.saveDraft",
+          "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+        },
+        "resultType": "{draftRef,revision,receiptId,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "conflict",
+          "invalid_recipient",
+          "oversize",
+          "denied"
+        ],
+        "semanticConstraints": [
+          "SaveDraft exact fields formalized in existing leaf/mail DTO; do not add a separate compose backend.",
+          "Primary account/draft/draftRevision names retained. Leaf draftRef/accountRef/baseRevision mapped explicitly using returned authority token, never parseInt.",
+          "Draft invalid raw recipient preservation is recovery representation; validation failure remains visible and blocks send; persist separately from validated recipients."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-04",
+        "actionId": "send",
+        "canonicalOperation": "mail.sendDraft",
+        "ownerWorkPackage": "WP-19",
+        "schemaId": "DF-04-SCHEMA-2",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "account": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "draft": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "draftRevision": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "account",
+            "draft",
+            "draftRevision"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "accountRef": "SaveDraft.accountRef / SendDraft.account",
+            "body": "SaveDraft.body immutable acksnapshot",
+            "attachments": "SaveDraft.attachmentRefs account-owned finalizedrefs",
+            "draftRef": "SaveDraft.draftRef / SendDraft.draft",
+            "savedRevision": "SendDraft.draftRevision"
+          },
+          "wireName": "mail.sendDraft",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{receiptId,submissionRef,operationState:accepted|pending|ambiguous,status:CanonicalStatus,providerMessageId?}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "provider_rejected",
+          "attachment_unavailable",
+          "conflict",
+          "invalid_recipient",
+          "external_blocked"
+        ],
+        "semanticConstraints": [
+          "SaveDraft exact fields formalized in existing leaf/mail DTO; do not add a separate compose backend.",
+          "Primary account/draft/draftRevision names retained. Leaf draftRef/accountRef/baseRevision mapped explicitly using returned authority token, never parseInt.",
+          "Draft invalid raw recipient preservation is recovery representation; validation failure remains visible and blocks send; persist separately from validated recipients."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-06",
+        "actionId": "check",
+        "canonicalOperation": "mail.reconcileSend",
+        "ownerWorkPackage": "WP-19",
+        "schemaId": "DF-06-SCHEMA-1",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "submissionRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            }
+          },
+          "required": [
+            "submissionRef"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "submissionRef": "mail.reconcileSend.submissionRef; GetSubmissionReceipt query rehydrates same ledger",
+            "providerEvidence": "readonly output; never callerattestation"
+          },
+          "wireName": "mail.reconcileSend",
+          "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+        },
+        "resultType": "{state:accepted|pending|ambiguous|rejected,sendAt?,providerEvidence?:ProviderReceipt,revision,asOf}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "not_found",
+          "provider_unavailable"
+        ],
+        "semanticConstraints": [
+          "GetSubmissionReceipt remains same named query; if lookup itself triggers worker reconciliation, dispatch is internal same submission authority, not a new send.",
+          "Unknown external effect retains original key/request hash; operation lifecycle unknown+verification unverified until scoped evidence. No forced ambiguous→failed."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      }
+    ]
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "MAIL-02.reply",
+      "MAIL-02.attachment",
+      "MAIL-02.task",
+      "MAIL-03.draft",
+      "MAIL-03.send",
+      "MAIL-03.attach"
+    ],
+    "featureControls": [
+      "CRM-04.email",
+      "CRM-04.company-link",
+      "CRM-04.merge",
+      "MAIL-02.reply",
+      "MAIL-02.attachment",
+      "MAIL-02.task",
+      "MAIL-03.draft",
+      "MAIL-03.send",
+      "MAIL-03.attach",
+      "MAIL-04.schedule",
+      "MAIL-04.cancel",
+      "MAIL-04.reconcile"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/mail-02.spec.ts",
+      "tests/macro-integration/ui/mail-03.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

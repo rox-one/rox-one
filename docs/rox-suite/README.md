@@ -1,0 +1,38 @@
+# ROX Suite — новые issues по скриншотам
+
+30 отдельных задач созданы в rox-one/rox-one. UI не реализован; cloud coding не запускался. Частные screenshots не загружались.
+
+| ID | Новая GitHub issue | Раздел | Depends on |
+|---|---|---|---|
+| RS-FOCUS-01 | [#1091: Главная: заменить толстую рамку быстрого ввода задачи на спокойный доступный focus-индикатор ](https://github.com/rox-one/rox-one/issues/1091) | focus |  |
+| RS-SHEET-01 | [#1092: Rox Sheets: сохраняемая таблица с формулами, совместным редактированием и связями с сущностями ](https://github.com/rox-one/rox-one/issues/1092) | sheets | [#1109](https://github.com/rox-one/rox-one/issues/1109), [#1110](https://github.com/rox-one/rox-one/issues/1110) |
+| RS-SLIDE-01 | [#1093: Rox Slides: редактор презентаций, показ, комментарии и экспорт как общая Document entity ](https://github.com/rox-one/rox-one/issues/1093) | slides | [#1109](https://github.com/rox-one/rox-one/issues/1109), [#1110](https://github.com/rox-one/rox-one/issues/1110) |
+| RS-BASE-01 | [#1094: Rox Base: типизированные записи и views Table/Board/Form поверх единого entity graph ](https://github.com/rox-one/rox-one/issues/1094) | base | [#1109](https://github.com/rox-one/rox-one/issues/1109) |
+| RS-FORM-01 | [#1095: Rox Forms: form builder, безопасная публикация и response-to-entity workflows ](https://github.com/rox-one/rox-one/issues/1095) | forms | [#1109](https://github.com/rox-one/rox-one/issues/1109), [#1094](https://github.com/rox-one/rox-one/issues/1094) |
+| RS-AUT-01 | [#1096: Automations: расширить текущий граф до визуального canvas с palette, ports и inspector ](https://github.com/rox-one/rox-one/issues/1096) | automations |  |
+| RS-AUT-02 | [#1097: Automations: каталог connector actions, Auth и типизированные Input/Output/Error mappings ](https://github.com/rox-one/rox-one/issues/1097) | automations | [#1096](https://github.com/rox-one/rox-one/issues/1096), [#1113](https://github.com/rox-one/rox-one/issues/1113) |
+| RS-AUT-03 | [#1098: Automations: durable event workflow runtime с Scheduler, DateTime, ветвлениями и возобновлением ](https://github.com/rox-one/rox-one/issues/1098) | automations | [#1096](https://github.com/rox-one/rox-one/issues/1096), [#1097](https://github.com/rox-one/rox-one/issues/1097) |
+| RS-AUT-04 | [#1099: Automations: Debug, журнал узлов, ошибки, конфигурация и проверяемые результаты запусков ](https://github.com/rox-one/rox-one/issues/1099) | automations | [#1098](https://github.com/rox-one/rox-one/issues/1098) |
+| RS-AUT-05 | [#1100: Automations: draft/publish versioning, guided tutorial и шаблон Scheduler → DateTime → Connector ](https://github.com/rox-one/rox-one/issues/1100) | automations | [#1096](https://github.com/rox-one/rox-one/issues/1096), [#1097](https://github.com/rox-one/rox-one/issues/1097), [#1098](https://github.com/rox-one/rox-one/issues/1098), [#1099](https://github.com/rox-one/rox-one/issues/1099) |
+| RS-MTG-01 | [#1101: [ROX Suite][Meetings] Landing: действия, история и сохранение локальной записи ](https://github.com/rox-one/rox-one/issues/1101) | meetings |  |
+| RS-MTG-02 | [#1102: [ROX Suite][Meetings] Join и preflight: реальные комнаты, устройства и scoped guests ](https://github.com/rox-one/rox-one/issues/1102) | meetings-calls | [#1101](https://github.com/rox-one/rox-one/issues/1101) |
+| RS-MTG-03 | [#1103: [ROX Suite][Meetings] Планирование: форма события, availability, recurrence и Calendar sync ](https://github.com/rox-one/rox-one/issues/1103) | meetings-calendar | [#1101](https://github.com/rox-one/rox-one/issues/1101) |
+| RS-MTG-04 | [#1104: [ROX Suite][Meetings] История: detail drawer, участие, lifecycle и verified readback ](https://github.com/rox-one/rox-one/issues/1104) | meetings-history | [#1101](https://github.com/rox-one/rox-one/issues/1101) |
+| RS-MTG-05 | [#1105: [ROX Suite][Meetings] Записи и протоколы: consent, transcript, summary и связанные действия ](https://github.com/rox-one/rox-one/issues/1105) | meetings-artifacts | [#1101](https://github.com/rox-one/rox-one/issues/1101) |
+| RS-MSG-01 | [#1106: Messenger: трёхпанельная human collaboration surface в ROX ](https://github.com/rox-one/rox-one/issues/1106) | collaboration |  |
+| RS-MSG-02 | [#1107: Human channels, DM, group threads: composer и durable read state ](https://github.com/rox-one/rox-one/issues/1107) | collaboration | [#1106](https://github.com/rox-one/rox-one/issues/1106) |
+| RS-MSG-03 | [#1108: Contacts: каталог, профиль и общая CRM identity ](https://github.com/rox-one/rox-one/issues/1108) | collaboration | [#1106](https://github.com/rox-one/rox-one/issues/1106), [#1107](https://github.com/rox-one/rox-one/issues/1107) |
+| RS-DRV-01 | [#1109: Docs / Drive: единая библиотека Recent, Owned, Shared, Favorites и table/grid ](https://github.com/rox-one/rox-one/issues/1109) | collaboration |  |
+| RS-DOC-01 | [#1110: Rox Docs: collaborative editor, comments, entity mentions и export ](https://github.com/rox-one/rox-one/issues/1110) | collaboration | [#1109](https://github.com/rox-one/rox-one/issues/1109), [#1107](https://github.com/rox-one/rox-one/issues/1107) |
+| RS-WIKI-01 | [#1111: Rox Wiki: spaces, hierarchy, access и history над общими Docs ](https://github.com/rox-one/rox-one/issues/1111) | collaboration | [#1109](https://github.com/rox-one/rox-one/issues/1109), [#1110](https://github.com/rox-one/rox-one/issues/1110) |
+| RS-NOTE-01 | [#1112: Notes ↔ Drive: personal Markdown и явная миграция в shared Docs ](https://github.com/rox-one/rox-one/issues/1112) | collaboration | [#1109](https://github.com/rox-one/rox-one/issues/1109), [#1110](https://github.com/rox-one/rox-one/issues/1110) |
+| RS-MCP-01 | [#1113: Каталог MCP capabilities, scopes и доступ инструментов агентам ](https://github.com/rox-one/rox-one/issues/1113) | mcp | [#1114](https://github.com/rox-one/rox-one/issues/1114) |
+| RS-ADM-01 | [#1114: Organization и capability Admin Hub в существующих Settings ](https://github.com/rox-one/rox-one/issues/1114) | admin |  |
+| RS-HD-01 | [#1115: Help Desk: tickets, очереди и idempotent intake ](https://github.com/rox-one/rox-one/issues/1115) | helpdesk | [#1114](https://github.com/rox-one/rox-one/issues/1114), [#1095](https://github.com/rox-one/rox-one/issues/1095) |
+| RS-HD-02 | [#1116: Help Desk: triage, SLA calendar, knowledge и agent-assisted ответ ](https://github.com/rox-one/rox-one/issues/1116) | helpdesk | [#1115](https://github.com/rox-one/rox-one/issues/1115), [#1113](https://github.com/rox-one/rox-one/issues/1113) |
+| RS-APR-01 | [#1117: Approval designer: versioned forms, routes и decision policy ](https://github.com/rox-one/rox-one/issues/1117) | approvals | [#1114](https://github.com/rox-one/rox-one/issues/1114) |
+| RS-APR-02 | [#1118: Approval Inbox: решения, execution receipts и неизменяемый audit ](https://github.com/rox-one/rox-one/issues/1118) | approvals | [#1117](https://github.com/rox-one/rox-one/issues/1117), [#1113](https://github.com/rox-one/rox-one/issues/1113) |
+| RS-SIG-01 | [#1119: Secure Document Viewer: file versions, sharing и revocation ](https://github.com/rox-one/rox-one/issues/1119) | documents | [#1114](https://github.com/rox-one/rox-one/issues/1114), [#1113](https://github.com/rox-one/rox-one/issues/1113) |
+| RS-SIG-02 | [#1120: Document signing: immutable sessions, signer intent и evidence lifecycle ](https://github.com/rox-one/rox-one/issues/1120) | signing | [#1119](https://github.com/rox-one/rox-one/issues/1119), [#1118](https://github.com/rox-one/rox-one/issues/1118) |
+
+Machine handoff: [issues.json](../../plans/rox-suite/issues.json), [publication.json](../../plans/rox-suite/publication.json). Exact опубликованные bodies находятся в [published](published/).

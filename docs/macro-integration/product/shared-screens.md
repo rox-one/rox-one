@@ -2,7 +2,7 @@
 
 Target spec; source citations pinned. Все proposed subviews требуют typed router integration; существующий destination не доказывает proposed route. Общие layout/states/a11y в UI-UX-CONTRACT.md.
 
-## SH-01 — Shell / navigation / multi-panel
+## SH-01 — Навигация и панели
 
 Placement: Native app shell → all destinations.
 
@@ -12,11 +12,15 @@ Evidence: [APP_NAV_DESTINATIONS](https://github.com/rox-one/rox-one/blob/e780e73
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| destination: Destination | registered destination + workspace | typed route and restored selection | row tint + exact destination label | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | navigate once; leaving pending draft prompts save/copy only when required | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| panel: Open in panel | canonical EntityRef | second representation of same ref | button tint, explain same-object view | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | create panel, do not duplicate data store | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| back: Back | history cursor | previous tab/filter/scroll | tooltip previous destination only if authorized | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | restore persisted view state | Alt+Left outside editor; button always available | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| destination: Раздел | registered destination + workspace | typed route and restored selection | row tint + exact destination label; Открывает существующий раздел текущего workspace и восстанавливает его сохранённое представление. | Видимая focus ring; та же справка: Открывает существующий раздел текущего workspace и восстанавливает его сохранённое представление.; focus не выполняет mutation | navigate once; leaving pending draft prompts save/copy only when required | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| panel: Открыть рядом | canonical EntityRef | second representation of same ref | button tint, explain same-object view; Показывает тот же объект в соседней панели; изменения относятся к одной сущности. | Видимая focus ring; та же справка: Показывает тот же объект в соседней панели; изменения относятся к одной сущности.; focus не выполняет mutation | create panel, do not duplicate data store | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| back: Назад | history cursor | previous tab/filter/scroll | tooltip previous destination only if authorized; Возвращает предыдущий маршрут, вкладку, фильтр и позицию прокрутки. | Видимая focus ring; та же справка: Возвращает предыдущий маршрут, вкладку, фильтр и позицию прокрутки.; focus не выполняет mutation | restore persisted view state | Alt+Left outside editor; button always available | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- destination: Открывает существующий раздел текущего workspace и восстанавливает его сохранённое представление. Пример: «Задачи» возвращает выбранный список и фильтр. Источник: navigation.setView; returned revision/watermark or receipt readback
+- panel: Показывает тот же объект в соседней панели; изменения относятся к одной сущности. Пример: Company Acme открыта рядом с письмом без создания копии Company. Источник: navigation.setView; returned revision/watermark or receipt readback
+- back: Возвращает предыдущий маршрут, вкладку, фильтр и позицию прокрутки. Пример: Из Task вернуться в Project → Tasks с прежним поиском. Источник: navigation.setView; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -24,7 +28,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-02 — Omnibox / unified search
+## SH-02 — Единый поиск
 
 Placement: Shell → Omnibox.
 
@@ -34,11 +38,15 @@ Evidence: [Omnibox](https://github.com/rox-one/rox-one/blob/e780e73ae84c977cf815
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| query: Search | text≤2048 + workspace + type filters + cursor | authorized hit refs/snippets/watermark | field hover border; help search scope | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | debounced250ms cancel prior query; open hit | Cmd/Ctrl+K; arrows results; Enter open; Esc close | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| scope: Scope/types | ProjectRef? + kinds[] | filtered authorised results | chip tint; no hidden facet counts | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | apply query scope; persist route filter | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| hit: Result | permitted ref + snippet source | native detail/context | highlight, cached peek permitted only | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open canonical route; forbidden result purged | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| query: Поиск по workspace | text≤2048 + workspace + type filters + cursor | authorized hit refs/snippets/watermark | field hover border; help search scope; Ищет только разрешённые данные в выбранной рабочей области; пустой результат отличается от ошибки индекса. | Видимая focus ring; та же справка: Ищет только разрешённые данные в выбранной рабочей области; пустой результат отличается от ошибки индекса.; focus не выполняет mutation | debounced250ms cancel prior query; open hit | Cmd/Ctrl+K; arrows results; Enter open; Esc close | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| scope: Область и типы | ProjectRef? + kinds[] | filtered authorised results | chip tint; no hidden facet counts; Ограничивает поиск Project и выбранными типами сущностей. | Видимая focus ring; та же справка: Ограничивает поиск Project и выбранными типами сущностей.; focus не выполняет mutation | apply query scope; persist route filter | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| hit: Результат поиска | permitted ref + snippet source | native detail/context | highlight, cached peek permitted only; Открывает исходную сущность; snippet и его источник доступны только при текущем read grant. | Видимая focus ring; та же справка: Открывает исходную сущность; snippet и его источник доступны только при текущем read grant.; focus не выполняет mutation | open canonical route; forbidden result purged | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- query: Ищет только разрешённые данные в выбранной рабочей области; пустой результат отличается от ошибки индекса. Пример: Запрос «Acme» возвращает разрешённые Company, письмо и задачу. Источник: search.entities; returned revision/watermark or receipt readback
+- scope: Ограничивает поиск Project и выбранными типами сущностей. Пример: Project «Запуск» + Tasks исключает письма из результатов. Источник: search.entities; returned revision/watermark or receipt readback
+- hit: Открывает исходную сущность; snippet и его источник доступны только при текущем read grant. Пример: Письмо открывается во Входящих с тем же MailThreadRef. Источник: entity.resolve; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -46,7 +54,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-03 — Entity peek / backlinks / favorites
+## SH-03 — Предпросмотр, связи и избранное
 
 Placement: Entity chip → peek; detail → linked objects.
 
@@ -56,11 +64,15 @@ Evidence: [Rox2EntityRef](https://github.com/rox-one/rox-one/blob/e780e73ae84c97
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| peek: Preview | EntityRef + policy epoch | safe title/type/summary | 400ms cached peek; disabled inaccessible | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | explicit open retrieves authorized detail | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| link: Add link | sourceRef + targetRef + relation | receipt + relation revision | explain mentions/derived-from/attached-to semantics | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | picker→preview relation→confirm; cycles checked | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| star: Favorite | EntityRef + boolean | private preference receipt | add/remove tooltip | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | optimistic star, rollback error; revoke hides cached label | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| peek: Предпросмотр | EntityRef + policy epoch | safe title/type/summary | 400ms cached peek; disabled inaccessible; Показывает краткую разрешённую проекцию объекта без изменения его read/unread или sharing. | Видимая focus ring; та же справка: Показывает краткую разрешённую проекцию объекта без изменения его read/unread или sharing.; focus не выполняет mutation | explicit open retrieves authorized detail | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| link: Связать объект | sourceRef + targetRef + relation | receipt + relation revision | explain mentions/derived-from/attached-to semantics; Создаёт типизированную связь между двумя существующими сущностями; доступ автоматически не выдаётся. | Видимая focus ring; та же справка: Создаёт типизированную связь между двумя существующими сущностями; доступ автоматически не выдаётся.; focus не выполняет mutation | picker→preview relation→confirm; cycles checked | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| star: В избранное | EntityRef + boolean | private preference receipt | add/remove tooltip; Сохраняет личную ссылку на объект; это не копия и не public share. | Видимая focus ring; та же справка: Сохраняет личную ссылку на объект; это не копия и не public share.; focus не выполняет mutation | optimistic star, rollback error; revoke hides cached label | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- peek: Показывает краткую разрешённую проекцию объекта без изменения его read/unread или sharing. Пример: Навести на Company chip и увидеть имя/тип; denied ref не показывает название. Источник: entity.resolve; returned revision/watermark or receipt readback
+- link: Создаёт типизированную связь между двумя существующими сущностями; доступ автоматически не выдаётся. Пример: Task derived-from Message сохраняет два исходных ID. Источник: entity.link; returned revision/watermark or receipt readback
+- star: Сохраняет личную ссылку на объект; это не копия и не public share. Пример: После revoke избранная Company не сохраняет старое приватное название. Источник: favorite.set through preferences.setFavorite adapter; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -68,7 +80,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-04 — Sharing / grants / revoke
+## SH-04 — Доступ и отзыв разрешений
 
 Placement: Entity header → Share.
 
@@ -78,11 +90,15 @@ Evidence: [SharePageDialog](https://github.com/rox-one/rox-one/blob/e780e73ae84c
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| grant: Invite / role | principalRef + read/write/share scope + expiry | effective grant and receipt | role help lists permitted operations | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | review audience diff→confirm; no implicit grant from mention | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| revoke: Remove access | grantId + expectedRevision | pending then fenced applied revoke | red tint; explain open clients affected | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | confirmation names principal/entity; await delivery fence | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| public: Link sharing | explicit audience + expiry + allowed action | revocable capability if policy permits | privacy help always visible | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | separate explicit confirmation; default private | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| grant: Пригласить и выбрать роль | principalRef + read/write/share scope + expiry | effective grant and receipt | role help lists permitted operations; Выдаёт выбранному principal конкретные действия и срок доступа после review аудитории. | Видимая focus ring; та же справка: Выдаёт выбранному principal конкретные действия и срок доступа после review аудитории.; focus не выполняет mutation | review audience diff→confirm; no implicit grant from mention | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| revoke: Убрать доступ | grantId + expectedRevision | pending then fenced applied revoke | red tint; explain open clients affected; Отзывает grant; завершение показывается после server delivery fence, а не по одному UI клику. | Видимая focus ring; та же справка: Отзывает grant; завершение показывается после server delivery fence, а не по одному UI клику.; focus не выполняет mutation | confirmation names principal/entity; await delivery fence | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| public: Доступ по ссылке | explicit audience + expiry + allowed action | revocable capability if policy permits | privacy help always visible; Создаёт ограниченную отзывную capability только если policy разрешает эту аудиторию. | Видимая focus ring; та же справка: Создаёт ограниченную отзывную capability только если policy разрешает эту аудиторию.; focus не выполняет mutation | separate explicit confirmation; default private | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- grant: Выдаёт выбранному principal конкретные действия и срок доступа после review аудитории. Пример: B получает write к Page до выбранной даты; owner CRM остаётся отдельным полем. Источник: permission.grant; returned revision/watermark or receipt readback
+- revoke: Отзывает grant; завершение показывается после server delivery fence, а не по одному UI клику. Пример: У B открыта Page: новые reads/edits блокируются после revoke receipt. Источник: permission.revoke; returned revision/watermark or receipt readback
+- public: Создаёт ограниченную отзывную capability только если policy разрешает эту аудиторию. Пример: Ссылка на запись истекает в указанное время; наличие ссылки не добавляет workspace membership. Источник: share.createCapability; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -90,7 +106,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-05 — Notifications / attention
+## SH-05 — Уведомления и внимание
 
 Placement: Inbox → attention representations; shell indicator opens same view.
 
@@ -100,11 +116,15 @@ Evidence: [InboxPage](https://github.com/rox-one/rox-one/blob/e780e73ae84c977cf8
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| notification: Open notification | notificationId + targetRef | native target and explicit read command | row tint; no mark-on-hover | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open target; mark only actual permitted viewing; receipt | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| read: Mark selected read | notificationIds[] + stateRevision | dedup durable state | tooltip number from authorised selection | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | batch command, rollback failed rows | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| unread: Unread filter | attention state/types | paged items and watermark | filter chip tint | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | server query; unseen≠dismissed | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| notification: Открыть уведомление | notificationId + targetRef | native target and explicit read command | row tint; no mark-on-hover; Открывает разрешённый target; просмотр не одобряет запрос агента и не выполняет бизнес-команду. | Видимая focus ring; та же справка: Открывает разрешённый target; просмотр не одобряет запрос агента и не выполняет бизнес-команду.; focus не выполняет mutation | open target; mark only actual permitted viewing; receipt | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| read: Отметить прочитанными | notificationIds[] + stateRevision | dedup durable state | tooltip number from authorised selection; Меняет только read state выбранных уведомлений; failed items остаются в прежнем состоянии. | Видимая focus ring; та же справка: Меняет только read state выбранных уведомлений; failed items остаются в прежнем состоянии.; focus не выполняет mutation | batch command, rollback failed rows | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| unread: Непрочитанные | attention state/types | paged items and watermark | filter chip tint; Фильтрует durable attention state; unread не равен undone или dismissed. | Видимая focus ring; та же справка: Фильтрует durable attention state; unread не равен undone или dismissed.; focus не выполняет mutation | server query; unseen≠dismissed | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- notification: Открывает разрешённый target; просмотр не одобряет запрос агента и не выполняет бизнес-команду. Пример: Assignment notification открывает Task; permission request остаётся pending. Источник: notification.setRead; returned revision/watermark or receipt readback
+- read: Меняет только read state выбранных уведомлений; failed items остаются в прежнем состоянии. Пример: Два устройства повторяют mark-read, итоговая state revision одна. Источник: notification.setRead; returned revision/watermark or receipt readback
+- unread: Фильтрует durable attention state; unread не равен undone или dismissed. Пример: Прочитанный, но не одобренный agent request остаётся в Решениях. Источник: notification.list; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -112,7 +132,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-06 — Activity / event provenance
+## SH-06 — Активность и происхождение событий
 
 Placement: Project/entity detail → Activity; Feed contextual.
 
@@ -122,11 +142,15 @@ Evidence: [FeedPage](https://github.com/rox-one/rox-one/blob/e780e73ae84c977cf81
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| event: Activity event | eventId + targetRef + causationId | redacted event detail | source/freshness tooltip | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open allowed target or evidence receipt | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| filter: Activity scope | actor/type/time/project filters + cursor | authorised timeline | chip tint; units ISO interval explained | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | query without reading private bodies | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| receipt: Command receipt | commandId | revision/provider/event/projection state | status explanation, no private payload | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open receipt panel; copy redacted correlation ID | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| event: Событие активности | eventId + targetRef + causationId | redacted event detail | source/freshness tooltip; Показывает actor, действие, время и причинную связь без приватного тела источника. | Видимая focus ring; та же справка: Показывает actor, действие, время и причинную связь без приватного тела источника.; focus не выполняет mutation | open allowed target or evidence receipt | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| filter: Фильтры активности | actor/type/time/project filters + cursor | authorised timeline | chip tint; units ISO interval explained; Ограничивает timeline по actor, типу, Project и интервалу времени. | Видимая focus ring; та же справка: Ограничивает timeline по actor, типу, Project и интервалу времени.; focus не выполняет mutation | query without reading private bodies | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| receipt: Результат команды | commandId | revision/provider/event/projection state | status explanation, no private payload; Показывает revision, lifecycle, verification и состояние внешнего provider. | Видимая focus ring; та же справка: Показывает revision, lifecycle, verification и состояние внешнего provider.; focus не выполняет mutation | open receipt panel; copy redacted correlation ID | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- event: Показывает actor, действие, время и причинную связь без приватного тела источника. Пример: task.assigned связан с Message→Task commandId. Источник: activity.list; returned revision/watermark or receipt readback
+- filter: Ограничивает timeline по actor, типу, Project и интервалу времени. Пример: Только изменения Tasks за текущую неделю выбранного Project. Источник: activity.list; returned revision/watermark or receipt readback
+- receipt: Показывает revision, lifecycle, verification и состояние внешнего provider. Пример: Mail send succeeded не равно readback_verified; unknown требует reconcile. Источник: command.getReceipt; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -134,7 +158,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-07 — Agent context / command preview
+## SH-07 — Контекст агента и проверка команды
 
 Placement: Sessions → composer/context rail.
 
@@ -144,11 +168,15 @@ Evidence: [Rox2EntityRef](https://github.com/rox-one/rox-one/blob/e780e73ae84c97
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| context: Attach context | EntityRef[] + allowed fields | authorized context manifest, not full stored transcript | chip preview title only if granted | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | picker→sources preview→attach; denied refs omitted with neutral reason | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| preview: Review write | typed command draft + expectedRevision + scope | validated diff and execution grant requirement | shows affected entity/action | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | confirm current diff; changed revision requires new preview | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| toolreceipt: Tool result | receipt/ref/source spans | verified result/context citations | source/freshness hint | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open source through gateway; no direct legacy write | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| context: Добавить контекст | EntityRef[] + allowed fields | authorized context manifest, not full stored transcript | chip preview title only if granted; Прикрепляет refs и разрешённые поля; агент не получает весь сохранённый transcript автоматически. | Видимая focus ring; та же справка: Прикрепляет refs и разрешённые поля; агент не получает весь сохранённый transcript автоматически.; focus не выполняет mutation | picker→sources preview→attach; denied refs omitted with neutral reason | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| preview: Проверить изменение | typed command draft + expectedRevision + scope | validated diff and execution grant requirement | shows affected entity/action; Показывает текущий typed diff и требует новую проверку после изменения source revision. | Видимая focus ring; та же справка: Показывает текущий typed diff и требует новую проверку после изменения source revision.; focus не выполняет mutation | confirm current diff; changed revision requires new preview | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| toolreceipt: Результат инструмента | receipt/ref/source spans | verified result/context citations | source/freshness hint; Открывает подтверждение domain command и читаемые source citations. | Видимая focus ring; та же справка: Открывает подтверждение domain command и читаемые source citations.; focus не выполняет mutation | open source through gateway; no direct legacy write | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- context: Прикрепляет refs и разрешённые поля; агент не получает весь сохранённый transcript автоматически. Пример: Добавить Company и Task; private Mail teammate не раскрывается. Источник: agent.resolveContext; returned revision/watermark or receipt readback
+- preview: Показывает текущий typed diff и требует новую проверку после изменения source revision. Пример: Агент предлагает назначить Task пользователю B; confirm связан с этим diff. Источник: agent.previewCommand; returned revision/watermark or receipt readback
+- toolreceipt: Открывает подтверждение domain command и читаемые source citations. Пример: TaskRef/revision совпадают с последующим task.get. Источник: agent.invokeDomain through agent.executeCommand adapter; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -156,7 +184,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-08 — Session sharing / viewer
+## SH-08 — Доступ к сессии и экспорт
 
 Placement: Session detail → share/export/viewer.
 
@@ -166,10 +194,13 @@ Evidence: [Rox2EntityRef](https://github.com/rox-one/rox-one/blob/e780e73ae84c97
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| audience: Export audience | recipient/policy + selected messages | redacted artifact preview/hash | help mixed-source limits | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | compute safe projection; cannot grant private tool output implicitly | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| publish: Share session | approved projection hash + expiry | revocable share receipt | button explains audience | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | publish only current hash; stale source permission invalidates | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| audience: Кому доступна сессия | recipient/policy + selected messages | redacted artifact preview/hash | help mixed-source limits; Выбирает аудиторию export projection и показывает redactions источников. | Видимая focus ring; та же справка: Выбирает аудиторию export projection и показывает redactions источников.; focus не выполняет mutation | compute safe projection; cannot grant private tool output implicitly | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| publish: Поделиться сессией | approved projection hash + expiry | revocable share receipt | button explains audience; Публикует только проверенный digest projection с expiry и current source grants. | Видимая focus ring; та же справка: Публикует только проверенный digest projection с expiry и current source grants.; focus не выполняет mutation | publish only current hash; stale source permission invalidates | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- audience: Выбирает аудиторию export projection и показывает redactions источников. Пример: Public Page остаётся; private Mail tool output исключён из export. Источник: session.previewExport; returned revision/watermark or receipt readback
+- publish: Публикует только проверенный digest projection с expiry и current source grants. Пример: Source revoke между preview и publish отклоняет старый digest. Источник: session.shareAuthorized through session.publishExport adapter; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -177,7 +208,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-09 — Memory provenance / retraction
+## SH-09 — Источники и исправление памяти
 
 Placement: Memory → item detail.
 
@@ -187,10 +218,13 @@ Evidence: [MemoryScreen](https://github.com/rox-one/rox-one/blob/e780e73ae84c977
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| source: Memory source | factRef + sourceRefs + timestamps | authorized source/evidence | freshness and source tooltip | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open source; denied source text purged | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| correction: Correct/retract | factRef + expectedRevision + reason | retraction/correction receipt | explain agent effect | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | preview→confirm; subsequent retrieval excludes retracted source | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| source: Источники памяти | factRef + sourceRefs + timestamps | authorized source/evidence | freshness and source tooltip; Показывает provenance, source refs и время получения данных факта. | Видимая focus ring; та же справка: Показывает provenance, source refs и время получения данных факта.; focus не выполняет mutation | open source; denied source text purged | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| correction: Исправить или отозвать | factRef + expectedRevision + reason | retraction/correction receipt | explain agent effect; Меняет факт через revisioned command и обновляет retrieval watermark. | Видимая focus ring; та же справка: Меняет факт через revisioned command и обновляет retrieval watermark.; focus не выполняет mutation | preview→confirm; subsequent retrieval excludes retracted source | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- source: Показывает provenance, source refs и время получения данных факта. Пример: Факт «Acme ждёт КП» ссылается на разрешённое письмо. Источник: memory.getProvenance; returned revision/watermark or receipt readback
+- correction: Меняет факт через revisioned command и обновляет retrieval watermark. Пример: Отозванный факт больше не появляется в новом ответе агента. Источник: memory.correctFact; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -198,7 +232,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-10 — Automation rule editor / run receipt
+## SH-10 — Правило автоматизации и результаты
 
 Placement: Automations → rule detail/runs.
 
@@ -208,11 +242,15 @@ Evidence: [AutomationsListPanel](https://github.com/rox-one/rox-one/blob/e780e73
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| trigger: Event trigger | canonical event kind + workspace filter | validated trigger subscription | event semantics help | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | select event schema; no ambiguous string trigger | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| action: Action and budget | typed domain command + execution policy + limits | preview/test receipt | cost/source/unit tooltip | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | dry-run fixture labelled; enable only permitted live action | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| run: Run details | runId + eventId + dedupKey | attempts/redacted receipt/recovery | status explanation | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | inspect; retry reconciles side effects, never blind resend | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| trigger: Событие запуска | canonical event kind + workspace filter | validated trigger subscription | event semantics help; Выбирает зарегистрированный event schema и проверяемый фильтр рабочей области. | Видимая focus ring; та же справка: Выбирает зарегистрированный event schema и проверяемый фильтр рабочей области.; focus не выполняет mutation | select event schema; no ambiguous string trigger | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| action: Действие и лимиты | typed domain command + execution policy + limits | preview/test receipt | cost/source/unit tooltip; Показывает typed command, разрешения и budget; fixture dry-run не вызывает providers. | Видимая focus ring; та же справка: Показывает typed command, разрешения и budget; fixture dry-run не вызывает providers.; focus не выполняет mutation | dry-run fixture labelled; enable only permitted live action | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| run: Прогон автоматизации | runId + eventId + dedupKey | attempts/redacted receipt/recovery | status explanation; Показывает eventId, dedupKey, попытки и receipts; retry сначала проверяет прошлый результат. | Видимая focus ring; та же справка: Показывает eventId, dedupKey, попытки и receipts; retry сначала проверяет прошлый результат.; focus не выполняет mutation | inspect; retry reconciles side effects, never blind resend | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- trigger: Выбирает зарегистрированный event schema и проверяемый фильтр рабочей области. Пример: task.assigned запускает правило только для Project «Запуск». Источник: automation.registerTrigger; returned revision/watermark or receipt readback
+- action: Показывает typed command, разрешения и budget; fixture dry-run не вызывает providers. Пример: Два одинаковых event дают одну side effect; dry-run externalWrites=0. Источник: automation.dryRun; returned revision/watermark or receipt readback
+- run: Показывает eventId, dedupKey, попытки и receipts; retry сначала проверяет прошлый результат. Пример: Неизвестный результат email send переходит в reconcile без повторной отправки. Источник: automation.getRun; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -220,7 +258,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-11 — Connections / workspace capabilities
+## SH-11 — Соединения и возможности workspace
 
 Placement: Connections → provider detail.
 
@@ -230,11 +268,15 @@ Evidence: [ConnectionsPage](https://github.com/rox-one/rox-one/blob/e780e73ae84c
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| connect: Connect provider | provider kind + test tenant + scopes | OAuth/server connection ref | scope and outbound data explanation | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | browser OAuth→server secret→probe; no client token snapshot | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| probe: Verify connection | connectionRef | capabilities/last read-back/error | source/time tooltip | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | probe actual installed adapter; unavailable remains unavailable | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| mode: Runtime mode | standalone/shared workspace binding | writer mode receipt | explains local vs shared authority | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | verify service before switch; fence old writer; no dual write | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| connect: Подключить провайдер | provider kind + test tenant + scopes | OAuth/server connection ref | scope and outbound data explanation; Показывает запрашиваемые scopes и назначение перед OAuth; секрет хранится сервером. | Видимая focus ring; та же справка: Показывает запрашиваемые scopes и назначение перед OAuth; секрет хранится сервером.; focus не выполняет mutation | browser OAuth→server secret→probe; no client token snapshot | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| probe: Проверить соединение | connectionRef | capabilities/last read-back/error | source/time tooltip; Выполняет probe фактического adapter и показывает время последнего readback. | Видимая focus ring; та же справка: Выполняет probe фактического adapter и показывает время последнего readback.; focus не выполняет mutation | probe actual installed adapter; unavailable remains unavailable | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| mode: Режим workspace | standalone/shared workspace binding | writer mode receipt | explains local vs shared authority; Переключает standalone/shared authority после проверки сервиса и fencing старого writer. | Видимая focus ring; та же справка: Переключает standalone/shared authority после проверки сервиса и fencing старого writer.; focus не выполняет mutation | verify service before switch; fence old writer; no dual write | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- connect: Показывает запрашиваемые scopes и назначение перед OAuth; секрет хранится сервером. Пример: Google Calendar read-only не включает право менять событие. Источник: connection.startAuth; returned revision/watermark or receipt readback
+- probe: Выполняет probe фактического adapter и показывает время последнего readback. Пример: Token есть, adapter unavailable: запись событий остаётся disabled. Источник: connection.probe; returned revision/watermark or receipt readback
+- mode: Переключает standalone/shared authority после проверки сервиса и fencing старого writer. Пример: Личный Task не отправляется в shared workspace автоматически. Источник: workspace.switchMode; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -242,7 +284,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-12 — Files / upload / safe viewer
+## SH-12 — Файлы и безопасный просмотр
 
 Placement: Project Assets / attachments → viewer.
 
@@ -252,11 +294,15 @@ Evidence: [Rox2EntityRef](https://github.com/rox-one/rox-one/blob/e780e73ae84c97
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| upload: Upload file | file bytes + checksum + parentRef + limits | upload ref/progress/scanning/ready receipt | size/type/storage explanation | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | upload chunks/retry idempotently; no executable preview before quarantine passes | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| download: Download | FileRef + policy epoch | proxy/short-lived capability≤60s | size/source help | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | recheck ACL; revoked download rejected | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| anchor: Link page/time/line | FileRef + representation anchor | typed source link | preview authorized anchor | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open safe PDF/image/video/code renderer | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| upload: Загрузить файл | file bytes + checksum + parentRef + limits | upload ref/progress/scanning/ready receipt | size/type/storage explanation; Загружает части с checksum и показывает отдельные uploading/scanning/ready состояния. | Видимая focus ring; та же справка: Загружает части с checksum и показывает отдельные uploading/scanning/ready состояния.; focus не выполняет mutation | upload chunks/retry idempotently; no executable preview before quarantine passes | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| download: Скачать | FileRef + policy epoch | proxy/short-lived capability≤60s | size/source help; Проверяет read grant и выдаёт proxy или короткую capability с expiry. | Видимая focus ring; та же справка: Проверяет read grant и выдаёт proxy или короткую capability с expiry.; focus не выполняет mutation | recheck ACL; revoked download rejected | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| anchor: Ссылка на фрагмент | FileRef + representation anchor | typed source link | preview authorized anchor; Сохраняет typed anchor страницы, времени или строки без копирования файла. | Видимая focus ring; та же справка: Сохраняет typed anchor страницы, времени или строки без копирования файла.; focus не выполняет mutation | open safe PDF/image/video/code renderer | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- upload: Загружает части с checksum и показывает отдельные uploading/scanning/ready состояния. Пример: Restart после part2 продолжает тот же uploadId; MIME mismatch не становится ready. Источник: file.beginUpload; returned revision/watermark or receipt readback
+- download: Проверяет read grant и выдаёт proxy или короткую capability с expiry. Пример: После revoke старый signed URL может действовать не дольше заявленного residual TTL. Источник: file.download; returned revision/watermark or receipt readback
+- anchor: Сохраняет typed anchor страницы, времени или строки без копирования файла. Пример: Recording 02:15 открывается по тому же FileRef и time anchor. Источник: file.resolveAnchor; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -264,7 +310,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-13 — Spreadsheet Page representation
+## SH-13 — Таблица внутри Page
 
 Placement: Pages → representation spreadsheet.
 
@@ -274,10 +320,13 @@ Evidence: [Rox2EntityRef](https://github.com/rox-one/rox-one/blob/e780e73ae84c97
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| cell: Cell/value/formula | sheetRef + cellAddress + typed value/formula + revision | revisioned value/computed result/error | formula/source/units tooltip | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | edit→validate→receipt; no arbitrary JS formula execution | arrows navigation; Enter edit/commit; Escape cancel | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| range: Range/import/export | range + validated CSV input | bounded import diff/export artifact | row/column count units | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | preview import+confirm; formula/csv injection sanitized | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| cell: Ячейка и формула | sheetRef + cellAddress + typed value/formula + revision | revisioned value/computed result/error | formula/source/units tooltip; Изменяет одну ячейку; formula вычисляется ограниченным движком, не JavaScript. | Видимая focus ring; та же справка: Изменяет одну ячейку; formula вычисляется ограниченным движком, не JavaScript.; focus не выполняет mutation | edit→validate→receipt; no arbitrary JS formula execution | arrows navigation; Enter edit/commit; Escape cancel | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| range: Импорт и экспорт диапазона | range + validated CSV input | bounded import diff/export artifact | row/column count units; Показывает bounded diff CSV до записи и число строк/колонок. | Видимая focus ring; та же справка: Показывает bounded diff CSV до записи и число строк/колонок.; focus не выполняет mutation | preview import+confirm; formula/csv injection sanitized | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- cell: Изменяет одну ячейку; formula вычисляется ограниченным движком, не JavaScript. Пример: A1=2,A2=3,A3=SUM(A1:A2) даёт 5 после reload. Источник: spreadsheet.editCell through sheet.setCell adapter; returned revision/watermark or receipt readback
+- range: Показывает bounded diff CSV до записи и число строк/колонок. Пример: Импорт 20×3 не меняет sheet до подтверждения текущего preview digest. Источник: sheet.previewImport; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -285,7 +334,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-14 — Canvas Page representation
+## SH-14 — Холст внутри Page
 
 Placement: Pages → representation canvas.
 
@@ -295,10 +344,13 @@ Evidence: [Rox2EntityRef](https://github.com/rox-one/rox-one/blob/e780e73ae84c97
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| node: Canvas node | nodeId + geometry + safe payload + baseRevision | canonical whole-file revision or conflict | handles on hover/focus | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | preview move/resize→CAS; simultaneous conflict compare | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| entitynode: Linked entity node | EntityRef + geometry | safe reference node | authorized peek | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | link picker; no hidden entity thumbnail | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| node: Узел холста | nodeId + geometry + safe payload + baseRevision | canonical whole-file revision or conflict | handles on hover/focus; Перемещает/меняет размер узла через whole-file CAS; stale revision сохраняет конфликтный draft. | Видимая focus ring; та же справка: Перемещает/меняет размер узла через whole-file CAS; stale revision сохраняет конфликтный draft.; focus не выполняет mutation | preview move/resize→CAS; simultaneous conflict compare | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| entitynode: Связанный объект | EntityRef + geometry | safe reference node | authorized peek; Добавляет ссылочный узел; thumbnail и peek требуют read target grant. | Видимая focus ring; та же справка: Добавляет ссылочный узел; thumbnail и peek требуют read target grant.; focus не выполняет mutation | link picker; no hidden entity thumbnail | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- node: Перемещает/меняет размер узла через whole-file CAS; stale revision сохраняет конфликтный draft. Пример: A и B двигают узел с base17: один commit, у второго conflict. Источник: canvas.save through canvas.patchRevision adapter; returned revision/watermark or receipt readback
+- entitynode: Добавляет ссылочный узел; thumbnail и peek требуют read target grant. Пример: Company node сохраняет EntityRef, а не вторую CRM запись. Источник: canvas.linkEntity; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -306,7 +358,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-15 — Skills / Sources / coding PR review
+## SH-15 — Навыки, источники и review кода
 
 Placement: Skills/Sources and Session artifact review.
 
@@ -316,11 +368,15 @@ Evidence: [SkillsListPanel](https://github.com/rox-one/rox-one/blob/e780e73ae84c
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| skill: Install/update skill | origin/version/digest/capabilities | reviewed install receipt | origin/license/version help | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | review diff+tool permissions; no silent trust upgrade | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| patch: Review patch | baseSha + diff + tests + source manifest | reviewed branch/draft PR evidence | changed-file origin/test receipt | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | read real diff; do not mark absent diff viewer implemented | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| apply: Apply patch | reviewed digest + clean base + ownership | commit/branch/read-back receipt | scope and target branch | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | recheck base/paths; no automatic merge/deploy | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| skill: Установить или обновить навык | origin/version/digest/capabilities | reviewed install receipt | origin/license/version help; Показывает origin/version/digest/license и изменения tool capabilities до установки. | Видимая focus ring; та же справка: Показывает origin/version/digest/license и изменения tool capabilities до установки.; focus не выполняет mutation | review diff+tool permissions; no silent trust upgrade | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| patch: Проверить изменения кода | baseSha + diff + tests + source manifest | reviewed branch/draft PR evidence | changed-file origin/test receipt; Показывает реальный diff, baseSha, ownership и test receipts. | Видимая focus ring; та же справка: Показывает реальный diff, baseSha, ownership и test receipts.; focus не выполняет mutation | read real diff; do not mark absent diff viewer implemented | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| apply: Применить patch | reviewed digest + clean base + ownership | commit/branch/read-back receipt | scope and target branch; Проверяет clean base, digest и allowedPaths; создаёт изолированную ветку/commit. | Видимая focus ring; та же справка: Проверяет clean base, digest и allowedPaths; создаёт изолированную ветку/commit.; focus не выполняет mutation | recheck base/paths; no automatic merge/deploy | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- skill: Показывает origin/version/digest/license и изменения tool capabilities до установки. Пример: Обновление навыка с новым filesystem scope требует отдельного review. Источник: skill.previewInstall; returned revision/watermark or receipt readback
+- patch: Показывает реальный diff, baseSha, ownership и test receipts. Пример: Отсутствующий diff не превращается в «проверено» из-за done cloud run. Источник: coding.reviewPatch; returned revision/watermark or receipt readback
+- apply: Проверяет clean base, digest и allowedPaths; создаёт изолированную ветку/commit. Пример: Patch по старому baseSha отклоняется до изменения файлов. Источник: coding.applyPatch; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -328,7 +384,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-16 — Sync/recovery status and mobile capability
+## SH-16 — Синхронизация и возможности устройства
 
 Placement: Entity header sync detail; narrow view.
 
@@ -338,10 +394,13 @@ Evidence: [Rox2Status / ROX2_VERIFICATIONS](https://github.com/rox-one/rox-one/b
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| sync: Inspect sync | ref + pending commands + policy lease | local durable/queued/ack/rejected status | lastverified timestamp | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | retry only valid policy; export draft if permitted | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| capability: Device feature | device capability + permission state | supported/unavailable/request-device result | help platform requirements | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | request OS permission only on explicit user feature action | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| sync: Состояние синхронизации | ref + pending commands + policy lease | local durable/queued/ack/rejected status | lastverified timestamp; Показывает local durable frontier, pending commands, ACK и policy lease отдельно. | Видимая focus ring; та же справка: Показывает local durable frontier, pending commands, ACK и policy lease отдельно.; focus не выполняет mutation | retry only valid policy; export draft if permitted | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| capability: Возможность устройства | device capability + permission state | supported/unavailable/request-device result | help platform requirements; Объясняет поддержку платформы и состояние OS permission. | Видимая focus ring; та же справка: Объясняет поддержку платформы и состояние OS permission.; focus не выполняет mutation | request OS permission only on explicit user feature action | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- sync: Показывает local durable frontier, pending commands, ACK и policy lease отдельно. Пример: Socket connected без durable ACK оставляет edits «Сохранено на устройстве». Источник: sync.getState; returned revision/watermark or receipt readback
+- capability: Объясняет поддержку платформы и состояние OS permission. Пример: Linux renderer fixture не подтверждает macOS microphone capture. Источник: device.getCapability; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -349,7 +408,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-17 — Cloud work packet review
+## SH-17 — Пакет облачной реализации
 
 Placement: Cloud Runs settings/run detail; implementation runner contract.
 
@@ -359,10 +418,13 @@ Evidence: [RunSpec](https://github.com/rox-one/rox-one/blob/e780e73ae84c977cf815
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| packet: Select work package | WP id + integration SHA + prerequisite receipts | reviewable prompt/input manifests | deps/owner/cost/time units | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | validate ready and ownership before submitting; not launched by spec build | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| results: Cloud results | runId + output manifest/hash | tests/patch/receipts/lane results | execution vs verification distinction | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | import review artifact; no feature complete from done state alone | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| packet: Пакет реализации | WP id + integration SHA + prerequisite receipts | reviewable prompt/input manifests | deps/owner/cost/time units; Показывает WP, exact inputSha, dependencies, owned files, lanes и лимиты до dispatch. | Видимая focus ring; та же справка: Показывает WP, exact inputSha, dependencies, owned files, lanes и лимиты до dispatch.; focus не выполняет mutation | validate ready and ownership before submitting; not launched by spec build | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| results: Результаты облачного задания | runId + output manifest/hash | tests/patch/receipts/lane results | execution vs verification distinction; Разделяет executor lifecycle и feature verification, показывает diff и per-lane proof. | Видимая focus ring; та же справка: Разделяет executor lifecycle и feature verification, показывает diff и per-lane proof.; focus не выполняет mutation | import review artifact; no feature complete from done state alone | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- packet: Показывает WP, exact inputSha, dependencies, owned files, lanes и лимиты до dispatch. Пример: Без receipts ready только WP-01/WP-48; пакет сам не запускает cloud job. Источник: coding.preparePacket; returned revision/watermark or receipt readback
+- results: Разделяет executor lifecycle и feature verification, показывает diff и per-lane proof. Пример: Linux pass + pending macOS оставляют feature incomplete. Источник: coding.verifyResults; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 
@@ -370,7 +432,7 @@ States: loading, empty, filtered_empty, forbidden, offline_cached, queued_local,
 
 DoD: Reload preserves canonical IDs/revisions; controls produce receipt and native route; screenshot+ARIA matches UI contract. Negative: Denied principal/tool/ref and stale revision must fail; seeded removal of policy or idempotency caught. Evidence lanes: linux-domain, linux-renderer, macos-native where affected, provider-live where affected.
 
-## SH-18 — Reminder detail / snooze / source
+## SH-18 — Напоминание и его источник
 
 Placement: Tasks → reminder detail; Inbox notification → same reminder ref.
 
@@ -380,11 +442,15 @@ Evidence: [Rox2EntityRef](https://github.com/rox-one/rox-one/blob/e780e73ae84c97
 
 | Control | Input | Output | Hover | Focus | Click | Keyboard | Failure |
 |---|---|---|---|---|---|---|---|
-| open: Open reminder | ReminderRef | same reminder detail route and policy | name/time/zone help, no source private title | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open reminder itself, not auto-navigate underlying source | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| snooze: Snooze | ReminderRef + untilInstant + IANAzone + expectedRevision | receipt, next occurrence and notification state | date/time/recurrence impact explained | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | choose until→preview→confirm; recurrence not silently rewritten | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
-| source: Source link | ReminderRef + sourceRef | authorized source detail or neutral denied placeholder | permission-filtered peek only | Visible semantic focus ring; same explanatory help as hover; no mutation on focus | open source separately; no implicit source read grant | Tab → focus; Enter/Space → action; Escape closes overlay | Preserve input; show permission, revision or transport error inline; no success without receipt |
+| open: Открыть напоминание | ReminderRef | same reminder detail route and policy | name/time/zone help, no source private title; Открывает reminder detail того же ID; переход к source — отдельное действие. | Видимая focus ring; та же справка: Открывает reminder detail того же ID; переход к source — отдельное действие.; focus не выполняет mutation | open reminder itself, not auto-navigate underlying source | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| snooze: Отложить напоминание | ReminderRef + untilInstant + IANAzone + expectedRevision | receipt, next occurrence and notification state | date/time/recurrence impact explained; Меняет next occurrence с timezone и revision, сохраняя recurrence rule. | Видимая focus ring; та же справка: Меняет next occurrence с timezone и revision, сохраняя recurrence rule.; focus не выполняет mutation | choose until→preview→confirm; recurrence not silently rewritten | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
+| source: Открыть источник | ReminderRef + sourceRef | authorized source detail or neutral denied placeholder | permission-filtered peek only; Открывает исходную сущность только после текущей проверки её permissions. | Видимая focus ring; та же справка: Открывает исходную сущность только после текущей проверки её permissions.; focus не выполняет mutation | open source separately; no implicit source read grant | Tab → focus; Enter/Space → action; Escape closes overlay | Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect. |
 
 Help: meaning/source/freshness/example accessible hover500ms, focus and explicit click.
+
+- open: Открывает reminder detail того же ID; переход к source — отдельное действие. Пример: Reminder из Tasks и Inbox имеет один Ref; A→B меняет displayed identity. Источник: reminder.get; returned revision/watermark or receipt readback
+- snooze: Меняет next occurrence с timezone и revision, сохраняя recurrence rule. Пример: Отложить до 09:00 Europe/Berlin; stale revision не перезаписывает чужое изменение. Источник: reminder.snooze; returned revision/watermark or receipt readback
+- source: Открывает исходную сущность только после текущей проверки её permissions. Пример: Reminder доступен, source Mail denied: private title/body не показываются. Источник: entity.resolve; returned revision/watermark or receipt readback
 
 Inputs: authenticated workspace scope, EntityRef/filter/cursor/policyEpoch; authenticated Actor + payload + expectedRevision/idempotencyKey. Outputs: authorised projection + watermark; command receipt/ref/revision/events/provider state.
 

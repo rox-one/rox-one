@@ -43,7 +43,10 @@
     "packages/server-core/src/handlers/rpc/files.ts",
     "packages/shared/src/projects/storage.ts",
     "packages/shared/src/pages/share-bundle.ts",
-    "plans/macro-integration/cloud/contract-amendments.json"
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md"
   ],
   "goal": "PDF annotation share/read authorization; code edit version conflict; video seek; attachment source preserved; unknown format safe download",
   "expectedResults": [
@@ -1002,5 +1005,22 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [],
+    "featureControls": [
+      "SH-12.upload",
+      "SH-12.download",
+      "SH-12.anchor"
+    ],
+    "testFiles": [],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

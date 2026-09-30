@@ -33,6 +33,7 @@
     "packages/shared/src/i18n/locales/zh-Hans.json",
     "packages/shared/src/i18n/locales/zh-Hant.json",
     "packages/shared/src/workspace-domain/search/contracts.ts",
+    "tests/macro-integration/ui/sh-02.spec.ts",
     "tests/macro-integration/wp-06.test.ts"
   ],
   "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
@@ -53,7 +54,11 @@
     "packages/server-core/src/knowledge/vault-index.ts",
     "plans/macro-integration/cloud/contract-amendments.json",
     "apps/electron/src/renderer/platform/Omnibox.tsx",
-    "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
+    "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/collaboration-walkthroughs.md"
   ],
   "goal": "New task/Page searchable and agent-readable after watermark; revoke before index update prevents snippet leakage; tombstone disappears; worker crash replay does not lose document",
   "expectedResults": [
@@ -1053,18 +1058,59 @@
     "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
     "assignedUiPaths": [
       "apps/electron/src/renderer/platform/Omnibox.tsx",
-      "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
+      "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+      "tests/macro-integration/ui/sh-02.spec.ts"
     ],
     "existingUiSeams": [
       "apps/electron/src/renderer/platform/Omnibox.tsx",
       "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
     ],
-    "newUiFiles": [],
+    "newUiFiles": [
+      "tests/macro-integration/ui/sh-02.spec.ts"
+    ],
     "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
   },
   "contractSupplement": {
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "SH-02.query",
+      "SH-02.scope",
+      "SH-02.hit"
+    ],
+    "featureControls": [
+      "COL-05.new",
+      "COL-05.view",
+      "COL-05.filter",
+      "COL-05.import",
+      "COL-17.tabs",
+      "COL-17.progress",
+      "COL-17.new",
+      "COL-17.agent",
+      "COL-17.members",
+      "COL-18.link",
+      "COL-18.unlink",
+      "COL-18.scope",
+      "COL-18.source",
+      "SH-02.query",
+      "SH-02.scope",
+      "SH-02.hit",
+      "SH-09.source",
+      "SH-09.correction"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/sh-02.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

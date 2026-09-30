@@ -30,6 +30,7 @@
     "packages/shared/src/i18n/locales/zh-Hans.json",
     "packages/shared/src/i18n/locales/zh-Hant.json",
     "packages/shared/src/workspace-domain/agents/contracts.ts",
+    "tests/macro-integration/ui/sh-15.spec.ts",
     "tests/macro-integration/wp-45.test.ts"
   ],
   "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
@@ -45,7 +46,10 @@
     "packages/core/src/rox2/surface-context.ts",
     "packages/server-core/src/meetings/executor.ts",
     "plans/macro-integration/cloud/contract-amendments.json",
-    "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx"
+    "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md"
   ],
   "goal": "Project opens authorized PR diff and source agent session; review approval applies exact revision; Skills remain existing ROX destination",
   "expectedResults": [
@@ -827,17 +831,45 @@
     "goal": "Skills origin/permissions review and Sessions real patch/diff/branch evidence. Existing CloudRun research flow retained; coding adapter must prove checkout/branch/tests before enable.",
     "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
     "assignedUiPaths": [
-      "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx"
+      "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+      "tests/macro-integration/ui/sh-15.spec.ts"
     ],
     "existingUiSeams": [
       "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx"
     ],
-    "newUiFiles": [],
+    "newUiFiles": [
+      "tests/macro-integration/ui/sh-15.spec.ts"
+    ],
     "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
   },
   "contractSupplement": {
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "SH-15.skill",
+      "SH-15.patch",
+      "SH-15.apply"
+    ],
+    "featureControls": [
+      "SH-15.skill",
+      "SH-15.patch",
+      "SH-15.apply",
+      "SH-17.packet",
+      "SH-17.results"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/sh-15.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

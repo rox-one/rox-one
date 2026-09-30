@@ -23,7 +23,7 @@ export function loadBundle(root){const dir=join(root,'plans/macro-integration'),
 const files=(dir)=>readdirSync(dir).flatMap(f=>statSync(join(dir,f)).isDirectory()?files(join(dir,f)):[join(dir,f)]);
 
 async function main(){
- const root=resolve(process.argv[2]??process.cwd()),macro=resolve(process.argv[3]??'/Users/t/Projects/macro-source-audit-20260930'),modules=resolve(process.argv[4]??'/tmp/macro-rox-diagrams-20260930/node_modules');
+ const root=resolve(process.argv[2]??process.cwd()),macro=resolve(process.argv[3]??'/Users/t/Projects/macro-source-audit-20260930'),modules=resolve(process.argv[4]??'/tmp/rox-product-validation-20260930/node_modules');
  const b=loadBundle(root),errors=validateMachine(b),warnings=[],checks=[],check=(ok,msg)=>{if(!ok)errors.push(msg);};
  const Ajv=(await import(pathToFileURL(join(modules,'ajv/dist/2020.js')).href)).default,addFormats=(await import(pathToFileURL(join(modules,'ajv-formats/dist/index.js')).href)).default;
  const ajv=new Ajv({strict:false,allErrors:true});addFormats(ajv);let schemas=0;
@@ -32,6 +32,7 @@ async function main(){
  const repoMap={'macro-inc/macro':{dir:macro,sha:snapshots.macro.sha},'rox-one/rox-one':{dir:root,sha:snapshots.rox.sha}},cache=new Map();
  const recheck=JSON.parse(readFileSync(join(root,'plans/macro-integration/reverification.json'),'utf8'));
  const allowed={'macro-inc/macro':new Set([snapshots.macro.sha,recheck.current['macro-inc/macro'],recheck.intermediateMacroSha]),'rox-one/rox-one':new Set([snapshots.rox.sha,recheck.current['rox-one/rox-one']])};
+ const v4=JSON.parse(readFileSync(join(root,'plans/macro-integration/source-reverification-v4.json'),'utf8'));for(const [repository,sha]of Object.entries(v4.current))allowed[repository].add(sha);
  const source=(repo,sha,path)=>{const key=`${repo}@${sha}:${path}`;if(cache.has(key))return cache.get(key);const map=repoMap[repo];if(!map||!allowed[repo].has(sha))throw Error(`unreviewed baseline ${key}`);const t=execFileSync('git',['show',`${sha}:${path}`],{cwd:map.dir,encoding:'utf8',stdio:['ignore','pipe','pipe'],maxBuffer:16*1024*1024});cache.set(key,t);return t;};
  for(const e of b.evidence){try{const t=source(e.repository,e.sha,e.path),lines=t.split('\n');check(e.lineStart>=1&&e.lineEnd>=e.lineStart&&e.lineEnd<=lines.length,`Evidence ${e.id} invalid range`);check(!!e.symbol&&!!e.claim,`Evidence ${e.id} incomplete`);}catch(err){errors.push(`Evidence ${e.id}: ${err.message}`);}}
  for(const w of b.packages.workPackages)for(const path of w.affectedFiles){try{source('rox-one/rox-one',snapshots.rox.sha,path);}catch(err){errors.push(`${w.id} existing file: ${err.message}`);}}
@@ -39,7 +40,7 @@ async function main(){
  for(let i=0;i<required.length;i++)check(docs.includes(`${String(i).padStart(2,'0')}-${required[i]}.md`),`Missing doc ${i}`);
  const {JSDOM}=await import(pathToFileURL(join(modules,'jsdom/lib/api.js')).href);const dom=new JSDOM('<!doctype html><html><body></body></html>');globalThis.window=dom.window;globalThis.document=dom.window.document;
  const mermaid=(await import(pathToFileURL(join(modules,'mermaid/dist/mermaid.core.mjs')).href)).default;mermaid.initialize({startOnLoad:false,securityLevel:'strict'});let diagrams=0,links=0;
- const allDocs=[...files(docsDir),...files(join(root,'cloud/macro-integration'))].filter(f=>f.endsWith('.md'));
+ const allDocs=[...files(docsDir),...files(join(root,'cloud/macro-integration')),...(existsSync(join(root,'docs/rox-suite'))?files(join(root,'docs/rox-suite')):[])].filter(f=>f.endsWith('.md'));
  for(const path of allDocs){const name=path.slice(root.length+1),text=readFileSync(path,'utf8');for(const m of text.matchAll(/```mermaid\s*\n([\s\S]*?)```/g)){try{await mermaid.parse(m[1]);diagrams++;}catch(err){errors.push(`${name} Mermaid ${diagrams+1}: ${err.message}`);}}
   for(const m of text.matchAll(/\]\(([^\n)]+)\)/g)){const target=m[1].replace(/^<|>$/g,'');if(target.startsWith('https://github.com/')){const hit=/^https:\/\/github.com\/(macro-inc\/macro|rox-one\/rox-one)\/blob\/([a-f0-9]{40})\/([^#]+)(?:#L(\d+)(?:-L(\d+))?)?$/.exec(target);if(hit)try{const t=source(hit[1],hit[2],decodeURIComponent(hit[3]));if(hit[4])check(Number(hit[4])<=t.split('\n').length,`${name} source line out of range ${target}`);links++;}catch(e){errors.push(`${name} broken source link ${target}: ${e.message}`);}continue;}if(/^(https?:|#|mailto:)/.test(target))continue;const local=target.split('#')[0].replace(/:\d+$/,'');if(local)check(existsSync(resolve(dirname(path),local)),`${name} broken local link ${target}`);}
  }

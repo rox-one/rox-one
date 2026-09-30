@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import {validateReceipt,ready,overlap,machinePreflight,safeProof,sha256} from './gates.mjs';
+import {buildHandoff} from '../control-handoff.mjs';
 const sha='a'.repeat(40),digest='d'.repeat(64),p={id:'WP-A',dependencies:[],allowedPaths:['src/domain.ts'],lanes:['linux-domain']};
 const manifest={specDigest:digest,workPackages:[p,{id:'WP-B',dependencies:['WP-A'],allowedPaths:['src/other.ts'],lanes:['linux-domain']},{id:'WP-C',dependencies:['WP-A'],allowedPaths:['src/other.ts'],lanes:['linux-domain']}]};
 const receipt=()=>({schemaVersion:1,wpId:p.id,specDigest:digest,inputSha:sha,commitSha:'b'.repeat(40),status:'verified',owner:'worker',review:{status:'approved',reviewer:'reviewer'},changedPaths:['src/domain.ts'],lanes:{'linux-domain':{status:'passed',executionMode:'fixture'}},tests:[{lane:'linux-domain',command:'targeted scenario',exitCode:0,expected:'one row',observed:'one row',logPath:'proof/macro-integration/WP-A/log.txt',sha256:sha256('pass')}],negativeControls:[{lane:'linux-domain',caught:true,mutation:'remove idempotency unique key',reproduction:'seed=42',assertion:'one canonical row on duplicate command',baselineExitCode:0,mutantExitCode:1,failureKind:'assertion',baselineLogPath:'proof/macro-integration/WP-A/baseline.txt',baselineSha256:sha256('baseline pass'),mutantLogPath:'proof/macro-integration/WP-A/mutant.txt',mutantSha256:sha256('assertion failed: duplicate row')}]});
@@ -23,14 +24,16 @@ test('actual CLI rejects an unallocated screen implementation path',()=>{
  try{
   const put=(f,x)=>{const dst=path.join(root,f);fs.mkdirSync(path.dirname(dst),{recursive:true});fs.writeFileSync(dst,typeof x==='string'?x:JSON.stringify(x));};
   for(const f of ['cli.mjs','gates.mjs'])put('scripts/'+f,fs.readFileSync(new URL(f,import.meta.url),'utf8'));
-  const dir='plans/macro-integration',leaf={screenContracts:[{id:'COL-X',workPackages:['WP-A'],controls:[{id:'create'}],implementationFiles:{new:['src/NewView.tsx']}}]};
+  put('control-handoff.mjs',fs.readFileSync(new URL('../control-handoff.mjs',import.meta.url),'utf8'));
+  const dir='plans/macro-integration',control={id:'create',labelRu:'Создать',input:'name',output:'ref',hover:'help',focus:'help',click:'create',keyboard:'Enter',help:'meaning'},leaf={screenContracts:[{id:'COL-X',workPackages:['WP-A'],controls:[control],implementationFiles:{new:['src/NewView.tsx']}}]};
   put(dir+'/collaboration-screen-contracts.json',leaf);for(const n of ['domain','shared'])put(dir+'/'+n+'-screen-contracts.json',{screenContracts:[]});
   put(dir+'/cloud/ui-slices.json',{screenPrimaryUiOwners:{'COL-X':'WP-A'}});put(dir+'/cloud/screen-index.json',{screens:[{id:'COL-X',workPackages:['WP-A'],controls:['create']}]});
+  const catalogs=['collaboration','domain','shared'].map(n=>{const p=dir+'/'+n+'-screen-contracts.json',bytes=fs.readFileSync(path.join(root,p),'utf8');return{path:p,bytes,data:JSON.parse(bytes)};});const h=buildHandoff(catalogs,{screenPrimaryUiOwners:{'COL-X':'WP-A'}});put(dir+'/control-handoff.json',h);
   const q={id:'WP-A',dependencies:[],specDigest:digest,screenRefs:[{id:'COL-X',controls:['create']}],domainSpecification:{affectedFiles:[]}};
   const packet=dir+'/cloud/packets/WP-A.json',prompt='cloud/WP-A.md';put(packet,q);put(prompt,'planned fixture');
-  const m={specDigest:digest,specInputs:[],workPackages:[{id:'WP-A',dependencies:[],allowedPaths:['src/NewView.tsx'],packet,prompt,packetSha256:sha256(fs.readFileSync(path.join(root,packet))),promptSha256:sha256('planned fixture')}]};put(dir+'/cloud/manifest.json',m);
+  const m={specDigest:digest,specInputs:[],workPackages:[{id:'WP-A',dependencies:[],allowedPaths:['src/NewView.tsx',h.controls[0].testFile],packet,prompt,packetSha256:sha256(fs.readFileSync(path.join(root,packet))),promptSha256:sha256('planned fixture')}]};put(dir+'/cloud/manifest.json',m);
   const run=()=>cp.spawnSync(process.execPath,['scripts/cli.mjs','validate'],{cwd:root,encoding:'utf8'});
   const baseline=run();assert.equal(baseline.status,0,baseline.stderr);
-  m.workPackages[0].allowedPaths=[];put(dir+'/cloud/manifest.json',m);const mutant=run();assert.notEqual(mutant.status,0);assert.match(mutant.stderr,/unallocated screen implementation file COL-X/);
+  m.workPackages[0].allowedPaths=[h.controls[0].testFile];put(dir+'/cloud/manifest.json',m);const mutant=run();assert.notEqual(mutant.status,0);assert.match(mutant.stderr,/unallocated screen implementation file COL-X/);
  }finally{fs.rmSync(root,{recursive:true});}
 });

@@ -1,0 +1,582 @@
+{
+  "schemaVersion": 1,
+  "revision": 4,
+  "status": "PREPARED_NOT_LAUNCHED",
+  "scope": "Choose and prepare provider-neutral coding executor interface only; no scheduler/provider implementation, provisioning or paid launch",
+  "baseline": {
+    "repository": "rox-one/rox-one",
+    "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+    "sourceDifference": "cloud-runner/server-core source unchanged since original study; current study commit pinned"
+  },
+  "chosenDesign": "EXTERNAL_CODING_EXECUTOR",
+  "schemaPath": "cloud/macro-integration/run-spec.schema.json",
+  "schemaSha256": "fac208cc9b4798f9e5be9c1cdc3959cc85d90d6398e4e676602f66c4ed238fcc",
+  "requiredLaneVocabulary": [
+    "linux-domain",
+    "linux-renderer",
+    "macos-native",
+    "provider-live"
+  ],
+  "laneRule": "Every RunSpec declares all4lanes; required flags exactly match packet manifest. Selected lane must be required. Linux/macOS/provider executors may contribute separate receipts; required pending lane never waived.",
+  "authorityRule": "Existing coordinator/manifest/Git integration and completion gate remain authority; executor reports compute/artifacts only. Prepared file grants no credentials or active lease.",
+  "candidates": [
+    {
+      "id": "EXTERNAL_CODING_EXECUTOR",
+      "chosen": true,
+      "shape": "Existing integration coordinator exports immutable RunSpec to isolated external coding runner; authenticated transport reports outcome/proofs back.",
+      "strengths": [
+        "No product-domain or Electron dependency for coding gate",
+        "Provider-specific adapters behind one contract",
+        "Four heterogeneous lanes preserved"
+      ],
+      "costs": [
+        "Need adapter, credential broker and durable run reconciliation implementation",
+        "No existing runnable scheduler assumed"
+      ],
+      "sourceEvidenceIds": [
+        "EX01",
+        "EX02",
+        "EX04"
+      ],
+      "cheapestFalsification": "Fixture executor with readonly prepared spec; simulate create-response timeout, duplicate payload, lost lease, stale SHA and unowned diff; demonstrate coordinator rejects invalid outcomes."
+    },
+    {
+      "id": "ROX_CLOUDRUN_ADAPTER",
+      "chosen": false,
+      "shape": "CodingExecutor adapter maps new RunSpec into existing CloudRunProvider transport and artifacts; does not stuff trust claims into free-form metadata.",
+      "strengths": [
+        "Existing UI run panel/status/cancel and provider adapters"
+      ],
+      "costs": [
+        "Generic RunSpec does not enforce Git/ref/lease/receipt",
+        "Idempotency after failure differs Local vs Daytona",
+        "Artifact done cannot become feature verified"
+      ],
+      "sourceEvidenceIds": [
+        "EX01",
+        "EX02",
+        "EX03",
+        "EX05",
+        "EX06",
+        "EX08"
+      ],
+      "cheapestFalsification": "Fake CloudRunProvider sends done with no commit or wrong input; coding adapter must stay pending/deny, plus identical runId different payload must conflict."
+    },
+    {
+      "id": "PERSISTENT_LOCAL_HARNESS_TO_CLOUD",
+      "chosen": false,
+      "shape": "User-local durable harness owns dispatch/reconcile queue and calls same external executor protocol; macOS worker can supply native lane.",
+      "strengths": [
+        "Local continuity and macOS device lane fit existing operator environment"
+      ],
+      "costs": [
+        "Personal host availability and private-vault boundary",
+        "Harness status is not code executor proof; source/private policy must remain isolated",
+        "Requires cloud adapter/receipt binding despite local durability"
+      ],
+      "sourceEvidenceIds": [
+        "EX05",
+        "EX06"
+      ],
+      "observedProbe": "harnessctl.py status read-only returned version2.0.0; no request, worker or cloud execution launched; private session details not persisted",
+      "cheapestFalsification": "Restart fake dispatcher after lost response; confirm one remote run, preserved lease fencing and no local private files/credentials forwarded."
+    }
+  ],
+  "operations": [
+    {
+      "name": "prepare",
+      "input": "RunSpec",
+      "output": "PreparedHandle + canonical requestSha256 + validation errors",
+      "effects": "No checkout/credential resolve/provision/execute"
+    },
+    {
+      "name": "submit",
+      "input": "preparedHandle + authenticated scheduler dispatch envelope with active lease/fencing",
+      "output": "stable runHandle; duplicate same request returns same attempt",
+      "effects": "Proposed isolated executor only; not implemented here"
+    },
+    {
+      "name": "status",
+      "input": "runHandle",
+      "output": "RunEvent snapshot + sequence + request digest",
+      "effects": "Read/reconcile external run"
+    },
+    {
+      "name": "events",
+      "input": "runHandle + afterSequence",
+      "output": "ordered resumable RunEvent batches",
+      "effects": "Deduplicate by eventId; no exactly-once provider transport claim"
+    },
+    {
+      "name": "cancel",
+      "input": "CancelRequest",
+      "output": "cancel-request acknowledgment; terminal only after cleanup confirmation",
+      "effects": "Revoke capability/lease then cancel provider; lost if provider unknown"
+    },
+    {
+      "name": "resume",
+      "input": "ResumeRequest + authenticated current active lease",
+      "output": "checkpoint resume or new explicit attempt handle",
+      "effects": "Never mutate input/spec on old attempt; prior events retained"
+    },
+    {
+      "name": "collect",
+      "input": "runHandle + authorized proof references",
+      "output": "RunOutcome + artifacts + pending completion receipt",
+      "effects": "Realpath, size, hashes, Git diff and ancestry checked before review"
+    }
+  ],
+  "fixtureRunSpec": {
+    "apiVersion": "rox.coding-executor/v1",
+    "preparationState": "PREPARED_NOT_LAUNCHED",
+    "runId": "fixture-wp-48-license-a1",
+    "idempotencyKey": "fixture:WP-48:249b3b44220bcfbd7d467de9cfc18f76e1c37807:linux-domain:a1",
+    "attemptNumber": 1,
+    "wpId": "WP-48",
+    "executionMode": "fixture",
+    "selectedLane": "linux-domain",
+    "inputAuthority": {
+      "repository": "rox-one/rox-one",
+      "remoteUrl": "https://github.com/rox-one/rox-one.git",
+      "inputSha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "studySha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b",
+      "manifestPath": "plans/macro-integration/cloud/manifest.json",
+      "manifestSha256": "091b36be31fa2c54100e0ce0bff0cf4aa04a37e0a8ef17df5bfd4b1d08217045",
+      "packetPath": "plans/macro-integration/cloud/packets/WP-48.json",
+      "packetSha256": "0d46915e61e29b4fdd3308cba31449b1fd6f1d650f092cf264c281d46e58f13c",
+      "promptPath": "cloud/macro-integration/packets/WP-48.md",
+      "promptSha256": "6cc3db9bb3e02bda8d022619cc2f7b84626a1e358b39dd0b94a4439a6c155e6f",
+      "executorSchemaSha256": "fac208cc9b4798f9e5be9c1cdc3959cc85d90d6398e4e676602f66c4ed238fcc"
+    },
+    "prerequisites": [],
+    "lease": {
+      "leaseId": "fixture-lease-not-active",
+      "issuerRef": "fixture:scheduler",
+      "state": "prepared",
+      "fencingToken": 1,
+      "notBefore": "2026-09-30T00:00:00Z",
+      "expiresAt": "2026-09-30T01:00:00Z",
+      "ownedPaths": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/license-gate.yml",
+        "Dockerfile.server",
+        "LICENSE",
+        "bun.lock",
+        "notices/THIRD-PARTY-NOTICES.txt",
+        "package.json",
+        "plans/compliance/component-decisions.json",
+        "scripts/compliance/generate-sbom.ts",
+        "tests/macro-integration/wp-48.test.ts"
+      ],
+      "proofPrefix": "proof/macro-integration/WP-48/runs/fixture-wp-48-license-a1/",
+      "receiptPath": "plans/macro-integration/cloud/receipts/WP-48.json"
+    },
+    "checkout": {
+      "strategy": "fresh_isolated_checkout",
+      "branch": "impl/macro-wp-48-fixture-a1",
+      "hooks": "disabled",
+      "submodules": "disabled_unless_pinned_allowlisted",
+      "lfs": "disabled_unless_pinned_allowlisted",
+      "userConfig": "isolated_git_config",
+      "integrationPolicy": "merge_default_no_force_push",
+      "writeDefaultBranch": false,
+      "pushPolicy": "none",
+      "draftPrPolicy": "none"
+    },
+    "lanePlan": {
+      "linux-domain": {
+        "required": true,
+        "requiredMode": "fixture_allowed",
+        "runnerProfileRef": "fixture-profile:linux-domain",
+        "proofContract": "cloud/macro-integration/completion.schema.json"
+      },
+      "linux-renderer": {
+        "required": false,
+        "requiredMode": "fixture_allowed",
+        "runnerProfileRef": "fixture-profile:linux-renderer",
+        "proofContract": "cloud/macro-integration/completion.schema.json"
+      },
+      "macos-native": {
+        "required": false,
+        "requiredMode": "live_only",
+        "runnerProfileRef": "fixture-profile:macos-native",
+        "proofContract": "cloud/macro-integration/completion.schema.json"
+      },
+      "provider-live": {
+        "required": false,
+        "requiredMode": "live_only",
+        "runnerProfileRef": "fixture-profile:provider-live",
+        "proofContract": "cloud/macro-integration/completion.schema.json"
+      }
+    },
+    "environment": {
+      "os": "linux",
+      "imageRef": "fixture:ubuntu24.04-node22-bun1.3.14",
+      "imageDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "bunVersion": "1.3.14",
+      "nodeMajor": 22,
+      "installPolicy": "frozen_lockfile",
+      "resources": {
+        "diskGiB": 8,
+        "ramGiB": 8,
+        "cpus": 4
+      }
+    },
+    "limits": {
+      "maxWallClockSec": 1800,
+      "heartbeatIntervalSec": 15,
+      "heartbeatDeadlineSec": 60,
+      "maxLlmTokens": 0,
+      "maxArtifactsBytes": 26214400,
+      "maxCostMinor": 0,
+      "currency": "USD",
+      "maxResumeAttempts": 2,
+      "retentionSec": 86400,
+      "cancelGraceSec": 30
+    },
+    "credentialRefs": [],
+    "network": {
+      "defaultPolicy": "deny",
+      "allowHosts": [],
+      "providerTenantRefs": [],
+      "productionAccess": false
+    },
+    "deliverables": {
+      "commitRequired": true,
+      "patchPath": "proof/macro-integration/WP-48/runs/fixture-wp-48-license-a1/diff.patch",
+      "runOutcomePath": "proof/macro-integration/WP-48/runs/fixture-wp-48-license-a1/run-outcome.json",
+      "eventsPath": "proof/macro-integration/WP-48/runs/fixture-wp-48-license-a1/events.jsonl",
+      "checkpointPath": "proof/macro-integration/WP-48/runs/fixture-wp-48-license-a1/checkpoint.json",
+      "receiptSchemaPath": "cloud/macro-integration/completion.schema.json",
+      "completionReceiptPath": "plans/macro-integration/cloud/receipts/WP-48.json",
+      "proofPrefix": "proof/macro-integration/WP-48/runs/fixture-wp-48-license-a1/",
+      "independentReviewRequired": true,
+      "automaticMerge": false,
+      "automaticDeploy": false,
+      "laneReceiptFragmentPath": "proof/macro-integration/WP-48/runs/fixture-wp-48-license-a1/lane-fragment.json",
+      "canonicalReceiptWriter": "coordinator_only"
+    },
+    "resume": {
+      "policy": "reconcile_then_resume_same_input_only",
+      "checkpointRef": null,
+      "checkpointSha256": null,
+      "priorAttemptId": null
+    },
+    "dispatch": {
+      "authorization": "transport_authenticated_scheduler_separate_envelope",
+      "executionEnabled": false
+    },
+    "jobRole": "implementation",
+    "verificationOf": null
+  },
+  "practicalGaps": [
+    "No executor adapter currently consumes coding RunSpec",
+    "No authenticated lease/credential broker or distributed fencing implementation in prepared folder",
+    "No durable request digest/event sequence/reconciliation store",
+    "No actual Linux/macOS/provider workers provisioned",
+    "No repo checkout/default-branch guard or code-output import implemented by existing prompt runner",
+    "Completion validators verify future evidence; prepared packets do not cause execution",
+    "No exact external image digest/model/provider tenant selected; fixture values deliberately inert",
+    "Per-run lane fragment aggregation and verification-role proof-only lease enforcement; canonical receipt single writer"
+  ],
+  "freeze": {
+    "changeRule": "Schema/lease/packet/screen changes require new specDigest and regenerated fixture; previously active attempt reconciled, not retargeted",
+    "newAuthority": false,
+    "provisioning": false,
+    "paidLaunch": false,
+    "validation": "PASSED",
+    "runtime": "NOT_LAUNCHED"
+  },
+  "sourceEvidence": [
+    {
+      "id": "EX01",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/types.ts",
+      "symbol": "RunSpec / RunLimits",
+      "lineStart": 29,
+      "lineEnd": 69,
+      "claim": "Existing prompt/model/limits artifact run spec lacks first-class coding checkout/lease/branch/receipt fields."
+    },
+    {
+      "id": "EX02",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/types.ts",
+      "symbol": "RunState / RunFailureReason / CloudRunProvider",
+      "lineStart": 75,
+      "lineEnd": 187,
+      "claim": "Existing compute states/cancel/artifacts/event subscription; no coding review or integration protocol."
+    },
+    {
+      "id": "EX03",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/daytona-provider.ts",
+      "symbol": "DaytonaProvider.createRun",
+      "lineStart": 126,
+      "lineEnd": 169,
+      "claim": "Duplicate active/done IDs return existing handle; failed IDs may proceed to new sandbox without payload hash comparison."
+    },
+    {
+      "id": "EX04",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/daytona-provider.ts",
+      "symbol": "DaytonaProvider.pump",
+      "lineStart": 314,
+      "lineEnd": 375,
+      "claim": "Sandbox seeds /run/spec.json and artifacts, executes rox-run, imports artifacts then deletes; this path does not implement Git checkout/ref proof."
+    },
+    {
+      "id": "EX05",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/local-provider.ts",
+      "symbol": "LocalSubprocessProvider.createRun / getStatus",
+      "lineStart": 139,
+      "lineEnd": 196,
+      "claim": "Local any existing run ID returns existing state; detached subprocess watchdog and dead PID reconciliation are reusable mechanisms."
+    },
+    {
+      "id": "EX06",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/native-provider.ts",
+      "symbol": "NativeRunProvider.createRun / getStatus / cancel",
+      "lineStart": 39,
+      "lineEnd": 67,
+      "claim": "Adapter delegates run RPC; coding constraints require an explicit adapter implementation."
+    },
+    {
+      "id": "EX07",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/research-pack.ts",
+      "symbol": "buildResearchSpec",
+      "lineStart": 237,
+      "lineEnd": 262,
+      "claim": "Prompt-pack generator returns research subtasks and metadata; not a Git coding request."
+    },
+    {
+      "id": "EX08",
+      "repository": "rox-one/rox-one",
+      "sha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+      "path": "packages/cloud-runner/src/cloudflare-provider.ts",
+      "symbol": "CloudflareComputerProvider.createRun / getStatus / cancel",
+      "lineStart": 35,
+      "lineEnd": 66,
+      "claim": "HTTP provider transports generic RunSpec; REST transport can carry an adapted request only after coding capability conformance."
+    }
+  ],
+  "fixtureSnapshotPolicy": "Historical inert fixture; current manifest changes require freshly prepared real RunSpec, never automatic retarget or active authorization.",
+  "laneAggregation": {
+    "codingOwner": "One implementation role owns source changes and outputCommit; verification roles operate same immutable subjectCommit with proof-only lease.",
+    "receiptWriter": "Existing coordinator assembles canonical WP completion receipt; workers return unique run/lane fragments, never race overwrite canonical receipt.",
+    "binding": "Verification checkout inputSha equals verificationOf.subjectCommitSha; preserve implementationInputSha and implementation run receipt hash. Required lanes all bind same subjectCommit/input/spec before acceptance.",
+    "proofIsolation": "Each run/attempt uses proof/macro-integration/WP-ID/runs/runId/; all artifact/event/checkpoint/outcome paths stay under that unique prefix, canonical receipt path is read reference only."
+  },
+  "validation": {
+    "checkedAt": "2026-09-30T00:51:56.498Z",
+    "status": "PASSED",
+    "scope": "Contract schema/source fixture only; no provision/checkout/credential resolution/remote run. Mutation checks target schema sensitivity, not future executor implementation.",
+    "compiler": "Ajv8.17.1 strict/allErrors +ajv-formats3.0.1 Draft07",
+    "compiledSchemas": [
+      {
+        "name": "RunSpec",
+        "status": "PASSED"
+      },
+      {
+        "name": "RunOutcome",
+        "status": "PASSED"
+      },
+      {
+        "name": "RunEvent",
+        "status": "PASSED"
+      },
+      {
+        "name": "ResumeRequest",
+        "status": "PASSED"
+      },
+      {
+        "name": "CancelRequest",
+        "status": "PASSED"
+      }
+    ],
+    "fixtureCases": [
+      {
+        "case": "prepared fixture input",
+        "expected": true,
+        "observed": true
+      },
+      {
+        "case": "unknown WP",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "bad Git SHA",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "secret value field",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "path traversal",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "absolute artifact",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "unrequired selected lane",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "default branch write",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "fixture paid budget",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "fixture remote push",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "public secret env map",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "active self-issued lease",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "self-enabled dispatch",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "renderer undersized",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "fake macOS via Linux",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "fixture provider live",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "verification no target",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "implementation no commit",
+        "expected": false,
+        "observed": false
+      },
+      {
+        "case": "concurrent canonical receipt writer",
+        "expected": false,
+        "observed": false
+      }
+    ],
+    "negativeControls": [
+      {
+        "mutation": "remove SHA constraint",
+        "baselineRejected": true,
+        "mutantAccepted": true
+      },
+      {
+        "mutation": "permit unknown secret fields",
+        "baselineRejected": true,
+        "mutantAccepted": true
+      },
+      {
+        "mutation": "remove lane required binding",
+        "baselineRejected": true,
+        "mutantAccepted": true
+      }
+    ],
+    "existingWpIdEquality": true,
+    "fixtureRequiredLaneEquality": true,
+    "sourceReadback": [
+      {
+        "id": "EX01",
+        "path": "packages/cloud-runner/src/types.ts",
+        "rangeValid": true,
+        "blob": "57a4fa96d3acbce1a2b5e651b5d3183c98270f11"
+      },
+      {
+        "id": "EX02",
+        "path": "packages/cloud-runner/src/types.ts",
+        "rangeValid": true,
+        "blob": "57a4fa96d3acbce1a2b5e651b5d3183c98270f11"
+      },
+      {
+        "id": "EX03",
+        "path": "packages/cloud-runner/src/daytona-provider.ts",
+        "rangeValid": true,
+        "blob": "ae67ff19c96a114d8104db5fc7751fa91cd133a5"
+      },
+      {
+        "id": "EX04",
+        "path": "packages/cloud-runner/src/daytona-provider.ts",
+        "rangeValid": true,
+        "blob": "ae67ff19c96a114d8104db5fc7751fa91cd133a5"
+      },
+      {
+        "id": "EX05",
+        "path": "packages/cloud-runner/src/local-provider.ts",
+        "rangeValid": true,
+        "blob": "de035319cb320d7cab722506156b14d9ce3d5b56"
+      },
+      {
+        "id": "EX06",
+        "path": "packages/cloud-runner/src/native-provider.ts",
+        "rangeValid": true,
+        "blob": "d57e5410db0cebf45438afc40f7b50b78390828f"
+      },
+      {
+        "id": "EX07",
+        "path": "packages/cloud-runner/src/research-pack.ts",
+        "rangeValid": true,
+        "blob": "040aa1c2ebfe2d494175303c979dc99dda179f29"
+      },
+      {
+        "id": "EX08",
+        "path": "packages/cloud-runner/src/cloudflare-provider.ts",
+        "rangeValid": true,
+        "blob": "7c5823a95d9e7cc9acf1ba814cbbcc29990830a3"
+      }
+    ],
+    "iterationHistory": [
+      "Initial strictTypes compiler rejected missing conditional object annotations; repaired schema nodes",
+      "Meta-schema rejected an accidental property-map annotation; removed it",
+      "StrictTypes rejected conditional numeric/array nodes without type; repaired types",
+      "Final strict compilation and all schema/negative cases passed"
+    ],
+    "parsedMermaidDiagrams": 1,
+    "definitionFreeze": "v1 prepared interface; fixture snapshots original manifest generation digest; actual future prepare must use current manifest"
+  }
+}

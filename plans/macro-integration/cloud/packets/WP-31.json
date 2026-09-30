@@ -63,7 +63,13 @@
     "apps/electron/src/renderer/pages/meetings/MeetingsWorkspace.tsx",
     "packages/server-core/src/meetings/repository.ts",
     "packages/server-core/src/meetings/__tests__/rooms.test.ts",
-    "plans/macro-integration/cloud/contract-amendments.json"
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/collaboration-walkthroughs.md",
+    "docs/macro-integration/product/domain-forms.md",
+    "plans/macro-integration/resolved-operation-contracts.json"
   ],
   "goal": "Three users join one channel call audio/video; nonmember denied; shared call ID; end call archives metadata even without transcript; local recording mode regression",
   "expectedResults": [
@@ -1150,5 +1156,172 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [
+      {
+        "canonicalOperation": "call.join",
+        "ownerWorkPackage": "WP-31",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "callRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "deviceId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "callRef",
+            "deviceId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "variantSchemaIds": [
+          "DF-10-SCHEMA-1"
+        ],
+        "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      }
+    ],
+    "actionBindings": [
+      {
+        "formId": "DF-10",
+        "actionId": "join",
+        "canonicalOperation": "call.join",
+        "ownerWorkPackage": "WP-31",
+        "schemaId": "DF-10-SCHEMA-1",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "callRef": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "deviceId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "callRef",
+            "deviceId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "callRef": "callRef",
+            "registeredDeviceId": "deviceId",
+            "nativeMediaDeviceIds": "localadapteronly, notdomainbody",
+            "toggles": "publishonlyafteractualconnection"
+          },
+          "wireName": "call.join",
+          "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+        },
+        "resultType": "{endpoint:https-or-wssURL,token:secret,expiresAt:RFC3339,participantRef:Rox2EntityRef} → mediaConnectResult{connected|failed,trackPublicationStates}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "revoked",
+          "media_unavailable",
+          "ended",
+          "native_permission_denied",
+          "device_unavailable"
+        ],
+        "semanticConstraints": [
+          "JoinCall named leafbinding registration required; preserveoneprincipal/callidentity. Device selections localmediaadapterinput, notnewdomainAPI.",
+          "Nativepermissionerrors localformresult; don'tfakeprovider receipt. Guestdoesnotbecomeworkspacemember."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      }
+    ]
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "MTG-05.join",
+      "MTG-05.screen",
+      "MTG-05.leave"
+    ],
+    "featureControls": [
+      "COL-08.compose",
+      "COL-08.attach",
+      "COL-08.reply",
+      "COL-08.reaction",
+      "COL-08.call",
+      "COL-08.more",
+      "MTG-01.record",
+      "MTG-01.filters",
+      "MTG-01.import",
+      "MTG-05.join",
+      "MTG-05.screen",
+      "MTG-05.leave",
+      "SH-11.connect",
+      "SH-11.probe",
+      "SH-11.mode"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/mtg-05.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

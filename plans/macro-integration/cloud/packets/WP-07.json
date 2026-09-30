@@ -35,6 +35,7 @@
     "packages/shared/src/team/sync.ts",
     "packages/shared/src/workspace-domain/attention/contracts.ts",
     "tests/macro-integration/ui/sh-05.spec.ts",
+    "tests/macro-integration/ui/sh-06.spec.ts",
     "tests/macro-integration/wp-07.test.ts"
   ],
   "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
@@ -55,7 +56,12 @@
     "apps/electron/src/renderer/hooks/useInboxItems.ts",
     "apps/electron/src/renderer/components/team/TeamInboxSection.tsx",
     "apps/electron/src/renderer/pages/InboxPage.tsx",
-    "plans/macro-integration/cloud/contract-amendments.json"
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/collaboration-walkthroughs.md",
+    "docs/macro-integration/product/domain-forms.md"
   ],
   "goal": "Assignment delivers once to assignee after restart/replay; mark done survives second device; permission-filtered payload; 100 edits coalesce without 100 pings",
   "expectedResults": [
@@ -1253,12 +1259,14 @@
     "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
     "assignedUiPaths": [
       "apps/electron/src/renderer/components/notifications/NotificationPanel.tsx",
-      "tests/macro-integration/ui/sh-05.spec.ts"
+      "tests/macro-integration/ui/sh-05.spec.ts",
+      "tests/macro-integration/ui/sh-06.spec.ts"
     ],
     "existingUiSeams": [],
     "newUiFiles": [
       "apps/electron/src/renderer/components/notifications/NotificationPanel.tsx",
-      "tests/macro-integration/ui/sh-05.spec.ts"
+      "tests/macro-integration/ui/sh-05.spec.ts",
+      "tests/macro-integration/ui/sh-06.spec.ts"
     ],
     "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
   },
@@ -1266,5 +1274,74 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "SH-05.notification",
+      "SH-05.read",
+      "SH-05.unread",
+      "SH-06.event",
+      "SH-06.filter",
+      "SH-06.receipt"
+    ],
+    "featureControls": [
+      "COL-08.compose",
+      "COL-08.attach",
+      "COL-08.reply",
+      "COL-08.reaction",
+      "COL-08.call",
+      "COL-08.more",
+      "COL-09.send",
+      "COL-09.recipient",
+      "COL-09.add",
+      "COL-09.mute",
+      "COL-10.root",
+      "COL-10.reply",
+      "COL-10.follow",
+      "COL-10.task",
+      "COL-11.new-thread",
+      "COL-11.mention",
+      "COL-11.anchor",
+      "COL-11.resolve",
+      "COL-11.agent",
+      "COL-14.title",
+      "COL-14.assignee",
+      "COL-14.status",
+      "COL-14.dates",
+      "COL-14.checklist",
+      "COL-14.dependency",
+      "COL-14.source",
+      "COL-14.delegate",
+      "COL-14.trash",
+      "COL-15.source",
+      "COL-15.title",
+      "COL-15.project",
+      "COL-15.assign",
+      "COL-15.create",
+      "CRM-05.post",
+      "CRM-05.mention",
+      "CRM-05.reply",
+      "SH-05.notification",
+      "SH-05.read",
+      "SH-05.unread",
+      "SH-06.event",
+      "SH-06.filter",
+      "SH-06.receipt",
+      "SH-18.open",
+      "SH-18.snooze",
+      "SH-18.source"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/sh-05.spec.ts",
+      "tests/macro-integration/ui/sh-06.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

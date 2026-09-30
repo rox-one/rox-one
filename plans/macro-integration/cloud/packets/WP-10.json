@@ -69,7 +69,11 @@
     "apps/electron/src/shared/routes.ts",
     "apps/electron/src/renderer/components/pages/PagesHome.tsx",
     "apps/electron/src/renderer/pages/NotesPage.tsx",
-    "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx"
+    "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/collaboration-walkthroughs.md"
   ],
   "goal": "A+B edit one Page concurrently; presence/cursor; offline reload/reconnect converges; durable ack survives crash; revoked updates refused; HTML pages still work",
   "expectedResults": [
@@ -1143,10 +1147,10 @@
       "apps/electron/src/renderer/components/pages/CollaborativeDocumentEditor.tsx",
       "packages/shared/src/workspace-domain/collaboration/contracts.ts",
       "tests/macro-integration/ui/col-02.spec.ts",
+      "tests/macro-integration/ui/col-01.spec.ts",
       "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
       "apps/electron/src/shared/routes.ts",
       "apps/electron/src/renderer/components/pages/PagesHome.tsx",
-      "tests/macro-integration/ui/col-01.spec.ts",
       "apps/electron/src/renderer/pages/NotesPage.tsx",
       "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx"
     ],
@@ -1169,5 +1173,55 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "COL-01.create",
+      "COL-01.kind",
+      "COL-01.project",
+      "COL-01.open",
+      "COL-01.search",
+      "COL-02.title",
+      "COL-02.body",
+      "COL-02.presence",
+      "COL-02.mention",
+      "COL-02.comment",
+      "COL-02.sync",
+      "COL-02.share"
+    ],
+    "featureControls": [
+      "COL-01.create",
+      "COL-01.kind",
+      "COL-01.project",
+      "COL-01.open",
+      "COL-01.search",
+      "COL-02.title",
+      "COL-02.body",
+      "COL-02.presence",
+      "COL-02.mention",
+      "COL-02.comment",
+      "COL-02.sync",
+      "COL-02.share",
+      "COL-04.version",
+      "COL-04.restore",
+      "COL-04.export",
+      "COL-06.editor",
+      "COL-06.wiki",
+      "COL-06.properties",
+      "COL-06.share",
+      "COL-06.ai"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/col-01.spec.ts",
+      "tests/macro-integration/ui/col-02.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

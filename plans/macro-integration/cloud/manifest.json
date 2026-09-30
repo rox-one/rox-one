@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "program": "macro-integration-revision-3",
+  "program": "macro-integration-revision-4",
   "referenceCodeSha": "e780e73ae84c977cf81546b49140d318dfcd6049",
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b",
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6",
   "launchState": "PREPARED_NOT_LAUNCHED",
   "scope": "cloud coding packets; no credentials/purchase/deployment performed",
   "lanes": {
@@ -75,8 +75,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-01.json",
       "prompt": "cloud/macro-integration/packets/WP-01.md",
-      "packetSha256": "b97e8717c2b0975fd5dc415a5288784c73d0401b4ffb36f840c6caa394af3455",
-      "promptSha256": "6e7009080afc603817e0aa8261264d675c68cffab45d979e8b0c9c50bffe1423"
+      "packetSha256": "09bb5f1a528239feac918e546f7d8e928b45ddfd75c9332d367c04b64cdce791",
+      "promptSha256": "aa3c0545b05a4d869c55b59d00014593d8b78f5429a2952e84b8999ddbd5c2a8"
     },
     {
       "id": "WP-02",
@@ -109,8 +109,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-02.json",
       "prompt": "cloud/macro-integration/packets/WP-02.md",
-      "packetSha256": "d9d625233e8813f9c31e195f25dd23897efc0fb364172746406a6a89f59c7d5d",
-      "promptSha256": "3461fc4a3c095f82809c7aecef9de9b422e70bd03c4608e36d307ba5b9df38e9"
+      "packetSha256": "611878ca883075b6e2cdab077e8ba799fb0f5b37f334db7d8e8fbb3a6085be67",
+      "promptSha256": "773995a4c490b3c9a9ae1ab5f518605f9e1f84af9a6c5fa5b3f67f2745594923"
     },
     {
       "id": "WP-03",
@@ -147,8 +147,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-03.json",
       "prompt": "cloud/macro-integration/packets/WP-03.md",
-      "packetSha256": "b80d5eae087c46537e72a4c77d0f85f1722cfb80638d2bc7245a449dd2253ca7",
-      "promptSha256": "4a36ba00e4846a3a18acef445d791fb5c9ed420a952c98de1cd6f55bb66e3dcd"
+      "packetSha256": "13bddd8231e6a6352f91cce594a88fbe09f6947d66649c27a3e1b5134658886d",
+      "promptSha256": "1b750514594a69a974b891392c3f55f44e7fdbc0772731c23b1a17370ba183da"
     },
     {
       "id": "WP-04",
@@ -184,8 +184,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-04.json",
       "prompt": "cloud/macro-integration/packets/WP-04.md",
-      "packetSha256": "1dc9f2a95901107cecd6fabc5497f345cdcb23316e987a47076c86bf7887e974",
-      "promptSha256": "16417bb296a0174c211b857e7daae5d6f235178d2a445e5f343d70f48e0e727a"
+      "packetSha256": "430e0cae44f63ffa5c5e5e92faae6009131c84a5b4455204787c618779533402",
+      "promptSha256": "930859e0359eae269957e50c1d31ffab70d406d5689c22c9124e2d7836f76f59"
     },
     {
       "id": "WP-05",
@@ -222,8 +222,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-05.json",
       "prompt": "cloud/macro-integration/packets/WP-05.md",
-      "packetSha256": "762d29bf3e093546c0aabc478cac325b2986a2678d96df5fc86dc1a2dd0c9cbf",
-      "promptSha256": "f811f463f9f83261b03002e7bb8ba68e2ac44b9ada1e617bec6f1f55d47b0b69"
+      "packetSha256": "c53423a647d6c4c1cd8caff774c8606e9e252310956d098dd3f9e7831001b464",
+      "promptSha256": "4c8b15ccf73b8c496af01372f643e26d53e665fc8a9550ab72f1af670fb83069"
     },
     {
       "id": "WP-06",
@@ -253,6 +253,7 @@
         "packages/shared/src/i18n/locales/zh-Hans.json",
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/search/contracts.ts",
+        "tests/macro-integration/ui/sh-02.spec.ts",
         "tests/macro-integration/wp-06.test.ts"
       ],
       "lanes": [
@@ -262,8 +263,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-06.json",
       "prompt": "cloud/macro-integration/packets/WP-06.md",
-      "packetSha256": "4b24a0181fe602900d8fe9f527080ba80b2c72cd17fce9de8d4a05e76f611d41",
-      "promptSha256": "5af7e95142ab8ecec1668cb1b256e22002374138722dbe386214ba153f3d3526"
+      "packetSha256": "b88122ee87ef595411584fabffcb3157c5112a096e73291878902ec70aa63717",
+      "promptSha256": "beaaa5145c7235cad9ad1e56edb420989a82d38e72442a28907b12931146f593"
     },
     {
       "id": "WP-07",
@@ -295,6 +296,7 @@
         "packages/shared/src/team/sync.ts",
         "packages/shared/src/workspace-domain/attention/contracts.ts",
         "tests/macro-integration/ui/sh-05.spec.ts",
+        "tests/macro-integration/ui/sh-06.spec.ts",
         "tests/macro-integration/wp-07.test.ts"
       ],
       "lanes": [
@@ -304,8 +306,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-07.json",
       "prompt": "cloud/macro-integration/packets/WP-07.md",
-      "packetSha256": "1c4b106b3b1614af2a274f7317741fdc29e5bb848f034b3a39b02d671f9a7aed",
-      "promptSha256": "901e56d986a4b52bcef9cc7a39b1ac3856558cd3a462dc1155ca8f104b730d43"
+      "packetSha256": "815fbffa453ecd161b0eab7afaf363dceaffa2c4827318c0c634b4026467af51",
+      "promptSha256": "3343690704023f39159461fa83a3efb8e69bff21bbee2f26bf61d7ab4ebb66e2"
     },
     {
       "id": "WP-08",
@@ -360,8 +362,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-08.json",
       "prompt": "cloud/macro-integration/packets/WP-08.md",
-      "packetSha256": "7baa00d704531e9557e78f09392cbe3b218b29dc88975c62644b5d93caf90f36",
-      "promptSha256": "a7132597eb4fa957c58c6d3dafe669868704a5d92e8ba223b7bf3e0d4d1f5e2c"
+      "packetSha256": "5890c23e6c67f3954de3326eb63cab49b9b801143d11b526b221d47243c498d8",
+      "promptSha256": "7e786a00af2c7c8b6cc1934c9baacb4b9642645d5c5c5bb4735903430234d428"
     },
     {
       "id": "WP-09",
@@ -396,8 +398,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-09.json",
       "prompt": "cloud/macro-integration/packets/WP-09.md",
-      "packetSha256": "6d36c57da4fe5c2ffac7c7fcdf43285b64784318efbe9a8c4f463a5c43d8394a",
-      "promptSha256": "0c31bb24c87278dba4c85b1e4a477124f0d3b53fe6f96728895869b00114d790"
+      "packetSha256": "64d2311404c2b195e42b0ca9048c77345967a00df8b2f2dd43f9d32a27fc6a5f",
+      "promptSha256": "7a2835f103ad44ff6de4ad218888db991646ce553ef97a9f875bb2baa936ecb6"
     },
     {
       "id": "WP-10",
@@ -449,8 +451,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-10.json",
       "prompt": "cloud/macro-integration/packets/WP-10.md",
-      "packetSha256": "e705684e98387a62aa0f022805a834bbb249cdc00b75822209046ea7925c8a90",
-      "promptSha256": "295dc8036ca78a483619b98f2696dd9f2f88722bdf58807da8a8a6bc32b13a38"
+      "packetSha256": "87819acab8fd9e37a1694bfe770f123c6f2c22a47b1fe9d51955a9625dae4f5d",
+      "promptSha256": "49a3771b8d051047a8c1ccf4195ea35972ef38fee24c5356eed18dafda560342"
     },
     {
       "id": "WP-11",
@@ -494,8 +496,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-11.json",
       "prompt": "cloud/macro-integration/packets/WP-11.md",
-      "packetSha256": "5c97a759bdd8bf8cef7430dbb13b49cdea9509c030fcb9d1b22be2847f0bdf37",
-      "promptSha256": "1f0f71d023976cd06f7d640a4b3885a0fd9b6e799136999b5a7e8ca5a3429905"
+      "packetSha256": "60c639b6846871645cca3211c5f22cf6c6076bd7a3737ef223b359cbff0f87c4",
+      "promptSha256": "d5daef18d44c71328717fd102e239dc0b5531b721fcfae771386b4b563556d64"
     },
     {
       "id": "WP-12",
@@ -537,8 +539,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-12.json",
       "prompt": "cloud/macro-integration/packets/WP-12.md",
-      "packetSha256": "1eea6368e6f2593ab0b900124f7845f3f89bc9b2a56c6395c8cceb8f42945dfd",
-      "promptSha256": "0a62bf319afca3f2ad3aeb84952ef6b6e5fdd42ac23ea41a5dd9279c4d9d8540"
+      "packetSha256": "81dd8f242cb4d852a3761955491f74580a00b6b304dcac2677150a385abb7456",
+      "promptSha256": "70b86421fbbc227c43d0c453b00fb1a3de7cecef83b539e509398c30e311873d"
     },
     {
       "id": "WP-13",
@@ -580,8 +582,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-13.json",
       "prompt": "cloud/macro-integration/packets/WP-13.md",
-      "packetSha256": "5212224e80c422fc03fbb81495f1ffd2e23becfabf0e4d9628562c58e68a053a",
-      "promptSha256": "c0bb5d7a856e59da94ff028012da301d3b8e33d9038c460e772cf828c6936883"
+      "packetSha256": "a9fb48a3742456755905f31fed531554c0eb5bd0f3bb182e12c73b1003325f85",
+      "promptSha256": "79efbe6ce9218f93203a6eee7c7d9fceba538150bf17c3c5a83d941537ff4b74"
     },
     {
       "id": "WP-14",
@@ -609,6 +611,7 @@
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/tasks/contracts.ts",
         "tests/macro-integration/ui/col-16.spec.ts",
+        "tests/macro-integration/ui/sh-18.spec.ts",
         "tests/macro-integration/wp-14.test.ts"
       ],
       "lanes": [
@@ -618,8 +621,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-14.json",
       "prompt": "cloud/macro-integration/packets/WP-14.md",
-      "packetSha256": "88da6c772364578a6978277fd1bc025ec8450d2faceab50d5fd2b696eca6ccb2",
-      "promptSha256": "fca8af28edd85ef30ffc69bea677a194279d9fedc601958d15bd2e58e99008fc"
+      "packetSha256": "67aef7b2b1a1081ac0c4cd349b27cb7fddff1bc8d65ca6fb499a3e942040548b",
+      "promptSha256": "29c9363e019611433220271eeff6d563ac5e3f50d89f61453447ce9d9e9c4370"
     },
     {
       "id": "WP-15",
@@ -663,8 +666,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-15.json",
       "prompt": "cloud/macro-integration/packets/WP-15.md",
-      "packetSha256": "8dbbc44ad0324f86228049540c98f93c4a8498e4c16a4a71ee98291280b1d775",
-      "promptSha256": "0e17d6dfed2177ea30938bcdd173b58b04a79bb81d2c374234e2b0d5ec1017f8"
+      "packetSha256": "b3014424710e304a669c6d8d2024260341316ed813a8d33fc146a0a7a492761c",
+      "promptSha256": "532ecd1b0724fcbb9c8a1c0d4b8c35345a90dbfb0db4e7c49e9ff79fc45bdac5"
     },
     {
       "id": "WP-16",
@@ -706,8 +709,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-16.json",
       "prompt": "cloud/macro-integration/packets/WP-16.md",
-      "packetSha256": "7162884ca23ea1735d16d232a48d85007289847809ef2cce21abf19f3f5c5190",
-      "promptSha256": "4db4852a372bfdfd81ddf01c474ed458a12effc3ad3b268be2ff74850180a2b6"
+      "packetSha256": "ca37a45d8777f11312b05e9cebe29bf8fa15710dda3c7d3b0f0cdbdcb542fbb4",
+      "promptSha256": "8ba50f3f9943666ed3ff1724902fef9759cc040b7803fd6cb00b5ef1b50610f8"
     },
     {
       "id": "WP-17",
@@ -750,6 +753,7 @@
         "packages/shared/src/workspace-domain/mail/provider-contract.ts",
         "packages/shared/src/workspace-domain/mail/types.ts",
         "tests/macro-integration/mail-domain-jmap-regression.test.ts",
+        "tests/macro-integration/ui/mail-01.spec.ts",
         "tests/macro-integration/wp-17.test.ts"
       ],
       "lanes": [
@@ -760,8 +764,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-17.json",
       "prompt": "cloud/macro-integration/packets/WP-17.md",
-      "packetSha256": "c79276e92bd81ed8ce3344c2bee5f7946ee752f9190d638b4f7c800d38baacd4",
-      "promptSha256": "b217722bb589d3c4b863e88d487dc331c03fabc485a58f5af15722fead3ce81b"
+      "packetSha256": "48b950821af8f7c8debb1a7442cd6f57b5d40c3faab62b3c347925e212fb63ad",
+      "promptSha256": "d026c2db740165f43cbb7e2c9e20bba579d74aed718e149e6298503776b8d64e"
     },
     {
       "id": "WP-18",
@@ -802,8 +806,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-18.json",
       "prompt": "cloud/macro-integration/packets/WP-18.md",
-      "packetSha256": "9f48fc5f11d566a3ff92dcf0d23f0e00608808deb8bf19d27a3486246599bfae",
-      "promptSha256": "98abab0662bcb445a176d088f08a29fdb21b5152fa893f0b77f2275b403a0b8b"
+      "packetSha256": "ebeb32d57767e71ea7cc6441974d3d6aabace3b93af71067e14f75d5fbd346e5",
+      "promptSha256": "dd7ed654c0a1abd0ba2fcf79a24afa9cbe5ce302ff39dc1afbedfc2e822ff8b9"
     },
     {
       "id": "WP-19",
@@ -843,6 +847,8 @@
         "packages/shared/src/workspace-domain/mail/contracts.ts",
         "packages/shared/src/workspace-domain/mail/send-receipt.ts",
         "tests/macro-integration/mail-submission-ambiguity.test.ts",
+        "tests/macro-integration/ui/mail-02.spec.ts",
+        "tests/macro-integration/ui/mail-03.spec.ts",
         "tests/macro-integration/wp-19.test.ts"
       ],
       "lanes": [
@@ -853,8 +859,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-19.json",
       "prompt": "cloud/macro-integration/packets/WP-19.md",
-      "packetSha256": "cb44584502f5d9f1b9dfa597201d64c4ec1e8199747edcc6a2c98ce95b4ac90a",
-      "promptSha256": "1eefa7abaeb012e08a1cc008f7d8b94a8272386be2251b2f4a561957f3754736"
+      "packetSha256": "c8fac26796c5c683c41ca204e5045928b7c73bc301c61a7856e3f64b67dd8971",
+      "promptSha256": "d1a6e7b1af68417ceddfed6cce076c5bd5201cbc51d40b1459bc9207250b7f83"
     },
     {
       "id": "WP-20",
@@ -889,6 +895,7 @@
         "packages/shared/src/workspace-domain/mail/contracts.ts",
         "packages/shared/src/workspace-domain/mail/provider-capabilities.ts",
         "tests/macro-integration/oauth-provider-bindings.test.ts",
+        "tests/macro-integration/ui/mail-05.spec.ts",
         "tests/macro-integration/wp-20.test.ts"
       ],
       "lanes": [
@@ -899,8 +906,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-20.json",
       "prompt": "cloud/macro-integration/packets/WP-20.md",
-      "packetSha256": "59127ee7dd3b14f341e2dcfb9b21ba9c9b3551a863e7ad1a4179d12647f64745",
-      "promptSha256": "57f7a4d56b5bf1ba05b939aaabdac06ba7c72dbf0acd6787cd762c2ca17692a8"
+      "packetSha256": "b5ec1da953da9f4fe0d8ec9ae6f4494c475ac38c4d5c66966340718857a10076",
+      "promptSha256": "67bc7d3f9023a43e349f3ecd09f011beeac909d40902679fa594ba3145bb0bf7"
     },
     {
       "id": "WP-21",
@@ -935,6 +942,7 @@
         "packages/shared/src/mail/jmap-client.ts",
         "packages/shared/src/workspace-domain/mail/contracts.ts",
         "tests/macro-integration/scheduled-send-uidvalidity.test.ts",
+        "tests/macro-integration/ui/mail-04.spec.ts",
         "tests/macro-integration/wp-21.test.ts"
       ],
       "lanes": [
@@ -945,8 +953,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-21.json",
       "prompt": "cloud/macro-integration/packets/WP-21.md",
-      "packetSha256": "04880309c869eb2dd79735bfe3b007ab811c857d5dab904c80141a51cc72751c",
-      "promptSha256": "c24d3a5334f650e3cc7bda51043352a4525f415ae69446d699530f40a93df70f"
+      "packetSha256": "7b32b096a42feba2181f6fdf5326eabe86545ff4805ed2c33c5456f8aa8ee3e2",
+      "promptSha256": "653155e214bdabddbe8c23d6a191ad64726d1f9a5bb896221c8eae1ad5d6fccf"
     },
     {
       "id": "WP-22",
@@ -989,8 +997,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-22.json",
       "prompt": "cloud/macro-integration/packets/WP-22.md",
-      "packetSha256": "bac504a88572aad60006152bc61c0bc6e700334c4c4289a1a75cf0b4b71df0c2",
-      "promptSha256": "42b05fc9e095ccd8d3a15f5b7c70b3828ad1b79c80eae0c882b43629a4b0ce3e"
+      "packetSha256": "ee74ed691e59b971f59c1fd101cc86c6617ebbd9e7f34896d72fbd942768c9b7",
+      "promptSha256": "d7e471e991b0d33b1b183a34a91c3f7238082322a74ba40de9ba84e3cc8b26a7"
     },
     {
       "id": "WP-23",
@@ -1023,6 +1031,8 @@
         "packages/shared/src/workspace-domain/crm/contracts.ts",
         "packages/shared/src/workspace-domain/crm/dossier-import.ts",
         "tests/macro-integration/dossier-identity-merge-rollback.test.ts",
+        "tests/macro-integration/ui/crm-04.spec.ts",
+        "tests/macro-integration/ui/crm-07.spec.ts",
         "tests/macro-integration/wp-23.test.ts"
       ],
       "lanes": [
@@ -1032,8 +1042,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-23.json",
       "prompt": "cloud/macro-integration/packets/WP-23.md",
-      "packetSha256": "8eea1fa2a61ef4a7a5fe21537164a07edde6713d26c5de7ef412f4bd3e236c0e",
-      "promptSha256": "54dbe801a039a6c8b7b2e08a3a9cb0188e1f254c138fd0a39523124bf3e2eda8"
+      "packetSha256": "c4682c04bfa4848777545f5556071d94b62d46832f444efb597da69715559148",
+      "promptSha256": "c47929db40858aaeab02901899e5fe96184e3fe75aab3b1f0de9584917aad992"
     },
     {
       "id": "WP-24",
@@ -1069,7 +1079,9 @@
         "packages/shared/src/workspace-domain/crm/contracts.ts",
         "packages/shared/src/workspace-domain/crm/property-schema.ts",
         "tests/macro-integration/crm-stage-revision-money.test.ts",
+        "tests/macro-integration/ui/crm-01.spec.ts",
         "tests/macro-integration/ui/crm-02.spec.ts",
+        "tests/macro-integration/ui/crm-06.spec.ts",
         "tests/macro-integration/wp-24.test.ts"
       ],
       "lanes": [
@@ -1079,8 +1091,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-24.json",
       "prompt": "cloud/macro-integration/packets/WP-24.md",
-      "packetSha256": "78fcea3635236897ad27a7be6f700d915a7368c4398991c814bbbcc2e631528c",
-      "promptSha256": "ad028ed2a8b686d38ed25758e59f0c5a01f9df500fc1f8a47667d8a4e54149a9"
+      "packetSha256": "850f0de6a368fd7994e78e20971a6fb9f09129578c292599decafe7c52b65e52",
+      "promptSha256": "e92dcef5f0a93a381a4cb5ba67581ae89512d5e8282244589ef893647c9277a1"
     },
     {
       "id": "WP-25",
@@ -1113,6 +1125,7 @@
         "packages/shared/src/workspace-domain/crm/context-query.ts",
         "packages/shared/src/workspace-domain/crm/contracts.ts",
         "tests/macro-integration/crm-discussion-mention-acl.test.ts",
+        "tests/macro-integration/ui/crm-05.spec.ts",
         "tests/macro-integration/wp-25.test.ts"
       ],
       "lanes": [
@@ -1122,8 +1135,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-25.json",
       "prompt": "cloud/macro-integration/packets/WP-25.md",
-      "packetSha256": "92388deb58ee6bc01dcfeae50021c6621b2692852fd0a79d8a95bf2f41cfeb32",
-      "promptSha256": "a5bed763b713678a9da36a3091a8e0db7cc7dadb1faa9dbbd1e7383dba942a19"
+      "packetSha256": "1579a812e71f83cd563542042dca7d34737b2105264a962e0b0d90397322b03a",
+      "promptSha256": "e6433fbde5c0a2e192a5447fcb1b744165248d692ff483f0e0d4e4b00b0b1e9e"
     },
     {
       "id": "WP-26",
@@ -1153,6 +1166,7 @@
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/crm/contracts.ts",
         "tests/macro-integration/crm-context-visibility.test.ts",
+        "tests/macro-integration/ui/mail-06.spec.ts",
         "tests/macro-integration/wp-26.test.ts"
       ],
       "lanes": [
@@ -1162,8 +1176,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-26.json",
       "prompt": "cloud/macro-integration/packets/WP-26.md",
-      "packetSha256": "9cb4956e84b4236d92abf783d9972ef4bf9a90ab155f6ee757d3a526450f1038",
-      "promptSha256": "0f5edf22d88c6abaf58783c9b84ba28da76070ac85abae48ec27722cf972e52b"
+      "packetSha256": "2bd1727361b0da16a3a60ae01203d60a86b11a6a8148948db7257cc14c3f6265",
+      "promptSha256": "8411b62025ae9d11105cf2c92ae79c7b011ee2a463ac95e54b0b22f6732560d4"
     },
     {
       "id": "WP-27",
@@ -1213,8 +1227,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-27.json",
       "prompt": "cloud/macro-integration/packets/WP-27.md",
-      "packetSha256": "c78fef0d447d516b0ab021bee0a6aabec51ccfd7ead245008095563a2cc64206",
-      "promptSha256": "eaee7d5cd9e66cc2671cec323f504e626c514ee12cb8af1631175a0772ccb9e0"
+      "packetSha256": "fd479612cd8afaee38ae0e80d732fe9cdfe86cc33909469e56a5953d47814037",
+      "promptSha256": "8e790a483cfc865e8597a2591dae38ecabec082fb6badac9e8306e6486a5b982"
     },
     {
       "id": "WP-28",
@@ -1262,8 +1276,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-28.json",
       "prompt": "cloud/macro-integration/packets/WP-28.md",
-      "packetSha256": "a8d575fe4aca569c492653dfaa9b8731d28c257d0626bbfbaac3a9a1e9684208",
-      "promptSha256": "d7e69a65fff4b9111dfb0f1658f8f07d7d14eda886dfe93265df5a51e1ce1448"
+      "packetSha256": "9e63b4c628a4555ec649d0b7154adc33b0a35367b80b2b68ec28cac335d928e6",
+      "promptSha256": "7d1a4e167a7a6691793fee15a909342f8670cd656eb11f7d01209005015f9d1d"
     },
     {
       "id": "WP-29",
@@ -1296,6 +1310,7 @@
         "packages/shared/src/workspace-domain/calendar/contracts.ts",
         "packages/shared/src/workspace-domain/calendar/recurrence.ts",
         "tests/macro-integration/calendar-recurrence-dst-availability.test.ts",
+        "tests/macro-integration/ui/cal-03.spec.ts",
         "tests/macro-integration/wp-29.test.ts"
       ],
       "lanes": [
@@ -1305,8 +1320,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-29.json",
       "prompt": "cloud/macro-integration/packets/WP-29.md",
-      "packetSha256": "a90293631834c75d3f8191803a8234f4fc69e0f2e5a1e47f145dbb6237e99054",
-      "promptSha256": "18cbf8a647a6c37ad0007cd3e127e457b81e1d7dfe74bb301e8c12b106cc2058"
+      "packetSha256": "17621f3730fe1a4f5ecb52adc8e2ee85c0ab8e09cede05b7a9d1f14c0a3a664c",
+      "promptSha256": "37bbb788aa78c6a12eac13c11b70d4560bf32f11407c3acb33d0232502b59062"
     },
     {
       "id": "WP-30",
@@ -1346,6 +1361,8 @@
         "packages/shared/src/workspace-domain/calls/contracts.ts",
         "packages/shared/src/workspace-domain/meetings/context-types.ts",
         "tests/macro-integration/calendar-meeting-identity.test.ts",
+        "tests/macro-integration/ui/mtg-01.spec.ts",
+        "tests/macro-integration/ui/mtg-02.spec.ts",
         "tests/macro-integration/wp-30.test.ts"
       ],
       "lanes": [
@@ -1355,8 +1372,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-30.json",
       "prompt": "cloud/macro-integration/packets/WP-30.md",
-      "packetSha256": "381723f35e343402a15004df1cff3aafd4614f2673e33b8b042913489fce13fc",
-      "promptSha256": "eceb9e4b9517df47c7124f3b3140e21486aa1f5897f2e587ae403d915b218d95"
+      "packetSha256": "3f4425caa4d132f8f29b20632bab1b991e4f0d68b5753a844b8f0b161720c0d2",
+      "promptSha256": "66a9d58cdc6d223e698a2352935c62ad88bb16970b71c858cb35aee03d3560ca"
     },
     {
       "id": "WP-31",
@@ -1407,8 +1424,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-31.json",
       "prompt": "cloud/macro-integration/packets/WP-31.md",
-      "packetSha256": "02eb9e3c1361e7c00333e65f8bdb1fb1696dfc1d21c5f9a382a413cb7d2a7443",
-      "promptSha256": "8bfaa594907e3583d238184716a689e7ba828cf81dc7898dd495292b07948f1e"
+      "packetSha256": "5cf24609b4be6e2d7299a17135ad8863b785bd90e790e5b440a411162733a98a",
+      "promptSha256": "b44c52a7c4e0c8030f37162b9b00ecd0eb939f9bca1fd89a144b21a1baa97d36"
     },
     {
       "id": "WP-32",
@@ -1452,8 +1469,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-32.json",
       "prompt": "cloud/macro-integration/packets/WP-32.md",
-      "packetSha256": "feb7c22adb803bf1883c664a99abee8923beff3b2ed942ed61614cfffee5ee7e",
-      "promptSha256": "cf67556b0f308150140087226d84ca47d2e5b8b7065cfdfbd03d5294b9bf446b"
+      "packetSha256": "fc17057abf50f94659bb24f9074221157bc2a12c9d5924ec9b6130edca714dbd",
+      "promptSha256": "91d1ddaef8cfaf53ed5df503bad3662f458ce93184042608f2c0a001384c96b3"
     },
     {
       "id": "WP-33",
@@ -1507,8 +1524,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-33.json",
       "prompt": "cloud/macro-integration/packets/WP-33.md",
-      "packetSha256": "687793bf1c8630b38169f4b6f54d7871f1212632a8139862b9056bde1779e2ef",
-      "promptSha256": "32a67b3eabb8040f5629aeafc1ec68ace7d0fb1812b349e7815f1b77c62ab893"
+      "packetSha256": "40b0de14ee81c1b397ecf3236d55c5613972fbe881d0a3f85328684b119a61ad",
+      "promptSha256": "1381787f44c13ec321bb0456358d25ca0fd4be0856987f240165344ba1fde2f9"
     },
     {
       "id": "WP-34",
@@ -1550,6 +1567,8 @@
         "packages/shared/src/workspace-domain/meetings/evidence.ts",
         "services/rox-media-worker/src/transcribe.ts",
         "tests/macro-integration/transcript-evidence-summary-jobs.test.ts",
+        "tests/macro-integration/ui/mtg-07.spec.ts",
+        "tests/macro-integration/ui/mtg-08.spec.ts",
         "tests/macro-integration/wp-34.test.ts"
       ],
       "lanes": [
@@ -1560,8 +1579,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-34.json",
       "prompt": "cloud/macro-integration/packets/WP-34.md",
-      "packetSha256": "58262130d2ab17fc91f6aa76d658e39b88bcb1e472f0be01d761d4221ece82eb",
-      "promptSha256": "7199c1cd7282be7063232f8e3aafbc92c6128b76afad89b538789f68c2c4f929"
+      "packetSha256": "1eee6e73df67876adf4a5774985115ca6420bd235a2bbe0fe3271351a2a5f0e4",
+      "promptSha256": "9d717e2cbc3feeb4d509ca69a0051c40007edff6f98cc8ba99c1a2214c7e9dd2"
     },
     {
       "id": "WP-35",
@@ -1616,6 +1635,8 @@
         "packages/shared/src/workspace-domain/calls/contracts.ts",
         "packages/shared/src/workspace-domain/meetings/local-alias.ts",
         "tests/macro-integration/local-recording-offline-recovery.test.ts",
+        "tests/macro-integration/ui/mtg-03.spec.ts",
+        "tests/macro-integration/ui/mtg-04.spec.ts",
         "tests/macro-integration/wp-35.test.ts"
       ],
       "lanes": [
@@ -1625,8 +1646,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-35.json",
       "prompt": "cloud/macro-integration/packets/WP-35.md",
-      "packetSha256": "b3bfbb5cbd229c640fe1b50b46180c3c2763a7da5070443f2236b3eda991eef8",
-      "promptSha256": "6e05992024d826c632863a573bf0032db6df79dbe03ec9a2b3a63d784872908c"
+      "packetSha256": "1cc1b14f88df81c45aa362a3963a48d8cf4335dd9147160979e86c6d2ca7bc30",
+      "promptSha256": "ad84ee29bfef40e68c6671b5040e31d14aba79d85df04f8f4adc69f991b38c67"
     },
     {
       "id": "WP-36",
@@ -1657,6 +1678,8 @@
         "packages/shared/src/i18n/locales/zh-Hans.json",
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/agents/contracts.ts",
+        "tests/macro-integration/ui/sh-07.spec.ts",
+        "tests/macro-integration/ui/sh-09.spec.ts",
         "tests/macro-integration/wp-36.test.ts"
       ],
       "lanes": [
@@ -1666,8 +1689,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-36.json",
       "prompt": "cloud/macro-integration/packets/WP-36.md",
-      "packetSha256": "fb87664dca8f0acc404c1d11647354dc7700e20dd33539c249fdaefc3ad5d8fa",
-      "promptSha256": "da70202d38650be7e29afac158eb13ca90512246d27423820ceeafa577a71d71"
+      "packetSha256": "cf7886acf90b6798379785dac72e3018684fba291c9225e6fddbc7371327fb6b",
+      "promptSha256": "33f895ddc90ab1805dade955b7d0b5f7acba6f5ec76a5c1828474e9bb67ed782"
     },
     {
       "id": "WP-37",
@@ -1695,6 +1718,7 @@
         "packages/shared/src/i18n/locales/zh-Hans.json",
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/automation/contracts.ts",
+        "tests/macro-integration/ui/sh-10.spec.ts",
         "tests/macro-integration/wp-37.test.ts"
       ],
       "lanes": [
@@ -1704,8 +1728,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-37.json",
       "prompt": "cloud/macro-integration/packets/WP-37.md",
-      "packetSha256": "b47a9844c427e7ec2ff9fc57869c5baa2663981bc0ff448ce47c865481f6dd93",
-      "promptSha256": "4ba010e809cf8e226fbb1e6118d1037fa027d5ee8d46a0ae24bbbddbeb4e6be5"
+      "packetSha256": "98f9e94a3834c6576f47947e8f4ac5138e5c0720b376522f46e3ba5b1fa3d1cf",
+      "promptSha256": "4e58d2b8c4d494f3eda51381a6df03b2de2c50e5f9b2909b65f7badb0a41a1c8"
     },
     {
       "id": "WP-38",
@@ -1750,8 +1774,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-38.json",
       "prompt": "cloud/macro-integration/packets/WP-38.md",
-      "packetSha256": "143c0ae132a521657be0ace5ea42024c307c603c14f5c65a4fb1535b5ef80a35",
-      "promptSha256": "7801aed6bac623fe706cacd54f6ca173ebd51ed77708ec5478895f6f17c7b206"
+      "packetSha256": "6df3dfaa040ab3f1b17f114ec4b994a50772cbbd677a787b6c4a983ea4864659",
+      "promptSha256": "388374a49e23c4ab0841eeeee70c6c21585642bebdb0b47b75113cdde13d3e8b"
     },
     {
       "id": "WP-39",
@@ -1779,6 +1803,7 @@
         "packages/shared/src/pages/share-bundle.ts",
         "packages/shared/src/projects/storage.ts",
         "packages/shared/src/workspace-domain/files/contracts.ts",
+        "tests/macro-integration/ui/sh-12.spec.ts",
         "tests/macro-integration/wp-39.test.ts"
       ],
       "lanes": [
@@ -1787,8 +1812,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-39.json",
       "prompt": "cloud/macro-integration/packets/WP-39.md",
-      "packetSha256": "df6d3eda6433d0c9625ba2fe20745b24eca8e4f4549d0a26751ebd44e514fb46",
-      "promptSha256": "0793a93d70904e41a42b77ac921128163f5c60a548f2cfa5a25fbff052a9623f"
+      "packetSha256": "a7e2dc0b6d964587c81ea73cac1ce4ca3b814a9f270193b270a04820f8fb836c",
+      "promptSha256": "9af1410e9733804675a54268a9f9b51a76e43d12dcc69837ccb57efe8b581798"
     },
     {
       "id": "WP-40",
@@ -1819,6 +1844,8 @@
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/graph/contracts.ts",
         "tests/macro-integration/ui/col-03.spec.ts",
+        "tests/macro-integration/ui/sh-01.spec.ts",
+        "tests/macro-integration/ui/sh-03.spec.ts",
         "tests/macro-integration/wp-40.test.ts"
       ],
       "lanes": [
@@ -1828,8 +1855,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-40.json",
       "prompt": "cloud/macro-integration/packets/WP-40.md",
-      "packetSha256": "ce8b117df0cf4f03e13cedc495f6941e6a599403162d119ff45e0f87e227e9ce",
-      "promptSha256": "dae66c42f492afa69cd4a7a828e9c4394951f0208be29dff02a6aef84aa7ba35"
+      "packetSha256": "f7e67b3759aba78f73f3a273871efaaaa684e7cde0d08896cab0412982e36e8c",
+      "promptSha256": "ff9a4f6d55c31562dc8dffcdc4443b377565c4fe5e3acc86652e12149cc79907"
     },
     {
       "id": "WP-41",
@@ -1864,8 +1891,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-41.json",
       "prompt": "cloud/macro-integration/packets/WP-41.md",
-      "packetSha256": "a064d4a8c408580cbf2e3b2a1fb822a1e2ad0f28bf06510779ac9da0a9c8fae3",
-      "promptSha256": "c8ae4b28af1beabf20015de60a9ac25c226b11ab8aa6db8ff2ddef1959dec72c"
+      "packetSha256": "d1eceefc32903b6824617777004079a6cba0ba141ea8148579f41ef93f2db26c",
+      "promptSha256": "fbd7b276eb7eb21cf40fb81482753ad337ee11126b05679e95d1509a6bfe9979"
     },
     {
       "id": "WP-42",
@@ -1903,8 +1930,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-42.json",
       "prompt": "cloud/macro-integration/packets/WP-42.md",
-      "packetSha256": "e3a8788cad3e74a30c049f6be2e92b10a52614e2e84ec9673bd23d28af65baf0",
-      "promptSha256": "4b329f83605e370b496f85d4adc2470558d0800aadeaa551a91f631d0dd1d6bd"
+      "packetSha256": "f6b07a1fad4bc662c044f08c110efa8dc071bdc53a7d22090807ac6bedf282b2",
+      "promptSha256": "adff70ec361f830dac8f8b9459b39eeedfa0dc5d4f76814786ef1ed282d9dc22"
     },
     {
       "id": "WP-43",
@@ -1942,8 +1969,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-43.json",
       "prompt": "cloud/macro-integration/packets/WP-43.md",
-      "packetSha256": "755ad1105c1b32b2f32eec4ad634a54e08cd5bdeef33f1578fd9a552b830dd55",
-      "promptSha256": "420c0a369652a45b35899a2fc2ed78635d992f50e970614dab784a9560e08f6e"
+      "packetSha256": "0a0805c271ee21e7419119f238d815ce177f26ca37253405dfac9321e5f05185",
+      "promptSha256": "37a3aca51f347aa7a672a4a79ac1c0c28eb556d5537ee79763623a1278fc7434"
     },
     {
       "id": "WP-44",
@@ -1977,8 +2004,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-44.json",
       "prompt": "cloud/macro-integration/packets/WP-44.md",
-      "packetSha256": "54291688bd254ec5e8129d219388512ad0e2da89440e00517cee3bb55a395022",
-      "promptSha256": "49de8ff3231407304c230e89e4c50bf26cc0b0893a2b413a809f79a7b92743a1"
+      "packetSha256": "dddac8c1d89fba9333d4b7443f74cb517da12fe785b2198156dabd616a21afab",
+      "promptSha256": "4b2bbf104c2c855f11090e508120735554171da4a4f0c23ed4bd02a962c213d2"
     },
     {
       "id": "WP-45",
@@ -2005,6 +2032,7 @@
         "packages/shared/src/i18n/locales/zh-Hans.json",
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/agents/contracts.ts",
+        "tests/macro-integration/ui/sh-15.spec.ts",
         "tests/macro-integration/wp-45.test.ts"
       ],
       "lanes": [
@@ -2014,8 +2042,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-45.json",
       "prompt": "cloud/macro-integration/packets/WP-45.md",
-      "packetSha256": "55e59c0573247528c187a4d1b41bbfb8832e49c79230455b7a9dd5bca39e2d67",
-      "promptSha256": "28f263ea0f9178505fa154a41951499656a2c665de57551e9ec496636913510e"
+      "packetSha256": "b13146408a5f2790b8eccfb2316e06b0cc48eaeb4ac1f202e7c92e34428a143e",
+      "promptSha256": "2dec37af3950af4763d7011668746cd22602a1887209223571a89dd3ad6a70ae"
     },
     {
       "id": "WP-46",
@@ -2045,6 +2073,7 @@
         "packages/shared/src/i18n/locales/zh-Hans.json",
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "tests/macro-integration/ui/sh-16.spec.ts",
         "tests/macro-integration/wp-46.test.ts"
       ],
       "lanes": [
@@ -2054,8 +2083,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-46.json",
       "prompt": "cloud/macro-integration/packets/WP-46.md",
-      "packetSha256": "4ed0937e81c72c1cb4c9a55621337d42d1b2666941c604d19978b00bf4526352",
-      "promptSha256": "43d74a8b92be394b8cb2e2247340b71411cdecff4b22393a52cb807e825dd47f"
+      "packetSha256": "a7ee6b54613b3de891e7eca61ec7ada6606b7c951c6ec24cee51596c4443adb4",
+      "promptSha256": "ec881df63661a05831e31db7983f38047d6b1b089edc532ca7da6df52eb8c7a4"
     },
     {
       "id": "WP-47",
@@ -2114,8 +2143,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-47.json",
       "prompt": "cloud/macro-integration/packets/WP-47.md",
-      "packetSha256": "9980c42422fa7a5127a9875b0e10386073c453a8094b746a58425f6a55e04f28",
-      "promptSha256": "067261c05ac07ee09460ed4f191fcf6d4e3c4ec37e94c2e867de0e7ba4a8b59c"
+      "packetSha256": "ebad98743c729c5e93131380df5357d57c83441fa1f9c0deb8951756ad6aaa2a",
+      "promptSha256": "d6018e51a7328c3baff3fe6fa2ab34c330dbf4ea2926ac6d63c03335295b5259"
     },
     {
       "id": "WP-48",
@@ -2137,8 +2166,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-48.json",
       "prompt": "cloud/macro-integration/packets/WP-48.md",
-      "packetSha256": "0d46915e61e29b4fdd3308cba31449b1fd6f1d650f092cf264c281d46e58f13c",
-      "promptSha256": "6cc3db9bb3e02bda8d022619cc2f7b84626a1e358b39dd0b94a4439a6c155e6f"
+      "packetSha256": "d012051095debf62623215a099215989b7b81df2e2ebbf2cc9ac337c3211711f",
+      "promptSha256": "ddec707ceb06ef0751b17d3e1bbc57316506dfbc3e818a3dd9c4e6299c2b2f93"
     },
     {
       "id": "WP-49",
@@ -2175,8 +2204,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-49.json",
       "prompt": "cloud/macro-integration/packets/WP-49.md",
-      "packetSha256": "3fb0f4c67e69b0e971d7967be112592706e2bde65d57821930dd9ee2cd733f74",
-      "promptSha256": "3f4f8f10f4ff30ecabbe5828a1d051253908705677931d2d4916e5d5eb3758ad"
+      "packetSha256": "8ba68c8701ecea2da7ee566b5e7c82af4f16fd649f13206aa0dc0a360b3dfa79",
+      "promptSha256": "85bd310b8b548b1a945ccb719617f97262f325742133db832314f73c185c1011"
     },
     {
       "id": "WP-50",
@@ -2206,6 +2235,7 @@
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/sessions/storage.ts",
         "packages/shared/src/workspace-domain/agents/contracts.ts",
+        "tests/macro-integration/ui/sh-08.spec.ts",
         "tests/macro-integration/wp-50.test.ts"
       ],
       "lanes": [
@@ -2214,8 +2244,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-50.json",
       "prompt": "cloud/macro-integration/packets/WP-50.md",
-      "packetSha256": "e80d5beb8aa06bdc765d9619e87c5a0fc36d9de6ce2ed3c767cc00d33c299dc4",
-      "promptSha256": "6b08e214d30c81679dfc4ee0e85fa3690cc330840815201ef8e5526a8db42400"
+      "packetSha256": "e524c8a4707b693f415c70e0f8b48893be8c73f7c42ffcd3e1e2ca8dc00332b4",
+      "promptSha256": "65d20185c0dcd8a836e3c9e646b78d4dbd1d27110531a8e40494b21c0560d16b"
     },
     {
       "id": "WP-51",
@@ -2249,6 +2279,7 @@
         "packages/shared/src/i18n/locales/zh-Hans.json",
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "packages/shared/src/workspace-domain/commands/contracts.ts",
+        "tests/macro-integration/ui/sh-04.spec.ts",
         "tests/macro-integration/wp-51.test.ts"
       ],
       "lanes": [
@@ -2258,8 +2289,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-51.json",
       "prompt": "cloud/macro-integration/packets/WP-51.md",
-      "packetSha256": "d56414f66caea36b8019080cf054254bf31424fe67080876ff56e71bf64f2696",
-      "promptSha256": "54c622a5b8fee853c4d7a4a264c18847166ad821d5f6a6da8e971630ca5afd86"
+      "packetSha256": "768d2de6e4192400bab2c0470fb0facf0a61581c2979b5ff43fe8356f9d544e0",
+      "promptSha256": "4d201b4018bf3d5979cec2e578baf25750fedef3c5b1317f91158d899b5f5a44"
     },
     {
       "id": "WP-52",
@@ -2297,6 +2328,8 @@
         "packages/shared/src/i18n/locales/zh-Hans.json",
         "packages/shared/src/i18n/locales/zh-Hant.json",
         "scripts/workspace/verify-providers.ts",
+        "tests/macro-integration/ui/sh-11.spec.ts",
+        "tests/macro-integration/ui/sh-17.spec.ts",
         "tests/macro-integration/wp-52.test.ts"
       ],
       "lanes": [
@@ -2307,8 +2340,8 @@
       ],
       "packet": "plans/macro-integration/cloud/packets/WP-52.json",
       "prompt": "cloud/macro-integration/packets/WP-52.md",
-      "packetSha256": "26c8916662e076869b06f144d3bdc0c20e298cb129304a4a93f1159c14db1fef",
-      "promptSha256": "c5aa85f4cfd066effc193e8216cdb9115545c3757df01d1de525e1afaf033186"
+      "packetSha256": "51efd8c3b51f5bbf1a28da91361f12f87d2d97df811296406fd13e5db667fe10",
+      "promptSha256": "e0d2b65050886eeb17f9cb195e31bfcf8694fa956ad70077607de7dff3ab5435"
     }
   ],
   "specInputs": [
@@ -2322,11 +2355,11 @@
     },
     {
       "path": "plans/macro-integration/shared-screen-contracts.json",
-      "sha256": "f3195ebd4e24b811cab0c9c8e1e2da29f4aac7c1b46a75d0be44f6c510578aa8"
+      "sha256": "af48f378a818dd9b9775276af6306b8fb8d881aa70d8b53db99c1e7f8594dd9c"
     },
     {
       "path": "plans/macro-integration/cloud/ui-slices.json",
-      "sha256": "64503f3a114312930098039cd61d6c487a2c79f85dc6e12b095197a6a61f9c02"
+      "sha256": "41cfbda3e7a9daa5a9fed09b02c8cc6263b5fc6fb093442a95f3a61899f90d43"
     },
     {
       "path": "plans/macro-integration/cloud/contract-amendments.json",
@@ -2334,7 +2367,7 @@
     },
     {
       "path": "docs/macro-integration/product/PRD.md",
-      "sha256": "9709318c206281fa9a5783f24031c77b6d36de2c60d909d4e4b8dea7491dafb6"
+      "sha256": "bf21be0841068157a59f84109f5501a99c77562805c08692cdeff202d43da43b"
     },
     {
       "path": "docs/macro-integration/product/UI-UX-CONTRACT.md",
@@ -2374,11 +2407,67 @@
     },
     {
       "path": "scripts/macro-integration/cloud/cli.mjs",
-      "sha256": "ff32580ea977c1150835cc4b2266df97c9299ab9fa14b168d7462ede872f5b28"
+      "sha256": "c9881f7edf02d343cbe9056a9818404ac263570edf242400ae7a1a7423b79597"
     },
     {
       "path": "scripts/macro-integration/cloud/build.mjs",
-      "sha256": "baaebc849cca481ffa05b2ad2e73524c81ae2fa1bcde8f558346ddee423b34b7"
+      "sha256": "48343f4faf9567bef7875c2674bfb3583c06fc5cb213b21c63b0cada8ee8bfee"
+    },
+    {
+      "path": "plans/macro-integration/shared-interactions.json",
+      "sha256": "d3b0065fb16c385db0bc62515b3d3990f43664d920744813d40752e16fafa68c"
+    },
+    {
+      "path": "plans/macro-integration/control-handoff.json",
+      "sha256": "4b90be16479699a99468f1e34db25d5fd2d2ade55f6ee080e667f47ace106465"
+    },
+    {
+      "path": "plans/macro-integration/collaboration-walkthroughs.json",
+      "sha256": "45e959c5e77c238ec720d217506dbf0799924041ab22b819a4218d173b84e125"
+    },
+    {
+      "path": "plans/macro-integration/domain-forms.json",
+      "sha256": "f6a25cc7e6d632a713a12faa8ed03aeee27275393187b8d0e4470d83e71bb146"
+    },
+    {
+      "path": "plans/macro-integration/resolved-operation-contracts.json",
+      "sha256": "c98c9a256ee234dee27e43ae73c22702a079b6dbd82a93fa105ea0e6ff69ef15"
+    },
+    {
+      "path": "plans/macro-integration/source-reverification-v4.json",
+      "sha256": "8a050880d36c4d7ec49162fb160d323e562dae55a50191a51ace0d9bb178b39d"
+    },
+    {
+      "path": "plans/macro-integration/cloud/executor-contract.json",
+      "sha256": "208a111128c2d8afa4315ce312d32d4272ccd12ae2da0ce42d11db5360bfe35d"
+    },
+    {
+      "path": "docs/macro-integration/product/collaboration-walkthroughs.md",
+      "sha256": "c87c58bb8f223abc7fed89ed8d639bc835a706efd7b478498e27236c69753bfe"
+    },
+    {
+      "path": "docs/macro-integration/product/domain-forms.md",
+      "sha256": "40fc1504aeb18882a1c91ea6b2c17a3b3bd358877684a34dc969a7815ca15008"
+    },
+    {
+      "path": "docs/macro-integration/product/cache-upgrade-recovery.md",
+      "sha256": "da5bbb8bf719696e53d6d57d82ce9b3004fd9c02eb22fd6040732e03f3dea7d6"
+    },
+    {
+      "path": "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+      "sha256": "f1efd9dc71858d12fce3e8813a7f40f006fd7300baaa23e84954c0b47c2524b4"
+    },
+    {
+      "path": "cloud/macro-integration/run-spec.schema.json",
+      "sha256": "fac208cc9b4798f9e5be9c1cdc3959cc85d90d6398e4e676602f66c4ed238fcc"
+    },
+    {
+      "path": "scripts/macro-integration/control-handoff.mjs",
+      "sha256": "724ec9f8c502e26677447d592d78169f1a5f9e7f16b8c343b3ae4ace5f6537fb"
+    },
+    {
+      "path": "scripts/macro-integration/resolve-v4-contracts.mjs",
+      "sha256": "607bf16b545d1fd584cf36d1f6e70fc6156450cd8cc5c747d00c209f9ba0d5ae"
     }
   ]
 }

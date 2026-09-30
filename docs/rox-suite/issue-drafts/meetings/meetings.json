@@ -1,0 +1,88 @@
+[
+  {
+    "id": "RS-MTG-01",
+    "title": "[ROX Suite][Meetings] Landing: действия, история и сохранение локальной записи",
+    "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-01.md",
+    "dependsOn": [],
+    "relatedIssues": [
+      568,
+      382,
+      389,
+      385
+    ],
+    "area": "meetings",
+    "images": [
+      3
+    ]
+  },
+  {
+    "id": "RS-MTG-02",
+    "title": "[ROX Suite][Meetings] Join и preflight: реальные комнаты, устройства и scoped guests",
+    "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-02.md",
+    "dependsOn": [
+      "RS-MTG-01"
+    ],
+    "relatedIssues": [
+      568,
+      389,
+      385
+    ],
+    "area": "meetings-calls",
+    "images": [
+      3
+    ]
+  },
+  {
+    "id": "RS-MTG-03",
+    "title": "[ROX Suite][Meetings] Планирование: форма события, availability, recurrence и Calendar sync",
+    "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-03.md",
+    "dependsOn": [
+      "RS-MTG-01"
+    ],
+    "relatedIssues": [
+      568,
+      382,
+      385,
+      389
+    ],
+    "area": "meetings-calendar",
+    "images": [
+      3
+    ]
+  },
+  {
+    "id": "RS-MTG-04",
+    "title": "[ROX Suite][Meetings] История: detail drawer, участие, lifecycle и verified readback",
+    "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-04.md",
+    "dependsOn": [
+      "RS-MTG-01"
+    ],
+    "relatedIssues": [
+      568,
+      389,
+      385
+    ],
+    "area": "meetings-history",
+    "images": [
+      4
+    ]
+  },
+  {
+    "id": "RS-MTG-05",
+    "title": "[ROX Suite][Meetings] Записи и протоколы: consent, transcript, summary и связанные действия",
+    "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-05.md",
+    "dependsOn": [
+      "RS-MTG-01"
+    ],
+    "relatedIssues": [
+      568,
+      389,
+      385,
+      382
+    ],
+    "area": "meetings-artifacts",
+    "images": [
+      3
+    ]
+  }
+]

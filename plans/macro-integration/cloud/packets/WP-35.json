@@ -58,6 +58,8 @@
     "packages/shared/src/workspace-domain/calls/contracts.ts",
     "packages/shared/src/workspace-domain/meetings/local-alias.ts",
     "tests/macro-integration/local-recording-offline-recovery.test.ts",
+    "tests/macro-integration/ui/mtg-03.spec.ts",
+    "tests/macro-integration/ui/mtg-04.spec.ts",
     "tests/macro-integration/wp-35.test.ts"
   ],
   "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
@@ -91,7 +93,11 @@
     "packages/server-core/src/meetings/__tests__/import-intent.test.ts",
     "packages/server-core/src/meetings/__tests__/finalize.test.ts",
     "plans/macro-integration/cloud/contract-amendments.json",
-    "apps/electron/src/renderer/pages/MeetingsPage.tsx"
+    "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/domain-forms.md"
   ],
   "goal": "Preserve offline device audio capture/import/recovery and installed local Whisper; summaries remain pending/unavailable when agent backend unavailable; explicit consent before upload",
   "expectedResults": [
@@ -1792,17 +1798,65 @@
     "goal": "Local recorder pause/stop/recovery/import/ASR install-readiness and disabled unavailable summary; retain actual local pipeline.",
     "boundary": "ScreenRefs are the final shared behavior reference. Each WP implements only its assigned slice below; dependency mechanisms are consumed, not rewritten. Full surface DoD closes after every owner slice and required lane succeeds.",
     "assignedUiPaths": [
-      "apps/electron/src/renderer/pages/MeetingsPage.tsx"
+      "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "tests/macro-integration/ui/mtg-03.spec.ts",
+      "tests/macro-integration/ui/mtg-04.spec.ts"
     ],
     "existingUiSeams": [
       "apps/electron/src/renderer/pages/MeetingsPage.tsx"
     ],
-    "newUiFiles": [],
+    "newUiFiles": [
+      "tests/macro-integration/ui/mtg-03.spec.ts",
+      "tests/macro-integration/ui/mtg-04.spec.ts"
+    ],
     "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
   },
   "contractSupplement": {
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "MTG-03.pause",
+      "MTG-03.stop",
+      "MTG-03.recover",
+      "MTG-04.import",
+      "MTG-04.transcribe",
+      "MTG-04.retry"
+    ],
+    "featureControls": [
+      "MTG-01.record",
+      "MTG-01.filters",
+      "MTG-01.import",
+      "MTG-02.plan",
+      "MTG-02.event-link",
+      "MTG-02.context-link",
+      "MTG-03.pause",
+      "MTG-03.stop",
+      "MTG-03.recover",
+      "MTG-04.import",
+      "MTG-04.transcribe",
+      "MTG-04.retry",
+      "MTG-06.grant",
+      "MTG-06.start",
+      "MTG-06.revoke",
+      "MTG-08.seek",
+      "MTG-08.speaker",
+      "MTG-08.summary",
+      "MTG-08.task-proposal"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/mtg-03.spec.ts",
+      "tests/macro-integration/ui/mtg-04.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

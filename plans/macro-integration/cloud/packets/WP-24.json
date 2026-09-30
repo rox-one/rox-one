@@ -39,7 +39,9 @@
     "packages/shared/src/workspace-domain/crm/contracts.ts",
     "packages/shared/src/workspace-domain/crm/property-schema.ts",
     "tests/macro-integration/crm-stage-revision-money.test.ts",
+    "tests/macro-integration/ui/crm-01.spec.ts",
     "tests/macro-integration/ui/crm-02.spec.ts",
+    "tests/macro-integration/ui/crm-06.spec.ts",
     "tests/macro-integration/wp-24.test.ts"
   ],
   "sharedFileRule": "one owner per overlapping exact file/directory; registry/transport/migration/shared contracts/lockfiles serialized; agents propose interface change to owner",
@@ -55,7 +57,12 @@
     "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx",
     "packages/core/src/rox2/platform-contract.ts",
     "packages/server-core/src/meetings/conation/crm.ts",
-    "plans/macro-integration/cloud/contract-amendments.json"
+    "plans/macro-integration/cloud/contract-amendments.json",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/domain-forms.md",
+    "plans/macro-integration/resolved-operation-contracts.json"
   ],
   "goal": "Board drag/list filter use same query; concurrent move revision conflict; revenue currency precise; nonadmin cannot edit pipeline; owner mention resolves",
   "expectedResults": [
@@ -1017,13 +1024,17 @@
     "assignedUiPaths": [
       "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyBoard.tsx",
       "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyPropertyEditor.tsx",
-      "tests/macro-integration/ui/crm-02.spec.ts"
+      "tests/macro-integration/ui/crm-02.spec.ts",
+      "tests/macro-integration/ui/crm-01.spec.ts",
+      "tests/macro-integration/ui/crm-06.spec.ts"
     ],
     "existingUiSeams": [],
     "newUiFiles": [
       "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyBoard.tsx",
       "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyPropertyEditor.tsx",
-      "tests/macro-integration/ui/crm-02.spec.ts"
+      "tests/macro-integration/ui/crm-02.spec.ts",
+      "tests/macro-integration/ui/crm-01.spec.ts",
+      "tests/macro-integration/ui/crm-06.spec.ts"
     ],
     "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
   },
@@ -1031,5 +1042,455 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [
+      {
+        "canonicalOperation": "crm.updateCompany",
+        "ownerWorkPackage": "WP-24",
+        "effectivePayloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "company": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "stageId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "ownerPrincipalId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "revenue": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "amountMinor": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amountMinor",
+                    "currency"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "company"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            },
+            "TemporalValue": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "instant",
+                    "wall_time",
+                    "all_day"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timeZone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "value"
+              ]
+            },
+            "Money": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "amountMinor": {
+                  "type": "string",
+                  "pattern": "^(0|[1-9][0-9]*)$"
+                },
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                }
+              },
+              "required": [
+                "amountMinor",
+                "currency"
+              ]
+            },
+            "Attendee": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "type": "string",
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            },
+            "DocumentAnchor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schemaVersion": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "anchorKind": {
+                  "type": "string",
+                  "enum": [
+                    "crdt_position",
+                    "text_quote",
+                    "pdf_region",
+                    "media_span"
+                  ]
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "start": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "end": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "anchorKind",
+                "sourceRevision",
+                "start",
+                "end"
+              ]
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "anyOf": [
+            {
+              "required": [
+                "ownerPrincipalId"
+              ]
+            },
+            {
+              "required": [
+                "revenue"
+              ]
+            },
+            {
+              "required": [
+                "stageId"
+              ]
+            }
+          ]
+        },
+        "variantSchemaIds": [
+          "DF-01-SCHEMA-1",
+          "DF-02-SCHEMA-1"
+        ],
+        "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+        "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+      }
+    ],
+    "actionBindings": [
+      {
+        "formId": "DF-01",
+        "actionId": "save-owner",
+        "canonicalOperation": "crm.updateCompany",
+        "ownerWorkPackage": "WP-24",
+        "schemaId": "DF-01-SCHEMA-1",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "company": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "ownerPrincipalId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            }
+          },
+          "required": [
+            "company",
+            "ownerPrincipalId"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "companyRef": "company",
+            "ownerRef": "authority-resolve userref.entityId→ownerPrincipalId; null clears",
+            "baseRevision": "envelope.expectedRevision tokenadapter"
+          },
+          "wireName": "crm.updateCompany",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{receiptId,companyRef,ownerRef:Rox2EntityRef|null,revision,status:CanonicalStatus,operationState:applied|queued}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "conflict",
+          "principal_not_workspace_member",
+          "invalid_principal_kind",
+          "not_found"
+        ],
+        "semanticConstraints": [
+          "WP24 primary ownerPrincipalId string currently forbids null; add null union and membership check, reject arbitrary account/Contact ref.",
+          "One company repository/outbox; omitted owner retains existing value; explicit null removes it."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      },
+      {
+        "formId": "DF-02",
+        "actionId": "save-revenue",
+        "canonicalOperation": "crm.updateCompany",
+        "ownerWorkPackage": "WP-24",
+        "schemaId": "DF-02-SCHEMA-1",
+        "payloadSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "company": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "revenue": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "amountMinor": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)$"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    }
+                  },
+                  "required": [
+                    "amountMinor",
+                    "currency"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "company",
+            "revenue"
+          ],
+          "$defs": {
+            "Rox2EntityRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "workspaceId",
+                "entityId"
+              ],
+              "properties": {
+                "workspaceId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entityId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:.+$"
+                },
+                "revisionId": {
+                  "type": "string"
+                },
+                "accountNamespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "requestMapping": {
+          "fields": {
+            "companyRef": "company",
+            "amountText": "exact decimal parse currency exponent→revenue.amountMinor",
+            "currency": "revenue.currency",
+            "unset": "true→revenue:null; false→Money",
+            "baseRevision": "envelope.expectedRevision"
+          },
+          "wireName": "crm.updateCompany",
+          "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+        },
+        "resultType": "{receiptId,companyRef,revenue:Money|null,revision,status:CanonicalStatus}",
+        "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+        "errorUnion": [
+          "denied",
+          "conflict",
+          "invalid_currency",
+          "invalid_minor_units",
+          "amount_out_of_range",
+          "not_found"
+        ],
+        "semanticConstraints": [
+          "Existing machine $defs Money minorUnits:integer conflicts with leaf exact string. WP24 must normalize shared schema to amountMinor:string before form implementation.",
+          "Normative proposed range:0..9223372036854775807 minor units inclusive; no negative revenue. Authority and UI same versioned currency exponents; compare integer strings/BigInt, not floats."
+        ],
+        "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+        "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+      }
+    ]
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "CRM-01.search",
+      "CRM-01.filter",
+      "CRM-01.open",
+      "CRM-02.move",
+      "CRM-02.view",
+      "CRM-02.stage-help",
+      "CRM-06.stage-reorder",
+      "CRM-06.delete-stage",
+      "CRM-06.revenue"
+    ],
+    "featureControls": [
+      "CRM-01.search",
+      "CRM-01.filter",
+      "CRM-01.open",
+      "CRM-02.move",
+      "CRM-02.view",
+      "CRM-02.stage-help",
+      "CRM-03.linked-tab",
+      "CRM-03.agent",
+      "CRM-03.hide",
+      "CRM-03.owner-edit",
+      "CRM-03.revenue-edit",
+      "CRM-06.stage-reorder",
+      "CRM-06.delete-stage",
+      "CRM-06.revenue",
+      "CRM-07.select-csv",
+      "CRM-07.import",
+      "CRM-07.retry"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/crm-01.spec.ts",
+      "tests/macro-integration/ui/crm-02.spec.ts",
+      "tests/macro-integration/ui/crm-06.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

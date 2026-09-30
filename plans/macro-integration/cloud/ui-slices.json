@@ -58,12 +58,14 @@
   "explicitUiOwnership": {
     "WP-01": [
       "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
-      "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx"
+      "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx",
+      "tests/macro-integration/ui/col-19.spec.ts"
     ],
     "WP-10": [
       "apps/electron/src/renderer/components/pages/CollaborativeDocumentEditor.tsx",
       "packages/shared/src/workspace-domain/collaboration/contracts.ts",
-      "tests/macro-integration/ui/col-02.spec.ts"
+      "tests/macro-integration/ui/col-02.spec.ts",
+      "tests/macro-integration/ui/col-01.spec.ts"
     ],
     "WP-08": [
       "apps/electron/src/renderer/components/channels/ChannelDirectory.tsx",
@@ -71,11 +73,14 @@
       "apps/electron/src/renderer/components/channels/MessageThread.tsx",
       "apps/electron/src/renderer/components/discussions/EntityDiscussion.tsx",
       "tests/macro-integration/ui/col-07.spec.ts",
-      "tests/macro-integration/ui/col-08.spec.ts"
+      "tests/macro-integration/ui/col-08.spec.ts",
+      "tests/macro-integration/ui/col-09.spec.ts",
+      "tests/macro-integration/ui/col-10.spec.ts"
     ],
     "WP-07": [
       "apps/electron/src/renderer/components/notifications/NotificationPanel.tsx",
-      "tests/macro-integration/ui/sh-05.spec.ts"
+      "tests/macro-integration/ui/sh-05.spec.ts",
+      "tests/macro-integration/ui/sh-06.spec.ts"
     ],
     "WP-11": [
       "apps/electron/src/renderer/components/tasks/CreateTaskFromMessageDialog.tsx",
@@ -84,7 +89,9 @@
     "WP-24": [
       "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyBoard.tsx",
       "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyPropertyEditor.tsx",
-      "tests/macro-integration/ui/crm-02.spec.ts"
+      "tests/macro-integration/ui/crm-02.spec.ts",
+      "tests/macro-integration/ui/crm-01.spec.ts",
+      "tests/macro-integration/ui/crm-06.spec.ts"
     ],
     "WP-27": [
       "apps/electron/src/renderer/components/meetings/CalendarGrid.tsx",
@@ -99,7 +106,9 @@
     ],
     "WP-30": [
       "apps/electron/src/renderer/components/meetings/MeetingContext.tsx",
-      "apps/electron/src/renderer/pages/MeetingsPage.tsx"
+      "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "tests/macro-integration/ui/mtg-01.spec.ts",
+      "tests/macro-integration/ui/mtg-02.spec.ts"
     ],
     "WP-31": [
       "apps/electron/src/renderer/components/meetings/LiveCallView.tsx",
@@ -111,7 +120,8 @@
     ],
     "WP-38": [
       "apps/electron/src/renderer/pages/extra-screens/dossier/CompanyContext.tsx",
-      "tests/macro-integration/ui/crm-03.spec.ts"
+      "tests/macro-integration/ui/crm-03.spec.ts",
+      "tests/macro-integration/ui/col-18.spec.ts"
     ],
     "WP-42": [
       "apps/electron/src/renderer/components/pages/SpreadsheetView.tsx",
@@ -123,44 +133,110 @@
     ],
     "WP-52": [
       "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
-      "apps/electron/src/renderer/components/connections/RuntimeCapabilitiesPanel.tsx"
+      "apps/electron/src/renderer/components/connections/RuntimeCapabilitiesPanel.tsx",
+      "tests/macro-integration/ui/sh-11.spec.ts",
+      "tests/macro-integration/ui/sh-17.spec.ts"
     ],
     "WP-35": [
-      "apps/electron/src/renderer/pages/MeetingsPage.tsx"
+      "apps/electron/src/renderer/pages/MeetingsPage.tsx",
+      "tests/macro-integration/ui/mtg-03.spec.ts",
+      "tests/macro-integration/ui/mtg-04.spec.ts"
     ],
     "WP-06": [
       "apps/electron/src/renderer/platform/Omnibox.tsx",
-      "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
+      "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+      "tests/macro-integration/ui/sh-02.spec.ts"
     ],
     "WP-40": [
-      "apps/electron/src/renderer/platform/Omnibox.tsx"
+      "apps/electron/src/renderer/platform/Omnibox.tsx",
+      "tests/macro-integration/ui/col-03.spec.ts",
+      "tests/macro-integration/ui/sh-01.spec.ts",
+      "tests/macro-integration/ui/sh-03.spec.ts"
     ],
     "WP-36": [
-      "apps/electron/src/renderer/components/memory/MemoryScreen.tsx"
+      "apps/electron/src/renderer/components/memory/MemoryScreen.tsx",
+      "tests/macro-integration/ui/sh-07.spec.ts",
+      "tests/macro-integration/ui/sh-09.spec.ts"
     ],
     "WP-37": [
       "apps/electron/src/renderer/components/automations/AutomationEditor.tsx",
-      "apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx"
+      "apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx",
+      "tests/macro-integration/ui/sh-10.spec.ts"
     ],
     "WP-03": [
       "apps/electron/src/renderer/components/pages/SharePageDialog.tsx"
     ],
     "WP-51": [
-      "apps/electron/src/renderer/components/pages/SharePageDialog.tsx"
+      "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+      "tests/macro-integration/ui/sh-04.spec.ts"
     ],
     "WP-45": [
-      "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx"
+      "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+      "tests/macro-integration/ui/sh-15.spec.ts"
     ],
     "WP-17": [
       "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
-      "apps/electron/src/renderer/pages/InboxPage.tsx"
+      "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "tests/macro-integration/ui/mail-01.spec.ts"
     ],
     "WP-21": [
       "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx",
-      "apps/electron/src/renderer/pages/InboxPage.tsx"
+      "apps/electron/src/renderer/pages/InboxPage.tsx",
+      "tests/macro-integration/ui/mail-04.spec.ts"
     ],
     "WP-20": [
-      "apps/electron/src/renderer/pages/ConnectionsPage.tsx"
+      "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+      "tests/macro-integration/ui/mail-05.spec.ts"
+    ],
+    "WP-15": [
+      "tests/macro-integration/ui/col-04.spec.ts",
+      "tests/macro-integration/ui/col-11.spec.ts"
+    ],
+    "WP-16": [
+      "tests/macro-integration/ui/col-05.spec.ts",
+      "tests/macro-integration/ui/col-06.spec.ts"
+    ],
+    "WP-13": [
+      "tests/macro-integration/ui/col-12.spec.ts",
+      "tests/macro-integration/ui/col-13.spec.ts",
+      "tests/macro-integration/ui/col-14.spec.ts"
+    ],
+    "WP-14": [
+      "tests/macro-integration/ui/col-16.spec.ts",
+      "tests/macro-integration/ui/sh-18.spec.ts"
+    ],
+    "WP-12": [
+      "tests/macro-integration/ui/col-17.spec.ts"
+    ],
+    "WP-23": [
+      "tests/macro-integration/ui/crm-04.spec.ts",
+      "tests/macro-integration/ui/crm-07.spec.ts"
+    ],
+    "WP-25": [
+      "tests/macro-integration/ui/crm-05.spec.ts"
+    ],
+    "WP-19": [
+      "tests/macro-integration/ui/mail-02.spec.ts",
+      "tests/macro-integration/ui/mail-03.spec.ts"
+    ],
+    "WP-26": [
+      "tests/macro-integration/ui/mail-06.spec.ts"
+    ],
+    "WP-29": [
+      "tests/macro-integration/ui/cal-03.spec.ts"
+    ],
+    "WP-34": [
+      "tests/macro-integration/ui/mtg-07.spec.ts",
+      "tests/macro-integration/ui/mtg-08.spec.ts"
+    ],
+    "WP-50": [
+      "tests/macro-integration/ui/sh-08.spec.ts"
+    ],
+    "WP-39": [
+      "tests/macro-integration/ui/sh-12.spec.ts"
+    ],
+    "WP-46": [
+      "tests/macro-integration/ui/sh-16.spec.ts"
     ]
   },
   "localizationOwnership": "UI packages request exact t() keys in all10locale files; scheduler grants serialized locale ownership. Paths included in UI packet locks, no simultaneous locale write.",
@@ -184,7 +260,49 @@
     "COL-16": "WP-14",
     "COL-17": "WP-12",
     "COL-18": "WP-38",
-    "COL-19": "WP-01"
+    "COL-19": "WP-01",
+    "CRM-01": "WP-24",
+    "CRM-02": "WP-24",
+    "CRM-03": "WP-38",
+    "CRM-04": "WP-23",
+    "CRM-05": "WP-25",
+    "CRM-06": "WP-24",
+    "CRM-07": "WP-23",
+    "MAIL-01": "WP-17",
+    "MAIL-02": "WP-19",
+    "MAIL-03": "WP-19",
+    "MAIL-04": "WP-21",
+    "MAIL-05": "WP-20",
+    "MAIL-06": "WP-26",
+    "CAL-01": "WP-27",
+    "CAL-02": "WP-28",
+    "CAL-03": "WP-29",
+    "MTG-01": "WP-30",
+    "MTG-02": "WP-30",
+    "MTG-03": "WP-35",
+    "MTG-04": "WP-35",
+    "MTG-05": "WP-31",
+    "MTG-06": "WP-33",
+    "MTG-07": "WP-34",
+    "MTG-08": "WP-34",
+    "SH-01": "WP-40",
+    "SH-02": "WP-06",
+    "SH-03": "WP-40",
+    "SH-04": "WP-51",
+    "SH-05": "WP-07",
+    "SH-06": "WP-07",
+    "SH-07": "WP-36",
+    "SH-08": "WP-50",
+    "SH-09": "WP-36",
+    "SH-10": "WP-37",
+    "SH-11": "WP-52",
+    "SH-12": "WP-39",
+    "SH-13": "WP-42",
+    "SH-14": "WP-43",
+    "SH-15": "WP-45",
+    "SH-16": "WP-46",
+    "SH-17": "WP-52",
+    "SH-18": "WP-14"
   },
   "screenFileAllocationRule": "For collaboration implementationFiles.extend/new, primary UI owner gets exact paths as supplemental ownership. Original domainWorkPackageFiles remain their domain owner; shared canonical messaging/contracts.ts is reused, no parallel messages schema. Shared exact paths serialize via overlap leases. Screen owner is responsible for final interaction test while feature scope remains its WP slice.",
   "additionalRoutedSeams": [
@@ -391,5 +509,6 @@
         }
       ]
     }
-  ]
+  ],
+  "primaryOwnerRule": "Primary UI owner owns final screen integration test, not all underlying features. Each screen can depend on several WP slices. Source seams serialize across writers; feature completeness requires all required lanes and upstream mechanics."
 }

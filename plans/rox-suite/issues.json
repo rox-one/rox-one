@@ -1,0 +1,949 @@
+{
+  "schemaVersion": 1,
+  "revision": 1,
+  "status": "PUBLISHED_REQUIREMENTS_NOT_IMPLEMENTED",
+  "repository": "rox-one/rox-one",
+  "sourceSha": "249b3b44220bcfbd7d467de9cfc18f76e1c37807",
+  "oldProgram": "Macro52WP manifest remains separate; RS requirements need new scheduler task contracts before dispatch",
+  "topologicalOrder": [
+    "RS-FOCUS-01",
+    "RS-DRV-01",
+    "RS-MSG-01",
+    "RS-MSG-02",
+    "RS-DOC-01",
+    "RS-SHEET-01",
+    "RS-SLIDE-01",
+    "RS-BASE-01",
+    "RS-FORM-01",
+    "RS-AUT-01",
+    "RS-ADM-01",
+    "RS-MCP-01",
+    "RS-AUT-02",
+    "RS-AUT-03",
+    "RS-AUT-04",
+    "RS-AUT-05",
+    "RS-MTG-01",
+    "RS-MTG-02",
+    "RS-MTG-03",
+    "RS-MTG-04",
+    "RS-MTG-05",
+    "RS-MSG-03",
+    "RS-WIKI-01",
+    "RS-NOTE-01",
+    "RS-HD-01",
+    "RS-HD-02",
+    "RS-APR-01",
+    "RS-APR-02",
+    "RS-SIG-01",
+    "RS-SIG-02"
+  ],
+  "issues": [
+    {
+      "id": "RS-FOCUS-01",
+      "title": "Главная: заменить толстую рамку быстрого ввода задачи на спокойный доступный focus-индикатор",
+      "area": "focus",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-FOCUS-01.md",
+      "dependsOn": [],
+      "relatedIssues": [
+        553,
+        578
+      ],
+      "images": [
+        1
+      ],
+      "bodySha256": "0ab5d7f3f74118b836e20b58461a291b22c70ac365eac9a28a89ae130b8798b7",
+      "github": {
+        "number": 1091,
+        "url": "https://github.com/rox-one/rox-one/issues/1091",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-FOCUS-01.md",
+        "sha256": "d7d78e5add70489d2c9e502a1938b9ea15ec7fabaa9a1af3c4d01e08480dbd04"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": []
+    },
+    {
+      "id": "RS-SHEET-01",
+      "title": "Rox Sheets: сохраняемая таблица с формулами, совместным редактированием и связями с сущностями",
+      "area": "sheets",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-SHEET-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "relatedIssues": [
+        563,
+        564,
+        570
+      ],
+      "images": [
+        5
+      ],
+      "bodySha256": "8909c1fcbcffd39e0428768735dad12953e5cd98a20eb294821bb5c8dd35c2cf",
+      "github": {
+        "number": 1092,
+        "url": "https://github.com/rox-one/rox-one/issues/1092",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-SHEET-01.md",
+        "sha256": "7fcaf1c656415d9e18a852a908428320d39d992daaaf16db1246d94e3af7cac3"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1109,
+        1110
+      ]
+    },
+    {
+      "id": "RS-SLIDE-01",
+      "title": "Rox Slides: редактор презентаций, показ, комментарии и экспорт как общая Document entity",
+      "area": "slides",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-SLIDE-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "relatedIssues": [
+        570,
+        563
+      ],
+      "images": [
+        5
+      ],
+      "bodySha256": "b02ce0ac6affbe8733b6eb038c0aff4294af16d0210fa540d6371c8b0f02a9f3",
+      "github": {
+        "number": 1093,
+        "url": "https://github.com/rox-one/rox-one/issues/1093",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-SLIDE-01.md",
+        "sha256": "a372f7762429f840e64e4ce677ecebec9aec2a70fdd61d77e1508b4dc6a7f4cf"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1109,
+        1110
+      ]
+    },
+    {
+      "id": "RS-BASE-01",
+      "title": "Rox Base: типизированные записи и views Table/Board/Form поверх единого entity graph",
+      "area": "base",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-BASE-01.md",
+      "dependsOn": [
+        "RS-DRV-01"
+      ],
+      "relatedIssues": [
+        564,
+        381
+      ],
+      "images": [
+        5,
+        7
+      ],
+      "bodySha256": "d376aa907b0c623372b79883a0d47cf7ccdf704bc607b6f66611640775683fbb",
+      "github": {
+        "number": 1094,
+        "url": "https://github.com/rox-one/rox-one/issues/1094",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-BASE-01.md",
+        "sha256": "78209f7c7f68024f0b9c7f2b31408c78b3ebe73589bf9e514ff2fae91b04a2b5"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1109
+      ]
+    },
+    {
+      "id": "RS-FORM-01",
+      "title": "Rox Forms: form builder, безопасная публикация и response-to-entity workflows",
+      "area": "forms",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-FORM-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-BASE-01"
+      ],
+      "relatedIssues": [
+        570,
+        569
+      ],
+      "images": [
+        5
+      ],
+      "bodySha256": "cf3c32a1e7c4d84a232894acc7403dbe47aadbb58c5ad0af75f9e01fcf212159",
+      "github": {
+        "number": 1095,
+        "url": "https://github.com/rox-one/rox-one/issues/1095",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-FORM-01.md",
+        "sha256": "c30ab28cf3014ed22e6e7c80bbba47fb7cbddbc3e5f3b5361dc48a360a2515d8"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1109,
+        1094
+      ]
+    },
+    {
+      "id": "RS-AUT-01",
+      "title": "Automations: расширить текущий граф до визуального canvas с palette, ports и inspector",
+      "area": "automations",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-01.md",
+      "dependsOn": [],
+      "relatedIssues": [
+        569
+      ],
+      "images": [
+        8
+      ],
+      "bodySha256": "0cce25fa735678a40567fd20717d78374d7babd9908fde0fe37429c14932cb5b",
+      "github": {
+        "number": 1096,
+        "url": "https://github.com/rox-one/rox-one/issues/1096",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-AUT-01.md",
+        "sha256": "2e5fccefa265389b9d927ed9779f5e2641ae1e10346ebd914326b54912208f3b"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": []
+    },
+    {
+      "id": "RS-AUT-02",
+      "title": "Automations: каталог connector actions, Auth и типизированные Input/Output/Error mappings",
+      "area": "automations",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-02.md",
+      "dependsOn": [
+        "RS-AUT-01",
+        "RS-MCP-01"
+      ],
+      "relatedIssues": [
+        569,
+        566
+      ],
+      "images": [
+        8
+      ],
+      "bodySha256": "365493872cebf01d6f89fc91e6978e9f81101b14537fe6c86e8af249b34a140f",
+      "github": {
+        "number": 1097,
+        "url": "https://github.com/rox-one/rox-one/issues/1097",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-AUT-02.md",
+        "sha256": "35dde92068f8b92b7ba034a62709d8c4e9617c7415c293659d89532b2cb550ab"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1096,
+        1113
+      ]
+    },
+    {
+      "id": "RS-AUT-03",
+      "title": "Automations: durable event workflow runtime с Scheduler, DateTime, ветвлениями и возобновлением",
+      "area": "automations",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-03.md",
+      "dependsOn": [
+        "RS-AUT-01",
+        "RS-AUT-02"
+      ],
+      "relatedIssues": [
+        569
+      ],
+      "images": [
+        8
+      ],
+      "bodySha256": "c97343c804a36db1815e89f70478a5277b69bcd564332c8e2cba4a5ff9e4921d",
+      "github": {
+        "number": 1098,
+        "url": "https://github.com/rox-one/rox-one/issues/1098",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-AUT-03.md",
+        "sha256": "0d42c0105cecb110427e045272de9237e996f4ee29bf0a2981ce316f7b76b1a8"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1096,
+        1097
+      ]
+    },
+    {
+      "id": "RS-AUT-04",
+      "title": "Automations: Debug, журнал узлов, ошибки, конфигурация и проверяемые результаты запусков",
+      "area": "automations",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-04.md",
+      "dependsOn": [
+        "RS-AUT-03"
+      ],
+      "relatedIssues": [
+        569,
+        578
+      ],
+      "images": [
+        8
+      ],
+      "bodySha256": "64546597efd261549699f3cc7ab9ca0ac7d9d8c661a19235308319fda71e690d",
+      "github": {
+        "number": 1099,
+        "url": "https://github.com/rox-one/rox-one/issues/1099",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-AUT-04.md",
+        "sha256": "2d1358a4044df3aa69dc1ae3a151e1301a103e0e9679344da502a19ab45ace40"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1098
+      ]
+    },
+    {
+      "id": "RS-AUT-05",
+      "title": "Automations: draft/publish versioning, guided tutorial и шаблон Scheduler → DateTime → Connector",
+      "area": "automations",
+      "bodyFile": "docs/rox-suite/issue-drafts/product/RS-AUT-05.md",
+      "dependsOn": [
+        "RS-AUT-01",
+        "RS-AUT-02",
+        "RS-AUT-03",
+        "RS-AUT-04"
+      ],
+      "relatedIssues": [
+        569,
+        577
+      ],
+      "images": [
+        8
+      ],
+      "bodySha256": "66ec965dacd9933e56dfc345456851afac61fac6e3451ee5a0e9c44f07686eaf",
+      "github": {
+        "number": 1100,
+        "url": "https://github.com/rox-one/rox-one/issues/1100",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-AUT-05.md",
+        "sha256": "d744861d35de4c46df3de25d7649341414f1d22a5cd111ec19736682bce8aa75"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1096,
+        1097,
+        1098,
+        1099
+      ]
+    },
+    {
+      "id": "RS-MTG-01",
+      "title": "[ROX Suite][Meetings] Landing: действия, история и сохранение локальной записи",
+      "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-01.md",
+      "dependsOn": [],
+      "relatedIssues": [
+        568,
+        382,
+        389,
+        385
+      ],
+      "area": "meetings",
+      "images": [
+        3
+      ],
+      "bodySha256": "d012eab5962a9b6689fa09f0fbd78d5a618cd5b5ec5f4e0a02ea99a7ce9c99ab",
+      "github": {
+        "number": 1101,
+        "url": "https://github.com/rox-one/rox-one/issues/1101",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MTG-01.md",
+        "sha256": "fec41688a5bd49a70e2482955d36b275c9cb44cfdf96839150dac010e1fdd730"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": []
+    },
+    {
+      "id": "RS-MTG-02",
+      "title": "[ROX Suite][Meetings] Join и preflight: реальные комнаты, устройства и scoped guests",
+      "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-02.md",
+      "dependsOn": [
+        "RS-MTG-01"
+      ],
+      "relatedIssues": [
+        568,
+        389,
+        385
+      ],
+      "area": "meetings-calls",
+      "images": [
+        3
+      ],
+      "bodySha256": "525979a1ed9c877eedef379979299403f4a0f1f7d0a29575e8a8d05b1bc512be",
+      "github": {
+        "number": 1102,
+        "url": "https://github.com/rox-one/rox-one/issues/1102",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MTG-02.md",
+        "sha256": "1a677b83146d9982d09f9bdd156b6e2792f24251f4feb8ebf23b3d382a189f00"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1101
+      ]
+    },
+    {
+      "id": "RS-MTG-03",
+      "title": "[ROX Suite][Meetings] Планирование: форма события, availability, recurrence и Calendar sync",
+      "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-03.md",
+      "dependsOn": [
+        "RS-MTG-01"
+      ],
+      "relatedIssues": [
+        568,
+        382,
+        385,
+        389
+      ],
+      "area": "meetings-calendar",
+      "images": [
+        3
+      ],
+      "bodySha256": "618e4042138e4dcf4bab3b0e932a266a18960686740b1dc358604018d3cc26b2",
+      "github": {
+        "number": 1103,
+        "url": "https://github.com/rox-one/rox-one/issues/1103",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MTG-03.md",
+        "sha256": "e2b2521c62599c744d3b7dff9e91b4fa785693a4d57a0489eddfdcb1d6d2a1d3"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1101
+      ]
+    },
+    {
+      "id": "RS-MTG-04",
+      "title": "[ROX Suite][Meetings] История: detail drawer, участие, lifecycle и verified readback",
+      "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-04.md",
+      "dependsOn": [
+        "RS-MTG-01"
+      ],
+      "relatedIssues": [
+        568,
+        389,
+        385
+      ],
+      "area": "meetings-history",
+      "images": [
+        4
+      ],
+      "bodySha256": "a72f286ebf2da8c95468b292d0e5dbcee3f0d356499424f2c213a13b5adfff0d",
+      "github": {
+        "number": 1104,
+        "url": "https://github.com/rox-one/rox-one/issues/1104",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MTG-04.md",
+        "sha256": "08c3cb8c68f9302dc1c4587589f14f6b345234b59d16fe29264ed608da7c2d04"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1101
+      ]
+    },
+    {
+      "id": "RS-MTG-05",
+      "title": "[ROX Suite][Meetings] Записи и протоколы: consent, transcript, summary и связанные действия",
+      "bodyFile": "docs/rox-suite/issue-drafts/meetings/RS-MTG-05.md",
+      "dependsOn": [
+        "RS-MTG-01"
+      ],
+      "relatedIssues": [
+        568,
+        389,
+        385,
+        382
+      ],
+      "area": "meetings-artifacts",
+      "images": [
+        3
+      ],
+      "bodySha256": "66e3f87bfcdcbe9105389abdfcf314529d7d21925563d1ca454134d7d6f5913a",
+      "github": {
+        "number": 1105,
+        "url": "https://github.com/rox-one/rox-one/issues/1105",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MTG-05.md",
+        "sha256": "58622d94dbed0985bea4cc57f88f9a9808a0df3b24782a107650803d263a82f8"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1101
+      ]
+    },
+    {
+      "id": "RS-MSG-01",
+      "title": "Messenger: трёхпанельная human collaboration surface в ROX",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-msg-01.md",
+      "dependsOn": [],
+      "relatedIssues": [
+        562,
+        380
+      ],
+      "area": "collaboration",
+      "bodySha256": "04b24adaaa0755c0f3559629e6b66a17a739bd2c26caa25171fbf44095df3796",
+      "github": {
+        "number": 1106,
+        "url": "https://github.com/rox-one/rox-one/issues/1106",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MSG-01.md",
+        "sha256": "7666cd3ddd561238ba77e6970f86b0f84bbb85a93c15d849cdd95a2667d1c21c"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": []
+    },
+    {
+      "id": "RS-MSG-02",
+      "title": "Human channels, DM, group threads: composer и durable read state",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-msg-02.md",
+      "dependsOn": [
+        "RS-MSG-01"
+      ],
+      "relatedIssues": [
+        562,
+        380
+      ],
+      "area": "collaboration",
+      "bodySha256": "8c4bfe6354bc10a0e722fbecbcd7600c7b8265e4923ebb2fe3b6b4ea8ddd5564",
+      "github": {
+        "number": 1107,
+        "url": "https://github.com/rox-one/rox-one/issues/1107",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MSG-02.md",
+        "sha256": "ea870216b6513e3724fcdc5b96428fd969b2609df6d633b4c8f6822619530063"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1106
+      ]
+    },
+    {
+      "id": "RS-MSG-03",
+      "title": "Contacts: каталог, профиль и общая CRM identity",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-msg-03.md",
+      "dependsOn": [
+        "RS-MSG-01",
+        "RS-MSG-02"
+      ],
+      "relatedIssues": [
+        381,
+        380
+      ],
+      "area": "collaboration",
+      "bodySha256": "7c090741003396f6c185cf13c90e11dadc80f8419c00abef2ef63f36485bb0fc",
+      "github": {
+        "number": 1108,
+        "url": "https://github.com/rox-one/rox-one/issues/1108",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MSG-03.md",
+        "sha256": "9a7279b72be841f1d65d74a7e78166daae112fa1a927ce6fc96845bbeeae26a8"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1106,
+        1107
+      ]
+    },
+    {
+      "id": "RS-DRV-01",
+      "title": "Docs / Drive: единая библиотека Recent, Owned, Shared, Favorites и table/grid",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-drv-01.md",
+      "dependsOn": [],
+      "relatedIssues": [
+        570,
+        563
+      ],
+      "area": "collaboration",
+      "bodySha256": "17b3e5bc1ca1f47f8fe1f93b3e6f9206f4fb806196c30390dce8cf726de84e14",
+      "github": {
+        "number": 1109,
+        "url": "https://github.com/rox-one/rox-one/issues/1109",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-DRV-01.md",
+        "sha256": "ae6937ae3703446b25ae4d3b43dee29f7338802a210d1e71d27a01316ce2c7c3"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": []
+    },
+    {
+      "id": "RS-DOC-01",
+      "title": "Rox Docs: collaborative editor, comments, entity mentions и export",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-doc-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-MSG-02"
+      ],
+      "relatedIssues": [
+        563,
+        570,
+        562
+      ],
+      "area": "collaboration",
+      "bodySha256": "f0809992a4df565d21483c9cb6f96d6df13bbd6e3f287e5332c966ec61544668",
+      "github": {
+        "number": 1110,
+        "url": "https://github.com/rox-one/rox-one/issues/1110",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-DOC-01.md",
+        "sha256": "b8f1f6a8eebb943ca7b0ef2a108135b5bce982681894a123efc751c6440560e5"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1109,
+        1107
+      ]
+    },
+    {
+      "id": "RS-WIKI-01",
+      "title": "Rox Wiki: spaces, hierarchy, access и history над общими Docs",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-wiki-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "relatedIssues": [
+        563,
+        570
+      ],
+      "area": "collaboration",
+      "bodySha256": "ebf3ad98d0c29117c1183fe3a2bf63b3157396975f29e9d70796671abb56a13a",
+      "github": {
+        "number": 1111,
+        "url": "https://github.com/rox-one/rox-one/issues/1111",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-WIKI-01.md",
+        "sha256": "583895fb30b8be752342323812d85bcbec452839038edd23583740d4643cdb37"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1109,
+        1110
+      ]
+    },
+    {
+      "id": "RS-NOTE-01",
+      "title": "Notes ↔ Drive: personal Markdown и явная миграция в shared Docs",
+      "bodyFile": "docs/rox-suite/issue-drafts/collaboration/rs-note-01.md",
+      "dependsOn": [
+        "RS-DRV-01",
+        "RS-DOC-01"
+      ],
+      "relatedIssues": [
+        563,
+        570
+      ],
+      "area": "collaboration",
+      "bodySha256": "cc907d5a3f2e4031d1ecd3114f3ca541e0e25f2fe2fb2b436ea850c5cb856201",
+      "github": {
+        "number": 1112,
+        "url": "https://github.com/rox-one/rox-one/issues/1112",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-NOTE-01.md",
+        "sha256": "48915bdf82194df2ade2c05b2b7db346e4f4f01be854b3aa0756da08fe24c002"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1109,
+        1110
+      ]
+    },
+    {
+      "id": "RS-MCP-01",
+      "title": "Каталог MCP capabilities, scopes и доступ инструментов агентам",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-MCP-01.md",
+      "dependsOn": [
+        "RS-ADM-01"
+      ],
+      "relatedIssues": [],
+      "area": "mcp",
+      "relatedRequirementIds": [],
+      "bodySha256": "87f4bf9501de550d30d3302062031ba8f0681a92047ab6c1c0aefd6b6bb968c1",
+      "github": {
+        "number": 1113,
+        "url": "https://github.com/rox-one/rox-one/issues/1113",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-MCP-01.md",
+        "sha256": "fc580fb77576f739173aba987e42e2e7e29230eea3659cf1580607ea712b8273"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1114
+      ]
+    },
+    {
+      "id": "RS-ADM-01",
+      "title": "Organization и capability Admin Hub в существующих Settings",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-ADM-01.md",
+      "dependsOn": [],
+      "relatedIssues": [],
+      "area": "admin",
+      "relatedRequirementIds": [
+        "RS-MCP-01"
+      ],
+      "bodySha256": "02e4c762e02aa93e9dd46c9860a8d8eb175b702c4e1743503131c0c7462ac5f1",
+      "github": {
+        "number": 1114,
+        "url": "https://github.com/rox-one/rox-one/issues/1114",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-ADM-01.md",
+        "sha256": "70e56c0f32dbf216b1f2a86adcc5090e6ec4a52737d73296300ba0c0761ee71b"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": []
+    },
+    {
+      "id": "RS-HD-01",
+      "title": "Help Desk: tickets, очереди и idempotent intake",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-HD-01.md",
+      "dependsOn": [
+        "RS-ADM-01",
+        "RS-FORM-01"
+      ],
+      "relatedIssues": [],
+      "area": "helpdesk",
+      "relatedRequirementIds": [
+        "RS-HD-02",
+        "RS-MCP-01"
+      ],
+      "bodySha256": "5bf2b5fe0ce145c5a800281bc34921688d68a8ade547d6c719e14790f2dce257",
+      "github": {
+        "number": 1115,
+        "url": "https://github.com/rox-one/rox-one/issues/1115",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-HD-01.md",
+        "sha256": "c88d30b3a78a48a1ef7a6587094c7b1f18fb2937a5f003f1e11c75cc5722ba45"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1114,
+        1095
+      ]
+    },
+    {
+      "id": "RS-HD-02",
+      "title": "Help Desk: triage, SLA calendar, knowledge и agent-assisted ответ",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-HD-02.md",
+      "dependsOn": [
+        "RS-HD-01",
+        "RS-MCP-01"
+      ],
+      "relatedIssues": [],
+      "area": "helpdesk",
+      "relatedRequirementIds": [
+        "RS-ADM-01"
+      ],
+      "bodySha256": "5a145a3d5bb5cd78cd24ddcab647014146814452dab71b5cb09a5908c4da26c8",
+      "github": {
+        "number": 1116,
+        "url": "https://github.com/rox-one/rox-one/issues/1116",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-HD-02.md",
+        "sha256": "8f22ed7c3ac6723ac3f3d650cebc9665af1ce5ab8265c9aae5ed6bab0b478574"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1115,
+        1113
+      ]
+    },
+    {
+      "id": "RS-APR-01",
+      "title": "Approval designer: versioned forms, routes и decision policy",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-APR-01.md",
+      "dependsOn": [
+        "RS-ADM-01"
+      ],
+      "relatedIssues": [],
+      "area": "approvals",
+      "relatedRequirementIds": [
+        "RS-APR-02",
+        "RS-MCP-01"
+      ],
+      "bodySha256": "3ebed5a2bd92f9c19beb3f2f7a8503ca74cfa096bee2921d91267384312d64c0",
+      "github": {
+        "number": 1117,
+        "url": "https://github.com/rox-one/rox-one/issues/1117",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-APR-01.md",
+        "sha256": "8408ffbadde5fd57f6b5baff2f61c1e450dd11f328fb13521c2fe3d397c2560c"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1114
+      ]
+    },
+    {
+      "id": "RS-APR-02",
+      "title": "Approval Inbox: решения, execution receipts и неизменяемый audit",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-APR-02.md",
+      "dependsOn": [
+        "RS-APR-01",
+        "RS-MCP-01"
+      ],
+      "relatedIssues": [],
+      "area": "approvals",
+      "relatedRequirementIds": [
+        "RS-HD-01",
+        "RS-SIG-02"
+      ],
+      "bodySha256": "42eda3eb4385c7858c68d717440c20c4fd72f6885fc15f23b3704eb77a71ee53",
+      "github": {
+        "number": 1118,
+        "url": "https://github.com/rox-one/rox-one/issues/1118",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-APR-02.md",
+        "sha256": "49edf1afbf899e1f80bd3700712d345494ee1303f00bfc54a9c1afe994fe6713"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1117,
+        1113
+      ]
+    },
+    {
+      "id": "RS-SIG-01",
+      "title": "Secure Document Viewer: file versions, sharing и revocation",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-SIG-01.md",
+      "dependsOn": [
+        "RS-ADM-01",
+        "RS-MCP-01"
+      ],
+      "relatedIssues": [],
+      "area": "documents",
+      "relatedRequirementIds": [
+        "RS-SIG-02"
+      ],
+      "bodySha256": "ff3ae4ded2afb8d3331bcfc77e0e4934dd8a92dcccd5f26afa9f7b66ea325efd",
+      "github": {
+        "number": 1119,
+        "url": "https://github.com/rox-one/rox-one/issues/1119",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-SIG-01.md",
+        "sha256": "9131557546c538a9112d33f7e2ef5ab16400fb3f408ad58886c4e15e6f4e2583"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1114,
+        1113
+      ]
+    },
+    {
+      "id": "RS-SIG-02",
+      "title": "Document signing: immutable sessions, signer intent и evidence lifecycle",
+      "bodyFile": "docs/rox-suite/issue-drafts/services/RS-SIG-02.md",
+      "dependsOn": [
+        "RS-SIG-01",
+        "RS-APR-02"
+      ],
+      "relatedIssues": [],
+      "area": "signing",
+      "relatedRequirementIds": [
+        "RS-MCP-01",
+        "RS-ADM-01"
+      ],
+      "bodySha256": "37e6fbf0bb5d3700dcfeb9cd6382b649385ee4a3190d6a459c9041ca1bb4235f",
+      "github": {
+        "number": 1120,
+        "url": "https://github.com/rox-one/rox-one/issues/1120",
+        "state": "OPEN"
+      },
+      "publishedSpec": {
+        "path": "docs/rox-suite/published/RS-SIG-02.md",
+        "sha256": "0d0e7f4801eba9a3429750442f7cadac8f7e7f80dbb2006bb964696a44433f1b"
+      },
+      "implementationStatus": "PLANNED_NOT_IMPLEMENTED",
+      "cloudExecution": "NOT_LAUNCHED",
+      "dependencyIssueNumbers": [
+        1119,
+        1118
+      ]
+    }
+  ],
+  "publicationReceipt": "plans/rox-suite/publication.json"
+}

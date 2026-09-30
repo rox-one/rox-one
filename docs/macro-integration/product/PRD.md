@@ -1,4 +1,12 @@
-# ROX ONE: подробный продуктовый PRD, редакция 3
+# ROX ONE: подробный продуктовый PRD, редакция 4
+
+## Дополнения Revision 4
+
+Новые нормативные детали: [5 collaboration walkthroughs / 39 шагов](collaboration-walkthroughs.md), [12 domain forms / 62 поля / 18 actions](domain-forms.md), [cache upgrade recovery](cache-upgrade-recovery.md), [executor contract](../../../cloud/macro-integration/EXECUTOR-CONTRACT.md). `plans/macro-integration/control-handoff.json` покрывает 61 экран / 219 controls; `resolved-operation-contracts.json` задаёт 17 canonical operations / 18 action payload variants и явный override исторических schemas. Money — exact decimal string `amountMinor`, не IEEE754 number; owner nullable с verified principal resolution; existing calendar account binding immutable.
+
+Source recheck: Macro `767a999a5f0901896959ee1f5b315999b1dea0ed`, ROX source `249b3b44220bcfbd7d467de9cfc18f76e1c37807`. 308 исходных refs: 303 unchanged / 5 reviewed; один ранее cited blob поменялся после R3. Историческое описание source R3 ниже сохранено. Code apps/packages ROX совпадает с main f63294b.
+
+Новые предложения из Lark screenshots оформлены отдельной [ROX Suite issue map](../../rox-suite/README.md). Messenger aggregator и Office representations расширяют прежнюю placement strategy через existing entities; Sessions остаются agent dialogs. Эти requirements не входят автоматически в прежний 52-WP runtime manifest. Product runtime **NOT_RUN**, cloud **PREPARED_NOT_LAUNCHED**.
 
 Статус: specification, не реализованные функции. Основа — Revision2 в `../19-target-architecture.md`; эта редакция уточняет placement, interaction и cloud delivery. Source ROX `e780e73ae84c977cf81546b49140d318dfcd6049` (UI code совпадает с `f63294ba4fffa7238b46b24e918925a313ad0b12`), Macro `5678f9bd777413f66e8bddac58f13f21150d831b` (latest observed remote main при final recheck). Сравнение всех первоначальных evidence paths — `plans/macro-integration/reverification.json`; intermediate44a сохранён в отчёте. Leaf domain evidence retain исходный immutablec966, когда файлы не изменились.
 

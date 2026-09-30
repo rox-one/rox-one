@@ -1,0 +1,4278 @@
+{
+  "schemaVersion": 1,
+  "revision": 4,
+  "status": "NORMATIVE_TARGET_NOT_IMPLEMENTED",
+  "source": "plans/macro-integration/domain-forms.json",
+  "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+  "envelope": "RoxCommand{workspaceId,commandId,idempotencyKey,expectedRevision?,policyRevision?}; actor injected by authenticated transport, no renderer actor. FormbaseRevision mapped viaauthority compatible tokenadapter, never arbitrary numericcast.",
+  "operations": [
+    {
+      "canonicalOperation": "crm.updateCompany",
+      "ownerWorkPackage": "WP-24",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "company": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "stageId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "ownerPrincipalId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "revenue": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amountMinor": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amountMinor",
+                  "currency"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "company"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          },
+          "TemporalValue": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "instant",
+                  "wall_time",
+                  "all_day"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "kind",
+              "value"
+            ]
+          },
+          "Money": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "amountMinor": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$"
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            },
+            "required": [
+              "amountMinor",
+              "currency"
+            ]
+          },
+          "Attendee": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "principalRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "contactRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "organizer",
+                  "required",
+                  "optional",
+                  "resource"
+                ]
+              },
+              "rsvp": {
+                "type": "string",
+                "enum": [
+                  "needs_action",
+                  "accepted",
+                  "tentative",
+                  "declined"
+                ]
+              }
+            },
+            "required": [
+              "email",
+              "role"
+            ]
+          },
+          "DocumentAnchor": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "schemaVersion": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "anchorKind": {
+                "type": "string",
+                "enum": [
+                  "crdt_position",
+                  "text_quote",
+                  "pdf_region",
+                  "media_span"
+                ]
+              },
+              "sourceRevision": {
+                "type": "string",
+                "minLength": 1
+              },
+              "start": {
+                "type": "string",
+                "minLength": 1
+              },
+              "end": {
+                "type": "string",
+                "minLength": 1
+              },
+              "quote": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "schemaVersion",
+              "anchorKind",
+              "sourceRevision",
+              "start",
+              "end"
+            ]
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "anyOf": [
+          {
+            "required": [
+              "ownerPrincipalId"
+            ]
+          },
+          {
+            "required": [
+              "revenue"
+            ]
+          },
+          {
+            "required": [
+              "stageId"
+            ]
+          }
+        ]
+      },
+      "variantSchemaIds": [
+        "DF-01-SCHEMA-1",
+        "DF-02-SCHEMA-1"
+      ],
+      "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "crm.linkContactCompany",
+      "ownerWorkPackage": "WP-22",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "contactRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "companyRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "contactRef",
+          "companyRef",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-03-SCHEMA-1"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "mail.saveDraft",
+      "ownerWorkPackage": "WP-19",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "draftRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "accountRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "to": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "cc": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "bcc": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "subject": {
+                "type": "string",
+                "maxLength": 998
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "mode": {
+                "enum": [
+                  "new",
+                  "reply",
+                  "replyAll",
+                  "forward"
+                ]
+              },
+              "sourceRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              }
+            },
+            "required": [
+              "to",
+              "cc",
+              "bcc",
+              "subject",
+              "text",
+              "mode"
+            ]
+          },
+          "attachmentRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "maxItems": 1000
+          }
+        },
+        "required": [
+          "accountRef",
+          "body",
+          "attachmentRefs"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-04-SCHEMA-1"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "mail.sendDraft",
+      "ownerWorkPackage": "WP-19",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "draft": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "draftRevision": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "account",
+          "draft",
+          "draftRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-04-SCHEMA-2"
+      ],
+      "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "mail.scheduleSend",
+      "ownerWorkPackage": "WP-21",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "draft": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "sendAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "account",
+          "draft",
+          "sendAt",
+          "timeZone"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-05-SCHEMA-1"
+      ],
+      "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "mail.cancelScheduledSend",
+      "ownerWorkPackage": "WP-21",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scheduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "scheduleId",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-05-SCHEMA-2"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "mail.reconcileSend",
+      "ownerWorkPackage": "WP-19",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "submissionRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          }
+        },
+        "required": [
+          "submissionRef"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-06-SCHEMA-1"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "calendar.updateEvent",
+      "ownerWorkPackage": "WP-28",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "event": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "providerEtag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "start": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "instant"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "all_day"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              }
+            ]
+          },
+          "end": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "instant"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "all_day"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              }
+            ]
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "attendees": {
+            "type": "array",
+            "maxItems": 1000,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "role": {
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            }
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "meetingLink": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https://"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "event",
+          "providerEtag"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-07-SCHEMA-1"
+      ],
+      "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "calendar.createEvent",
+      "ownerWorkPackage": "WP-28",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "calendarRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "event": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "start": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "end": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "allDay": {
+                "type": "boolean"
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attendees": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "role": {
+                      "enum": [
+                        "organizer",
+                        "required",
+                        "optional",
+                        "resource"
+                      ]
+                    },
+                    "rsvp": {
+                      "enum": [
+                        "needs_action",
+                        "accepted",
+                        "tentative",
+                        "declined"
+                      ]
+                    },
+                    "principalRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    },
+                    "contactRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "role"
+                  ]
+                }
+              },
+              "location": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "meetingLink": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^https://"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 10000
+              }
+            },
+            "required": [
+              "title",
+              "start",
+              "end",
+              "allDay",
+              "timeZone",
+              "attendees"
+            ]
+          }
+        },
+        "required": [
+          "calendarRef",
+          "event"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-07-SCHEMA-2"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "calendar.event.rsvp",
+      "ownerWorkPackage": "WP-28",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "eventRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "attendeeAccountRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "response": {
+            "enum": [
+              "accepted",
+              "tentative",
+              "declined"
+            ]
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerEtag": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "eventRef",
+          "attendeeAccountRef",
+          "response",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-08-SCHEMA-1"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "calendar.updateOccurrence",
+      "ownerWorkPackage": "WP-29",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "event": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "occurrenceKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scope": {
+            "enum": [
+              "one",
+              "series",
+              "following"
+            ]
+          },
+          "patch": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "start": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "end": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "allDay": {
+                "type": "boolean"
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attendees": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "role": {
+                      "enum": [
+                        "organizer",
+                        "required",
+                        "optional",
+                        "resource"
+                      ]
+                    },
+                    "rsvp": {
+                      "enum": [
+                        "needs_action",
+                        "accepted",
+                        "tentative",
+                        "declined"
+                      ]
+                    },
+                    "principalRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    },
+                    "contactRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "role"
+                  ]
+                }
+              },
+              "location": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "meetingLink": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^https://"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 10000
+              }
+            },
+            "required": []
+          }
+        },
+        "required": [
+          "event",
+          "occurrenceKey",
+          "scope",
+          "patch"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-09-SCHEMA-1"
+      ],
+      "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "call.join",
+      "ownerWorkPackage": "WP-31",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "callRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "deviceId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "callRef",
+          "deviceId"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-10-SCHEMA-1"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "consent.record",
+      "ownerWorkPackage": "WP-33",
+      "effectivePayloadSchema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "const": "room_recording"
+              },
+              "callRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audiencePolicyRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "audiencePolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "retentionPolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "scope",
+              "callRef",
+              "policyRevision",
+              "audiencePolicyRef",
+              "audiencePolicyRevision",
+              "retentionPolicyRevision"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "const": "local_upload"
+              },
+              "meetingRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "artifactRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "inputChecksum": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "artifactRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "deviceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audiencePolicyRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "audiencePolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "retentionPolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "scope",
+              "meetingRef",
+              "artifactRef",
+              "inputChecksum",
+              "artifactRevision",
+              "deviceId",
+              "policyRevision",
+              "audiencePolicyRef",
+              "audiencePolicyRevision",
+              "retentionPolicyRevision"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "const": "local_upload"
+              },
+              "meetingRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "localRecordingHandle": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "workspaceId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "localMeetingId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "captureGeneration": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "deviceId",
+                  "localMeetingId",
+                  "captureGeneration"
+                ]
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audiencePolicyRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "audiencePolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "retentionPolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "scope",
+              "meetingRef",
+              "localRecordingHandle",
+              "policyRevision",
+              "audiencePolicyRef",
+              "audiencePolicyRevision",
+              "retentionPolicyRevision"
+            ]
+          }
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-11-SCHEMA-1"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "consent.bindLocalUpload",
+      "ownerWorkPackage": "WP-33",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "consentRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseConsentRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "localRecordingHandle": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "deviceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "localMeetingId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "captureGeneration": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "workspaceId",
+              "deviceId",
+              "localMeetingId",
+              "captureGeneration"
+            ]
+          },
+          "artifactRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "inputChecksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "artifactRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "manifestHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "audiencePolicyRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "audiencePolicyRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "retentionPolicyRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "policyRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "consentRef",
+          "baseConsentRevision",
+          "localRecordingHandle",
+          "artifactRef",
+          "inputChecksum",
+          "artifactRevision",
+          "manifestHash",
+          "audiencePolicyRef",
+          "audiencePolicyRevision",
+          "retentionPolicyRevision",
+          "policyRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-11-SCHEMA-2"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "call.startRecording",
+      "ownerWorkPackage": "WP-33",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "call": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "consentVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "consentingPrincipalIds": {
+            "type": "array",
+            "maxItems": 1000,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "call",
+          "consentVersion",
+          "consentingPrincipalIds"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-11-SCHEMA-3"
+      ],
+      "responseContract": "historical primary receipt envelope + named resultType DTO refinements",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "consent.revoke",
+      "ownerWorkPackage": "WP-33",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "consentRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "consentRef",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-11-SCHEMA-4"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    },
+    {
+      "canonicalOperation": "artifact.retry",
+      "ownerWorkPackage": "WP-34",
+      "effectivePayloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "artifactRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "inputChecksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "processorVersion": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "artifactRef",
+          "inputChecksum",
+          "processorVersion"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "variantSchemaIds": [
+        "DF-12-SCHEMA-1"
+      ],
+      "responseContract": "named resultType DTO and errorUnion in variants; implementation must define server serialization/schema before dispatch",
+      "transport": "same authenticated workspace domain gateway; no invented parallel REST authority"
+    }
+  ],
+  "bindings": [
+    {
+      "formId": "DF-01",
+      "actionId": "save-owner",
+      "canonicalOperation": "crm.updateCompany",
+      "ownerWorkPackage": "WP-24",
+      "schemaId": "DF-01-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "company": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "ownerPrincipalId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          }
+        },
+        "required": [
+          "company",
+          "ownerPrincipalId"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "companyRef": "company",
+          "ownerRef": "authority-resolve userref.entityId→ownerPrincipalId; null clears",
+          "baseRevision": "envelope.expectedRevision tokenadapter"
+        },
+        "wireName": "crm.updateCompany",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{receiptId,companyRef,ownerRef:Rox2EntityRef|null,revision,status:CanonicalStatus,operationState:applied|queued}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "conflict",
+        "principal_not_workspace_member",
+        "invalid_principal_kind",
+        "not_found"
+      ],
+      "semanticConstraints": [
+        "WP24 primary ownerPrincipalId string currently forbids null; add null union and membership check, reject arbitrary account/Contact ref.",
+        "One company repository/outbox; omitted owner retains existing value; explicit null removes it."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-02",
+      "actionId": "save-revenue",
+      "canonicalOperation": "crm.updateCompany",
+      "ownerWorkPackage": "WP-24",
+      "schemaId": "DF-02-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "company": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "revenue": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "amountMinor": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                },
+                "required": [
+                  "amountMinor",
+                  "currency"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "company",
+          "revenue"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "companyRef": "company",
+          "amountText": "exact decimal parse currency exponent→revenue.amountMinor",
+          "currency": "revenue.currency",
+          "unset": "true→revenue:null; false→Money",
+          "baseRevision": "envelope.expectedRevision"
+        },
+        "wireName": "crm.updateCompany",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{receiptId,companyRef,revenue:Money|null,revision,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "conflict",
+        "invalid_currency",
+        "invalid_minor_units",
+        "amount_out_of_range",
+        "not_found"
+      ],
+      "semanticConstraints": [
+        "Existing machine $defs Money minorUnits:integer conflicts with leaf exact string. WP24 must normalize shared schema to amountMinor:string before form implementation.",
+        "Normative proposed range:0..9223372036854775807 minor units inclusive; no negative revenue. Authority and UI same versioned currency exponents; compare integer strings/BigInt, not floats."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-03",
+      "actionId": "link",
+      "canonicalOperation": "crm.linkContactCompany",
+      "ownerWorkPackage": "WP-22",
+      "schemaId": "DF-03-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "contactRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "companyRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "contactRef",
+          "companyRef",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "contactRef": "contactRef",
+          "companyRef": "companyRef",
+          "baseRevision": "leaf numeric authorityrevision ifdocumented; canonical envelope token separate"
+        },
+        "wireName": "crm.linkContactCompany",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{revision:number,receiptId:string,status:CanonicalStatus,provenance:{kind:manual,actorRef,at}}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "conflict",
+        "cross_scope"
+      ],
+      "semanticConstraints": [
+        "Persist canonical entity link + provenance atomically; old org display text may remain legacy projection, never identity authority.",
+        "No manual Company/Contact create/edit controls exist in referenced screen registry; name/domain/email are readonly here. Any later identity editor needs explicit screen+operation extension."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-04",
+      "actionId": "save",
+      "canonicalOperation": "mail.saveDraft",
+      "ownerWorkPackage": "WP-19",
+      "schemaId": "DF-04-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "draftRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "accountRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "to": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "cc": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "bcc": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "subject": {
+                "type": "string",
+                "maxLength": 998
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 1048576
+              },
+              "mode": {
+                "enum": [
+                  "new",
+                  "reply",
+                  "replyAll",
+                  "forward"
+                ]
+              },
+              "sourceRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              }
+            },
+            "required": [
+              "to",
+              "cc",
+              "bcc",
+              "subject",
+              "text",
+              "mode"
+            ]
+          },
+          "attachmentRefs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Rox2EntityRef"
+            },
+            "maxItems": 1000
+          }
+        },
+        "required": [
+          "accountRef",
+          "body",
+          "attachmentRefs"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "accountRef": "SaveDraft.accountRef / SendDraft.account",
+          "body": "SaveDraft.body immutable acksnapshot",
+          "attachments": "SaveDraft.attachmentRefs account-owned finalizedrefs",
+          "draftRef": "SaveDraft.draftRef / SendDraft.draft",
+          "savedRevision": "SendDraft.draftRevision"
+        },
+        "wireName": "mail.saveDraft",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{draftRef,revision,receiptId,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "conflict",
+        "invalid_recipient",
+        "oversize",
+        "denied"
+      ],
+      "semanticConstraints": [
+        "SaveDraft exact fields formalized in existing leaf/mail DTO; do not add a separate compose backend.",
+        "Primary account/draft/draftRevision names retained. Leaf draftRef/accountRef/baseRevision mapped explicitly using returned authority token, never parseInt.",
+        "Draft invalid raw recipient preservation is recovery representation; validation failure remains visible and blocks send; persist separately from validated recipients."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-04",
+      "actionId": "send",
+      "canonicalOperation": "mail.sendDraft",
+      "ownerWorkPackage": "WP-19",
+      "schemaId": "DF-04-SCHEMA-2",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "draft": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "draftRevision": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "account",
+          "draft",
+          "draftRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "accountRef": "SaveDraft.accountRef / SendDraft.account",
+          "body": "SaveDraft.body immutable acksnapshot",
+          "attachments": "SaveDraft.attachmentRefs account-owned finalizedrefs",
+          "draftRef": "SaveDraft.draftRef / SendDraft.draft",
+          "savedRevision": "SendDraft.draftRevision"
+        },
+        "wireName": "mail.sendDraft",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{receiptId,submissionRef,operationState:accepted|pending|ambiguous,status:CanonicalStatus,providerMessageId?}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "provider_rejected",
+        "attachment_unavailable",
+        "conflict",
+        "invalid_recipient",
+        "external_blocked"
+      ],
+      "semanticConstraints": [
+        "SaveDraft exact fields formalized in existing leaf/mail DTO; do not add a separate compose backend.",
+        "Primary account/draft/draftRevision names retained. Leaf draftRef/accountRef/baseRevision mapped explicitly using returned authority token, never parseInt.",
+        "Draft invalid raw recipient preservation is recovery representation; validation failure remains visible and blocks send; persist separately from validated recipients."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-05",
+      "actionId": "schedule",
+      "canonicalOperation": "mail.scheduleSend",
+      "ownerWorkPackage": "WP-21",
+      "schemaId": "DF-05-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "draft": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "sendAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "account",
+          "draft",
+          "sendAt",
+          "timeZone"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "accountRef": "account",
+          "draftRef": "draft",
+          "civilDateTimeZoneOffset": "Temporalresolve→sendAt UTC + timeZone",
+          "draftRevision": "envelope.expectedRevision/frozen snapshot"
+        },
+        "wireName": "mail.scheduleSend",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{scheduleId,revision,receiptId,operationState:scheduled,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "past_time",
+        "unsupported",
+        "denied",
+        "conflict"
+      ],
+      "semanticConstraints": [
+        "Schedule payload binds exact draft revision/account; current primary request lacks explicit revision field, require envelope.expectedRevision validated/frozen by authority.",
+        "Cancel keeps existing named leaf operation; do not invent per-provider scheduling UI authority."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-05",
+      "actionId": "cancel",
+      "canonicalOperation": "mail.cancelScheduledSend",
+      "ownerWorkPackage": "WP-21",
+      "schemaId": "DF-05-SCHEMA-2",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scheduleId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "scheduleId",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "accountRef": "account",
+          "draftRef": "draft",
+          "civilDateTimeZoneOffset": "Temporalresolve→sendAt UTC + timeZone",
+          "draftRevision": "envelope.expectedRevision/frozen snapshot"
+        },
+        "wireName": "mail.cancelScheduledSend",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{receiptId,operationState:cancelled|already_claimed|sent|ambiguous,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "conflict",
+        "denied"
+      ],
+      "semanticConstraints": [
+        "Schedule payload binds exact draft revision/account; current primary request lacks explicit revision field, require envelope.expectedRevision validated/frozen by authority.",
+        "Cancel keeps existing named leaf operation; do not invent per-provider scheduling UI authority."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-06",
+      "actionId": "check",
+      "canonicalOperation": "mail.reconcileSend",
+      "ownerWorkPackage": "WP-19",
+      "schemaId": "DF-06-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "submissionRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          }
+        },
+        "required": [
+          "submissionRef"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "submissionRef": "mail.reconcileSend.submissionRef; GetSubmissionReceipt query rehydrates same ledger",
+          "providerEvidence": "readonly output; never callerattestation"
+        },
+        "wireName": "mail.reconcileSend",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{state:accepted|pending|ambiguous|rejected,sendAt?,providerEvidence?:ProviderReceipt,revision,asOf}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "not_found",
+        "provider_unavailable"
+      ],
+      "semanticConstraints": [
+        "GetSubmissionReceipt remains same named query; if lookup itself triggers worker reconciliation, dispatch is internal same submission authority, not a new send.",
+        "Unknown external effect retains original key/request hash; operation lifecycle unknown+verification unverified until scoped evidence. No forced ambiguous→failed."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-07",
+      "actionId": "save-existing",
+      "canonicalOperation": "calendar.updateEvent",
+      "ownerWorkPackage": "WP-28",
+      "schemaId": "DF-07-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "event": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "providerEtag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "start": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "instant"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "all_day"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              }
+            ]
+          },
+          "end": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "instant"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "all_day"
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "value",
+                  "timeZone"
+                ]
+              }
+            ]
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "attendees": {
+            "type": "array",
+            "maxItems": 1000,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email"
+                },
+                "role": {
+                  "enum": [
+                    "organizer",
+                    "required",
+                    "optional",
+                    "resource"
+                  ]
+                },
+                "rsvp": {
+                  "enum": [
+                    "needs_action",
+                    "accepted",
+                    "tentative",
+                    "declined"
+                  ]
+                },
+                "principalRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                },
+                "contactRef": {
+                  "$ref": "#/$defs/Rox2EntityRef"
+                }
+              },
+              "required": [
+                "email",
+                "role"
+              ]
+            }
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "meetingLink": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https://"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "event",
+          "providerEtag"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "eventRef": "event",
+          "providerEtag": "providerEtag",
+          "startEnd": "resolved TemporalValue; allDay exclusiveend civil date",
+          "existingCalendarRef": "immutable; not submitted; movingcalendar unavailable",
+          "createCalendarRef": "CreateCalendarEvent.calendarRef",
+          "titleDescriptionLocation": "validated known patch fields; no hidden schema stripping"
+        },
+        "wireName": "calendar.updateEvent",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{receiptId,eventRef,revision?,operationState:committed|reconciling,status:CanonicalStatus,normalizedEvent?}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "invalid_interval",
+        "invalid_local_time",
+        "ambiguous_local_time",
+        "provider_conflict",
+        "provider_rejected",
+        "unsupported_capability"
+      ],
+      "semanticConstraints": [
+        "TemporalValue targetnormative union instant{valueRFC3339,timeZone}|all_day{valueYYYY-MM-DD,timeZone}; wall_time isform intermediate only untilDSTresolved.",
+        "Source CalendarEvent numeric startAt/endAt remains legacyprojectionadapter ofnormalized instants; all-day dates stored in targetDTO not reconstructed from24h.",
+        "Explicit schema extension requiredtitle/allDay/timeZone/description/location/link/calendarcreate; no duplicate calendar service."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-07",
+      "actionId": "create",
+      "canonicalOperation": "calendar.createEvent",
+      "ownerWorkPackage": "WP-28",
+      "schemaId": "DF-07-SCHEMA-2",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "calendarRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "event": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "start": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "end": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "allDay": {
+                "type": "boolean"
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attendees": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "role": {
+                      "enum": [
+                        "organizer",
+                        "required",
+                        "optional",
+                        "resource"
+                      ]
+                    },
+                    "rsvp": {
+                      "enum": [
+                        "needs_action",
+                        "accepted",
+                        "tentative",
+                        "declined"
+                      ]
+                    },
+                    "principalRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    },
+                    "contactRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "role"
+                  ]
+                }
+              },
+              "location": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "meetingLink": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^https://"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 10000
+              }
+            },
+            "required": [
+              "title",
+              "start",
+              "end",
+              "allDay",
+              "timeZone",
+              "attendees"
+            ]
+          }
+        },
+        "required": [
+          "calendarRef",
+          "event"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "eventRef": "event",
+          "providerEtag": "providerEtag",
+          "startEnd": "resolved TemporalValue; allDay exclusiveend civil date",
+          "existingCalendarRef": "immutable; not submitted; movingcalendar unavailable",
+          "createCalendarRef": "CreateCalendarEvent.calendarRef",
+          "titleDescriptionLocation": "validated known patch fields; no hidden schema stripping"
+        },
+        "wireName": "calendar.createEvent",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{eventRef,receiptId,operationState:committed|reconciling,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "invalid_interval",
+        "provider_rejected"
+      ],
+      "semanticConstraints": [
+        "TemporalValue targetnormative union instant{valueRFC3339,timeZone}|all_day{valueYYYY-MM-DD,timeZone}; wall_time isform intermediate only untilDSTresolved.",
+        "Source CalendarEvent numeric startAt/endAt remains legacyprojectionadapter ofnormalized instants; all-day dates stored in targetDTO not reconstructed from24h.",
+        "Explicit schema extension requiredtitle/allDay/timeZone/description/location/link/calendarcreate; no duplicate calendar service."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-08",
+      "actionId": "respond",
+      "canonicalOperation": "calendar.event.rsvp",
+      "ownerWorkPackage": "WP-28",
+      "schemaId": "DF-08-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "eventRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "attendeeAccountRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "response": {
+            "enum": [
+              "accepted",
+              "tentative",
+              "declined"
+            ]
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "providerEtag": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "eventRef",
+          "attendeeAccountRef",
+          "response",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "eventRef": "eventRef",
+          "ownedAccount": "attendeeAccountRef; server resolves ownattendee email",
+          "response": "response",
+          "baseRevision": "leaf revision viaauthority mapping; notetag"
+        },
+        "wireName": "calendar.event.rsvp",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{eventRef,response:CalendarAttendeeResponse,revision?,receiptId,operationState:committed|reconciling,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "attendee_mismatch",
+        "account_binding_mismatch",
+        "unsupported_capability",
+        "provider_conflict",
+        "provider_rejected",
+        "account_revoked"
+      ],
+      "semanticConstraints": [
+        "One dedicated own-RSVP operation; never reuse organizer fullpatch updateEvent. Accountemail resolved onlyserver-side.",
+        "Provider-specific token scopes/capability required; no local success-only RSVP whenprovider unavailable."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-09",
+      "actionId": "change-occurrence",
+      "canonicalOperation": "calendar.updateOccurrence",
+      "ownerWorkPackage": "WP-29",
+      "schemaId": "DF-09-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "event": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "occurrenceKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scope": {
+            "enum": [
+              "one",
+              "series",
+              "following"
+            ]
+          },
+          "patch": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "start": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "end": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "instant"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "const": "all_day"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "timeZone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "value",
+                      "timeZone"
+                    ]
+                  }
+                ]
+              },
+              "allDay": {
+                "type": "boolean"
+              },
+              "timeZone": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attendees": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "role": {
+                      "enum": [
+                        "organizer",
+                        "required",
+                        "optional",
+                        "resource"
+                      ]
+                    },
+                    "rsvp": {
+                      "enum": [
+                        "needs_action",
+                        "accepted",
+                        "tentative",
+                        "declined"
+                      ]
+                    },
+                    "principalRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    },
+                    "contactRef": {
+                      "$ref": "#/$defs/Rox2EntityRef"
+                    }
+                  },
+                  "required": [
+                    "email",
+                    "role"
+                  ]
+                }
+              },
+              "location": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "meetingLink": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^https://"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 10000
+              }
+            },
+            "required": []
+          }
+        },
+        "required": [
+          "event",
+          "occurrenceKey",
+          "scope",
+          "patch"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "instance": "scope:one",
+          "following": "scope:following",
+          "series": "scope:series",
+          "originalOccurrence": "sourcecalendar/master/originalStart→authorityoccurrenceKey, nevereditedstart",
+          "patch": "validatedresolvedCalendarPatch"
+        },
+        "wireName": "calendar.updateOccurrence",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{eventRef,receiptId,operationState:committed|reconciling,status:CanonicalStatus,normalizedOccurrence?,splitSeriesRefs?}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "unsupported_scope",
+        "invalid_local_time",
+        "ambiguous_local_time",
+        "provider_conflict",
+        "invalid_recurrence"
+      ],
+      "semanticConstraints": [
+        "OccurrenceKey schema typed/source-scoped; patch onlyvalidated knownCalendarfields; old genericobject cannotacceptarbitrarypayload.",
+        "No arbitraryrecurrencenewrule editor introduced; existingseries/occurrencechangeonly. Subsequent ruleform needsregisteredcontrol."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-10",
+      "actionId": "join",
+      "canonicalOperation": "call.join",
+      "ownerWorkPackage": "WP-31",
+      "schemaId": "DF-10-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "callRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "deviceId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "callRef",
+          "deviceId"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "callRef": "callRef",
+          "registeredDeviceId": "deviceId",
+          "nativeMediaDeviceIds": "localadapteronly, notdomainbody",
+          "toggles": "publishonlyafteractualconnection"
+        },
+        "wireName": "call.join",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{endpoint:https-or-wssURL,token:secret,expiresAt:RFC3339,participantRef:Rox2EntityRef} → mediaConnectResult{connected|failed,trackPublicationStates}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "revoked",
+        "media_unavailable",
+        "ended",
+        "native_permission_denied",
+        "device_unavailable"
+      ],
+      "semanticConstraints": [
+        "JoinCall named leafbinding registration required; preserveoneprincipal/callidentity. Device selections localmediaadapterinput, notnewdomainAPI.",
+        "Nativepermissionerrors localformresult; don'tfakeprovider receipt. Guestdoesnotbecomeworkspacemember."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-11",
+      "actionId": "grant",
+      "canonicalOperation": "consent.record",
+      "ownerWorkPackage": "WP-33",
+      "schemaId": "DF-11-SCHEMA-1",
+      "payloadSchema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "const": "room_recording"
+              },
+              "callRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audiencePolicyRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "audiencePolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "retentionPolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "scope",
+              "callRef",
+              "policyRevision",
+              "audiencePolicyRef",
+              "audiencePolicyRevision",
+              "retentionPolicyRevision"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "const": "local_upload"
+              },
+              "meetingRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "artifactRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "inputChecksum": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "artifactRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "deviceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audiencePolicyRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "audiencePolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "retentionPolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "scope",
+              "meetingRef",
+              "artifactRef",
+              "inputChecksum",
+              "artifactRevision",
+              "deviceId",
+              "policyRevision",
+              "audiencePolicyRef",
+              "audiencePolicyRevision",
+              "retentionPolicyRevision"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "const": "local_upload"
+              },
+              "meetingRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "localRecordingHandle": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "workspaceId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "deviceId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "localMeetingId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "captureGeneration": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "deviceId",
+                  "localMeetingId",
+                  "captureGeneration"
+                ]
+              },
+              "policyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "audiencePolicyRef": {
+                "$ref": "#/$defs/Rox2EntityRef"
+              },
+              "audiencePolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "retentionPolicyRevision": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "scope",
+              "meetingRef",
+              "localRecordingHandle",
+              "policyRevision",
+              "audiencePolicyRef",
+              "audiencePolicyRevision",
+              "retentionPolicyRevision"
+            ]
+          }
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "room": "RoomConsentInput",
+          "localDraft": "LocalDraftConsentInput→provisional",
+          "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+          "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+          "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+        },
+        "wireName": "consent.record",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{consentRef,revision,operationState:room_granted|provisional|artifact_bound,bindingDigest,receiptId,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "policy_stale",
+        "audience_policy_stale",
+        "source_denied",
+        "artifact_mismatch",
+        "capture_generation_mismatch",
+        "denied"
+      ],
+      "semanticConstraints": [
+        "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+        "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+        "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-11",
+      "actionId": "bind-final",
+      "canonicalOperation": "consent.bindLocalUpload",
+      "ownerWorkPackage": "WP-33",
+      "schemaId": "DF-11-SCHEMA-2",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "consentRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseConsentRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "localRecordingHandle": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "deviceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "localMeetingId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "captureGeneration": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "workspaceId",
+              "deviceId",
+              "localMeetingId",
+              "captureGeneration"
+            ]
+          },
+          "artifactRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "inputChecksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "artifactRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "manifestHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "audiencePolicyRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "audiencePolicyRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "retentionPolicyRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "policyRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "consentRef",
+          "baseConsentRevision",
+          "localRecordingHandle",
+          "artifactRef",
+          "inputChecksum",
+          "artifactRevision",
+          "manifestHash",
+          "audiencePolicyRef",
+          "audiencePolicyRevision",
+          "retentionPolicyRevision",
+          "policyRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "room": "RoomConsentInput",
+          "localDraft": "LocalDraftConsentInput→provisional",
+          "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+          "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+          "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+        },
+        "wireName": "consent.bindLocalUpload",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{consentRef,revision,bindingDigest,receiptId,operationState:artifact_bound,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "consent_revoked",
+        "policy_stale",
+        "audience_policy_stale",
+        "capture_generation_mismatch",
+        "artifact_mismatch",
+        "already_bound_different_artifact"
+      ],
+      "semanticConstraints": [
+        "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+        "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+        "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-11",
+      "actionId": "start",
+      "canonicalOperation": "call.startRecording",
+      "ownerWorkPackage": "WP-33",
+      "schemaId": "DF-11-SCHEMA-3",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "call": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "consentVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "consentingPrincipalIds": {
+            "type": "array",
+            "maxItems": 1000,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "call",
+          "consentVersion",
+          "consentingPrincipalIds"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "room": "RoomConsentInput",
+          "localDraft": "LocalDraftConsentInput→provisional",
+          "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+          "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+          "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+        },
+        "wireName": "call.startRecording",
+        "registration": "Primary/supplement/existing leafnamedbinding; leaf wire alias requires registration in same module before dispatch."
+      },
+      "resultType": "{recordingRef,receiptId,operationState:starting|active,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "consent_missing",
+        "consent_stale",
+        "denied",
+        "egress_unavailable"
+      ],
+      "semanticConstraints": [
+        "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+        "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+        "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-11",
+      "actionId": "revoke",
+      "canonicalOperation": "consent.revoke",
+      "ownerWorkPackage": "WP-33",
+      "schemaId": "DF-11-SCHEMA-4",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "consentRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "baseRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "consentRef",
+          "baseRevision"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "room": "RoomConsentInput",
+          "localDraft": "LocalDraftConsentInput→provisional",
+          "finalArtifact": "exact ArtifactManifest→artifact_bound; bindLocalUploadConsent",
+          "acknowledgement": "UIguard; actor/consent/roster verifiedauthority",
+          "revisions": "policy/audience/retentioncurrentatdispatchandretry"
+        },
+        "wireName": "consent.revoke",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{revision,receiptId,effect:stopping|upload_cancelled|policy_applied,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "conflict",
+        "denied"
+      ],
+      "semanticConstraints": [
+        "All payloads usecurrentleafdiscriminatedRecordConsentInput; no uniformcall-widefutureartifactconsent.",
+        "StartRecording roster/version checkedauthority/provider; no clientattestation accepted.",
+        "Finalbindingreview reusesgrantcontrol; finalchecksum/audiencenewversion resetsacknowledgement; workerdispatch/retry recheck bindingconsent."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    },
+    {
+      "formId": "DF-12",
+      "actionId": "retry",
+      "canonicalOperation": "artifact.retry",
+      "ownerWorkPackage": "WP-34",
+      "schemaId": "DF-12-SCHEMA-1",
+      "payloadSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "artifactRef": {
+            "$ref": "#/$defs/Rox2EntityRef"
+          },
+          "inputChecksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "processorVersion": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "artifactRef",
+          "inputChecksum",
+          "processorVersion"
+        ],
+        "$defs": {
+          "Rox2EntityRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workspaceId",
+              "entityId"
+            ],
+            "properties": {
+              "workspaceId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:.+$"
+              },
+              "revisionId": {
+                "type": "string"
+              },
+              "accountNamespace": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "requestMapping": {
+        "fields": {
+          "artifactRef": "artifactRef",
+          "checksum": "inputChecksum",
+          "processorVersion": "serververified processorVersion",
+          "stage": "authorityartifactgraphrelation; not arbitrarywirefield"
+        },
+        "wireName": "artifact.retry",
+        "registration": "PROPOSED canonical secondary registration on same authenticated workspace gateway; same existing module/repository/ACL/outbox; no parallel authority."
+      },
+      "resultType": "{jobId,receiptId,operationState:queued,status:CanonicalStatus}",
+      "moneyResultBinding": "Any Money in target response DTO uses {amountMinor:decimal_integer_string,currency}|null; historical minorUnits integer not serialized",
+      "errorUnion": [
+        "denied",
+        "source_deleted",
+        "budget_exceeded",
+        "processor_unavailable",
+        "checksum_mismatch"
+      ],
+      "semanticConstraints": [
+        "Stage is selectedartifactgraphrelationvalidatedserver-side; don't trustclientstage to bypasssourcepermissions.",
+        "RetryArtifactJob exacttuple validated/sourcechecksum; responsequeued neverlabelready. Source raw EvidenceSpan ids/revisions immutable; speaker corrections derivative."
+      ],
+      "history": "Original primary schema retained as historical input; this resolved payload variant is normative for named form action. One gateway, no second authority.",
+      "status": "PROPOSED_TYPED_REGISTRATION_BEFORE_DISPATCH"
+    }
+  ]
+}

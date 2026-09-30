@@ -7,7 +7,7 @@
   "screenContracts": [
     {
       "id": "SH-01",
-      "title": "Shell / navigation / multi-panel",
+      "title": "Навигация и панели",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Native app shell → all destinations",
@@ -35,58 +35,82 @@
       "controls": [
         {
           "id": "destination",
-          "label": "Destination",
+          "label": "Раздел",
           "input": "registered destination + workspace",
           "output": "typed route and restored selection",
-          "hover": "row tint + exact destination label",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "row tint + exact destination label; Открывает существующий раздел текущего workspace и восстанавливает его сохранённое представление.",
+          "focus": "Видимая focus ring; та же справка: Открывает существующий раздел текущего workspace и восстанавливает его сохранённое представление.; focus не выполняет mutation",
           "click": "navigate once; leaving pending draft prompts save/copy only when required",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Destination",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: registered destination + workspace",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Открывает существующий раздел текущего workspace и восстанавливает его сохранённое представление.",
+            "source": "navigation.setView; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "«Задачи» возвращает выбранный список и фильтр.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Раздел",
+            "role": "button",
+            "helpDescription": "Открывает существующий раздел текущего workspace и восстанавливает его сохранённое представление.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "navigation.setView",
           "resultErrors": "invalid_route|unknown_kind|forbidden_ref"
         },
         {
           "id": "panel",
-          "label": "Open in panel",
+          "label": "Открыть рядом",
           "input": "canonical EntityRef",
           "output": "second representation of same ref",
-          "hover": "button tint, explain same-object view",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "button tint, explain same-object view; Показывает тот же объект в соседней панели; изменения относятся к одной сущности.",
+          "focus": "Видимая focus ring; та же справка: Показывает тот же объект в соседней панели; изменения относятся к одной сущности.; focus не выполняет mutation",
           "click": "create panel, do not duplicate data store",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Open in panel",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: canonical EntityRef",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает тот же объект в соседней панели; изменения относятся к одной сущности.",
+            "source": "navigation.setView; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Company Acme открыта рядом с письмом без создания копии Company.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Открыть рядом",
+            "role": "button",
+            "helpDescription": "Показывает тот же объект в соседней панели; изменения относятся к одной сущности.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "navigation.setView",
           "resultErrors": "invalid_route|unknown_kind|forbidden_ref"
         },
         {
           "id": "back",
-          "label": "Back",
+          "label": "Назад",
           "input": "history cursor",
           "output": "previous tab/filter/scroll",
-          "hover": "tooltip previous destination only if authorized",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "tooltip previous destination only if authorized; Возвращает предыдущий маршрут, вкладку, фильтр и позицию прокрутки.",
+          "focus": "Видимая focus ring; та же справка: Возвращает предыдущий маршрут, вкладку, фильтр и позицию прокрутки.; focus не выполняет mutation",
           "click": "restore persisted view state",
           "keyboard": "Alt+Left outside editor; button always available",
           "help": {
-            "meaning": "Back",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: history cursor",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Возвращает предыдущий маршрут, вкладку, фильтр и позицию прокрутки.",
+            "source": "navigation.setView; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Из Task вернуться в Project → Tasks с прежним поиском.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Назад",
+            "role": "button",
+            "helpDescription": "Возвращает предыдущий маршрут, вкладку, фильтр и позицию прокрутки.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "navigation.setView",
           "resultErrors": "invalid_route|unknown_kind|forbidden_ref"
         }
@@ -168,7 +192,7 @@
     },
     {
       "id": "SH-02",
-      "title": "Omnibox / unified search",
+      "title": "Единый поиск",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Shell → Omnibox",
@@ -196,58 +220,82 @@
       "controls": [
         {
           "id": "query",
-          "label": "Search",
+          "label": "Поиск по workspace",
           "input": "text≤2048 + workspace + type filters + cursor",
           "output": "authorized hit refs/snippets/watermark",
-          "hover": "field hover border; help search scope",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "field hover border; help search scope; Ищет только разрешённые данные в выбранной рабочей области; пустой результат отличается от ошибки индекса.",
+          "focus": "Видимая focus ring; та же справка: Ищет только разрешённые данные в выбранной рабочей области; пустой результат отличается от ошибки индекса.; focus не выполняет mutation",
           "click": "debounced250ms cancel prior query; open hit",
           "keyboard": "Cmd/Ctrl+K; arrows results; Enter open; Esc close",
           "help": {
-            "meaning": "Search",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: text≤2048 + workspace + type filters + cursor",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Ищет только разрешённые данные в выбранной рабочей области; пустой результат отличается от ошибки индекса.",
+            "source": "search.entities; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Запрос «Acme» возвращает разрешённые Company, письмо и задачу.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Поиск по workspace",
+            "role": "textbox",
+            "helpDescription": "Ищет только разрешённые данные в выбранной рабочей области; пустой результат отличается от ошибки индекса.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "search.entities",
           "resultErrors": "denied|invalid_filter|index_unavailable|stale_cursor"
         },
         {
           "id": "scope",
-          "label": "Scope/types",
+          "label": "Область и типы",
           "input": "ProjectRef? + kinds[]",
           "output": "filtered authorised results",
-          "hover": "chip tint; no hidden facet counts",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "chip tint; no hidden facet counts; Ограничивает поиск Project и выбранными типами сущностей.",
+          "focus": "Видимая focus ring; та же справка: Ограничивает поиск Project и выбранными типами сущностей.; focus не выполняет mutation",
           "click": "apply query scope; persist route filter",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Scope/types",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: ProjectRef? + kinds[]",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Ограничивает поиск Project и выбранными типами сущностей.",
+            "source": "search.entities; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Project «Запуск» + Tasks исключает письма из результатов.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Область и типы",
+            "role": "button",
+            "helpDescription": "Ограничивает поиск Project и выбранными типами сущностей.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "search.entities",
           "resultErrors": "denied|invalid_filter|index_unavailable|stale_cursor"
         },
         {
           "id": "hit",
-          "label": "Result",
+          "label": "Результат поиска",
           "input": "permitted ref + snippet source",
           "output": "native detail/context",
-          "hover": "highlight, cached peek permitted only",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "highlight, cached peek permitted only; Открывает исходную сущность; snippet и его источник доступны только при текущем read grant.",
+          "focus": "Видимая focus ring; та же справка: Открывает исходную сущность; snippet и его источник доступны только при текущем read grant.; focus не выполняет mutation",
           "click": "open canonical route; forbidden result purged",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Result",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: permitted ref + snippet source",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Открывает исходную сущность; snippet и его источник доступны только при текущем read grant.",
+            "source": "entity.resolve; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Письмо открывается во Входящих с тем же MailThreadRef.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Результат поиска",
+            "role": "button",
+            "helpDescription": "Открывает исходную сущность; snippet и его источник доступны только при текущем read grant.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "entity.resolve",
           "resultErrors": "not_found_or_denied|unsupported_kind"
         }
@@ -327,7 +375,7 @@
     },
     {
       "id": "SH-03",
-      "title": "Entity peek / backlinks / favorites",
+      "title": "Предпросмотр, связи и избранное",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Entity chip → peek; detail → linked objects",
@@ -355,58 +403,82 @@
       "controls": [
         {
           "id": "peek",
-          "label": "Preview",
+          "label": "Предпросмотр",
           "input": "EntityRef + policy epoch",
           "output": "safe title/type/summary",
-          "hover": "400ms cached peek; disabled inaccessible",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "400ms cached peek; disabled inaccessible; Показывает краткую разрешённую проекцию объекта без изменения его read/unread или sharing.",
+          "focus": "Видимая focus ring; та же справка: Показывает краткую разрешённую проекцию объекта без изменения его read/unread или sharing.; focus не выполняет mutation",
           "click": "explicit open retrieves authorized detail",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Preview",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: EntityRef + policy epoch",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает краткую разрешённую проекцию объекта без изменения его read/unread или sharing.",
+            "source": "entity.resolve; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Навести на Company chip и увидеть имя/тип; denied ref не показывает название.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Предпросмотр",
+            "role": "button",
+            "helpDescription": "Показывает краткую разрешённую проекцию объекта без изменения его read/unread или sharing.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "entity.resolve",
           "resultErrors": "not_found_or_denied"
         },
         {
           "id": "link",
-          "label": "Add link",
+          "label": "Связать объект",
           "input": "sourceRef + targetRef + relation",
           "output": "receipt + relation revision",
-          "hover": "explain mentions/derived-from/attached-to semantics",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "explain mentions/derived-from/attached-to semantics; Создаёт типизированную связь между двумя существующими сущностями; доступ автоматически не выдаётся.",
+          "focus": "Видимая focus ring; та же справка: Создаёт типизированную связь между двумя существующими сущностями; доступ автоматически не выдаётся.; focus не выполняет mutation",
           "click": "picker→preview relation→confirm; cycles checked",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Add link",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: sourceRef + targetRef + relation",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Создаёт типизированную связь между двумя существующими сущностями; доступ автоматически не выдаётся.",
+            "source": "entity.link; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Task derived-from Message сохраняет два исходных ID.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Связать объект",
+            "role": "button",
+            "helpDescription": "Создаёт типизированную связь между двумя существующими сущностями; доступ автоматически не выдаётся.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "entity.link",
           "resultErrors": "denied|cross_workspace|forbidden_cycle|revision_conflict"
         },
         {
           "id": "star",
-          "label": "Favorite",
+          "label": "В избранное",
           "input": "EntityRef + boolean",
           "output": "private preference receipt",
-          "hover": "add/remove tooltip",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "add/remove tooltip; Сохраняет личную ссылку на объект; это не копия и не public share.",
+          "focus": "Видимая focus ring; та же справка: Сохраняет личную ссылку на объект; это не копия и не public share.; focus не выполняет mutation",
           "click": "optimistic star, rollback error; revoke hides cached label",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Favorite",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: EntityRef + boolean",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Сохраняет личную ссылку на объект; это не копия и не public share.",
+            "source": "favorite.set through preferences.setFavorite adapter; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "После revoke избранная Company не сохраняет старое приватное название.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "В избранное",
+            "role": "button",
+            "helpDescription": "Сохраняет личную ссылку на объект; это не копия и не public share.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "preferences.setFavorite",
           "resultErrors": "denied|unknown_ref"
         }
@@ -514,7 +586,7 @@
     },
     {
       "id": "SH-04",
-      "title": "Sharing / grants / revoke",
+      "title": "Доступ и отзыв разрешений",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Entity header → Share",
@@ -542,58 +614,82 @@
       "controls": [
         {
           "id": "grant",
-          "label": "Invite / role",
+          "label": "Пригласить и выбрать роль",
           "input": "principalRef + read/write/share scope + expiry",
           "output": "effective grant and receipt",
-          "hover": "role help lists permitted operations",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "role help lists permitted operations; Выдаёт выбранному principal конкретные действия и срок доступа после review аудитории.",
+          "focus": "Видимая focus ring; та же справка: Выдаёт выбранному principal конкретные действия и срок доступа после review аудитории.; focus не выполняет mutation",
           "click": "review audience diff→confirm; no implicit grant from mention",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Invite / role",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: principalRef + read/write/share scope + expiry",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Выдаёт выбранному principal конкретные действия и срок доступа после review аудитории.",
+            "source": "permission.grant; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "B получает write к Page до выбранной даты; owner CRM остаётся отдельным полем.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Пригласить и выбрать роль",
+            "role": "button",
+            "helpDescription": "Выдаёт выбранному principal конкретные действия и срок доступа после review аудитории.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "permission.grant",
           "resultErrors": "denied|invalid_principal|cross_workspace|revision_conflict"
         },
         {
           "id": "revoke",
-          "label": "Remove access",
+          "label": "Убрать доступ",
           "input": "grantId + expectedRevision",
           "output": "pending then fenced applied revoke",
-          "hover": "red tint; explain open clients affected",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "red tint; explain open clients affected; Отзывает grant; завершение показывается после server delivery fence, а не по одному UI клику.",
+          "focus": "Видимая focus ring; та же справка: Отзывает grant; завершение показывается после server delivery fence, а не по одному UI клику.; focus не выполняет mutation",
           "click": "confirmation names principal/entity; await delivery fence",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Remove access",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: grantId + expectedRevision",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Отзывает grant; завершение показывается после server delivery fence, а не по одному UI клику.",
+            "source": "permission.revoke; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "У B открыта Page: новые reads/edits блокируются после revoke receipt.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Убрать доступ",
+            "role": "button",
+            "helpDescription": "Отзывает grant; завершение показывается после server delivery fence, а не по одному UI клику.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "permission.revoke",
           "resultErrors": "denied|revision_conflict|fence_unavailable"
         },
         {
           "id": "public",
-          "label": "Link sharing",
+          "label": "Доступ по ссылке",
           "input": "explicit audience + expiry + allowed action",
           "output": "revocable capability if policy permits",
-          "hover": "privacy help always visible",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "privacy help always visible; Создаёт ограниченную отзывную capability только если policy разрешает эту аудиторию.",
+          "focus": "Видимая focus ring; та же справка: Создаёт ограниченную отзывную capability только если policy разрешает эту аудиторию.; focus не выполняет mutation",
           "click": "separate explicit confirmation; default private",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Link sharing",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: explicit audience + expiry + allowed action",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Создаёт ограниченную отзывную capability только если policy разрешает эту аудиторию.",
+            "source": "share.createCapability; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Ссылка на запись истекает в указанное время; наличие ссылки не добавляет workspace membership.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Доступ по ссылке",
+            "role": "button",
+            "helpDescription": "Создаёт ограниченную отзывную capability только если policy разрешает эту аудиторию.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "share.createCapability",
           "resultErrors": "denied|public_disabled|invalid_expiry"
         }
@@ -702,7 +798,7 @@
     },
     {
       "id": "SH-05",
-      "title": "Notifications / attention",
+      "title": "Уведомления и внимание",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Inbox → attention representations; shell indicator opens same view",
@@ -730,58 +826,82 @@
       "controls": [
         {
           "id": "notification",
-          "label": "Open notification",
+          "label": "Открыть уведомление",
           "input": "notificationId + targetRef",
           "output": "native target and explicit read command",
-          "hover": "row tint; no mark-on-hover",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "row tint; no mark-on-hover; Открывает разрешённый target; просмотр не одобряет запрос агента и не выполняет бизнес-команду.",
+          "focus": "Видимая focus ring; та же справка: Открывает разрешённый target; просмотр не одобряет запрос агента и не выполняет бизнес-команду.; focus не выполняет mutation",
           "click": "open target; mark only actual permitted viewing; receipt",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Open notification",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: notificationId + targetRef",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Открывает разрешённый target; просмотр не одобряет запрос агента и не выполняет бизнес-команду.",
+            "source": "notification.setRead; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Assignment notification открывает Task; permission request остаётся pending.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Открыть уведомление",
+            "role": "button",
+            "helpDescription": "Открывает разрешённый target; просмотр не одобряет запрос агента и не выполняет бизнес-команду.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "notification.setRead",
           "resultErrors": "revision_conflict|target_revoked|denied"
         },
         {
           "id": "read",
-          "label": "Mark selected read",
+          "label": "Отметить прочитанными",
           "input": "notificationIds[] + stateRevision",
           "output": "dedup durable state",
-          "hover": "tooltip number from authorised selection",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "tooltip number from authorised selection; Меняет только read state выбранных уведомлений; failed items остаются в прежнем состоянии.",
+          "focus": "Видимая focus ring; та же справка: Меняет только read state выбранных уведомлений; failed items остаются в прежнем состоянии.; focus не выполняет mutation",
           "click": "batch command, rollback failed rows",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Mark selected read",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: notificationIds[] + stateRevision",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Меняет только read state выбранных уведомлений; failed items остаются в прежнем состоянии.",
+            "source": "notification.setRead; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Два устройства повторяют mark-read, итоговая state revision одна.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Отметить прочитанными",
+            "role": "button",
+            "helpDescription": "Меняет только read state выбранных уведомлений; failed items остаются в прежнем состоянии.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "notification.setRead",
           "resultErrors": "revision_conflict|target_revoked|denied"
         },
         {
           "id": "unread",
-          "label": "Unread filter",
+          "label": "Непрочитанные",
           "input": "attention state/types",
           "output": "paged items and watermark",
-          "hover": "filter chip tint",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "filter chip tint; Фильтрует durable attention state; unread не равен undone или dismissed.",
+          "focus": "Видимая focus ring; та же справка: Фильтрует durable attention state; unread не равен undone или dismissed.; focus не выполняет mutation",
           "click": "server query; unseen≠dismissed",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Unread filter",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: attention state/types",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Фильтрует durable attention state; unread не равен undone или dismissed.",
+            "source": "notification.list; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Прочитанный, но не одобренный agent request остаётся в Решениях.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Непрочитанные",
+            "role": "button",
+            "helpDescription": "Фильтрует durable attention state; unread не равен undone или dismissed.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "notification.list",
           "resultErrors": "denied|invalid_cursor|projection_unavailable"
         }
@@ -878,7 +998,7 @@
     },
     {
       "id": "SH-06",
-      "title": "Activity / event provenance",
+      "title": "Активность и происхождение событий",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Project/entity detail → Activity; Feed contextual",
@@ -906,58 +1026,82 @@
       "controls": [
         {
           "id": "event",
-          "label": "Activity event",
+          "label": "Событие активности",
           "input": "eventId + targetRef + causationId",
           "output": "redacted event detail",
-          "hover": "source/freshness tooltip",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "source/freshness tooltip; Показывает actor, действие, время и причинную связь без приватного тела источника.",
+          "focus": "Видимая focus ring; та же справка: Показывает actor, действие, время и причинную связь без приватного тела источника.; focus не выполняет mutation",
           "click": "open allowed target or evidence receipt",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Activity event",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: eventId + targetRef + causationId",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает actor, действие, время и причинную связь без приватного тела источника.",
+            "source": "activity.list; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "task.assigned связан с Message→Task commandId.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Событие активности",
+            "role": "button",
+            "helpDescription": "Показывает actor, действие, время и причинную связь без приватного тела источника.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "activity.list",
           "resultErrors": "denied|invalid_interval|projection_unavailable"
         },
         {
           "id": "filter",
-          "label": "Activity scope",
+          "label": "Фильтры активности",
           "input": "actor/type/time/project filters + cursor",
           "output": "authorised timeline",
-          "hover": "chip tint; units ISO interval explained",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "chip tint; units ISO interval explained; Ограничивает timeline по actor, типу, Project и интервалу времени.",
+          "focus": "Видимая focus ring; та же справка: Ограничивает timeline по actor, типу, Project и интервалу времени.; focus не выполняет mutation",
           "click": "query without reading private bodies",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Activity scope",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: actor/type/time/project filters + cursor",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Ограничивает timeline по actor, типу, Project и интервалу времени.",
+            "source": "activity.list; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Только изменения Tasks за текущую неделю выбранного Project.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Фильтры активности",
+            "role": "button",
+            "helpDescription": "Ограничивает timeline по actor, типу, Project и интервалу времени.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "activity.list",
           "resultErrors": "denied|invalid_interval|projection_unavailable"
         },
         {
           "id": "receipt",
-          "label": "Command receipt",
+          "label": "Результат команды",
           "input": "commandId",
           "output": "revision/provider/event/projection state",
-          "hover": "status explanation, no private payload",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "status explanation, no private payload; Показывает revision, lifecycle, verification и состояние внешнего provider.",
+          "focus": "Видимая focus ring; та же справка: Показывает revision, lifecycle, verification и состояние внешнего provider.; focus не выполняет mutation",
           "click": "open receipt panel; copy redacted correlation ID",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Command receipt",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: commandId",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает revision, lifecycle, verification и состояние внешнего provider.",
+            "source": "command.getReceipt; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Mail send succeeded не равно readback_verified; unknown требует reconcile.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Результат команды",
+            "role": "button",
+            "helpDescription": "Показывает revision, lifecycle, verification и состояние внешнего provider.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "command.getReceipt",
           "resultErrors": "not_found_or_denied"
         }
@@ -1038,7 +1182,7 @@
     },
     {
       "id": "SH-07",
-      "title": "Agent context / command preview",
+      "title": "Контекст агента и проверка команды",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Sessions → composer/context rail",
@@ -1066,58 +1210,82 @@
       "controls": [
         {
           "id": "context",
-          "label": "Attach context",
+          "label": "Добавить контекст",
           "input": "EntityRef[] + allowed fields",
           "output": "authorized context manifest, not full stored transcript",
-          "hover": "chip preview title only if granted",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "chip preview title only if granted; Прикрепляет refs и разрешённые поля; агент не получает весь сохранённый transcript автоматически.",
+          "focus": "Видимая focus ring; та же справка: Прикрепляет refs и разрешённые поля; агент не получает весь сохранённый transcript автоматически.; focus не выполняет mutation",
           "click": "picker→sources preview→attach; denied refs omitted with neutral reason",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Attach context",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: EntityRef[] + allowed fields",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Прикрепляет refs и разрешённые поля; агент не получает весь сохранённый transcript автоматически.",
+            "source": "agent.resolveContext; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Добавить Company и Task; private Mail teammate не раскрывается.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Добавить контекст",
+            "role": "button",
+            "helpDescription": "Прикрепляет refs и разрешённые поля; агент не получает весь сохранённый transcript автоматически.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "agent.resolveContext",
           "resultErrors": "denied|source_revoked|context_too_large"
         },
         {
           "id": "preview",
-          "label": "Review write",
+          "label": "Проверить изменение",
           "input": "typed command draft + expectedRevision + scope",
           "output": "validated diff and execution grant requirement",
-          "hover": "shows affected entity/action",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "shows affected entity/action; Показывает текущий typed diff и требует новую проверку после изменения source revision.",
+          "focus": "Видимая focus ring; та же справка: Показывает текущий typed diff и требует новую проверку после изменения source revision.; focus не выполняет mutation",
           "click": "confirm current diff; changed revision requires new preview",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Review write",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: typed command draft + expectedRevision + scope",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает текущий typed diff и требует новую проверку после изменения source revision.",
+            "source": "agent.previewCommand; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Агент предлагает назначить Task пользователю B; confirm связан с этим diff.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Проверить изменение",
+            "role": "button",
+            "helpDescription": "Показывает текущий typed diff и требует новую проверку после изменения source revision.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "agent.previewCommand",
           "resultErrors": "denied|unsupported_operation|revision_conflict"
         },
         {
           "id": "toolreceipt",
-          "label": "Tool result",
+          "label": "Результат инструмента",
           "input": "receipt/ref/source spans",
           "output": "verified result/context citations",
-          "hover": "source/freshness hint",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "source/freshness hint; Открывает подтверждение domain command и читаемые source citations.",
+          "focus": "Видимая focus ring; та же справка: Открывает подтверждение domain command и читаемые source citations.; focus не выполняет mutation",
           "click": "open source through gateway; no direct legacy write",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Tool result",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: receipt/ref/source spans",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Открывает подтверждение domain command и читаемые source citations.",
+            "source": "agent.invokeDomain through agent.executeCommand adapter; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "TaskRef/revision совпадают с последующим task.get.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Результат инструмента",
+            "role": "button",
+            "helpDescription": "Открывает подтверждение domain command и читаемые source citations.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "agent.executeCommand",
           "resultErrors": "denied|preview_expired|revision_conflict|grant_required"
         }
@@ -1211,7 +1379,7 @@
     },
     {
       "id": "SH-08",
-      "title": "Session sharing / viewer",
+      "title": "Доступ к сессии и экспорт",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Session detail → share/export/viewer",
@@ -1239,39 +1407,55 @@
       "controls": [
         {
           "id": "audience",
-          "label": "Export audience",
+          "label": "Кому доступна сессия",
           "input": "recipient/policy + selected messages",
           "output": "redacted artifact preview/hash",
-          "hover": "help mixed-source limits",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "help mixed-source limits; Выбирает аудиторию export projection и показывает redactions источников.",
+          "focus": "Видимая focus ring; та же справка: Выбирает аудиторию export projection и показывает redactions источников.; focus не выполняет mutation",
           "click": "compute safe projection; cannot grant private tool output implicitly",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Export audience",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: recipient/policy + selected messages",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Выбирает аудиторию export projection и показывает redactions источников.",
+            "source": "session.previewExport; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Public Page остаётся; private Mail tool output исключён из export.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Кому доступна сессия",
+            "role": "button",
+            "helpDescription": "Выбирает аудиторию export projection и показывает redactions источников.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "session.previewExport",
           "resultErrors": "denied|source_revoked|audience_not_permitted"
         },
         {
           "id": "publish",
-          "label": "Share session",
+          "label": "Поделиться сессией",
           "input": "approved projection hash + expiry",
           "output": "revocable share receipt",
-          "hover": "button explains audience",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "button explains audience; Публикует только проверенный digest projection с expiry и current source grants.",
+          "focus": "Видимая focus ring; та же справка: Публикует только проверенный digest projection с expiry и current source grants.; focus не выполняет mutation",
           "click": "publish only current hash; stale source permission invalidates",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Share session",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: approved projection hash + expiry",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Публикует только проверенный digest projection с expiry и current source grants.",
+            "source": "session.shareAuthorized through session.publishExport adapter; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Source revoke между preview и publish отклоняет старый digest.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Поделиться сессией",
+            "role": "button",
+            "helpDescription": "Публикует только проверенный digest projection с expiry и current source grants.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "session.publishExport",
           "resultErrors": "denied|preview_stale|source_revoked|digest_mismatch"
         }
@@ -1353,7 +1537,7 @@
     },
     {
       "id": "SH-09",
-      "title": "Memory provenance / retraction",
+      "title": "Источники и исправление памяти",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Memory → item detail",
@@ -1381,39 +1565,55 @@
       "controls": [
         {
           "id": "source",
-          "label": "Memory source",
+          "label": "Источники памяти",
           "input": "factRef + sourceRefs + timestamps",
           "output": "authorized source/evidence",
-          "hover": "freshness and source tooltip",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "freshness and source tooltip; Показывает provenance, source refs и время получения данных факта.",
+          "focus": "Видимая focus ring; та же справка: Показывает provenance, source refs и время получения данных факта.; focus не выполняет mutation",
           "click": "open source; denied source text purged",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Memory source",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: factRef + sourceRefs + timestamps",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает provenance, source refs и время получения данных факта.",
+            "source": "memory.getProvenance; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Факт «Acme ждёт КП» ссылается на разрешённое письмо.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Источники памяти",
+            "role": "button",
+            "helpDescription": "Показывает provenance, source refs и время получения данных факта.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "memory.getProvenance",
           "resultErrors": "not_found_or_denied|source_revoked"
         },
         {
           "id": "correction",
-          "label": "Correct/retract",
+          "label": "Исправить или отозвать",
           "input": "factRef + expectedRevision + reason",
           "output": "retraction/correction receipt",
-          "hover": "explain agent effect",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "explain agent effect; Меняет факт через revisioned command и обновляет retrieval watermark.",
+          "focus": "Видимая focus ring; та же справка: Меняет факт через revisioned command и обновляет retrieval watermark.; focus не выполняет mutation",
           "click": "preview→confirm; subsequent retrieval excludes retracted source",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Correct/retract",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: factRef + expectedRevision + reason",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Меняет факт через revisioned command и обновляет retrieval watermark.",
+            "source": "memory.correctFact; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Отозванный факт больше не появляется в новом ответе агента.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Исправить или отозвать",
+            "role": "button",
+            "helpDescription": "Меняет факт через revisioned command и обновляет retrieval watermark.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "memory.correctFact",
           "resultErrors": "denied|revision_conflict"
         }
@@ -1496,7 +1696,7 @@
     },
     {
       "id": "SH-10",
-      "title": "Automation rule editor / run receipt",
+      "title": "Правило автоматизации и результаты",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Automations → rule detail/runs",
@@ -1524,58 +1724,82 @@
       "controls": [
         {
           "id": "trigger",
-          "label": "Event trigger",
+          "label": "Событие запуска",
           "input": "canonical event kind + workspace filter",
           "output": "validated trigger subscription",
-          "hover": "event semantics help",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "event semantics help; Выбирает зарегистрированный event schema и проверяемый фильтр рабочей области.",
+          "focus": "Видимая focus ring; та же справка: Выбирает зарегистрированный event schema и проверяемый фильтр рабочей области.; focus не выполняет mutation",
           "click": "select event schema; no ambiguous string trigger",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Event trigger",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: canonical event kind + workspace filter",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Выбирает зарегистрированный event schema и проверяемый фильтр рабочей области.",
+            "source": "automation.registerTrigger; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "task.assigned запускает правило только для Project «Запуск».",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Событие запуска",
+            "role": "button",
+            "helpDescription": "Выбирает зарегистрированный event schema и проверяемый фильтр рабочей области.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "automation.registerTrigger",
           "resultErrors": "denied|unknown_event|invalid_filter"
         },
         {
           "id": "action",
-          "label": "Action and budget",
+          "label": "Действие и лимиты",
           "input": "typed domain command + execution policy + limits",
           "output": "preview/test receipt",
-          "hover": "cost/source/unit tooltip",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "cost/source/unit tooltip; Показывает typed command, разрешения и budget; fixture dry-run не вызывает providers.",
+          "focus": "Видимая focus ring; та же справка: Показывает typed command, разрешения и budget; fixture dry-run не вызывает providers.; focus не выполняет mutation",
           "click": "dry-run fixture labelled; enable only permitted live action",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Action and budget",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: typed domain command + execution policy + limits",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает typed command, разрешения и budget; fixture dry-run не вызывает providers.",
+            "source": "automation.dryRun; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Два одинаковых event дают одну side effect; dry-run externalWrites=0.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Действие и лимиты",
+            "role": "button",
+            "helpDescription": "Показывает typed command, разрешения и budget; fixture dry-run не вызывает providers.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "automation.dryRun",
           "resultErrors": "denied|invalid_fixture|budget_exceeded"
         },
         {
           "id": "run",
-          "label": "Run details",
+          "label": "Прогон автоматизации",
           "input": "runId + eventId + dedupKey",
           "output": "attempts/redacted receipt/recovery",
-          "hover": "status explanation",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "status explanation; Показывает eventId, dedupKey, попытки и receipts; retry сначала проверяет прошлый результат.",
+          "focus": "Видимая focus ring; та же справка: Показывает eventId, dedupKey, попытки и receipts; retry сначала проверяет прошлый результат.; focus не выполняет mutation",
           "click": "inspect; retry reconciles side effects, never blind resend",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Run details",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: runId + eventId + dedupKey",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает eventId, dedupKey, попытки и receipts; retry сначала проверяет прошлый результат.",
+            "source": "automation.getRun; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Неизвестный результат email send переходит в reconcile без повторной отправки.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Прогон автоматизации",
+            "role": "button",
+            "helpDescription": "Показывает eventId, dedupKey, попытки и receipts; retry сначала проверяет прошлый результат.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "automation.getRun",
           "resultErrors": "not_found_or_denied"
         }
@@ -1681,7 +1905,7 @@
     },
     {
       "id": "SH-11",
-      "title": "Connections / workspace capabilities",
+      "title": "Соединения и возможности workspace",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Connections → provider detail",
@@ -1709,58 +1933,82 @@
       "controls": [
         {
           "id": "connect",
-          "label": "Connect provider",
+          "label": "Подключить провайдер",
           "input": "provider kind + test tenant + scopes",
           "output": "OAuth/server connection ref",
-          "hover": "scope and outbound data explanation",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "scope and outbound data explanation; Показывает запрашиваемые scopes и назначение перед OAuth; секрет хранится сервером.",
+          "focus": "Видимая focus ring; та же справка: Показывает запрашиваемые scopes и назначение перед OAuth; секрет хранится сервером.; focus не выполняет mutation",
           "click": "browser OAuth→server secret→probe; no client token snapshot",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Connect provider",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: provider kind + test tenant + scopes",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает запрашиваемые scopes и назначение перед OAuth; секрет хранится сервером.",
+            "source": "connection.startAuth; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Google Calendar read-only не включает право менять событие.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Подключить провайдер",
+            "role": "button",
+            "helpDescription": "Показывает запрашиваемые scopes и назначение перед OAuth; секрет хранится сервером.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "connection.startAuth",
           "resultErrors": "denied|unsupported_provider|scope_not_permitted"
         },
         {
           "id": "probe",
-          "label": "Verify connection",
+          "label": "Проверить соединение",
           "input": "connectionRef",
           "output": "capabilities/last read-back/error",
-          "hover": "source/time tooltip",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "source/time tooltip; Выполняет probe фактического adapter и показывает время последнего readback.",
+          "focus": "Видимая focus ring; та же справка: Выполняет probe фактического adapter и показывает время последнего readback.; focus не выполняет mutation",
           "click": "probe actual installed adapter; unavailable remains unavailable",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Verify connection",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: connectionRef",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Выполняет probe фактического adapter и показывает время последнего readback.",
+            "source": "connection.probe; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Token есть, adapter unavailable: запись событий остаётся disabled.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Проверить соединение",
+            "role": "button",
+            "helpDescription": "Выполняет probe фактического adapter и показывает время последнего readback.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "connection.probe",
           "resultErrors": "denied|token_expired|adapter_unavailable"
         },
         {
           "id": "mode",
-          "label": "Runtime mode",
+          "label": "Режим workspace",
           "input": "standalone/shared workspace binding",
           "output": "writer mode receipt",
-          "hover": "explains local vs shared authority",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "explains local vs shared authority; Переключает standalone/shared authority после проверки сервиса и fencing старого writer.",
+          "focus": "Видимая focus ring; та же справка: Переключает standalone/shared authority после проверки сервиса и fencing старого writer.; focus не выполняет mutation",
           "click": "verify service before switch; fence old writer; no dual write",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Runtime mode",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: standalone/shared workspace binding",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Переключает standalone/shared authority после проверки сервиса и fencing старого writer.",
+            "source": "workspace.switchMode; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Личный Task не отправляется в shared workspace автоматически.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Режим workspace",
+            "role": "button",
+            "helpDescription": "Переключает standalone/shared authority после проверки сервиса и fencing старого writer.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "workspace.switchMode",
           "resultErrors": "denied|service_unavailable|active_writer|revision_conflict"
         }
@@ -1856,7 +2104,7 @@
     },
     {
       "id": "SH-12",
-      "title": "Files / upload / safe viewer",
+      "title": "Файлы и безопасный просмотр",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Project Assets / attachments → viewer",
@@ -1884,58 +2132,82 @@
       "controls": [
         {
           "id": "upload",
-          "label": "Upload file",
+          "label": "Загрузить файл",
           "input": "file bytes + checksum + parentRef + limits",
           "output": "upload ref/progress/scanning/ready receipt",
-          "hover": "size/type/storage explanation",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "size/type/storage explanation; Загружает части с checksum и показывает отдельные uploading/scanning/ready состояния.",
+          "focus": "Видимая focus ring; та же справка: Загружает части с checksum и показывает отдельные uploading/scanning/ready состояния.; focus не выполняет mutation",
           "click": "upload chunks/retry idempotently; no executable preview before quarantine passes",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Upload file",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: file bytes + checksum + parentRef + limits",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Загружает части с checksum и показывает отдельные uploading/scanning/ready состояния.",
+            "source": "file.beginUpload; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Restart после part2 продолжает тот же uploadId; MIME mismatch не становится ready.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Загрузить файл",
+            "role": "button",
+            "helpDescription": "Загружает части с checksum и показывает отдельные uploading/scanning/ready состояния.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "file.beginUpload",
           "resultErrors": "denied|size_limit|unsupported_mime|source_revoked"
         },
         {
           "id": "download",
-          "label": "Download",
+          "label": "Скачать",
           "input": "FileRef + policy epoch",
           "output": "proxy/short-lived capability≤60s",
-          "hover": "size/source help",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "size/source help; Проверяет read grant и выдаёт proxy или короткую capability с expiry.",
+          "focus": "Видимая focus ring; та же справка: Проверяет read grant и выдаёт proxy или короткую capability с expiry.; focus не выполняет mutation",
           "click": "recheck ACL; revoked download rejected",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Download",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: FileRef + policy epoch",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Проверяет read grant и выдаёт proxy или короткую capability с expiry.",
+            "source": "file.download; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "После revoke старый signed URL может действовать не дольше заявленного residual TTL.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Скачать",
+            "role": "button",
+            "helpDescription": "Проверяет read grant и выдаёт proxy или короткую capability с expiry.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "file.download",
           "resultErrors": "not_found_or_denied|quarantined|deleted"
         },
         {
           "id": "anchor",
-          "label": "Link page/time/line",
+          "label": "Ссылка на фрагмент",
           "input": "FileRef + representation anchor",
           "output": "typed source link",
-          "hover": "preview authorized anchor",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "preview authorized anchor; Сохраняет typed anchor страницы, времени или строки без копирования файла.",
+          "focus": "Видимая focus ring; та же справка: Сохраняет typed anchor страницы, времени или строки без копирования файла.; focus не выполняет mutation",
           "click": "open safe PDF/image/video/code renderer",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Link page/time/line",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: FileRef + representation anchor",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Сохраняет typed anchor страницы, времени или строки без копирования файла.",
+            "source": "file.resolveAnchor; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Recording 02:15 открывается по тому же FileRef и time anchor.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Ссылка на фрагмент",
+            "role": "button",
+            "helpDescription": "Сохраняет typed anchor страницы, времени или строки без копирования файла.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "file.resolveAnchor",
           "resultErrors": "denied|invalid_anchor|unsupported_type"
         }
@@ -2051,7 +2323,7 @@
     },
     {
       "id": "SH-13",
-      "title": "Spreadsheet Page representation",
+      "title": "Таблица внутри Page",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Pages → representation spreadsheet",
@@ -2079,39 +2351,55 @@
       "controls": [
         {
           "id": "cell",
-          "label": "Cell/value/formula",
+          "label": "Ячейка и формула",
           "input": "sheetRef + cellAddress + typed value/formula + revision",
           "output": "revisioned value/computed result/error",
-          "hover": "formula/source/units tooltip",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "formula/source/units tooltip; Изменяет одну ячейку; formula вычисляется ограниченным движком, не JavaScript.",
+          "focus": "Видимая focus ring; та же справка: Изменяет одну ячейку; formula вычисляется ограниченным движком, не JavaScript.; focus не выполняет mutation",
           "click": "edit→validate→receipt; no arbitrary JS formula execution",
           "keyboard": "arrows navigation; Enter edit/commit; Escape cancel",
           "help": {
-            "meaning": "Cell/value/formula",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: sheetRef + cellAddress + typed value/formula + revision",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Изменяет одну ячейку; formula вычисляется ограниченным движком, не JavaScript.",
+            "source": "spreadsheet.editCell through sheet.setCell adapter; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "A1=2,A2=3,A3=SUM(A1:A2) даёт 5 после reload.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Ячейка и формула",
+            "role": "gridcell",
+            "helpDescription": "Изменяет одну ячейку; formula вычисляется ограниченным движком, не JavaScript.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "sheet.setCell",
           "resultErrors": "denied|revision_conflict|formula_invalid|formula_budget"
         },
         {
           "id": "range",
-          "label": "Range/import/export",
+          "label": "Импорт и экспорт диапазона",
           "input": "range + validated CSV input",
           "output": "bounded import diff/export artifact",
-          "hover": "row/column count units",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "row/column count units; Показывает bounded diff CSV до записи и число строк/колонок.",
+          "focus": "Видимая focus ring; та же справка: Показывает bounded diff CSV до записи и число строк/колонок.; focus не выполняет mutation",
           "click": "preview import+confirm; formula/csv injection sanitized",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Range/import/export",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: range + validated CSV input",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает bounded diff CSV до записи и число строк/колонок.",
+            "source": "sheet.previewImport; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Импорт 20×3 не меняет sheet до подтверждения текущего preview digest.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Импорт и экспорт диапазона",
+            "role": "button",
+            "helpDescription": "Показывает bounded diff CSV до записи и число строк/колонок.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "sheet.previewImport",
           "resultErrors": "denied|size_limit|csv_invalid"
         }
@@ -2206,7 +2494,7 @@
     },
     {
       "id": "SH-14",
-      "title": "Canvas Page representation",
+      "title": "Холст внутри Page",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Pages → representation canvas",
@@ -2234,39 +2522,55 @@
       "controls": [
         {
           "id": "node",
-          "label": "Canvas node",
+          "label": "Узел холста",
           "input": "nodeId + geometry + safe payload + baseRevision",
           "output": "canonical whole-file revision or conflict",
-          "hover": "handles on hover/focus",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "handles on hover/focus; Перемещает/меняет размер узла через whole-file CAS; stale revision сохраняет конфликтный draft.",
+          "focus": "Видимая focus ring; та же справка: Перемещает/меняет размер узла через whole-file CAS; stale revision сохраняет конфликтный draft.; focus не выполняет mutation",
           "click": "preview move/resize→CAS; simultaneous conflict compare",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Canvas node",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: nodeId + geometry + safe payload + baseRevision",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Перемещает/меняет размер узла через whole-file CAS; stale revision сохраняет конфликтный draft.",
+            "source": "canvas.save through canvas.patchRevision adapter; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "A и B двигают узел с base17: один commit, у второго conflict.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Узел холста",
+            "role": "group",
+            "helpDescription": "Перемещает/меняет размер узла через whole-file CAS; stale revision сохраняет конфликтный draft.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "canvas.patchRevision",
           "resultErrors": "denied|revision_conflict|schema_invalid|size_limit"
         },
         {
           "id": "entitynode",
-          "label": "Linked entity node",
+          "label": "Связанный объект",
           "input": "EntityRef + geometry",
           "output": "safe reference node",
-          "hover": "authorized peek",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "authorized peek; Добавляет ссылочный узел; thumbnail и peek требуют read target grant.",
+          "focus": "Видимая focus ring; та же справка: Добавляет ссылочный узел; thumbnail и peek требуют read target grant.; focus не выполняет mutation",
           "click": "link picker; no hidden entity thumbnail",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Linked entity node",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: EntityRef + geometry",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Добавляет ссылочный узел; thumbnail и peek требуют read target grant.",
+            "source": "canvas.linkEntity; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Company node сохраняет EntityRef, а не вторую CRM запись.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Связанный объект",
+            "role": "button",
+            "helpDescription": "Добавляет ссылочный узел; thumbnail и peek требуют read target grant.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "canvas.linkEntity",
           "resultErrors": "denied|target_denied|revision_conflict"
         }
@@ -2349,7 +2653,7 @@
     },
     {
       "id": "SH-15",
-      "title": "Skills / Sources / coding PR review",
+      "title": "Навыки, источники и review кода",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Skills/Sources and Session artifact review",
@@ -2377,58 +2681,82 @@
       "controls": [
         {
           "id": "skill",
-          "label": "Install/update skill",
+          "label": "Установить или обновить навык",
           "input": "origin/version/digest/capabilities",
           "output": "reviewed install receipt",
-          "hover": "origin/license/version help",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "origin/license/version help; Показывает origin/version/digest/license и изменения tool capabilities до установки.",
+          "focus": "Видимая focus ring; та же справка: Показывает origin/version/digest/license и изменения tool capabilities до установки.; focus не выполняет mutation",
           "click": "review diff+tool permissions; no silent trust upgrade",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Install/update skill",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: origin/version/digest/capabilities",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает origin/version/digest/license и изменения tool capabilities до установки.",
+            "source": "skill.previewInstall; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Обновление навыка с новым filesystem scope требует отдельного review.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Установить или обновить навык",
+            "role": "button",
+            "helpDescription": "Показывает origin/version/digest/license и изменения tool capabilities до установки.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "skill.previewInstall",
           "resultErrors": "origin_untrusted|license_review_required|digest_mismatch"
         },
         {
           "id": "patch",
-          "label": "Review patch",
+          "label": "Проверить изменения кода",
           "input": "baseSha + diff + tests + source manifest",
           "output": "reviewed branch/draft PR evidence",
-          "hover": "changed-file origin/test receipt",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "changed-file origin/test receipt; Показывает реальный diff, baseSha, ownership и test receipts.",
+          "focus": "Видимая focus ring; та же справка: Показывает реальный diff, baseSha, ownership и test receipts.; focus не выполняет mutation",
           "click": "read real diff; do not mark absent diff viewer implemented",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Review patch",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: baseSha + diff + tests + source manifest",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает реальный diff, baseSha, ownership и test receipts.",
+            "source": "coding.reviewPatch; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Отсутствующий diff не превращается в «проверено» из-за done cloud run.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Проверить изменения кода",
+            "role": "button",
+            "helpDescription": "Показывает реальный diff, baseSha, ownership и test receipts.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "coding.reviewPatch",
           "resultErrors": "invalid_patch|base_stale|receipt_missing"
         },
         {
           "id": "apply",
-          "label": "Apply patch",
+          "label": "Применить patch",
           "input": "reviewed digest + clean base + ownership",
           "output": "commit/branch/read-back receipt",
-          "hover": "scope and target branch",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "scope and target branch; Проверяет clean base, digest и allowedPaths; создаёт изолированную ветку/commit.",
+          "focus": "Видимая focus ring; та же справка: Проверяет clean base, digest и allowedPaths; создаёт изолированную ветку/commit.; focus не выполняет mutation",
           "click": "recheck base/paths; no automatic merge/deploy",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Apply patch",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: reviewed digest + clean base + ownership",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Проверяет clean base, digest и allowedPaths; создаёт изолированную ветку/commit.",
+            "source": "coding.applyPatch; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Patch по старому baseSha отклоняется до изменения файлов.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Применить patch",
+            "role": "button",
+            "helpDescription": "Проверяет clean base, digest и allowedPaths; создаёт изолированную ветку/commit.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "coding.applyPatch",
           "resultErrors": "base_stale|dirty_checkout|unowned_path|license_review_required"
         }
@@ -2520,7 +2848,7 @@
     },
     {
       "id": "SH-16",
-      "title": "Sync/recovery status and mobile capability",
+      "title": "Синхронизация и возможности устройства",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Entity header sync detail; narrow view",
@@ -2548,39 +2876,55 @@
       "controls": [
         {
           "id": "sync",
-          "label": "Inspect sync",
+          "label": "Состояние синхронизации",
           "input": "ref + pending commands + policy lease",
           "output": "local durable/queued/ack/rejected status",
-          "hover": "lastverified timestamp",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "lastverified timestamp; Показывает local durable frontier, pending commands, ACK и policy lease отдельно.",
+          "focus": "Видимая focus ring; та же справка: Показывает local durable frontier, pending commands, ACK и policy lease отдельно.; focus не выполняет mutation",
           "click": "retry only valid policy; export draft if permitted",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Inspect sync",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: ref + pending commands + policy lease",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает local durable frontier, pending commands, ACK и policy lease отдельно.",
+            "source": "sync.getState; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Socket connected без durable ACK оставляет edits «Сохранено на устройстве».",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Состояние синхронизации",
+            "role": "button",
+            "helpDescription": "Показывает local durable frontier, pending commands, ACK и policy lease отдельно.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "sync.getState",
           "resultErrors": "denied|state_unavailable"
         },
         {
           "id": "capability",
-          "label": "Device feature",
+          "label": "Возможность устройства",
           "input": "device capability + permission state",
           "output": "supported/unavailable/request-device result",
-          "hover": "help platform requirements",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "help platform requirements; Объясняет поддержку платформы и состояние OS permission.",
+          "focus": "Видимая focus ring; та же справка: Объясняет поддержку платформы и состояние OS permission.; focus не выполняет mutation",
           "click": "request OS permission only on explicit user feature action",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Device feature",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: device capability + permission state",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Объясняет поддержку платформы и состояние OS permission.",
+            "source": "device.getCapability; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Linux renderer fixture не подтверждает macOS microphone capture.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Возможность устройства",
+            "role": "button",
+            "helpDescription": "Объясняет поддержку платформы и состояние OS permission.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "device.getCapability",
           "resultErrors": "device_unavailable"
         }
@@ -2661,7 +3005,7 @@
     },
     {
       "id": "SH-17",
-      "title": "Cloud work packet review",
+      "title": "Пакет облачной реализации",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Cloud Runs settings/run detail; implementation runner contract",
@@ -2689,39 +3033,55 @@
       "controls": [
         {
           "id": "packet",
-          "label": "Select work package",
+          "label": "Пакет реализации",
           "input": "WP id + integration SHA + prerequisite receipts",
           "output": "reviewable prompt/input manifests",
-          "hover": "deps/owner/cost/time units",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "deps/owner/cost/time units; Показывает WP, exact inputSha, dependencies, owned files, lanes и лимиты до dispatch.",
+          "focus": "Видимая focus ring; та же справка: Показывает WP, exact inputSha, dependencies, owned files, lanes и лимиты до dispatch.; focus не выполняет mutation",
           "click": "validate ready and ownership before submitting; not launched by spec build",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Select work package",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: WP id + integration SHA + prerequisite receipts",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Показывает WP, exact inputSha, dependencies, owned files, lanes и лимиты до dispatch.",
+            "source": "coding.preparePacket; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Без receipts ready только WP-01/WP-48; пакет сам не запускает cloud job.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Пакет реализации",
+            "role": "button",
+            "helpDescription": "Показывает WP, exact inputSha, dependencies, owned files, lanes и лимиты до dispatch.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "coding.preparePacket",
           "resultErrors": "spec_stale|dependency_missing|base_stale|ownership_conflict"
         },
         {
           "id": "results",
-          "label": "Cloud results",
+          "label": "Результаты облачного задания",
           "input": "runId + output manifest/hash",
           "output": "tests/patch/receipts/lane results",
-          "hover": "execution vs verification distinction",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "execution vs verification distinction; Разделяет executor lifecycle и feature verification, показывает diff и per-lane proof.",
+          "focus": "Видимая focus ring; та же справка: Разделяет executor lifecycle и feature verification, показывает diff и per-lane proof.; focus не выполняет mutation",
           "click": "import review artifact; no feature complete from done state alone",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Cloud results",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: runId + output manifest/hash",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Разделяет executor lifecycle и feature verification, показывает diff и per-lane proof.",
+            "source": "coding.verifyResults; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Linux pass + pending macOS оставляют feature incomplete.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Результаты облачного задания",
+            "role": "button",
+            "helpDescription": "Разделяет executor lifecycle и feature verification, показывает diff и per-lane proof.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "coding.verifyResults",
           "resultErrors": "artifact_mismatch|test_failed|provider_not_verified"
         }
@@ -2802,7 +3162,7 @@
     },
     {
       "id": "SH-18",
-      "title": "Reminder detail / snooze / source",
+      "title": "Напоминание и его источник",
       "implementationStatus": "SPECIFICATION_TARGET_EXTENSION",
       "navigation": {
         "placement": "Tasks → reminder detail; Inbox notification → same reminder ref",
@@ -2830,58 +3190,82 @@
       "controls": [
         {
           "id": "open",
-          "label": "Open reminder",
+          "label": "Открыть напоминание",
           "input": "ReminderRef",
           "output": "same reminder detail route and policy",
-          "hover": "name/time/zone help, no source private title",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "name/time/zone help, no source private title; Открывает reminder detail того же ID; переход к source — отдельное действие.",
+          "focus": "Видимая focus ring; та же справка: Открывает reminder detail того же ID; переход к source — отдельное действие.; focus не выполняет mutation",
           "click": "open reminder itself, not auto-navigate underlying source",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Open reminder",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: ReminderRef",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Открывает reminder detail того же ID; переход к source — отдельное действие.",
+            "source": "reminder.get; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Reminder из Tasks и Inbox имеет один Ref; A→B меняет displayed identity.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Открыть напоминание",
+            "role": "button",
+            "helpDescription": "Открывает reminder detail того же ID; переход к source — отдельное действие.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "reminder.get",
           "resultErrors": "not_found_or_denied"
         },
         {
           "id": "snooze",
-          "label": "Snooze",
+          "label": "Отложить напоминание",
           "input": "ReminderRef + untilInstant + IANAzone + expectedRevision",
           "output": "receipt, next occurrence and notification state",
-          "hover": "date/time/recurrence impact explained",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "date/time/recurrence impact explained; Меняет next occurrence с timezone и revision, сохраняя recurrence rule.",
+          "focus": "Видимая focus ring; та же справка: Меняет next occurrence с timezone и revision, сохраняя recurrence rule.; focus не выполняет mutation",
           "click": "choose until→preview→confirm; recurrence not silently rewritten",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Snooze",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: ReminderRef + untilInstant + IANAzone + expectedRevision",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Меняет next occurrence с timezone и revision, сохраняя recurrence rule.",
+            "source": "reminder.snooze; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Отложить до 09:00 Europe/Berlin; stale revision не перезаписывает чужое изменение.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Отложить напоминание",
+            "role": "button",
+            "helpDescription": "Меняет next occurrence с timezone и revision, сохраняя recurrence rule.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "reminder.snooze",
           "resultErrors": "denied|invalid_until|revision_conflict"
         },
         {
           "id": "source",
-          "label": "Source link",
+          "label": "Открыть источник",
           "input": "ReminderRef + sourceRef",
           "output": "authorized source detail or neutral denied placeholder",
-          "hover": "permission-filtered peek only",
-          "focus": "Visible semantic focus ring; same explanatory help as hover; no mutation on focus",
+          "hover": "permission-filtered peek only; Открывает исходную сущность только после текущей проверки её permissions.",
+          "focus": "Видимая focus ring; та же справка: Открывает исходную сущность только после текущей проверки её permissions.; focus не выполняет mutation",
           "click": "open source separately; no implicit source read grant",
           "keyboard": "Tab → focus; Enter/Space → action; Escape closes overlay",
           "help": {
-            "meaning": "Source link",
-            "source": "permission-filtered canonical gateway; freshness from query watermark/read-back receipt",
-            "example": "Synthetic workspace example: ReminderRef + sourceRef",
-            "access": "hover500ms / focus / explicit help button"
+            "meaning": "Открывает исходную сущность только после текущей проверки её permissions.",
+            "source": "entity.resolve; returned revision/watermark or receipt readback",
+            "freshness": "Показывать asOf/updatedAt/lastReadBackAt из результата; для local client action время последней сохранённой view state. Не подменять время данных текущими часами.",
+            "example": "Reminder доступен, source Mail denied: private title/body не показываются.",
+            "access": "hover/focus/explicit-help-click"
           },
-          "failure": "Preserve input; show permission, revision or transport error inline; no success without receipt",
+          "failure": "Denied/revoked: «Объект недоступен» и purge denied preview. Иные ошибки: видимое сообщение по errorCode; draft сохраняется только при действующей policy; pending dispatch не обещает отмену side effect.",
+          "a11y": {
+            "accessibleName": "Открыть источник",
+            "role": "button",
+            "helpDescription": "Открывает исходную сущность только после текущей проверки её permissions.",
+            "disabledReasonVisible": true,
+            "focusReturn": "После закрытия overlay вернуть focus на trigger или ближайший разрешённый контрол"
+          },
           "canonicalOperation": "entity.resolve",
           "resultErrors": "not_found_or_denied"
         }

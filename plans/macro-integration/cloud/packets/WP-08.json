@@ -75,7 +75,12 @@
     "apps/electron/src/shared/routes.ts",
     "apps/electron/src/shared/route-parser.ts",
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
-    "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx"
+    "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/collaboration-walkthroughs.md",
+    "docs/macro-integration/product/domain-forms.md"
   ],
   "goal": "Two users exchange channel messages; same API posts Company discussion; edit/delete/replies persist and notify authorized subscribers; agent transcript stays separate",
   "expectedResults": [
@@ -1303,6 +1308,8 @@
       "apps/electron/src/renderer/components/discussions/EntityDiscussion.tsx",
       "tests/macro-integration/ui/col-07.spec.ts",
       "tests/macro-integration/ui/col-08.spec.ts",
+      "tests/macro-integration/ui/col-09.spec.ts",
+      "tests/macro-integration/ui/col-10.spec.ts",
       "apps/electron/src/renderer/contexts/NavigationContext.tsx",
       "apps/electron/src/renderer/pages/ChatPage.tsx",
       "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
@@ -1312,9 +1319,7 @@
       "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
       "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
       "packages/shared/src/workspace-domain/messaging/contracts.ts",
-      "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx",
-      "tests/macro-integration/ui/col-09.spec.ts",
-      "tests/macro-integration/ui/col-10.spec.ts"
+      "apps/electron/src/renderer/components/app-shell/SessionPresenceAvatars.tsx"
     ],
     "existingUiSeams": [
       "apps/electron/src/renderer/contexts/NavigationContext.tsx",
@@ -1332,11 +1337,11 @@
       "apps/electron/src/renderer/components/discussions/EntityDiscussion.tsx",
       "tests/macro-integration/ui/col-07.spec.ts",
       "tests/macro-integration/ui/col-08.spec.ts",
+      "tests/macro-integration/ui/col-09.spec.ts",
+      "tests/macro-integration/ui/col-10.spec.ts",
       "apps/electron/src/renderer/components/messaging/MessageTimeline.tsx",
       "apps/electron/src/renderer/components/messaging/MessageComposer.tsx",
-      "packages/shared/src/workspace-domain/messaging/contracts.ts",
-      "tests/macro-integration/ui/col-09.spec.ts",
-      "tests/macro-integration/ui/col-10.spec.ts"
+      "packages/shared/src/workspace-domain/messaging/contracts.ts"
     ],
     "screenFinalDoD": "Referenced full-screen contracts are shared final behavior; this WP owns only uiSlice goal. Reuse prerequisite code. Do not mark full screen done before other feature owners finish."
   },
@@ -1344,5 +1349,89 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "COL-07.create-channel",
+      "COL-07.dm",
+      "COL-07.group",
+      "COL-07.search",
+      "COL-08.compose",
+      "COL-08.attach",
+      "COL-08.reply",
+      "COL-08.reaction",
+      "COL-08.call",
+      "COL-08.more",
+      "COL-09.send",
+      "COL-09.recipient",
+      "COL-09.add",
+      "COL-09.mute",
+      "COL-10.root",
+      "COL-10.reply",
+      "COL-10.follow",
+      "COL-10.task"
+    ],
+    "featureControls": [
+      "COL-07.create-channel",
+      "COL-07.dm",
+      "COL-07.group",
+      "COL-07.search",
+      "COL-08.compose",
+      "COL-08.attach",
+      "COL-08.reply",
+      "COL-08.reaction",
+      "COL-08.call",
+      "COL-08.more",
+      "COL-09.send",
+      "COL-09.recipient",
+      "COL-09.add",
+      "COL-09.mute",
+      "COL-10.root",
+      "COL-10.reply",
+      "COL-10.follow",
+      "COL-10.task",
+      "COL-11.new-thread",
+      "COL-11.mention",
+      "COL-11.anchor",
+      "COL-11.resolve",
+      "COL-11.agent",
+      "COL-14.title",
+      "COL-14.assignee",
+      "COL-14.status",
+      "COL-14.dates",
+      "COL-14.checklist",
+      "COL-14.dependency",
+      "COL-14.source",
+      "COL-14.delegate",
+      "COL-14.trash",
+      "COL-17.tabs",
+      "COL-17.progress",
+      "COL-17.new",
+      "COL-17.agent",
+      "COL-17.members",
+      "CRM-05.post",
+      "CRM-05.mention",
+      "CRM-05.reply",
+      "MTG-05.join",
+      "MTG-05.screen",
+      "MTG-05.leave",
+      "SH-05.notification",
+      "SH-05.read",
+      "SH-05.unread"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/col-07.spec.ts",
+      "tests/macro-integration/ui/col-08.spec.ts",
+      "tests/macro-integration/ui/col-09.spec.ts",
+      "tests/macro-integration/ui/col-10.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }

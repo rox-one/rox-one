@@ -1,5 +1,32 @@
 # План исследования и владельцы
 
+## ROX Suite — новый task graph
+
+| Task | Owner | Inputs | Artifact | Verify | State |
+|---|---|---|---|---|---|
+| suite-product | lead | screenshot1/5/8 + source | 10 issue drafts | source/ranges/UI/domain/DoD | complete |
+| suite-collaboration | macro_collab | screenshot2/5 + source | 7 issue drafts | principal/message/document identity | complete |
+| suite-meetings | macro_domains | screenshot3/4 + source | 5 issue drafts | local/media/provider distinction | complete |
+| suite-services | rox_audit | screenshot6/7 + source | 8 issue drafts | scopes/approvals/signature evidence | complete |
+| suite-review | lead/team | all30 drafts | machine manifest + corrections | DAG/schema/source/privacy checks | complete |
+| suite-publish | lead | reviewed drafts | 30 new GitHub issues | idempotent publish + exact readback | complete |
+| suite-delivery | lead | receipts/R4 | docs commit/push | remote blobs + preserved user edits | ready_for_delivery |
+
+## Revision 4 execution graph
+
+| Task | Owner | Inputs/dependencies | Artifact | Verification | State |
+|---|---|---|---|---|---|
+| v4-source-delta | lead | remote HEAD / original evidence | v4 recheck + cache-upgrade ADR | blob comparisons, symbols/ranges | complete |
+| v4-collaboration-walkthroughs | macro_collab | COL catalogs / ownership | walkthrough Markdown+JSON | step IDs, refs, role/recovery assertions | complete |
+| v4-domain-forms | macro_domains | domain catalogs / primary schemas | form Markdown+JSON | field/default/validation/mapping examples | complete |
+| v4-cloud-executor | rox_audit | current CloudRun / packets | executor contract+RunSpec schema | alternatives, valid+negative schema cases | complete |
+| v4-control-handoff | lead | 219controls / shared authored labels | handoff index / interaction enrichment | exact coverage, Russian copy, negative controls | complete |
+| v4-contract-reconciliation | lead | forms / current schema gaps | compiled target amendments / packets | no untyped casts, examples, one dispatcher | complete |
+| v4-independent-review | team | all corrected bytes | review findings / resolutions | source/schema/ownership/gate checks | complete |
+| v4-delivery | lead | reviewed bundle | commit/push/readback | clean tree / remote blob hashes | ready_for_delivery |
+
+No coding executor launched. Existing61screens/52WPs remain stable; enrichment adds implementation detail, not parallel product surfaces. New runtime observations must be separately measured; prior installed binary screenshots do not certify these specs.
+
 ## Revision 3 execution graph
 
 | Task | Owner | Inputs/dependencies | Artifact | Verification | State |

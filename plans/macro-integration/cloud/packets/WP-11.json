@@ -57,7 +57,11 @@
     "apps/electron/src/renderer/pages/tasks/atoms.ts",
     "packages/core/src/tasks/personal/rpc.ts",
     "plans/macro-integration/cloud/contract-amendments.json",
-    "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx"
+    "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx",
+    "cloud/macro-integration/EXECUTOR-CONTRACT.md",
+    "plans/macro-integration/control-handoff.json",
+    "docs/macro-integration/product/cache-upgrade-recovery.md",
+    "docs/macro-integration/product/collaboration-walkthroughs.md"
   ],
   "goal": "Create from message twice with same key yields one task; source backlink visible; assignee notified; Project lists task; agent retrieves authorized conversation",
   "expectedResults": [
@@ -1164,5 +1168,50 @@
     "path": "plans/macro-integration/cloud/contract-amendments.json",
     "precedence": "Revision3 supplement + leaf contracts refine original primary schemas; extend/test typed schemas before new control dispatch; alias means one authority"
   },
-  "specDigest": "b921de8adfdee7865a7a2033336b37eab18c4cbb87f01543870dd1fd7289a29b"
+  "targetOperationContracts": {
+    "source": "plans/macro-integration/resolved-operation-contracts.json",
+    "precedence": "Effective canonical payload + action-specific payload variant and mapping override historical primary only for these forms. Original104 schemas remain historical, not silently cast. Server semantic ACL/CAS/time/provider validation remains required.",
+    "operations": [],
+    "actionBindings": []
+  },
+  "controlHandoff": {
+    "source": "plans/macro-integration/control-handoff.json",
+    "primaryOwnedControls": [
+      "COL-15.source",
+      "COL-15.title",
+      "COL-15.project",
+      "COL-15.assign",
+      "COL-15.create"
+    ],
+    "featureControls": [
+      "COL-10.root",
+      "COL-10.reply",
+      "COL-10.follow",
+      "COL-10.task",
+      "COL-12.scope",
+      "COL-12.entry",
+      "COL-12.today",
+      "COL-12.complete",
+      "COL-12.filters",
+      "COL-14.title",
+      "COL-14.assignee",
+      "COL-14.status",
+      "COL-14.dates",
+      "COL-14.checklist",
+      "COL-14.dependency",
+      "COL-14.source",
+      "COL-14.delegate",
+      "COL-14.trash",
+      "COL-15.source",
+      "COL-15.title",
+      "COL-15.project",
+      "COL-15.assign",
+      "COL-15.create"
+    ],
+    "testFiles": [
+      "tests/macro-integration/ui/col-15.spec.ts"
+    ],
+    "status": "PROPOSED_NOT_IMPLEMENTED"
+  },
+  "specDigest": "4111f451022132ff0dc520400d57b52ab9390cec8339eae31ec852571bd479f6"
 }
