@@ -16,7 +16,7 @@ import { WorkspaceIconRail } from '@/components/app-shell/WorkspaceIconRail'
 import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
 import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
-import { OnboardingWizard, ReauthScreen } from '@/components/onboarding'
+import { OnboardingWizard, ReauthScreen, ensureRoxRuntimeDefault } from '@/components/onboarding'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
@@ -302,6 +302,7 @@ export default function App() {
   // App state: loading -> check auth -> onboarding or ready
   const [appState, setAppState] = useState<AppState>('loading')
   const [setupNeeds, setSetupNeeds] = useState<SetupNeeds | null>(null)
+  const [callerAuthority, setCallerAuthority] = useState<'native' | 'local' | null>(null)
 
   // Per-session Jotai atom setters for isolated updates
   // NOTE: No sessionsAtom - we don't store a Session[] array anywhere to prevent memory leaks
@@ -690,6 +691,16 @@ export default function App() {
 
   // Refresh LLM connections from config (called on workspace change and after connection updates)
   const refreshLlmConnections = useCallback(async () => {
+    const identity = await window.electronAPI.getOrgIdentity()
+    if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
+      throw new Error('runtime-identity-unavailable')
+    }
+    if (identity.authority === 'native') {
+      const summary = await window.electronAPI.getStartupRuntimeSummary()
+      setLlmConnections([])
+      setDefaultLlmConnectionSlug(summary?.slug)
+      return
+    }
     const connections = await window.electronAPI.listLlmConnectionsWithStatus()
     setLlmConnections(connections)
     setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
@@ -700,29 +711,40 @@ export default function App() {
     }
   }, [resolveDefaultConnectionSlug, windowWorkspaceId])
 
-  // Handle onboarding completion
-  const handleOnboardingComplete = useCallback(async () => {
+  // Enter Home only after the selected workspace is confirmed active.
+  const handleOnboardingComplete = useCallback(async (): Promise<boolean> => {
     try {
-      // Reload workspaces after onboarding
-      const ws = await window.electronAPI.getWorkspaces()
-      if (ws.length > 0) {
-        // Switch to workspace in-place (no window close/reopen)
-        await window.electronAPI.switchWorkspace(ws[0].id)
-        setWindowWorkspaceId(ws[0].id)
-        setWorkspaces(ws)
-      } else {
-        setWorkspaces(ws)
+      const identity = await window.electronAPI.getOrgIdentity()
+      if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
+        throw new Error('runtime-identity-unavailable')
       }
+      setCallerAuthority(identity.authority)
+      const ws = await window.electronAPI.getWorkspaces()
+      setWorkspaces(ws)
+      if (ws.length === 0) {
+        if (identity.authority === 'native') throw new Error('native-workspace-unavailable')
+        setAppState('workspace-picker')
+        return true
+      }
+      const workspace = ws.find((item) => item.id === windowWorkspaceId) ?? ws[0]
+      if (identity.authority === 'native') {
+        const current = await window.electronAPI.getWindowWorkspace()
+        if (current !== workspace.id) throw new Error('native-workspace-binding-changed')
+      } else {
+        await window.electronAPI.switchWorkspace(workspace.id)
+      }
+      setWindowWorkspaceId(workspace.id)
+      setAppState('ready')
+      return true
     } catch (error) {
-      console.error('[App] Failed to load workspaces after onboarding:', error)
-      // Still transition to ready — the app can recover via reconnect
+      console.error('[App] Failed to open a workspace after onboarding:', error)
+      toast.error(t('onboarding.errors.workspaceTransitionFailed'))
+      return false
     }
-    setAppState('ready')
-  }, [])
+  }, [windowWorkspaceId, t])
 
   // Onboarding hook — onConfigSaved fires immediately when billing is saved,
   // ensuring connection state updates before the wizard closes.
-  const usernameConfirmed = storage.get<boolean>(storage.KEYS.onboardingUsernameConfirmed, false) === true
   const onboarding = useOnboarding({
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
@@ -733,15 +755,34 @@ export default function App() {
 
   // Reauth login handler - placeholder (reauth is not currently used)
   const handleReauthLogin = useCallback(async () => {
-    // Re-check setup needs
-    const needs = await window.electronAPI.getSetupNeeds()
-    if (usernameConfirmed) {
-      setAppState('ready')
-    } else {
-      setSetupNeeds(needs)
+    try {
+      const identity = await window.electronAPI.getOrgIdentity()
+      if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
+        throw new Error('runtime-identity-unavailable')
+      }
+      setCallerAuthority(identity.authority)
+      const needs = identity.authority === 'local' ? await window.electronAPI.getSetupNeeds() : null
+      if (identity?.name?.trim()) {
+        const runtime = await ensureRoxRuntimeDefault(window.electronAPI)
+        if (runtime.status === 'failed') {
+          toast.error(t('onboarding.errors.saveConfigFailed'))
+          setSetupNeeds(needs)
+          setAppState('onboarding')
+          return
+        }
+        const current = await window.electronAPI.getWindowWorkspace()
+        if (!current && identity.authority === 'native') throw new Error('native-workspace-unavailable')
+        setWindowWorkspaceId(current)
+        setAppState(current ? 'ready' : 'workspace-picker')
+      } else {
+        setSetupNeeds(needs)
+        setAppState('onboarding')
+      }
+    } catch (error) {
+      toast.error(t('settings.account.loadFailed', { message: error instanceof Error ? error.message : String(error) }))
       setAppState('onboarding')
     }
-  }, [])
+  }, [t])
 
   // Reauth reset handler - open reset confirmation dialog
   const handleReauthReset = useCallback(() => {
@@ -756,33 +797,53 @@ export default function App() {
         const wsId = await window.electronAPI.getWindowWorkspace()
         setWindowWorkspaceId(wsId)
 
-        const needs = await window.electronAPI.getSetupNeeds()
-        setSetupNeeds(needs)
+        const identity = await window.electronAPI.getOrgIdentity()
+        if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
+          throw new Error('runtime-identity-unavailable')
+        }
+        setCallerAuthority(identity.authority)
+        if (identity.authority === 'local') {
+          setSetupNeeds(await window.electronAPI.getSetupNeeds())
+        }
 
-        // Onboarding is only the name screen. Once the name is confirmed the
-        // app opens even when no provider is ready: new users default to the
-        // Rox runtime and every other provider is added in Settings → ИИ.
-        if (usernameConfirmed) {
-          // If no workspace is selected (thin client without CRAFT_WORKSPACE_ID),
-          // show workspace picker before entering the main app
-          if (!wsId) {
-            setAppState('workspace-picker')
-          } else {
-            setAppState('ready')
-          }
-        } else {
-          // New user (display name not confirmed yet)
+        const savedDisplayName = identity?.name?.trim()
+        if (!savedDisplayName) {
           setAppState('onboarding')
+          return
+        }
+
+        // An explicit persisted display name is completion authority. Ensure a
+        // Rox default for new profiles while preserving existing selections.
+        const runtime = await ensureRoxRuntimeDefault(window.electronAPI)
+        if (runtime.status === 'failed') {
+          toast.error(t('onboarding.errors.saveConfigFailed'))
+          setAppState('onboarding')
+          return
+        }
+
+        if (identity.authority === 'native') {
+          const summary = await window.electronAPI.getStartupRuntimeSummary()
+          setLlmConnections([])
+          setDefaultLlmConnectionSlug(summary?.slug)
+        } else {
+          const connections = await window.electronAPI.listLlmConnectionsWithStatus()
+          setLlmConnections(connections)
+          setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
+        }
+        if (!wsId) {
+          setAppState('workspace-picker')
+        } else {
+          setAppState('ready')
         }
       } catch (error) {
         console.error('Failed to check auth state:', error)
-        // If check fails, show onboarding to be safe
+        toast.error(t('settings.account.loadFailed', { message: error instanceof Error ? error.message : String(error) }))
         setAppState('onboarding')
       }
     }
 
-    initialize()
-  }, [])
+    void initialize()
+  }, [resolveDefaultConnectionSlug, t])
 
   // Session selection state
   const [sessionSelection, setSession] = useSession()
@@ -803,9 +864,16 @@ export default function App() {
 
   // Load workspaces, sessions, model, notifications setting, and drafts when app is ready
   useEffect(() => {
-    if (appState !== 'ready') return
+    if (appState !== 'ready' || callerAuthority === null) return
 
-    window.electronAPI.getWorkspaces().then(setWorkspaces)
+    window.electronAPI.getWorkspaces().then(setWorkspaces).catch(() => {})
+    if (callerAuthority === 'native') {
+      void refreshLlmConnections().catch(() => {})
+      // Session authorization is independent of Notes. The normal loader
+      // preserves a denied result as a visible error rather than inventing an empty list.
+      void loadSessionsFromServer()
+      return
+    }
     window.electronAPI.getNotificationsEnabled().then(setNotificationsEnabled).catch(() => {})
 
     // Show actionable toast for missing system dependencies (Windows only)
@@ -837,7 +905,7 @@ export default function App() {
     })
     // Load app-level theme
     window.electronAPI.getAppTheme().then(setAppTheme)
-  }, [appState, loadSessionsFromServer, resolveDefaultConnectionSlug])
+  }, [appState, callerAuthority, loadSessionsFromServer, refreshLlmConnections, resolveDefaultConnectionSlug])
 
   // Subscribe to theme change events (live updates when theme.json changes)
   useEffect(() => {
@@ -2225,8 +2293,15 @@ export default function App() {
                 />
               )}
               <ToolchainStatusBanner />
+              {sessionLoadError && callerAuthority === 'native' && (
+                <div role="alert" className="flex items-center gap-3 border-b border-border bg-muted px-4 py-2 text-sm text-muted-foreground">
+                  <span className="min-w-0 flex-1">{sessionLoadError}</span>
+                  <button type="button" className="shrink-0 rounded px-2 py-1 hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+                    onClick={() => { void loadSessionsFromServer() }}>{t('common.retry')}</button>
+                </div>
+              )}
               <div className="min-h-0 flex-1">
-                {sessionLoadError ? (
+                {sessionLoadError && callerAuthority !== 'native' ? (
                   <SessionLoadErrorScreen
                     message={sessionLoadError}
                     onRetry={() => { void loadSessionsFromServer() }}

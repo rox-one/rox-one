@@ -110,26 +110,36 @@ describe('getCatalog degradation ladder', () => {
     expect(result.error).toBe('network down')
   })
 
-  it('serves a fresh cache without touching the network', async () => {
+  it('rejects a forged fresh cache instead of trusting its parsed catalog', async () => {
     const now = 1_700_000_000_000
-    const raw = JSON.stringify({ fetchedAt: now, catalog: VALID_CATALOG })
+    const forged: MarketplaceCatalog = {
+      ...VALID_CATALOG,
+      entries: [{ ...VALID_CATALOG.entries[0]!, title: 'Untrusted injected package' }],
+    }
     mkdirSync(marketplacePaths(dir).dir, { recursive: true })
-    writeFileSync(marketplacePaths(dir).catalogCache, raw)
+    writeFileSync(
+      marketplacePaths(dir).catalogCache,
+      JSON.stringify({ fetchedAt: now, body: JSON.stringify(forged), signature: 'invalid-signature' }),
+    )
+    const bundledCatalogPath = join(dir, 'bundle.json')
+    writeFileSync(bundledCatalogPath, JSON.stringify(VALID_CATALOG))
 
     let calls = 0
-    const countingFetch: MarketplaceFetch = async () => {
+    const failedFetch: MarketplaceFetch = async () => {
       calls++
-      throw new Error('must not be called')
+      throw new Error('network down')
     }
     const result = await getCatalog({
       configDir: dir,
       metaStore: createMemoryMetaStore(),
-      fetchFn: countingFetch,
-      now: () => now + 1000, // within the 24h TTL
+      fetchFn: failedFetch,
+      bundledCatalogPath,
+      now: () => now + 1000,
     })
-    expect(calls).toBe(0)
-    expect(result.origin).toBe('cache')
-    expect(result.catalog).toEqual(VALID_CATALOG)
+
+    expect(calls).toBe(1)
+    expect(result.origin).toBe('bundled')
+    expect(result.catalog.entries[0]?.title).toBe('Pack One')
   })
 })
 
@@ -279,7 +289,7 @@ describe('catalog remote digest verification', () => {
       const result = await getCatalog({
         configDir: dir,
         metaStore: createMemoryMetaStore(),
-        fetchFn: makeFetch({ digestBody: goodDigest }),
+        fetchFn: makeFetch({ digestBody: goodDigest, sigBody: goodSig }),
         remoteUrl,
         maxCacheAgeMs: 0,
       })

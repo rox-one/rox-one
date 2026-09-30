@@ -18,7 +18,10 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { BrowserInstanceInfo } from '@craft-agent/shared/protocol'
 
+import { electronMockExports } from '../../__tests__/electron-mock-exports'
+
 mock.module('electron', () => ({
+  ...electronMockExports,
   ipcMain: { handle: () => {}, on: () => {} },
 }))
 

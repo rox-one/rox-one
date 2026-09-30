@@ -40,7 +40,10 @@ export interface ReplicaEnvelope {
   ciphertext: string;
 }
 
-export type ReplicaOpType = 'put' | 'delete';
+export interface ReplicaFileChange {
+  path: string;
+  content: string | null;
+}
 
 export interface ReplicaOperation {
   id: string;
@@ -50,10 +53,15 @@ export interface ReplicaOperation {
   accountId: string;
   workspaceId: string;
   category: ReplicaCategory;
-  type: ReplicaOpType;
-  path: string;
-  body?: string;
+  nativeId: string;
+  expectedRevision: number | null;
+  schemaVersion: number;
+  changes: ReplicaFileChange[];
 }
+export type ReplicaWriteInput = Pick<
+  ReplicaOperation,
+  'deviceId' | 'workspaceId' | 'category' | 'nativeId' | 'expectedRevision' | 'schemaVersion' | 'changes'
+>;
 
 export interface ReplicaSnapshot {
   accountId: string;

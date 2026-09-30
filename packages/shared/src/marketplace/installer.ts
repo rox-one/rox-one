@@ -237,7 +237,12 @@ export function scanSkillDirs(checkoutDir: string, entry: MarketplaceEntry): Sca
 // Atomic target swap
 // ---------------------------------------------------------------------------
 
-function swapStagedIntoPlace(staged: string, target: string): void {
+interface StagedSwap {
+  rollback(): void
+  commit(): void
+}
+
+function swapStagedIntoPlace(staged: string, target: string): StagedSwap {
   mkdirSync(dirname(target), { recursive: true })
   const backup = `${target}.craft-bak-${randomBytes(4).toString('hex')}`
   const hadExisting = existsSync(target)
@@ -245,10 +250,18 @@ function swapStagedIntoPlace(staged: string, target: string): void {
   try {
     renameSync(staged, target)
   } catch (err) {
-    if (hadExisting && existsSync(backup)) renameSync(backup, target) // rollback
+    if (hadExisting && existsSync(backup)) renameSync(backup, target)
     throw err
   }
-  rmSync(backup, { recursive: true, force: true })
+  return {
+    rollback() {
+      rmSync(target, { recursive: true, force: true })
+      if (hadExisting && existsSync(backup)) renameSync(backup, target)
+    },
+    commit() {
+      rmSync(backup, { recursive: true, force: true })
+    },
+  }
 }
 
 function copyCheckout(src: string, dest: string): void {
@@ -262,18 +275,23 @@ function copyCheckout(src: string, dest: string): void {
 // Install (dispatch by kind)
 // ---------------------------------------------------------------------------
 
+// Module-wide serialization: every install/update mutates shared targets or
+// the aggregate lock, so distinct ids must not run concurrently.
 // ---------------------------------------------------------------------------
-// Модульный in-process mutex: публичный installEntry сериализуется по entry.id
-// на уровне модуля — прямые вызовы (минуя per-slug очередь RPC-хэндлера) не
-// могут устроить гонку (double-clone, swap/lock рассинхрон): повторный install
-// того же id ЖДЁТ завершения текущего. Разные id ставятся параллельно.
-// Реализация — тот же promise-tail, что и createMarketplaceQueue ниже.
-// ---------------------------------------------------------------------------
-
 const installById = createMarketplaceQueue()
+let installInProgress = 0
 
 export function installEntry(entry: MarketplaceEntry, options: InstallOptions = {}): Promise<MarketplaceInstallResult> {
-  return installById(entry.id, () => installEntryUnlocked(entry, options))
+  // Count queued operations too, so a synchronous remove cannot slip in before
+  // the next queued installer starts.
+  installInProgress += 1
+  return installById('__marketplace-install__', async () => {
+    try {
+      return await installEntryUnlocked(entry, options)
+    } finally {
+      installInProgress -= 1
+    }
+  })
 }
 
 async function installEntryUnlocked(entry: MarketplaceEntry, options: InstallOptions = {}): Promise<MarketplaceInstallResult> {
@@ -343,8 +361,7 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
     }
 
     const collisions: string[] = []
-    /** Targets we actually wrote this call — rollback must NOT touch kept local-mod paths. */
-    const writtenTargets: string[] = []
+    const swaps: StagedSwap[] = []
 
     const installOne = (name: string, srcDir: string, allowRename: boolean): void => {
       progress('install', name)
@@ -414,12 +431,12 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       }
       const staged = join(paths.tmpDir, `stage-${randomUUID()}`)
       copyCheckout(srcDir, staged)
-      swapStagedIntoPlace(staged, target)
+      const swap = swapStagedIntoPlace(staged, target)
+      swaps.push(swap)
       const contentSha = sha256Directory(target)
       const pinKey = finalName // skills basename; directory mode uses entry.id as name
       const expected = entry.expectedContentSha256?.[pinKey]
       if (expected !== undefined && expected !== contentSha) {
-        rmSync(target, { recursive: true, force: true })
         throw new MarketplaceIntegrityError(
           `content sha256 mismatch for '${pinKey}': expected ${expected.slice(0, 12)}…, got ${contentSha.slice(0, 12)}…`,
         )
@@ -428,7 +445,6 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
       record.skills!.push(finalName)
       record.contentSha256![target] = contentSha
       writeInstallMarker(target, record)
-      writtenTargets.push(target)
     }
 
     try {
@@ -459,14 +475,36 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
         }
       }
     } catch (err) {
-      // Rollback only what THIS call wrote — never rmSync kept local-mod targets.
-      for (const target of writtenTargets) {
-        rmSync(target, { recursive: true, force: true })
+      for (const swap of swaps.reverse()) {
+        try {
+          swap.rollback()
+        } catch {
+          // Preserve the original error; backup remains available for recovery.
+        }
       }
       throw err
     }
-    upsertLockRecord(paths.lockFile, record)
-    const result: MarketplaceInstallResult = { id: entry.id, kind: 'skillpack', status: 'installed', ref: entry.source.ref, skills: record.skills!, targets: record.targets }
+    const result: MarketplaceInstallResult = {
+      id: entry.id,
+      kind: 'skillpack',
+      status: 'installed',
+      ref: entry.source.ref,
+      skills: record.skills!,
+      targets: record.targets,
+    }
+    try {
+      upsertLockRecord(paths.lockFile, record)
+    } catch (err) {
+      for (const swap of swaps.reverse()) {
+        try {
+          swap.rollback()
+        } catch {
+          // Preserve the original error; backup remains available for recovery.
+        }
+      }
+      throw err
+    }
+    for (const swap of swaps) swap.commit()
     if (collisions.length > 0 && result.kind === 'skillpack') result.collisions = collisions
     return result
   } finally {
@@ -536,7 +574,8 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
   }
 
   /** Targets written this call — rollback on integrity failure mid-loop. */
-  const writtenTargets: string[] = []
+  const swaps: StagedSwap[] = []
+  const previousMarkers = new Map<string, MarketplaceLockRecord | null>()
 
   try {
     for (const { doc, body } of staged) {
@@ -572,12 +611,14 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
           continue
         }
       }
-      atomicWriteFileSync(target, body)
+      previousMarkers.set(target, readInstallMarker(target))
+      const stagedPath = join(paths.tmpDir, `doc-${randomUUID()}.md`)
+      atomicWriteFileSync(stagedPath, body)
+      const swap = swapStagedIntoPlace(stagedPath, target)
+      swaps.push(swap)
       const contentSha = sha256FileContent(body)
       const expected = entry.expectedContentSha256?.[doc.targetName]
       if (expected !== undefined && expected !== contentSha) {
-        rmSync(target, { recursive: true, force: true })
-        removeInstallMarker(target)
         throw new MarketplaceIntegrityError(
           `content sha256 mismatch for '${doc.targetName}': expected ${expected.slice(0, 12)}…, got ${contentSha.slice(0, 12)}…`,
         )
@@ -585,12 +626,18 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
       record.targets.push(target)
       record.contentSha256![target] = contentSha
       writeInstallMarker(target, record)
-      writtenTargets.push(target)
     }
   } catch (err) {
-    for (const target of writtenTargets) {
-      rmSync(target, { recursive: true, force: true })
-      removeInstallMarker(target)
+    for (const swap of swaps.reverse()) {
+      try {
+        swap.rollback()
+      } catch {
+        // Preserve the original error; backup remains available for recovery.
+      }
+    }
+    for (const [target, marker] of previousMarkers) {
+      if (marker) writeInstallMarker(target, marker)
+      else removeInstallMarker(target)
     }
     throw err
   }
@@ -602,7 +649,23 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
     )
   }
 
-  upsertLockRecord(paths.lockFile, record)
+  try {
+    upsertLockRecord(paths.lockFile, record)
+  } catch (err) {
+    for (const swap of swaps.reverse()) {
+      try {
+        swap.rollback()
+      } catch {
+        // Preserve the original error; backup remains available for recovery.
+      }
+    }
+    for (const [target, marker] of previousMarkers) {
+      if (marker) writeInstallMarker(target, marker)
+      else removeInstallMarker(target)
+    }
+    throw err
+  }
+  for (const swap of swaps) swap.commit()
   const result: MarketplaceInstallResult = {
     id: entry.id,
     kind: 'context-doc',
@@ -620,6 +683,8 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
 // ---------------------------------------------------------------------------
 
 export function removeEntry(id: string, options: { configDir?: string; lockPath?: string } = {}): MarketplaceRemoveResult {
+  if (installInProgress > 0) {
+  }
   const lockPath = options.lockPath ?? marketplacePaths(options.configDir).lockFile
   const record = readLock(lockPath).entries[id]
   if (!record) return { id, status: 'not-installed', removed: [], kept: [] }

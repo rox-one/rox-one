@@ -373,6 +373,26 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
     return true;
   }
 
+  /** Security-sensitive callers distinguish a missing store from unreadable/corrupt ciphertext. */
+  async getStrict(id: CredentialId): Promise<StoredCredential | null> {
+    try {
+      // Read first: existsSync alone can report false for an inaccessible parent.
+      readFileSync(this.file);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+        if (this.repairState.status !== 'ok') throw new CredentialStoreError('WRITE_BLOCKED', this.repairState.code);
+        return null;
+      }
+      throw new CredentialStoreError('PROVIDER_UNAVAILABLE');
+    }
+    // Re-read current disk state on reconnect, rather than trust a previously cached enrollment.
+    this.cachedStore = null;
+    const store = this.loadStoreSync();
+    if (!store || this.repairState.status !== 'ok') throw new CredentialStoreError('PROVIDER_UNAVAILABLE');
+    const key = credentialIdToAccount(id);
+    return store.credentials[key] ?? null;
+  }
+
   async get(id: CredentialId): Promise<StoredCredential | null> {
     const store = await this.loadStore();
     if (!store) return null;

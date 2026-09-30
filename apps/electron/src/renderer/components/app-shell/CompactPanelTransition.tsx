@@ -14,14 +14,14 @@
  * - Forward (navigator → detail): navigator parallaxes left to -30%; detail
  *   slides in from 100%. Same snappy spring as the mobile menu sub-page slide.
  * - Back (detail → navigator): symmetric reverse.
- * - prefers-reduced-motion: 120ms tween fallback.
+ * - prefers-reduced-motion: applies slot changes immediately without animation.
  */
 
 import * as React from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 
 const SNAPPY_SPRING = { type: 'spring' as const, stiffness: 400, damping: 36, mass: 0.8 }
-const REDUCED_TWEEN = { type: 'tween' as const, duration: 0.12 }
+const NO_MOTION = { duration: 0 }
 
 export type CompactPanelRole = 'navigator' | 'detail'
 
@@ -35,9 +35,9 @@ interface CompactPanelTransitionProps {
 /**
  * Wraps a slot in absolute-positioned + transform-animated motion.div.
  *
- * Both navigator and detail slots stay mounted; they just slide in/out.
- * Off-screen slots get pointer-events: none + aria-hidden so they don't
- * trap taps or screen-reader focus.
+ * Both navigator and detail slots stay mounted. Inactive content is inert and
+ * hidden from assistive technology so it cannot be reached through Tab or
+ * announced while visually off-screen.
  */
 export function CompactPanelTransition({
   role,
@@ -45,15 +45,20 @@ export function CompactPanelTransition({
   children,
 }: CompactPanelTransitionProps) {
   const reduceMotion = useReducedMotion()
-  const transition = reduceMotion ? REDUCED_TWEEN : SNAPPY_SPRING
+  const transition = reduceMotion ? NO_MOTION : SNAPPY_SPRING
 
   const isOffscreen = role === 'navigator' ? isDetailActive : !isDetailActive
+  const slotRef = React.useRef<HTMLDivElement>(null)
+  React.useLayoutEffect(() => {
+    if (slotRef.current) slotRef.current.inert = isOffscreen
+  }, [isOffscreen])
   // Navigator parallaxes (-30%) to feel layered behind the incoming detail panel.
   // Detail slides fully off (100%) so it never bleeds in over the navigator.
   const offscreenX = role === 'navigator' ? '-30%' : '100%'
 
   return (
     <motion.div
+      ref={slotRef}
       className="absolute left-0 right-0 bottom-0"
       style={{
         top: 'var(--compact-panel-stack-top, 0px)',

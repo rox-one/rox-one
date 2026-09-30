@@ -127,8 +127,11 @@ describe('inspectConnectionMetadata', () => {
       kind: 'bearer_token',
       locator: { type: 'local', key: 'github/default' },
       payload: { value: 'super-secret' },
-      expiresAt: Date.UTC(2020, 0, 1),
+      // Register a valid lifetime, then inspect after expiration. The registry
+      // rejects impossible versions whose expiry precedes their creation.
+      expiresAt: Date.now() + 100,
     })
+    await new Promise((resolve) => setTimeout(resolve, 150))
     const kernel = createWorkGraphKernel({
       configDir: createRoot(),
       platform: { platform: 'darwin', arch: 'arm64' },
@@ -147,7 +150,7 @@ describe('inspectConnectionMetadata', () => {
       connectionId: connection.id,
     })
     expect(inspected.health).toBe('expired')
-    expect(inspected.expiry).toBe(new Date(Date.UTC(2020, 0, 1)).toISOString())
+    expect(inspected.expiry).toBe(new Date(written.version.expiresAt!).toISOString())
     expect(JSON.stringify(inspected)).not.toContain('super-secret')
     await kernel.close()
   })

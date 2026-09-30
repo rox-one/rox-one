@@ -13,6 +13,8 @@ export {
   unwrapAccountKey,
   wrapAccountKey,
 } from './crypto.ts';
+export { SqliteReplicaOutbox, validateReplicaOperation } from './outbox.ts';
+export type { ReplicaOutboxPort, ReplicaServerAcknowledgement } from './outbox.ts';
 export {
   EXCLUDED_REPLICA_CATEGORIES,
   REPLICA_CATEGORIES,
@@ -28,8 +30,10 @@ export type {
   ReplicaCategory,
   ReplicaCategoryControl,
   ReplicaDevice,
+  ReplicaFileChange,
   ReplicaEnvelope,
   ReplicaMembership,
   ReplicaOperation,
+  ReplicaWriteInput,
   ReplicaSnapshot,
 } from './types.ts';

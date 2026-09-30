@@ -76,6 +76,8 @@ export interface SearchOptions {
   ignoreCase?: boolean;
   /** Search ID for correlating logs across stages */
   searchId?: string;
+  /** Restrict matching session IDs; an empty allowlist returns no sessions. */
+  allowedSessionIds?: readonly string[];
 }
 
 /**
@@ -195,14 +197,16 @@ export async function searchSessions(
     maxSessions = 50,
     ignoreCase = true,
     searchId = Date.now().toString(36),
+    allowedSessionIds,
   } = options;
+  const allowedSessions = allowedSessionIds === undefined ? undefined : new Set(allowedSessionIds);
 
   if (!query.trim()) {
     return [];
   }
 
   const startTime = Date.now();
-  searchLog.info('ripgrep:start', { searchId, query });
+  searchLog.info('ripgrep:start', { searchId, queryLength: query.length });
 
   const rgPath = getRipgrepPath();
   handlerLog.debug('[search] Ripgrep path:', rgPath);
@@ -217,7 +221,7 @@ export async function searchSessions(
     return [];
   }
 
-  return new Promise((resolve) => {
+  const { promise, resolve, reject } = Promise.withResolvers<SessionSearchResult[]>();
     const results = new Map<string, SessionSearchResult>();
     let buffer = '';
 
@@ -268,7 +272,11 @@ export async function searchSessions(
       } else {
         rg.kill('SIGTERM');
       }
+      if (currentSearchProcess === rg) {
+        currentSearchProcess = null;
+      }
       handlerLog.warn('[search] Search timed out after', timeout, 'ms');
+      reject(new SearchUnavailableError(`ripgrep timed out after ${timeout} ms`));
     }, timeout);
 
     rg.stdout.on('data', (chunk: Buffer) => {
@@ -298,6 +306,7 @@ export async function searchSessions(
 
           const sessionId = pathParts[jsonlIndex - 1];
           if (!sessionId) continue;
+          if (allowedSessions && !allowedSessions.has(sessionId)) continue;
 
           // Skip header line (line 1)
           const lineNumber = data.line_number;
@@ -348,13 +357,11 @@ export async function searchSessions(
       }
     });
 
-    rg.stderr.on('data', (data: Buffer) => {
-      handlerLog.warn('[search] ripgrep stderr:', data.toString());
+    rg.stderr.on('data', () => {
+      handlerLog.warn('[search] ripgrep reported an error');
     });
 
-    // Log the command being executed
-    handlerLog.debug('[search] Running ripgrep:', rgPath, args.join(' '));
-
+    handlerLog.debug('[search] Running ripgrep:', { searchId, rgPath });
     rg.on('close', (code) => {
       clearTimeout(timeoutHandle);
       // Clear reference if this is still the current search
@@ -363,8 +370,9 @@ export async function searchSessions(
       }
 
       if (code !== 0 && code !== 1) {
-        // Exit code 1 means no matches found (not an error)
-        handlerLog.debug('[search] ripgrep exited with code:', code);
+        handlerLog.warn('[search] ripgrep exited unsuccessfully with code:', code);
+        reject(new SearchUnavailableError(`ripgrep exited with code ${code}`));
+        return;
       }
 
       // Convert map to array, sorted by match count (descending)
@@ -383,8 +391,12 @@ export async function searchSessions(
 
     rg.on('error', (error) => {
       clearTimeout(timeoutHandle);
+      if (currentSearchProcess === rg) {
+        currentSearchProcess = null;
+      }
       handlerLog.error('[search] ripgrep error:', error);
-      resolve([]);
+      reject(new SearchUnavailableError(`ripgrep failed: ${error.message}`));
     });
-  });
+
+  return promise;
 }

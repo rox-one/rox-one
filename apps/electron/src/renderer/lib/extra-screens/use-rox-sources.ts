@@ -3,7 +3,7 @@
  * atoms), personal tasks, meetings and messenger bindings. Every source
  * degrades to an empty list + `available: false` instead of throwing.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import type { PersonalTask } from '@craft-agent/core/tasks/personal'
 import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
@@ -116,44 +116,108 @@ export function useMessengerBindings(): MessengerBinding[] {
 
 export type FeedItemRow = import('@craft-agent/shared/feed').FeedItem
 
-export interface FeedState {
+export interface FeedSnapshot {
   /** false = no feed:list IPC (honest «Лента недоступна»). */
   available: boolean
-  loaded: boolean
   items: FeedItemRow[]
   /** User news/X sources configured in Лента. */
   sourceCount: number
   xConnected: boolean
 }
 
+export interface FeedState extends FeedSnapshot {
+  loaded: boolean
+  stale: boolean
+  error: boolean
+  refreshing: boolean
+}
+
+export interface FeedItemsState extends FeedState {
+  retry: () => void
+}
+export interface FeedOptions {
+  retainStale?: boolean
+}
+
+/** Hide stale rows from existing consumers unless they explicitly label them. */
+export function visibleFeedItems(state: FeedState, retainStale = false): FeedItemRow[] {
+  return state.stale && !retainStale ? [] : state.items
+}
+
+/** A failed refresh preserves the last good snapshot and marks its freshness. */
+export function feedAfterFailure(previous: FeedState, available = previous.available): FeedState {
+  return { ...previous, available, loaded: true, stale: previous.loaded, error: true, refreshing: false }
+}
+
+const EMPTY_FEED: FeedState = {
+  available: true,
+  loaded: false,
+  items: [],
+  sourceCount: 0,
+  xConnected: false,
+  stale: false,
+  error: false,
+  refreshing: false,
+}
+
 /** Real items from the Лента aggregator (feed:list), live via feed:changed. */
-export async function loadFeed(workspaceId: string | null | undefined): Promise<Omit<FeedState, 'loaded'>> {
+export async function loadFeed(workspaceId: string | null | undefined): Promise<FeedSnapshot> {
   const api = typeof window !== 'undefined' ? window.electronAPI : undefined
   if (!api || typeof api.feedList !== 'function') return { available: false, items: [], sourceCount: 0, xConnected: false }
   const res = await api.feedList(workspaceId ?? null)
+  if (!res || !Array.isArray(res.items) || !Array.isArray(res.sources) || !res.x) {
+    throw new Error('Feed IPC returned an invalid result')
+  }
   return {
     available: true,
-    items: Array.isArray(res?.items) ? res.items : [],
-    sourceCount: Array.isArray(res?.sources) ? res.sources.length : 0,
-    xConnected: res?.x?.state === 'connected',
+    items: res.items,
+    sourceCount: res.sources.length,
+    xConnected: res.x.state === 'connected',
   }
 }
 
-export function useFeedItems(workspaceId: string | null | undefined): FeedState {
-  const [state, setState] = useState<FeedState>({ available: true, loaded: false, items: [], sourceCount: 0, xConnected: false })
+export function useFeedItems(workspaceId: string | null | undefined, options: FeedOptions = {}): FeedItemsState {
+  const scope = workspaceId ?? null
+  const [state, setState] = useState(() => ({ ...EMPTY_FEED, workspaceId: scope }))
+  const [retryVersion, setRetryVersion] = useState(0)
+  const retry = useCallback(() => setRetryVersion((version) => version + 1), [])
+
   useEffect(() => {
     let cancelled = false
+    let latestRequest = 0
+    setState((current) => current.workspaceId === scope ? current : { ...EMPTY_FEED, workspaceId: scope })
     const load = () => {
-      loadFeed(workspaceId).then(
-        (next) => { if (!cancelled) setState({ ...next, loaded: true }) },
-        () => { if (!cancelled) setState({ available: false, loaded: true, items: [], sourceCount: 0, xConnected: false }) },
-      )
+      const request = ++latestRequest
+      setState((current) => {
+        const scoped = current.workspaceId === scope ? current : { ...EMPTY_FEED, workspaceId: scope }
+        return { ...scoped, refreshing: true }
+      })
+      void loadFeed(scope).then((next) => {
+        if (cancelled || request !== latestRequest) return
+        setState((current) => {
+          const previous = current.workspaceId === scope ? current : { ...EMPTY_FEED, workspaceId: scope }
+          if (!next.available) return { ...feedAfterFailure(previous, false), workspaceId: scope }
+          return { ...next, loaded: true, stale: false, error: false, refreshing: false, workspaceId: scope }
+        })
+      }).catch(() => {
+        if (cancelled || request !== latestRequest) return
+        setState((current) => {
+          const previous = current.workspaceId === scope ? current : { ...EMPTY_FEED, workspaceId: scope }
+          return { ...feedAfterFailure(previous), workspaceId: scope }
+        })
+      })
     }
     load()
-    const off = window.electronAPI?.onFeedChanged?.(() => load())
-    return () => { cancelled = true; off?.() }
-  }, [workspaceId])
-  return state
+    const off = typeof window !== 'undefined' ? window.electronAPI?.onFeedChanged?.(() => load()) : undefined
+    return () => {
+      cancelled = true
+      latestRequest += 1
+      off?.()
+    }
+  }, [retryVersion, scope])
+
+  const visibleState = state.workspaceId === scope ? state : { ...EMPTY_FEED, workspaceId: scope }
+  return { ...visibleState, items: visibleFeedItems(visibleState, options.retainStale), retry }
 }
 
 /** Feed items that are not Rox's own agent activity (news, X, page changes, team). */

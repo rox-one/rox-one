@@ -1217,24 +1217,23 @@ export function NavigationProvider({
   useEffect(() => {
     if (suppressAutoSelectRef.current) return
     if (!isReady || !workspaceId) return
-    // Don't auto-select when panel stack is empty (user closed all panels)
-    if (store.get(panelStackAtom).length === 0) return
-    // Scoped to sessions with no explicit detail. resolveAutoSelection owns the
-    // selection decision (board skip, last/first fallback) so it lives in one
-    // place; this effect just applies it when the session list loads after
-    // navigation (workspace switch, lazy session load, etc.).
-    if (!isSessionsNavigation(navigationState) || navigationState.details) return
+    // Earlier restoration effects can change the focused route in this same
+    // effect pass; the render-time navigationState may still describe sessions.
+    const currentRoute = store.get(focusedPanelRouteAtom)
+    const currentState = currentRoute ? parseRouteToNavigationState(currentRoute) : null
+    if (!currentState || !isSessionsNavigation(currentState) || currentState.details) return
 
-    const resolved = resolveAutoSelection(navigationState)
+    const resolved = resolveAutoSelection(currentState)
     if (isSessionsNavigation(resolved) && resolved.details) {
-      navigateToSession(resolved.details.sessionId)
+      void navigate(buildRouteFromNavigationState(resolved) as ViewRoute)
     }
   }, [
     isReady,
     workspaceId,
     navigationState,
     resolveAutoSelection,
-    navigateToSession,
+    navigate,
+    store,
   ])
 
   // =========================================================================

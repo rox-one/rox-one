@@ -8,7 +8,10 @@ type HandlerFn = (ctx: { clientId: string }, ...args: any[]) => Promise<any> | a
 const getDefaultThinkingLevelMock = mock(() => 'think')
 const setDefaultThinkingLevelMock = mock((_level: string) => true)
 
+const actualConfigExports = await import('@craft-agent/shared/config')
+
 mock.module('@craft-agent/shared/config', () => ({
+  ...actualConfigExports,
   getPreferencesPath: () => '/tmp/preferences.json',
   getSessionDraft: () => null,
   setSessionDraft: () => {},

@@ -86,7 +86,7 @@ try {
   ensureLocation((globalThis as { window?: object }).window);
 }
 
-mock.module('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: '' }));
+mock.module('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: '/pdf.worker.min.mjs' }));
 mock.module('pdfjs-dist', () => ({
   GlobalWorkerOptions: { workerSrc: '' },
   getDocument: () => ({}),

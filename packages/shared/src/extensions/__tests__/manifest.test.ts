@@ -46,6 +46,23 @@ describe('parseExtensionManifest (fail-closed)', () => {
     expect(m.permissions).toContain('secrets.use:source_oauth::ws::linear')
   })
 
+  it('validates explicit operation names and required capabilities', () => {
+    const m = parseExtensionManifest({
+      ...base,
+      permissions: ['ui.command', 'network.request'],
+      operations: { greet: [], refresh: ['network.request'] },
+    })
+    expect(m.operations).toEqual({ greet: [], refresh: ['network.request'] })
+    expect(tryParseExtensionManifest({
+      ...base,
+      operations: { refresh: ['shell.root'] },
+    }).ok).toBe(false)
+    expect(tryParseExtensionManifest({
+      ...base,
+      operations: { '../refresh': [] },
+    }).ok).toBe(false)
+  })
+
   it('accepts known contributes keys', () => {
     const m = parseExtensionManifest({
       ...base,

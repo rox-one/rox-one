@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "status": "INVENTORY_ONLY_NOT_FROZEN",
+  "asOf": "2026-09-30T02:21:32.311Z",
+  "sourceRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
+  "sourceMapStatus": "Discovery-only static source reports. No accepted end-to-end revision, live two-consumer operation, or runtime contract verification is claimed.",
+  "contracts": [
+    {
+      "id": "DATA-01",
+      "issue": "https://github.com/rox-one/rox-one/issues/1212",
+      "kind": "requested",
+      "status": "NOT_RUN",
+      "owner": "SharedIntegrator",
+      "dependsOn": ["RECON-01", "AUDIT-01"],
+      "immutableLease": {
+        "maxOwnedRoots": 5,
+        "paths": ["packages/core/src/rox2/platform-contract.ts", "packages/core/src/rox2/notes-repository.ts", "packages/core/src/rox2/project-membership.ts"],
+        "concurrency": 1,
+        "excluded": ["route/entity registry", "RPC/API/schema", "localization catalog", "lockfile", "common UI primitives"]
+      },
+      "existingContracts": [
+        {
+          "path": "packages/core/src/rox2/platform-contract.ts",
+          "signature": "Rox2EntityRef(workspaceId, entityId, optional revisionId/accountNamespace); four-slot provider/account/type/id binding key; legacy four-slot dual-read; schema v1 parse result preserves unsupported payload in returned result.",
+          "revision": "Source-inspected baseline a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2; accepted DATA-01 contract revision: NONE."
+        },
+        {
+          "path": "packages/core/src/rox2/conation-api.ts",
+          "signature": "Soup/DSS read ingest only; preserves extra fields on read; rejected versions do not mutate; writes rejected.",
+          "revision": "Source-inspected baseline; accepted remote write/sync revision: NONE."
+        },
+        {
+          "path": "packages/core/src/rox2/notes-repository.ts",
+          "signature": "Notes map keyed by entityId with origin/revision/sync labels; not native editor persistence.",
+          "revision": "Source-inspected baseline; no accepted durable entity revision protocol."
+        },
+        {
+          "path": "packages/core/src/rox2/project-membership.ts",
+          "signature": "Schema v1 membership edge/pointer and read visibility; unsupported-version preservation in parser path.",
+          "revision": "Source-inspected baseline; no accepted live authorization/sync revision."
+        },
+        {
+          "path": "packages/shared/src/account-replica/types.ts and packages/shared/src/account-replica/replica.ts",
+          "signature": "Local categories, operation sequence/id/account/workspace/path, encrypted-byte envelope and deletion receipt; in-memory membership/ops/offline arrays, append/flush, snapshot/incremental materialization, local merge helpers.",
+          "revision": "Source-inspected baseline; no durable outbox/idempotency/replay index/operation receipt or deployed remote sync revision."
+        },
+        {
+          "path": "packages/server-core/src/handlers/rpc/notes.ts",
+          "signature": "Native workspace Notes READ/SAVE/CREATE; optional expectedRevision hash precondition; handler path shown ignores _ctx.",
+          "revision": "Source-inspected baseline; actual workspace filesystem persistence, not a frozen DATA-01 protocol."
+        },
+        {
+          "path": "packages/shared/src/orgs/storage.ts and packages/shared/src/orgs/types.ts",
+          "signature": "Local CONFIG_DIR/orgs.json v1 and local member/invite/role model.",
+          "revision": "Source-inspected baseline; local-only org state, not remote team sync."
+        }
+      ],
+      "sourceToConsumerMap": [
+        "Native Notes producer: packages/server-core/src/handlers/rpc/notes.ts → workspace filesystem store; channel definitions in packages/shared/src/protocol/channels.ts; Electron consumer in apps/electron/src/transport/channel-map.ts.",
+        "Local organization producer/handler: packages/server-core/src/handlers/rpc/orgs.ts → packages/shared/src/orgs/storage.ts local orgs.json; shared org channel registry → Electron channel-map. No remote team consumer accepted.",
+        "Account replica helpers: packages/shared/src/account-replica/replica.ts → in-memory journal/queue; no deployed remote consumer/provider identified.",
+        "Conation data path: packages/core/src/rox2/conation-api.ts read-only Soup/DSS ingest; no write consumer or authorized live provider account evidenced."
+      ],
+      "acceptance": "Pending: durable idempotent operation envelope/replay, authorization at actual entity boundary, conflict/revision preservation, schema quarantine/export lifecycle, tombstone/revocation, restart/offline recovery, and real product-path evidence. WS transport acknowledgement is not synchronization acceptance."
+    },
+    {
+      "id": "SHARED-01",
+      "issue": "https://github.com/rox-one/rox-one/issues/1160",
+      "kind": "verification-gap",
+      "status": "NOT_RUN_WAITING_FOR_DATA-01",
+      "owner": "SharedIntegrator",
+      "dependsOn": ["DATA-01"],
+      "immutableLease": {
+        "maxOwnedRoots": 5,
+        "concurrency": 1,
+        "reservedProtocolPaths": ["packages/shared/src/protocol/channels.ts", "packages/shared/src/protocol/routing.ts", "packages/shared/src/protocol/dto.ts", "packages/shared/src/protocol/types.ts"],
+        "locales": "packages/shared/src/i18n/locales/ treated as one owned root",
+        "lockfile": "Only after recon discovers dependency change; designated owner only",
+        "commonUi": "Only after actual shared primitive/route discovery",
+        "domainFeatureFiles": "Excluded"
+      },
+      "existingContracts": [
+        {"path": "packages/shared/src/protocol/channels.ts", "signature": "RPC channel registry; org channels local; Notes and Projects classified remote eligible.", "revision": "Existing source baseline; no frozen DATA-01/SHARED-01 revision."},
+        {"path": "packages/shared/src/protocol/routing.ts", "signature": "Single local/remote routing classification; exhaustive routing test exists.", "revision": "Existing source baseline; no accepted contract revision."},
+        {"path": "packages/shared/src/protocol/types.ts", "signature": "WebSocket envelope, handshake capabilities, seq/lastSeq, serverVersion, coded errors and protocol v1.0.", "revision": "Wire protocol version is 1.0; entity/data contract version is not thereby frozen."},
+        {"path": "packages/shared/src/protocol/version-policy.ts and packages/shared/src/protocol/index.ts", "signature": "Major-version compatibility policy exists; protocol/index.ts does not re-export it.", "revision": "Existing source baseline; no acceptance artifact."},
+        {"path": "packages/shared/src/i18n/locales/{en,ru,ar,de,es,fr,hu,ja,ko,pl,zh-Hans,zh-Hant}.json", "signature": "12 locale files contain accountReplica status keys at inspected locations.", "revision": "Presence in source is not proof that all required keys resolve in all consumers."}
+      ],
+      "producerConsumerMap": "server-core RPC Notes/Org handlers ↔ shared channel registry/routing/types ↔ Electron channel-map; webui uses authenticated config plus WebSocket-backed ElectronAPI adapter, with some native operations explicitly overridden/unavailable. Electron and web source code do not yet constitute two independently accepted authorized live consumers.",
+      "pendingAcceptance": [
+        "After DATA-01 accepted, publish exact frozen interface revision, signature/error/auth semantics, migration and rollback order, and path ownership.",
+        "Exercise one real producer and two independent authorized consumers with identical stable identity/readback after reload.",
+        "Demonstrate stale-schema and unauthorized mutation rejection without mutation/leak; verify locale key resolution in each consumer.",
+        "Keep registry/schema/locales/lockfile/common primitive roots singleton-owned; do not infer a new RPC/endpoint from a desired workflow."
+      ]
+    }
+  ],
+  "acceptanceEvidence": {
+    "baselineBuild": "Electron build PASS at source revision a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2; build only, not product acceptance.",
+    "nativeLaunch": "Isolated native launch FAILED before app startup because node_modules/electron lacked path.txt or dist; install/launch prerequisite remains.",
+    "liveUiAudit": "NOT_RUN; Rox 0.11.5 Connections / Policies and visible legacy MORE label are initial native surface observations only.",
+    "dataAcceptance": "NOT_RUN; no live provider/deployment/test data or two-consumer authorized scenario evidenced.",
+    "sharedAcceptance": "NOT_RUN; no exact frozen revision or accepted multi-consumer compatibility evidence."
+  },
+  "nonClaims": [
+    "Neither DATA-01 nor SHARED-01 is frozen or satisfied by this inventory document.",
+    "No production cross-device sync, cloud service, external endpoint, or Conation write API is claimed.",
+    "No source map is claimed exhaustive or runtime verified.",
+    "Transport delivery sequence/ack is not entity sync status."
+  ]
+}

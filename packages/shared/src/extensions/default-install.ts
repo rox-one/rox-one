@@ -1,9 +1,8 @@
 /**
- * Default-install the shipped marketplace catalog (P35-06).
+ * Record which shipped marketplace entries were presented to the user.
  *
- * Seeds lock rows so Installed lists the bundled ~17 entries without a
- * first-run git clone. Tools stay deferred + disabled (high-risk).
- * Does not prefetch catalog bytes — load-time is unchanged.
+ * Catalog presence is not installation: a row is added to the install lock
+ * only after the pinned artifact has actually been installed.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -11,7 +10,6 @@ import { dirname, join } from 'node:path'
 
 import type { MarketplaceCatalog, MarketplaceEntry } from '../marketplace/catalog.ts'
 import { marketplacePaths } from '../marketplace/catalog.ts'
-import { readLock, upsertLockRecord, type MarketplaceLockRecord } from '../marketplace/lock.ts'
 import type { ExtensionStateFile } from './types.ts'
 
 export const DEFAULT_MARKETPLACE_SEED_VERSION = 1 as const
@@ -30,7 +28,6 @@ export interface SeedDefaultMarketplaceInstallsOptions {
   catalog: MarketplaceCatalog
   configDir: string
   stateStore: ExtensionEnableStore
-  now?: number
 }
 
 export interface SeedDefaultMarketplaceInstallsResult {
@@ -47,9 +44,6 @@ export function isHighRiskDefaultInstall(entry: MarketplaceEntry): boolean {
   return entry.kind === 'tool'
 }
 
-export function seedLockStatusFor(entry: MarketplaceEntry): MarketplaceLockRecord['status'] {
-  return entry.kind === 'tool' ? 'deferred' : 'installed'
-}
 
 export function defaultSeedPath(configDir: string): string {
   return join(marketplacePaths(configDir).dir, 'default-seed.json')
@@ -85,18 +79,14 @@ export function marketplaceExtensionId(entryId: string): string {
 }
 
 /**
- * Idempotent: each catalog id is considered at most once. User uninstalls
- * are not re-added. High-risk tools are disabled only when no prior flag.
+ * Idempotently records entries that have been exposed as defaults. User
+ * removal is respected; actual installation is exclusively installer-owned.
  */
 export function seedDefaultMarketplaceInstalls(
   options: SeedDefaultMarketplaceInstallsOptions,
 ): SeedDefaultMarketplaceInstallsResult {
-  const now = options.now ?? Date.now()
-  const paths = marketplacePaths(options.configDir)
   const seedPath = defaultSeedPath(options.configDir)
-  const previous = readDefaultMarketplaceSeed(seedPath)
-  const considered = new Set(previous.ids)
-  const lock = readLock(paths.lockFile)
+  const considered = new Set(readDefaultMarketplaceSeed(seedPath).ids)
   const result: SeedDefaultMarketplaceInstallsResult = {
     seeded: [],
     skipped: [],
@@ -109,24 +99,10 @@ export function seedDefaultMarketplaceInstalls(
       continue
     }
     considered.add(entry.id)
-    if (!lock.entries[entry.id]) {
-      upsertLockRecord(paths.lockFile, {
-        id: entry.id,
-        kind: entry.kind,
-        repo: entry.source.repo,
-        ref: entry.source.ref,
-        installedAt: now,
-        updatedAt: now,
-        status: seedLockStatusFor(entry),
-        targets: [],
-        skills: entry.skills,
-        toolName: entry.toolName,
-      })
-      result.seeded.push(entry.id)
-    } else {
-      result.skipped.push(entry.id)
-    }
+    result.seeded.push(entry.id)
 
+    // Default entries remain suggestions until the pinned installer writes a
+    // real artifact and provenance lock. Never fabricate installed/deferred.
     if (isHighRiskDefaultInstall(entry)) {
       const extId = marketplaceExtensionId(entry.id)
       if (options.stateStore.getState().enabled[extId] === undefined) {

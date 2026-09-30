@@ -32,6 +32,7 @@ import {
   createRpcCallCounterFromEnv,
   type RpcCallCounter,
 } from '../observability/rpc-call-counter'
+import type { NativeAuthority, NativePrincipal } from '../authority/native-authority'
 
 // ---------------------------------------------------------------------------
 // Client connection state
@@ -54,6 +55,10 @@ interface ClientConnection {
    * window/workspace binding. Raw handshake fields never create this state.
    */
   localBinding: TrustedLocalClientBinding | null
+  /** Kept server-side so main can renew the original proof against the live window. */
+  localBindingCandidate: LocalClientBindingCandidate
+  principal: NativePrincipal | null
+  subscriptionFence: string | null
   capabilities: Set<string>
   missedPongs: number
   alive: boolean
@@ -75,6 +80,7 @@ interface PendingInvoke {
 interface RegisteredHandler {
   readonly handler: HandlerFn
   readonly access: RpcHandlerOptions['access']
+  readonly nativeAction: RpcHandlerOptions['nativeAction']
 }
 
 export interface LocalClientBindingCandidate {
@@ -155,6 +161,10 @@ export interface WsRpcServerOptions {
    * CRAFT_PERF_RPC_TRACE=1 to count session permission/metadata N+1.
    */
   rpcCallCounter?: RpcCallCounter | null
+  /** Server-owned authority; legacy tokens never grant access to registered workspaces. */
+  nativeAuthority?: NativeAuthority
+  /** Only these explicitly workspace-scoped events can reach native subscribers. */
+  nativeEventChannels?: ReadonlySet<string>
 }
 
 const transportLog = createLogger('ws-rpc-server')
@@ -193,6 +203,9 @@ export class WsRpcServer implements RpcServer {
   private readonly resolveLocalClientBinding: WsRpcServerOptions['resolveLocalClientBinding']
   private readonly httpHandler: WsRpcServerOptions['httpHandler']
   private readonly rpcCallCounter: RpcCallCounter | null
+  private readonly nativeAuthority: NativeAuthority | null
+  private readonly nativeEventChannels: ReadonlySet<string>
+  private readonly disposeAuthorityListener: (() => void) | null
 
   constructor(opts?: WsRpcServerOptions) {
     this.host = opts?.host ?? '127.0.0.1'
@@ -208,6 +221,20 @@ export class WsRpcServer implements RpcServer {
     this.onClientDisconnected = opts?.onClientDisconnected
     this.resolveLocalClientBinding = opts?.resolveLocalClientBinding
     this.httpHandler = opts?.httpHandler
+    this.nativeAuthority = opts?.nativeAuthority ?? null
+    this.nativeEventChannels = new Set(opts?.nativeEventChannels ?? [])
+    this.disposeAuthorityListener = this.nativeAuthority?.onInvalidation(event => {
+      for (const client of this.clients.values()) {
+        if (client.principal?.subject !== event.subject) continue
+        client.eventBuffer.length = 0
+        client.subscriptionFence = null
+      }
+      for (const { client } of this.disconnectedClients.values()) {
+        if (client.principal?.subject !== event.subject) continue
+        client.eventBuffer.length = 0
+        client.subscriptionFence = null
+      }
+    }) ?? null
     this.rpcCallCounter = opts?.rpcCallCounter === undefined
       ? createRpcCallCounterFromEnv()
       : opts.rpcCallCounter
@@ -241,29 +268,104 @@ export class WsRpcServer implements RpcServer {
       throw new Error(`Handler already registered for channel: ${channel}`)
     }
     const access = options?.access
-    this.handlers.set(channel, { handler, access })
+    this.handlers.set(channel, { handler, access, nativeAction: options?.nativeAction })
     if (access === 'localElectron') {
       this.localElectronChannels.add(channel)
     }
   }
 
-  private registeredChannelsFor(client: Pick<ClientConnection, 'localBinding'>): string[] {
-    return [...this.handlers].flatMap(([channel, registration]) =>
-      registration.access === 'localElectron' && !client.localBinding ? [] : [channel],
-    )
+  private registeredChannelsFor(client: ClientConnection): string[] {
+    return [...this.handlers].flatMap(([channel, registration]) => {
+      if (registration.access === 'localElectron' && !client.localBinding) return []
+      if (!this.canRequest(client, registration)) return []
+      return [channel]
+    })
   }
 
-  private resolveBinding(envelope: MessageEnvelope): TrustedLocalClientBinding | null {
+  private canRequest(client: ClientConnection, registration: RegisteredHandler): boolean {
+    if (client.localBinding && !this.hasCurrentLocalBinding(client)) return false
+    if (registration.access === 'localElectron' && !this.hasCurrentLocalBinding(client)) return false
+    if (client.principal) {
+      return !!client.workspaceId && !!registration.nativeAction
+        && !!this.nativeAuthority?.authorize(client.principal, client.workspaceId, 'read')
+        && !!this.nativeAuthority?.authorize(client.principal, client.workspaceId, registration.nativeAction)
+    }
+    return !this.nativeAuthority?.hasRegisteredWorkspaces()
+  }
+
+  private requestPermissionFence(client: ClientConnection, registration: RegisteredHandler): string | null {
+    if (!client.principal || !client.workspaceId || !registration.nativeAction || !this.nativeAuthority) return null
+    const readFence = this.nativeAuthority.permissionFence(client.principal, client.workspaceId, 'read')
+    if (!readFence || registration.nativeAction === 'read') return readFence
+    const actionFence = this.nativeAuthority.permissionFence(client.principal, client.workspaceId, registration.nativeAction)
+    return actionFence ? `${readFence}:${actionFence}` : null
+  }
+
+  private canReturnResponse(
+    client: ClientConnection,
+    registration: RegisteredHandler,
+    ctx: RequestContext,
+    requestFence: string | null,
+  ): boolean {
+    return client.workspaceId === ctx.workspaceId
+      && client.webContentsId === ctx.webContentsId
+      && (client.principal ?? undefined) === ctx.principal
+      && this.canRequest(client, registration)
+      && this.requestPermissionFence(client, registration) === requestFence
+  }
+
+  private refreshSubscription(client: ClientConnection): boolean {
+    if (!client.principal || !client.workspaceId || !this.nativeAuthority) return false
+    const readFence = this.nativeAuthority.permissionFence(client.principal, client.workspaceId, 'read')
+    const subscribeFence = this.nativeAuthority.permissionFence(client.principal, client.workspaceId, 'subscribe')
+    const fence = readFence && subscribeFence ? `${readFence}:${subscribeFence}` : null
+    if (fence !== client.subscriptionFence) {
+      client.eventBuffer.length = 0
+      client.subscriptionFence = fence
+    }
+    return fence !== null
+  }
+
+  private canReceiveEvent(client: ClientConnection, channel: string, target: PushTarget): boolean {
+    if (client.localBinding && !this.hasCurrentLocalBinding(client)) {
+      client.eventBuffer.length = 0
+      client.subscriptionFence = null
+      return false
+    }
+    if (client.principal) {
+      return target.to !== 'all' && this.nativeEventChannels.has(channel) && this.refreshSubscription(client)
+    }
+    return !this.nativeAuthority?.hasRegisteredWorkspaces()
+  }
+
+  private bindingCandidate(envelope: MessageEnvelope): LocalClientBindingCandidate {
     const rawWebContentsId = envelope.webContentsId
-    const candidate: LocalClientBindingCandidate = {
+    return {
       workspaceId: typeof envelope.workspaceId === 'string' ? envelope.workspaceId : null,
       webContentsId: typeof rawWebContentsId === 'number' && Number.isSafeInteger(rawWebContentsId)
         ? rawWebContentsId
         : null,
       localClientProof: typeof envelope.localClientProof === 'string' ? envelope.localClientProof : null,
     }
-    const binding = this.resolveLocalClientBinding?.(candidate) ?? null
-    return isTrustedLocalClientBinding(binding) ? binding : null
+  }
+
+  private resolveBinding(candidate: LocalClientBindingCandidate): TrustedLocalClientBinding | null {
+    try {
+      const binding = this.resolveLocalClientBinding?.(candidate) ?? null
+      return isTrustedLocalClientBinding(binding) ? binding : null
+    } catch {
+      return null
+    }
+  }
+
+  private hasCurrentLocalBinding(client: ClientConnection): boolean {
+    if (!client.localBinding) return false
+    const current = this.resolveBinding(client.localBindingCandidate)
+    return !!current
+      && current.workspaceId === client.localBinding.workspaceId
+      && current.webContentsId === client.localBinding.webContentsId
+      && current.workspaceId === client.workspaceId
+      && current.webContentsId === client.webContentsId
   }
 
   push(channel: string, target: PushTarget, ...args: any[]): void {
@@ -271,24 +373,30 @@ export class WsRpcServer implements RpcServer {
 
     for (const client of this.clients.values()) {
       if (!this.matchesTarget(client, target)) continue
+      if (!this.canReceiveEvent(client, channel, target)) continue
       this.bufferAndMaybeSendEvent(client, channel, args, timestamp, true)
     }
 
     for (const { client } of this.disconnectedClients.values()) {
       if (!this.matchesTarget(client, target)) continue
+      if (!this.canReceiveEvent(client, channel, target)) continue
       this.bufferAndMaybeSendEvent(client, channel, args, timestamp, false)
     }
   }
 
   hasClientCapability(clientId: string, capability: string): boolean {
     const client = this.clients.get(clientId)
-    return !!client && client.capabilities.has(capability)
+    return !!client && !client.principal && !this.nativeAuthority?.hasRegisteredWorkspaces()
+      && (!client.localBinding || this.hasCurrentLocalBinding(client))
+      && client.capabilities.has(capability)
   }
 
   findClientsWithCapability(capability: string, opts?: { workspaceId?: string }): string[] {
     const results: string[] = []
     for (const [clientId, client] of this.clients) {
       if (!client.capabilities.has(capability)) continue
+      if (client.principal || this.nativeAuthority?.hasRegisteredWorkspaces()) continue
+      if (client.localBinding && !this.hasCurrentLocalBinding(client)) continue
       if (opts?.workspaceId !== undefined && client.workspaceId !== opts.workspaceId) continue
       results.push(clientId)
     }
@@ -304,6 +412,11 @@ export class WsRpcServer implements RpcServer {
         const err = new Error(`Client not connected: ${clientId}`)
         ;(err as any).code = 'CLIENT_DISCONNECTED'
         reject(err)
+        return
+      }
+      if (client.principal || this.nativeAuthority?.hasRegisteredWorkspaces()
+        || client.localBinding && !this.hasCurrentLocalBinding(client)) {
+        reject(Object.assign(new Error('Native clients do not expose legacy capabilities'), { code: 'AUTH_FAILED' }))
         return
       }
 
@@ -408,12 +521,13 @@ export class WsRpcServer implements RpcServer {
       }
 
       this.wss.on('connection', (ws, req) => {
-        this.onConnection(ws, req.headers.cookie ?? null)
+        this.onConnection(ws, req.headers.cookie ?? null, req.socket.remoteAddress ?? null)
       })
     })
   }
 
   close(): void {
+    this.disposeAuthorityListener?.()
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer)
       this.heartbeatTimer = null
@@ -447,7 +561,7 @@ export class WsRpcServer implements RpcServer {
   // Connection handling
   // -------------------------------------------------------------------------
 
-  private onConnection(ws: WebSocket, upgradeRequestCookie: string | null): void {
+  private onConnection(ws: WebSocket, upgradeRequestCookie: string | null, remoteAddress: string | null): void {
     // Reject if at capacity
     if (this.maxClients > 0 && this.clients.size >= this.maxClients) {
       transportLog.warn('Connection rejected: at capacity', {
@@ -505,31 +619,50 @@ export class WsRpcServer implements RpcServer {
           return
         }
 
-        // Auth check — bearer token OR session cookie (web UI)
-        if (this.requireAuth) {
+        // Reserved native credentials never fall back to legacy bearer/cookie auth.
+        let principal: NativePrincipal | null = null
+        const nativeToken = typeof envelope.token === 'string'
+          && (envelope.token.startsWith('na_') || envelope.token.startsWith('ne_'))
+        if (nativeToken) {
+          const loopback = remoteAddress === '127.0.0.1' || remoteAddress === '::1'
+            || remoteAddress === '::ffff:127.0.0.1'
+          if (this._protocol !== 'wss' && !loopback) {
+            this.sendError(ws, envelope.id, 'TLS_REQUIRED', 'Native credentials require TLS')
+            ws.close(4005, 'TLS required')
+            return
+          }
+          principal = this.nativeAuthority?.authenticate(envelope.token!) ?? null
+          if (!principal) {
+            this.sendError(ws, envelope.id, 'AUTH_FAILED', 'Invalid native credential')
+            ws.close(4005, 'Auth failed')
+            return
+          }
+        } else if (this.requireAuth) {
           let authenticated = false
-
-          // 1. Try bearer token (standard path)
           if (envelope.token && this.validateToken) {
             authenticated = await this.validateToken(envelope.token)
           }
-
-          // 2. Fallback: try session cookie from HTTP upgrade request (web UI path)
           if (!authenticated && this.validateSessionCookie && upgradeRequestCookie) {
             authenticated = await this.validateSessionCookie(upgradeRequestCookie)
           }
-
           if (!authenticated) {
-            const reason = envelope.token ? 'Invalid token' : 'Token required'
-            this.sendError(ws, envelope.id, 'AUTH_FAILED', reason)
+            this.sendError(ws, envelope.id, 'AUTH_FAILED', 'Authentication required')
             ws.close(4005, 'Auth failed')
             return
           }
         }
 
-        const localBinding = this.resolveBinding(envelope)
+        const localBindingCandidate = this.bindingCandidate(envelope)
+        const localBinding = this.resolveBinding(localBindingCandidate)
         const workspaceId = localBinding?.workspaceId ?? envelope.workspaceId ?? null
         const webContentsId = localBinding?.webContentsId ?? envelope.webContentsId ?? null
+        if (principal
+          ? !workspaceId || !this.nativeAuthority?.authorize(principal, workspaceId, 'read')
+          : !!workspaceId && !!this.nativeAuthority?.isRegisteredWorkspace(workspaceId)) {
+          this.sendError(ws, envelope.id, 'AUTH_FAILED', 'Workspace access denied')
+          ws.close(4005, 'Workspace access denied')
+          return
+        }
 
         // ── Reconnect attempt ──
         if (envelope.reconnectClientId && envelope.lastSeq != null) {
@@ -543,6 +676,13 @@ export class WsRpcServer implements RpcServer {
             const identityMatch =
               prevClient.workspaceId === workspaceId
               && prevClient.webContentsId === webContentsId
+              && (
+                prevClient.principal === null && principal === null
+                || !!principal && prevClient.principal?.issuer === principal.issuer
+                  && prevClient.principal.subject === principal.subject
+                  && prevClient.principal.credentialId === principal.credentialId
+                  && prevClient.principal.credentialVersion === principal.credentialVersion
+              )
               && (
                 (prevClient.localBinding === null && localBinding === null)
                 || (
@@ -560,6 +700,10 @@ export class WsRpcServer implements RpcServer {
               clearTimeout(entry.timer)
 
               prevClient.ws = ws
+              prevClient.principal = principal
+              prevClient.localBinding = localBinding
+              prevClient.localBindingCandidate = localBindingCandidate
+              if (principal) this.refreshSubscription(prevClient)
               prevClient.alive = true
               prevClient.missedPongs = 0
               handshakeCompleted = true
@@ -654,13 +798,17 @@ export class WsRpcServer implements RpcServer {
           workspaceId,
           webContentsId,
           localBinding,
-          capabilities: new Set(envelope.clientCapabilities ?? []),
+          localBindingCandidate,
+          principal,
+          subscriptionFence: null,
+          capabilities: new Set(principal ? [] : envelope.clientCapabilities ?? []),
           missedPongs: 0,
           alive: true,
           eventBuffer: [],
           lastAckedSeq: 0,
           lastSentSeq: 0,
         }
+        if (principal) this.refreshSubscription(client)
         this.clients.set(clientId, client)
         handshakeCompleted = true
 
@@ -751,7 +899,7 @@ export class WsRpcServer implements RpcServer {
     // Local-Electron channels are denied before consulting the handler map.
     // This protects accidental registration in a remote/headless profile and
     // makes unbound clients observe the same result as an absent channel.
-    if (!client.localBinding && this.localElectronChannels.has(channel)) {
+    if (!this.hasCurrentLocalBinding(client) && this.localElectronChannels.has(channel)) {
       this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', `No handler for: ${channel}`)
       return
     }
@@ -759,6 +907,10 @@ export class WsRpcServer implements RpcServer {
     const registration = this.handlers.get(channel)
     if (!registration) {
       this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', `No handler for: ${channel}`)
+      return
+    }
+    if (!this.canRequest(client, registration)) {
+      this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission denied')
       return
     }
 
@@ -788,16 +940,27 @@ export class WsRpcServer implements RpcServer {
       clientId: client.id,
       workspaceId: client.workspaceId,
       webContentsId: client.webContentsId,
+      principal: client.principal ?? undefined,
+    }
+    const requestFence = this.requestPermissionFence(client, registration)
+    if (client.principal && !requestFence) {
+      this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission denied')
+      return
     }
 
+    let handlerTimeout: ReturnType<typeof setTimeout> | undefined
     try {
       const result = await Promise.race([
         registration.handler(ctx, ...(args ?? [])),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Handler timeout: ${channel} (${WsRpcServer.HANDLER_TIMEOUT_MS}ms)`)),
+          handlerTimeout = setTimeout(() => reject(new Error(`Handler timeout: ${channel} (${WsRpcServer.HANDLER_TIMEOUT_MS}ms)`)),
             WsRpcServer.HANDLER_TIMEOUT_MS),
         ),
       ])
+      if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
+        this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission changed')
+        return
+      }
       const response: MessageEnvelope = {
         id,
         type: 'response',
@@ -806,10 +969,16 @@ export class WsRpcServer implements RpcServer {
       }
       this.safeSend(client.ws, serializeEnvelope(response))
     } catch (err) {
+      if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
+        this.sendResponseError(client.ws, id, channel, 'AUTH_FAILED', 'Workspace permission changed')
+        return
+      }
       const message = err instanceof Error ? err.message : String(err)
       const rawCode = (err as { code?: unknown } | null)?.code
       const code: ErrorCode = isErrorCode(rawCode) ? rawCode : 'HANDLER_ERROR'
       this.sendResponseError(client.ws, id, channel, code, message)
+    } finally {
+      clearTimeout(handlerTimeout)
     }
   }
 
@@ -951,6 +1120,13 @@ export class WsRpcServer implements RpcServer {
   updateClientWorkspace(clientId: string, workspaceId: string): void {
     const client = this.clients.get(clientId)
     if (client && !client.localBinding) {
+      if (client.principal
+        ? !this.nativeAuthority?.authorize(client.principal, workspaceId, 'read')
+        : this.nativeAuthority?.isRegisteredWorkspace(workspaceId)) {
+        throw Object.assign(new Error('Workspace permission denied'), { code: 'AUTH_FAILED' })
+      }
+      client.eventBuffer.length = 0
+      client.subscriptionFence = null
       client.workspaceId = workspaceId
     }
   }

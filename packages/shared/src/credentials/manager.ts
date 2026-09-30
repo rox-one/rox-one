@@ -145,6 +145,35 @@ export class CredentialManager {
    * Get a credential by ID, trying all backends.
    * Automatically initializes if needed.
    */
+  /** Native transport reads must never convert a damaged store into an unenrolled fallback. */
+  async getNativeTransportCredential(workspaceId: string): Promise<string | null> {
+    const id: CredentialId = { type: 'native_transport_credential', workspaceId };
+    // Validate scope before accessing storage.
+    const { credentialIdToAccount } = await import('./types.ts');
+    credentialIdToAccount(id);
+    await this.ensureInitialized();
+    if (this.backends.length === 0) throw new Error('Native credential storage unavailable');
+    for (const backend of this.backends) {
+      const stored = backend instanceof SecureStorageBackend ? await backend.getStrict(id) : await backend.get(id);
+      if (stored === null) continue;
+      const credential = classifyStoredCredential(id.type, stored)?.credential;
+      if (!credential || typeof credential.value !== 'string' || !credential.value.trim()) {
+        throw new Error('Invalid native transport credential record');
+      }
+      return credential.value;
+    }
+    return null;
+  }
+
+  /** Operator enrollment persists only the enrolled secret in encrypted credential storage. */
+  async setNativeTransportCredential(workspaceId: string, credential: string): Promise<void> {
+    const { credentialIdToAccount } = await import('./types.ts');
+    const id: CredentialId = { type: 'native_transport_credential', workspaceId };
+    credentialIdToAccount(id);
+    if (typeof credential !== 'string' || !credential.trim()) throw new Error('Invalid native transport credential');
+    await this.set(id, { value: credential, source: 'native' });
+  }
+
   async get(id: CredentialId): Promise<StoredCredential | null> {
     const classified = await this.inspect(id);
     return classified?.credential ?? null;
@@ -858,6 +887,8 @@ export function credentialKindForType(type: CredentialType): CredentialKind {
       return 'basic_auth';
     case 'ssh_managed_token':
       return 'opaque_bundle';
+    case 'account_replica_key':
+      return 'account_replica_key';
     default:
       return 'opaque_bundle';
   }

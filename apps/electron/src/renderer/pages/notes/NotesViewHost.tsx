@@ -31,8 +31,9 @@ import {
   progressiveGraph,
   projectNoteRows,
   removeFormula,
-  serializeJsonCanvas,
+  setNotePropertyColumn,
   serializeOutlineFolds,
+  serializeJsonCanvas,
   tagFilterValue,
   toggleNoteViewSort,
   withTagFilter,
@@ -51,6 +52,7 @@ export type NotesViewNote = {
   markdown: string
   tags?: string[]
   properties?: Record<string, unknown>
+  tasks?: Array<{ checked: boolean }>
   links?: Array<{ target: string }>
   backlinks?: Array<{ noteId: string; title?: string }>
 }
@@ -63,6 +65,8 @@ export function NotesViewHost({
   onOpenNote,
   onCreateNote,
   onConvert,
+  onEditNote,
+  onDeleteNote,
 }: {
   view: 'table' | 'canvas' | 'graph' | 'outline'
   notes: NotesViewNote[]
@@ -71,13 +75,15 @@ export function NotesViewHost({
   onOpenNote: (noteId: string) => void
   onCreateNote: (folder?: string) => void
   onConvert: (noteId: string, kind: 'session-draft' | 'task') => void
+  onEditNote: (noteId: string, field: 'title' | 'tags' | `property:${string}`, value: string) => void
+  onDeleteNote: (noteId: string) => void
 }) {
   const rows = React.useMemo(
     () =>
       projectNoteRows(
         notes.map((note) => ({
           ...note,
-          tasks: parseNoteDocument(note.markdown).tasks,
+          tasks: note.tasks ?? parseNoteDocument(note.markdown).tasks,
         })),
       ),
     [notes],
@@ -90,7 +96,10 @@ export function NotesViewHost({
         workspaceId={workspaceId}
         activeNoteId={activeNoteId}
         onOpenNote={onOpenNote}
+        onCreateNote={onCreateNote}
         onConvert={onConvert}
+        onEditNote={onEditNote}
+        onDeleteNote={onDeleteNote}
       />
     )
   }
@@ -117,15 +126,22 @@ function NotesTableView({
   workspaceId,
   activeNoteId,
   onOpenNote,
+  onCreateNote,
   onConvert,
+  onEditNote,
+  onDeleteNote,
 }: {
   rows: NoteProjectionRow[]
   workspaceId: string
   activeNoteId: string | null
   onOpenNote: (noteId: string) => void
+  onCreateNote: (folder?: string) => void
   onConvert: (noteId: string, kind: 'session-draft' | 'task') => void
+  onEditNote: (noteId: string, field: 'title' | 'tags' | `property:${string}`, value: string) => void
+  onDeleteNote: (noteId: string) => void
 }) {
   const { t } = useTranslation()
+  const [newPropertyKey, setNewPropertyKey] = React.useState('')
   const storageKey = notesViewsStorageKey(workspaceId)
   const [views, setViews] = React.useState<NoteBaseView[]>(() =>
     loadSavedViews(typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey)),
@@ -157,7 +173,10 @@ function NotesTableView({
   const visible = applyNoteBaseView(rows, view)
   const groups = groupNoteRows(visible, view.groupBy, view.formulas)
   const unusedFormulas = availableFormulaExprs(view)
-  const colSpan = 4 + view.formulas.length
+  const propertyColumns = view.columns
+    .filter((column) => column.startsWith('property:'))
+    .map((column) => column.slice('property:'.length))
+  const colSpan = 4 + propertyColumns.length + view.formulas.length
 
   return (
     <div className="h-full overflow-auto p-4" data-testid="notes-table-view">
@@ -213,6 +232,30 @@ function NotesTableView({
             />
           </span>
         </label>
+        <Button type="button" size="sm" variant="outline" onClick={() => onCreateNote()}>
+          <FilePlus2 className="mr-1 h-3.5 w-3.5" />
+          {t('notes.views.addNote')}
+        </Button>
+        <form
+          className="flex items-center gap-1"
+          onSubmit={(event) => {
+            event.preventDefault()
+            const next = setNotePropertyColumn(view, newPropertyKey, true)
+            if (next === view) return
+            patchView(next)
+            setNewPropertyKey('')
+          }}
+        >
+          <input
+            className="h-7 w-28 rounded-[6px] border border-border/60 bg-background px-2 text-xs"
+            aria-label={t('notes.inspector.propertyKey')}
+            value={newPropertyKey}
+            onChange={(event) => setNewPropertyKey(event.target.value)}
+          />
+          <Button type="submit" size="sm" variant="outline" disabled={!newPropertyKey.trim()}>
+            {t('notes.views.addProperty')}
+          </Button>
+        </form>
         {view.formulas.map((formula) => (
           <button
             key={formula.expr}
@@ -233,6 +276,19 @@ function NotesTableView({
             <th className="px-2 py-1">{t('notes.views.colTitle')}</th>
             <th className="px-2 py-1">{t('notes.views.colFolder')}</th>
             <th className="px-2 py-1">{t('notes.views.colTags')}</th>
+            {propertyColumns.map((key) => (
+              <th key={key} className="px-2 py-1">
+                <span className="inline-flex items-center gap-1">
+                  {key}
+                  <button
+                    type="button"
+                    aria-label={t('notes.views.removePropertyColumn', { key })}
+                  >
+                    ×
+                  </button>
+                </span>
+              </th>
+            ))}
             {view.formulas.map((formula) => (
               <th key={formula.expr} className="px-2 py-1">
                 <button
@@ -265,12 +321,29 @@ function NotesTableView({
                 className={cn('border-t border-border/40 hover:bg-foreground/[0.03]', row.id === activeNoteId && 'bg-foreground/[0.06]')}
               >
                 <td className="px-2 py-1.5">
-                  <button type="button" className="truncate font-medium" onClick={() => onOpenNote(row.id)}>
-                    {row.title}
-                  </button>
+                  <EditableNoteCell
+                    value={row.title}
+                    ariaLabel={t('notes.views.editCell', { field: t('notes.views.colTitle'), title: row.title })}
+                    onCommit={(value) => onEditNote(row.id, 'title', value)}
+                    onOpen={() => onOpenNote(row.id)}
+                  />
                 </td>
-                <td className="px-2 py-1.5 text-muted-foreground">{row.folder || '—'}</td>
-                <td className="px-2 py-1.5 text-muted-foreground">{row.tags.join(', ') || '—'}</td>
+                <td className="px-2 py-1.5 text-muted-foreground">
+                  <EditableNoteCell
+                    value={row.tags.join(', ')}
+                    ariaLabel={t('notes.views.editCell', { field: t('notes.views.colTags'), title: row.title })}
+                    onCommit={(value) => onEditNote(row.id, 'tags', value)}
+                  />
+                </td>
+                {propertyColumns.map((key) => (
+                  <td key={key} className="px-2 py-1.5">
+                    <EditableNoteCell
+                      value={String(row.properties[key] ?? '')}
+                      ariaLabel={t('notes.views.editCell', { field: key, title: row.title })}
+                      onCommit={(value) => onEditNote(row.id, `property:${key}`, value)}
+                    />
+                  </td>
+                ))}
                 {view.formulas.map((formula) => (
                   <td key={formula.expr} className="px-2 py-1.5" data-testid={`notes-formula-${formula.expr}`}>
                     {formulaValue(row, formula)}
@@ -280,8 +353,11 @@ function NotesTableView({
                   <button type="button" className="mr-2 text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'session-draft')}>
                     {t('notes.views.convertSession')}
                   </button>
-                  <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'task')}>
+                  <button type="button" className="mr-2 text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'task')}>
                     {t('notes.views.convertTask')}
+                  </button>
+                  <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => onDeleteNote(row.id)}>
+                    {t('notes.views.deleteNote')}
                   </button>
                 </td>
               </tr>
@@ -293,6 +369,56 @@ function NotesTableView({
         <p className="mt-6 text-center text-sm text-muted-foreground">{t('notes.views.tableEmpty')}</p>
       ) : null}
     </div>
+  )
+}
+
+function EditableNoteCell({
+  value,
+  ariaLabel,
+  onCommit,
+  onOpen,
+}: {
+  value: string
+  ariaLabel: string
+  onCommit: (value: string) => void
+  onOpen?: () => void
+}) {
+  const [draft, setDraft] = React.useState(value)
+  const lastSubmittedRef = React.useRef(value)
+
+  React.useEffect(() => {
+    setDraft(value)
+    lastSubmittedRef.current = value
+  }, [value])
+
+  const commit = (next: string) => {
+    if (next === value || next === lastSubmittedRef.current) return
+    lastSubmittedRef.current = next
+    onCommit(next)
+  }
+
+  return (
+    <input
+      className="w-full min-w-16 rounded px-1 py-0.5 outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      aria-label={ariaLabel}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onDoubleClick={onOpen}
+      onBlur={() => commit(draft)}
+      onKeyDown={(event) => {
+        if (event.nativeEvent.isComposing) return
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          commit(draft)
+          event.currentTarget.blur()
+        } else if (event.key === 'Escape') {
+          event.preventDefault()
+          setDraft(value)
+          lastSubmittedRef.current = value
+          event.currentTarget.blur()
+        }
+      }}
+    />
   )
 }
 

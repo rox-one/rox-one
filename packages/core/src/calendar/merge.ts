@@ -1,4 +1,4 @@
-import type { CalendarEvent, MergedTodayItem, TaskLike } from './types.ts'
+import { calendarEventIdentity, type CalendarEvent, type MergedTodayItem, type TaskLike } from './types.ts'
 
 const MS_DAY = 24 * 60 * 60 * 1000
 
@@ -34,11 +34,11 @@ export function mergeTodayUpcoming(
   }
   for (const event of events) {
     if (!eventOverlapsLocalDay(event, now) && event.startAt < startOfLocalDay(now) + 14 * MS_DAY && event.startAt >= startOfLocalDay(now) + MS_DAY) {
-      items.push({ kind: 'event', id: event.id, title: event.title, at: event.startAt, event })
+      items.push({ kind: 'event', id: calendarEventIdentity(event), title: event.title, at: event.startAt, event })
       continue
     }
     if (eventOverlapsLocalDay(event, now)) {
-      items.push({ kind: 'event', id: event.id, title: event.title, at: event.startAt, event })
+      items.push({ kind: 'event', id: calendarEventIdentity(event), title: event.title, at: event.startAt, event })
     }
   }
   return items.sort((a, b) => (a.at ?? Number.MAX_SAFE_INTEGER) - (b.at ?? Number.MAX_SAFE_INTEGER))

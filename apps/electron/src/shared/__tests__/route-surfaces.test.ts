@@ -18,6 +18,18 @@ import type { NavigationState } from '../types'
  * top of route-parser.ts).
  */
 describe('route-parser: unified shell surfaces', () => {
+
+  it('registers Search as a query-preserving route and accepts its deep link', () => {
+    const query = 'notes & sessions / knowledge?'
+    const route = routes.view.search(query)
+    const state = parseRouteToNavigationState(route)
+    expect(route).toContain('search?q=')
+    expect(state).toEqual({ navigator: 'search', query })
+    expect(buildRouteFromNavigationState(state!)).toBe(route)
+    expect(parseCompoundRoute(route)).toEqual({ navigator: 'search', query, details: null })
+    expect(parseRoute(route)).toEqual({ type: 'view', name: 'search', params: { q: query } })
+    expect(parseRouteToNavigationState('search')).toEqual({ navigator: 'search', query: '' })
+  })
   // ------------------------------------------------------------------
   // Round-trip: all 7 SurfaceTab kinds (NavigationState pair)
   // ------------------------------------------------------------------

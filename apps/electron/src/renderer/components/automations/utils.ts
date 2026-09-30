@@ -55,13 +55,14 @@ export function describeCron(cron: string, t: TranslateFn): string {
 }
 
 /**
- * Compute the next N run times for a cron expression using croner.
+ * Compute the next run times in the automation's configured IANA timezone.
+ * An omitted timezone intentionally follows the host timezone.
  */
-export function computeNextRuns(cron: string, count: number = 3): Date[] {
+export function computeNextRuns(cron: string, count: number = 3, timezone?: string): Date[] {
   try {
-    const job = new Cron(cron)
-    return job.nextRuns(count)
+    const job = new Cron(cron, timezone ? { timezone } : {});
+    return job.nextRuns(count);
   } catch {
-    return []
+    return [];
   }
 }

@@ -30,6 +30,7 @@ export default function BrowserProfileImportPanel() {
   const [error, setError] = useState<string | null>(null)
   const [profiles, setProfiles] = useState<DiscoveredProfile[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [cookieDomains, setCookieDomains] = useState('')
   const [consent, setConsent] = useState<ImportConsent>({
     historyBookmarks: true,
     cookies: false,
@@ -43,7 +44,12 @@ export default function BrowserProfileImportPanel() {
 
   const refreshCookieAuto = useCallback(async () => {
     try {
-      setCookieAuto(await window.electronAPI.browserCookieAutoStatus())
+      const status = await window.electronAPI.browserCookieAutoStatus()
+      setCookieAuto(status)
+      if (status.consent) {
+        setSelectedId((current) => current ?? status.profileId ?? null)
+        setCookieDomains((current) => current || status.domains?.join(', ') || '')
+      }
     } catch (err) {
       setCookieError(err instanceof Error ? err.message : String(err))
     }
@@ -58,12 +64,21 @@ export default function BrowserProfileImportPanel() {
 
   const setCookieConsent = useCallback(async (on: boolean) => {
     setCookieError(null)
+    const domains = cookieDomains.split(',').map((domain) => domain.trim()).filter(Boolean)
+    if (on && (!selectedId || domains.length === 0)) {
+      setCookieError(t('settings.browserImport.auto.scopeHint'))
+      return
+    }
     try {
-      setCookieAuto(await window.electronAPI.browserCookieAutoSet({ consent: on }))
+      setCookieAuto(await window.electronAPI.browserCookieAutoSet({
+        consent: on,
+        profileId: on ? selectedId ?? undefined : undefined,
+        domains: on ? domains : undefined,
+      }))
     } catch (err) {
       setCookieError(err instanceof Error ? err.message : String(err))
     }
-  }, [])
+  }, [cookieDomains, selectedId, t])
 
   const runCookieImport = useCallback(async () => {
     setCookieError(null)
@@ -77,11 +92,18 @@ export default function BrowserProfileImportPanel() {
 
   const cookieLine = (() => {
     if (!cookieAuto) return t('settings.browserImport.auto.loading')
-    if (!cookieAuto.supported) return t('settings.browserImport.auto.unsupported')
-    if (cookieAuto.browsers.length === 0) return t('settings.browserImport.auto.noBrowsers')
-    if (!cookieAuto.consent) {
-      return t('settings.browserImport.auto.offDetected', { browsers: cookieAuto.browsers.join(', ') })
+    if (!cookieAuto.consent && cookieAuto.revocationReceipt) {
+      return t('settings.browserImport.auto.revoked', {
+        count: cookieAuto.revocationReceipt.cookiesRemoved,
+        domains: cookieAuto.revocationReceipt.domains.join(', '),
+        time: new Date(cookieAuto.revocationReceipt.revokedAt).toLocaleString(i18n.language),
+      })
     }
+    if (!cookieAuto.consent && cookieAuto.state === 'error') {
+      return t('settings.browserImport.auto.error', { error: cookieAuto.error ?? '' })
+    }
+    if (!cookieAuto.supported) return t('settings.browserImport.auto.unsupported')
+    if (!cookieAuto.consent) return t('settings.browserImport.auto.scopeHint')
     if (cookieAuto.state === 'importing') return t('settings.browserImport.auto.importing', { browser: cookieAuto.browser ?? '' })
     if (cookieAuto.state === 'error') {
       return t('settings.browserImport.auto.error', { error: cookieAuto.error ?? '' })
@@ -99,10 +121,9 @@ export default function BrowserProfileImportPanel() {
     setLoading(true)
     setError(null)
     try {
-      const found = await window.electronAPI.discoverBrowserProfiles()
+      const found = await window.electronAPI.discoverBrowserProfiles({ consent: true })
       setProfiles(found)
-      const recommended = found.find((profile) => profile.recommended)
-      setSelectedId(recommended?.id ?? found[0]?.id ?? null)
+      setSelectedId(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -110,9 +131,7 @@ export default function BrowserProfileImportPanel() {
     }
   }, [])
 
-  useEffect(() => {
-    void discover()
-  }, [discover])
+
 
   const runImport = useCallback(async (dryRun: boolean) => {
     if (!workspace?.id || !selectedId) return
@@ -122,7 +141,7 @@ export default function BrowserProfileImportPanel() {
       const result = await window.electronAPI.importBrowserProfile({
         workspaceId: workspace.id,
         profileId: selectedId,
-        consent,
+        consent: { ...consent, domains: cookieDomains.split(',').map((domain) => domain.trim()).filter(Boolean) },
         dryRun,
       })
       setSummary(result)
@@ -131,7 +150,7 @@ export default function BrowserProfileImportPanel() {
     } finally {
       setLoading(false)
     }
-  }, [consent, selectedId, workspace?.id])
+  }, [consent, cookieDomains, selectedId, workspace?.id])
 
   const rollback = useCallback(async () => {
     if (!workspace?.id || !summary?.rollbackToken) return
@@ -179,12 +198,39 @@ export default function BrowserProfileImportPanel() {
             label={t('settings.browserImport.auto.consent')}
             description={t('settings.browserImport.auto.consentHint')}
             checked={cookieAuto?.consent ?? false}
-            disabled={!cookieAuto || !cookieAuto.supported || cookieAuto.browsers.length === 0}
+            disabled={!cookieAuto || !cookieAuto.supported || (!cookieAuto.consent && (!selectedId || cookieDomains.trim().length === 0))}
             onCheckedChange={(on) => void setCookieConsent(on)}
           />
+          <label className="flex items-center gap-2 text-sm">
+            {t('settings.browserImport.profileLabel')}
+            <select
+              value={selectedId ?? ''}
+              onChange={(event) => setSelectedId(event.target.value || null)}
+              disabled={profiles.length === 0 || cookieAuto?.consent === true}
+            >
+              <option value="">{t('settings.browserImport.empty')}</option>
+              {cookieAuto?.consent && cookieAuto.profileId && !profiles.some((profile) => profile.id === cookieAuto.profileId) ? (
+                <option value={cookieAuto.profileId}>{cookieAuto.profileName ?? cookieAuto.browser ?? t('settings.browserImport.profileLabel')}</option>
+              ) : null}
+              {profiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>{profile.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            {t('settings.browserImport.auto.domainsLabel')}
+            <input
+              value={cookieDomains}
+              onChange={(event) => setCookieDomains(event.target.value)}
+              placeholder={t('settings.browserImport.auto.domainsPlaceholder')}
+              disabled={cookieAuto?.consent ?? false}
+            />
+          </label>
           <SettingsRow
             label={t('settings.browserImport.auto.status')}
-            description={cookieLine}
+            description={cookieAuto?.consent && cookieAuto.domains?.length
+              ? `${cookieLine} · ${t('settings.browserImport.auto.domainsLabel')}: ${cookieAuto.domains.join(', ')}`
+              : cookieLine}
             wrapDescription
             action={
               cookieAuto?.consent ? (
@@ -201,8 +247,11 @@ export default function BrowserProfileImportPanel() {
       <button
         type="button"
         data-testid="browser-profile-manual-toggle"
-        onClick={() => setManualOpen((open) => !open)}
-        className="inline-flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-foreground"
+        onClick={() => {
+          const opening = !manualOpen
+          setManualOpen(opening)
+          if (opening && profiles.length === 0) void discover()
+        }}
       >
         {manualOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         {t('settings.browserImport.title')}

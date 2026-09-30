@@ -1,13 +1,11 @@
 /**
- * System text-to-speech fallback for the message «Слушать» action.
- *
- * The configured TTS engines (edge / fish-speech) are placeholders that never
- * produce audio, so «Слушать» used to do nothing audible. On macOS we speak
- * through the built-in `say` binary (text is piped via stdin, never passed as
- * argv). Elsewhere the caller reports `playback: 'renderer'` and the renderer
- * falls back to the Web Speech API.
+ * Local Russian text-to-speech fallback for the message «Слушать» action.
+ * Text is piped through stdin and never passed as a process argument. The
+ * requested voice is explicit: if it is not installed, startup fails and the
+ * caller can report that local fallback is unavailable rather than claiming
+ * that speech was played.
  */
-import { spawn as nodeSpawn } from 'node:child_process'
+import { execFileSync, spawn as nodeSpawn } from 'node:child_process'
 
 type SpawnLike = (command: string, args: string[], options: { stdio: ['pipe', 'ignore', 'ignore'] }) => {
   stdin: { end(chunk: string): void } | null
@@ -15,7 +13,8 @@ type SpawnLike = (command: string, args: string[], options: { stdio: ['pipe', 'i
   once(event: 'spawn' | 'exit' | 'error', listener: (arg: unknown) => void): unknown
 }
 
-export type SystemSpeakResult = { played: boolean }
+export type SystemSpeakResult = { played: boolean; voice?: string }
+
 
 export type SystemSpeaker = {
   /**
@@ -32,9 +31,22 @@ export type SystemSpeaker = {
 export function createSystemSpeaker(options: {
   platform?: NodeJS.Platform
   spawn?: SpawnLike
+  findRussianVoice?: () => string | null
 } = {}): SystemSpeaker {
   const platform = options.platform ?? process.platform
   const spawn = options.spawn ?? (nodeSpawn as unknown as SpawnLike)
+  const findRussianVoice = options.findRussianVoice ?? (() => {
+    try {
+      const output = execFileSync('say', ['-v', '?'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+      const voices = output.split('\n').flatMap((line) => {
+        const match = line.match(/^(.+?)\s+ru_RU(?:\s|$)/)
+        return match?.[1] ? [match[1].trim()] : []
+      })
+      return voices.find((voice) => voice.toLowerCase() === 'yuri') ?? voices[0] ?? null
+    } catch {
+      return null
+    }
+  })
   let current: ReturnType<SpawnLike> | null = null
 
   const stop = () => {
@@ -50,17 +62,19 @@ export function createSystemSpeaker(options: {
     isSpeaking: () => current !== null,
     speak(text) {
       if (platform !== 'darwin' || !text.trim()) return Promise.resolve({ played: false })
+      const voice = findRussianVoice()
+      if (!voice) return Promise.resolve({ played: false })
       stop()
       return new Promise<SystemSpeakResult>((resolve) => {
         let settled = false
         const settle = (played: boolean) => {
           if (settled) return
           settled = true
-          resolve({ played })
+          resolve(played ? { played: true, voice } : { played: false })
         }
         let proc: ReturnType<SpawnLike>
         try {
-          proc = spawn('say', [], { stdio: ['pipe', 'ignore', 'ignore'] })
+          proc = spawn('say', ['-v', voice], { stdio: ['pipe', 'ignore', 'ignore'] })
         } catch {
           settle(false)
           return

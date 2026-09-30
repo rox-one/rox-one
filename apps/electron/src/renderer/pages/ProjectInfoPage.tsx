@@ -9,7 +9,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import { FolderKanban, FolderOpen, Plus, Trash2, Upload, ImagePlus } from 'lucide-react'
+import { ArrowDown, ArrowUp, FolderOpen, Plus, Trash2, Upload, ImagePlus } from 'lucide-react'
 import { ProjectIcon, invalidateProjectIconCache } from '@/components/projects/ProjectIcon'
 import { toast } from 'sonner'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
@@ -39,13 +39,14 @@ import {
 } from '@craft-agent/core/rox2'
 import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
-import type { LoadedProject, ProjectAsset } from '@craft-agent/shared/projects/types'
+import type { LoadedProject, OkrCycle, OkrKeyResult, OkrObjective, OkrProgress, ProjectOkrDocument, ProjectAsset } from '@craft-agent/shared/projects/types'
+import { calculateOkrCycle, createOkrCycle } from '@craft-agent/shared/projects'
 
 interface ProjectInfoPageProps {
   projectSlug: string
 }
 
-type TabKey = 'sessions' | 'tasks' | 'assets' | 'settings'
+type TabKey = 'sessions' | 'tasks' | 'assets' | 'settings' | 'okr'
 
 export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { t } = useTranslation()
@@ -67,6 +68,166 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const [editDetails, setEditDetails] = useState('')
   const [editColor, setEditColor] = useState<string>('')
   const [saving, setSaving] = useState(false)
+  const [okrDocument, setOkrDocument] = useState<ProjectOkrDocument | null>(null)
+  const [okrCycles, setOkrCycles] = useState<OkrCycle[]>([])
+  const [selectedCycleId, setSelectedCycleId] = useState('')
+  const [okrLoading, setOkrLoading] = useState(false)
+  const [okrSaving, setOkrSaving] = useState(false)
+  const [okrError, setOkrError] = useState<string | null>(null)
+  const [newCycleTitle, setNewCycleTitle] = useState('')
+  const [newCycleStart, setNewCycleStart] = useState('')
+  const [newCycleEnd, setNewCycleEnd] = useState('')
+  const [newCycleTimezone, setNewCycleTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
+  const selectedCycle = useMemo(
+    () => okrCycles.find((cycle) => cycle.id === selectedCycleId) ?? null,
+    [okrCycles, selectedCycleId]
+  )
+  const selectedCycleCalculation = useMemo(() => {
+    if (!selectedCycle || selectedCycle.objectives.length === 0) return null
+    try {
+      return calculateOkrCycle(selectedCycle)
+    } catch {
+      return null
+    }
+  }, [selectedCycle])
+
+  const loadOkr = useCallback(async () => {
+    if (!workspaceId) return
+    const read = soupProjectReadResult({ source: 'native', nativeId: projectSlug })
+    if (!isClaimableLive(read.result)) return
+    setOkrLoading(true)
+    setOkrError(null)
+    try {
+      const document = await window.electronAPI.getProjectOkr(workspaceId, projectSlug)
+      setOkrDocument(document)
+      setOkrCycles(document.cycles)
+      setSelectedCycleId((current) => document.cycles.some((cycle) => cycle.id === current)
+        ? current
+        : document.cycles[0]?.id ?? '')
+    } catch (err) {
+      console.error('[ProjectInfoPage] Failed to load project OKRs:', err)
+      setOkrError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setOkrLoading(false)
+    }
+  }, [workspaceId, projectSlug])
+
+  useEffect(() => {
+    void loadOkr()
+  }, [loadOkr])
+  const updateOkrCycle = useCallback((update: (cycle: OkrCycle) => OkrCycle) => {
+    if (!selectedCycle) return
+    setOkrCycles((cycles) => cycles.map((cycle) => cycle.id === selectedCycle.id ? update(cycle) : cycle))
+  }, [selectedCycle])
+
+  const handleCreateCycle = useCallback(() => {
+    if (!project || !newCycleTitle.trim()) return
+    try {
+      const created = createOkrCycle(project.config.id, {
+        title: newCycleTitle,
+        startDate: newCycleStart,
+        endDate: newCycleEnd,
+        timezone: newCycleTimezone,
+      })
+      setOkrCycles((cycles) => [...cycles, created])
+      setSelectedCycleId(created.id)
+      setNewCycleTitle('')
+      setNewCycleStart('')
+      setNewCycleEnd('')
+      setOkrError(null)
+    } catch {
+      setOkrError(t('projectOkr.invalidCycle'))
+    }
+  }, [project, newCycleTitle, newCycleStart, newCycleEnd, newCycleTimezone, t])
+
+  const handleAddObjective = useCallback(() => {
+    const objective: OkrObjective = {
+      id: crypto.randomUUID(),
+      title: t('projectOkr.newObjectiveTitle', { number: selectedCycle?.objectives.length ? selectedCycle.objectives.length + 1 : 1 }),
+      weight: 1,
+      keyResults: [],
+    }
+    updateOkrCycle((cycle) => ({ ...cycle, objectives: [...cycle.objectives, objective] }))
+  }, [selectedCycle, updateOkrCycle, t])
+
+  const handleAddKeyResult = useCallback((objectiveId: string) => {
+    const keyResult: OkrKeyResult = {
+      id: crypto.randomUUID(),
+      title: t('projectOkr.newKeyResultTitle'),
+      weight: 1,
+      measurement: {
+        kind: 'numeric',
+        direction: 'increase',
+        baseline: 0,
+        target: 100,
+        current: null,
+        unit: t('projectOkr.defaultUnit'),
+        evidence: [],
+      },
+    }
+    updateOkrCycle((cycle) => ({
+      ...cycle,
+      objectives: cycle.objectives.map((objective) => objective.id === objectiveId
+        ? { ...objective, keyResults: [...objective.keyResults, keyResult] }
+        : objective),
+    }))
+  }, [updateOkrCycle, t])
+
+  const handleSaveOkr = useCallback(async () => {
+    if (!workspaceId || !okrDocument) return
+    const act = soupProjectActResult({ source: 'native', action: 'write', nativeId: projectSlug })
+    if (!isClaimableLive(act)) return
+    setOkrSaving(true)
+    setOkrError(null)
+    try {
+      const result = await window.electronAPI.saveProjectOkr(workspaceId, projectSlug, okrDocument.revision, { cycles: okrCycles })
+      if ('conflict' in result) {
+        setOkrError(t('projectOkr.conflict', { revision: result.actualRevision }))
+        return
+      }
+      setOkrDocument(result)
+      setOkrCycles(result.cycles)
+      toast.success(t('projectOkr.saveSuccess'))
+    } catch (err) {
+      console.error('[ProjectInfoPage] OKR save failed:', err)
+      setOkrError(t('projectOkr.saveFailed'))
+    } finally {
+      setOkrSaving(false)
+    }
+  }, [workspaceId, projectSlug, okrDocument, okrCycles, t])
+
+  const moveObjective = useCallback((objectiveId: string, offset: number) => {
+    updateOkrCycle((cycle) => {
+      const index = cycle.objectives.findIndex((objective) => objective.id === objectiveId)
+      const target = index + offset
+      if (index < 0 || target < 0 || target >= cycle.objectives.length) return cycle
+      const objectives = [...cycle.objectives]
+      ;[objectives[index], objectives[target]] = [objectives[target]!, objectives[index]!]
+      return { ...cycle, objectives }
+    })
+  }, [updateOkrCycle])
+
+  const moveKeyResult = useCallback((objectiveId: string, keyResultId: string, offset: number) => {
+    updateOkrCycle((cycle) => ({
+      ...cycle,
+      objectives: cycle.objectives.map((objective) => {
+        if (objective.id !== objectiveId) return objective
+        const index = objective.keyResults.findIndex((item) => item.id === keyResultId)
+        const target = index + offset
+        if (index < 0 || target < 0 || target >= objective.keyResults.length) return objective
+        const keyResults = [...objective.keyResults]
+        ;[keyResults[index], keyResults[target]] = [keyResults[target]!, keyResults[index]!]
+        return { ...objective, keyResults }
+      }),
+    }))
+  }, [updateOkrCycle])
+  const removeCycle = useCallback(() => {
+    if (!selectedCycle || selectedCycle.status !== 'draft') return
+    setOkrCycles((cycles) => cycles.filter((cycle) => cycle.id !== selectedCycle.id))
+    setSelectedCycleId(okrCycles.find((cycle) => cycle.id !== selectedCycle.id)?.id ?? '')
+  }, [selectedCycle, okrCycles])
+
 
   // Load project (and re-load on broadcast)
   const loadProject = useCallback(async () => {
@@ -105,12 +266,15 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   useEffect(() => {
     if (!workspaceId) return
     const off = window.electronAPI.onProjectsChanged((wsId: string) => {
-      if (wsId === workspaceId) loadProject()
+      if (wsId === workspaceId) {
+        loadProject()
+        loadOkr()
+      }
     })
     return () => {
       if (typeof off === 'function') off()
     }
-  }, [workspaceId, loadProject])
+  }, [workspaceId, loadProject, loadOkr])
 
   // Load assets when entering Assets tab
   const refreshAssets = useCallback(async () => {
@@ -345,6 +509,9 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
             <TabButton active={tab === 'assets'} onClick={() => setTab('assets')}>
               {t('projectInfo.tabAssets')}
             </TabButton>
+            <TabButton active={tab === 'okr'} onClick={() => setTab('okr')}>
+              OKR
+            </TabButton>
             <TabButton active={tab === 'settings'} onClick={() => setTab('settings')}>
               {t('projectInfo.tabSettings')}
             </TabButton>
@@ -416,6 +583,338 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                   ))}
                 </ul>
               )}
+            </Info_Section>
+          )}
+          {tab === 'okr' && (
+            <Info_Section title={t('projectOkr.tab')}>
+              <div className="space-y-4 px-4 py-3">
+                <p className="text-sm text-muted-foreground">{t('projectOkr.guidance')}</p>
+                <details className="rounded-md border border-border/60 px-3 py-2 text-sm">
+                  <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{t('projectOkr.examplesTitle')}</summary>
+                  <p className="mt-2 text-muted-foreground">{t('projectOkr.examplesBody')}</p>
+                </details>
+                {okrLoading && <p role="status" className="text-sm text-muted-foreground">{t('projectOkr.loading')}</p>}
+                {okrError && (
+                  <div role="alert" className="rounded-md border border-destructive/30 p-3 text-sm text-destructive">
+                    <p>{okrError}</p>
+                    <Button size="sm" variant="outline" onClick={() => void loadOkr()}>{t('projectOkr.reload')}</Button>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(10rem,1fr)_auto_auto_minmax(10rem,auto)_auto]">
+                  <Input value={newCycleTitle} onChange={(event) => setNewCycleTitle(event.target.value)} placeholder={t('projectOkr.newCycle')} aria-label={t('projectOkr.newCycle')} />
+                  <Input type="date" value={newCycleStart} onChange={(event) => setNewCycleStart(event.target.value)} aria-label={t('projectOkr.cycleStart')} />
+                  <Input type="date" value={newCycleEnd} onChange={(event) => setNewCycleEnd(event.target.value)} aria-label={t('projectOkr.cycleEnd')} />
+                  <Input value={newCycleTimezone} onChange={(event) => setNewCycleTimezone(event.target.value)} placeholder="Europe/Moscow" aria-label={t('projectOkr.cycleTimezone')} />
+                  <Button type="button" variant="outline" onClick={handleCreateCycle} disabled={!newCycleTitle.trim()}>
+                    <Plus className="mr-1 h-3.5 w-3.5" />{t('projectOkr.createCycle')}
+                  </Button>
+                </div>
+                {okrCycles.length > 0 && (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="text-sm font-medium" htmlFor="project-okr-cycle">{t('projectOkr.cycle')}</label>
+                      <select
+                        id="project-okr-cycle"
+                        value={selectedCycleId}
+                        onChange={(event) => setSelectedCycleId(event.target.value)}
+                        className="h-9 min-w-48 rounded-md border border-border bg-background px-2 text-sm"
+                      >
+                        {okrCycles.map((cycle) => (
+                          <option key={cycle.id} value={cycle.id}>{cycle.title} · {t(`projectOkr.${cycle.status}`)}</option>
+                        ))}
+                      </select>
+                      {selectedCycle && (
+                        <>
+                          <span className="text-xs text-muted-foreground">{t('projectOkr.cycleRevision', { revision: selectedCycle.revision, start: selectedCycle.startDate, end: selectedCycle.endDate })}</span>
+                          <span className="text-xs text-muted-foreground">{t('projectOkr.cycleTimezone')}: {selectedCycle.timezone}</span>
+                          <select
+                            aria-label={t('projectOkr.cycleStatus')}
+                            value={selectedCycle.status}
+                            onChange={(event) => updateOkrCycle((cycle) => ({
+                              ...cycle,
+                              status: event.target.value as OkrCycle['status'],
+                              publishedAt: event.target.value === 'published' ? new Date().toISOString() : cycle.publishedAt,
+                              archivedAt: event.target.value === 'archived' ? new Date().toISOString() : undefined,
+                            }))}
+                            className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+                          >
+                            <option value="draft" disabled={selectedCycle.status !== 'draft'}>{t('projectOkr.draft')}</option>
+                            <option value="published" disabled={selectedCycle.status === 'archived'}>{t('projectOkr.published')}</option>
+                            <option value="archived" disabled={selectedCycle.status === 'archived'}>{t('projectOkr.archived')}</option>
+                          </select>
+                          <Button type="button" variant="ghost" size="sm" onClick={removeCycle} disabled={selectedCycle.status !== 'draft'}>{t('projectOkr.deleteCycle')}</Button>
+                        </>
+                      )}
+                    </div>
+                    {selectedCycle && (
+                      <fieldset disabled={selectedCycle.status !== 'draft'} className="space-y-4 disabled:opacity-80">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Input
+                          className="min-w-48 flex-1"
+                          aria-label={t('projectOkr.cycle')}
+                          value={selectedCycle.title}
+                          onChange={(event) => updateOkrCycle((cycle) => ({ ...cycle, title: event.target.value }))}
+                        />
+                        <Input
+                          type="date"
+                          aria-label={t('projectOkr.cycleStart')}
+                          value={selectedCycle.startDate}
+                          onChange={(event) => updateOkrCycle((cycle) => ({ ...cycle, startDate: event.target.value }))}
+                        />
+                        <Input
+                          type="date"
+                          aria-label={t('projectOkr.cycleEnd')}
+                          value={selectedCycle.endDate}
+                          onChange={(event) => updateOkrCycle((cycle) => ({ ...cycle, endDate: event.target.value }))}
+                        />
+                        <Input
+                          aria-label={t('projectOkr.cycleTimezone')}
+                          value={selectedCycle.timezone}
+                          onChange={(event) => updateOkrCycle((cycle) => ({ ...cycle, timezone: event.target.value }))}
+                        />
+                        <Button type="button" variant="outline" size="sm" onClick={handleAddObjective}>
+                          <Plus className="mr-1 h-3.5 w-3.5" />{t('projectOkr.addObjective')}
+                        </Button>
+                      </div>
+                    {selectedCycle && selectedCycle.objectives.map((objective, objectiveIndex) => {
+                      const objectiveResult = selectedCycleCalculation?.objectives.find((item) => item.id === objective.id)
+                      return (
+                        <section key={objective.id} className="space-y-3 rounded-lg border border-border/70 p-3" aria-labelledby={`objective-${objective.id}`}>
+                          <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(10rem,1fr)_6rem_minmax(8rem,0.6fr)_auto_auto_auto_auto]">
+                            <Input
+                              id={`objective-${objective.id}`}
+                              aria-label={t('projectOkr.objective')}
+                              value={objective.title}
+                              onChange={(event) => updateOkrCycle((cycle) => ({
+                                ...cycle,
+                                objectives: cycle.objectives.map((item) => item.id === objective.id ? { ...item, title: event.target.value } : item),
+                              }))}
+                              placeholder={t('projectOkr.objectivePlaceholder')}
+                            />
+                            <Input
+                              type="number" min="0" step="any" aria-label={t('projectOkr.objectiveWeight')}
+                              value={objective.weight}
+                              onChange={(event) => updateOkrCycle((cycle) => ({
+                                ...cycle,
+                                objectives: cycle.objectives.map((item) => item.id === objective.id ? { ...item, weight: Number(event.target.value) } : item),
+                              }))}
+                            />
+                            <Input
+                              aria-label={t('projectOkr.ownerObjective')} placeholder={t('projectOkr.owner')}
+                              value={objective.owner ?? ''}
+                              onChange={(event) => updateOkrCycle((cycle) => ({
+                                ...cycle,
+                                objectives: cycle.objectives.map((item) => item.id === objective.id ? { ...item, owner: event.target.value } : item),
+                              }))}
+                            />
+                            <span className="text-xs text-muted-foreground sm:whitespace-nowrap">
+                              {objectiveResult
+                                ? t('projectOkr.objectiveProgress', { weight: (objectiveResult.normalizedWeight * 100).toFixed(1), progress: formatOkrProgress(objectiveResult.progress, t('projectOkr.unknownProgress')) })
+                                : t('projectOkr.notCalculated')}
+                            </span>
+                            <Button type="button" size="icon" variant="ghost" aria-label={t('projectOkr.moveUp')} disabled={objectiveIndex === 0} onClick={() => moveObjective(objective.id, -1)}><ArrowUp className="h-4 w-4" /></Button>
+                            <Button type="button" size="icon" variant="ghost" aria-label={t('projectOkr.moveDown')} disabled={objectiveIndex === selectedCycle.objectives.length - 1} onClick={() => moveObjective(objective.id, 1)}><ArrowDown className="h-4 w-4" /></Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              aria-label={t('projectOkr.deleteObjective')}
+                              onClick={() => updateOkrCycle((cycle) => ({
+                                ...cycle,
+                                objectives: cycle.objectives.filter((item) => item.id !== objective.id),
+                              }))}
+                            >
+                              {t('projectOkr.delete')}
+                            </Button>
+                          </div>
+                          <Textarea
+                            aria-label={t('projectOkr.objectiveDescription')}
+                            placeholder={t('projectOkr.objectiveDescriptionHint')}
+                            rows={2}
+                            value={objective.description ?? ''}
+                            onChange={(event) => updateOkrCycle((cycle) => ({
+                              ...cycle,
+                              objectives: cycle.objectives.map((item) => item.id === objective.id ? { ...item, description: event.target.value } : item),
+                            }))}
+                          />
+                          <div className="space-y-2">
+                            {objective.keyResults.map((keyResult, keyResultIndex) => {
+                              const result = objectiveResult?.keyResults.find((item) => item.id === keyResult.id)
+                              const measurement = keyResult.measurement
+                              return (
+                                <div key={keyResult.id} className="space-y-2 rounded-md bg-foreground/[0.025] p-3">
+                                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(10rem,1fr)_5rem_minmax(8rem,0.6fr)_auto_auto]">
+                                    <Input
+                                      aria-label={t('projectOkr.keyResult')}
+                                      value={keyResult.title}
+                                      onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({ ...item, title: event.target.value }))}
+                                      placeholder={t('projectOkr.keyResultPlaceholder')}
+                                    />
+                                    <Input
+                                      type="number" min="0" step="any" aria-label={t('projectOkr.keyResultWeight')}
+                                      value={keyResult.weight}
+                                      onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({ ...item, weight: Number(event.target.value) }))}
+                                    />
+                                    <Input
+                                      aria-label={t('projectOkr.ownerKeyResult')} placeholder={t('projectOkr.owner')}
+                                      value={keyResult.owner ?? ''}
+                                      onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({ ...item, owner: event.target.value }))}
+                                    />
+                                    <span className="self-center text-xs text-muted-foreground">
+                                      {result ? t('projectOkr.innerWeightProgress', { weight: (result.normalizedWeight * 100).toFixed(1), progress: formatOkrProgress(result.progress, t('projectOkr.unknownProgress')) }) : t('projectOkr.unknown')}
+                                    </span>
+                                    <select
+                                      aria-label={t('projectOkr.keyResultStatus')}
+                                      value={keyResult.status ?? 'unknown'}
+                                      onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({ ...item, status: event.target.value === 'unknown' ? undefined : event.target.value }))}
+                                      className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+                                    >
+                                      <option value="unknown">{t('projectOkr.noStatus')}</option>
+                                      <option value="on-track">{t('projectOkr.onTrack')}</option>
+                                      <option value="at-risk">{t('projectOkr.atRisk')}</option>
+                                      <option value="completed">{t('projectOkr.completed')}</option>
+                                    </select>
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <label className="space-y-1 text-xs text-muted-foreground">
+                                      {t('projectOkr.measurementType')}
+                                      <select
+                                        value={measurement.kind}
+                                        onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({
+                                          ...item,
+                                          measurement: event.target.value === 'binary'
+                                            ? { kind: 'binary', achieved: null, evidence: [], source: item.measurement.source }
+                                            : { kind: 'numeric', direction: 'increase', baseline: 0, target: 100, current: null, unit: t('projectOkr.defaultUnit'), evidence: [], source: item.measurement.source },
+                                        }))}
+                                        className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
+                                      >
+                                        <option value="numeric">{t('projectOkr.numeric')}</option>
+                                        <option value="binary">{t('projectOkr.binary')}</option>
+                                      </select>
+                                    </label>
+                                    {measurement.kind === 'numeric' ? (
+                                      <>
+                                        <label className="space-y-1 text-xs text-muted-foreground">
+                                          {t('projectOkr.direction')}
+                                          <select
+                                            value={measurement.direction}
+                                            onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => item.measurement.kind === 'numeric'
+                                              ? { ...item, measurement: { ...item.measurement, direction: event.target.value as 'increase' | 'decrease' } }
+                                              : item)}
+                                            className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
+                                          >
+                                            <option value="increase">{t('projectOkr.increase')}</option>
+                                            <option value="decrease">{t('projectOkr.decrease')}</option>
+                                          </select>
+                                        </label>
+                                        <Input type="number" step="any" aria-label={t('projectOkr.measurementBaseline')} placeholder={t('projectOkr.baseline')} value={measurement.baseline} onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => item.measurement.kind === 'numeric' ? { ...item, measurement: { ...item.measurement, baseline: Number(event.target.value) } } : item)} />
+                                        <Input type="number" step="any" aria-label={t('projectOkr.numericTarget')} placeholder={t('projectOkr.target')} value={measurement.target} onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => item.measurement.kind === 'numeric' ? { ...item, measurement: { ...item.measurement, target: Number(event.target.value) } } : item)} />
+                                        <Input type="number" step="any" aria-label={t('projectOkr.measurementCurrent')} placeholder={t('projectOkr.currentUnknown')} value={measurement.current ?? ''} onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => item.measurement.kind === 'numeric' ? { ...item, measurement: { ...item.measurement, current: event.target.value === '' ? null : Number(event.target.value) } } : item)} />
+                                        <Input aria-label={t('projectOkr.unit')} placeholder={t('projectOkr.unit')} value={measurement.unit} onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => item.measurement.kind === 'numeric' ? { ...item, measurement: { ...item.measurement, unit: event.target.value } } : item)} />
+                                      </>
+                                    ) : (
+                                      <label className="space-y-1 text-xs text-muted-foreground">
+                                        {t('projectOkr.binaryState')}
+                                        <select
+                                          value={measurement.achieved === null ? 'unknown' : String(measurement.achieved)}
+                                          onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => item.measurement.kind === 'binary'
+                                            ? { ...item, measurement: { ...item.measurement, achieved: event.target.value === 'unknown' ? null : event.target.value === 'true' } }
+                                            : item)}
+                                          className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
+                                        >
+                                          <option value="unknown">{t('projectOkr.unknown')}</option>
+                                          <option value="false">{t('projectOkr.notAchieved')}</option>
+                                          <option value="true">{t('projectOkr.achieved')}</option>
+                                        </select>
+                                      </label>
+                                    )}
+                                    <Input aria-label={t('projectOkr.source')} placeholder={t('projectOkr.source')} value={measurement.source ?? ''} onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({ ...item, measurement: { ...item.measurement, source: event.target.value } }))} />
+                                    <Input type="datetime-local" aria-label={t('projectOkr.measuredAt')} value={formatLocalDateTimeInput(measurement.measuredAt)} onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({ ...item, measurement: { ...item.measurement, measuredAt: event.target.value ? new Date(event.target.value).toISOString() : undefined } }))} />
+                                    <label className="space-y-1 text-xs text-muted-foreground">
+                                      {t('projectOkr.freshness')}
+                                      <select
+                                        value={measurement.freshness ?? 'unknown'}
+                                        onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({
+                                          ...item,
+                                          measurement: { ...item.measurement, freshness: event.target.value as 'fresh' | 'stale' | 'unknown' },
+                                        }))}
+                                        className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
+                                      >
+                                        <option value="unknown">{t('projectOkr.notChecked')}</option>
+                                        <option value="fresh">{t('projectOkr.fresh')}</option>
+                                        <option value="stale">{t('projectOkr.stale')}</option>
+                                      </select>
+                                    </label>
+                                    <Input
+                                      type="datetime-local"
+                                      aria-label={t('projectOkr.freshnessCheckedAt')}
+                                      value={formatLocalDateTimeInput(measurement.freshnessCheckedAt)}
+                                      onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({
+                                        ...item,
+                                        measurement: { ...item.measurement, freshnessCheckedAt: event.target.value ? new Date(event.target.value).toISOString() : undefined },
+                                      }))}
+                                    />
+                                    <Textarea
+                                      aria-label={t('projectOkr.evidence')}
+                                      placeholder={t('projectOkr.evidencePlaceholder')}
+                                      rows={2}
+                                      value={measurement.evidence?.map((item) => item.label).join('\n') ?? ''}
+                                      onChange={(event) => updateKeyResult(updateOkrCycle, objective.id, keyResult.id, (item) => ({
+                                        ...item,
+                                        measurement: {
+                                          ...item.measurement,
+                                          evidence: event.target.value.split('\n').map((label, index) => ({ id: `evidence-${index + 1}`, label: label.trim() })).filter((entry) => entry.label),
+                                        },
+                                      }))}
+                                    />
+                                  </div>
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="text-xs text-muted-foreground">{t('projectOkr.orderScore', { order: keyResultIndex + 1, score: result?.score == null ? t('projectOkr.unknownProgress') : `${(result.score * 100).toFixed(1)}%` })}</span>
+                                    <div className="flex items-center gap-1">
+                                      <Button type="button" size="icon" variant="ghost" aria-label={t('projectOkr.moveKeyResultUp')} disabled={keyResultIndex === 0} onClick={() => moveKeyResult(objective.id, keyResult.id, -1)}><ArrowUp className="h-4 w-4" /></Button>
+                                      <Button type="button" size="icon" variant="ghost" aria-label={t('projectOkr.moveKeyResultDown')} disabled={keyResultIndex === objective.keyResults.length - 1} onClick={() => moveKeyResult(objective.id, keyResult.id, 1)}><ArrowDown className="h-4 w-4" /></Button>
+                                      <Button type="button" size="sm" variant="ghost" onClick={() => updateOkrCycle((cycle) => ({
+                                        ...cycle,
+                                        objectives: cycle.objectives.map((item) => item.id === objective.id
+                                          ? { ...item, keyResults: item.keyResults.filter((entry) => entry.id !== keyResult.id) }
+                                          : item),
+                                      }))}>{t('projectOkr.deleteKeyResult')}</Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            <Button type="button" size="sm" variant="outline" onClick={() => handleAddKeyResult(objective.id)}>
+                              <Plus className="mr-1 h-3.5 w-3.5" />{t('projectOkr.addKeyResult')}
+                            </Button>
+                          </div>
+                        </section>
+                      )
+                    })}
+                      </fieldset>
+                    )}
+                    {selectedCycleCalculation && (
+                      <div className="rounded-md border border-border/70 p-3 text-sm" aria-live="polite">
+                        <strong>{t('projectOkr.cycleProgress')}:</strong> {formatOkrProgress(selectedCycleCalculation.progress, t('projectOkr.unknownProgress'))}
+                        <span className="ml-2 text-muted-foreground">
+                          {t('projectOkr.knownContribution', { value: (selectedCycleCalculation.progress.knownContribution * 100).toFixed(1) })}; {t('projectOkr.coverage', { value: (selectedCycleCalculation.progress.coverage * 100).toFixed(1) })}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+                {!okrLoading && okrCycles.length === 0 && (
+                  <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">{t('projectOkr.empty')}</p>
+                )}
+                <div className="flex flex-wrap justify-end gap-2 border-t border-border/50 pt-3">
+                  <Button type="button" variant="outline" disabled={!okrDocument || okrSaving} onClick={() => { setOkrCycles(okrDocument?.cycles ?? []); setOkrError(null) }}>
+                    {t('projectOkr.cancel')}
+                  </Button>
+                  <Button type="button" disabled={!okrDocument || okrSaving || okrLoading} onClick={() => void handleSaveOkr()}>
+                    {okrSaving ? t('projectOkr.saving') : t('projectOkr.save')}
+                  </Button>
+                </div>
+              </div>
             </Info_Section>
           )}
 
@@ -651,4 +1150,31 @@ function Field({
       {hint && <div className="mt-1 text-xs text-foreground/50">{hint}</div>}
     </label>
   )
+}
+function updateKeyResult(
+  updateCycle: (update: (cycle: OkrCycle) => OkrCycle) => void,
+  objectiveId: string,
+  keyResultId: string,
+  update: (keyResult: OkrKeyResult) => OkrKeyResult
+): void {
+  updateCycle((cycle) => ({
+    ...cycle,
+    objectives: cycle.objectives.map((objective) => objective.id === objectiveId
+      ? {
+          ...objective,
+          keyResults: objective.keyResults.map((keyResult) => keyResult.id === keyResultId ? update(keyResult) : keyResult),
+        }
+      : objective),
+  }))
+}
+
+function formatOkrProgress(progress: OkrProgress, unknownLabel: string): string {
+  return progress.score === null ? unknownLabel : `${(progress.score * 100).toFixed(1)}%`
+}
+function formatLocalDateTimeInput(value: string | undefined): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 16)
 }

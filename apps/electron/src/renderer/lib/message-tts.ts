@@ -8,11 +8,14 @@
  * errors from the stub aborted it entirely.
  */
 
-export type SpeakVoiceApi = (payload: { text?: string; stop?: boolean; status?: boolean }) => Promise<{
+export type SpeakVoiceResult = {
   playback?: 'native' | 'renderer' | 'none'
   speaking?: boolean
-}>
+  voice?: string
+  reason?: string
+}
 
+export type SpeakVoiceApi = (payload: { text?: string; stop?: boolean; status?: boolean }) => Promise<SpeakVoiceResult>
 export type SpeechSynthesisLike = {
   speak(utterance: unknown): void
   cancel(): void
@@ -35,7 +38,9 @@ export function createMessageTts(deps: MessageTtsDeps) {
   const clearIntervalFn = deps.clearInterval ?? ((id) => globalThis.clearInterval(id as ReturnType<typeof setInterval>))
   let poll: unknown = null
   let token = 0
-
+  // Serialize starts through the RPC. If an old request resolves after Stop,
+  // it is stopped before a newer utterance is allowed to start.
+  let requestTail: Promise<void> = Promise.resolve()
   const clearPoll = () => {
     if (poll !== null) clearIntervalFn(poll)
     poll = null
@@ -56,30 +61,52 @@ export function createMessageTts(deps: MessageTtsDeps) {
       const mine = ++token
       clearPoll()
       deps.synth?.cancel()
-      let native = false
+
+      const previous = requestTail
+      const { promise, resolve: finish } = Promise.withResolvers<void>()
+      requestTail = promise
+      await previous
+      let ended = false
+      const finishPlayback = () => {
+        if (ended || mine !== token) return
+        ended = true
+        onEnd()
+      }
       try {
-        const result = await deps.speakVoice?.({ text: trimmed })
-        native = result?.playback === 'native'
-      } catch {
-        native = false
+        if (mine !== token) return 'unavailable'
+        let result: SpeakVoiceResult | undefined
+        try {
+          result = await deps.speakVoice?.({ text: trimmed })
+        } catch {
+          result = undefined
+        }
+        if (mine !== token) {
+          if (result?.playback === 'native') {
+            await deps.speakVoice?.({ stop: true }).catch(() => undefined)
+          }
+          return 'unavailable'
+        }
+        if (result?.playback === 'native') {
+          poll = setIntervalFn(() => {
+            void deps.speakVoice?.({ status: true })
+              .then((status) => {
+                if (mine !== token || status?.speaking) return
+                clearPoll()
+                finishPlayback()
+              })
+              .catch(() => {
+                clearPoll()
+                finishPlayback()
+              })
+          }, deps.pollMs ?? 800)
+          return 'native'
+        }
+        return result?.playback === 'renderer'
+          ? speakWeb(trimmed, finishPlayback)
+          : 'unavailable'
+      } finally {
+        finish()
       }
-      if (mine !== token) return 'unavailable'
-      if (native) {
-        poll = setIntervalFn(() => {
-          void deps.speakVoice?.({ status: true })
-            .then((status) => {
-              if (mine !== token || status?.speaking) return
-              clearPoll()
-              onEnd()
-            })
-            .catch(() => {
-              clearPoll()
-              onEnd()
-            })
-        }, deps.pollMs ?? 800)
-        return 'native'
-      }
-      return speakWeb(trimmed, onEnd)
     },
     stop() {
       token += 1

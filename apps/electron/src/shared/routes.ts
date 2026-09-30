@@ -100,6 +100,10 @@ export const routes = {
   // View Routes - Compound sidebar/navigator/details routes
   // ============================================
   view: {
+    /** Global, workspace-scoped Search page; query remains URL-encoded for restore/back. */
+    search: (query?: string) =>
+      `search${toQueryString(query ? { q: query } : undefined)}` as const,
+
     /** All sessions view (sessions navigator, allSessions filter) */
     allSessions: (sessionId?: string) =>
       sessionId ? `allSessions/session/${sessionId}` as const : 'allSessions' as const,

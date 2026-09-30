@@ -13,6 +13,7 @@ import {
   topOpenTasks,
   usageByModel,
 } from '../home/home-data'
+import { feedAfterFailure, loadFeed, visibleFeedItems, type FeedState } from '../../lib/extra-screens/use-rox-sources'
 
 const NOW = new Date(2026, 8, 29, 15, 0).getTime()
 const DAY = 86_400_000
@@ -159,5 +160,37 @@ describe('task tracker / calls / week calendar', () => {
     expect(days[1]!.events.map((e) => e.id)).toEqual(['m1'])
     expect(days[2]!.events.map((e) => e.id)).toEqual(['soon'])
     expect(days.flatMap((d) => d.events).length).toBe(5)
+  })
+})
+describe('Home feed freshness', () => {
+  it('retains the last successful rows and marks them stale when refresh fails', () => {
+    const previous: FeedState = {
+      available: true,
+      loaded: true,
+      items: [{ id: 'news:1', tab: 'news', kind: 'news', title: 'Release notes', at: NOW }],
+      sourceCount: 2,
+      xConnected: true,
+      stale: false,
+      error: false,
+      refreshing: true,
+    }
+    const failed = feedAfterFailure(previous)
+    expect(failed.items).toEqual([{ id: 'news:1', tab: 'news', kind: 'news', title: 'Release notes', at: NOW }])
+    expect(failed).toMatchObject({ available: true, loaded: true, stale: true, error: true, refreshing: false, sourceCount: 2, xConnected: true })
+    expect(visibleFeedItems(failed)).toEqual([])
+    expect(visibleFeedItems(failed, true)).toBe(previous.items)
+  })
+  it('treats malformed IPC results as failed refreshes instead of false empty data', async () => {
+    const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { electronAPI: { feedList: async () => ({}) } } as unknown as Window,
+    })
+    try {
+      await expect(loadFeed('workspace-a')).rejects.toThrow()
+    } finally {
+      if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow)
+      else Reflect.deleteProperty(globalThis, 'window')
+    }
   })
 })

@@ -16,12 +16,12 @@
  * bundles the global preferences so a workspace export is self-contained.
  */
 import { existsSync, mkdirSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
-import { dirname, join } from 'path'
+import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { PushTarget } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { Lesson, LessonScope } from '@craft-agent/shared/memory/types'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { Lesson, LessonOwner, LessonScope } from '@craft-agent/shared/memory/types'
+import type { RequestContext, RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
@@ -37,6 +37,10 @@ export const HANDLED_CHANNELS = [RPC_CHANNELS.memory.EXPORT, RPC_CHANNELS.memory
 
 export const MEMORY_BUNDLE_VERSION = 1
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/
+function broadcastChanged(server: RpcServer, workspaceId: string | null, scope: LessonScope): void {
+  const target: PushTarget = workspaceId ? { to: 'workspace', workspaceId } : { to: 'all' }
+  pushTyped(server, RPC_CHANNELS.memory.CHANGED, target, workspaceId, scope)
+}
 
 export interface MemoryHistoryEntry {
   /** YYYY-MM-DD */
@@ -71,19 +75,17 @@ export interface MemoryImportResult {
   historySkipped: number
 }
 
-function broadcastChanged(server: RpcServer, workspaceId: string | null, scope: LessonScope | 'both'): void {
-  const target: PushTarget = workspaceId ? { to: 'workspace', workspaceId } : { to: 'all' }
-  pushTyped(server, RPC_CHANNELS.memory.CHANGED, target, workspaceId, scope)
+function ownerFromContext(ctx: RequestContext): LessonOwner | undefined {
+  return ctx.principal ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : undefined
 }
 
-/** Full atomic rewrite of a lessons.jsonl (tmp + rename, mirrors LessonStore.rewrite). */
-function rewriteLessonsFile(store: LessonStore, lessons: Lesson[]): void {
-  const content = lessons.map(l => JSON.stringify(l)).join('\n') + (lessons.length ? '\n' : '')
-  mkdirSync(dirname(store.filePath), { recursive: true })
-  const tmp = join(dirname(store.filePath), `.${Date.now()}-${process.pid}.import.tmp`)
-  writeFileSync(tmp, content)
-  renameSync(tmp, store.filePath)
-  store.invalidate()
+function authorizeMemoryWorkspace(ctx: RequestContext, requestedId: string | null | undefined, deps: HandlerDeps): string | undefined {
+  const boundId = ctx.workspaceId ?? (
+    ctx.webContentsId === null ? undefined : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+  )
+  if (ctx.principal && !boundId) throw new Error('Workspace access denied')
+  if (boundId && requestedId && boundId !== requestedId) throw new Error('Workspace access denied')
+  return boundId ?? requestedId ?? undefined
 }
 
 /** Validate the bundle envelope; per-entry tolerance happens at apply time. */
@@ -98,10 +100,11 @@ function assertBundle(bundle: unknown): asserts bundle is MemoryExportBundle {
 }
 
 /** Build a target lesson entry, enforcing the target scope and minimal fields. */
-function normalizeImportLesson(l: Lesson, scope: LessonScope, ts: string): Lesson {
+function normalizeImportLesson(l: Lesson, scope: LessonScope, ts: string, owner?: LessonOwner): Lesson {
   return {
     ...l,
     scope,
+    ...(owner ? { owner } : { owner: undefined }),
     ts: typeof l.ts === 'string' && l.ts ? l.ts : ts,
     source: l.source ?? { trigger: 'explicit' },
   }
@@ -109,84 +112,85 @@ function normalizeImportLesson(l: Lesson, scope: LessonScope, ts: string): Lesso
 
 export function registerMemoryIoHandlers(server: RpcServer, deps: HandlerDeps): void {
   // ——— EXPORT(scope, workspaceId?) ———
-  server.handle(RPC_CHANNELS.memory.EXPORT, async (_ctx, scope: LessonScope, workspaceId?: string): Promise<MemoryExportBundle> => {
+  server.handle(RPC_CHANNELS.memory.EXPORT, async (ctx, scope: LessonScope, workspaceId?: string): Promise<MemoryExportBundle> => {
+    const authorizedWorkspaceId = authorizeMemoryWorkspace(ctx, workspaceId, deps)
+    const owner = ownerFromContext(ctx)
     const listed = rpcMemoryIoListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('memory export is not live')
     const read = rpcMemoryIoReadResult({ source: 'native', nativeId: scope ?? 'bundle' })
     if (!isClaimableLive(read.result)) throw new Error('memory export is not live')
     const globalFiles = new MemoryFileStore('global')
-    const preferences = globalFiles.readPreferences()
+    const preferences = ctx.principal ? '' : globalFiles.readPreferences()
     if (scope === 'global') {
-      const lessons = new LessonStore(globalFiles.lessonsPath, 'global').list()
+      const lessons = new LessonStore(globalFiles.lessonsPath, 'global').listForOwner(owner)
       return { version: 1, lessons, context: '', preferences, history: [] }
     }
-    const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null
+    const workspace = authorizedWorkspaceId ? getWorkspaceByNameOrId(authorizedWorkspaceId) : null
     if (!workspace) throw new Error('Workspace not found')
     const wsFiles = new MemoryFileStore('workspace', workspace.rootPath)
-    const lessons = new LessonStore(wsFiles.lessonsPath, 'workspace').list()
+    const lessons = new LessonStore(wsFiles.lessonsPath, 'workspace').listForOwner(owner)
     const history: MemoryHistoryEntry[] = wsFiles
       .listHistoryDates()
-      .sort((a, b) => a.localeCompare(b)) // chronological: oldest first (YYYY-MM-DD compares correctly)
+      .sort((a, b) => a.localeCompare(b))
       .map(day => ({ day, text: wsFiles.readHistory(day) }))
     return { version: 1, lessons, context: wsFiles.readContext(), preferences, history }
-  })
+  }, { nativeAction: 'read' })
 
   // ——— IMPORT(scope, workspaceId, bundle, {mode}) ———
   server.handle(
     RPC_CHANNELS.memory.IMPORT,
     async (
-      _ctx,
+      ctx,
       scope: LessonScope,
       workspaceId: string | null,
       bundle: MemoryExportBundle,
       options?: MemoryImportOptions,
     ): Promise<MemoryImportResult> => {
+      const authorizedWorkspaceId = authorizeMemoryWorkspace(ctx, workspaceId, deps)
+      const owner = ownerFromContext(ctx)
       const act = rpcMemoryIoActResult({ source: 'native', action: 'write', nativeId: scope ?? 'import' })
       if (!isClaimableLive(act)) throw new Error('memory import is not live')
       assertBundle(bundle)
+      if (ctx.principal && typeof bundle.preferences === 'string' && bundle.preferences.length > 0) {
+        throw new Error('Machine-private preferences cannot be imported by a personal memory owner')
+      }
       const mode = options?.mode ?? 'merge'
       if (mode !== 'merge' && mode !== 'replace') throw new Error(`Invalid import mode: ${String(mode)}`)
       const ts = new Date().toISOString()
       const result: MemoryImportResult = { added: 0, skipped: 0, historyAdded: 0, historySkipped: 0 }
 
       const globalFiles = new MemoryFileStore('global')
-      // Workspace resolution comes first: a bad id must not half-write globals.
       let wsFiles: MemoryFileStore | null = null
       if (scope === 'workspace') {
-        const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null
+        const workspace = authorizedWorkspaceId ? getWorkspaceByNameOrId(authorizedWorkspaceId) : null
         if (!workspace) throw new Error('Workspace not found')
         wsFiles = new MemoryFileStore('workspace', workspace.rootPath)
       }
 
-      // — lessons —
       const files = scope === 'global' ? globalFiles : wsFiles!
       const store = new LessonStore(files.lessonsPath, scope)
-      const lessons = bundle.lessons.map(l => normalizeImportLesson(l, scope, ts))
+      const lessons = bundle.lessons.map(l => normalizeImportLesson(l, scope, ts, owner))
       if (mode === 'replace') {
-        rewriteLessonsFile(store, lessons)
+        store.replaceForOwner(owner, lessons)
         result.added = lessons.length
-        try {
-          store.auditLog.append({ actor: 'rpc', action: 'update', target: files.lessonsPath, detail: `import replace (${lessons.length} lessons)` })
-        } catch {
-          // auditing is best-effort; the write already landed
-        }
       } else {
-        const existing = new Set(store.list().map(l => lessonKey(l.rule)))
+        const existing = new Set(store.listForOwner(owner).map(l => lessonKey(l.rule)))
         for (const lesson of lessons) {
           if (existing.has(lessonKey(lesson.rule))) {
             result.skipped++
             continue
           }
           store.add(lesson, 'rpc')
+          existing.add(lessonKey(lesson.rule))
           result.added++
         }
       }
 
       // — preferences (global file; bundled by both scopes) —
       const bundlePrefs = typeof bundle.preferences === 'string' ? bundle.preferences : ''
-      if (mode === 'replace') {
+      if (!ctx.principal && mode === 'replace') {
         globalFiles.writePreferences(bundlePrefs)
-      } else if (bundlePrefs) {
+      } else if (!ctx.principal && bundlePrefs) {
         const current = globalFiles.readPreferences()
         if (!current.includes(bundlePrefs)) {
           globalFiles.writePreferences(current ? `${current.replace(/\n*$/, '')}\n\n${bundlePrefs}` : bundlePrefs)
@@ -239,9 +243,10 @@ export function registerMemoryIoHandlers(server: RpcServer, deps: HandlerDeps): 
         }
       }
 
-      broadcastChanged(server, scope === 'global' ? null : workspaceId, scope)
+      broadcastChanged(server, scope === 'global' ? null : authorizedWorkspaceId ?? null, scope)
       deps.platform.logger?.info?.(`MEMORY_IMPORT: ${mode} import into ${scope} store (+${result.added} lessons, ${result.skipped} skipped)`)
       return result
     },
+    { nativeAction: 'write' },
   )
 }

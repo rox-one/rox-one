@@ -10,7 +10,23 @@ export type {
   CreateProjectInput,
   LoadedProject,
   ProjectPromptContext,
+  OkrCycle,
+  OkrCycleStatus,
+  OkrEvidence,
+  OkrMeasurement,
+  OkrKeyResult,
+  OkrObjective,
+  OkrProgress,
+  ProjectOkrDocument,
 } from './types.ts';
+export type { OkrCycleInput, OkrCalculation, OkrObjectiveCalculation, OkrKeyResultCalculation } from './okr.ts';
+export {
+  calculateOkrCycle,
+  createOkrCycle,
+  loadProjectOkr,
+  saveProjectOkr,
+  ProjectOkrConflictError,
+} from './okr.ts';
 
 export {
   // Path utilities

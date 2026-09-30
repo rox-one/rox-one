@@ -148,6 +148,55 @@ export const visibleSessionIdsAtom = atom((get) => {
   return ids
 })
 
+export type PanelSpatialDirection = 'left' | 'right' | 'up' | 'down'
+
+export interface PanelSpatialBounds {
+  id: string
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
+/** Choose the nearest visible panel in the requested geometric direction. */
+export function findPanelInDirection(
+  focusedId: string | null,
+  panels: readonly PanelSpatialBounds[],
+  direction: PanelSpatialDirection,
+): string | null {
+  const current = panels.find((panel) => panel.id === focusedId)
+  if (!current) return null
+
+  const currentCenterX = (current.left + current.right) / 2
+  const currentCenterY = (current.top + current.bottom) / 2
+  let nearestId: string | null = null
+  let nearestDistance = Number.POSITIVE_INFINITY
+
+  for (const candidate of panels) {
+    if (candidate.id === focusedId) continue
+    const centerX = (candidate.left + candidate.right) / 2
+    const centerY = (candidate.top + candidate.bottom) / 2
+    const horizontalDelta = centerX - currentCenterX
+    const verticalDelta = centerY - currentCenterY
+    const isInDirection =
+      direction === 'right' ? horizontalDelta > 0
+        : direction === 'left' ? horizontalDelta < 0
+          : direction === 'down' ? verticalDelta > 0
+            : verticalDelta < 0
+    if (!isInDirection) continue
+
+    const horizontalGap = Math.max(0, current.left - candidate.right, candidate.left - current.right)
+    const verticalGap = Math.max(0, current.top - candidate.bottom, candidate.top - current.bottom)
+    const distance = horizontalGap ** 2 + verticalGap ** 2
+    if (distance < nearestDistance) {
+      nearestId = candidate.id
+      nearestDistance = distance
+    }
+  }
+
+  return nearestId
+}
+
 export const pushPanelAtom = atom(
   null,
   (get, set, { route, afterIndex }: {

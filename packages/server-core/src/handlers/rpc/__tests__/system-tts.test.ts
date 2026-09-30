@@ -18,13 +18,12 @@ function fakeSpawn() {
 describe('system TTS fallback', () => {
   it('speaks through macOS say with text on stdin (not argv)', async () => {
     const { calls, spawn } = fakeSpawn()
-    const speaker = createSystemSpeaker({ platform: 'darwin', spawn })
+    const speaker = createSystemSpeaker({ platform: 'darwin', spawn, findRussianVoice: () => 'Yuri' })
     const pending = speaker.speak('Привет; rm -rf /')
-    expect(calls[0]!.command).toBe('say')
-    expect(calls[0]!.args).toEqual([])
+    expect(calls[0]!.args).toEqual(['-v', 'Yuri'])
     expect(calls[0]!.stdin).toEqual(['Привет; rm -rf /'])
     calls[0]!.listeners.spawn?.(undefined)
-    expect(await pending).toEqual({ played: true })
+    expect(await pending).toEqual({ played: true, voice: 'Yuri' })
     expect(speaker.isSpeaking()).toBe(true)
     calls[0]!.listeners.exit?.(0)
     expect(speaker.isSpeaking()).toBe(false)
@@ -32,7 +31,7 @@ describe('system TTS fallback', () => {
 
   it('stop() kills the running say process', async () => {
     const { calls, spawn } = fakeSpawn()
-    const speaker = createSystemSpeaker({ platform: 'darwin', spawn })
+    const speaker = createSystemSpeaker({ platform: 'darwin', spawn, findRussianVoice: () => 'Yuri' })
     const pending = speaker.speak('long text')
     expect(speaker.stop()).toBe(true)
     expect(calls[0]!.killed).toBe(true)
@@ -44,9 +43,8 @@ describe('system TTS fallback', () => {
     const { calls, spawn } = fakeSpawn()
     expect(await createSystemSpeaker({ platform: 'linux', spawn }).speak('hi')).toEqual({ played: false })
     expect(calls).toHaveLength(0)
-    const speaker = createSystemSpeaker({ platform: 'darwin', spawn })
-    const pending = speaker.speak('hi')
-    calls[0]!.listeners.error?.(new Error('ENOENT'))
-    expect(await pending).toEqual({ played: false })
+    const speaker = createSystemSpeaker({ platform: 'darwin', spawn, findRussianVoice: () => null })
+    expect(await speaker.speak('hi')).toEqual({ played: false })
+    expect(calls).toHaveLength(0)
   })
 })

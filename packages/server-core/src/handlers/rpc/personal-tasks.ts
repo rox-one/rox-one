@@ -5,7 +5,7 @@
  */
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { resolveConfigDir } from '@craft-agent/shared/config'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTaskDelete, PersonalTaskWrite } from '@craft-agent/core/tasks/personal'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { PersonalTaskPersistStore, type PersonalTaskMeta } from '../../tasks/personal-persist.ts'
@@ -44,18 +44,19 @@ export function registerPersonalTasksHandlers(server: RpcServer, deps: HandlerDe
 
   server.handle(
     RPC_CHANNELS.personalTasks.PUT,
-    async (ctx, tasks: PersonalTask[], meta?: PersonalTaskMeta | null) => {
-      const result = putPersonalTasks(personalTasksStore(), Array.isArray(tasks) ? tasks : [], meta ?? null)
+    async (ctx, writes: PersonalTaskWrite[], meta?: PersonalTaskMeta | null) => {
+      const result = putPersonalTasks(personalTasksStore(), Array.isArray(writes) ? writes : [], meta ?? null)
       if (result.rejected.length) log.warn(`personalTasks:put rejected ids ${result.rejected.join(',')}`)
-      changed(ctx.clientId)
+      if (result.accepted.length || meta != null) changed(ctx.clientId)
       return result
     },
   )
 
-  server.handle(RPC_CHANNELS.personalTasks.DELETE, async (ctx, ids: string[]) => {
-    const removed = deletePersonalTasks(personalTasksStore(), Array.isArray(ids) ? ids : [])
-    changed(ctx.clientId)
-    return { removed }
+  server.handle(RPC_CHANNELS.personalTasks.DELETE, async (ctx, deletes: PersonalTaskDelete[]) => {
+    const result = deletePersonalTasks(personalTasksStore(), Array.isArray(deletes) ? deletes : [])
+    if (result.rejected.length) log.warn(`personalTasks:delete rejected ids ${result.rejected.join(',')}`)
+    if (result.removed.length) changed(ctx.clientId)
+    return result
   })
 
   server.handle(RPC_CHANNELS.personalTasks.MIGRATE, async (ctx, input: PersonalTasksMigrateInput) => {

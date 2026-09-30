@@ -33,6 +33,8 @@ export type GraphLabelNode = {
     /** Webhook action fields. */
     url?: string
     method?: string
+    /** Metadata group members do not imply an executable action. */
+    memberIds?: string[]
   }
 }
 

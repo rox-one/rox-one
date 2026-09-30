@@ -9,6 +9,7 @@ import {
   discoverForeignSessionsAsync,
   persistForeignSession,
   type ForeignImportMode,
+  type ForeignPersistResult,
 } from '@craft-agent/shared/sessions'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
@@ -89,29 +90,39 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
       if (!isClaimableLive(act)) throw new Error('sessions.foreignPersist is not live')
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error('sessions.foreignPersist: workspace not found')
-      const sourcePaths = (args?.sourcePaths ?? [])
-        .filter((path): path is string => typeof path === 'string' && path.length > 0)
-        .slice(0, MAX_FOREIGN_PERSIST)
-      const results = []
+      const submitted = args?.sourcePaths ?? []
+      const sourcePaths = submitted.slice(0, MAX_FOREIGN_PERSIST)
+      const results: ForeignPersistResult[] = []
       for (const sourcePath of sourcePaths) {
-        results.push(
-          await persistForeignSession({
-            workspaceRoot: workspace.rootPath,
-            sourcePath,
-            mode: args?.mode,
-          }),
-        )
+        if (typeof sourcePath !== 'string' || sourcePath.length === 0) {
+          results.push({ sourcePath: '', action: 'skipped' as const, reason: 'invalid-source-path' })
+          continue
+        }
+        try {
+          results.push(await persistForeignSession({ workspaceRoot: workspace.rootPath, sourcePath, mode: args?.mode }))
+        } catch {
+          results.push({ sourcePath, action: 'skipped' as const, reason: 'import-failed' })
+        }
       }
       for (const result of results) {
         if (
           result.sessionId &&
           (result.action === 'created' || result.action === 'appended' || result.action === 'replaced')
         ) {
-          deps.sessionManager.ingestImportedSession(workspaceId, result.sessionId)
-          deps.sessionManager.notifySessionCreated(workspaceId, result.sessionId)
+          try {
+            deps.sessionManager.ingestImportedSession(workspaceId, result.sessionId)
+            deps.sessionManager.notifySessionCreated(workspaceId, result.sessionId)
+          } catch {
+            // Persisted session remains available; list refresh can happen on the next load.
+          }
         }
       }
-      return { results }
+      return {
+        results,
+        failed: results.filter((result) => result.reason === 'import-failed').length,
+        truncated: submitted.length > sourcePaths.length,
+        omitted: Math.max(0, submitted.length - sourcePaths.length),
+      }
     },
   )
 }

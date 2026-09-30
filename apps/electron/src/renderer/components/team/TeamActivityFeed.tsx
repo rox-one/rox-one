@@ -6,7 +6,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { TEAM_FLAG, useTeamFlag, useTeamState } from './team-store'
 import { useTeamRoster } from './use-team-roster'
-import { activityText, memberInitials, memberName } from './team-labels'
+import { activityText, memberInitials, memberName, syncStatusText } from './team-labels'
 
 export function TeamActivityFeed({ limit = 50 }: { limit?: number }) {
   const { t } = useTranslation()
@@ -18,6 +18,11 @@ export function TeamActivityFeed({ limit = 50 }: { limit?: number }) {
 
   return (
     <div className="flex flex-col gap-1" data-testid="team-activity-feed">
+      {events.length > 0 ? (
+        <div role="status" className="px-1 text-xs text-muted-foreground">
+          {t('teamCollab.sync.savedLocally')} · {syncStatusText(roster.sync, state.outbox.length, t)}
+        </div>
+      ) : null}
       {events.length === 0 ? (
         <div className="px-1 py-2 text-sm text-muted-foreground">{t('teamCollab.activityEmpty')}</div>
       ) : (

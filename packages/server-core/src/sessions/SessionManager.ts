@@ -19,9 +19,10 @@ import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-c
 import { createScopedLogger, CONSOLE_LOGGER, type PlatformServices, type Logger } from '@craft-agent/server-core/runtime'
 import { basename, dirname, join } from 'path'
 import { existsSync } from 'fs'
-import { readFile, writeFile, mkdir } from 'fs/promises'
 import { randomUUID } from 'node:crypto'
-import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive } from '@craft-agent/shared/agent'
+import { awardXpSafe } from '@craft-agent/shared/gamification'
+import { readFile, writeFile, mkdir } from 'fs/promises'
+import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive } from '@craft-agent/shared/agent'
 import {
   resolveSessionConnection,
   createBackendFromConnection,
@@ -52,13 +53,14 @@ import {
   migrateOrphanedDefaultConnections,
   seedDefaultLlmConnection,
   resolveSpawnSessionModel,
+  resolveConfigDir,
   ROX_DEFAULT_CONNECTION_SLUG,
   MODEL_REGISTRY,
   type Workspace,
   type WorkspaceInfo,
 } from '@craft-agent/shared/config'
 import type { ActiveSessionInfo, SessionProcessingStatus } from '@craft-agent/core/types'
-import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import {
   // Session persistence functions
   listSessions as listStoredSessions,
@@ -137,7 +139,7 @@ import { extractLabelId, resolveSessionLabels, findTaskItemLabelId } from '@craf
 import { ensureLabelsExist, ensureTaskItemLabel } from '@craft-agent/shared/labels/crud'
 import { loadStatusConfig } from '@craft-agent/shared/statuses/storage'
 import { AutomationSystem, createPromptHistoryEntry, appendAutomationHistoryEntry, type AutomationSystemMetadataSnapshot, type KnowledgeActionExecutor, type CloudRunSubmitExecutor, type KnowledgeActionExecutorContext, type KnowledgeAutomationAction, type CloudRunSubmitAction, type CloudRunSubmitExecutorContext } from '@craft-agent/shared/automations'
-import { awardXpSafe } from '@craft-agent/shared/gamification'
+import { claimAutomationOccurrence, recoverAutomationOccurrences, setAutomationOccurrenceOutcome } from '@craft-agent/shared/automations'
 import { ServerKnowledgeActionExecutor } from '../knowledge/automation-actions'
 import { KnowledgeBridgeService } from '../knowledge/bridge-service'
 import { KnowledgeMutationProposalsStore } from '../knowledge/proposals-store'
@@ -888,6 +890,11 @@ interface ManagedSession {
     /** Model's context window size in tokens (from SDK modelUsage) */
     contextWindow?: number
   }
+  /** Runtime-only budget reservation; unresolved reservations survive in AgentBudgetLedger. */
+  budgetRunId?: string
+  /** Session total cost at the beginning of this provider dispatch. */
+  budgetCostAtStart?: number
+  budgetUsageReported?: boolean
   // Session status (user-controlled) - determines open vs closed
   // Dynamic status ID referencing workspace status config
   sessionStatus?: string
@@ -1282,6 +1289,7 @@ export function resolveMidStreamDeliveryOutcome(
 
 export class SessionManager implements ISessionManager {
   private sessions: Map<string, ManagedSession> = new Map()
+  private budgetLedger: AgentBudgetLedger | null = null
   // Delta batching for performance - reduces IPC events from 50+/sec to ~20/sec
   private pendingDeltas: Map<string, PendingDelta> = new Map()
   private deltaFlushTimers: Map<string, NodeJS.Timeout> = new Map()
@@ -1372,6 +1380,35 @@ export class SessionManager implements ISessionManager {
    *  Resolves immediately if already initialized. */
   waitForInit(): Promise<void> {
     return this.initGate.wait()
+  }
+  private getAgentBudgetLedger(): AgentBudgetLedger {
+    if (!this.budgetLedger) {
+      this.budgetLedger = new AgentBudgetLedger(join(resolveConfigDir(), 'agent-budget.sqlite'))
+    }
+    return this.budgetLedger
+  }
+
+  /** Workspace budget settings are local-profile scoped and must be ACL-checked by the RPC caller. */
+  setAgentDailyBudget(workspaceId: string, limitUsd: number | null): AgentBudgetSnapshot {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error(`Workspace ${workspaceId} not found`)
+    const config = loadWorkspaceConfig(workspace.rootPath)
+    if (!config) throw new Error(`Workspace config ${workspaceId} not found`)
+    config.defaults = { ...(config.defaults ?? {}), dailyAgentBudgetUsd: limitUsd }
+    saveWorkspaceConfig(workspace.rootPath, config)
+    return this.getAgentBudget(workspace.id)
+  }
+
+  getAgentBudget(workspaceId: string, now = Date.now()): AgentBudgetSnapshot {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error(`Workspace ${workspaceId} not found`)
+    const config = loadWorkspaceConfig(workspace.rootPath)
+    const limitUsd = config?.defaults?.dailyAgentBudgetUsd ?? null
+    return this.getAgentBudgetLedger().snapshot(workspace.id, limitUsd, now)
+  }
+
+  reconcileAgentBudgetRun(workspaceId: string, runId: string, receiptId: string, totalCostUsd: number): void {
+    this.getAgentBudgetLedger().reconcile(workspaceId, runId, receiptId, totalCostUsd)
   }
 
   /**
@@ -1843,6 +1880,12 @@ export class SessionManager implements ISessionManager {
 
     // Initialize AutomationSystem for this workspace (includes scheduler, handlers, and event logging)
     if (!this.automationSystems.has(workspaceRootPath)) {
+      // Mark effects left claimed by a prior process ambiguous before the
+      // scheduler can emit another prompt; recovery never redispatches them.
+      const recoveredOccurrences = recoverAutomationOccurrences(workspaceRootPath)
+      if (recoveredOccurrences > 0) {
+        sessionLog.warn(`[Automations] Marked ${recoveredOccurrences} interrupted occurrence(s) unknown`)
+      }
       const automationSystem = new AutomationSystem({
         workspaceRootPath,
         workspaceId,
@@ -1850,45 +1893,100 @@ export class SessionManager implements ISessionManager {
         knowledgeExecutor: this.createKnowledgeActionExecutor(workspaceRootPath, workspaceId),
         cloudRunSubmitExecutor: this.createCloudRunSubmitExecutor(workspaceRootPath, workspaceId),
         onPromptsReady: async (prompts) => {
-          // Execute prompt automations by creating new sessions
+          // Claim scheduled occurrences durably before any session or provider work.
           const settled = await Promise.allSettled(
-            prompts.map((pending) =>
-              this.executePromptAutomation({
-                workspaceId,
-                workspaceRootPath,
-                prompt: pending.prompt,
-                labels: pending.labels,
-                permissionMode: pending.permissionMode,
-                mentions: pending.mentions,
-                llmConnection: pending.llmConnection,
-                model: pending.model,
-                thinkingLevel: pending.thinkingLevel,
-                automationName: pending.automationName,
-                telegramTopic: pending.telegramTopic,
-              })
-            )
+            prompts.map(async (pending) => {
+              let occurrence: { key: string; runId: string } | undefined
+              if (pending.scheduledAt) {
+                if (
+                  !pending.occurrenceKey ||
+                  !pending.matcherId ||
+                  !pending.matcherRevision ||
+                  pending.actionIndex === undefined
+                ) {
+                  throw new Error('Scheduled prompt is missing its occurrence identity')
+                }
+                const claim = claimAutomationOccurrence(workspaceRootPath, pending.occurrenceKey, {
+                  workspaceId,
+                  matcherId: pending.matcherId,
+                  matcherRevision: pending.matcherRevision,
+                  scheduledAt: pending.scheduledAt,
+                  scheduledTimezone: pending.scheduledTimezone,
+                  actionIndex: pending.actionIndex,
+                  targetSessionId: pending.sessionId,
+                })
+                if (!claim.claimed) {
+                  return { skipped: true as const, runId: claim.runId, state: claim.state }
+                }
+                occurrence = { key: pending.occurrenceKey, runId: claim.runId }
+              }
+
+              try {
+                const result = await this.executePromptAutomation({
+                  workspaceId,
+                  workspaceRootPath,
+                  prompt: pending.prompt,
+                  labels: pending.labels,
+                  permissionMode: pending.permissionMode,
+                  mentions: pending.mentions,
+                  llmConnection: pending.llmConnection,
+                  model: pending.model,
+                  thinkingLevel: pending.thinkingLevel,
+                  automationName: pending.automationName,
+                  telegramTopic: pending.telegramTopic,
+                })
+                if (occurrence) {
+                  setAutomationOccurrenceOutcome(workspaceRootPath, occurrence.key, occurrence.runId, 'succeeded')
+                }
+                return { result, occurrence, outcome: 'success' as const }
+              } catch (error) {
+                if (!occurrence) throw error
+                try {
+                  setAutomationOccurrenceOutcome(workspaceRootPath, occurrence.key, occurrence.runId, 'unknown_external_outcome')
+                } catch (outcomeError) {
+                  sessionLog.error('[Automations] Failed to persist ambiguous occurrence outcome:', outcomeError)
+                }
+                return { occurrence, outcome: 'unknown_external_outcome' as const, error }
+              }
+            })
           )
 
-          // Write enriched history entries (with session IDs and prompt summaries)
+          // Write enriched history entries (with session IDs, occurrence IDs and outcomes).
           for (const [idx, result] of settled.entries()) {
             const pending = prompts[idx]
             if (!pending.matcherId) continue
+            const execution = result.status === 'fulfilled' ? result.value : undefined
+            if (execution?.skipped) continue
 
+            const ok = execution?.outcome === 'success'
+            const error = result.status === 'rejected'
+              ? String(result.reason)
+              : execution && 'error' in execution
+                ? String(execution.error)
+                : undefined
             const entry = createPromptHistoryEntry({
               matcherId: pending.matcherId,
-              ok: result.status === 'fulfilled',
-              sessionId: result.status === 'fulfilled' ? result.value.sessionId : undefined,
+              ok,
+              sessionId: execution && 'result' in execution ? execution.result?.sessionId : undefined,
               prompt: pending.prompt,
-              error: result.status === 'rejected' ? String(result.reason) : undefined,
+              error,
+              scheduledAt: pending.scheduledAt,
+              scheduledTimezone: pending.scheduledTimezone,
+              occurrenceKey: pending.occurrenceKey,
+              matcherRevision: pending.matcherRevision,
+              actionIndex: pending.actionIndex,
+              runId: execution && 'occurrence' in execution ? execution.occurrence?.runId : undefined,
+              attempt: pending.attempt,
+              outcome: execution?.outcome ?? (result.status === 'rejected' ? 'error' : undefined),
             })
 
             appendAutomationHistoryEntry(workspaceRootPath, entry).catch(e => sessionLog.warn('[Automations] Failed to write history:', e))
             awardXpSafe('automation_ran')
 
-            if (result.status === 'rejected') {
-              sessionLog.error(`[Automations] Failed to execute prompt action ${idx + 1}:`, result.reason)
-            } else {
-              sessionLog.info(`[Automations] Created session ${result.value.sessionId} from prompt action`)
+            if (!ok) {
+              sessionLog.error(`[Automations] Failed to execute prompt action ${idx + 1}:`, error ?? 'unknown outcome')
+            } else if (execution && 'result' in execution && execution.result) {
+              sessionLog.info(`[Automations] Created session ${execution.result.sessionId} from prompt action`)
             }
           }
         },
@@ -6953,6 +7051,44 @@ export class SessionManager implements ISessionManager {
           level: 'warning',
         }, managed.workspace.id)
       }
+      const budgetLedger = this.getAgentBudgetLedger()
+      const budget = this.getAgentBudget(managed.workspace.id)
+      if (budget.limitUsd !== null) {
+        if (budget.unresolvedUsd > 0 || budget.remainingUsd === null || budget.remainingUsd <= 0) {
+          const errorMessage = i18n.t(budget.unresolvedUsd > 0
+            ? 'extraScreens.agents.budgetUnknown'
+            : 'extraScreens.agents.budgetExhausted')
+          managed.messages.push({
+            id: generateMessageId(),
+            role: 'error',
+            content: errorMessage,
+            timestamp: this.monotonic(),
+          })
+          this.persistSession(managed)
+          this.sendEvent({ type: 'error', sessionId, error: errorMessage }, managed.workspace.id)
+          await this.onProcessingStopped(sessionId, 'error')
+          return
+        }
+        const runId = randomUUID()
+        const reservation = budgetLedger.reserve(managed.workspace.id, runId, budget.limitUsd, budget.remainingUsd)
+        if (!reservation) {
+          const errorMessage = i18n.t('extraScreens.agents.budgetExhausted')
+          managed.messages.push({
+            id: generateMessageId(),
+            role: 'error',
+            content: errorMessage,
+            timestamp: this.monotonic(),
+          })
+          this.persistSession(managed)
+          this.sendEvent({ type: 'error', sessionId, error: errorMessage }, managed.workspace.id)
+          await this.onProcessingStopped(sessionId, 'error')
+          return
+        }
+        managed.budgetRunId = runId
+        managed.budgetCostAtStart = managed.tokenUsage?.costUsd ?? 0
+        managed.budgetUsageReported = false
+      }
+
 
       sendSpan.mark('chat.starting')
       const chatIterator = agent.chat(effectiveMessage, modelInputAttachments.attachments)
@@ -7522,6 +7658,29 @@ export class SessionManager implements ISessionManager {
     if (!managed) return
 
     sessionLog.info(`Processing stopped for session ${sessionId}: ${reason}`)
+    if (managed.budgetRunId) {
+      // Missing final usage is not a zero-cost success: retain the reservation
+      // as unresolved so no retry can bypass an unknown provider outcome.
+      const reportedCost = (managed.tokenUsage?.costUsd ?? 0) - (managed.budgetCostAtStart ?? 0)
+      try {
+        if (managed.budgetUsageReported) {
+          this.getAgentBudgetLedger().settleUsage(
+            managed.workspace.id,
+            managed.budgetRunId,
+            `${managed.budgetRunId}:terminal`,
+            Math.max(0, reportedCost),
+          )
+          this.getAgentBudgetLedger().complete(managed.workspace.id, managed.budgetRunId)
+        } else {
+          this.getAgentBudgetLedger().markUnresolved(managed.workspace.id, managed.budgetRunId)
+        }
+      } catch (error) {
+        sessionLog.error(`Failed to settle agent budget run ${managed.budgetRunId}:`, error)
+      }
+      managed.budgetRunId = undefined
+      managed.budgetCostAtStart = undefined
+      managed.budgetUsageReported = undefined
+    }
 
     // 1. Cleanup state
     this.setProcessing(managed, false)
@@ -9632,6 +9791,9 @@ export class SessionManager implements ISessionManager {
           managed.tokenUsage.outputTokens += event.usage.outputTokens
           managed.tokenUsage.totalTokens = managed.tokenUsage.inputTokens + managed.tokenUsage.outputTokens
           managed.tokenUsage.costUsd += event.usage.costUsd ?? 0
+          if (managed.budgetRunId && typeof event.usage.costUsd === 'number') {
+            managed.budgetUsageReported = true
+          }
           // Cache tokens reflect current state, not accumulated
           managed.tokenUsage.cacheReadTokens = event.usage.cacheReadTokens ?? 0
           managed.tokenUsage.cacheCreationTokens = event.usage.cacheCreationTokens ?? 0

@@ -1,9 +1,9 @@
 /**
  * Organization storage — CONFIG_DIR/orgs.json
  *
- * Local single-device org bookkeeping. Invite tokens are opaque random strings.
- * Server-mode redemption (Rox Server URL / env CRAFT_SERVER_URL) is handled
- * at the RPC layer. There is no mailer — invites are device-local tokens.
+ * Local persistence for organization membership and bounded-lifetime invites.
+ * Trusted RPC callers supply their server-issued identity; local callers use
+ * the device profile. Invite tokens stay inside privileged create/accept flows.
  */
 
 import { existsSync, mkdirSync } from 'fs'
@@ -13,13 +13,14 @@ import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts'
 import { resolveConfigDir } from "../config/paths.ts"
 import {
   ensureLocalUserIdentity,
-  loadPreferences,
   type LocalUserIdentity,
 } from '../config/preferences.ts'
 import type {
   AcceptInviteInput,
   CreateOrganizationInput,
   InviteToOrgInput,
+  OrgActorIdentity,
+  OrgAuditEvent,
   OrgInvite,
   OrgInvitePublic,
   OrgMember,
@@ -30,13 +31,38 @@ import type {
 } from './types.ts'
 
 const ORGS_FILE = join(resolveConfigDir(), 'orgs.json')
-const STORE_VERSION = 1 as const
 
+const STORE_VERSION = 2 as const
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+function isPendingInvite(invite: OrgInvite, now = Date.now()): boolean {
+  const expiresAt = invite.expiresAt ?? invite.createdAt + INVITE_TTL_MS
+  return !invite.acceptedAt && !invite.revokedAt && expiresAt > now
+}
+
+function resolveActor(actor?: OrgActorIdentity): OrgActorIdentity {
+  if (actor === undefined) return ensureLocalUserIdentity()
+  const userId = typeof actor.userId === 'string' ? actor.userId.trim() : ''
+  if (!userId) throw new Error('Authenticated organization subject is required')
+  return { ...actor, userId }
+}
+
+function matchesInvitee(invite: OrgInvite, actor: OrgActorIdentity): boolean {
+  const target = invite.emailOrUsername.trim().toLowerCase()
+  return [actor.userId, actor.email, actor.username]
+    .some((value) => typeof value === 'string' && value.trim().toLowerCase() === target)
+}
+
+function isNativeSubjectId(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
 const EMPTY_STORE: OrgsStoreFile = {
   version: STORE_VERSION,
   organizations: [],
   members: [],
   invites: [],
+  auditEvents: [],
 }
 
 function slugify(input: string): string {
@@ -78,11 +104,18 @@ export function loadOrgsStore(): OrgsStoreFile {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error('Invalid orgs store: expected a JSON object')
   }
+  const invites = Array.isArray(raw.invites)
+    ? raw.invites.map((invite) => ({
+      ...invite,
+      expiresAt: Number.isFinite(invite.expiresAt) ? invite.expiresAt : invite.createdAt + INVITE_TTL_MS,
+    }))
+    : []
   return {
     version: STORE_VERSION,
     organizations: Array.isArray(raw.organizations) ? raw.organizations : [],
     members: Array.isArray(raw.members) ? raw.members : [],
-    invites: Array.isArray(raw.invites) ? raw.invites : [],
+    invites,
+    auditEvents: Array.isArray(raw.auditEvents) ? raw.auditEvents : [],
   }
 }
 
@@ -93,8 +126,29 @@ export function saveOrgsStore(store: OrgsStoreFile): void {
     organizations: store.organizations,
     members: store.members,
     invites: store.invites,
+    auditEvents: store.auditEvents,
   }
   atomicWriteFileSync(ORGS_FILE, JSON.stringify(payload, null, 2) + '\n')
+}
+
+export function recordOrganizationAccessDenial(
+  orgId: string,
+  actorUserId: string,
+  action: OrgAuditEvent['action'],
+): void {
+  const userId = actorUserId.trim()
+  if (!userId) throw new Error('Authenticated organization subject is required for audit')
+  const store = loadOrgsStore()
+  store.auditEvents.push({
+    id: `audit_${randomUUID().slice(0, 12)}`,
+    orgId: orgId.trim().slice(0, 128),
+    actorUserId: userId,
+    action,
+    outcome: 'denied',
+    occurredAt: Date.now(),
+  })
+  if (store.auditEvents.length > 1000) store.auditEvents.splice(0, store.auditEvents.length - 1000)
+  saveOrgsStore(store)
 }
 
 /** Strip invite tokens from list/get DTOs (create/accept still return full tokens). */
@@ -108,7 +162,7 @@ function looksLikeEmail(value: string): boolean {
 }
 
 function contactFields(
-  identity: LocalUserIdentity,
+  identity: OrgActorIdentity,
   inviteTarget?: string,
 ): { username?: string; email?: string } {
   const username = identity.username?.trim() || undefined
@@ -215,43 +269,46 @@ export function isCurrentLocalOrganizationMember(orgId: string): boolean {
   }
 }
 
-export function listOrganizations(): OrganizationWithMembers[] {
+export function listOrganizations(viewerUserId?: string): OrganizationWithMembers[] {
   const store = loadOrgsStore()
-  return store.organizations.map((org) => ({
-    ...org,
-    members: hydrateMembers(store.members.filter((m) => m.orgId === org.id)),
-    pendingInvites: store.invites
-      .filter((i) => i.orgId === org.id && !i.acceptedAt)
-      .map(toPublicInvite),
-  }))
+  const viewerId = viewerUserId?.trim()
+  if (viewerUserId !== undefined && !viewerId) return []
+  return store.organizations
+    .filter((org) => !viewerId || store.members.some((member) => member.orgId === org.id && member.userId === viewerId))
+    .map((org) => {
+      const viewerMembership = viewerId
+        ? store.members.find((member) => member.orgId === org.id && member.userId === viewerId)
+        : undefined
+      const canManageInvites = !viewerId || viewerMembership?.role === 'owner' || viewerMembership?.role === 'admin'
+      return {
+        ...org,
+        ...(viewerId ? { viewerUserId: viewerId } : {}),
+        members: hydrateMembers(store.members.filter((member) => member.orgId === org.id)),
+        pendingInvites: canManageInvites
+          ? store.invites.filter((invite) => invite.orgId === org.id && isPendingInvite(invite)).map(toPublicInvite)
+          : [],
+      }
+    })
 }
 
-export function getOrganization(orgId: string): OrganizationWithMembers | null {
-  const store = loadOrgsStore()
-  const org = store.organizations.find((o) => o.id === orgId)
-  if (!org) return null
-  return {
-    ...org,
-    members: hydrateMembers(store.members.filter((m) => m.orgId === org.id)),
-    pendingInvites: store.invites
-      .filter((i) => i.orgId === org.id && !i.acceptedAt)
-      .map(toPublicInvite),
-  }
+export function getOrganization(orgId: string, viewerUserId?: string): OrganizationWithMembers | null {
+  return listOrganizations(viewerUserId).find((org) => org.id === orgId) ?? null
 }
 
-export function listOrgMembers(orgId: string): OrgMember[] {
+export function listOrgMembers(orgId: string, viewerUserId?: string): OrgMember[] {
   const store = loadOrgsStore()
-  if (!store.organizations.some((o) => o.id === orgId)) {
+  if (!store.organizations.some((org) => org.id === orgId)) {
     throw new Error(`Organization not found: ${orgId}`)
   }
-  return hydrateMembers(store.members.filter((m) => m.orgId === orgId))
+  if (viewerUserId !== undefined) requireOrganizationMembership(orgId, viewerUserId)
+  return hydrateMembers(store.members.filter((member) => member.orgId === orgId))
 }
 
-export function createOrganization(input: CreateOrganizationInput): OrganizationWithMembers {
+export function createOrganization(input: CreateOrganizationInput, actorIdentity?: OrgActorIdentity): OrganizationWithMembers {
   const name = (input.name ?? '').trim()
   if (!name) throw new Error('Organization name is required')
 
-  const identity = ensureLocalUserIdentity()
+  const identity = resolveActor(actorIdentity)
   const store = loadOrgsStore()
   const slug = uniqueSlug(input.slug?.trim() || name, store.organizations)
   const now = Date.now()
@@ -278,6 +335,7 @@ export function createOrganization(input: CreateOrganizationInput): Organization
   saveOrgsStore(store)
 
   return {
+    viewerUserId: identity.userId,
     ...org,
     members: hydrateMembers([owner]),
     pendingInvites: [],
@@ -294,26 +352,28 @@ function requireMemberRole(store: OrgsStoreFile, orgId: string, userId: string, 
   return member
 }
 
-export function inviteToOrganization(input: InviteToOrgInput): OrgInvite {
+export function inviteToOrganization(input: InviteToOrgInput, actorIdentity?: OrgActorIdentity): OrgInvite {
   const orgId = input.orgId
   const emailOrUsername = (input.emailOrUsername ?? '').trim()
   if (!orgId) throw new Error('orgId is required')
   if (!emailOrUsername) throw new Error('emailOrUsername is required')
+  if (actorIdentity !== undefined && !isNativeSubjectId(emailOrUsername)) {
+    throw new Error('Server invitations require an exact server-issued subject UUID')
+  }
 
   const role: Exclude<OrgRole, 'owner'> = input.role === 'admin' ? 'admin' : 'member'
-  const identity = ensureLocalUserIdentity()
+  const identity = resolveActor(actorIdentity)
   const store = loadOrgsStore()
-  if (!store.organizations.some((o) => o.id === orgId)) {
+  if (!store.organizations.some((organization) => organization.id === orgId)) {
     throw new Error(`Organization not found: ${orgId}`)
   }
   requireMemberRole(store, orgId, identity.userId, 'admin')
 
-  // Dedup pending invite for same target
   const existing = store.invites.find(
-    (i) =>
-      i.orgId === orgId &&
-      !i.acceptedAt &&
-      i.emailOrUsername.toLowerCase() === emailOrUsername.toLowerCase(),
+    (invite) =>
+      invite.orgId === orgId &&
+      isPendingInvite(invite) &&
+      invite.emailOrUsername.toLowerCase() === emailOrUsername.toLowerCase(),
   )
   if (existing) {
     existing.role = role
@@ -321,13 +381,15 @@ export function inviteToOrganization(input: InviteToOrgInput): OrgInvite {
     return existing
   }
 
+  const createdAt = Date.now()
   const invite: OrgInvite = {
     id: `inv_${randomUUID().slice(0, 12)}`,
     orgId,
     emailOrUsername,
     role,
     token: newToken(),
-    createdAt: Date.now(),
+    createdAt,
+    expiresAt: createdAt + INVITE_TTL_MS,
     createdBy: identity.userId,
   }
   store.invites.push(invite)
@@ -336,96 +398,77 @@ export function inviteToOrganization(input: InviteToOrgInput): OrgInvite {
 }
 
 /**
- * Accept an invite by token.
- * Local path: matches email/username against local profile when possible,
- * otherwise attaches to the current local userId.
- * When Rox Server URL (CRAFT_SERVER_URL) is set, callers should prefer
- * server redemption first. Email delivery is not implemented.
+ * Redeem with an identity resolved at the trusted call boundary. Client input
+ * contains only the opaque token; it can never choose the resulting member ID.
  */
-export function acceptInvite(input: AcceptInviteInput): {
+export function acceptInvite(input: AcceptInviteInput, actorIdentity?: OrgActorIdentity): {
   org: OrganizationWithMembers
   member: OrgMember
-  invite: OrgInvite
+  invite: OrgInvitePublic
 } {
+  if (Object.hasOwn(input, 'userId')) throw new Error('Invite acceptance identity cannot be supplied by the caller')
   const token = (input.token ?? '').trim()
   if (!token) throw new Error('token is required')
 
   const store = loadOrgsStore()
-  const invite = store.invites.find((i) => i.token === token)
+  const invite = store.invites.find((candidate) => candidate.token === token)
   if (!invite) throw new Error('Invite not found')
   if (invite.acceptedAt) throw new Error('Invite already accepted')
+  if (invite.revokedAt) throw new Error('Invite revoked')
+  if (!isPendingInvite(invite)) throw new Error('Invite expired')
 
-  const org = store.organizations.find((o) => o.id === invite.orgId)
+  const org = store.organizations.find((organization) => organization.id === invite.orgId)
   if (!org) throw new Error('Organization not found for invite')
 
-  const identity = ensureLocalUserIdentity()
-  const prefs = loadPreferences()
-  const userId = (input.userId ?? identity.userId).trim()
-  if (!userId) throw new Error('userId is required')
-
-  // Soft match: if invite targets a specific email/username and local profile
-  // has a different one, still allow on single-device (local-first). Record label.
-  const label =
-    prefs.email?.toLowerCase() === invite.emailOrUsername.toLowerCase()
-      ? prefs.email
-      : prefs.username?.toLowerCase() === invite.emailOrUsername.toLowerCase()
-        ? prefs.username
-        : invite.emailOrUsername
-  const identityForContact =
-    userId === identity.userId
-      ? identity
-      : { userId, username: undefined, email: undefined }
-  const contact = contactFields(identityForContact, invite.emailOrUsername)
-
-  let member = store.members.find((m) => m.orgId === invite.orgId && m.userId === userId)
-  const now = Date.now()
-  if (!member) {
-    member = {
-      orgId: invite.orgId,
-      userId,
-      role: invite.role,
-      displayLabel: label,
-      username: contact.username,
-      email: contact.email,
-      joinedAt: now,
-    }
-    store.members.push(member)
-  } else {
-    // Elevate role if invite is higher
-    const rank: Record<OrgRole, number> = { owner: 3, admin: 2, member: 1 }
-    if (rank[invite.role] > rank[member.role]) {
-      member.role = invite.role
-    }
-    if (!member.displayLabel) member.displayLabel = label
-    if (!member.username && contact.username) member.username = contact.username
-    if (!member.email && contact.email) member.email = contact.email
+  const identity = resolveActor(actorIdentity)
+  if (!matchesInvitee(invite, identity)) throw new Error('Invite is addressed to a different identity')
+  if (store.members.some((member) => member.orgId === invite.orgId && member.userId === identity.userId)) {
+    throw new Error('Identity is already a member of this organization')
   }
-
+  const contact = contactFields(identity)
+  const now = Date.now()
+  const member: OrgMember = {
+    orgId: invite.orgId,
+    userId: identity.userId,
+    role: invite.role,
+    displayLabel: identity.username || identity.email || identity.userId,
+    ...(contact.username ? { username: contact.username } : {}),
+    ...(contact.email ? { email: contact.email } : {}),
+    joinedAt: now,
+  }
+  store.members.push(member)
   invite.acceptedAt = now
-  invite.acceptedByUserId = userId
+  invite.acceptedByUserId = identity.userId
   saveOrgsStore(store)
 
   return {
     org: {
       ...org,
-      members: hydrateMembers(store.members.filter((m) => m.orgId === org.id)),
+      viewerUserId: identity.userId,
+      members: hydrateMembers(store.members.filter((candidate) => candidate.orgId === org.id)),
       pendingInvites: store.invites
-        .filter((i) => i.orgId === org.id && !i.acceptedAt)
+        .filter((candidate) => candidate.orgId === org.id && isPendingInvite(candidate))
         .map(toPublicInvite),
     },
     member,
-    invite,
+    invite: toPublicInvite(invite),
   }
 }
 
-export function updateMemberRole(orgId: string, userId: string, role: OrgRole): OrgMember {
-  const identity = ensureLocalUserIdentity()
+export function updateMemberRole(
+  orgId: string,
+  userId: string,
+  role: OrgRole,
+  actorIdentity?: OrgActorIdentity,
+): OrgMember {
+  if (!['owner', 'admin', 'member'].includes(role)) throw new Error('Invalid organization role')
+  const identity = resolveActor(actorIdentity)
   const store = loadOrgsStore()
   requireMemberRole(store, orgId, identity.userId, 'owner')
-  const member = store.members.find((m) => m.orgId === orgId && m.userId === userId)
+  const member = store.members.find((candidate) => candidate.orgId === orgId && candidate.userId === userId)
   if (!member) throw new Error('Member not found')
   if (member.role === 'owner' && role !== 'owner') {
-    const owners = store.members.filter((m) => m.orgId === orgId && m.role === 'owner')
+    const owners = store.members.filter((candidate) => candidate.orgId === orgId && candidate.role === 'owner')
     if (owners.length <= 1) throw new Error('Cannot demote the only owner')
   }
   member.role = role
@@ -433,7 +476,44 @@ export function updateMemberRole(orgId: string, userId: string, role: OrgRole): 
   return member
 }
 
-export function findInviteByToken(token: string): OrgInvite | null {
+export function revokeOrganizationInvite(
+  orgId: string,
+  inviteId: string,
+  actorIdentity?: OrgActorIdentity,
+): OrgInvitePublic {
+  const identity = resolveActor(actorIdentity)
   const store = loadOrgsStore()
-  return store.invites.find((i) => i.token === token) ?? null
+  requireMemberRole(store, orgId, identity.userId, 'admin')
+  const invite = store.invites.find((candidate) => candidate.orgId === orgId && candidate.id === inviteId)
+  if (!invite) throw new Error('Invite not found')
+  if (!isPendingInvite(invite)) throw new Error('Invite is no longer pending')
+  invite.revokedAt = Date.now()
+  invite.revokedByUserId = identity.userId
+  saveOrgsStore(store)
+  return toPublicInvite(invite)
+}
+
+export function removeOrganizationMember(
+  orgId: string,
+  userId: string,
+  actorIdentity?: OrgActorIdentity,
+): OrgMember {
+  const identity = resolveActor(actorIdentity)
+  const store = loadOrgsStore()
+  requireMemberRole(store, orgId, identity.userId, 'owner')
+  const memberIndex = store.members.findIndex((candidate) => candidate.orgId === orgId && candidate.userId === userId)
+  if (memberIndex < 0) throw new Error('Member not found')
+  const member = store.members[memberIndex]!
+  if (member.role === 'owner' && store.members.filter((candidate) => candidate.orgId === orgId && candidate.role === 'owner').length <= 1) {
+    throw new Error('Cannot remove the only owner')
+  }
+  store.members.splice(memberIndex, 1)
+  saveOrgsStore(store)
+  return member
+}
+
+export function findInviteByToken(token: string): OrgInvitePublic | null {
+  const store = loadOrgsStore()
+  const invite = store.invites.find((candidate) => candidate.token === token)
+  return invite ? toPublicInvite(invite) : null
 }

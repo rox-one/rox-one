@@ -11,7 +11,9 @@ import type {
   ResourceSearchContext,
 } from '@craft-agent/core/platform'
 import i18n from 'i18next'
+import type { KnowledgeRef } from '@craft-agent/core/knowledge'
 import { scoreMatch, scoreMatchAny } from './omnibox-helpers'
+import { routes } from '../../shared/routes'
 
 export interface SessionMetaLike {
   id: string
@@ -47,16 +49,17 @@ export interface SettingsPageLike {
   label: string
   description?: string
 }
-
 export interface KnowledgeSearchHitLike {
-  ref: { kind: string; id: string }
+  ref: KnowledgeRef
   title: string
   snippet?: string
   notebookPath?: string
   score?: number
+  attributes?: Record<string, string>
 }
 
 export type KnowledgeSearchFn = (query: string, signal?: AbortSignal) => Promise<KnowledgeSearchHitLike[] | null>
+export type KnowledgeHitRoute = (hit: KnowledgeSearchHitLike) => string
 
 const TOP_EMPTY = 8
 
@@ -246,7 +249,10 @@ export function createAutomationsProvider(
  * knowledge-docs — knowledge.search when query length ≥ 2 and a search fn is live.
  * Empty/short query → no hits (avoids hammering the kernel).
  */
-export function createKnowledgeProvider(searchFn: KnowledgeSearchFn): ResourceProvider {
+export function createKnowledgeProvider(
+  searchFn: KnowledgeSearchFn,
+  routeFor: KnowledgeHitRoute = () => routes.view.notes(),
+): ResourceProvider {
   return {
     id: 'knowledge-docs',
     label: i18n.t('sidebar.knowledge'),
@@ -266,7 +272,7 @@ export function createKnowledgeProvider(searchFn: KnowledgeSearchFn): ResourcePr
           title: hit.title || hit.ref.id,
           subtitle: hit.snippet ?? hit.notebookPath ?? hit.ref.kind,
           icon: 'knowledge',
-          route: `knowledge/${hit.ref.kind}/${encodeURIComponent(hit.ref.id)}`,
+          route: routeFor(hit),
           data: { ref: hit.ref },
           // Preserve provider order as a small tie-break
           score: base + (limit - index) * 0.0001,

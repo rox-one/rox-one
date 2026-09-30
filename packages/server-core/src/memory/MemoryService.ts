@@ -468,7 +468,7 @@ export class MemoryService {
       if (!gHits || !wHits) return null
       const pickRanked = (store: LessonStore, hits: Array<{ rule: string; rank: number }>): Array<{ lesson: Lesson; rank: number }> => {
         if (hits.length === 0) return []
-        const byKey = new Map(store.list().filter(l => !l.disabled).map(l => [lessonKey(l.rule), l]))
+        const byKey = new Map(store.listForOwner().filter(l => !l.disabled).map(l => [lessonKey(l.rule), l]))
         const out: Array<{ lesson: Lesson; rank: number }> = []
         for (const hit of hits) {
           const lesson = byKey.get(lessonKey(hit.rule))
@@ -479,7 +479,7 @@ export class MemoryService {
       const ranked = [...pickRanked(globalStore, gHits.lessons), ...pickRanked(workspaceStore, wHits.lessons)]
         .sort((a, b) => a.rank - b.rank)
       // Pinned lessons are always injected, ahead of the query-ranked ones.
-      const pinned = [...globalStore.list(), ...workspaceStore.list()]
+      const pinned = [...globalStore.listForOwner(), ...workspaceStore.listForOwner()]
         .filter(l => l.pinned && !l.disabled)
         .map(lesson => ({ lesson, rank: Number.NEGATIVE_INFINITY }))
       const pinnedKeys = new Set(pinned.map(p => `${p.lesson.scope}:${lessonKey(p.lesson.rule)}`))

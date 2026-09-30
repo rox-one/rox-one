@@ -1,8 +1,8 @@
 /**
  * Cron Matching Utilities for Automations
  *
- * Determines if a cron expression matches the current time.
- * Used by SchedulerTick automations to trigger at specific intervals.
+ * Determines whether a cron expression matches a supplied instant (or the
+ * current time when omitted). Used by SchedulerTick automations.
  */
 
 import { Cron } from 'croner';
@@ -11,47 +11,32 @@ import { createLogger } from '../utils/debug.ts';
 const log = createLogger('cron-matcher');
 
 /**
- * Check if a cron expression matches the current time.
- * Uses croner's nextRun to determine if the current minute matches the cron pattern.
+ * Check whether a cron expression matches the minute containing an instant.
+ * The containing UTC minute is evaluated in the optional IANA timezone, so
+ * repeated fall-back minutes are both valid occurrences and spring-forward
+ * gap minutes never match.
  *
  * @param cronExpr - Cron expression in 5-field format (minute hour day-of-month month day-of-week)
  * @param timezone - Optional IANA timezone (e.g., "Europe/Budapest", "America/New_York")
- * @returns true if the cron expression matches the current minute
+ * @param instant - Number, Date, or parseable date string; defaults to now
+ * @returns true if the cron expression matches that minute
  *
  * @example
- * matchesCron('* * * * *')                    // Matches every minute
- * matchesCron('0 9 * * *', 'Europe/Budapest') // Matches 9:00 AM Budapest time
+ * matchesCron('* * * * *')                                  // Matches current minute
+ * matchesCron('0 9 * * *', 'Europe/Budapest')              // Matches 9:00 AM Budapest time
+ * matchesCron('0 9 * * *', 'UTC', '2026-02-09T09:30:00Z')  // Matches the supplied minute
  */
-export function matchesCron(cronExpr: string, timezone?: string): boolean {
-  try {
-    const options = timezone ? { timezone } : {};
-    const job = new Cron(cronExpr, options);
-    const now = new Date();
+export function matchesCron(cronExpr: string, timezone?: string, instant: number | Date | string = Date.now()): boolean {
 
-    // Get start of current minute (floored to :00 seconds)
+  try {
+    const job = new Cron(cronExpr, timezone ? { timezone } : {});
+    const now = instant instanceof Date ? instant : new Date(instant);
+    if (!Number.isFinite(now.getTime())) return false;
     const startOfMinute = new Date(now);
     startOfMinute.setSeconds(0, 0);
-
-    // Check from 1 second before the start of this minute
-    const checkFrom = new Date(startOfMinute.getTime() - 1000);
-    const nextRun = job.nextRun(checkFrom);
-
-    log.debug(`[matchesCron] cron=${cronExpr}, tz=${timezone || 'default'}`);
-    log.debug(`[matchesCron] now=${now.toISOString()}, startOfMinute=${startOfMinute.toISOString()}`);
-    log.debug(`[matchesCron] checkFrom=${checkFrom.toISOString()}, nextRun=${nextRun?.toISOString() || 'null'}`);
-
-    // If nextRun falls within the current minute, we have a match
-    if (!nextRun) {
-      log.debug(`[matchesCron] No nextRun, returning false`);
-      return false;
-    }
-
-    const matches = nextRun.getTime() >= startOfMinute.getTime() &&
-           nextRun.getTime() < startOfMinute.getTime() + 60_000;
-    log.debug(`[matchesCron] matches=${matches} (nextRun ${nextRun.getTime()} vs startOfMinute ${startOfMinute.getTime()} to ${startOfMinute.getTime() + 60_000})`);
-    return matches;
-  } catch (e) {
-    console.error(`[matchesCron] Error:`, e);
+    return job.match(startOfMinute);
+  } catch (error) {
+    log.debug(`[matchesCron] Invalid schedule: ${error instanceof Error ? error.message : String(error)}`);
     return false;
   }
 }

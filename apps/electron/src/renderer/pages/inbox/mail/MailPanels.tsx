@@ -317,6 +317,17 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
   const [notice, setNotice] = useState<{ text: string; path?: string; task?: boolean } | null>(null)
   const [picking, setPicking] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [threadMessages, setThreadMessages] = useState<MailMessage[]>([message])
+  useEffect(() => {
+    let active = true
+    setThreadMessages([message])
+    void mail.getThread(message.threadId).then((messages) => {
+      if (active) setThreadMessages(messages.length ? messages : [message])
+    }).catch((e) => {
+      if (active) setNotice({ text: e instanceof Error ? e.message : String(e) })
+    })
+    return () => { active = false }
+  }, [message, mail.getThread])
   useEffect(() => { setNotice(null); setPicking(false) }, [message.id])
   const inTrash = message.folderIds.some((id) => mail.folders.find((f) => f.id === id)?.role === 'trash')
   const inArchive = message.folderIds.some((id) => { const role = mail.folders.find((f) => f.id === id)?.role; return role === 'archive' || role === 'junk' })
@@ -332,8 +343,8 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
       setBusy(false)
     }
   }
-  const save = (a: MailAttachment) => run(async () => {
-    const r = await mail.act((api) => api.saveAttachment(message.id, a))
+  const save = (emailId: string, a: MailAttachment) => run(async () => {
+    const r = await mail.act((api) => api.saveAttachment(emailId, a))
     setNotice({ text: t('inbox.mail.saved'), path: r.path })
   })
   const toTask = () => {
@@ -388,13 +399,33 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
         <AddressRow label={t('inbox.mail.to')} value={addressLine(message.to)} />
         <AddressRow label={t('inbox.mail.cc')} value={addressLine(message.cc)} />
       </div>
+      {threadMessages.filter((entry) => entry.id !== message.id).map((entry) => (
+        <article key={entry.id} className="mt-3 rounded-[8px] bg-foreground/[0.03] p-3" data-testid="mail-thread-message">
+          <div className="flex items-center gap-2 text-[12px]">
+            <span className="font-semibold">{addressLine(entry.from) || '—'}</span>
+            <span className="ml-auto tabular-nums text-text-muted">{fmt.full(entry.receivedAt)}</span>
+          </div>
+          <AddressRow label={t('inbox.mail.to')} value={addressLine(entry.to)} />
+          <AddressRow label={t('inbox.mail.cc')} value={addressLine(entry.cc)} />
+          {entry.attachments.length ? (
+            <div className="flex flex-wrap gap-1.5 pt-2">
+              {entry.attachments.map((a) => (
+                <button key={a.blobId} type="button" onClick={() => void save(entry.id, a)} title={t('inbox.mail.save')} className="inline-flex h-7 max-w-[260px] items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2 text-[12px] hover:bg-foreground/[0.1]">
+                  <span className="min-w-0 truncate">{a.name}</span><span className="shrink-0 text-text-muted">{formatBytes(a.size)}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {entry.html ? <HtmlBody html={entry.html} /> : <div className="whitespace-pre-wrap break-words pt-2 text-[13px] leading-[1.5]">{entry.text || entry.preview}</div>}
+        </article>
+      ))}
 
       {message.attachments.length ? (
         <>
           <SectionLabel>{t('inbox.mail.attachments')}</SectionLabel>
           <div className="flex flex-wrap gap-1.5" data-testid="mail-attachments">
             {message.attachments.map((a) => (
-              <button key={a.blobId} type="button" onClick={() => void save(a)} title={t('inbox.mail.save')}
+              <button key={a.blobId} type="button" onClick={() => void save(message.id, a)} title={t('inbox.mail.save')}
                 className="inline-flex h-7 max-w-[260px] items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2 text-[12px] hover:bg-foreground/[0.1]" data-testid="mail-attachment">
                 <span className="min-w-0 truncate">{a.name}</span>
                 <span className="shrink-0 text-text-muted">{formatBytes(a.size)}</span>
@@ -426,8 +457,9 @@ export function MailCompose({ mail, draft, source, onClose }: {
   const { t } = useTranslation()
   const [d, setD] = useState<ComposeDraft>(draft)
   const [files, setFiles] = useState<MailPickedFile[]>([])
-  const [forwardAtt, setForwardAtt] = useState<MailAttachment[]>(draft.mode === 'forward' && source ? source.attachments : [])
+  const [forwardAtt, setForwardAtt] = useState<MailAttachment[]>(draft.attachments ?? (draft.mode === 'forward' && source ? source.attachments : []))
   const [showCc, setShowCc] = useState(!!draft.cc)
+  const [showBcc, setShowBcc] = useState(!!draft.bcc)
   const [busy, setBusy] = useState<'send' | 'draft' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -438,7 +470,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
   const domain = mail.status?.domain ?? 'rox.one'
 
   const input = useCallback(() => ({
-    to: d.to, cc: d.cc, subject: d.subject, text: d.text,
+    to: d.to, cc: d.cc, bcc: d.bcc, subject: d.subject, text: d.text,
     sourceId: d.sourceId, mode: d.mode, files, forwardAttachments: forwardAtt, draftId: draftId.current,
   }), [d, files, forwardAtt])
 
@@ -491,6 +523,19 @@ export function MailCompose({ mail, draft, source, onClose }: {
       setBusy(null)
     }
   }
+  const discard = async () => {
+    if (saving.current) await saving.current
+    setBusy('draft')
+    setError(null)
+    try {
+      if (draftId.current) await mail.act((api) => api.remove([draftId.current!]))
+      onClose(false)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(null)
+    }
+  }
 
   const pick = async () => {
     const picked = await window.electronAPI.mailLocal!.pickFiles()
@@ -526,11 +571,18 @@ export function MailCompose({ mail, draft, source, onClose }: {
         <span className="w-12 shrink-0 text-[12px] text-text-muted">{t('inbox.mail.to')}</span>
         <input className={field} value={d.to} onChange={(e) => set({ to: e.target.value })} autoFocus={d.mode !== 'reply' && d.mode !== 'replyAll'} data-testid="mail-to" placeholder={`name@${domain}`} />
         {!showCc ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setShowCc(true)}>{t('inbox.mail.showCc')}</button> : null}
+        {!showBcc ? <button type="button" className="text-[11px] text-text-muted hover:text-foreground" onClick={() => setShowBcc(true)}>{t('inbox.mail.bcc')}</button> : null}
       </label>
       {showCc ? (
         <label className="flex items-center gap-2 rounded-[6px] bg-foreground/[0.04] px-2">
           <span className="w-12 shrink-0 text-[12px] text-text-muted">{t('inbox.mail.cc')}</span>
           <input className={field} value={d.cc} onChange={(e) => set({ cc: e.target.value })} data-testid="mail-cc" />
+        </label>
+      ) : null}
+      {showBcc ? (
+        <label className="flex items-center gap-2 rounded-[6px] bg-foreground/[0.04] px-2">
+          <span className="w-12 shrink-0 text-[12px] text-text-muted">{t('inbox.mail.bcc')}</span>
+          <input className={field} value={d.bcc} onChange={(e) => set({ bcc: e.target.value })} data-testid="mail-bcc" />
         </label>
       ) : null}
       <label className="flex items-center gap-2 rounded-[6px] bg-foreground/[0.04] px-2">
@@ -551,13 +603,13 @@ export function MailCompose({ mail, draft, source, onClose }: {
           {forwardAtt.map((a) => (
             <span key={a.blobId} className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2 text-[12px]">
               {a.name} <span className="text-text-muted">{formatBytes(a.size)}</span>
-              <button type="button" aria-label={t('inbox.mail.discard')} onClick={() => setForwardAtt((l) => l.filter((x) => x !== a))} className="text-text-muted hover:text-foreground">×</button>
+              <button type="button" aria-label={t('inbox.mail.discard')} onClick={() => { dirty.current = true; setForwardAtt((l) => l.filter((x) => x !== a)) }} className="text-text-muted hover:text-foreground">×</button>
             </span>
           ))}
           {files.map((f) => (
             <span key={f.path} className="inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2 text-[12px]" data-testid="mail-file">
               {f.name} <span className="text-text-muted">{formatBytes(f.size)}</span>
-              <button type="button" aria-label={t('inbox.mail.discard')} onClick={() => setFiles((l) => l.filter((x) => x !== f))} className="text-text-muted hover:text-foreground">×</button>
+              <button type="button" aria-label={t('inbox.mail.discard')} onClick={() => { dirty.current = true; setFiles((l) => l.filter((x) => x !== f)) }} className="text-text-muted hover:text-foreground">×</button>
             </span>
           ))}
         </div>
@@ -567,7 +619,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
         <Button type="submit" variant="primary" disabled={!!busy} data-testid="mail-send">{busy === 'send' ? t('inbox.mail.sending') : t('inbox.mail.send')}</Button>
         <Button onClick={() => void pick()} disabled={!!busy}>{t('inbox.mail.attach')}</Button>
         <Button variant="ghost" onClick={() => void saveDraft()} disabled={!!busy} data-testid="mail-save-draft">{t('inbox.mail.saveDraft')}</Button>
-        <Button variant="ghost" onClick={() => { if (dirty.current) void saveDraft(true); onClose(false) }}>{t('inbox.mail.discard')}</Button>
+        <Button variant="ghost" onClick={() => void discard()} disabled={!!busy}>{t('inbox.mail.discard')}</Button>
         {mail.status?.local ? <span className="ml-auto text-[11px] text-text-muted">{t('inbox.mail.externalBlocked', { domain })}</span> : null}
       </div>
     </form>

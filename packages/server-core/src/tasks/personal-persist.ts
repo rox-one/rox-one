@@ -14,9 +14,9 @@
  * Reads are fail-soft: unknown/unsafe/corrupt ids yield null and are skipped
  * from list; corrupt sibling files are left on disk.
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
+import { closeSync, copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync, writeSync } from 'fs'
 import { basename, join } from 'path'
-import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker, PersonalTaskWrite } from '@craft-agent/core/tasks/personal'
 
 const TASK_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
 
@@ -29,6 +29,14 @@ export interface PersistedPersonalTask {
   task: PersonalTask
   revision: number
 }
+
+export type PersonalTaskWriteResult =
+  | { status: 'accepted'; record: PersistedPersonalTask }
+  | { status: 'conflict'; current: PersistedPersonalTask | null }
+
+export type PersonalTaskDeleteResult =
+  | { status: 'removed' }
+  | { status: 'conflict'; current: PersistedPersonalTask | null }
 
 interface PersistFile {
   id: string
@@ -81,17 +89,22 @@ export class PersonalTaskPersistStore {
   }
 
   put(task: PersonalTask): PersistedPersonalTask {
-    if (!TASK_ID_RE.test(task.id)) {
-      throw new TypeError(`Invalid personal-task id (refused for path safety): ${JSON.stringify(task.id)}`)
+    this.assertSafeId(task.id)
+    return this.withRecordLock(task.id, () => this.putUnlocked(task))
+  }
+
+  putIfRevision(write: PersonalTaskWrite): PersonalTaskWriteResult {
+    this.assertSafeId(write.task.id)
+    if (write.expectedRevision !== null && (!Number.isInteger(write.expectedRevision) || write.expectedRevision < 1)) {
+      throw new TypeError('Expected task revision must be null or a positive integer')
     }
-    const existing = this.readRecord(task.id)
-    if (existing && tasksEqual(existing.task, task)) {
-      return { task: existing.task, revision: existing.revision }
-    }
-    const revision = (existing?.revision ?? 0) + 1
-    const record: PersistFile = { id: task.id, revision, task }
-    this.writeRecord(record)
-    return { task, revision }
+    return this.withRecordLock(write.task.id, () => {
+      const current = this.readRecord(write.task.id)
+      if ((current?.revision ?? null) !== write.expectedRevision) {
+        return { status: 'conflict', current: current ? { task: current.task, revision: current.revision } : null }
+      }
+      return { status: 'accepted', record: this.putUnlocked(write.task) }
+    })
   }
 
   get(id: string): PersistedPersonalTask | null {
@@ -107,10 +120,25 @@ export class PersonalTaskPersistStore {
   /** Remove one task file. Unknown/unsafe ids are a no-op (false). */
   delete(id: string): boolean {
     if (!TASK_ID_RE.test(id)) return false
-    const path = this.recordPath(id)
-    if (!existsSync(path)) return false
-    unlinkSync(path)
-    return true
+    return this.withRecordLock(id, () => {
+      const path = this.recordPath(id)
+      if (!existsSync(path)) return false
+      unlinkSync(path)
+      return true
+    })
+  }
+
+  deleteIfRevision(id: string, expectedRevision: number): PersonalTaskDeleteResult {
+    this.assertSafeId(id)
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 1) throw new TypeError('Expected task revision must be a positive integer')
+    return this.withRecordLock(id, () => {
+      const current = this.readRecord(id)
+      if (!current || current.revision !== expectedRevision) {
+        return { status: 'conflict', current: current ? { task: current.task, revision: current.revision } : null }
+      }
+      unlinkSync(this.recordPath(id))
+      return { status: 'removed' }
+    })
   }
 
   /** {root}/personal-tasks-meta.json — projects/areas/headings/audit (fail-soft). */
@@ -236,6 +264,63 @@ export class PersonalTaskPersistStore {
     const tmp = join(this.dir, `.${Date.now()}-${process.pid}.${record.id}.tmp`)
     writeFileSync(tmp, `${JSON.stringify(record)}\n`)
     renameSync(tmp, this.recordPath(record.id))
+  }
+
+  private assertSafeId(id: string): void {
+    if (!TASK_ID_RE.test(id)) {
+      throw new TypeError(`Invalid personal-task id (refused for path safety): ${JSON.stringify(id)}`)
+    }
+  }
+
+  private putUnlocked(task: PersonalTask): PersistedPersonalTask {
+    const existing = this.readRecord(task.id)
+    if (existing && tasksEqual(existing.task, task)) return { task: existing.task, revision: existing.revision }
+    const revision = (existing?.revision ?? 0) + 1
+    this.writeRecord({ id: task.id, revision, task })
+    return { task, revision }
+  }
+
+  private withRecordLock<T>(id: string, operation: () => T): T {
+    mkdirSync(this.dir, { recursive: true })
+    const lockPath = `${this.recordPath(id)}.lock`
+    const deadline = Date.now() + 10_000
+    const wait = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT))
+    while (true) {
+      let fd: number
+      try {
+        fd = openSync(lockPath, 'wx', 0o600)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+        this.removeDeadLock(lockPath)
+        if (Date.now() >= deadline) throw new Error(`Timed out waiting for personal-task writer lock: ${id}`)
+        Atomics.wait(wait, 0, 0, 20)
+        continue
+      }
+      try {
+        writeSync(fd, String(process.pid))
+        return operation()
+      } finally {
+        closeSync(fd)
+        try { unlinkSync(lockPath) } catch { /* an owner may already have removed a stale lock */ }
+      }
+    }
+  }
+
+  private removeDeadLock(lockPath: string): void {
+    let pid: number
+    try {
+      pid = Number(readFileSync(lockPath, 'utf8').trim())
+    } catch {
+      return
+    }
+    if (!Number.isSafeInteger(pid) || pid <= 0) return
+    try {
+      process.kill(pid, 0)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ESRCH') {
+        try { unlinkSync(lockPath) } catch { /* another contender already removed it */ }
+      }
+    }
   }
 
   private recordPath(id: string): string {

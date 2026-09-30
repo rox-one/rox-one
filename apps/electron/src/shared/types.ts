@@ -38,11 +38,26 @@ import type {
   ImportSummary,
 } from '@craft-agent/shared/browser/profile-import'
 import type { ForeignAutoImportStatus } from '@craft-agent/shared/sessions'
+import type { ProjectOkrDocument } from '@craft-agent/shared/projects/types'
+import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
+import type { OrgMember, OrgInvite, OrgRole } from '@craft-agent/shared/orgs'
+import type {
+  PersonalTaskWrite,
+  PersonalTaskDelete,
+  PersonalTaskMeta,
+  PersonalTaskPutResult,
+  PersonalTaskDeleteResult,
+  PersonalTasksSnapshot,
+} from '@craft-agent/core/tasks/personal'
 
 /** Automatic browser cookie import (in-app browser). Values never cross RPC. */
 export interface BrowserCookieAutoStatus {
   /** Explicit in-app consent; nothing is read while false. */
   consent: boolean
+  /** Exact profile/domain scope selected by the user; absent until consent. */
+  profileId?: string
+  domains?: string[]
+  revocationReceipt?: { revokedAt: number; domains: string[]; cookiesRemoved: number }
   supported: boolean
   state: 'off' | 'idle' | 'importing' | 'done' | 'error'
   /** Installed Chromium-family browsers that have a cookie store. */
@@ -344,6 +359,8 @@ export interface BrowserPaneCreateOptions {
   id?: string
   show?: boolean
   bindToSessionId?: string
+  /** Requests the isolated imported-cookie session; main requires current scoped consent. */
+  useImportedCookies?: boolean
 }
 
 /**
@@ -467,6 +484,14 @@ import type {
   NoteAssetRenameResult,
   NoteBacklink,
   NoteDocument,
+  NoteMutationOptions,
+  NativeDataReadEntityInput,
+  NativeDataMutationInput,
+  NativeDataPullChangesInput,
+  NativeDataReceipt,
+  NativeDataEntitySnapshot,
+  NativeDataPullChangesOutput,
+  NativeReplicaPublicApi,
   NoteInsights,
   NoteIndexHealth,
   NoteRenameImpact,
@@ -804,19 +829,25 @@ export interface ElectronAPI {
       sessionId?: string
       reason?: string
     }>
+    failed: number
+    truncated: boolean
+    omitted: number
   }>
+  getSessionBudget(workspaceId: string): Promise<AgentBudgetSnapshot>
+  setSessionBudget(workspaceId: string, input: { limitUsd: number | null }): Promise<AgentBudgetSnapshot>
   foreignAutoImportStatus(args: { workspaceId?: string }): Promise<ForeignAutoImportStatus>
   foreignAutoImportRun(args: { workspaceId?: string; all?: boolean }): Promise<ForeignAutoImportStatus>
   foreignAutoImportSet(args: { workspaceId?: string; enabled: boolean }): Promise<ForeignAutoImportStatus>
-  discoverBrowserProfiles(explicitId?: string): Promise<DiscoveredProfile[]>
+  discoverBrowserProfiles(args: { consent: true; explicitId?: string }): Promise<DiscoveredProfile[]>
   browserCookieAutoStatus(): Promise<BrowserCookieAutoStatus>
-  browserCookieAutoSet(args: { consent: boolean }): Promise<BrowserCookieAutoStatus>
+  browserCookieAutoSet(args: { consent: boolean; profileId?: string; domains?: string[] }): Promise<BrowserCookieAutoStatus>
   browserCookieAutoRun(): Promise<BrowserCookieAutoStatus>
   importBrowserProfile(args: {
     workspaceId: string
     profileId: string
     consent: ImportConsent
     dryRun?: boolean
+    domains?: string[]
   }): Promise<ImportSummary>
   rollbackBrowserProfileImport(args: { workspaceId: string; token: string }): Promise<{ ok: boolean }>
   deleteImportedBrowserProfile(workspaceId: string): Promise<{
@@ -930,10 +961,11 @@ export interface ElectronAPI {
   // Notes
   listNotes(workspaceId: string): Promise<NoteSummary[]>
   readNote(workspaceId: string, noteId: string): Promise<NoteDocument>
-  saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string): Promise<NoteDocument>
-  createNote(workspaceId: string, title: string, folder?: string): Promise<NoteDocument>
-  renameNote(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameResult>
-  deleteNote(workspaceId: string, noteId: string): Promise<boolean>
+  saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
+  createNote(workspaceId: string, title: string, folder?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
+  renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
+  moveNote(workspaceId: string, noteId: string, targetFolder: string, operation: NoteMutationOptions): Promise<{ note: NoteDocument }>
+  deleteNote(workspaceId: string, noteId: string, operation?: NoteMutationOptions): Promise<boolean>
   renameFolderNote(workspaceId: string, folder: string, nextName: string): Promise<{ movedNotes: string[] }>
   deleteFolderNote(workspaceId: string, folder: string): Promise<{ deletedNotes: string[] }>
   searchNotes(workspaceId: string, query: string): Promise<NoteSummary[]>
@@ -947,10 +979,17 @@ export interface ElectronAPI {
   listNoteAssets(workspaceId: string): Promise<NoteAsset[]>
   deleteNoteAsset(workspaceId: string, relativePath: string): Promise<boolean>
   renameNoteAsset(workspaceId: string, relativePath: string, nextName: string): Promise<NoteAssetRenameResult>
-  updateNoteProperties(workspaceId: string, noteId: string, properties: Record<string, unknown>): Promise<NoteDocument>
+  updateNoteProperties(workspaceId: string, noteId: string, properties: Record<string, unknown>, operation?: NoteMutationOptions): Promise<NoteDocument>
   watchNotes(workspaceId: string): Promise<void>
   unwatchNotes(workspaceId: string): Promise<void>
   onNotesChanged(callback: (payload: NoteChangedPayload | string) => void): () => void
+  nativeData: {
+    // Main binds each receipt to the open context's issuer+subject+workspace.
+    readEntity(input: NativeDataReadEntityInput): Promise<NativeDataEntitySnapshot | null>
+    mutate(input: NativeDataMutationInput): Promise<NativeDataReceipt>
+    pullChanges(input: NativeDataPullChangesInput): Promise<NativeDataPullChangesOutput>
+  }
+  nativeReplica: NativeReplicaPublicApi
 
   // Knowledge (P1 read-only provider — spec 2026-08-07-siyuan-integration/03 §3.5.1;
   // P3 write-back mutation proposals — spec 05; P4 publication pipeline — spec 06).
@@ -1631,7 +1670,18 @@ export interface ElectronAPI {
     audioBase64: string
     mimeType?: string
     language?: string
-  }): Promise<{ text: string; engine: string; uploaded: boolean; noSpeech?: boolean; requestId?: string }>
+  }): Promise<{
+    text: string
+    engine: string
+    uploaded: boolean
+    noSpeech?: boolean
+    requestId?: string
+    requestedModelId?: string
+    resolvedModelId?: string
+    routeVersion?: string
+    detectedLanguage?: string
+    durationMs?: number
+  }>
   /**
    * Start speaking `text` (resolves once playback started), stop with
    * `{ stop: true }`, or poll native playback with `{ status: true }`.
@@ -1642,6 +1692,8 @@ export interface ElectronAPI {
     playback?: 'native' | 'renderer' | 'none'
     stopped?: boolean
     speaking?: boolean
+    voice?: string
+    reason?: 'russian-system-voice-unavailable'
   }>
   onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
   bootstrapVoice(): Promise<{ installationId: string; expiresAt: number; scopes: string[] }>
@@ -1783,6 +1835,8 @@ export interface ElectronAPI {
   onSkillsPendingChanged(callback: (workspaceId: string) => void): () => void
   // Memory (self-learning lessons, context, history)
   listMemoryLessons(scope: LessonScope | 'both', workspaceId?: string): Promise<Lesson[]>
+  listMemoryArchive(scope: LessonScope, workspaceId?: string): Promise<Array<{ id: string; lesson: Lesson }>>
+  restoreMemoryArchive(workspaceId: string | null, scope: LessonScope, archiveId: string): Promise<Lesson | null>
   addMemoryLesson(workspaceId: string | null, input: { rule: string; category: LessonCategory; negative?: boolean; scope: LessonScope }): Promise<AddLessonResult>
   updateMemoryLesson(workspaceId: string | null, scope: LessonScope, match: string | number, patch: Partial<Omit<Lesson, 'scope'>>): Promise<Lesson | null>
   deleteMemoryLesson(workspaceId: string | null, scope: LessonScope, match: string | number): Promise<boolean>
@@ -1875,7 +1929,10 @@ export interface ElectronAPI {
     invite: import('@craft-agent/shared/orgs').OrgInvite
   }>
   listOrganizationMembers(orgId: string): Promise<import('@craft-agent/shared/orgs').OrgMember[]>
-  getOrgIdentity(): Promise<{ userId: string; username?: string; email?: string; name?: string }>
+  updateOrganizationMemberRole(orgId: string, userId: string, role: OrgRole): Promise<OrgMember>
+  removeOrganizationMember(orgId: string, userId: string): Promise<OrgMember>
+  revokeOrganizationInvite(orgId: string, inviteId: string): Promise<Omit<OrgInvite, 'token'>>
+  getOrgIdentity(): Promise<{ userId: string; username?: string; email?: string; name?: string; authority: 'native' | 'local'; issuer?: string }>
   updateOrgIdentity(updates: { username?: string; email?: string; name?: string }): Promise<{ userId: string; username?: string; email?: string; name?: string }>
 
   // LLM connections change listener
@@ -1994,6 +2051,8 @@ export interface ElectronAPI {
   menuNewWindow(): Promise<void>
   menuMinimize(): Promise<void>
   menuMaximize(): Promise<void>
+  exitMiniWindow(): Promise<boolean>
+  onPanelFocusDirection(callback: (direction: 'left' | 'right' | 'up' | 'down') => void): () => void
   menuZoomIn(): Promise<void>
   menuZoomOut(): Promise<void>
   menuZoomReset(): Promise<void>
@@ -2008,7 +2067,7 @@ export interface ElectronAPI {
   // Browser pane management
   browserPane: {
     create(input?: string | BrowserPaneCreateOptions): Promise<string>
-    createEmbedded(input?: { url?: string }): Promise<string>
+    createEmbedded(input?: { url?: string; useImportedCookies?: boolean }): Promise<string>
     syncBounds(id: string, rect: { x: number; y: number; width: number; height: number } | null): Promise<void>
     destroy(id: string): Promise<void>
     list(): Promise<BrowserInstanceInfo[]>
@@ -2061,6 +2120,7 @@ export interface ElectronAPI {
   // LLM Connections (provider configurations)
   listLlmConnections(): Promise<LlmConnection[]>
   listLlmConnectionsWithStatus(): Promise<LlmConnectionWithStatus[]>
+  getStartupRuntimeSummary(): Promise<import('@craft-agent/shared/protocol').StartupRuntimeSummary | null>
   getLlmConnection(slug: string): Promise<LlmConnection | null>
   getLlmConnectionApiKey(slug: string): Promise<string | null>
   saveLlmConnection(connection: LlmConnection): Promise<{ success: boolean; error?: string }>
@@ -2074,6 +2134,8 @@ export interface ElectronAPI {
   // Projects (workspace-scoped)
   getProjects(workspaceId: string): Promise<unknown>
   getProject(workspaceId: string, projectIdOrSlug: string): Promise<unknown | null>
+  getProjectOkr(workspaceId: string, projectSlug: string): Promise<ProjectOkrDocument>
+  saveProjectOkr(workspaceId: string, projectSlug: string, expectedRevision: number, document: Pick<ProjectOkrDocument, 'cycles'>): Promise<ProjectOkrDocument | { conflict: true; expectedRevision: number; actualRevision: number }>
   createProject(workspaceId: string, input: import('@craft-agent/shared/projects/types').CreateProjectInput): Promise<import('@craft-agent/shared/projects/types').ProjectConfig>
   updateProject(workspaceId: string, projectSlug: string, patch: Partial<Omit<import('@craft-agent/shared/projects/types').ProjectConfig, 'id' | 'slug' | 'createdAt'>>): Promise<import('@craft-agent/shared/projects/types').ProjectConfig>
   deleteProject(workspaceId: string, projectSlug: string): Promise<void>
@@ -2112,9 +2174,9 @@ export interface ElectronAPI {
   onPagesChanged(callback: (workspaceId: string, pages: import('@craft-agent/shared/pages/types').LoadedPage[]) => void): () => void
 
   // Personal tasks (config-dir persist; localStorage is a cache)
-  personalTasksList(): Promise<import('@craft-agent/core/tasks/personal').PersonalTasksSnapshot>
-  personalTasksPut(tasks: import('@craft-agent/core/tasks/personal').PersonalTask[], meta?: import('@craft-agent/core/tasks/personal').PersonalTaskMeta | null): Promise<{ written: number; rejected: string[] }>
-  personalTasksDelete(ids: string[]): Promise<{ removed: number }>
+  personalTasksList(): Promise<PersonalTasksSnapshot>
+  personalTasksPut(writes: PersonalTaskWrite[], meta?: PersonalTaskMeta | null): Promise<PersonalTaskPutResult>
+  personalTasksDelete(deletes: PersonalTaskDelete[]): Promise<PersonalTaskDeleteResult>
   personalTasksMigrate(input: import('@craft-agent/core/tasks/personal').PersonalTasksMigrateInput): Promise<import('@craft-agent/core/tasks/personal').PersonalTasksMigrateResult>
   onPersonalTasksChanged(callback: (payload: { at: number }) => void): () => void
   // Лента (feed:*)
@@ -2159,7 +2221,7 @@ export interface ElectronAPI {
   setAutomationEnabled(workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean): Promise<void>
   duplicateAutomation(workspaceId: string, eventName: string, matcherIndex: number, copyName?: string): Promise<{ id: string } | void>
   /** Replace one matcher (keeps its id). Changing `event` moves it to that event's list. */
-  updateAutomation(workspaceId: string, eventName: string, matcherIndex: number, next: { event: string; matcher: Record<string, unknown> }): Promise<{ id: string; event: string; matcherIndex: number }>
+  updateAutomation(workspaceId: string, eventName: string, matcherIndex: number, next: { event: string; matcher: Record<string, unknown>; expectedRevision?: string }): Promise<{ id: string; event: string; matcherIndex: number }>
   /** Append a new matcher under `event`; returns its generated id. */
   createAutomation(workspaceId: string, next: { event: string; matcher: Record<string, unknown> }): Promise<{ id: string; event: string; matcherIndex: number }>
   deleteAutomation(workspaceId: string, eventName: string, matcherIndex: number): Promise<void>
@@ -2422,6 +2484,13 @@ export interface NotesNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface SearchNavigationState {
+  navigator: 'search'
+  query: string
+  details?: null
+  rightSidebar?: RightSidebarPanel
+}
+
 /**
  * Automations navigation state
  */
@@ -2589,6 +2658,7 @@ export type NavigationState =
   | SettingsNavigationState
   | SkillsNavigationState
   | NotesNavigationState
+  | SearchNavigationState
   | AutomationsNavigationState
   | ProjectsNavigationState
   | PagesNavigationState
@@ -2626,6 +2696,10 @@ export const isSkillsNavigation = (
 export const isNotesNavigation = (
   state: NavigationState
 ): state is NotesNavigationState => state.navigator === 'notes'
+
+export const isSearchNavigation = (
+  state: NavigationState
+): state is SearchNavigationState => state.navigator === 'search'
 
 export const isAutomationsNavigation = (
   state: NavigationState
@@ -2701,6 +2775,9 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 }
 
 export const getNavigationStateKey = (state: NavigationState): string => {
+  if (state.navigator === 'search') {
+    return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
+  }
   if (state.navigator === 'sources') {
     if (state.details) {
       return `sources/source/${state.details.sourceSlug}`

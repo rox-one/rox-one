@@ -8,7 +8,7 @@ import type {
 
 // Onboarding imports the UI package, whose PDF viewer uses Vite's ?url suffix.
 // Mock that browser-only asset before importing the wizard under Bun.
-mock.module('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: '' }))
+mock.module('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: '/pdf.worker.min.mjs' }))
 mock.module('pdfjs-dist', () => ({ GlobalWorkerOptions: { workerSrc: '' }, getDocument: () => ({}) }))
 mock.module('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),

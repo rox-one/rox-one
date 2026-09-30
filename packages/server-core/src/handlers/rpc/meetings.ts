@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getEnv } from '@craft-agent/shared/config'
 import type { RpcServer } from '@craft-agent/server-core/transport'
@@ -17,19 +18,17 @@ import { appendOperationResultEvent } from '../../meetings/operation-journal.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness, openNativePersistTarget } from '../../meetings/native-actions.ts'
 import type { OutboxJob } from '../../meetings/executor.ts'
-import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import { blocked, denied } from '../../meetings/types.ts'
 import type { CalendarOccurrence } from '../../meetings/conation/calendar-calls.ts'
 import type { CrmTarget } from '../../meetings/conation/crm.ts'
 import {
   approveMailDraft,
-  bindCalendarOccurrence,
   joinNativeRoom,
   listMailThreads,
   prepareMailDraft,
   proposeCrmCard,
   sendPreparedMail,
   type MailLedgerEntry,
-  type ReminderLedgerEntry,
 } from '../../meetings/conation/native-shells.ts'
 import { gateMeetingConationShell } from '@craft-agent/core/rox2'
 
@@ -37,7 +36,6 @@ const proposalStores = new Map<string, ProposalStore>()
 const jobStores = new Map<string, OutboxJob[]>()
 const nativeRuntimes = new Map<string, NativeExecuteRuntime>()
 const mailLedgers = new Map<string, Map<string, MailLedgerEntry>>()
-const reminderLedgers = new Map<string, Map<string, ReminderLedgerEntry>>()
 const mailSeen = new Map<string, Set<string>>()
 
 function storeFor(workspaceId: string): ProposalStore {
@@ -92,13 +90,6 @@ function mailLedgerFor(workspaceId: string): Map<string, MailLedgerEntry> {
   return created
 }
 
-function reminderLedgerFor(workspaceId: string): Map<string, ReminderLedgerEntry> {
-  const existing = reminderLedgers.get(workspaceId)
-  if (existing) return existing
-  const created = new Map<string, ReminderLedgerEntry>()
-  reminderLedgers.set(workspaceId, created)
-  return created
-}
 
 function seenFor(workspaceId: string): Set<string> {
   const existing = mailSeen.get(workspaceId)
@@ -377,11 +368,9 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
   )
   server.handle(
     RPC_CHANNELS.meetings.CALENDAR_BIND,
-    async (_ctx, workspaceId: string, row: CalendarOccurrence, credentialsPresent = false) => {
-      return gateMeetingConationShell(
-        'calendar',
-        bindCalendarOccurrence(row, { present: credentialsPresent }, reminderLedgerFor(workspaceId)),
-      )
+    async (ctx, workspaceId: string, _row: CalendarOccurrence) => {
+      if (ctx.workspaceId !== workspaceId) return gateMeetingConationShell('calendar', denied('workspace-mismatch'))
+      return gateMeetingConationShell('calendar', blocked('calendar-conation-unconfirmed'))
     },
   )
   server.handle(

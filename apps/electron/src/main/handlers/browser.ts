@@ -1,9 +1,11 @@
+import {
+  BROWSER_COOKIE_IMPORT_PARTITION,
+  type BrowserScreenshotOptions,
+} from '../browser-pane-manager'
 import { RPC_CHANNELS, type BrowserPaneCreateOptions, type BrowserEmptyStateLaunchPayload } from '../../shared/types'
-import type { BrowserScreenshotOptions } from '../browser-pane-manager'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import { getBrowserCookieAutoImporter } from '../browser-cookie-auto-import'
-
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.browserPane.CREATE,
   RPC_CHANNELS.browserPane.CREATE_EMBEDDED,
@@ -37,51 +39,76 @@ export function registerBrowserHandlers(server: RpcServer, deps: HandlerDeps): v
   const { browserPaneManager, platform } = deps
   if (!browserPaneManager) return
 
-  // Cookie import for the in-app browser: gated by one explicit consent switch.
+  // Cookie import for the in-app browser: only explicitly opted-in panes use its isolated partition.
   const cookieImporter = getBrowserCookieAutoImporter()
+  browserPaneManager.setCookieImportConsent?.(cookieImporter.status().consent)
   if (process.versions.electron && process.env.NODE_ENV !== 'test') cookieImporter.start()
   server.handle(RPC_CHANNELS.browserProfile.COOKIE_AUTO_STATUS, () => cookieImporter.status())
-  server.handle(RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET, (_ctx, args: { consent?: boolean } | undefined) =>
-    cookieImporter.setConsent(args?.consent === true),
+  server.handle(
+    RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET,
+    async (_ctx, args: { consent?: boolean; profileId?: string; domains?: string[] } | undefined) => {
+      const consent = args?.consent === true
+      if (!consent) browserPaneManager.setCookieImportConsent?.(false)
+      const status = await cookieImporter.setConsent({
+        consent,
+        profileId: args?.profileId,
+        domains: args?.domains,
+      })
+      browserPaneManager.setCookieImportConsent?.(status.consent)
+      return status
+    },
   )
   server.handle(RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN, () => cookieImporter.run(true))
 
   server.handle(RPC_CHANNELS.browserPane.CREATE, (ctx, input?: string | BrowserPaneCreateOptions) => {
-    // Stamp the window with the requester's workspace so manual UI-opened
-    // tabs stay scoped to the workspace where the user clicked. If
-    // ctx.workspaceId is null (no workspace context — e.g. CLI / agent
-    // harness), the window stays globally visible (legacy behavior).
     const workspaceId = ctx.workspaceId ?? null
+    const useImportedCookies = input !== null && typeof input === 'object' && input.useImportedCookies === true
+    if (useImportedCookies && !cookieImporter.status().consent) {
+      throw new Error('Imported browser cookies require active profile and domain consent')
+    }
 
     if (typeof input === 'string') {
       return browserPaneManager.createInstance(input, { workspaceId })
     }
 
     if (input?.bindToSessionId) {
+      if (useImportedCookies) throw new Error('Imported cookies cannot be bound to an existing browser session')
       return browserPaneManager.createForSession(input.bindToSessionId, {
         show: input.show ?? false,
         workspaceId,
       })
     }
 
-    return browserPaneManager.createInstance(input?.id, { show: input?.show, workspaceId })
-  })
-
-  server.handle(RPC_CHANNELS.browserPane.CREATE_EMBEDDED, (ctx, input?: { url?: string }) => {
-    return browserPaneManager.createEmbeddedInstance({
-      url: input?.url,
-      workspaceId: ctx.workspaceId ?? null,
+    return browserPaneManager.createInstance(input?.id, {
+      show: input?.show,
+      workspaceId,
+      useImportedCookies,
     })
   })
 
+  server.handle(
+    RPC_CHANNELS.browserPane.CREATE_EMBEDDED,
+    (ctx, input?: { url?: string; useImportedCookies?: boolean }) => {
+      const useImportedCookies = input?.useImportedCookies === true
+      if (useImportedCookies && !cookieImporter.status().consent) {
+        throw new Error('Imported browser cookies require active profile and domain consent')
+      }
+      return browserPaneManager.createEmbeddedInstance({
+        url: input?.url,
+        workspaceId: ctx.workspaceId ?? null,
+        partition: useImportedCookies ? BROWSER_COOKIE_IMPORT_PARTITION : undefined,
+      })
+    },
+  )
+
   // ZS-07 receiver: BrowserPanelPage → browserPane.syncBounds → syncEmbeddedBounds.
   // Finite bounds only; invalid payloads hide the view. Do not confuse with WebBrowserPanel's 390×720 VPS viewport.
-  server.handle(RPC_CHANNELS.browserPane.SYNC_BOUNDS, (_ctx, id: string, rect: { x: number; y: number; width: number; height: number } | null) => {
+  server.handle(RPC_CHANNELS.browserPane.SYNC_BOUNDS, (ctx, id: string, rect: { x: number; y: number; width: number; height: number } | null) => {
     if (rect && ![rect.x, rect.y, rect.width, rect.height].every((value) => Number.isFinite(value))) {
-      browserPaneManager.syncEmbeddedBounds(id, null)
+      browserPaneManager.syncEmbeddedBounds(id, null, ctx.webContentsId ?? undefined)
       return
     }
-    browserPaneManager.syncEmbeddedBounds(id, rect)
+    browserPaneManager.syncEmbeddedBounds(id, rect, ctx.webContentsId ?? undefined)
   })
 
   server.handle(RPC_CHANNELS.browserPane.DESTROY, (_ctx, id: string) => {

@@ -34,11 +34,9 @@ import {
   saveHistoryIndex,
   saveVoicePrefs,
   setFavorite,
-  speakWithPolicy,
   transcribeWithPolicy,
   voiceGatewayBaseUrl,
   VOICE_PREFS_VERSION,
-  type SpeakAdapter,
   type TranscribeAdapter,
   type TranscribeInput,
   type VoiceCapabilities,
@@ -104,7 +102,7 @@ function identityClient() {
   })
 }
 
-function cloudAdapter(prefs: VoicePrefs, caps: VoiceCapabilities): TranscribeAdapter {
+function cloudAdapter(caps: VoiceCapabilities): TranscribeAdapter {
   const adapter = new RoxTranscriptionAdapter({
     capabilities: caps,
     identity: identityClient(),
@@ -112,7 +110,7 @@ function cloudAdapter(prefs: VoicePrefs, caps: VoiceCapabilities): TranscribeAda
     baseUrl: voiceGatewayBaseUrl(),
   })
   return {
-    engine: prefs.sttEngine,
+    engine: 'cloud-rox',
     async transcribe(input) {
       const result = await adapter.transcribe({
         audio: input.audio,
@@ -121,22 +119,20 @@ function cloudAdapter(prefs: VoicePrefs, caps: VoiceCapabilities): TranscribeAda
       })
       return {
         text: result.text,
-        engine: prefs.sttEngine,
+        engine: 'cloud-rox',
         uploaded: true,
         noSpeech: result.noSpeech,
         requestId: result.requestId,
+        requestedModelId: result.requestedModelId,
+        resolvedModelId: result.resolvedModelId,
+        routeVersion: result.routeVersion,
+        detectedLanguage: result.detectedLanguage,
+        durationMs: result.durationMs,
       }
     },
   }
 }
 
-function edgeSpeakAdapter(): SpeakAdapter {
-  return { engine: 'edge', async speak() { return { engine: 'edge', uploaded: false } } }
-}
-
-function fishSpeakAdapter(): SpeakAdapter {
-  return { engine: 'fish-speech', async speak() { return { engine: 'fish-speech', uploaded: false } } }
-}
 
 let cachedCaps: VoiceCapabilities = {
   ...LAST_KNOWN_GOOD_CAPABILITIES,
@@ -153,7 +149,7 @@ function getHost(server: RpcServer): VoiceHost {
         const prefs = loadVoicePrefs()
         const result = await transcribeWithPolicy(prefs, { audio, mimeType, language }, {
           local: localAdapter(prefs),
-          cloud: cloudAdapter(prefs, cachedCaps),
+          cloud: cloudAdapter(cachedCaps),
         })
         return {
           text: result.text,
@@ -247,7 +243,7 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
     try {
       return await transcribeWithPolicy(prefs, input, {
         local: localAdapter(prefs),
-        cloud: cloudAdapter(prefs, cachedCaps),
+        cloud: cloudAdapter(cachedCaps),
       })
     } catch (error) {
       if (error instanceof VoicePrivacyError) throw new Error(error.message)
@@ -265,16 +261,10 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
       return { engine: 'system', uploaded: false as const, playback: 'none' as const, stopped }
     }
     const text = assertEditableTranscript(typeof body.text === 'string' ? body.text : '')
-    const policy = await speakWithPolicy(loadVoicePrefs(), { text }, {
-      edge: edgeSpeakAdapter(),
-      fish: fishSpeakAdapter(),
-    })
-    // edge/fish adapters do not synthesize audio yet — speak via the OS engine
-    // (macOS `say`), otherwise let the renderer use the Web Speech API.
-    const { played } = await systemSpeaker.speak(text)
-    return played
-      ? { engine: 'macos-say', uploaded: false as const, playback: 'native' as const }
-      : { ...policy, playback: 'renderer' as const }
+    const result = await systemSpeaker.speak(text)
+    return result.played
+      ? { engine: 'system', uploaded: false as const, playback: 'native' as const, voice: result.voice }
+      : { engine: 'system', uploaded: false as const, playback: 'none' as const, reason: 'russian-system-voice-unavailable' as const }
   })
 
   server.handle(RPC_CHANNELS.voice.START, async () => getHost(server).start(loadVoicePrefs()))

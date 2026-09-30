@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { createMessageTts } from '../message-tts'
 
-function harness(playback: 'native' | 'renderer' | 'throw') {
+function harness(playback: 'native' | 'renderer' | 'none' | 'throw') {
   const calls: Array<Record<string, unknown>> = []
   let speaking = true
   const intervals: Array<() => void> = []
@@ -46,13 +46,19 @@ describe('message TTS', () => {
     expect(await h.tts.speak('hello', () => { ended += 1 })).toBe('web-speech')
     expect(h.spoken).toHaveLength(1)
     h.utterances[0]!.onend?.()
+    h.utterances[0]!.onerror?.()
     expect(ended).toBe(1)
   })
 
-  it('falls back to Web Speech when the voice RPC fails', async () => {
+  it('does not start Web Speech when the local speech RPC fails', async () => {
     const h = harness('throw')
-    expect(await h.tts.speak('hello', () => {})).toBe('web-speech')
-    expect(h.spoken).toHaveLength(1)
+    expect(await h.tts.speak('hello', () => {})).toBe('unavailable')
+    expect(h.spoken).toHaveLength(0)
+  })
+  it('does not hide unavailable local Russian speech behind browser fallback', async () => {
+    const h = harness('none')
+    expect(await h.tts.speak('Привет', () => {})).toBe('unavailable')
+    expect(h.spoken).toHaveLength(0)
   })
 
   it('stop() cancels both native and Web Speech playback', async () => {
@@ -62,6 +68,34 @@ describe('message TTS', () => {
     expect(h.calls.some((c) => c.stop === true)).toBe(true)
     expect(h.intervals).toHaveLength(0)
     expect(h.cancelled).toBeGreaterThan(0)
+  })
+  it('stops a late native start before allowing a newer message to speak', async () => {
+    const calls: Array<Record<string, unknown>> = []
+    const { promise, resolve } = Promise.withResolvers<{ playback: 'native' | 'none' }>()
+    const { promise: started, resolve: markStarted } = Promise.withResolvers<void>()
+    let finishFirst = resolve
+    const tts = createMessageTts({
+      speakVoice: (payload) => {
+        calls.push(payload)
+        if (payload.text === 'A') { markStarted(); return promise }
+        return Promise.resolve({ playback: payload.text === 'B' ? 'native' : 'none' })
+      },
+      setInterval: () => 1,
+      clearInterval: () => {},
+    })
+    const first = tts.speak('A', () => {})
+    await started
+    tts.stop()
+    const second = tts.speak('B', () => {})
+    // B must wait until the late native A response has been stopped.
+    expect(calls.filter((call) => typeof call.text === 'string').map((call) => call.text)).toEqual(['A'])
+    finishFirst({ playback: 'native' })
+    expect(await first).toBe('unavailable')
+    expect(await second).toBe('native')
+    const starts = calls.filter((call) => typeof call.text === 'string').map((call) => call.text)
+    expect(starts).toEqual(['A', 'B'])
+    expect(calls.filter((call) => call.stop === true)).toHaveLength(2)
+    expect(calls.map((call) => call.text ?? (call.stop ? 'stop' : 'status'))).toEqual(['A', 'stop', 'stop', 'B'])
   })
 
   it('ignores empty text', async () => {

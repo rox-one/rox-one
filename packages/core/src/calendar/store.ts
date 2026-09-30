@@ -1,4 +1,4 @@
-import { emptyCalendarBundle, sameCalendarEvent, type CalendarAccount, type CalendarBundle, type CalendarEvent, type CalendarProvider, type CalendarUiStatus, type ReminderProposal, type TaskLike } from './types.ts'
+import { calendarEventIdentity, emptyCalendarBundle, sameCalendarEvent, type CalendarAccount, type CalendarBundle, type CalendarEvent, type CalendarProvider, type CalendarUiStatus, type ReminderProposal, type SyncConflictKind, type SyncJournal, type TaskLike } from './types.ts'
 import { createProductionAdapter, type CalendarAdapter } from './adapters.ts'
 import { capabilityFor } from './capabilities.ts'
 import { timezoneWarnings } from './merge.ts'
@@ -19,6 +19,10 @@ function restoreSeq(bundle: CalendarBundle): number {
   }
   return max
 }
+function calendarRemoteRevision(event: CalendarEvent): string {
+  return JSON.stringify([event.deleted ? 'delete' : 'update', event.etag ?? null])
+}
+
 
 export function resetCalendarIds(): void {
   // Per-store seq is restored from persisted ids. Kept for test isolation of older callers.
@@ -76,6 +80,28 @@ export class CalendarStore {
     return this.bundle.journals.flatMap((journal) => journal.conflicts)
   }
 
+  resolveConflict(conflictId: string, resolution: 'local' | 'remote'): CalendarEvent {
+    const journal = this.bundle.journals.find((item) =>
+      item.conflicts.some((conflict) => conflict.id === conflictId),
+    )
+    const conflictIndex = journal?.conflicts.findIndex((conflict) => conflict.id === conflictId) ?? -1
+    const conflict = conflictIndex >= 0 ? journal?.conflicts[conflictIndex] : undefined
+    if (!journal || !conflict) throw new Error(`Unknown conflict ${conflictId}`)
+    if (!conflict.remoteEvent) throw new Error(`Conflict ${conflictId} has no remote snapshot`)
+
+    const remoteEvent = conflict.remoteEvent
+    const event = this.bundle.events.find((item) => sameCalendarEvent(item, remoteEvent))
+    if (!event) throw new Error(`Unknown event ${conflict.eventIdentity ?? conflict.eventId}`)
+    if (resolution === 'remote') {
+      Object.assign(event, conflict.remoteEvent, { localDirty: false, acknowledgedRemoteRevision: undefined })
+    } else {
+      event.localDirty = true
+      event.acknowledgedRemoteRevision = calendarRemoteRevision(conflict.remoteEvent)
+    }
+    journal.conflicts.splice(conflictIndex, 1)
+    return event
+  }
+
   connect(provider: CalendarProvider, displayName: string, timeZone: string): CalendarAccount {
     if (provider === 'appleReminders' && !createProductionAdapter(provider).available()) {
       throw new Error('Apple Reminders requires a privileged macOS helper')
@@ -108,11 +134,11 @@ export class CalendarStore {
     return account
   }
 
-  markLocalDirty(accountId: string, remoteEventId: string): CalendarEvent {
+  markLocalDirty(identity: Pick<CalendarEvent, 'accountId' | 'calendarId' | 'id'>): CalendarEvent {
     const event = this.bundle.events.find(
-      (item) => item.accountId === accountId && item.id === remoteEventId && !item.deleted,
+      (item) => sameCalendarEvent(item, identity) && !item.deleted,
     )
-    if (!event) throw new Error(`Unknown event ${remoteEventId}`)
+    if (!event) throw new Error(`Unknown event ${calendarEventIdentity(identity)}`)
     event.localDirty = true
     return event
   }
@@ -130,24 +156,24 @@ export class CalendarStore {
         ...incoming,
         accountId,
         calendarId: incoming.calendarId || 'primary',
+        deleted: incoming.deleted ?? false,
+        localDirty: false,
       }
       const existing = this.bundle.events.find((event) => sameCalendarEvent(event, scoped))
-      if (existing && incoming.deleted) {
-        if (existing.localDirty) {
-          journal.conflicts.push({ id: this.mint('conf'), kind: 'delete', eventId: incoming.id })
-        } else {
-          existing.deleted = true
-          existing.localDirty = false
-        }
+      if (existing?.localDirty) {
+        if (existing.acknowledgedRemoteRevision === calendarRemoteRevision(scoped)) continue
+        if (!incoming.deleted && incoming.etag && existing.etag === incoming.etag) continue
+        this.recordConflict(journal, incoming.deleted ? 'delete' : 'update', existing, scoped)
         continue
       }
-      if (existing && existing.localDirty && existing.etag && incoming.etag && existing.etag !== incoming.etag && !incoming.deleted) {
-        journal.conflicts.push({ id: this.mint('conf'), kind: 'update', eventId: incoming.id })
+      if (existing && incoming.deleted) {
+        existing.deleted = true
+        existing.localDirty = false
         continue
       }
       if (existing) {
         Object.assign(existing, scoped)
-        existing.localDirty = false
+        existing.acknowledgedRemoteRevision = undefined
       } else {
         this.bundle.events.push({ ...scoped, localDirty: false })
       }
@@ -157,16 +183,17 @@ export class CalendarStore {
     journal.lastSyncedRevision = page.cursor
   }
 
-  proposeReminder(eventId: string, accountId?: string): ReminderProposal {
+  proposeReminder(identity: Pick<CalendarEvent, 'accountId' | 'calendarId' | 'id'>): ReminderProposal {
     const event = this.bundle.events.find((item) =>
-      item.id === eventId && (accountId == null || item.accountId === accountId),
+      sameCalendarEvent(item, identity) && !item.deleted,
     )
-    if (!event) throw new Error(`Unknown event ${eventId}`)
+    if (!event) throw new Error(`Unknown event ${calendarEventIdentity(identity)}`)
     const proposal: ReminderProposal = {
       id: this.mint('prop'),
       title: event.title,
       dueAt: event.startAt,
       sourceEventId: event.id,
+      sourceEventIdentity: calendarEventIdentity(event),
       accepted: false,
       dismissed: false,
     }
@@ -209,10 +236,10 @@ export class CalendarStore {
 
   uiStatus(localTimeZone: string): CalendarUiStatus {
     const live = this.bundle.accounts.filter((account) => account.status !== 'revoked')
-    if (live.length === 0) return 'none'
     if (live.some((account) => account.status === 'pending')) return 'pending'
     if (this.conflicts().length > 0) return 'conflict'
     if (timezoneWarnings(this.events(), localTimeZone).length > 0) return 'timezone'
+    if (this.bundle.events.some((event) => event.localDirty && !event.deleted)) return 'localChanges'
     if (live.some((account) => account.status === 'connected')) return 'connected'
     return 'none'
   }
@@ -224,6 +251,29 @@ export class CalendarStore {
   /** Revoke must not mutate caller task lists. */
   revokeLeavesTasks(tasks: readonly TaskLike[]): TaskLike[] {
     return tasks.map((task) => ({ ...task }))
+  }
+
+  private recordConflict(
+    journal: SyncJournal,
+    kind: SyncConflictKind,
+    event: CalendarEvent,
+    remoteEvent: CalendarEvent,
+  ): void {
+    const eventIdentity = calendarEventIdentity(event)
+    const existing = journal.conflicts.find((conflict) => conflict.eventIdentity === eventIdentity)
+    if (existing) {
+      existing.kind = kind
+      existing.eventId = event.id
+      existing.remoteEvent = structuredClone(remoteEvent)
+      return
+    }
+    journal.conflicts.push({
+      id: this.mint('conf'),
+      kind,
+      eventId: event.id,
+      eventIdentity,
+      remoteEvent: structuredClone(remoteEvent),
+    })
   }
 
   private mint(prefix: string): string {

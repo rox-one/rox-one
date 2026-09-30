@@ -119,6 +119,7 @@ interface LinkInterceptorResult {
 
 export function useLinkInterceptor(options: LinkInterceptorOptions): LinkInterceptorResult {
   const [previewState, setPreviewState] = useState<FilePreviewState | null>(null)
+  const previewRequestIdRef = useRef(0)
 
   // Use refs for options so callbacks remain referentially stable.
   // Without this, every render creates a new options object → new callbacks → cascading
@@ -142,6 +143,7 @@ export function useLinkInterceptor(options: LinkInterceptorOptions): LinkInterce
    * (e.g., @uiw/react-json-view crashes on null value).
    */
   const handleOpenFile = useCallback(async (path: string) => {
+    const requestId = ++previewRequestIdRef.current
     const classification = classifyFile(path)
 
     if (!classification.canPreview || !classification.type) {
@@ -158,13 +160,15 @@ export function useLinkInterceptor(options: LinkInterceptorOptions): LinkInterce
       return
     }
 
-    // For text-based files: read content first, then show overlay with content ready.
-    // Local filesystem reads are near-instant — no loading state needed.
+    // Do not leave another document visible while this file is being resolved.
+    setPreviewState(null)
     try {
       const content = await optionsRef.current.readFile(path)
+      if (requestId !== previewRequestIdRef.current) return
       const state = buildInitialTextState(type, path)
       setPreviewState({ ...state, content } as FilePreviewState)
     } catch (err) {
+      if (requestId !== previewRequestIdRef.current) return
       const errorMsg = err instanceof Error ? err.message : i18n.t('preview.failedToReadFile')
       const state = buildInitialTextState(type, path)
       setPreviewState({ ...state, content: '', error: errorMsg } as FilePreviewState)
@@ -174,20 +178,23 @@ export function useLinkInterceptor(options: LinkInterceptorOptions): LinkInterce
   /** Open file directly in external app, bypassing classification/preview.
    * Used by overlay header badges — when already viewing a file, "Open" should launch the editor. */
   const openFileExternal = useCallback((path: string) => {
+    ++previewRequestIdRef.current
     optionsRef.current.openFileExternal(path)
   }, []) // Stable: uses optionsRef
 
   /** Safe http/https open in the retained browser; auth/deep-link/unsafe stay on the policy table. */
   const handleOpenUrl = useCallback((url: string) => {
+    ++previewRequestIdRef.current
     const policy = classifyLinkPolicy(url)
     if (policy.kind === 'internal-browser' && optionsRef.current.openInAppBrowser) {
       void optionsRef.current.openInAppBrowser(url)
       return
     }
     optionsRef.current.openUrl(url)
-  }, []) // Stable: uses optionsRef
+  }, []) // Stable: uses refs
 
   const closePreview = useCallback(() => {
+    ++previewRequestIdRef.current
     setPreviewState(null)
   }, [])
 
@@ -195,6 +202,7 @@ export function useLinkInterceptor(options: LinkInterceptorOptions): LinkInterce
   const openCurrentExternal = useCallback(() => {
     const state = previewStateRef.current
     if (state) {
+      ++previewRequestIdRef.current
       optionsRef.current.openFileExternal(state.filePath)
     }
   }, []) // Stable: uses refs

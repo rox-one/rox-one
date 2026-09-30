@@ -4,7 +4,8 @@
  * do not pull node-only workspace deps (zod).
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { isAllowedForeignSourcePath, splitForeignSourceRef } from './import-home.ts'
 import { convertForeignSource, inspectForeignSource, MAX_FOREIGN_EXPORT_BYTES } from './import-convert.ts'
@@ -26,6 +27,7 @@ interface RoxSessionFile {
   id: string
   name?: string
   workingDirectory?: string
+  foreignSource?: { sourcePath: string; kind: ForeignSessionKind; contentHash: string; importedAt: number }
   messages: Array<{ id: string; type: 'user' | 'assistant'; content: string; timestamp?: number }>
 }
 
@@ -58,9 +60,31 @@ function mergeImportedMessages(
   existing: RoxSessionFile['messages'],
   incoming: RoxSessionFile['messages'],
 ): RoxSessionFile['messages'] {
-  const seen = new Set(existing.map((message) => message.id))
-  const extra = incoming.filter((message) => !seen.has(message.id))
-  return extra.length === 0 ? existing : [...existing, ...extra]
+  const incomingById = new Map(incoming.map((message) => [message.id, message]))
+  const seen = new Set<string>()
+  const merged = existing.flatMap((message) => {
+    const updated = incomingById.get(message.id)
+    if (!updated && message.id.startsWith('import-')) return []
+    if (!updated) return [message]
+    seen.add(message.id)
+    return [updated]
+  })
+  for (const message of incoming) {
+    if (!seen.has(message.id)) merged.push(message)
+  }
+  return merged
+}
+
+function fingerprint(messages: ConvertedForeignMessage[]): string {
+  return createHash('sha256').update(JSON.stringify(messages)).digest('hex')
+}
+
+function findPersistedSource(workspaceRoot: string, sourcePath: string): RoxSessionFile | null {
+  for (const sessionId of existingIds(workspaceRoot)) {
+    const session = readRoxSession(workspaceRoot, sessionId)
+    if (session?.foreignSource?.sourcePath === sourcePath) return session
+  }
+  return null
 }
 
 function hashCode(value: string): number {
@@ -89,17 +113,13 @@ function writeRoxSession(workspaceRoot: string, session: RoxSessionFile): boolea
     messageCount: session.messages.length,
     lastMessageRole: last?.type,
     preview,
+    foreignSource: session.foreignSource,
     tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0 },
   }
   const file = sessionFile(workspaceRoot, id)
   const lines = [JSON.stringify(header), ...session.messages.map((m) => JSON.stringify(m))]
   const tmp = `${file}.${process.pid}.${now}.tmp`
   writeFileSync(tmp, `${lines.join('\n')}\n`)
-  try {
-    unlinkSync(file)
-  } catch {
-    /* first write */
-  }
   renameSync(tmp, file)
   return true
 }
@@ -111,12 +131,18 @@ function readRoxSession(workspaceRoot: string, sessionId: string): RoxSessionFil
   if (!existsSync(file)) return null
   const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean)
   if (lines.length === 0) return null
-  const header = JSON.parse(lines[0]!) as { id: string; name?: string; workingDirectory?: string }
+  const header = JSON.parse(lines[0]!) as {
+    id: string
+    name?: string
+    workingDirectory?: string
+    foreignSource?: RoxSessionFile['foreignSource']
+  }
   const messages = lines.slice(1).map((line) => JSON.parse(line) as RoxSessionFile['messages'][number])
   return {
     id: header.id,
     name: header.name,
     workingDirectory: header.workingDirectory,
+    foreignSource: header.foreignSource,
     messages,
   }
 }
@@ -144,9 +170,26 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
     return { sourcePath: options.sourcePath, action: 'skipped', reason: 'empty', anomalies: converted.anomalies }
   }
 
+  const importedAt = Date.now()
+  const storedMessages = toMessages(options.sourcePath, converted.messages)
+  const contentHash = fingerprint(converted.messages)
   const existingRaw = lookupImportedSession(options.workspaceRoot, options.sourcePath)
   const existingId = existingRaw ? sanitizeSessionId(existingRaw.sessionId) : ''
-  const existing = existingRaw && existingId && isValidSessionId(existingId) ? { ...existingRaw, sessionId: existingId } : undefined
+  let existing = existingRaw && existingId && isValidSessionId(existingId) ? { ...existingRaw, sessionId: existingId } : undefined
+  if (!existing) {
+    const recovered = findPersistedSource(options.workspaceRoot, options.sourcePath)
+    if (recovered) {
+      existing = {
+        sessionId: recovered.id,
+        kind,
+        importedAt: recovered.foreignSource?.importedAt ?? importedAt,
+        sourcePath: options.sourcePath,
+        contentHash: recovered.foreignSource?.contentHash,
+        messageCount: recovered.messages.length,
+      }
+      recordImportedSession(options.workspaceRoot, existing)
+    }
+  }
   if (existing && mode === 'skip') {
     return {
       sourcePath: options.sourcePath,
@@ -156,8 +199,22 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
       anomalies: converted.anomalies,
     }
   }
-
-  const storedMessages = toMessages(options.sourcePath, converted.messages)
+  if (existing && mode === 'append' && existing.contentHash === contentHash) {
+    if (existing.sourceMtimeMs !== scanned.mtimeMs) {
+      recordImportedSession(options.workspaceRoot, {
+        ...existing,
+        sourceMtimeMs: scanned.mtimeMs,
+        messageCount: converted.messages.length,
+      })
+    }
+    return {
+      sourcePath: options.sourcePath,
+      action: 'skipped',
+      sessionId: existing.sessionId,
+      reason: 'source-unchanged',
+      anomalies: converted.anomalies,
+    }
+  }
 
   if (existing && (mode === 'append' || mode === 'force')) {
     const session = readRoxSession(options.workspaceRoot, existing.sessionId)
@@ -168,14 +225,18 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
           : storedMessages
       session.name = converted.title
       session.workingDirectory = options.workspaceRoot
+      session.foreignSource = { sourcePath: options.sourcePath, kind, contentHash, importedAt }
       if (!writeRoxSession(options.workspaceRoot, session)) {
         return { sourcePath: options.sourcePath, action: 'skipped', reason: 'invalid-session-id' }
       }
       recordImportedSession(options.workspaceRoot, {
         sessionId: session.id,
         kind,
-        importedAt: Date.now(),
+        importedAt,
         sourcePath: options.sourcePath,
+        sourceMtimeMs: scanned.mtimeMs,
+        contentHash,
+        messageCount: converted.messages.length,
       })
       return {
         sourcePath: options.sourcePath,
@@ -191,6 +252,7 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
     id,
     name: converted.title,
     workingDirectory: options.workspaceRoot,
+    foreignSource: { sourcePath: options.sourcePath, kind, contentHash, importedAt },
     messages: storedMessages,
   })
   if (!written) {
@@ -199,8 +261,11 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
   recordImportedSession(options.workspaceRoot, {
     sessionId: id,
     kind,
-    importedAt: Date.now(),
+    importedAt,
     sourcePath: options.sourcePath,
+    sourceMtimeMs: scanned.mtimeMs,
+    contentHash,
+    messageCount: converted.messages.length,
   })
   return {
     sourcePath: options.sourcePath,

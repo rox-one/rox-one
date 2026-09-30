@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { DndContext, useDraggable, useDroppable, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@craft-agent/ui'
-import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteRenameImpact, NoteSummary } from '../../shared/types'
+import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
 import {
@@ -16,6 +16,7 @@ import {
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import {
+  contentHash,
   isClaimableLive,
   soupDocumentActResult,
   soupDocumentListResult,
@@ -46,7 +47,7 @@ import {
   useNotesRailLayout,
 } from './notes/NotesDocumentChrome'
 import { NotesViewHost } from './notes/NotesViewHost'
-import { convertNote, dailyNoteDestination } from './notes/note-views'
+import { convertNote, dailyNoteDestination, parseNotePropertyValue } from './notes/note-views'
 import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
@@ -91,11 +92,16 @@ import {
   parseWikiCreateTarget,
   wikiMatchSubtitle,
 } from './notes/wiki-autocomplete'
+import { createNativeNotesSyncController } from '../lib/native-notes-sync'
 
 interface NotesPageProps {
   selectedNoteId: string | null
 }
 
+
+function noteRevisionKey(workspaceId: string, noteId: string): string {
+  return `${workspaceId}\0${noteId}`
+}
 function noteRelativeLabel(note: NoteSummary): string {
   return note.relativePath.replace(/\.md$/i, '')
 }
@@ -667,7 +673,22 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [commandIndex, setCommandIndex] = React.useState(0)
   const saveTimerRef = React.useRef<number | null>(null)
   const saveQueueRef = React.useRef<Promise<boolean>>(Promise.resolve(true))
+  const openNoteRequestRef = React.useRef(0)
+  const searchRequestRef = React.useRef(0)
+  const notesListRequestRef = React.useRef(0)
+  const taskRequestRef = React.useRef(0)
+  const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
+  const taskCacheUpdatedAtRef = React.useRef<Map<string, number>>(new Map())
+  const nativeRevisionByNoteRef = React.useRef<Map<string, number | null>>(new Map())
+  const expectedRevisionByNoteRef = React.useRef<Map<string, string>>(new Map())
+  const mutationOptions = React.useCallback((workspaceId: string, noteId: string, expectedRevision?: number | null): NoteMutationOptions => ({
+    operationId: crypto.randomUUID(),
+    expectedRevision: expectedRevision === undefined
+      ? nativeRevisionByNoteRef.current.get(noteRevisionKey(workspaceId, noteId)) ?? null
+      : expectedRevision,
+    schemaVersion: 1,
+  }), [])
   const dirtyRef = React.useRef(dirty)
   const contentRef = React.useRef(content)
   const noteViewCapabilities = React.useMemo(() => defaultNoteEntityCapabilities(), [])
@@ -696,6 +717,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   React.useEffect(() => { dirtyRef.current = dirty }, [dirty])
   React.useEffect(() => { contentRef.current = content }, [content])
   React.useEffect(() => { activeNoteIdRef.current = activeNote?.id ?? null }, [activeNote?.id])
+  const [nativeNotesSync] = React.useState(createNativeNotesSyncController)
 
   const toggleFolder = React.useCallback((folder: string) => {
     setCollapsedFolders(prev => {
@@ -707,10 +729,12 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   }, [])
 
   const refreshNotes = React.useCallback(async () => {
+    const request = ++notesListRequestRef.current
     if (!activeWorkspaceId) return
     const listed = soupDocumentListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return
     const next = await window.electronAPI.listNotes(activeWorkspaceId)
+    if (request !== notesListRequestRef.current) return
     setNotes(next)
     setSidebarOrder(next.map(n => n.id))
   }, [activeWorkspaceId])
@@ -750,48 +774,81 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId])
 
   const refreshTasks = React.useCallback(async (sourceNotes?: NoteSummary[]) => {
+    const request = ++taskRequestRef.current
+    if (taskCacheWorkspaceRef.current !== (activeWorkspaceId ?? null)) {
+      taskCacheRef.current.clear()
+      taskCacheUpdatedAtRef.current.clear()
+      taskCacheWorkspaceRef.current = activeWorkspaceId ?? null
+    }
     if (!activeWorkspaceId) {
       setAllTasks([])
-      taskCacheRef.current.clear()
       return
     }
     const baseNotes = sourceNotes ?? notes
     const currentIds = new Set(baseNotes.map(n => n.id))
     for (const id of taskCacheRef.current.keys()) {
-      if (!currentIds.has(id)) taskCacheRef.current.delete(id)
+      if (!currentIds.has(id)) {
+        taskCacheRef.current.delete(id)
+        taskCacheUpdatedAtRef.current.delete(id)
+      }
     }
-    const toFetch = baseNotes.filter(n => !taskCacheRef.current.has(n.id))
+    const toFetch = baseNotes.filter(note =>
+      !taskCacheRef.current.has(note.id) || taskCacheUpdatedAtRef.current.get(note.id) !== note.updatedAt
+    )
     const results = await Promise.allSettled(
       toFetch.map(note => window.electronAPI.readNote(activeWorkspaceId, note.id))
     )
+    if (request !== taskRequestRef.current || taskCacheWorkspaceRef.current !== activeWorkspaceId) return
     for (const result of results) {
       if (result.status === 'fulfilled') {
         taskCacheRef.current.set(result.value.id, extractTasks(result.value, result.value.content))
+        taskCacheUpdatedAtRef.current.set(result.value.id, result.value.updatedAt)
       }
     }
     setAllTasks([...taskCacheRef.current.values()].flat())
   }, [activeWorkspaceId, notes])
 
   const openNote = React.useCallback(async (noteId: string) => {
-    if (!activeWorkspaceId) return
+    const request = ++openNoteRequestRef.current
+    if (!activeWorkspaceId) {
+      setActiveNote(null)
+      contentRef.current = ''
+      dirtyRef.current = false
+      setContent('')
+      setDirty(false)
+      setLoading(false)
+      return
+    }
     const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
-    if (!isClaimableLive(read.result)) return
+    if (!isClaimableLive(read.result)) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const note = await window.electronAPI.readNote(activeWorkspaceId, noteId)
+      if (request !== openNoteRequestRef.current) return
+      const revisionKey = noteRevisionKey(activeWorkspaceId, note.id)
+      expectedRevisionByNoteRef.current.set(revisionKey, contentHash(note.content))
+      nativeRevisionByNoteRef.current.set(revisionKey, note.nativeRevision ?? null)
       setActiveNote(note)
+      contentRef.current = note.content
+      dirtyRef.current = false
       setContent(note.content)
       setDirty(false)
       setSaveError(null)
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
+      if (request !== openNoteRequestRef.current) return
       setActiveNote(null)
+      contentRef.current = ''
+      dirtyRef.current = false
       setContent('')
       setDirty(false)
+      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
     } finally {
-      setLoading(false)
+      if (request === openNoteRequestRef.current) setLoading(false)
     }
   }, [activeWorkspaceId, t])
 
@@ -820,6 +877,11 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     refreshAssets()
     void refreshIndexHealth()
     if (!activeWorkspaceId) return
+    void nativeNotesSync.start(activeWorkspaceId)
+      .then(() => nativeNotesSync.flush())
+      .catch(error => {
+        toast.error(error instanceof Error ? error.message : t('notes.toast.watchFailed'))
+      })
     window.electronAPI.watchNotes(activeWorkspaceId).catch(error => {
       toast.error(error instanceof Error ? error.message : t('notes.toast.watchFailed'))
     }).then(() => { void refreshIndexHealth() })
@@ -846,6 +908,9 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
 
     return () => {
       unsubscribe()
+      void nativeNotesSync.stop().catch(error => {
+        toast.error(error instanceof Error ? error.message : t('notes.toast.watchFailed'))
+      })
       window.electronAPI.unwatchNotes(activeWorkspaceId).catch(() => {})
     }
   }, [activeWorkspaceId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, t])
@@ -856,18 +921,30 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       return
     }
     setActiveNote(null)
+    contentRef.current = ''
+    dirtyRef.current = false
     setContent('')
     setDirty(false)
     setSaveError(null)
   }, [selectedNoteId, openNote])
 
-  const noteIds = React.useMemo(() => notes.map(n => n.id).join(','), [notes])
+  const noteIds = React.useMemo(
+    () => `${activeWorkspaceId ?? ''}:${notes.map(n => `${n.id}:${n.updatedAt}`).join(',')}`,
+    [activeWorkspaceId, notes],
+  )
   React.useEffect(() => {
     void refreshTasks(notes)
-    // Only re-run when the set of note IDs changes, not on every content/metadata update.
+    // Refresh task projections when any note's persisted version changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteIds])
 
+  const saveNativeNote = React.useCallback(async (note: NoteDocument, markdown: string): Promise<NoteDocument> => {
+    const queuedMutation = await nativeNotesSync.queueSave(note, markdown)
+    const receipts = await nativeNotesSync.flush()
+    const receipt = receipts.find(candidate => candidate.operationId === queuedMutation.operationId)
+    if (!receipt) throw new Error(`Native Notes operation ${queuedMutation.operationId} remains pending`)
+    return { ...note, content: markdown, nativeRevision: receipt.revision }
+  }, [nativeNotesSync])
   const saveCurrentNote = React.useCallback(async (): Promise<boolean> => {
     if (!activeWorkspaceId || !activeNote) return true
     if (saveTimerRef.current) {
@@ -882,21 +959,57 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       try {
         const act = soupDocumentActResult({ source: 'native', action: 'write', nativeId: noteId })
         if (!isClaimableLive(act)) return false
-        const saved = await window.electronAPI.saveNote(activeWorkspaceId, noteId, currentContent)
+        const revisionKey = noteRevisionKey(activeWorkspaceId, noteId)
+        if (activeNote.nativeRevision !== undefined) {
+          const saved = await saveNativeNote(activeNote, currentContent)
+          nativeRevisionByNoteRef.current.set(revisionKey, saved.nativeRevision ?? null)
+          expectedRevisionByNoteRef.current.set(revisionKey, contentHash(saved.content))
+          if (activeNoteIdRef.current === noteId) {
+            if (contentRef.current === currentContent) {
+              setActiveNote(saved)
+              setDirty(false)
+              setTagDraft(saved.tags.join(', '))
+            } else {
+              setActiveNote(current => current?.id === noteId
+                ? { ...current, nativeRevision: saved.nativeRevision }
+                : current)
+              setDirty(true)
+            }
+          }
+          return true
+        }
+        const expectedRevision = expectedRevisionByNoteRef.current.get(revisionKey) ?? contentHash(activeNote.content)
+        const saved = await window.electronAPI.saveNote(
+          activeWorkspaceId,
+          noteId,
+          currentContent,
+          expectedRevision,
+          mutationOptions(activeWorkspaceId, noteId),
+        )
+        nativeRevisionByNoteRef.current.set(revisionKey, saved.nativeRevision ?? null)
+        expectedRevisionByNoteRef.current.set(revisionKey, contentHash(saved.content))
         if (activeNoteIdRef.current === noteId) {
           setActiveNote(saved)
-          setDirty(false)
-          setTagDraft(saved.tags.join(', '))
+          if (contentRef.current === currentContent) {
+            setDirty(false)
+            setTagDraft(saved.tags.join(', '))
+          } else {
+            setDirty(true)
+          }
         }
         // Optimistically update sidebar — no refreshNotes() round-trip needed
         setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
         taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
+        taskCacheUpdatedAtRef.current.set(saved.id, saved.updatedAt)
         setAllTasks([...taskCacheRef.current.values()].flat())
         return true
       } catch (error) {
-        const message = error instanceof Error ? error.message : t('notes.toast.saveFailed')
-        setSaveError(message)
-        toast.error(message)
+        if ((activeNote.nativeRevision !== undefined || contentRef.current === currentContent) &&
+            activeNoteIdRef.current === noteId) {
+          const message = error instanceof Error ? error.message : t('notes.toast.saveFailed')
+          setSaveError(message)
+          toast.error(message)
+        }
         return false
       } finally {
         setSaving(false)
@@ -905,7 +1018,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     saveQueueRef.current = queued
     return queued
   // contentRef is a ref — intentionally excluded; activeNote.id and activeWorkspaceId are the real deps
-  }, [activeWorkspaceId, activeNote, t])
+  }, [activeWorkspaceId, activeNote, mutationOptions, saveNativeNote, t])
 
   const flushBeforeAction = React.useCallback(async (): Promise<boolean> => {
     if (!dirtyRef.current) return true
@@ -924,19 +1037,26 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, activeNote, dirty, saveCurrentNote])
 
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    const request = ++searchRequestRef.current
+    if (!activeWorkspaceId) {
+      setSearchResults(null)
+      return
+    }
     const q = query.trim()
     if (!q) {
       setSearchResults(null)
       return
     }
+    setSearchResults(null)
 
     const timer = window.setTimeout(async () => {
       try {
         const results = await window.electronAPI.searchNotes(activeWorkspaceId, q)
-        setSearchResults(results)
+        if (request === searchRequestRef.current) setSearchResults(results)
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : t('notes.toast.searchFailed'))
+        if (request === searchRequestRef.current) {
+          toast.error(error instanceof Error ? error.message : t('notes.toast.searchFailed'))
+        }
       }
     }, 180)
 
@@ -1033,7 +1153,13 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const handleCreate = async () => {
     if (!activeWorkspaceId || !createTitle.trim()) return
     if (!await flushBeforeAction()) return
-    const note = await window.electronAPI.createNote(activeWorkspaceId, createTitle.trim(), createInFolder)
+    const note = await window.electronAPI.createNote(
+      activeWorkspaceId,
+      createTitle.trim(),
+      createInFolder,
+      mutationOptions(activeWorkspaceId, createTitle.trim(), null),
+    )
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, note.id), note.nativeRevision ?? null)
     setCreateDialogOpen(false)
     setCreateTitle('')
     setCreateInFolder(undefined)
@@ -1052,7 +1178,13 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!activeWorkspaceId || !createFolderName.trim()) return
     if (!await flushBeforeAction()) return
     const folder = stripMdExtension(createFolderName.trim()).replace(/^\/+|\/+$/g, '')
-    const note = await window.electronAPI.createNote(activeWorkspaceId, t('notes.untitled'), folder)
+    const note = await window.electronAPI.createNote(
+      activeWorkspaceId,
+      t('notes.untitled'),
+      folder,
+      mutationOptions(activeWorkspaceId, `${folder}/${t('notes.untitled')}`, null),
+    )
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, note.id), note.nativeRevision ?? null)
     setCreateFolderDialogOpen(false)
     setCreateFolderName('')
     await refreshNotes()
@@ -1085,6 +1217,10 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!await flushBeforeAction()) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
     setActiveNote(document)
+    expectedRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, document.id), contentHash(document.content))
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, document.id), document.nativeRevision ?? null)
+    contentRef.current = document.content
+    dirtyRef.current = false
     setContent(document.content)
     setDirty(false)
     setTagDraft(document.tags.join(', '))
@@ -1099,6 +1235,9 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!await flushBeforeAction()) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
     setActiveNote(document)
+    expectedRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, document.id), contentHash(document.content))
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, document.id), document.nativeRevision ?? null)
+    dirtyRef.current = false
     setContent(document.content)
     setDirty(false)
     setTagDraft(document.tags.join(', '))
@@ -1106,13 +1245,88 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     navigate(routes.view.notes(document.id))
   }
 
+  const editTableCell = React.useCallback(async (
+    noteId: string,
+    field: 'title' | 'tags' | `property:${string}`,
+    value: string,
+  ) => {
+    if (!activeWorkspaceId) return
+    if (activeNote?.id === noteId && !await flushBeforeAction()) return
+    const act = soupDocumentActResult({ source: 'native', action: 'write', nativeId: noteId })
+    if (!isClaimableLive(act)) return
+
+    try {
+      if (field === 'title') {
+        const title = value.trim()
+        if (!title) return
+        const renamedDocument = await window.electronAPI.readNote(activeWorkspaceId, noteId)
+        const renamed = await window.electronAPI.renameNote(
+          activeWorkspaceId,
+          noteId,
+          title,
+          mutationOptions(activeWorkspaceId, noteId, renamedDocument.nativeRevision),
+        )
+        nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), renamed.note.nativeRevision ?? null)
+        await refreshNotes()
+        if (activeNote?.id === noteId) navigate(routes.view.notes(renamed.note.id))
+        return
+      }
+
+      const document = await window.electronAPI.readNote(activeWorkspaceId, noteId)
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), document.nativeRevision ?? null)
+      const properties = { ...document.properties }
+      if (field === 'tags') {
+        properties.tags = value.split(',').map((tag) => tag.trim().replace(/^#/, '')).filter(Boolean)
+      } else {
+        const key = field.slice('property:'.length)
+        const previous = properties[key]
+        properties[key] = parseNotePropertyValue(previous, value)
+      }
+      const updated = await window.electronAPI.updateNoteProperties(
+        activeWorkspaceId,
+        noteId,
+        properties,
+        mutationOptions(activeWorkspaceId, noteId, document.nativeRevision),
+      )
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), updated.nativeRevision ?? null)
+      if (activeNote?.id === noteId) {
+        setActiveNote(updated)
+        contentRef.current = updated.content
+        dirtyRef.current = false
+        setContent(updated.content)
+        expectedRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), contentHash(updated.content))
+        setDirty(false)
+        setTagDraft(updated.tags.join(', '))
+      }
+      await refreshNotes()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
+    }
+  }, [activeNote, activeWorkspaceId, flushBeforeAction, mutationOptions, refreshNotes, t])
+
   const duplicateNote = async (note: NoteSummary) => {
     if (!activeWorkspaceId) return
     if (!await flushBeforeAction()) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
     const title = `${document.title} copy`
-    const created = await window.electronAPI.createNote(activeWorkspaceId, title, noteFolder(note) || undefined)
-    const saved = await window.electronAPI.saveNote(activeWorkspaceId, created.id, updateMarkdownTitle(document.content, title))
+    const created = await window.electronAPI.createNote(
+      activeWorkspaceId,
+      title,
+      noteFolder(note) || undefined,
+      mutationOptions(activeWorkspaceId, title, null),
+    )
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
+    const duplicateContent = updateMarkdownTitle(document.content, title)
+    const saved = created.nativeRevision !== undefined
+      ? await saveNativeNote(created, duplicateContent)
+      : await window.electronAPI.saveNote(
+        activeWorkspaceId,
+        created.id,
+        duplicateContent,
+        contentHash(created.content),
+        mutationOptions(activeWorkspaceId, created.id, created.nativeRevision),
+      )
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, saved.id), saved.nativeRevision ?? null)
     await refreshNotes()
     navigate(routes.view.notes(saved.id))
     toast.success(t('notes.toast.duplicated'))
@@ -1132,22 +1346,22 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setMoveDialogOpen(false)
       return
     }
-    const document = await window.electronAPI.readNote(activeWorkspaceId, moveTargetNote.id)
-    let created: Awaited<ReturnType<typeof window.electronAPI.createNote>> | null = null
     try {
-      created = await window.electronAPI.createNote(activeWorkspaceId, document.title, folder || undefined)
-      const saved = await window.electronAPI.saveNote(activeWorkspaceId, created.id, document.content)
-      await window.electronAPI.deleteNote(activeWorkspaceId, moveTargetNote.id)
+      const document = await window.electronAPI.readNote(activeWorkspaceId, moveTargetNote.id)
+      const moved = await window.electronAPI.moveNote(
+        activeWorkspaceId,
+        moveTargetNote.id,
+        folder,
+        mutationOptions(activeWorkspaceId, moveTargetNote.id, document.nativeRevision),
+      )
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
       setMoveDialogOpen(false)
       setMoveTargetNote(null)
       setMoveFolderName('')
       await refreshNotes()
-      navigate(routes.view.notes(saved.id))
+      navigate(routes.view.notes(moved.note.id))
       toast.success(t('notes.toast.moved'))
     } catch (error) {
-      if (created) {
-        await window.electronAPI.deleteNote(activeWorkspaceId, created.id).catch(() => {})
-      }
       toast.error(error instanceof Error ? error.message : t('notes.toast.moveFailed'))
     }
   }
@@ -1155,17 +1369,19 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const moveSilently = async (note: NoteSummary, targetFolder: string) => {
     if (!activeWorkspaceId) return
     if (!await flushBeforeAction()) return
-    const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
-    let created: Awaited<ReturnType<typeof window.electronAPI.createNote>> | null = null
     try {
-      created = await window.electronAPI.createNote(activeWorkspaceId, document.title, targetFolder || undefined)
-      const saved = await window.electronAPI.saveNote(activeWorkspaceId, created.id, document.content)
-      await window.electronAPI.deleteNote(activeWorkspaceId, note.id)
+      const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
+      const moved = await window.electronAPI.moveNote(
+        activeWorkspaceId,
+        note.id,
+        targetFolder,
+        mutationOptions(activeWorkspaceId, note.id, document.nativeRevision),
+      )
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
       await refreshNotes()
-      navigate(routes.view.notes(saved.id))
+      navigate(routes.view.notes(moved.note.id))
       toast.success(t('notes.toast.moved'))
     } catch (error) {
-      if (created) await window.electronAPI.deleteNote(activeWorkspaceId, created.id).catch(() => {})
       toast.error(error instanceof Error ? error.message : t('notes.toast.moveFailed'))
     }
   }
@@ -1217,6 +1433,8 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setDeleteFolderTarget('')
       if (activeNote && result.deletedNotes.includes(activeNote.id)) {
         setActiveNote(null)
+        contentRef.current = ''
+        dirtyRef.current = false
         setContent('')
         setDirty(false)
         navigate(routes.view.notes())
@@ -1238,7 +1456,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   }
 
   const refreshRenameImpact = React.useCallback(async (title: string) => {
-    if (!activeWorkspaceId || !activeNote || !title.trim() || title.trim() === activeNote.title) {
+    if (!activeWorkspaceId || !activeNote || activeNote.nativeRevision !== undefined || !title.trim() || title.trim() === activeNote.title) {
       setRenameImpact(null)
       return
     }
@@ -1260,11 +1478,19 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
 
   const handleRename = async () => {
     if (!activeWorkspaceId || !activeNote || !renameTitle.trim() || renameTitle.trim() === activeNote.title) return
-    const result = await window.electronAPI.renameNote(activeWorkspaceId, activeNote.id, renameTitle.trim())
+    const result = await window.electronAPI.renameNote(
+      activeWorkspaceId,
+      activeNote.id,
+      renameTitle.trim(),
+      mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
+    )
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, activeNote.id), result.note.nativeRevision ?? null)
     setRenameDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes(result.note.id))
-    toast.success(t('notes.toast.updatedLinkedNotes', { count: result.updatedNotes.length }))
+    if (activeNote.nativeRevision === undefined) {
+      toast.success(t('notes.toast.updatedLinkedNotes', { count: result.updatedNotes.length }))
+    }
   }
 
   const handleDelete = async () => {
@@ -1277,7 +1503,11 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       nativeId: activeNote.id,
     })
     if (!isClaimableLive(act)) return
-    await window.electronAPI.deleteNote(activeWorkspaceId, activeNote.id)
+    await window.electronAPI.deleteNote(
+      activeWorkspaceId,
+      activeNote.id,
+      mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
+    )
     setDeleteDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes())
@@ -1293,8 +1523,17 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       properties[key] = value
     }
     try {
-      const updated = await window.electronAPI.updateNoteProperties(activeWorkspaceId, activeNote.id, properties)
+      const updated = await window.electronAPI.updateNoteProperties(
+        activeWorkspaceId,
+        activeNote.id,
+        properties,
+        mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
+      )
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, activeNote.id), updated.nativeRevision ?? null)
       setActiveNote(updated)
+      contentRef.current = updated.content
+      expectedRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, updated.id), contentHash(updated.content))
+      dirtyRef.current = false
       setContent(updated.content)
       setDirty(false)
       setSaveError(null)
@@ -1303,7 +1542,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
     }
-  }, [activeWorkspaceId, activeNote, flushBeforeAction, refreshNotes, t])
+  }, [activeWorkspaceId, activeNote, flushBeforeAction, mutationOptions, refreshNotes, t])
 
   const applyTags = React.useCallback(() => {
     const tags = tagDraft.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(Boolean)
@@ -1327,12 +1566,17 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       editor.chain().focus().insertContent(text).run()
       return
     }
-    setContent(prev => `${prev}${prev && !prev.endsWith('\n') ? '\n' : ''}${text}`)
+    const next = `${contentRef.current}${contentRef.current && !contentRef.current.endsWith('\n') ? '\n' : ''}${text}`
+    contentRef.current = next
+    setContent(next)
+    dirtyRef.current = true
     setDirty(true)
   }
 
   const applyNoteMarkdown = (next: string) => {
+    contentRef.current = next
     setContent(next)
+    dirtyRef.current = true
     setDirty(true)
     const editor = richEditorRef.current
     if (editor) {
@@ -1388,7 +1632,10 @@ h1,h2,h3{margin-top:1.5em}
   }
 
   const handleRichBodyChange = (nextBody: string) => {
-    setContent(mergeFrontmatter(richParts.frontmatter, nextBody))
+    const next = mergeFrontmatter(richParts.frontmatter, nextBody)
+    contentRef.current = next
+    setContent(next)
+    dirtyRef.current = true
     setDirty(true)
     setSaveError(null)
     updateWikiQueryAndAnchor()
@@ -1449,7 +1696,13 @@ h1,h2,h3{margin-top:1.5em}
     const { title, folder } = parseWikiCreateTarget(raw)
     if (!title) return
     try {
-      const created = await window.electronAPI.createNote(activeWorkspaceId, title, folder)
+      const created = await window.electronAPI.createNote(
+        activeWorkspaceId,
+        title,
+        folder,
+        mutationOptions(activeWorkspaceId, `${folder ?? ''}/${title}`, null),
+      )
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
       completeWikiText(created.title)
       await refreshNotes()
     } catch (error) {
@@ -1462,7 +1715,13 @@ h1,h2,h3{margin-top:1.5em}
     const cleanTarget = stripMdExtension(missingLinkTarget)
     const parts = cleanTarget.split('/').filter(Boolean)
     const title = parts.pop() || cleanTarget
-    const created = await window.electronAPI.createNote(activeWorkspaceId, title, parts.length > 0 ? parts.join('/') : undefined)
+    const created = await window.electronAPI.createNote(
+      activeWorkspaceId,
+      title,
+      parts.length > 0 ? parts.join('/') : undefined,
+      mutationOptions(activeWorkspaceId, `${parts.join('/')}/${title}`, null),
+    )
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
     setMissingLinkTarget(null)
     await refreshNotes()
     navigate(routes.view.notes(created.id))
@@ -1672,14 +1931,29 @@ h1,h2,h3{margin-top:1.5em}
     const index = task.line - 1
     if (!lines[index]) return
     lines[index] = lines[index].replace(/\[([ xX])\]/, task.checked ? '[ ]' : '[x]')
-    const saved = await window.electronAPI.saveNote(activeWorkspaceId, task.noteId, lines.join('\n'))
+    const expectedRevision = contentHash(document.content)
+    const taskContent = lines.join('\n')
+    const saved = document.nativeRevision !== undefined
+      ? await saveNativeNote(document, taskContent)
+      : await window.electronAPI.saveNote(
+        activeWorkspaceId,
+        task.noteId,
+        taskContent,
+        expectedRevision,
+        mutationOptions(activeWorkspaceId, task.noteId, document.nativeRevision),
+      )
+    nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, task.noteId), saved.nativeRevision ?? null)
     if (activeNote?.id === task.noteId) {
       setActiveNote(saved)
+      expectedRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, saved.id), contentHash(saved.content))
+      contentRef.current = saved.content
+      dirtyRef.current = false
       setContent(saved.content)
       setDirty(false)
       setTagDraft(saved.tags.join(', '))
     }
     taskCacheRef.current.delete(task.noteId)
+    taskCacheUpdatedAtRef.current.delete(task.noteId)
     await refreshNotes()
     await refreshTasks()
   }
@@ -2082,13 +2356,21 @@ h1,h2,h3{margin-top:1.5em}
                 markdown: note.id === activeNote.id ? content : '',
                 tags: note.tags,
                 properties: note.properties,
+                tasks: note.id === activeNote.id
+                  ? undefined
+                  : taskCacheRef.current.get(note.id)?.map((task) => ({ checked: task.checked })),
                 links: note.links,
                 backlinks: note.id === activeNote.id ? activeNote.backlinks : undefined,
               }))}
               activeNoteId={activeNote.id}
               workspaceId={activeWorkspaceId ?? ''}
               onOpenNote={(noteId) => void handleOpenNote(noteId)}
-              onCreateNote={(folder) => openCreateNoteDialog(folder ?? dailyNoteDestination().folder)}
+              onCreateNote={(folder) => openCreateNoteDialog(folder)}
+              onEditNote={(noteId, field, value) => void editTableCell(noteId, field, value)}
+              onDeleteNote={(noteId) => {
+                const note = notes.find((item) => item.id === noteId)
+                if (note) void openDeleteDialogForNote(note)
+              }}
               onConvert={(noteId, kind) => {
                 if (noteId !== activeNote.id) return
                 void (async () => {
@@ -2148,7 +2430,10 @@ h1,h2,h3{margin-top:1.5em}
                   : [...foldedHeadingIds, id]
                 setFoldedHeadingIds(next)
                 localStorage.setItem(notesFoldStorageKey(activeNote.id), serializePersistedFolds(next))
-                setContent(applyPersistentFolds(content, next))
+                const nextContent = applyPersistentFolds(contentRef.current, next)
+                contentRef.current = nextContent
+                dirtyRef.current = true
+                setContent(nextContent)
                 setDirty(true)
               }}
               onJump={(text) => {
@@ -2335,12 +2620,15 @@ h1,h2,h3{margin-top:1.5em}
                   onSubmit={() => {
                     const text = commentComposerBody.trim()
                     if (!text || !activeNote) return
-                    setContent(upsertMarkdownComment(content, {
+                    const nextContent = upsertMarkdownComment(contentRef.current, {
                       id: crypto.randomUUID(),
                       quote: commentDraftQuote.trim(),
                       body: text,
                       createdAt: Date.now(),
-                    }))
+                    })
+                    contentRef.current = nextContent
+                    dirtyRef.current = true
+                    setContent(nextContent)
                     setDirty(true)
                     setCommentDraftQuote('')
                     setCommentComposerBody('')
@@ -2390,6 +2678,8 @@ h1,h2,h3{margin-top:1.5em}
                 onCommit={(comments) => {
                   let next = content
                   for (const comment of comments) next = upsertMarkdownComment(next, comment)
+                  contentRef.current = next
+                  dirtyRef.current = true
                   setContent(next)
                   setDirty(true)
                 }}

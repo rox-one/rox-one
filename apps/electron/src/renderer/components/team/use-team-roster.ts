@@ -1,6 +1,6 @@
 /**
- * Real organization roster for team features. Never invents people: members
- * come from orgs.listOrganizations(); no org → empty roster + honest state.
+ * Organization roster from the server-filtered org listing. Viewer identity
+ * comes from that same membership-scoped response, never renderer preferences.
  */
 import * as React from 'react'
 import type { OrganizationWithMembers } from '@craft-agent/shared/orgs'
@@ -9,6 +9,8 @@ import { createTeamSyncAdapter, type TeamMemberRef, type TeamSyncStatus } from '
 export interface TeamRoster {
   loading: boolean
   selfUserId: string | null
+  identityAuthority: 'native' | 'local' | 'none'
+  identityIssuer: string | null
   org: OrganizationWithMembers | null
   /** All real members of the active org (incl. self) */
   members: TeamMemberRef[]
@@ -29,47 +31,60 @@ export function toTeamMembers(org: OrganizationWithMembers | null): TeamMemberRe
   }))
 }
 
-/** Prefer an org the local user belongs to; stable by creation order. */
-export function pickActiveOrg(orgs: readonly OrganizationWithMembers[], selfUserId: string | null): OrganizationWithMembers | null {
-  if (!selfUserId) return orgs[0] ?? null
-  return orgs.find((o) => o.members.some((m) => m.userId === selfUserId)) ?? orgs[0] ?? null
+/** Select only an organization whose scoped response identifies its viewer as a member. */
+export function pickActiveOrg(orgs: readonly OrganizationWithMembers[]): OrganizationWithMembers | null {
+  return orgs.find((org) =>
+    org.viewerUserId && org.members.some((member) => member.userId === org.viewerUserId),
+  ) ?? null
 }
 
 export function useTeamRoster(): TeamRoster {
-  const [state, setState] = React.useState<{ loading: boolean; orgs: OrganizationWithMembers[]; selfUserId: string | null }>({
+  const [state, setState] = React.useState<{ loading: boolean; orgs: OrganizationWithMembers[] }>({
     loading: true,
     orgs: [],
-    selfUserId: null,
   })
 
   React.useEffect(() => {
     let cancelled = false
-    void (async () => {
+    let requestVersion = 0
+    const load = async () => {
+      const version = ++requestVersion
       try {
-        const api = window.electronAPI
-        const [orgs, identity] = await Promise.all([
-          api.listOrganizations().catch(() => [] as OrganizationWithMembers[]),
-          api.getOrgIdentity().catch(() => null),
-        ])
-        if (!cancelled) setState({ loading: false, orgs: Array.isArray(orgs) ? orgs : [], selfUserId: identity?.userId ?? null })
+        const orgs = await window.electronAPI.listOrganizations()
+        if (!cancelled && version === requestVersion) {
+          setState({ loading: false, orgs: Array.isArray(orgs) ? orgs : [] })
+        }
       } catch {
-        if (!cancelled) setState({ loading: false, orgs: [], selfUserId: null })
+        if (!cancelled && version === requestVersion) setState({ loading: false, orgs: [] })
       }
-    })()
+    }
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void load()
+    }
+    void load()
+    window.addEventListener('focus', refreshWhenVisible)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
     return () => {
       cancelled = true
+      window.removeEventListener('focus', refreshWhenVisible)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
     }
   }, [])
 
   return React.useMemo(() => {
-    const org = pickActiveOrg(state.orgs, state.selfUserId)
+    const org = pickActiveOrg(state.orgs)
+    const selfUserId = org?.viewerUserId ?? null
+    const identityAuthority = org?.viewerAuthority ?? 'none'
+    const identityIssuer = identityAuthority === 'native' ? org?.viewerIssuer ?? null : null
     const members = toTeamMembers(org)
     return {
       loading: state.loading,
-      selfUserId: state.selfUserId,
+      selfUserId,
+      identityAuthority,
+      identityIssuer,
       org,
       members,
-      teammates: members.filter((m) => m.userId !== state.selfUserId),
+      teammates: members.filter((member) => member.userId !== selfUserId),
       pendingInvites: org?.pendingInvites.length ?? 0,
       sync: createTeamSyncAdapter({ orgId: org?.id ?? null }).status(),
     }

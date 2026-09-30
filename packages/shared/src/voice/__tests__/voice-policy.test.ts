@@ -17,10 +17,8 @@ import {
   normalizeVoicePrefs,
   saveVoicePrefs,
   shouldUploadAudio,
-  speakWithPolicy,
   transcribeWithPolicy,
   withWakeWordConsent,
-  type SpeakAdapter,
   type TranscribeAdapter,
   type VoicePrefs,
 } from '../index.ts'
@@ -36,35 +34,27 @@ function localAdapter(text = 'hello locally'): TranscribeAdapter {
 
 function cloudAdapter(text = 'hello cloud'): TranscribeAdapter {
   return {
-    engine: 'cloud-deepgram',
+    engine: 'cloud-rox',
     async transcribe() {
-      return { text, engine: 'cloud-deepgram', uploaded: true }
+      return { text, engine: 'cloud-rox', uploaded: true }
     },
   }
 }
 
-function edgeAdapter(): SpeakAdapter {
-  return {
-    engine: 'edge',
-    async speak() {
-      return { engine: 'edge', uploaded: false }
-    },
-  }
-}
 
 describe('voice privacy policy', () => {
   it('defaults new installs to cloud-rox rocks-t1 without auto-submit', () => {
     const prefs = getDefaultVoicePrefs(1)
     expect(prefs.sttEngine).toBe('cloud-rox')
     expect(prefs.asrModelId).toBe(ROCKS_T1_MODEL_ID)
-    expect(prefs.ttsEngine).toBe('edge')
+    expect(prefs.ttsEngine).toBe('system')
     expect(prefs.wakeWordEnabled).toBe(false)
     expect(prefs.alwaysListeningConsent).toBe(false)
     expect(prefs.autoSubmit).toBe(false)
     expect(prefs.cloudEnhancementConsent).toBe(false)
     expect(prefs.webEnrichmentConsent).toBe(false)
     expect(prefs.wakePhrase).toBe(DEFAULT_WAKE_PHRASE)
-    expect(shouldUploadAudio(prefs)).toBe(true)
+    expect(shouldUploadAudio(prefs)).toBe(false)
     expect(canStartWakeListening(prefs)).toEqual({ ok: false, reason: 'disabled' })
   })
 
@@ -83,6 +73,34 @@ describe('voice privacy policy', () => {
     expect(prefs.cloudAsrConsent).toBe(false)
     expect(prefs.privacyMigrationPending).toBe(true)
     expect(shouldUploadAudio(prefs)).toBe(false)
+  })
+  it('does not reinterpret legacy default cloud consent or remote TTS as user choices', () => {
+    const prefs = normalizeVoicePrefs({
+      version: 2,
+      sttEngine: 'cloud-rox',
+      cloudAsrConsent: true,
+      ttsEngine: 'edge',
+    }, 6)
+    expect(prefs.version).toBe(3)
+    expect(prefs.cloudAsrConsent).toBe(false)
+    expect(prefs.privacyMigrationPending).toBe(true)
+    expect(prefs.ttsEngine).toBe('system')
+  })
+  it('requires explicit ASR consent instead of silently switching engines', async () => {
+    const prefs = getDefaultVoicePrefs(1)
+    let localCalls = 0
+    const local: TranscribeAdapter = {
+      engine: 'local-whisper',
+      async transcribe(input) {
+        localCalls += 1
+        return localAdapter().transcribe(input)
+      },
+    }
+    await expect(transcribeWithPolicy(prefs, {
+      audio: new Uint8Array([1]),
+      mimeType: 'audio/webm',
+    }, { local, cloud: cloudAdapter() })).rejects.toMatchObject({ code: 'consent-required' })
+    expect(localCalls).toBe(0)
   })
 
   it('refuses to arm wake word without always-listening consent', () => {
@@ -136,7 +154,7 @@ describe('voice privacy policy', () => {
   it('uploads audio only when a cloud STT engine is selected and consented', async () => {
     const prefs: VoicePrefs = {
       ...getDefaultVoicePrefs(1),
-      sttEngine: 'cloud-deepgram',
+      sttEngine: 'cloud-rox',
       cloudAsrConsent: true,
       audioRetention: 'cloud-policy',
     }
@@ -153,8 +171,42 @@ describe('voice privacy policy', () => {
       mimeType: 'audio/webm',
     }, { local, cloud: cloudAdapter('cloud text') })
     expect(result.uploaded).toBe(true)
-    expect(result.engine).toBe('cloud-deepgram')
+    expect(result.engine).toBe('cloud-rox')
     expect(localCalls).toBe(0)
+  })
+  it('preserves the actual ASR model evidence returned by the selected provider', async () => {
+    const result = await transcribeWithPolicy(
+      { ...getDefaultVoicePrefs(1), cloudAsrConsent: true },
+      { audio: new Uint8Array([1]), mimeType: 'audio/webm' },
+      {
+        local: localAdapter(),
+        cloud: {
+          engine: 'cloud-rox',
+          async transcribe() {
+            return {
+              text: 'Привет',
+              engine: 'cloud-rox',
+              uploaded: true,
+              requestedModelId: 'rocks-t1',
+              resolvedModelId: 'whisper-large-v3-turbo',
+              routeVersion: 'route-2026-09',
+              requestId: 'request-1',
+              detectedLanguage: 'ru',
+              durationMs: 640,
+            }
+          },
+        },
+      },
+    )
+    expect(result).toMatchObject({
+      engine: 'cloud-rox',
+      requestedModelId: 'rocks-t1',
+      resolvedModelId: 'whisper-large-v3-turbo',
+      routeVersion: 'route-2026-09',
+      requestId: 'request-1',
+      detectedLanguage: 'ru',
+      durationMs: 640,
+    })
   })
 
   it('blocks cloud STT while offline', async () => {
@@ -167,14 +219,6 @@ describe('voice privacy policy', () => {
     })
   })
 
-  it('does not upload TTS audio', async () => {
-    const result = await speakWithPolicy(
-      getDefaultVoicePrefs(1),
-      { text: 'hello' },
-      { edge: edgeAdapter(), fish: { engine: 'fish-speech', async speak() { return { engine: 'fish-speech', uploaded: false } } } },
-    )
-    expect(result).toEqual({ engine: 'edge', uploaded: false })
-  })
 
   it('keeps live transcripts editable', () => {
     expect(assertEditableTranscript('  Привет  ')).toBe('Привет')

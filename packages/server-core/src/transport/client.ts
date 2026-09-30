@@ -14,6 +14,7 @@ import {
   REQUEST_TIMEOUT_MS,
   SEQUENCE_ACK_INTERVAL_MS,
   isErrorCode,
+  assertNativeCredentialTransport,
   type ErrorCode,
   type MessageEnvelope,
 } from '@craft-agent/shared/protocol'
@@ -436,6 +437,16 @@ export class WsRpcClient implements RpcClient {
   /** Open the WebSocket against the current (already-resolved) url/token. */
   private openSocket(): void {
     if (this.destroyed) return
+    try {
+      assertNativeCredentialTransport(this.url, this.token)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid connection target'
+      const err = this.createConnectionError('auth', message, 'TLS_REQUIRED')
+      this.connectError = err
+      this.setConnectionState({ status: 'failed', lastError: this.toErrorState(err), attempt: this.reconnectAttempt })
+      this.failReady(err)
+      return
+    }
 
     this.setConnectionState({
       status: this.computeConnectingStatus(),

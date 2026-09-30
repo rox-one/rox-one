@@ -107,6 +107,14 @@ export {
   UsageTracker,
   createUsageTracker,
 } from './usage-tracker.ts';
+// Durable per-workspace spend reservations used by SessionManager before dispatch.
+export {
+  AgentBudgetLedger,
+  localDayStart,
+  type AgentBudgetRunState,
+  type AgentBudgetSnapshot,
+  type AgentBudgetReservation,
+} from './agent-budget.ts';
 
 // PreToolUse Utilities
 export {

@@ -6,6 +6,9 @@ import type {
   TeamLocalState,
   TeamMemberRef,
   TeamOutboxOp,
+  TeamRecipientAction,
+  TeamRecipientRequest,
+  TeamVersionedTarget,
   TeamTarget,
 } from './types.ts'
 import { resolveMentions } from './mentions.ts'
@@ -13,10 +16,8 @@ import { resolveMentions } from './mentions.ts'
 export const TEAM_ACTIVITY_LIMIT = 500
 
 export function emptyTeamState(): TeamLocalState {
-  return { version: 1, comments: [], assignments: [], handoffs: [], access: [], approvals: [], activity: [], outbox: [] }
+  return { version: 1, comments: [], assignments: [], handoffs: [], access: [], approvals: [], recipientRequests: [], recipientActions: [], activity: [], outbox: [] }
 }
-
-/** Defensive parse of persisted state; anything malformed falls back to empty collections. */
 export function normalizeTeamState(raw: unknown): TeamLocalState {
   const base = emptyTeamState()
   if (!raw || typeof raw !== 'object') return base
@@ -29,17 +30,18 @@ export function normalizeTeamState(raw: unknown): TeamLocalState {
     handoffs: arr(r.handoffs),
     access: arr(r.access),
     approvals: arr(r.approvals),
+    recipientRequests: arr(r.recipientRequests),
+    recipientActions: arr(r.recipientActions),
     activity: arr<TeamActivityEvent>(r.activity).slice(0, TEAM_ACTIVITY_LIMIT),
     outbox: arr(r.outbox),
   }
 }
-
 export interface TeamActionContext {
   selfUserId: string
+  organizationId?: string
   now: number
   newId: () => string
 }
-
 function push(
   state: TeamLocalState,
   ctx: TeamActionContext,
@@ -63,20 +65,82 @@ function requireText(value: string, what: string): string {
 function requireMember(userId: string, roster: readonly TeamMemberRef[]): void {
   if (!roster.some((m) => m.userId === userId)) throw new Error('assignee must be a real organization member')
 }
-
 export function addComment(
   state: TeamLocalState,
   ctx: TeamActionContext,
-  input: { target: TeamTarget; body: string; roster: readonly TeamMemberRef[] },
+  input: { target: TeamTarget; body: string; roster: readonly TeamMemberRef[]; parentCommentId?: string },
 ): TeamLocalState {
   const body = requireText(input.body, 'comment body')
+  const revision = input.target.revision
+  if (!revision) throw new Error('comment requires an exact source revision')
+  const target: TeamVersionedTarget = { ...input.target, revision }
+  if (input.parentCommentId) {
+    const parent = state.comments.find((comment) => comment.id === input.parentCommentId)
+    if (!parent || parent.deletedAt || parent.target.kind !== target.kind || parent.target.id !== target.id || parent.target.revision !== target.revision) {
+      throw new Error('thread parent does not match the exact target revision')
+    }
+  }
   const mentions = resolveMentions(body, input.roster).filter((id) => id !== ctx.selfUserId)
-  const record = { id: ctx.newId(), target: input.target, authorUserId: ctx.selfUserId, body, mentions, createdAt: ctx.now, sync: 'queued' as const }
+  const record = { id: ctx.newId(), target, authorUserId: ctx.selfUserId, body, mentions, createdAt: ctx.now, sync: 'queued' as const, ...(input.parentCommentId ? { parentCommentId: input.parentCommentId } : {}) }
   const next = push(state, ctx, { type: 'comment', record }, [
-    { kind: 'comment', target: input.target, refId: record.id },
-    ...mentions.map((uid) => ({ kind: 'mention' as const, subjectUserId: uid, target: input.target, refId: record.id })),
+    { kind: 'comment', target, refId: record.id },
+    ...mentions.map((uid) => ({ kind: 'mention' as const, subjectUserId: uid, target, refId: record.id })),
   ])
-  return { ...next, comments: [...state.comments, record] }
+  const requests: TeamRecipientRequest[] = ctx.organizationId
+    ? mentions.map((recipientUserId) => ({
+        id: ctx.newId(),
+        organizationId: ctx.organizationId!,
+        recipientUserId,
+        senderUserId: ctx.selfUserId,
+        target,
+        sourceCommentId: record.id,
+        idempotencyKey: `${ctx.organizationId}:${record.id}:${recipientUserId}`,
+        createdAt: ctx.now,
+        delivery: 'pending-delivery',
+        decision: 'pending',
+      }))
+    : []
+  const outbox = requests.map((request) => ({ id: ctx.newId(), op: { type: 'recipient-request' as const, record: request }, queuedAt: ctx.now, attempts: 0 }))
+  return { ...next, comments: [...state.comments, record], recipientRequests: [...state.recipientRequests, ...requests], outbox: [...next.outbox, ...outbox] }
+}
+/** Author deletion is a tombstone; retries are idempotent and keep the source revision. */
+export function deleteComment(state: TeamLocalState, ctx: TeamActionContext, commentId: string): TeamLocalState {
+  const comment = state.comments.find((candidate) => candidate.id === commentId)
+  if (!comment || comment.authorUserId !== ctx.selfUserId) throw new Error('only the comment author may delete it')
+  if (comment.deletedAt) return state
+  const tombstone = { ...comment, deletedAt: ctx.now, sync: 'queued' as const }
+  const revokedRequests = state.recipientRequests.filter((request) => request.sourceCommentId === commentId && request.delivery !== 'revoked' && request.delivery !== 'expired')
+    .map((request) => ({ ...request, delivery: 'revocation-pending' as const }))
+  const revokedIds = new Set(revokedRequests.map((request) => request.id))
+  const revokeOps = revokedRequests.map((request) => ({ id: ctx.newId(), op: { type: 'recipient-revoke' as const, record: request }, queuedAt: ctx.now, attempts: 0 }))
+  return {
+    ...state,
+    comments: state.comments.map((candidate) => candidate.id === commentId ? tombstone : candidate),
+    recipientRequests: state.recipientRequests.map((request) => revokedIds.has(request.id) ? { ...request, delivery: 'revocation-pending' as const } : request),
+    activity: [{ id: ctx.newId(), kind: 'comment' as const, actorUserId: ctx.selfUserId, target: comment.target, at: ctx.now, refId: comment.id }, ...state.activity].slice(0, TEAM_ACTIVITY_LIMIT),
+    outbox: [...state.outbox, { id: ctx.newId(), op: { type: 'comment', record: tombstone }, queuedAt: ctx.now, attempts: 0 }, ...revokeOps],
+  }
+}
+
+/** Recipient consent is queued locally and does not claim server acceptance. */
+export function decideRecipientRequest(
+  state: TeamLocalState,
+  ctx: TeamActionContext,
+  requestId: string,
+  decision: 'accepted' | 'rejected',
+): TeamLocalState {
+  const request = state.recipientRequests.find((item) => item.id === requestId)
+  if (!request || request.delivery !== 'delivered' || request.decision !== 'pending' || state.recipientActions.some((item) => item.requestId === requestId)) {
+    throw new Error('recipient request is not actionable')
+  }
+  if (request.recipientUserId !== ctx.selfUserId) throw new Error('only the addressed recipient may decide')
+  const action: TeamRecipientAction = { requestId, recipientUserId: ctx.selfUserId, decision, decidedAt: ctx.now, sync: 'queued' }
+  return {
+    ...state,
+    recipientActions: [...state.recipientActions, action],
+    activity: [{ id: ctx.newId(), kind: 'recipient-decision' as const, actorUserId: ctx.selfUserId, subjectUserId: request.senderUserId, target: request.target, at: ctx.now, refId: requestId }, ...state.activity].slice(0, TEAM_ACTIVITY_LIMIT),
+    outbox: [...state.outbox, { id: ctx.newId(), op: { type: 'recipient-action', record: action }, queuedAt: ctx.now, attempts: 0 }],
+  }
 }
 
 export function assign(
@@ -138,38 +202,45 @@ export function requestApproval(
 
 // ── selectors ────────────────────────────────────────────────────────────
 
-const sameTarget = (a: TeamTarget, kind: TeamTarget['kind'], id: string) => a.kind === kind && a.id === id
+const sameTarget = (a: TeamTarget, target: Pick<TeamTarget, 'kind' | 'id' | 'revision'>) =>
+  a.kind === target.kind && a.id === target.id && (target.revision === undefined || a.revision === target.revision)
 
-export function selectForTarget(state: TeamLocalState, kind: TeamTarget['kind'], id: string) {
+export function selectForTarget(state: TeamLocalState, kind: TeamTarget['kind'], id: string, revision?: string) {
+  const target = { kind, id, revision }
   return {
-    comments: state.comments.filter((c) => sameTarget(c.target, kind, id)),
-    assignment: state.assignments.find((a) => sameTarget(a.target, kind, id)) ?? null,
-    handoffs: state.handoffs.filter((h) => sameTarget(h.target, kind, id)),
-    access: state.access.filter((g) => sameTarget(g.target, kind, id)),
-    approvals: state.approvals.filter((a) => sameTarget(a.target, kind, id)),
+    comments: state.comments.filter((c) => sameTarget(c.target, target) && !c.deletedAt),
+    assignment: state.assignments.find((a) => sameTarget(a.target, target)) ?? null,
+    handoffs: state.handoffs.filter((h) => sameTarget(h.target, target)),
+    access: state.access.filter((g) => sameTarget(g.target, target)),
+    approvals: state.approvals.filter((a) => sameTarget(a.target, target)),
   }
 }
 
-/**
- * Items addressed to `userId` from someone else. Locally-authored records are
- * always from self, so this is empty until an org server delivers teammates'
- * records via pull() — the UI must render that honestly.
- */
+/** Only explicitly delivered records enter a recipient inbox. */
+/** Only acknowledged, still-pending recipient requests enter the receiver's Inbox. */
 export function selectInboxForUser(state: TeamLocalState, userId: string): TeamInboxItem[] {
-  const items: TeamInboxItem[] = []
-  for (const c of state.comments) {
-    if (c.authorUserId !== userId && c.mentions.includes(userId)) items.push({ id: c.id, kind: 'mention', fromUserId: c.authorUserId, target: c.target, at: c.createdAt, text: c.body })
-  }
-  for (const h of state.handoffs) {
-    if (h.fromUserId !== userId && h.toUserId === userId) items.push({ id: h.id, kind: 'handoff', fromUserId: h.fromUserId, target: h.target, at: h.createdAt, text: h.summary })
-  }
-  for (const a of state.assignments) {
-    if (a.assignedByUserId !== userId && a.assigneeUserId === userId) items.push({ id: a.id, kind: 'assign', fromUserId: a.assignedByUserId, target: a.target, at: a.createdAt })
-  }
-  for (const r of state.approvals) {
-    if (r.requestedByUserId !== userId && r.reviewerUserId === userId && r.status === 'pending') items.push({ id: r.id, kind: 'approval', fromUserId: r.requestedByUserId, target: r.target, at: r.createdAt, text: r.note })
-  }
-  return items.sort((a, b) => b.at - a.at)
+  return state.recipientRequests
+    .filter((request) =>
+      request.delivery === 'delivered' &&
+      request.decision === 'pending' &&
+      request.recipientUserId === userId &&
+      Boolean(request.target.revision),
+    )
+    .map((request) => {
+      const pendingAction = state.recipientActions.find((action) => action.requestId === request.id)
+      return {
+        id: `team-recipient:${request.organizationId}:${request.id}`,
+        kind: 'recipient-request' as const,
+        fromUserId: request.senderUserId,
+        target: request.target,
+        at: request.createdAt,
+        delivery: 'delivered' as const,
+        organizationId: request.organizationId,
+        ...(pendingAction ? { pendingAction: pendingAction.decision, pendingActionSync: pendingAction.sync } : {}),
+        requestId: request.id,
+      }
+    })
+    .sort((a, b) => b.at - a.at)
 }
 
 export function pendingOutboxCount(state: TeamLocalState): number {

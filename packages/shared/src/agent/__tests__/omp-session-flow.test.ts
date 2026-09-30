@@ -179,7 +179,7 @@ describe('OmpAgent model switching', () => {
     expect('model' in setModel).toBe(false);
   });
 
-  it('keeps the OMP default when the craft model has no fuzzy match', async () => {
+  it('rejects the next prompt when the requested model has no catalog match', async () => {
     const { agent, fake } = setup('healthy');
 
     await chatEvents(agent, 'hi', 8_000);
@@ -192,6 +192,9 @@ describe('OmpAgent model switching', () => {
       .slice(framesBefore)
       .filter((f) => f.type === 'set_model');
     expect(setModelFrames).toHaveLength(0);
+    const events = await chatEvents(agent, 'must not use the previous model', 8_000);
+    expect(events.some((event) => event.type === 'error')).toBe(true);
+    expect(fake.readRpcLog().filter((frame) => frame.type === 'prompt')).toHaveLength(1);
   });
 });
 

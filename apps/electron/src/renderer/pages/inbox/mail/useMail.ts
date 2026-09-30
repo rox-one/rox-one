@@ -120,7 +120,8 @@ export function useMail(options: { active: boolean }) {
       if (openId.current !== id) return
       setMessage(m)
       if (m && markSeen && !m.seen) {
-        await a.setFlags([id], { seen: true })
+        const updated = unwrap(await a.setFlags([id], { seen: true }))
+        if (updated === 0) throw new Error('Mail server did not mark the message as read')
         setMessage({ ...m, seen: true })
         setItems((list) => list.map((i) => (i.id === id ? { ...i, seen: true } : i)))
       }
@@ -136,11 +137,16 @@ export function useMail(options: { active: boolean }) {
     void refresh()
     return value
   }, [refresh])
+  const getThread = useCallback(async (threadId: string) => {
+    const a = api()
+    if (!a) throw new Error('Mail bridge is unavailable')
+    return unwrap(await a.getThread(threadId))
+  }, [])
 
   return {
     available: !!api(),
     status, folders, folder, setFolder, search, setSearch, items, total, unread, loading, error, setError,
-    message, open, refresh, refreshStatus, ensure, act,
+    message, open, refresh, refreshStatus, ensure, act, getThread,
   }
 }
 

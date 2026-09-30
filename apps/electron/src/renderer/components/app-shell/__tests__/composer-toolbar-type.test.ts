@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const badgePath = join(__dirname, '../input/FreeFormInputContextBadge.tsx')
-const cssPath = join(__dirname, '../../../../chat-chrome-clarity.css')
-const mainPath = join(__dirname, '../../../../main.tsx')
+const cssPath = join(import.meta.dir, '../../../chat-chrome-clarity.css')
+const mainPath = join(import.meta.dir, '../../../main.tsx')
 
 describe('composer toolbar type', () => {
   it('uses 9px on context badge and chrome CSS override for toolbar buttons', () => {

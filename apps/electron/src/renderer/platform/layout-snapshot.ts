@@ -107,9 +107,9 @@ export function surfaceTabToRoute(tab: SurfaceTabLike): string {
     case 'browser':
       return routes.view.browser(tab.tabId)
     case 'knowledge':
-      return routes.view.notes()
+      return routes.view.siyuan(tab.ref)
     case 'database':
-      return routes.view.notes()
+      return routes.view.siyuan(tab.ref)
     case 'cloud-run':
       return routes.view.cloudRun(tab.runId)
     case 'extension':

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive, normalizeRox2Result } from '@craft-agent/core/rox2'
 import {
   BROWSER_SURFACE_ID,
   NATIVE_RAIL_SURFACE_IDS,
@@ -92,14 +92,14 @@ describe('ROX2 native rail and browser surfaces', () => {
       const empty = nativeSurfaceListResult(id, [])
       expect(empty.ok).not.toBe(true)
       expect(empty.state).not.toBe('live')
-      expect(empty.executionMode).toBe('live')
-      expect(empty.lifecycle).toBe('succeeded')
-      expect(empty.verification).toBe('unverified')
+      expect(normalizeRox2Result(empty).executionMode).toBe('live')
+      expect(normalizeRox2Result(empty).lifecycle).toBe('succeeded')
+      expect(normalizeRox2Result(empty).verification).toBe('unverified')
       expect(isClaimableLive(empty)).toBe(false)
       const native = nativeSurfaceResult(id, 'native')
       expect(native.ok).not.toBe(true)
       expect(native.state).not.toBe('live')
-      expect(native.verification).toBe('unverified')
+      expect(normalizeRox2Result(native).verification).toBe('unverified')
       expect(isClaimableLive(native)).toBe(false)
       expect(isClaimableLive(nativeSurfaceResult(id, 'fixture'))).toBe(false)
       expect(isClaimableLive(nativeSurfaceResult(id, 'conation'))).toBe(false)
@@ -108,7 +108,7 @@ describe('ROX2 native rail and browser surfaces', () => {
     const browser = nativeSurfaceResult('browser', 'native')
     expect(browser.ok).not.toBe(true)
     expect(browser.state).not.toBe('live')
-    expect(browser.verification).toBe('unverified')
+    expect(normalizeRox2Result(browser).verification).toBe('unverified')
     expect(isClaimableLive(browser)).toBe(false)
     expect(isClaimableLive(nativeSurfaceResult('browser', 'fixture'))).toBe(false)
     expect(isClaimableLive(nativeSurfaceResult('browser', 'conation'))).toBe(false)

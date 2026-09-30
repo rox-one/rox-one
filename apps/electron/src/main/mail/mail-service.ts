@@ -100,6 +100,8 @@ export class MailService {
   private readonly dir: string
   private readonly env: NodeJS.ProcessEnv
   private record: MailboxRecord | null = null
+  private records: Record<string, MailboxRecord> = {}
+  private activeOwnerUuid: string | null = null
   private client: JmapClient | null = null
   private stopPush: (() => void) | null = null
   private push: MailStatus['push'] = 'off'
@@ -111,7 +113,10 @@ export class MailService {
   constructor(private readonly deps: MailServiceDeps) {
     this.dir = join(deps.configDir, 'mail')
     this.env = deps.env ?? process.env
-    this.record = this.readJson<MailboxRecord>('mailbox.json')
+    this.records = this.readJson<Record<string, MailboxRecord>>('mailboxes.json') ?? {}
+    const legacy = this.readJson<MailboxRecord>('mailbox.json')
+    if (legacy && !this.records[legacy.ownerUuid]) this.records[legacy.ownerUuid] = legacy
+    this.record = legacy
   }
 
   private async senderName(): Promise<string> {
@@ -175,6 +180,23 @@ export class MailService {
     this.writeJson('owner.json', { ownerUuid })
     return ownerUuid
   }
+  private async activateMailbox(who?: { ownerUuid?: string | null; handles: Array<string | null | undefined> }): Promise<{ ownerUuid: string; handles: Array<string | null | undefined> }> {
+    const identity = who ?? await this.deps.identity()
+    const ownerUuid = identity.ownerUuid || this.ownerUuidFallback()
+    if (this.activeOwnerUuid !== ownerUuid) {
+      this.resetClient()
+      this.activeOwnerUuid = ownerUuid
+      this.record = this.records[ownerUuid] ?? null
+      this.lastError = undefined
+    }
+    return { ownerUuid, handles: identity.handles }
+  }
+
+  private persistMailbox(record: MailboxRecord): void {
+    this.records[record.ownerUuid] = record
+    this.writeJson('mailboxes.json', this.records)
+    this.writeJson('mailbox.json', record)
+  }
 
   private async reachable(serverUrl: string): Promise<boolean> {
     try {
@@ -214,6 +236,7 @@ export class MailService {
   }
 
   async status(): Promise<MailStatus> {
+    await this.activateMailbox()
     const cfg = this.config()
     const base: MailStatus = {
       flag: MAIL_FLAG,
@@ -235,8 +258,29 @@ export class MailService {
     }
     if (this.provisioning) return { ...base, state: 'provisioning' }
     if (!this.record || this.record.state !== 'READY') return { ...base, state: this.lastError ? 'error' : 'no-mailbox' }
-    if (!(await this.deps.secrets.get(this.record.address))) return { ...base, state: 'no-mailbox' }
-    return { ...base, state: 'ready' }
+    let secret: string | null
+    try {
+      secret = await this.deps.secrets.get(this.record.address)
+    } catch {
+      const error = 'Secure mailbox credentials are unavailable'
+      this.lastError = error
+      return { ...base, state: 'error', error }
+    }
+    if (!secret) {
+      const error = 'Mailbox credential is missing from secure storage'
+      this.lastError = error
+      return { ...base, state: 'error', error }
+    }
+    try {
+      const fetchImpl = this.deps.fetch ? (i: string, init?: RequestInit) => this.deps.fetch!(i, init) : undefined
+      await new JmapClient({ baseUrl: cfg.serverUrl, username: this.record.address, secret }, { fetch: fetchImpl }).accountId()
+      this.lastError = undefined
+      return { ...base, state: 'ready', error: undefined }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Mail server rejected the mailbox connection'
+      this.lastError = message
+      return { ...base, state: 'error', error: message }
+    }
   }
 
   /** Idempotent: create/adopt `<handle>@domain`, mint + store the device credential, verify. */
@@ -250,8 +294,8 @@ export class MailService {
         if (!isLoopbackUrl(serverUrl)) {
           throw new Error('Mailbox creation from the app is available only for the local mail server; production mailboxes are created by rox.one at sign-up')
         }
-        const who = await this.deps.identity()
-        const ownerUuid = who.ownerUuid || this.record?.ownerUuid || this.ownerUuidFallback()
+        const who = await this.activateMailbox(await this.deps.identity())
+        const ownerUuid = who.ownerUuid
         const handleOverride = this.env.ROX_MAIL_HANDLE?.trim()
         const record = await provisionMailbox({
           baseUrl: serverUrl,
@@ -267,7 +311,7 @@ export class MailService {
           log: (m) => this.deps.log?.(m),
         })
         this.record = record
-        this.writeJson('mailbox.json', record)
+        this.persistMailbox(record)
         this.lastError = undefined
         this.resetClient()
         this.deps.log?.(`[mail] mailbox ready: ${record.address}`)
@@ -287,6 +331,7 @@ export class MailService {
   // ----------------------------------------------------------------- client
 
   private async jmap(): Promise<JmapClient> {
+    await this.activateMailbox()
     if (this.client) return this.client
     const cfg = this.config()
     if (!cfg.enabled) throw new MailError('disabled', `${MAIL_FLAG} is disabled`)
@@ -348,7 +393,7 @@ export class MailService {
     const c = await this.jmap()
     let mailboxId = query.folderId
     if (!mailboxId && query.role) mailboxId = await this.folderIdFor(query.role)
-    const res = await c.queryEmails({ mailboxId, text: query.text, limit: Math.min(query.limit ?? 100, 200) })
+    const res = await c.queryEmails({ mailboxId, text: query.text, limit: Math.min(query.limit ?? 100, 200), unseenOnly: query.unseenOnly })
     let items = res.emails.map(toSummary)
     if (query.unseenOnly) items = items.filter((i) => !i.seen)
     return { total: res.total, items }
@@ -358,6 +403,10 @@ export class MailService {
     const c = await this.jmap()
     const e = await c.getEmail(id)
     return e ? toMessage(e) : null
+  }
+  async getThread(threadId: string): Promise<MailMessage[]> {
+    const c = await this.jmap()
+    return (await c.getThread(threadId)).map(toMessage)
   }
 
   async setFlags(ids: string[], flags: { seen?: boolean; flagged?: boolean }): Promise<number> {
@@ -396,7 +445,7 @@ export class MailService {
     return n
   }
 
-  private async prepare(input: MailComposeInput) {
+  private async prepare(input: MailComposeInput, sending = false) {
     const c = await this.jmap()
     const cfg = this.config()
     const record = this.record!
@@ -404,6 +453,13 @@ export class MailService {
     const cc = parseAddressList(input.cc ?? '')
     const bcc = parseAddressList(input.bcc ?? '')
     const all = [...to, ...cc, ...bcc].map((a) => a.email)
+    if (sending && !all.length) throw new MailError('invalid', 'No valid recipients')
+    if (sending && isLoopbackUrl(cfg.serverUrl)) {
+      const external = externalRecipients(all, cfg.domain)
+      if (external.length) {
+        throw new MailError('external-blocked', `Local mail server: only @${cfg.domain} recipients are delivered (${external.join(', ')})`)
+      }
+    }
     let headers: { inReplyTo?: string[]; references?: string[] } = {}
     let subject = input.subject
     if (input.sourceId && input.mode && input.mode !== 'new') {
@@ -426,14 +482,7 @@ export class MailService {
   }
 
   async send(input: MailComposeInput): Promise<{ emailId: string }> {
-    const p = await this.prepare(input)
-    if (!p.to.length && !p.cc.length && !p.bcc.length) throw new MailError('invalid', 'No valid recipients')
-    if (isLoopbackUrl(p.cfg.serverUrl)) {
-      const external = externalRecipients(p.all, p.cfg.domain)
-      if (external.length) {
-        throw new MailError('external-blocked', `Local mail server: only @${p.cfg.domain} recipients are delivered (${external.join(', ')})`)
-      }
-    }
+    const p = await this.prepare(input, true)
     const identity = await p.c.ensureIdentity(p.record.address, await this.senderName())
     const result = await p.c.compose({
       from: { name: identity.name || null, email: p.record.address },

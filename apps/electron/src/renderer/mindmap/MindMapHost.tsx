@@ -33,6 +33,16 @@ import {
   type MindMapNodeId,
   type PinnedMap,
 } from '@craft-agent/core/mindmap'
+import {
+  activeMentionQuery,
+  addComment,
+  deleteComment,
+  mentionHandle,
+  selectForTarget,
+  suggestMentions,
+  TEAM_FLAG,
+  type TeamVersionedTarget,
+} from '@craft-agent/shared/team'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { toast } from 'sonner'
 import { navigate, routes } from '@/lib/navigate'
@@ -48,6 +58,8 @@ import {
   type SvgMindMapViewHandle,
 } from './engine/svg-engine'
 import { clearPinAsync, loadPinAsync, savePinAsync } from './pin-store'
+import { dispatchTeam, teamActionContext, useTeamFlag, useTeamState } from '@/components/team/team-store'
+import { useTeamRoster } from '@/components/team/use-team-roster'
 
 const pinOperationChains = new Map<string, Promise<void>>()
 
@@ -111,6 +123,12 @@ export function MindMapHost({
   className,
 }: MindMapHostProps) {
   const { t } = useTranslation()
+  const teamState = useTeamState()
+  const teamRoster = useTeamRoster()
+  const teamCommentsEnabled = useTeamFlag(TEAM_FLAG.comments)
+  const [commentDraft, setCommentDraft] = React.useState('')
+  const [replyToCommentId, setReplyToCommentId] = React.useState<string | null>(null)
+  const [commentCaret, setCommentCaret] = React.useState(0)
   const [selectedId, setSelectedId] = React.useState<MindMapNodeId | null>(selectedProp)
   const [search, setSearch] = React.useState('')
   const [searchOpen, setSearchOpen] = React.useState(false)
@@ -249,6 +267,53 @@ export function MindMapHost({
     enrichDraft ?? (showPinnedStructure && pin ? pin.graph : graph ?? starterGraph)
   // Only the active persisted snapshot may receive structural changes.
   const isPinned = Boolean(pin && showPinnedStructure && !enrichDraft)
+  const selectedNode = selectedId && displayGraph ? displayGraph.nodes[selectedId] : undefined
+  const mapSourceKey = JSON.stringify({ workspaceId: workspaceIdProp || activeWorkspaceId, entityKey })
+  const mapTargetRevision = selectedNode && displayGraph
+    ? JSON.stringify({ source: mapSourceKey, organizationId: teamRoster.org?.id ?? null, projection: displayGraph.contentHash, node: selectedNode })
+    : undefined
+  const mapTarget: TeamVersionedTarget | null = selectedNode && mapTargetRevision
+    ? { kind: 'mapNode', id: selectedNode.id, parentId: mapSourceKey, title: selectedNode.label, revision: mapTargetRevision }
+    : null
+  React.useEffect(() => {
+    setCommentDraft('')
+    setCommentCaret(0)
+    setReplyToCommentId(null)
+  }, [mapTargetRevision])
+  const selectedNodeComments = mapTarget
+    ? selectForTarget(teamState, 'mapNode', mapTarget.id, mapTarget.revision).comments
+    : []
+  const staleNodeCommentCount = selectedNode
+    ? teamState.comments.filter((comment) =>
+        comment.target.parentId === mapSourceKey &&
+        comment.target.id === selectedNode.id &&
+        comment.target.revision !== mapTargetRevision &&
+        !comment.deletedAt,
+      ).length
+    : 0
+  const mentionQuery = activeMentionQuery(commentDraft, commentCaret)
+  const mentionSuggestions = teamCommentsEnabled && mentionQuery !== null
+    ? suggestMentions(mentionQuery, teamRoster.teammates)
+    : []
+  const insertMention = (member: (typeof teamRoster.teammates)[number]) => {
+    const before = commentDraft.slice(0, commentCaret).replace(/@[\p{L}\p{N}._-]*$/u, `@${mentionHandle(member)} `)
+    const next = before + commentDraft.slice(commentCaret)
+    setCommentDraft(next)
+    setCommentCaret(before.length)
+  }
+  const saveNodeComment = () => {
+    if (!mapTarget || !teamRoster.selfUserId || !commentDraft.trim()) return
+    try {
+      const ctx = { ...teamActionContext(teamRoster.selfUserId), organizationId: teamRoster.org?.id }
+      dispatchTeam((current) => addComment(current, ctx, { target: mapTarget, body: commentDraft, roster: teamRoster.members, ...(replyToCommentId ? { parentCommentId: replyToCommentId } : {}) }))
+      setCommentDraft('')
+      setCommentCaret(0)
+      setReplyToCommentId(null)
+      toast.info(t('mindmap.comments.localOnly'))
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : t('teamCollab.commentSendError'))
+    }
+  }
 
   const handleGraphChange = React.useCallback(
     (nextGraph: MindMapGraph) => {
@@ -761,6 +826,84 @@ export function MindMapHost({
       ) : (
         renderMap()
       )}
+
+      {teamCommentsEnabled && selectedNode && mapTarget ? (
+        <section className="flex max-h-64 shrink-0 flex-col gap-2 overflow-auto border-t border-border/40 bg-background px-3 py-2" aria-label={t('mindmap.comments.title')}>
+          <div className="flex items-center gap-2 text-xs">
+            <strong>{t('mindmap.comments.title')}: {selectedNode.label}</strong>
+            <span className="ml-auto truncate text-muted-foreground">{t('mindmap.comments.revision', { revision: mapTarget.revision.slice(0, 32) })}</span>
+          </div>
+          {staleNodeCommentCount > 0 ? (
+            <div className="text-xs text-amber-700 dark:text-amber-300">{t('mindmap.comments.stale')}</div>
+          ) : null}
+          {selectedNodeComments.length === 0 ? (
+            <div className="text-xs text-muted-foreground">{t('mindmap.comments.empty')}</div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {selectedNodeComments.map((comment) => (
+                <article key={comment.id} className="rounded border border-border/40 px-2 py-1.5" data-comment-id={comment.id} data-parent-comment-id={comment.parentCommentId}>
+                  <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
+                  <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span>{teamRoster.members.find((member) => member.userId === comment.authorUserId)?.displayName || t('mindmap.comments.authorFallback')}</span>
+                    <span>{t(`teamCollab.commentStatus.${comment.sync}`)}</span>
+                    <button type="button" className="ml-auto hover:text-foreground" onClick={() => setReplyToCommentId(comment.id)}>{t('mindmap.comments.reply')}</button>
+                    {comment.authorUserId === teamRoster.selfUserId ? (
+                      <button
+                        type="button"
+                        className="hover:text-destructive"
+                        onClick={() => {
+                          try {
+                            dispatchTeam((current) => deleteComment(current, teamActionContext(teamRoster.selfUserId!), comment.id))
+                          } catch (cause) {
+                            toast.error(cause instanceof Error ? cause.message : t('teamCollab.commentSendError'))
+                          }
+                        }}
+                      >
+                        {t('mindmap.comments.delete')}
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+          <form
+            className="flex flex-col gap-1"
+            onSubmit={(event) => {
+              event.preventDefault()
+              saveNodeComment()
+            }}
+          >
+            {replyToCommentId ? <div className="text-xs text-muted-foreground">{t('mindmap.comments.replying')}</div> : null}
+            <textarea
+              value={commentDraft}
+              onChange={(event) => {
+                setCommentDraft(event.target.value)
+                setCommentCaret(event.target.selectionStart)
+              }}
+              onSelect={(event) => setCommentCaret(event.currentTarget.selectionStart)}
+              placeholder={t('mindmap.comments.placeholder')}
+              aria-label={t('mindmap.comments.placeholder')}
+              className="min-h-14 resize-y rounded border border-border/50 bg-background px-2 py-1.5 text-sm outline-none focus-visible:ring-1 focus-visible:ring-foreground/30"
+            />
+            {mentionSuggestions.length > 0 ? (
+              <div className="flex flex-wrap gap-1" role="listbox">
+                {mentionSuggestions.map((member) => (
+                  <button key={member.userId} type="button" role="option" className="rounded bg-foreground/5 px-2 py-1 text-xs" onClick={() => insertMention(member)}>
+                    @{mentionHandle(member)} · {member.displayName}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <div className="flex items-center gap-2">
+              {!teamRoster.selfUserId ? <span className="text-xs text-destructive">{t('teamCollab.inboxNeedsServer')}</span> : null}
+              <button type="submit" disabled={!teamRoster.selfUserId || !commentDraft.trim()} className="ml-auto rounded bg-foreground px-2.5 py-1 text-xs text-background disabled:opacity-50">
+                {t('mindmap.comments.send')}
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
     </>
   )
 

@@ -30,6 +30,7 @@ describe('parseAutomationsConfig', () => {
       automations: {
         SchedulerTick: [{
           cron: '0 9 * * 1-5',
+          timezone: 'Europe/Moscow',
           actions: [{ type: 'prompt', prompt: 'echo hello' }],
         }],
       },
@@ -41,6 +42,7 @@ describe('parseAutomationsConfig', () => {
     expect(items[0].cron).toBe('0 9 * * 1-5')
     expect(items[0].actions).toHaveLength(1)
     expect(items[0].actions[0].type).toBe('prompt')
+    expect(items[0].summary).toContain('Europe/Moscow')
   })
 
   it('parses multiple events with multiple matchers', () => {

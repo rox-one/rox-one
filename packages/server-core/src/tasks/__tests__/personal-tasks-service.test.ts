@@ -55,13 +55,25 @@ describe('personalTasks service (config-dir persist)', () => {
     expect(result.migration?.quarantined).toBe(true)
   })
 
-  it('put/delete round-trip with meta and rejects unsafe ids', () => {
+  it('compares task writes and deletes to revisions while reporting accepted and current records', () => {
     const dir = root()
     const store = new PersonalTaskPersistStore(dir)
-    const put = putPersonalTasks(store, [task('task-1'), task('../evil')], { projects: [], areas: [], headings: [], audit: [{ at: 1, action: 'create' }] })
-    expect(put).toEqual({ written: 1, rejected: ['../evil'] })
+    const create = putPersonalTasks(store, [{ task: task('task-1'), expectedRevision: null }, { task: task('../evil'), expectedRevision: null }], { projects: [], areas: [], headings: [], audit: [{ at: 1, action: 'create' }] })
+    expect(create.accepted.map((record) => record.task.id)).toEqual(['task-1'])
+    expect(create.accepted[0]?.revision).toBe(1)
+    expect(create.rejected).toEqual(['../evil'])
+    expect(readPersonalTasks(store).revisions).toEqual({ 'task-1': 1 })
     expect(readPersonalTasks(store).meta?.audit).toHaveLength(1)
-    expect(deletePersonalTasks(store, ['task-1', 'nope', '../x'])).toBe(1)
+
+    const won = putPersonalTasks(store, [{ task: task('task-1', 'Editor A'), expectedRevision: 1 }])
+    expect(won.accepted[0]?.revision).toBe(2)
+    const stale = putPersonalTasks(store, [{ task: task('task-1', 'Editor B'), expectedRevision: 1 }])
+    expect(stale.accepted).toEqual([])
+    expect(stale.conflicts).toEqual([{ id: 'task-1', current: won.accepted[0] }])
+
+    const deleted = deletePersonalTasks(store, [{ id: 'task-1', expectedRevision: 2 }, { id: '../x', expectedRevision: 1 }])
+    expect(deleted.removed).toEqual(['task-1'])
+    expect(deleted.rejected).toEqual(['../x'])
     expect(readPersonalTasks(store).tasks).toEqual([])
     expect(readdirSync(join(dir, 'personal-tasks')).filter((f) => f.endsWith('.json'))).toEqual([])
   })

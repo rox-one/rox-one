@@ -66,6 +66,22 @@ describe('repeat rules', () => {
     expect(nextRepeatDate({ rule: 'daily', interval: 3, mode: 'after' }, day(-10), now)).toBe(day(3))
     expect(nextRepeatDate({ rule: 'daily', interval: 1, until: today }, today, now)).toBeNull()
   })
+  it('keeps the scheduled wall clock when a zoned weekly recurrence crosses DST', () => {
+    const anchor = Date.UTC(2026, 2, 1, 14, 30)
+    const completed = Date.UTC(2026, 2, 1, 15)
+    const next = nextRepeatDate({ rule: 'weekly', interval: 1, timeZone: 'America/New_York' }, anchor, completed)
+    expect(next).toBe(Date.UTC(2026, 2, 8, 13, 30))
+  })
+
+  it('returns the same persisted successor when completion is retried', () => {
+    const store = new PersonalTaskStore()
+    const task = store.create({ title: 'Recurring', list: 'today', recurrence: { rule: 'daily', interval: 1 }, now })
+    const first = store.completeTask(task.id, now)
+    const retry = store.completeTask(task.id, now + 10_000)
+    expect(retry.next?.id).toBe(first.next?.id)
+    expect(store.list().filter((item) => item.repeatOf === task.id)).toHaveLength(1)
+  })
+
 
   it('completeTask spawns the next occurrence with a fresh checklist', () => {
     const store = new PersonalTaskStore()
@@ -109,12 +125,14 @@ describe('Things lists', () => {
   })
 
   it('upcomingByDay keeps 7 calendar days and groups later by month', () => {
+    const planNow = startOfLocalDay(Date.now()) + 10 * 60 * 60 * 1000
+    const planDay = (n: number) => new Date(new Date(planNow).getFullYear(), new Date(planNow).getMonth(), new Date(planNow).getDate() + n).getTime()
     const store = new PersonalTaskStore()
-    const a = store.create({ title: 'A', now })
-    store.setWhen(a.id, { kind: 'date', at: day(1) })
-    const b = store.create({ title: 'B', now })
-    store.setWhen(b.id, { kind: 'date', at: day(40) })
-    const plan = upcomingByDay(store.list(), now, 7)
+    const a = store.create({ title: 'A', now: planNow })
+    store.setWhen(a.id, { kind: 'date', at: planDay(1) })
+    const b = store.create({ title: 'B', now: planNow })
+    store.setWhen(b.id, { kind: 'date', at: planDay(40) })
+    const plan = upcomingByDay(store.list(), planNow, 7)
     expect(plan.days).toHaveLength(7)
     expect(plan.days[0]!.tasks.map((x) => x.title)).toEqual(['A'])
     expect(plan.later[0]!.tasks.map((x) => x.title)).toEqual(['B'])

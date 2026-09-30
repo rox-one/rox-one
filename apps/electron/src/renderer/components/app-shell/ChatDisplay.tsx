@@ -558,7 +558,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         }
       : undefined,
   }), [])
-  React.useEffect(() => () => messageTts.stop(), [messageTts])
+  React.useEffect(() => {
+    messageTts.stop()
+    setListeningTurnId(null)
+    return () => messageTts.stop()
+  }, [session?.id, messageTts])
 
   const handleListen = useCallback(async (text: string, turnId: string) => {
     if (!text.trim()) return
@@ -573,8 +577,9 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     })
     if (playback === 'unavailable') {
       setListeningTurnId((current) => current === turnId ? null : current)
+      toast.error(t('settings.input.ttsUnavailable'))
     }
-  }, [listeningTurnId, messageTts])
+  }, [listeningTurnId, messageTts, t])
 
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()

@@ -197,6 +197,7 @@ import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
 import { isScreenNavigation } from '../../../shared/types'
+import { MiniSessionSurface } from "./MiniSessionSurface"
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -244,10 +245,27 @@ export function shouldHideSessionsSidebar(navState: NavigationState): boolean {
 }
 
 export function AppShell(props: AppShellProps) {
-  // Wrap with EscapeInterruptProvider so AppShellContent can use useEscapeInterrupt
+  const [mini, setMini] = useState(() => new URLSearchParams(window.location.search).get('mini') === 'true')
+
+  useEffect(() => {
+    const syncMiniMode = () => setMini(new URLSearchParams(window.location.search).get('mini') === 'true')
+    window.addEventListener('resize', syncMiniMode)
+    window.addEventListener('popstate', syncMiniMode)
+    return () => {
+      window.removeEventListener('resize', syncMiniMode)
+      window.removeEventListener('popstate', syncMiniMode)
+    }
+  }, [])
+
   return (
     <EscapeInterruptProvider>
-      <AppShellContent {...props} />
+      {mini ? (
+        <AppShellProvider value={props.contextValue}>
+          <MiniSessionSurface />
+        </AppShellProvider>
+      ) : (
+        <AppShellContent {...props} />
+      )}
     </EscapeInterruptProvider>
   )
 }
@@ -2997,17 +3015,6 @@ function AppShellContent({
                 onSkillClick={handleSkillSelect}
                 onDeleteSkill={handleDeleteSkill}
                 selectedSkillSlug={isSkillsNavigation(navState) && navState.details?.type === 'skill' ? navState.details.skillSlug : null}
-              />
-            )}
-            {isProjectsNavigation(navState) && activeWorkspaceId && (
-              /* Projects List */
-              <ProjectsListPanel
-                projects={projects}
-                workspaceId={activeWorkspaceId}
-                onProjectClick={(slug) => navigate(routes.view.projects(slug))}
-                onAddProject={openAddProject}
-                onJumpToSessions={handleJumpToProjectSessions}
-                selectedProjectSlug={isProjectsNavigation(navState) ? navState.details?.projectSlug ?? null : null}
               />
             )}
             {isAutomationsNavigation(navState) && (

@@ -37,9 +37,10 @@ import {
   type PromptAction,
   type StateConditionUI,
   type TimeConditionUI,
+  type WebhookAction,
 } from './types'
-import { computeNextRuns } from './utils'
 import { DEFAULT_SCHEDULE, buildCron, isPlausibleCron, parseSchedule, type ScheduleKind, type ScheduleModel } from './schedule-model'
+import { computeNextRuns } from './utils'
 import './automations.css'
 
 // ============================================================================
@@ -59,10 +60,22 @@ interface Draft {
   permissionMode: PermissionMode
   labels: string
   telegramTopic: string
+  webhookUrl: string
+  webhookMethod: NonNullable<WebhookAction['method']>
+  webhookBodyFormat: NonNullable<WebhookAction['bodyFormat']>
+  webhookHeaders: string
+  webhookBody: string
+  webhookCaptureResponse: boolean
+  webhookAuthMode: 'none' | 'keep' | 'basic' | 'bearer'
+  webhookUsername: string
+  webhookPassword: string
+  webhookToken: string
 }
 
 function draftFrom(a: AutomationListItem): Draft {
-  const prompt = a.actions[0]?.type === 'prompt' ? (a.actions[0] as PromptAction) : undefined
+  const first = a.actions[0]
+  const prompt = first?.type === 'prompt' ? first : undefined
+  const webhook = first?.type === 'webhook' ? first : undefined
   return {
     name: a.name,
     event: a.event,
@@ -76,11 +89,47 @@ function draftFrom(a: AutomationListItem): Draft {
     permissionMode: a.permissionMode ?? 'safe',
     labels: (a.labels ?? []).join(', '),
     telegramTopic: a.telegramTopic ?? '',
+    webhookUrl: webhook?.url ?? '',
+    webhookMethod: webhook?.method ?? 'POST',
+    webhookBodyFormat: webhook?.bodyFormat ?? 'json',
+    webhookHeaders: JSON.stringify(webhook?.headers ?? {}, null, 2),
+    webhookBody: webhook?.body === undefined ? '' : typeof webhook.body === 'string' ? webhook.body : JSON.stringify(webhook.body, null, 2),
+    webhookCaptureResponse: webhook?.captureResponse ?? false,
+    webhookAuthMode: webhook?.authConfigured || webhook?.auth ? 'keep' : 'none',
+    webhookUsername: '',
+    webhookPassword: '',
+    webhookToken: '',
   }
+}
+
+/** Compare editable inputs without parsing partially typed webhook JSON. */
+function comparable(draft: Draft): string {
+  return JSON.stringify(draft)
 }
 
 function buildActions(original: AutomationAction[], d: Draft): AutomationAction[] {
   const first = original[0]
+  if (first?.type === 'webhook') {
+    const next: WebhookAction = {
+      ...first,
+      url: d.webhookUrl.trim(),
+      method: d.webhookMethod,
+      bodyFormat: d.webhookBodyFormat,
+      headers: d.webhookHeaders.trim() ? JSON.parse(d.webhookHeaders) as Record<string, string> : undefined,
+      body: d.webhookBody.trim()
+        ? d.webhookBodyFormat === 'raw' ? d.webhookBody : JSON.parse(d.webhookBody)
+        : undefined,
+      captureResponse: d.webhookCaptureResponse,
+    }
+    delete next.authConfigured
+    delete next.authType
+    if (d.webhookAuthMode === 'none') delete next.auth
+    if (d.webhookAuthMode === 'basic') next.auth = { type: 'basic', username: d.webhookUsername.trim(), password: d.webhookPassword }
+    if (d.webhookAuthMode === 'bearer') next.auth = { type: 'bearer', token: d.webhookToken }
+    if (d.webhookAuthMode === 'keep') next.authConfigured = true
+    return [next, ...original.slice(1)]
+  }
+
   if (first && first.type !== 'prompt') return original
   const base: PromptAction = first?.type === 'prompt' ? { ...first } : { type: 'prompt', prompt: '' }
   const next: PromptAction = { ...base, prompt: d.prompt }
@@ -104,19 +153,42 @@ function buildMatcher(a: AutomationListItem, d: Draft): Record<string, unknown> 
     permissionMode: d.permissionMode,
     labels: labels.length ? labels : undefined,
     telegramTopic: d.telegramTopic.trim() || undefined,
+    webhookAuthMode: d.webhookAuthMode,
     actions: buildActions(a.actions, d),
   }
 }
 
-function comparable(d: Draft, a: AutomationListItem): string {
-  return JSON.stringify({ event: d.event, m: buildMatcher(a, d) })
+function validWebhookHeaders(text: string): boolean {
+  if (!text.trim()) return true
+  try {
+    const headers: unknown = JSON.parse(text)
+    return !!headers && typeof headers === 'object' && !Array.isArray(headers) &&
+      Object.values(headers).every((value) => typeof value === 'string')
+  } catch {
+    return false
+  }
 }
 
 function validate(d: Draft, a: AutomationListItem, t: (k: string) => string): string | null {
-  if (a.actions[0]?.type !== 'webhook' && !d.prompt.trim()) return t('automations.errPromptEmpty')
+  const webhook = a.actions[0]?.type === 'webhook'
+  if (!webhook && !d.prompt.trim()) return t('automations.errPromptEmpty')
+  if (webhook) {
+    try {
+      const url = new URL(d.webhookUrl)
+      if (!['http:', 'https:'].includes(url.protocol) || !url.hostname) return t('automations.errWebhookUrl')
+    } catch {
+      return t('automations.errWebhookUrl')
+    }
+    if (!validWebhookHeaders(d.webhookHeaders)) return t('automations.errWebhookHeaders')
+    if (d.webhookBody.trim() && d.webhookBodyFormat !== 'raw') {
+      try { JSON.parse(d.webhookBody) } catch { return t('automations.errWebhookBody') }
+    }
+    if (d.webhookAuthMode === 'basic' && (!d.webhookUsername.trim() || !d.webhookPassword)) return t('automations.errWebhookAuth')
+    if (d.webhookAuthMode === 'bearer' && !d.webhookToken) return t('automations.errWebhookAuth')
+  }
   if (d.event === 'SchedulerTick') {
     const cron = buildCron(d.schedule)
-    if (!isPlausibleCron(cron) || computeNextRuns(cron, 1).length === 0) return t('automations.errCronInvalid')
+    if (!isPlausibleCron(cron) || computeNextRuns(cron, 1, d.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone).length === 0) return t('automations.errCronInvalid')
   } else if (d.matcher.trim()) {
     try { new RegExp(d.matcher.trim()) } catch { return t('automations.errMatcherInvalid') }
   }
@@ -195,8 +267,8 @@ function ScheduleBuilder({
   const locale = i18n.language || 'ru'
   const cron = buildCron(value)
   const valid = isPlausibleCron(cron)
-  const nextRuns = React.useMemo(() => (valid ? computeNextRuns(cron, 3) : []), [cron, valid])
   const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const nextRuns = React.useMemo(() => (valid ? computeNextRuns(cron, 3, timezone || systemTz) : []), [cron, valid, timezone, systemTz])
   const zones = React.useMemo(() => {
     const supported = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf
     const list = typeof supported === 'function' ? supported('timeZone') : []
@@ -271,7 +343,7 @@ function ScheduleBuilder({
           <>
             {' · '}
             {t('automations.nextRuns')}{' '}
-            {nextRuns.map((d) => d.toLocaleString(locale, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })).join(', ')}
+            {nextRuns.map((d) => d.toLocaleString(locale, { timeZone: timezone || systemTz, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })).join(', ')}
           </>
         )}
       </p>
@@ -452,8 +524,8 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
   const [history, setHistory] = React.useState<ExecutionEntry[]>([])
   const [historyLoading, setHistoryLoading] = React.useState(false)
 
-  const baseline = React.useMemo(() => comparable(draftFrom(automation), automation), [automation])
-  const dirty = comparable(draft, automation) !== baseline
+  const baseline = React.useMemo(() => comparable(draftFrom(automation)), [automation])
+  const dirty = comparable(draft) !== baseline
   const dirtyRef = React.useRef(dirty)
   dirtyRef.current = dirty
 
@@ -502,6 +574,7 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
     try {
       await window.electronAPI.updateAutomation(workspaceId, automation.event, automation.matcherIndex, {
         event: draft.event,
+        expectedRevision: automation.revision,
         matcher: buildMatcher(automation, draft),
       })
       return true
@@ -748,7 +821,59 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
               </div>
             </>
           ) : (
-            <p className="rox-autom-note">{t('automations.webhookReadOnly', { n: automation.actions.length })}</p>
+            <>
+              <div className="rox-autom-grid">
+                <Field label={t('automations.webhookUrl')}>
+                  <input className="rox-autom-input" type="url" value={draft.webhookUrl} onChange={(e) => set({ webhookUrl: e.target.value })} data-testid="webhook-url" />
+                </Field>
+                <Field label={t('automations.webhookMethod')}>
+                  <select className="rox-autom-select" value={draft.webhookMethod} onChange={(e) => set({ webhookMethod: e.target.value as NonNullable<WebhookAction['method']> })}>
+                    {(['POST', 'GET', 'PUT', 'PATCH', 'DELETE'] as const).map((method) => <option key={method} value={method}>{method}</option>)}
+                  </select>
+                </Field>
+                <Field label={t('automations.webhookBodyFormat')}>
+                  <select className="rox-autom-select" value={draft.webhookBodyFormat} onChange={(e) => set({ webhookBodyFormat: e.target.value as NonNullable<WebhookAction['bodyFormat']> })}>
+                    {(['json', 'form', 'raw'] as const).map((format) => <option key={format} value={format}>{format}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <Field label={t('automations.webhookHeaders')}>
+                <textarea className="rox-autom-textarea rox-autom-mono" rows={3} value={draft.webhookHeaders} onChange={(e) => set({ webhookHeaders: e.target.value })} />
+              </Field>
+              <Field label={t('automations.webhookBody')}>
+                <textarea className="rox-autom-textarea rox-autom-mono" rows={4} value={draft.webhookBody} onChange={(e) => set({ webhookBody: e.target.value })} />
+              </Field>
+              <Field label={t('automations.webhookAuth')}>
+                <select className="rox-autom-select" value={draft.webhookAuthMode} onChange={(e) => set({ webhookAuthMode: e.target.value as Draft['webhookAuthMode'] })}>
+                  {automation.actions[0]?.type === 'webhook' && (automation.actions[0].authConfigured || automation.actions[0].auth) && <option value="keep">{t('automations.webhookAuthKeep')}</option>}
+                  <option value="none">{t('automations.webhookAuthNone')}</option>
+                  <option value="basic">{t('automations.webhookAuthBasic')}</option>
+                  <option value="bearer">{t('automations.webhookAuthBearer')}</option>
+                </select>
+              </Field>
+              {automation.actions[0]?.type === 'webhook' && (automation.actions[0].authConfigured || automation.actions[0].auth) && (
+                <p className="rox-autom-note">{t('automations.webhookSecretRetained')} {t('automations.webhookSecretRotate')}</p>
+              )}
+              {draft.webhookAuthMode === 'basic' && (
+                <div className="rox-autom-grid">
+                  <Field label={t('automations.webhookUsername')}>
+                    <input className="rox-autom-input" autoComplete="username" value={draft.webhookUsername} onChange={(e) => set({ webhookUsername: e.target.value })} />
+                  </Field>
+                  <Field label={t('automations.webhookPassword')}>
+                    <input className="rox-autom-input" type="password" autoComplete="new-password" value={draft.webhookPassword} onChange={(e) => set({ webhookPassword: e.target.value })} />
+                  </Field>
+                </div>
+              )}
+              {draft.webhookAuthMode === 'bearer' && (
+                <Field label={t('automations.webhookToken')}>
+                  <input className="rox-autom-input" type="password" autoComplete="new-password" value={draft.webhookToken} onChange={(e) => set({ webhookToken: e.target.value })} />
+                </Field>
+              )}
+              <label className="rox-autom-inline">
+                <input type="checkbox" checked={draft.webhookCaptureResponse} onChange={(e) => set({ webhookCaptureResponse: e.target.checked })} />
+                {t('automations.webhookCaptureResponse')}
+              </label>
+            </>
           )}
           <span className="rox-autom-label" style={{ marginTop: 4 }}>{t('automations.targetSession')}</span>
           <div className="rox-autom-grid">

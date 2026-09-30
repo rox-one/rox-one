@@ -1,9 +1,7 @@
 /**
  * «Центр агентов» — every agent and background run on one screen: waiting for
- * the user, running now, stuck, cloud runs, automations, cost today vs. a
- * daily budget, with stop / pause controls. Reuses the session meta store,
- * AppShell pending permission/credential maps, cloud-run and automation IPC.
- * The budget is warn-only in v1 (no automatic enforcement).
+ * the user, running now, stuck, cloud runs, automations, and authoritative
+ * workspace budget status, with stop / pause controls.
  */
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,7 +9,7 @@ import { parseAutomationsConfig } from '@/components/automations/types'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { loadWorkspaceJson, saveWorkspaceJson, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
-import { sessionTitle, useWorkspaceSessions } from '@/lib/extra-screens/use-rox-sources'
+import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
 import { cn } from '@/lib/utils'
 import { Card, CardTitle, Chip, ScreenButton, ScreenDetail, ScreenHeader, ScreenRoot, TextField } from '../ui'
 import {
@@ -23,20 +21,19 @@ import {
   type CenterCloudRun,
   type CenterSession,
 } from './agent-center-model'
+import { useWorkspaceSessions, sessionTitle } from '@/lib/extra-screens/use-rox-sources'
 import { getSessionTitle } from '@/utils/session'
 
 const NS = 'agent-center'
 
 interface CenterSettings {
-  dailyBudgetUsd: number | null
   /** Automations paused from this screen (for «Возобновить приостановленные»). */
   pausedByCenter: string[]
 }
 
 function normalizeSettings(raw: unknown): CenterSettings {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  const budget = typeof r.dailyBudgetUsd === 'number' && r.dailyBudgetUsd > 0 ? r.dailyBudgetUsd : null
-  return { dailyBudgetUsd: budget, pausedByCenter: Array.isArray(r.pausedByCenter) ? r.pausedByCenter.filter((x): x is string => typeof x === 'string') : [] }
+  return { pausedByCenter: Array.isArray(r.pausedByCenter) ? r.pausedByCenter.filter((x): x is string => typeof x === 'string') : [] }
 }
 
 function useCloudRuns(): { enabled: boolean; runs: CenterCloudRun[]; refresh: () => void } {
@@ -100,7 +97,9 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
   const cloud = useCloudRuns()
   const { automations, available: automationsAvailable } = useCenterAutomations(workspaceId)
   const [settings, setSettings] = useState<CenterSettings>(() => loadWorkspaceJson(NS, workspaceId, normalizeSettings))
-  const [budgetDraft, setBudgetDraft] = useState(settings.dailyBudgetUsd ? String(settings.dailyBudgetUsd) : '')
+  const [budget, setBudget] = useState<AgentBudgetSnapshot | null>(null)
+  const [budgetLoading, setBudgetLoading] = useState(true)
+  const [budgetDraft, setBudgetDraft] = useState('')
   const [now, setNow] = useState(() => Date.now())
   const [busy, setBusy] = useState<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
@@ -108,8 +107,28 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
   useEffect(() => {
     const next = loadWorkspaceJson(NS, workspaceId, normalizeSettings)
     setSettings(next)
-    setBudgetDraft(next.dailyBudgetUsd ? String(next.dailyBudgetUsd) : '')
     return subscribeWorkspaceJson(NS, workspaceId, () => setSettings(loadWorkspaceJson(NS, workspaceId, normalizeSettings)))
+  }, [workspaceId])
+  useEffect(() => {
+    let cancelled = false
+    const api = window.electronAPI
+    setBudget(null)
+    setBudgetLoading(true)
+    if (!workspaceId || typeof api?.getSessionBudget !== 'function') {
+      setBudgetLoading(false)
+      return
+    }
+    api.getSessionBudget(workspaceId).then((snapshot) => {
+      if (!cancelled) {
+        setBudget(snapshot)
+        setBudgetDraft(snapshot.limitUsd == null ? '' : String(snapshot.limitUsd))
+      }
+    }).catch((e) => {
+      if (!cancelled) setError(e instanceof Error ? e.message : String(e))
+    }).finally(() => {
+      if (!cancelled) setBudgetLoading(false)
+    })
+    return () => { cancelled = true }
   }, [workspaceId])
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30000)
@@ -128,7 +147,6 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
       isProcessing: s.isProcessing,
       lastMessageAt: s.lastMessageAt,
       createdAt: s.createdAt,
-      costUsd: s.tokenUsage?.costUsd,
       permissionMode: s.permissionMode,
     })),
     pendingPermissions: new Map([...pendingPermissions].map(([id, list]) => [id, list.length])),
@@ -136,8 +154,8 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
     cloudRuns: cloud.runs,
     automations,
     now,
-    dailyBudgetUsd: settings.dailyBudgetUsd,
-  }), [sessions, pendingPermissions, pendingCredentials, cloud.runs, automations, now, settings.dailyBudgetUsd])
+    budget,
+  }), [sessions, pendingPermissions, pendingCredentials, cloud.runs, automations, now, budget])
 
   const withBusy = async (key: string, fn: () => Promise<unknown>) => {
     setBusy((prev) => new Set(prev).add(key))
@@ -181,10 +199,17 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
     saveSettings({ ...settings, pausedByCenter: [] })
   })
 
-  const commitBudget = () => {
-    const value = Number(budgetDraft.replace(',', '.'))
-    saveSettings({ ...settings, dailyBudgetUsd: Number.isFinite(value) && value > 0 ? value : null })
-  }
+  const commitBudget = () => withBusy('budget', async () => {
+    if (!workspaceId) return
+    const text = budgetDraft.trim().replace(',', '.')
+    const limitUsd = text === '' ? null : Number(text)
+    if (limitUsd !== null && (!Number.isFinite(limitUsd) || limitUsd <= 0)) {
+      throw new Error(t('extraScreens.agents.budgetInvalid'))
+    }
+    const snapshot = await window.electronAPI.setSessionBudget(workspaceId, { limitUsd })
+    setBudget(snapshot)
+    setBudgetDraft(snapshot.limitUsd == null ? '' : String(snapshot.limitUsd))
+  })
 
   const openSession = (id: string) => navigate(routes.view.allSessions(id))
   const ago = (ts?: number) => (ts ? formatAgo(now - ts, language) : '—')
@@ -208,27 +233,40 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
             <Stat label={t('extraScreens.agents.stuck')} value={String(center.stuck.length)} tone={center.stuck.length ? 'err' : undefined} />
             <Stat
               label={t('extraScreens.agents.costToday')}
-              value={formatUsd(center.costToday)}
-              sub={center.budget ? t('extraScreens.agents.ofBudget', { budget: formatUsd(center.budget.limit) }) : undefined}
-              tone={center.budget?.over ? 'err' : center.budget?.near ? 'warn' : undefined}
+              value={center.budget?.limitUsd == null ? '—' : formatUsd(center.budget.spentUsd)}
+              sub={center.budget?.limitUsd == null ? undefined : t('extraScreens.agents.ofBudget', { budget: formatUsd(center.budget.limitUsd) })}
+              tone={center.budget?.exhausted ? 'err' : undefined}
             />
           </div>
 
-          <Card accent={!!center.budget?.over}>
+          <Card accent={!!center.budget?.exhausted}>
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle>{t('extraScreens.agents.budgetTitle')}</CardTitle>
               <span className="flex-1" />
               <span className="text-[12px] text-muted-foreground">{t('extraScreens.agents.budgetLabel')}</span>
-              <TextField value={budgetDraft} onChange={setBudgetDraft} onEnter={commitBudget} onBlur={commitBudget} placeholder="$" className="h-7 w-[90px]" ariaLabel={t('extraScreens.agents.budgetLabel')} />
+              <fieldset disabled={budgetLoading || busy.has('budget')}><TextField value={budgetDraft} onChange={setBudgetDraft} onEnter={commitBudget} onBlur={commitBudget} placeholder="$" className="h-7 w-[90px]" ariaLabel={t('extraScreens.agents.budgetLabel')} /></fieldset>
             </div>
-            {center.budget && (
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.08]" role="progressbar" aria-valuenow={Math.round(center.budget.ratio * 100)} aria-valuemin={0} aria-valuemax={100}>
-                <div className={cn('h-full', center.budget.over ? 'bg-destructive' : center.budget.near ? 'bg-warning' : 'bg-accent')} style={{ width: `${Math.min(100, center.budget.ratio * 100)}%` }} />
+            {center.budget?.limitUsd != null && (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.08]" role="progressbar" aria-valuenow={Math.round(Math.min(100, ((center.budget.spentUsd + center.budget.reservedUsd) / center.budget.limitUsd) * 100))} aria-valuemin={0} aria-valuemax={100}>
+                <div className={cn('h-full', center.budget.exhausted ? 'bg-destructive' : 'bg-accent')} style={{ width: `${Math.min(100, ((center.budget.spentUsd + center.budget.reservedUsd) / center.budget.limitUsd) * 100)}%` }} />
               </div>
             )}
             <div className="mt-1.5 text-[12px] text-muted-foreground">
-              {center.budget?.over ? t('extraScreens.agents.budgetOver') : t('extraScreens.agents.budgetHint')}
+              {budgetLoading
+                ? t('extraScreens.agents.budgetHint')
+                : center.budget?.limitUsd != null && center.budget.unresolvedUsd > 0
+                  ? t('extraScreens.agents.budgetUnknown')
+                  : center.budget?.exhausted
+                    ? t('extraScreens.agents.budgetExhausted')
+                    : center.budget?.limitUsd != null
+                      ? t('extraScreens.agents.budgetEnforced')
+                      : t('extraScreens.agents.budgetHint')}
             </div>
+            {center.budget?.limitUsd != null && (
+              <div className="mt-1 text-[12px] text-muted-foreground">
+                {t('extraScreens.agents.budgetRemaining')}: {center.budget.remainingUsd == null ? '—' : formatUsd(center.budget.remainingUsd)} · {t('extraScreens.agents.budgetReserved')}: {formatUsd(center.budget.reservedUsd)}
+              </div>
+            )}
           </Card>
 
           {nothingActive && (
@@ -249,7 +287,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
           {center.running.length > 0 && (
             <Section title={t('extraScreens.agents.runningNow')} count={center.running.length}>
               {center.running.map((s) => (
-                <Row key={s.id} title={s.name} meta={[t('extraScreens.agents.lastEvent', { ago: ago(s.lastMessageAt ?? s.createdAt) }), s.costUsd ? formatUsd(s.costUsd) : null, s.permissionMode].filter(Boolean).join(' · ')}>
+                <Row key={s.id} title={s.name} meta={[t('extraScreens.agents.lastEvent', { ago: ago(s.lastMessageAt ?? s.createdAt) }), s.permissionMode].filter(Boolean).join(' · ')}>
                   <ScreenButton onClick={() => openSession(s.id)}>{t('extraScreens.radar.open')}</ScreenButton>
                   <ScreenButton variant="danger" disabled={busy.has(`s:${s.id}`)} onClick={() => { void stopSession(s.id) }}>{t('extraScreens.agents.stop')}</ScreenButton>
                 </Row>
@@ -308,15 +346,6 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
             ))}
           </Section>
 
-          {center.topCostToday.length > 0 && (
-            <Section title={t('extraScreens.agents.topCost')} hint={t('extraScreens.agents.costHint')}>
-              {center.topCostToday.map((s) => (
-                <Row key={s.id} title={s.name} meta={formatUsd(s.costUsd ?? 0)}>
-                  <ScreenButton variant="ghost" onClick={() => openSession(s.id)}>{t('extraScreens.radar.open')}</ScreenButton>
-                </Row>
-              ))}
-            </Section>
-          )}
         </div>
       </ScreenDetail>
     </ScreenRoot>

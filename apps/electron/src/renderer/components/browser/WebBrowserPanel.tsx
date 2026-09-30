@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, ArrowRight, ExternalLink, LoaderCircle, RefreshCw, X } from 'lucide-react'
 import { Button } from '../ui/button'
 import { cn } from '@/lib/utils'
+import type { BrowserCookieAutoStatus } from '../../../shared/types'
 
 type BrowserSnapshot = { url: string; title: string }
 
@@ -18,9 +20,13 @@ const MOBILE_VIEWPORT = { width: 390, height: 720 }
 
 /** A mobile-style viewport for the persistent VPS agent-browser session. */
 export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserPanelProps) {
+  const { t } = useTranslation()
   const [instanceId, setInstanceId] = useState<string | null>(null)
   const [snapshot, setSnapshot] = useState<BrowserSnapshot | null>(null)
   const [image, setImage] = useState<string | null>(null)
+  const [cookieStatus, setCookieStatus] = useState<BrowserCookieAutoStatus | null>(null)
+  const [useImportedCookies, setUseImportedCookies] = useState(false)
+  const ownedInstance = useRef<string | null>(null)
   const [address, setAddress] = useState('about:blank')
   const [busy, setBusy] = useState(false)
   const imageRef = useRef<HTMLImageElement>(null)
@@ -57,20 +63,43 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
   }, [instanceId, refresh])
 
   useEffect(() => {
+    void window.electronAPI.browserCookieAutoStatus().then(setCookieStatus).catch(() => setCookieStatus(null))
+  }, [])
+  useEffect(() => {
+    if (!open) return
+    const refreshConsent = () => {
+      void window.electronAPI.browserCookieAutoStatus()
+        .then((status) => {
+          setCookieStatus(status)
+          if (!status.consent) setUseImportedCookies(false)
+        })
+        .catch(() => setCookieStatus(null))
+    }
+    refreshConsent()
+    const timer = window.setInterval(refreshConsent, 10_000)
+    return () => window.clearInterval(timer)
+  }, [open])
+  const canUseImportedCookies = cookieStatus?.consent === true
+
+  useEffect(() => {
     if (!open) return
     let cancelled = false
 
     void (async () => {
       try {
-        const instances = await window.electronAPI.browserPane.list()
-        const id = instances[0]?.id ?? await window.electronAPI.browserPane.create({ show: true })
+        if (ownedInstance.current) {
+          await window.electronAPI.browserPane.destroy(ownedInstance.current)
+          ownedInstance.current = null
+        }
+        const id = await window.electronAPI.browserPane.create({
+          show: true,
+          useImportedCookies: useImportedCookies && canUseImportedCookies,
+        })
+        ownedInstance.current = id
         if (cancelled) return
 
         setInstanceId(id)
         await window.electronAPI.browserPane.resize(id, MOBILE_VIEWPORT.width, MOBILE_VIEWPORT.height)
-        // The VPS agent applies viewport changes asynchronously. Give it a
-        // moment before capturing, otherwise the first frame can still be a
-        // desktop-sized screenshot.
         await new Promise((resolve) => window.setTimeout(resolve, 250))
         if (!cancelled) await refresh(id, true)
       } catch (error) {
@@ -79,7 +108,7 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
     })()
 
     return () => { cancelled = true }
-  }, [open, refresh])
+  }, [open, refresh, useImportedCookies, canUseImportedCookies])
 
   useEffect(() => {
     if (!open || !instanceId) return
@@ -143,6 +172,20 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
         >
           <ArrowRight className="size-4" />
         </Button>
+        <label className="flex max-w-[180px] shrink-0 items-center gap-1 text-[11px] text-muted-foreground" title={canUseImportedCookies ? cookieStatus?.domains?.join(', ') : t('settings.browserImport.auto.noImportedConsent')}>
+          <input
+            type="checkbox"
+            checked={useImportedCookies}
+            disabled={!cookieStatus?.consent || busy}
+            onChange={(event) => setUseImportedCookies(event.target.checked)}
+          />
+          <span className="truncate">{t('settings.browserImport.auto.useImportedCookies')}</span>
+        </label>
+        {cookieStatus?.consent && (cookieStatus.profileName || cookieStatus.domains?.length) ? (
+          <span className="max-w-[96px] truncate text-[9px] text-muted-foreground" title={cookieStatus.domains?.join(', ')}>
+            {cookieStatus.profileName ?? ''}{cookieStatus.domains?.length ? ` · ${cookieStatus.domains.join(', ')}` : ''}
+          </span>
+        ) : null}
         <Button
           variant="ghost"
           size="icon"

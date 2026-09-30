@@ -2,6 +2,7 @@ import { readFile, writeFile, stat } from 'fs/promises'
 import { join } from 'path'
 import {
   RPC_CHANNELS,
+  CodedError,
   type BulkUpdateSessionsInput,
   type BulkUpdateSessionsResult,
   type FileAttachment,
@@ -133,6 +134,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.BULK_UPDATE,
   RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION,
   RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE,
+  RPC_CHANNELS.sessions.GET_BUDGET,
+  RPC_CHANNELS.sessions.SET_BUDGET,
   RPC_CHANNELS.sessions.SET_MEMORY_MODE,
   RPC_CHANNELS.sessions.GET_PROVENANCE,
   RPC_CHANNELS.sessions.SEARCH_CONTENT,
@@ -491,6 +494,44 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     return result
   })
 
+  // Read and update the caller's workspace-scoped agent budget.
+  server.handle(RPC_CHANNELS.sessions.GET_BUDGET, async (ctx, workspaceId: string) => {
+    const callerWorkspaceId = ctx.workspaceId ?? (
+      ctx.webContentsId === null
+        ? undefined
+        : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+    )
+    if (!workspaceId || callerWorkspaceId !== workspaceId) {
+      throw new CodedError('AUTH_FAILED', 'Workspace access denied')
+    }
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new CodedError('NOT_FOUND', `Workspace not found: ${workspaceId}`)
+    return sessionManager.getAgentBudget(workspace.id)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.sessions.SET_BUDGET, async (
+    ctx,
+    workspaceId: string,
+    input: { limitUsd: number | null },
+  ) => {
+    const callerWorkspaceId = ctx.workspaceId ?? (
+      ctx.webContentsId === null
+        ? undefined
+        : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+    )
+    if (!workspaceId || callerWorkspaceId !== workspaceId) {
+      throw new CodedError('AUTH_FAILED', 'Workspace access denied')
+    }
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new CodedError('NOT_FOUND', `Workspace not found: ${workspaceId}`)
+    if (!input || (input.limitUsd !== null && (
+      typeof input.limitUsd !== 'number' || !Number.isFinite(input.limitUsd) || input.limitUsd <= 0
+    ))) {
+      throw new CodedError('HANDLER_ERROR', 'Budget limit must be a positive finite number or null')
+    }
+    return sessionManager.setAgentDailyBudget(workspace.id, input.limitUsd)
+  }, { nativeAction: 'write' })
+
   // Get pending plan execution state (for reload recovery)
   server.handle(RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION, async (
     _ctx,
@@ -531,39 +572,52 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // ============================================================
 
   // Search session content using ripgrep
-  server.handle(RPC_CHANNELS.sessions.SEARCH_CONTENT, async (_ctx, workspaceId: string, query: string, searchId?: string) => {
+  server.handle(RPC_CHANNELS.sessions.SEARCH_CONTENT, async (ctx, workspaceId: string, query: string, searchId?: string) => {
     const id = searchId || Date.now().toString(36)
-    log.info('[search]','ipc:request', { searchId: id, query })
+    log.info('[search]','ipc:request', { searchId: id, queryLength: query.length })
 
-    const workspace = getWorkspaceByNameOrId(workspaceId)
-    if (!workspace) {
-      log.warn('SEARCH_SESSIONS: Workspace not found:', workspaceId)
-      return []
+    const callerWorkspaceId = ctx.workspaceId ?? (
+      ctx.webContentsId === null
+        ? undefined
+        : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+    )
+    const workspace = callerWorkspaceId ? getWorkspaceByNameOrId(callerWorkspaceId) : undefined
+    const requestedWorkspace = getWorkspaceByNameOrId(workspaceId)
+    if (
+      !ctx.principal
+      || !workspace
+      || !requestedWorkspace
+      || workspace.id !== requestedWorkspace.id
+    ) {
+      throw new Error('Workspace access denied')
     }
+
+    await sessionManager.waitForInit()
+    const visibleSessions = sessionManager.getSessions(workspace.id).filter((session) => !session.hidden)
+    const allowedSessionIds = visibleSessions.map((session) => session.id)
 
     const { searchSessions } = await import('@craft-agent/server-core/services')
     const { getWorkspaceSessionsPath } = await import('@craft-agent/shared/workspaces')
-
     const sessionsDir = getWorkspaceSessionsPath(workspace.rootPath)
-    log.debug(`SEARCH_SESSIONS: Searching "${query}" in ${sessionsDir}`)
+    log.debug('SEARCH_SESSIONS: Searching workspace content', { searchId: id, queryLength: query.length })
 
     const results = await searchSessions(query, sessionsDir, {
       timeout: 5000,
       maxMatchesPerSession: 3,
       maxSessions: 50,
       searchId: id,
+      allowedSessionIds,
     })
 
-    // Filter out hidden sessions (e.g., mini edit sessions)
-    const allSessions = await sessionManager.getSessions()
-    const hiddenSessionIds = new Set(
-      allSessions.filter(s => s.hidden).map(s => s.id)
+    const stillVisibleIds = new Set(
+      sessionManager.getSessions(workspace.id)
+        .filter((session) => !session.hidden)
+        .map((session) => session.id),
     )
-    const filteredResults = results.filter(r => !hiddenSessionIds.has(r.sessionId))
-
-    log.info('[search]','ipc:response', { searchId: id, resultCount: filteredResults.length, totalFound: results.length })
-    return filteredResults
-  })
+    const visibleResults = results.filter((result) => stillVisibleIds.has(result.sessionId))
+    log.info('[search]','ipc:response', { searchId: id, resultCount: visibleResults.length, totalFound: visibleResults.length })
+    return visibleResults
+  }, { nativeAction: 'read' })
 
   // ============================================================
   // Session Info Panel (files, notes, file watching)
@@ -600,8 +654,12 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       }
 
       state.watcher = watch(sessionPath, { recursive: true }, (_eventType, filename) => {
-        // Ignore internal files and hidden files
-        if (filename && (filename.includes('session.jsonl') || filename.startsWith('.'))) {
+        if (clientSessionWatches.get(clientId) !== state) return
+
+        // Ignore internal files and hidden path segments.
+        const changedPath = filename == null ? '' : String(filename)
+        const pathSegments = changedPath.split(/[\\/]/)
+        if (pathSegments.some((segment) => segment === 'session.jsonl' || segment.startsWith('.'))) {
           return
         }
 
@@ -611,6 +669,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         }
 
         state.debounceTimer = setTimeout(() => {
+          if (clientSessionWatches.get(clientId) !== state) return
           pushTyped(server, RPC_CHANNELS.sessions.FILES_CHANGED, { to: 'client', clientId }, state.sessionId)
         }, 100)
       })

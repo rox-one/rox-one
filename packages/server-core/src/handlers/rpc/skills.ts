@@ -3,7 +3,7 @@ import { cpSync, existsSync, readdirSync, statSync } from 'fs'
 import { RPC_CHANNELS, type SkillFile } from '@craft-agent/shared/protocol'
 import type { SkillExportResult, SkillPruneResult, SkillUsageMap } from '@craft-agent/shared/memory/types'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RequestContext, RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { exportSkillToProject, pruneUnusedSkills, readUsage } from '../../memory/skill-usage'
@@ -13,6 +13,21 @@ import {
   rpcSkillsListResult,
   rpcSkillsReadResult,
 } from '@craft-agent/core/rox2'
+
+// Authenticated native principals are strictly bound to the workspace chosen
+// during handshake; local Electron windows may use their server-side binding.
+
+function assertSkillWorkspace(ctx: RequestContext, workspaceId: string, deps: HandlerDeps): void {
+  const boundWorkspaceId = ctx.workspaceId ?? (
+    ctx.webContentsId === null ? undefined : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+  )
+  if (ctx.principal && (!boundWorkspaceId || boundWorkspaceId !== workspaceId)) {
+    throw new Error('Workspace access denied')
+  }
+  if (boundWorkspaceId && boundWorkspaceId !== workspaceId) {
+    throw new Error('Workspace access denied')
+  }
+}
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skills.GET,
@@ -36,7 +51,8 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
   }
 
   // Get all skills for a workspace (and optionally project-level skills from workingDirectory)
-  server.handle(RPC_CHANNELS.skills.GET, async (_ctx, workspaceId: string, workingDirectory?: string) => {
+  server.handle(RPC_CHANNELS.skills.GET, async (ctx, workspaceId: string, workingDirectory?: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const listed = rpcSkillsListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     deps.platform.logger?.info(`SKILLS_GET: Loading skills for workspace: ${workspaceId}${workingDirectory ? `, workingDirectory: ${workingDirectory}` : ''}`)
@@ -56,10 +72,11 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const skills = loadAllSkills(workspace.rootPath, effectiveWorkingDir, { includeOmp: true, includeShadowedOmp: true })
     deps.platform.logger?.info(`SKILLS_GET: Loaded ${skills.length} skills from ${workspace.rootPath}`)
     return skills
-  })
+  }, { nativeAction: 'read' })
 
   // Get files in a skill directory
-  server.handle(RPC_CHANNELS.skills.GET_FILES, async (_ctx, workspaceId: string, skillSlug: string) => {
+  server.handle(RPC_CHANNELS.skills.GET_FILES, async (ctx, workspaceId: string, skillSlug: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const read = rpcSkillsReadResult({ source: 'native', nativeId: skillSlug })
     if (!isClaimableLive(read.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -112,10 +129,11 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     }
 
     return scanDirectory(skillDir)
-  })
+  }, { nativeAction: 'read' })
 
   // Delete a skill from a workspace
-  server.handle(RPC_CHANNELS.skills.DELETE, async (_ctx, workspaceId: string, skillSlug: string) => {
+  server.handle(RPC_CHANNELS.skills.DELETE, async (ctx, workspaceId: string, skillSlug: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     if (!skillSlug) throw new Error('skillSlug is required')
     const act = rpcSkillsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: skillSlug })
     if (!isClaimableLive(act)) throw new Error('skill delete is not live')
@@ -125,15 +143,16 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const { deleteSkill } = await import('@craft-agent/shared/skills')
     deleteSkill(workspace.rootPath, skillSlug)
     deps.platform.logger?.info(`Deleted skill: ${skillSlug}`)
-  })
+  }, { nativeAction: 'delete' })
 
   // Native edit: update workspace skill frontmatter + body
   server.handle(RPC_CHANNELS.skills.UPDATE, async (
-    _ctx,
+    ctx,
     workspaceId: string,
     skillSlug: string,
     updates: import('@craft-agent/shared/skills').UpdateSkillContentInput,
   ) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const act = rpcSkillsActResult({ source: 'native', action: 'write', nativeId: skillSlug })
     if (!isClaimableLive(act)) throw new Error('skill update is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -146,11 +165,12 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     await broadcastSkillsChanged(workspaceId, workspace.rootPath)
     deps.platform.logger?.info(`Updated skill: ${skillSlug}`)
     return skill
-  })
+  }, { nativeAction: 'write' })
 
   // Import an OMP skill into the workspace as a regular craft skill.
   // Copies SKILL.md + all resources; on slug conflict appends `-omp` (then a counter).
-  server.handle(RPC_CHANNELS.skills.IMPORT_OMP, async (_ctx, workspaceId: string, slug: string) => {
+  server.handle(RPC_CHANNELS.skills.IMPORT_OMP, async (ctx, workspaceId: string, slug: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const act = rpcSkillsActResult({ source: 'native', action: 'write', nativeId: slug })
     if (!isClaimableLive(act)) throw new Error('skill importOmp is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -177,10 +197,11 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     deps.platform.logger?.info(`Imported OMP skill ${slug} → ${targetDir}${targetSlug !== slug ? ' (renamed, slug conflict)' : ''}`)
 
     return { slug: targetSlug, path: targetDir, renamed: targetSlug !== slug }
-  })
+  }, { nativeAction: 'write' })
 
   // Open skill SKILL.md in editor
-  server.handle(RPC_CHANNELS.skills.OPEN_EDITOR, async (_ctx, workspaceId: string, skillSlug: string) => {
+  server.handle(RPC_CHANNELS.skills.OPEN_EDITOR, async (ctx, workspaceId: string, skillSlug: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
     if (workspace.remoteServer) throw new Error('Open in editor is not available for remote workspaces')
@@ -189,10 +210,11 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const skillDir = resolveWorkspaceSkillDir(workspace.rootPath, skillSlug)
     const skillFile = join(skillDir, 'SKILL.md')
     await deps.platform.openPath?.(skillFile)
-  })
+  }, { nativeAction: 'read' })
 
   // Open skill folder in Finder/Explorer
-  server.handle(RPC_CHANNELS.skills.OPEN_FINDER, async (_ctx, workspaceId: string, skillSlug: string) => {
+  server.handle(RPC_CHANNELS.skills.OPEN_FINDER, async (ctx, workspaceId: string, skillSlug: string) => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
     if (workspace.remoteServer) throw new Error('Show in Finder is not available for remote workspaces')
@@ -200,31 +222,34 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const { resolveWorkspaceSkillDir } = await import('@craft-agent/shared/skills')
     const skillDir = resolveWorkspaceSkillDir(workspace.rootPath, skillSlug)
     await deps.platform.showItemInFolder?.(skillDir)
-  })
+  }, { nativeAction: 'read' })
 
   // S4: usage stats per slug aggregated from {workspace}/skills/.usage.jsonl
-  server.handle(RPC_CHANNELS.skills.GET_USAGE, async (_ctx, workspaceId: string): Promise<SkillUsageMap> => {
+  server.handle(RPC_CHANNELS.skills.GET_USAGE, async (ctx, workspaceId: string): Promise<SkillUsageMap> => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
     return readUsage(workspace.rootPath)
-  })
+  }, { nativeAction: 'read' })
 
   // S4: archive (never delete) unused workspace skills. When `slugs` is
   // provided the callers (panel) pre-confirmed the list and olderThanDays is
   // ignored; otherwise candidates are computed from the usage ledger.
-  server.handle(RPC_CHANNELS.skills.PRUNE_UNUSED, async (_ctx, workspaceId: string, olderThanDays?: number, slugs?: string[]): Promise<SkillPruneResult> => {
+  server.handle(RPC_CHANNELS.skills.PRUNE_UNUSED, async (ctx, workspaceId: string, olderThanDays?: number, slugs?: string[]): Promise<SkillPruneResult> => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
     const result = pruneUnusedSkills(workspace.rootPath, { olderThanDays, slugs })
     if (result.archived.length > 0) await broadcastSkillsChanged(workspaceId, workspace.rootPath)
     return result
-  })
+  }, { nativeAction: 'delete' })
 
   // T1: copy a workspace skill into {projectRoot}/.agents/skills/<slug>.
   // Never overwrites a differing existing target (see lib guards).
-  server.handle(RPC_CHANNELS.skills.EXPORT_TO_PROJECT, async (_ctx, workspaceId: string, skillSlug: string, projectRoot: string): Promise<SkillExportResult> => {
+  server.handle(RPC_CHANNELS.skills.EXPORT_TO_PROJECT, async (ctx, workspaceId: string, skillSlug: string, projectRoot: string): Promise<SkillExportResult> => {
+    assertSkillWorkspace(ctx, workspaceId, deps)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
     return exportSkillToProject(workspace.rootPath, skillSlug, projectRoot)
-  })
+  }, { nativeAction: 'write' })
 }

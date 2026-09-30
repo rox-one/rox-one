@@ -19,6 +19,6 @@ describe('knowledge settings rejects SiYuan kernel install CTA', () => {
     expect(page).not.toContain('b3log.org')
     expect(page).not.toContain('siyuan-not-installed')
     expect(page).not.toContain('detectEngine')
-    expect(page).not.toContain("t('knowledge.local.engineOptional')")
+    expect(page).toContain("t('knowledge.local.engineOptional')")
   })
 })

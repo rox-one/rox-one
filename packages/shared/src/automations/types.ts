@@ -525,7 +525,21 @@ export interface PendingPrompt {
   model?: string;
   /** Thinking level for the created session (falls back to workspace default when omitted) */
   thinkingLevel?: ThinkingLevel;
-  /** Forum-topic name to bind the new session to (Telegram supergroup, when paired). */
+  /** UTC schedule instant captured before event dispatch. */
+  scheduledAt?: string;
+  /** IANA timezone used to resolve the scheduled instant. */
+  scheduledTimezone?: string;
+  /** Stable matcher + occurrence + action identity for idempotent dispatch. */
+  occurrenceKey?: string;
+  /** Exact config revision and action position bound to this occurrence claim. */
+  matcherRevision?: string;
+  actionIndex?: number;
+  /** Durable scheduled action run ID, assigned by the occurrence ledger. */
+  runId?: string;
+  /** Dispatch attempt number when known; ambiguous outcomes must not be replayed blindly. */
+  attempt?: number;
+  outcome?: 'success' | 'error' | 'unknown_external_outcome';
+  /** Forum-topic name to bind to a new session when available. */
   telegramTopic?: string;
 }
 

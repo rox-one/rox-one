@@ -149,6 +149,17 @@ export { AUTOMATIONS_CONFIG_FILE, AUTOMATIONS_HISTORY_FILE, AUTOMATIONS_RETRY_QU
 // History store
 export { appendAutomationHistoryEntry, compactAutomationHistory, compactAutomationHistorySync } from './history-store.ts';
 
+// Durable scheduled occurrence claims
+export {
+  claimAutomationOccurrence,
+  setAutomationOccurrenceOutcome,
+  recoverAutomationOccurrences,
+  type AutomationOccurrenceState,
+  type AutomationOccurrenceOutcome,
+  type AutomationOccurrenceContext,
+  type AutomationOccurrenceClaim,
+} from './occurrence-ledger.ts';
+
 // Config path resolution
 export { resolveAutomationsConfigPath, generateShortId } from './resolve-config-path.ts';
 

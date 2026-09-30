@@ -37,11 +37,12 @@ export function tableToMarkdown(columns: ExportColumn[], rows: Record<string, un
 export function tableToCsv(columns: ExportColumn[], rows: Record<string, unknown>[]): string {
   const escapeField = (v: unknown): string => {
     if (v === null || v === undefined) return ''
-    const s = String(v)
-    if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
-      return `"${s.replace(/"/g, '""')}"`
+    const raw = String(v)
+    const value = typeof v === 'string' && /^\s*[=+\-@]/.test(raw) ? `'${raw}` : raw
+    if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+      return `"${value.replace(/"/g, '""')}"`
     }
-    return s
+    return value
   }
 
   const header = columns.map((c) => escapeField(c.label)).join(',')
@@ -56,6 +57,7 @@ export function tableToCsv(columns: ExportColumn[], rows: Record<string, unknown
 
 function xmlEscape(s: string): string {
   return s
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -204,7 +206,7 @@ function buildSheetXml(columns: ExportColumn[], rows: Record<string, unknown>[])
   xml += '<row r="1">'
   columns.forEach((col, ci) => {
     const ref = `${colIndexToLetter(ci)}1`
-    xml += `<c r="${ref}" s="${S.BOLD}" t="inlineStr"><is><t>${xmlEscape(col.label)}</t></is></c>`
+    xml += `<c r="${ref}" s="${S.BOLD}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(col.label)}</t></is></c>`
   })
   xml += '</row>'
 
@@ -224,9 +226,9 @@ function buildSheetXml(columns: ExportColumn[], rows: Record<string, unknown>[])
       } else if (col.type === 'boolean') {
         // Write as string "Yes"/"No" with color
         const label = val ? 'Yes' : 'No'
-        xml += `<c r="${ref}"${sAttr} t="inlineStr"><is><t>${label}</t></is></c>`
+        xml += `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${label}</t></is></c>`
       } else {
-        xml += `<c r="${ref}"${sAttr} t="inlineStr"><is><t>${xmlEscape(String(val))}</t></is></c>`
+        xml += `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${xmlEscape(String(val))}</t></is></c>`
       }
     })
     xml += '</row>'

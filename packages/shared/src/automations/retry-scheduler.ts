@@ -17,12 +17,11 @@
  *
  * Single-process invariant: one RetryScheduler owns AUTOMATIONS_RETRY_QUEUE_FILE
  * for a workspace. Multi-worker / multi-process leases and DLQ are unsupported.
- * Effect is the HTTP call; ack is the atomic JSONL rewrite. Outcomes stay in
- * memory until ack succeeds so a same-process crash after effect does not
- * re-fire. History is written only after ack succeeds — a crash between effect
- * and ack must not leave `"ok":true` while the queue row remains. Process
- * restart drops in-memory acks; the JSONL row remains recoverable
- * (at-least-once across restart, without a false success history entry).
+ * Each due row is durably marked in-flight before its HTTP effect. Known results
+ * are acknowledged by an atomic JSONL rewrite; history is written only after
+ * ack succeeds. On process restart, any in-flight row is recorded as an unknown
+ * external outcome and removed without automatic resend. Only acknowledged,
+ * known failures become eligible for the next deferred attempt.
  */
 
 import { readFile, writeFile, appendFile, rename } from 'fs/promises';
@@ -59,6 +58,13 @@ export interface RetryQueueEntry {
   nextRetryAt: number;
   createdAt: number;
   lastError?: string;
+  state?: 'ready' | 'in_flight';
+  scheduledAt?: string;
+  scheduledTimezone?: string;
+  occurrenceKey?: string;
+  matcherRevision?: string;
+  actionIndex?: number;
+  runId?: string;
 }
 
 export interface RetrySchedulerOptions {
@@ -137,6 +143,7 @@ export class RetryScheduler {
     action: WebhookAction,
     expandedUrl: string,
     lastError?: string,
+    schedule?: Pick<RetryQueueEntry, 'scheduledAt' | 'scheduledTimezone' | 'occurrenceKey' | 'matcherRevision' | 'actionIndex' | 'runId'>,
   ): Promise<void> {
     const entry: RetryQueueEntry = {
       id: `${matcherId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -147,6 +154,7 @@ export class RetryScheduler {
       nextRetryAt: Date.now() + DEFERRED_DELAYS_MS[0]!,
       createdAt: Date.now(),
       lastError,
+      ...schedule,
     };
 
     await this.withQueueLock(async () => {
@@ -155,6 +163,7 @@ export class RetryScheduler {
     });
     log.debug(`[RetryScheduler] Enqueued ${entry.id} — next retry in ${DEFERRED_DELAYS_MS[0]! / 60_000}m`);
   }
+
 
   async tick(): Promise<void> {
     if (this.processing || this.stopped) return;
@@ -170,8 +179,29 @@ export class RetryScheduler {
 
       for (const entry of snapshot) {
         if (this.pendingAcks.has(entry.id)) continue;
+        if (entry.state === 'in_flight') {
+          this.pendingAcks.set(entry.id, {
+            kind: 'drop',
+            history: {
+              matcherId: entry.matcherId,
+              ok: false,
+              method: entry.action.method,
+              url: entry.expandedUrl,
+              statusCode: 0,
+              durationMs: 0,
+              attempts: entry.deferredAttempt + 1,
+              scheduledAt: entry.scheduledAt,
+              scheduledTimezone: entry.scheduledTimezone,
+              occurrenceKey: entry.occurrenceKey,
+              outcome: 'unknown_external_outcome',
+              error: 'The previous request may have reached the endpoint; automatic replay was suppressed.',
+            },
+          });
+          continue;
+        }
         if (entry.nextRetryAt > now) continue;
         if (this.isStale(generation)) return;
+        if (!(await this.markInFlight(entry.id))) continue;
 
         log.debug(`[RetryScheduler] Retrying ${entry.id} (deferred attempt ${entry.deferredAttempt + 1}/${MAX_DEFERRED_ATTEMPTS})`);
         let result: WebhookActionResult;
@@ -229,8 +259,32 @@ export class RetryScheduler {
   }
 
   private outcomeFor(entry: RetryQueueEntry, result: WebhookActionResult): QueueOutcome {
+    const historyMetadata = {
+      scheduledAt: entry.scheduledAt,
+      scheduledTimezone: entry.scheduledTimezone,
+      occurrenceKey: entry.occurrenceKey,
+      matcherRevision: entry.matcherRevision,
+      actionIndex: entry.actionIndex,
+      runId: entry.runId,
+    };
+    if (entry.occurrenceKey && result.statusCode === 0) {
+      return {
+        kind: 'drop',
+        history: {
+          matcherId: entry.matcherId,
+          ok: false,
+          method: entry.action.method,
+          url: entry.expandedUrl,
+          statusCode: 0,
+          durationMs: result.durationMs ?? 0,
+          attempts: entry.deferredAttempt + 1,
+          ...historyMetadata,
+          outcome: 'unknown_external_outcome',
+          error: result.error ?? 'The retry outcome is unknown; automatic replay was suppressed.',
+        },
+      };
+    }
     if (result.success) {
-      log.debug(`[RetryScheduler] ${entry.id} succeeded on deferred attempt ${entry.deferredAttempt + 1}`);
       return {
         kind: 'drop',
         history: {
@@ -241,11 +295,11 @@ export class RetryScheduler {
           statusCode: result.statusCode,
           durationMs: result.durationMs ?? 0,
           attempts: entry.deferredAttempt + 1,
+          ...historyMetadata,
         },
       };
     }
     if (entry.deferredAttempt + 1 >= MAX_DEFERRED_ATTEMPTS) {
-      log.debug(`[RetryScheduler] ${entry.id} permanently failed after ${MAX_DEFERRED_ATTEMPTS} deferred attempts`);
       return {
         kind: 'drop',
         history: {
@@ -256,21 +310,33 @@ export class RetryScheduler {
           statusCode: result.statusCode,
           durationMs: result.durationMs ?? 0,
           attempts: entry.deferredAttempt + 1,
+          ...historyMetadata,
           error: result.error ?? 'Unknown error',
         },
       };
     }
     const nextDelay = DEFERRED_DELAYS_MS[entry.deferredAttempt + 1]!;
-    log.debug(`[RetryScheduler] ${entry.id} failed — next retry in ${nextDelay / 60_000}m`);
     return {
       kind: 'keep',
       entry: {
         ...entry,
+        state: 'ready',
         deferredAttempt: entry.deferredAttempt + 1,
         nextRetryAt: Date.now() + nextDelay,
         lastError: result.error,
       },
     };
+  }
+
+  private async markInFlight(id: string): Promise<boolean> {
+    return this.withQueueLock(async () => {
+      const entries = await this.readEntries();
+      const index = entries.findIndex((entry) => entry.id === id);
+      if (index < 0 || entries[index]!.state === 'in_flight') return false;
+      entries[index] = { ...entries[index]!, state: 'in_flight' };
+      await this.writeEntriesAtomic(entries);
+      return true;
+    });
   }
 
   private isStale(generation: number): boolean {

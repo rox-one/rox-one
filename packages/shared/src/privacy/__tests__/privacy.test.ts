@@ -18,8 +18,10 @@ import {
   completeDeletion,
   getDefaultPrivacyState,
   loadPrivacyState,
+  providerScopeAllowed,
   requestDeletion,
   requestExport,
+  setProviderAccessConsent,
   setPurpose,
 } from '../store.ts'
 import { emptyPurposes } from '../types.ts'
@@ -58,11 +60,12 @@ describe('privacy consent ledger', () => {
       deviceId: 'device-a',
       workspaceId: 'ws-1',
       category: 'notes',
-      type: 'put',
-      path: 'keep.md',
-      body: '# local canonical',
+      nativeId: 'keep.md',
+      expectedRevision: null,
+      schemaVersion: 1,
+      changes: [{ path: 'notes/keep.md', content: '# local canonical' }],
     })
-    const localCopy = replica.materialize('ws-1').get('notes:keep.md')
+    const localCopy = replica.materialize('ws-1').get('notes:notes/keep.md')
     const revoked = setPurpose('realtimeSync', false, dir)
     applyConsentToReplica(replica, revoked.purposes)
     expect(replicaRealtimeAllowed(revoked.purposes)).toBe(false)
@@ -71,10 +74,10 @@ describe('privacy consent ledger', () => {
     const { receipt } = requestDeletion(dir)
     expect(receipt.status).toBe('queued')
     expect(receipt.localDataKept).toBe(true)
-    expect(replica.materialize('ws-1').get('notes:keep.md')).toBe('# local canonical')
+    expect(replica.materialize('ws-1').get('notes:notes/keep.md')).toBe('# local canonical')
     const completed = completeDeletion(receipt.id, dir)
     expect(completed.deletions.at(-1)?.status).toBe('completed')
-    expect(replica.materialize('ws-1').get('notes:keep.md')).toBe('# local canonical')
+    expect(replica.materialize('ws-1').get('notes:notes/keep.md')).toBe('# local canonical')
   })
 
   it('pauses replica writes when recovery consent is off', () => {
@@ -90,9 +93,10 @@ describe('privacy consent ledger', () => {
         deviceId: 'device-a',
         workspaceId: 'ws-1',
         category: 'notes',
-        type: 'put',
-        path: 'x.md',
-        body: 'nope',
+        nativeId: 'x.md',
+        expectedRevision: null,
+        schemaVersion: 1,
+        changes: [{ path: 'notes/x.md', content: 'nope' }],
       }),
     ).toThrow(ReplicaCategoryError)
   })
@@ -117,5 +121,36 @@ describe('privacy consent ledger', () => {
     const dir = tmp()
     expect(() => setPurpose('realtimeSync', true, dir)).toThrow(/requires account recovery/)
     expect(loadPrivacyState(dir).purposes.realtimeSync).toBe(false)
+  })
+
+  it('allows only the granted provider account, domain, data scope, and purpose until revoked', () => {
+    const dir = tmp()
+    const profileA = 'profile-a-hash'
+    expect(providerScopeAllowed(loadPrivacyState(dir), 'browser-import', profileA, 'mail.example', 'cookies', 'browser-session')).toBe(false)
+
+    setProviderAccessConsent({
+      provider: 'browser-import',
+      accountRef: profileA,
+      domains: ['.mail.example'],
+      dataScopes: ['cookies'],
+      purposes: ['browser-session'],
+      granted: true,
+    }, dir, 10)
+    const granted = loadPrivacyState(dir)
+    expect(providerScopeAllowed(granted, 'browser-import', profileA, 'mail.example', 'cookies', 'browser-session')).toBe(true)
+    expect(providerScopeAllowed(granted, 'browser-import', profileA, 'other.example', 'cookies', 'browser-session')).toBe(false)
+    expect(providerScopeAllowed(granted, 'browser-import', 'profile-b-hash', 'mail.example', 'cookies', 'browser-session')).toBe(false)
+    expect(providerScopeAllowed(granted, 'browser-import', profileA, 'mail.example', 'credentials', 'browser-session')).toBe(false)
+    expect(providerScopeAllowed(granted, 'browser-import', profileA, 'mail.example', 'cookies', 'cloud-inference')).toBe(false)
+
+    setProviderAccessConsent({
+      provider: 'browser-import',
+      accountRef: profileA,
+      domains: [],
+      dataScopes: [],
+      purposes: [],
+      granted: false,
+    }, dir, 20)
+    expect(providerScopeAllowed(loadPrivacyState(dir), 'browser-import', profileA, 'mail.example', 'cookies', 'browser-session')).toBe(false)
   })
 })

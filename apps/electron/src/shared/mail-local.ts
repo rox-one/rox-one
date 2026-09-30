@@ -16,6 +16,7 @@ export const MAIL_IPC = {
   FOLDERS: 'mail:folders',
   LIST: 'mail:list',
   GET: 'mail:get',
+  GET_THREAD: 'mail:get-thread',
   SET_FLAGS: 'mail:set-flags',
   MOVE: 'mail:move',
   REMOVE: 'mail:remove',
@@ -130,6 +131,7 @@ export interface MailLocalApi {
   folders(): Promise<MailResult<MailFolder[]>>
   list(query: MailListQuery): Promise<MailResult<{ total: number; items: MailSummary[] }>>
   get(id: string): Promise<MailResult<MailMessage | null>>
+  getThread(threadId: string): Promise<MailResult<MailMessage[]>>
   setFlags(ids: string[], flags: { seen?: boolean; flagged?: boolean }): Promise<MailResult<number>>
   move(ids: string[], target: MailFolderRole | string): Promise<MailResult<number>>
   remove(ids: string[]): Promise<MailResult<number>>

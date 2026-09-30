@@ -180,7 +180,7 @@ export function matchesFilter(lesson: Lesson, filter: MemoryFilter, ctx: { inCon
     case 'inContext': if (!ctx.inContext.has(id)) return false; break
     case 'negative': if (!lesson.negative) return false; break
     case 'conflicts': if (!(lesson.conflicts?.length)) return false; break
-    case 'merged': if (!(lesson.mergedFrom?.length)) return false; break
+    case 'merged': if (!(lesson.mergedFrom?.length || lesson.mergedInto)) return false; break
     default: break
   }
   const q = filter.query?.trim().toLowerCase()
@@ -215,16 +215,23 @@ export function countBy<T>(items: readonly T[], key: (item: T) => string | strin
   return out
 }
 
-/** The merged lesson patch: keeper text + provenance, summed usage, union of tags. */
+/** Merge metadata retains complete originals so the operation can be undone. */
 export function mergePatch(keeper: Lesson, others: readonly Lesson[], rule: string): Partial<Lesson> {
   const all = [keeper, ...others]
+  if (all.some((lesson) => lesson.scope !== keeper.scope)) throw new Error('Memory lessons from different scopes cannot be merged')
   const tags = [...new Set(all.flatMap((l) => l.tags ?? []))]
   const usedAt = all.flatMap((l) => l.usedAt ?? []).sort().slice(-20)
   const mergedFrom = [...new Set([...(keeper.mergedFrom ?? []), ...others.flatMap((l) => [l.rule, ...(l.mergedFrom ?? [])])])].filter((r) => r !== rule)
   const lastUsed = all.map((l) => l.lastUsedAt).filter((x): x is string => Boolean(x)).sort().pop()
+  const originals = all.flatMap((lesson) => {
+    if (lesson.mergeHistory?.version === 1) return lesson.mergeHistory.lessons
+    const { mergeHistory: _history, ...original } = lesson
+    return [original]
+  })
   return {
     rule,
     mergedFrom,
+    mergeHistory: { version: 1, lessons: originals },
     usageCount: all.reduce((sum, l) => sum + (l.usageCount ?? 0), 0),
     ...(lastUsed ? { lastUsedAt: lastUsed } : {}),
     ...(usedAt.length ? { usedAt } : {}),

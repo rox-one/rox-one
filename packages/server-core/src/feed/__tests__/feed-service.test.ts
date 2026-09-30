@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, readFileSync, rmSync } from 'fs'
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { FEED_STATE_FILE, FeedService } from '../feed-service'
@@ -140,5 +140,103 @@ describe('FeedService', () => {
     expect(svc.updateSource(s.id, { intervalMin: 1 })!.intervalMin).toBe(5)
     expect(svc.removeSource(s.id)).toBe(true)
     expect(svc.listItems()).toHaveLength(0)
+  })
+  it('rejects an add when the durable state cannot be written and allows a retry', async () => {
+    const { svc, calls, changes } = make({ 'https://b.example/feed': { body: RSS(1) } })
+    mkdirSync(join(dir, FEED_STATE_FILE))
+    expect(() => svc.addSource('https://b.example/feed')).toThrow()
+    expect(svc.listSources()).toHaveLength(0)
+    expect(changes()).toBe(0)
+    expect(calls).toHaveLength(0)
+    rmSync(join(dir, FEED_STATE_FILE), { recursive: true, force: true })
+
+    const retry = svc.addSource('https://b.example/feed')
+    expect(retry.ok).toBe(true)
+    if (retry.ok) await svc.pollSource(retry.source.id)
+    expect(new FeedService({ configDir: dir }).listSources()).toHaveLength(1)
+  })
+
+  it('deduplicates repeated ids from one poll response', async () => {
+    const repeated = `<rss><channel><title>Blog</title><item><title>First</title><guid>same</guid></item><item><title>Duplicate</title><guid>same</guid></item></channel></rss>`
+    const { svc } = make({ 'https://b.example/feed': { body: repeated } })
+    const source = svc.addSource('https://b.example/feed')
+    if (!source.ok) throw new Error()
+    await svc.pollSource(source.source.id)
+    expect(svc.listItems()).toHaveLength(1)
+  })
+
+  it('propagates poll persistence failure without losing prior memory or notifying', async () => {
+    const { svc, changes } = make({ 'https://b.example/feed': { body: RSS(1) } })
+    const source = svc.addSource('https://b.example/feed')
+    if (!source.ok) throw new Error()
+    await svc.pollSource(source.source.id)
+    const before = svc.listItems()
+    const stateFile = join(dir, FEED_STATE_FILE)
+    const backupFile = `${stateFile}.backup`
+    renameSync(stateFile, backupFile)
+    mkdirSync(stateFile)
+    const notifiedBefore = changes()
+    await expect(svc.refresh(source.source.id)).rejects.toThrow()
+    expect(svc.listItems()).toEqual(before)
+    expect(changes()).toBe(notifiedBefore)
+    rmSync(stateFile, { recursive: true, force: true })
+    renameSync(backupFile, stateFile)
+    expect(new FeedService({ configDir: dir }).listItems()).toEqual(before)
+    await svc.refresh(source.source.id)
+  })
+
+  it('reports checking transitions without reporting a failed poll as a durable change', async () => {
+    let releaseFetch!: () => void
+    const blocked = new Promise<void>((resolve) => { releaseFetch = resolve })
+    const checking: boolean[] = []
+    let changes = 0
+    const svc = new FeedService({
+      configDir: dir,
+      fetch: async () => {
+        await blocked
+        return new Response(RSS(1), { headers: { 'content-type': 'application/rss+xml' } })
+      },
+      onChange: () => { changes++ },
+      onStatusChange: () => { checking.push(svc.listSources()[0]?.checking === true) },
+    })
+    const source = svc.addSource('https://b.example/feed')
+    if (!source.ok) throw new Error('add failed')
+    const poll = svc.pollSource(source.source.id)
+    const stateFile = join(dir, FEED_STATE_FILE)
+    const backupFile = `${stateFile}.backup`
+    renameSync(stateFile, backupFile)
+    mkdirSync(stateFile)
+    releaseFetch()
+    await expect(poll).rejects.toThrow()
+    expect(checking).toEqual([true, false])
+    expect(changes).toBe(1)
+    expect(svc.listSources()[0]).toMatchObject({ id: source.source.id, lastStatus: 'pending' })
+    expect(svc.listItems()).toEqual([])
+    rmSync(stateFile, { recursive: true, force: true })
+    renameSync(backupFile, stateFile)
+    expect(new FeedService({ configDir: dir }).listSources()[0]).toMatchObject({ id: source.source.id, lastStatus: 'pending' })
+  })
+
+  it('keeps a concurrent source edit when a poll commits', async () => {
+    let releaseFetch!: () => void
+    let notifyStarted!: () => void
+    const started = new Promise<void>((resolve) => { notifyStarted = resolve })
+    const blocked = new Promise<void>((resolve) => { releaseFetch = resolve })
+    const svc = new FeedService({
+      configDir: dir,
+      fetch: async () => {
+        notifyStarted()
+        await blocked
+        return new Response(RSS(1), { headers: { 'content-type': 'application/rss+xml' } })
+      },
+    })
+    const source = svc.addSource('https://b.example/feed')
+    if (!source.ok) throw new Error()
+    await started
+    svc.updateSource(source.source.id, { title: 'Concurrent edit', intervalMin: 30 })
+    releaseFetch()
+    await svc.pollSource(source.source.id)
+    expect(svc.listSources()[0]).toMatchObject({ title: 'Concurrent edit', intervalMin: 30, lastStatus: 'ok' })
+    expect(svc.listItems()).toHaveLength(1)
   })
 })

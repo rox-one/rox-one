@@ -7,7 +7,8 @@
  * profiles and the «Подписки» home timeline go through XSubscriptionsAdapter
  * (official API, user token) — never through browser cookies.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
+import { randomUUID } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'path'
 import {
   FEED_DEFAULT_INTERVAL_MIN,
@@ -100,7 +101,10 @@ export interface FeedServiceOptions {
   fetch?: FetchLike
   now?: () => number
   getXAdapter?: () => Promise<XSubscriptionsAdapter>
+  /** Called only after a durable state commit. */
   onChange?: () => void
+  /** Ephemeral polling progress, independent of durable state commits. */
+  onStatusChange?: () => void
   logger?: FeedServiceLogger
   tickMs?: number
 }
@@ -157,6 +161,7 @@ export class FeedService {
   private ticking = false
   private xStatusCache: XConnectionStatus | null = null
   onChange?: () => void
+  onStatusChange?: () => void
 
   constructor(private readonly opts: FeedServiceOptions) {
     this.file = join(opts.configDir, FEED_STATE_FILE)
@@ -165,6 +170,7 @@ export class FeedService {
     this.getX = opts.getXAdapter ?? (async () => notConnectedXAdapter)
     this.log = opts.logger
     this.onChange = opts.onChange
+    this.onStatusChange = opts.onStatusChange
   }
 
   // ── persistence ──────────────────────────────────────────────────────────
@@ -196,22 +202,35 @@ export class FeedService {
     return st
   }
 
-  private save(): void {
-    const st = this.load()
+  private cloneState(): FeedState {
+    return structuredClone(this.load())
+  }
+
+  private persist(next: FeedState): void {
+    mkdirSync(dirname(this.file), { recursive: true })
+    const tmp = `${this.file}.${process.pid}.${randomUUID()}.tmp`
     try {
-      mkdirSync(dirname(this.file), { recursive: true })
-      const tmp = `${this.file}.${process.pid}.tmp`
-      writeFileSync(tmp, JSON.stringify(st), 'utf-8')
+      writeFileSync(tmp, JSON.stringify(next), 'utf-8')
       renameSync(tmp, this.file)
     } catch (e) {
-      this.log?.warn(`feed: failed to persist state (${e instanceof Error ? e.message : e})`)
+      try { rmSync(tmp, { force: true }) } catch { /* preserve the write failure */ }
+      throw e
+    }
+    this.state = next
+  }
+
+  private changed(next: FeedState): void {
+    this.persist(next)
+    try {
+      this.onChange?.()
+    } catch {
+      // listener errors never break polling
     }
   }
 
-  private changed(): void {
-    this.save()
+  private statusChanged(): void {
     try {
-      this.onChange?.()
+      this.onStatusChange?.()
     } catch {
       // listener errors never break polling
     }
@@ -245,8 +264,9 @@ export class FeedService {
   /** Call after the X token changed. */
   resetX(): void {
     this.xStatusCache = null
-    const st = this.load()
-    if (st.x) st.x = {}
+    const next = this.cloneState()
+    if (next.x) next.x = {}
+    this.changed(next)
   }
 
   // ── mutations ────────────────────────────────────────────────────────────
@@ -273,21 +293,24 @@ export class FeedService {
       addedAt: now,
       lastStatus: 'pending',
     }
-    st.sources.push(source)
-    this.changed()
-    void this.pollSource(source.id)
+    const next = this.cloneState()
+    next.sources.push(source)
+    this.changed(next)
+    void this.pollSource(source.id).catch((e) => {
+      this.log?.warn(`feed: ${source.url} failed: ${e instanceof Error ? e.message : e}`)
+    })
     return { ok: true, source: publicSource(source) }
   }
 
   removeSource(id: string): boolean {
-    const st = this.load()
-    const before = st.sources.length
-    st.sources = st.sources.filter((s) => s.id !== id)
-    if (st.sources.length === before) return false
-    const gone = new Set(st.items.filter((i) => i.sourceId === id).map((i) => i.id))
-    st.items = st.items.filter((i) => i.sourceId !== id)
-    for (const itemId of Object.keys(st.annotations)) if (gone.has(itemId) || itemId.startsWith(`news:${id}:`)) delete st.annotations[itemId]
-    this.changed()
+    const next = this.cloneState()
+    const before = next.sources.length
+    next.sources = next.sources.filter((s) => s.id !== id)
+    if (next.sources.length === before) return false
+    const gone = new Set(next.items.filter((i) => i.sourceId === id).map((i) => i.id))
+    next.items = next.items.filter((i) => i.sourceId !== id)
+    for (const itemId of Object.keys(next.annotations)) if (gone.has(itemId) || itemId.startsWith(`news:${id}:`)) delete next.annotations[itemId]
+    this.changed(next)
     return true
   }
 
@@ -297,7 +320,8 @@ export class FeedService {
   }
 
   updateSource(id: string, patch: FeedSourcePatch): FeedSource | null {
-    const s = this.load().sources.find((x) => x.id === id)
+    const next = this.cloneState()
+    const s = next.sources.find((x) => x.id === id)
     if (!s) return null
     if (patch.intervalMin !== undefined) s.intervalMin = clampInterval(patch.intervalMin)
     if (typeof patch.title === 'string') s.title = patch.title.trim().slice(0, 200) || s.title
@@ -310,18 +334,17 @@ export class FeedService {
     }
     if (patch.paused === true) s.paused = true
     else if (patch.paused === false) delete s.paused
-    this.changed()
+    this.changed(next)
     return publicSource(s, this.busy.has(s.id))
   }
-
   /** Tags / color / star / read for one or more items (any tab). */
   annotate(ids: readonly string[], patch: FeedAnnotationPatch): number {
-    const st = this.load()
+    const next = this.cloneState()
     const now = this.now()
     let n = 0
     for (const raw of ids.slice(0, 2000)) {
       if (typeof raw !== 'string' || !raw || raw.length > 500) continue
-      const cur: FeedItemAnnotation = { ...(st.annotations[raw] ?? {}) }
+      const cur: FeedItemAnnotation = { ...(next.annotations[raw] ?? {}) }
       if (patch.tags !== undefined) {
         const tags = normalizeFeedTags(patch.tags)
         if (tags.length) cur.tags = tags
@@ -333,20 +356,18 @@ export class FeedService {
       else if (patch.starred === false) delete cur.starred
       if (patch.read === true) cur.readAt = cur.readAt ?? now
       else if (patch.read === false) delete cur.readAt
-      if (Object.keys(cur).length) st.annotations[raw] = cur
-      else delete st.annotations[raw]
+      if (Object.keys(cur).length) next.annotations[raw] = cur
+      else delete next.annotations[raw]
       n++
     }
-    this.capAnnotations()
-    if (n) this.changed()
+    this.capAnnotations(next)
+    if (n) this.changed(next)
     return n
   }
 
-  private capAnnotations(): void {
-    const st = this.load()
+  private capAnnotations(st: FeedState): void {
     const ids = Object.keys(st.annotations)
     if (ids.length <= FEED_MAX_ANNOTATIONS) return
-    // Keep user-meaningful marks (tags/color/star) first, then the newest reads.
     const weight = (a: FeedItemAnnotation) => (a.tags?.length || a.color || a.starred ? 1 : 0)
     ids.sort((a, b) => weight(st.annotations[b]!) - weight(st.annotations[a]!) || (st.annotations[b]!.readAt ?? 0) - (st.annotations[a]!.readAt ?? 0))
     for (const id of ids.slice(FEED_MAX_ANNOTATIONS)) delete st.annotations[id]
@@ -430,7 +451,11 @@ export class FeedService {
   // ── scheduling ───────────────────────────────────────────────────────────
   start(): void {
     if (this.timer) return
-    const tick = () => void this.tick()
+    const tick = () => {
+      void this.tick().catch((e) => {
+        this.log?.warn(`feed: background tick failed: ${e instanceof Error ? e.message : e}`)
+      })
+    }
     this.timer = setInterval(tick, this.opts.tickMs ?? 60_000)
     ;(this.timer as { unref?: () => void }).unref?.()
     const first = setTimeout(tick, 5_000)
@@ -461,23 +486,26 @@ export class FeedService {
   }
 
   // ── polling ──────────────────────────────────────────────────────────────
-  private ingest(source: StoredSource, items: FeedItem[]): number {
-    const st = this.load()
-    const have = new Set(st.items.map((i) => i.id))
-    const fresh = items.filter((i) => !have.has(i.id))
+  private ingest(st: FeedState, source: StoredSource, items: FeedItem[]): number {
+    const have = new Set(st.items.map((item) => item.id))
+    const fresh: FeedItem[] = []
+    for (const item of items) {
+      if (have.has(item.id)) continue
+      have.add(item.id)
+      fresh.push(item)
+    }
     if (fresh.length) {
       st.items.push(...fresh)
       const mine = st.items.filter((i) => i.sourceId === source.id).sort((a, b) => b.at - a.at)
       const drop = new Set(mine.slice(FEED_ITEMS_PER_SOURCE).map((i) => i.id))
       st.items = st.items.filter((i) => !drop.has(i.id))
-      this.capItems()
+      this.capItems(st)
     }
     source.itemCount = st.items.filter((i) => i.sourceId === source.id).length
     return fresh.length
   }
 
-  private capItems(): void {
-    const st = this.load()
+  private capItems(st: FeedState): void {
     const byTab = (tab: string, cap: number) => st.items.filter((i) => i.tab === tab).sort((a, b) => b.at - a.at).slice(cap).map((i) => i.id)
     const drop = new Set([...byTab('news', FEED_MAX_NEWS_ITEMS), ...byTab('subscriptions', FEED_MAX_SUBSCRIPTION_ITEMS)])
     if (drop.size) st.items = st.items.filter((i) => !drop.has(i.id))
@@ -509,43 +537,67 @@ export class FeedService {
   }
 
   private async pollSourceOnce(id: string): Promise<void> {
-    const source = this.load().sources.find((s) => s.id === id)
+    const base = this.cloneState()
+    const staged = structuredClone(base)
+    const source = staged.sources.find((s) => s.id === id)
     if (!source) return
     this.busy.add(id)
+    this.statusChanged()
     try {
-      this.onChange?.()
-    } catch {
-      // «checking» push is best-effort
-    }
-    try {
-      await this.pollSourceInner(source)
+      await this.pollSourceInner(source, staged)
       source.lastStatus = 'ok'
       source.lastOkAt = this.now()
       delete source.lastError
     } catch (e) {
       const msg = e instanceof Error ? (e.name === 'AbortError' ? 'timeout' : e.message) : String(e)
-      if (msg === 'x-not-connected') {
-        source.lastStatus = 'unsupported'
-      } else {
+      if (msg === 'x-not-connected') source.lastStatus = 'unsupported'
+      else {
         source.lastStatus = 'error'
         this.log?.warn(`feed: ${source.url} failed: ${msg}`)
       }
       source.lastError = msg.slice(0, 300)
-    } finally {
-      source.lastFetchAt = this.now()
-      this.busy.delete(id)
-      // Source may have been removed while polling.
-      if (this.load().sources.includes(source)) this.changed()
     }
+
+    source.lastFetchAt = this.now()
+    this.busy.delete(id)
+    this.statusChanged()
+    const current = this.cloneState()
+    const currentSource = current.sources.find((s) => s.id === id)
+    if (!currentSource) return
+    const stagedSource = staged.sources.find((s) => s.id === id)!
+    currentSource.kind = stagedSource.kind
+    if (!currentSource.title && stagedSource.title) currentSource.title = stagedSource.title
+    currentSource.feedUrl = stagedSource.feedUrl
+    currentSource.etag = stagedSource.etag
+    currentSource.lastModified = stagedSource.lastModified
+    currentSource.pageHash = stagedSource.pageHash
+    currentSource.pageText = stagedSource.pageText
+    currentSource.lastStatus = stagedSource.lastStatus
+    currentSource.lastOkAt = stagedSource.lastOkAt
+    currentSource.lastError = stagedSource.lastError
+    currentSource.lastFetchAt = stagedSource.lastFetchAt
+    const existingIds = new Set(current.items.map((item) => item.id))
+    const baseIds = new Set(base.items.map((item) => item.id))
+    const stagedIds = new Set(staged.items.map((item) => item.id))
+    current.items = current.items.filter((item) => item.sourceId !== id || !baseIds.has(item.id) || stagedIds.has(item.id))
+    for (const item of staged.items) {
+      if (!baseIds.has(item.id) && !existingIds.has(item.id)) {
+        current.items.push(item)
+        existingIds.add(item.id)
+      }
+    }
+    this.capItems(current)
+    currentSource.itemCount = current.items.filter((item) => item.sourceId === id).length
+    this.changed(current)
   }
 
-  private async pollSourceInner(source: StoredSource): Promise<void> {
+  private async pollSourceInner(source: StoredSource, st: FeedState): Promise<void> {
     if (source.kind === 'x') {
       if (!source.handle) throw new Error('x-no-handle')
       const x = await this.getX()
       if (!x.connected) throw new Error('x-not-connected')
       const posts = await x.userPosts(source.handle)
-      this.ingest(source, posts.map((p) => xPostToItem(p, 'news', this.now(), source)))
+      this.ingest(st, source, posts.map((p) => xPostToItem(p, 'news', this.now(), source)))
       return
     }
 
@@ -582,7 +634,7 @@ export class FeedService {
       source.lastModified = validators.lastModified
       delete source.pageHash
       delete source.pageText
-      this.ingest(source, this.feedItems(source, feed))
+      this.ingest(st, source, this.feedItems(source, feed))
       return
     }
 
@@ -600,7 +652,7 @@ export class FeedService {
     if (source.pageHash && source.pageHash !== hash) {
       const added = addedLines(source.pageText ?? '', text)
       const now = this.now()
-      this.ingest(source, [{
+      this.ingest(st, source, [{
         id: `news:${source.id}:page-${hash}`,
         tab: 'news',
         kind: 'page-change',
@@ -610,40 +662,45 @@ export class FeedService {
         url: res.finalUrl || source.url,
         sourceId: source.id,
         sourceTitle: source.title ?? source.url,
-        ref: { type: 'source', id: source.id },
+        ref: { type: 'source' as const, id: source.id },
       }])
     }
     source.pageHash = hash
     source.pageText = text.slice(0, PAGE_TEXT_CAP)
-    source.itemCount = this.load().items.filter((i) => i.sourceId === source.id).length
+    source.itemCount = st.items.filter((i) => i.sourceId === source.id).length
   }
 
   async pollX(): Promise<void> {
-    const st = this.load()
     const x = await this.getX()
-    if (!x.connected) return
-    if (this.busy.has('x')) return
+    if (!x.connected || this.busy.has('x')) return
     this.busy.add('x')
-    const meta = (st.x ??= {})
+    let posts: XPost[] = []
+    let failure: string | null = null
     try {
-      const posts = await x.homeTimeline(meta.sinceId ? { sinceId: meta.sinceId } : {})
-      const now = this.now()
-      const items = posts.map((p) => xPostToItem(p, 'subscriptions', now))
-      const have = new Set(st.items.map((i) => i.id))
-      const fresh = items.filter((i) => !have.has(i.id))
-      if (fresh.length) {
-        st.items.push(...fresh)
-        this.capItems()
+      const sinceId = this.load().x?.sinceId
+      posts = await x.homeTimeline(sinceId ? { sinceId } : {})
+    } catch (e) {
+      failure = (e instanceof Error ? e.message : String(e)).slice(0, 300)
+      this.log?.warn(`feed: X timeline failed: ${failure}`)
+    }
+
+    const current = this.cloneState()
+    const meta = (current.x ??= {})
+    if (failure) meta.lastError = failure
+    else {
+      const have = new Set(current.items.map((item) => item.id))
+      for (const post of posts) {
+        const item = xPostToItem(post, 'subscriptions', this.now())
+        if (have.has(item.id)) continue
+        have.add(item.id)
+        current.items.push(item)
       }
+      this.capItems(current)
       if (posts[0]) meta.sinceId = posts[0].id
       delete meta.lastError
-    } catch (e) {
-      meta.lastError = (e instanceof Error ? e.message : String(e)).slice(0, 300)
-      this.log?.warn(`feed: X timeline failed: ${meta.lastError}`)
-    } finally {
-      meta.lastFetchAt = this.now()
-      this.busy.delete('x')
-      this.changed()
     }
+    meta.lastFetchAt = this.now()
+    this.busy.delete('x')
+    this.changed(current)
   }
 }

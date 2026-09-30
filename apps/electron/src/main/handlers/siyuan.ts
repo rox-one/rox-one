@@ -210,14 +210,14 @@ export function registerSiyuanHandlers(server: RpcServer, deps: HandlerDeps): vo
     surfaces.register(record)
     pushTyped(server, RPC_CHANNELS.siyuan.STATE_CHANGED, { to: 'all' }, toState(record))
     // G1: count first open of a durable knowledge surface (dedup re-opens skip).
-    try {
-      const wsId = input.workspaceId
-      if (typeof wsId === 'string' && wsId.length > 0) {
+    const wsId = input.workspaceId
+    if (typeof wsId === 'string' && wsId.length > 0) {
+      try {
         const ws = getWorkspaceByNameOrId(wsId)
         if (ws?.rootPath) bumpKnowledgeMetric(ws.rootPath, 'knowledgeSurfaceOpens')
+      } catch {
+        /* metrics must never break surface open */
       }
-    } catch {
-      /* metrics must never break surface open */
     }
     return instanceId
   })

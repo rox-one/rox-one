@@ -57,13 +57,10 @@ files:
   - resources/bin/pptx-tool.cmd
   - resources/bin/ical-tool
   - resources/bin/ical-tool.cmd
-  # Include bundled uv binary (platform-specific, only the relevant one ships per build)
-  - resources/bin/darwin-arm64/**/*
-  - resources/bin/darwin-x64/**/*
-  - resources/bin/win32-x64/**/*
-  - resources/bin/linux-x64/**/*
-  # Include bundled Bun runtime (platform-specific, set by build script)
-  - vendor/bun/**/*
+  # Platform files below re-include only the target's binaries. Resources are
+  # also copied under dist/, so both paths must be excluded from this common
+  # matcher. A platform matcher containing only exclusions would add **/*.
+  - "!**/resources/bin/{darwin,win32,linux}-*/**"
   # Exclude everything from node_modules (will use extraResources for SDK)
   - "!node_modules/**/*"
 
@@ -164,10 +161,11 @@ mac:
       filter:
         - "**/*"
         - "!**/.gitkeep"
-  # Exclude binaries for other platforms
+  # Positive patterns keep this platform matcher narrow (no implicit **/*).
   files:
-    - "!**/resources/bin/win32-*/**"
-    - "!**/resources/bin/linux-*/**"
+    - resources/bin/darwin-${arch}/**/*
+    - dist/resources/bin/darwin-${arch}/**/*
+    - vendor/bun/**/*
   # Use predictable naming for macOS packages (applies to zip; dmg uses its own config below)
   artifactName: "Rox-${arch}.${ext}"
   # Code signing & notarization (disabled by default for local builds)
@@ -203,18 +201,10 @@ win:
         - x64
   # Use predictable naming: Craft-Agents-x64.exe
   artifactName: "Rox-${arch}.${ext}"
-  files:
-    # Exclude binaries for other platforms
-    - "!**/resources/bin/darwin-*/**"
-    - "!**/resources/bin/linux-*/**"
-    # WORKAROUND: Exclude bun and uv from regular files on Windows.
-    # electron-builder's npm node module collector causes EBUSY errors when copying
-    # .exe files because it scans/locks files while simultaneously trying to copy them.
-    # Moving them to extraResources avoids this by copying before the collector runs.
-    # See: https://github.com/electron-userland/electron-builder/issues/8250
-    - "!vendor/bun/**/*"
-    - "!**/resources/bin/win32-x64/**"
-  # Copy executables as extraResources to avoid EBUSY file locking (see comment above)
+  # Bun and uv stay outside regular files to avoid collector EBUSY locking.
+  # Do not add a negative-only files matcher: it implicitly includes **/*.
+  # See: https://github.com/electron-userland/electron-builder/issues/8250
+  # Copy executables as extraResources; source/destination remain unchanged.
   extraResources:
     - from: node_modules/@anthropic-ai/claude-agent-sdk
       to: app/node_modules/@anthropic-ai/claude-agent-sdk
@@ -276,7 +266,8 @@ linux:
       filter:
         - "**/*"
         - "!**/.gitkeep"
-  # Exclude binaries for other platforms
+  # Positive patterns keep this platform matcher narrow (no implicit **/*).
   files:
-    - "!**/resources/bin/darwin-*/**"
-    - "!**/resources/bin/win32-*/**"
+    - resources/bin/linux-${arch}/**/*
+    - dist/resources/bin/linux-${arch}/**/*
+    - vendor/bun/**/*

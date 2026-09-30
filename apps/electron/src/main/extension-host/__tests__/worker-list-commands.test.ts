@@ -14,12 +14,17 @@ async function awaitReply(
   posted: Msg[],
   id: string,
   type: 'ok' | 'error',
-  maxTurns = 200,
+  maxWaitMs = 2_000,
 ): Promise<Msg | undefined> {
-  for (let i = 0; i < maxTurns; i++) {
+  const deadline = performance.now() + maxWaitMs
+  while (performance.now() < deadline) {
     const hit = posted.find((m) => m.id === id && m.type === type)
     if (hit) return hit
-    await new Promise((r) => setImmediate(r))
+    const failure = posted.find((m) => m.id === id && m.type === 'error')
+    if (failure && type === 'ok') throw new Error(`Worker ${id} failed: ${failure.error}`)
+    // Import performs real filesystem I/O; counting setImmediate callbacks
+    // allowed the old fixture to time out in 2ms under the union gate.
+    await new Promise((r) => setTimeout(r, 1))
   }
   return undefined
 }

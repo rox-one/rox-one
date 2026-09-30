@@ -29,6 +29,7 @@ import {
   Plus,
   Radar as RadarIcon,
   Rss,
+  RotateCcw,
   Search,
   SquarePen,
   Timer,
@@ -39,6 +40,7 @@ import type { LocalMeeting } from '../../../shared/meetings-local'
 import type { NoteSummary } from '@craft-agent/shared/protocol'
 import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
+import type { AgentBudgetSnapshot } from '@craft-agent/shared/agent'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { parseAutomationsConfig, type AutomationListItem } from '@/components/automations/types'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
@@ -341,17 +343,34 @@ function AgentsWidget({ edit, span }: WidgetProps) {
   const { t } = useTranslation()
   const fmt = useFormat()
   const now = useNow(30_000)
+  const workspace = useActiveWorkspace()
+  const workspaceId = workspace?.id ?? null
   const { active } = useHomeSessions()
   const { pendingPermissions, pendingCredentials } = useAppShellContext()
+  const [budget, setBudget] = useState<AgentBudgetSnapshot | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const api = window.electronAPI
+    setBudget(null)
+    if (!workspaceId || typeof api?.getSessionBudget !== 'function') return
+    api.getSessionBudget(workspaceId).then((snapshot) => {
+      if (!cancelled) setBudget(snapshot)
+    }).catch(() => {
+      if (!cancelled) setBudget(null)
+    })
+    return () => { cancelled = true }
+  }, [workspaceId])
+
   const center = useMemo(() => buildAgentCenter({
-    sessions: active.map((s) => ({ id: s.id, name: getSessionTitle(s), isProcessing: s.isProcessing, lastMessageAt: s.lastMessageAt, createdAt: s.createdAt, costUsd: s.tokenUsage?.costUsd })),
+    sessions: active.map((s) => ({ id: s.id, name: getSessionTitle(s), isProcessing: s.isProcessing, lastMessageAt: s.lastMessageAt, createdAt: s.createdAt })),
     pendingPermissions: new Map([...pendingPermissions].map(([id, list]) => [id, list.length])),
     pendingCredentials: new Map([...pendingCredentials].map(([id, list]) => [id, list.length])),
     cloudRuns: [],
     automations: [],
     now,
-    dailyBudgetUsd: null,
-  }), [active, pendingPermissions, pendingCredentials, now])
+    budget,
+  }), [active, pendingPermissions, pendingCredentials, now, budget])
   const rows = [
     ...center.waiting.map((w) => ({ id: w.session.id, name: w.session.name, tone: 'warning' as const, note: t('workbench.home.agents.waitingRow') })),
     ...center.stuck.map((s) => ({ id: s.id, name: s.name, tone: 'danger' as const, note: t('workbench.home.agents.stuckRow') })),
@@ -378,7 +397,7 @@ function AgentsWidget({ edit, span }: WidgetProps) {
           </div>
         )}
         <span className="flex-1" />
-        <p className="truncate text-[12px] text-muted-foreground">{t('workbench.home.agents.costToday', { cost: formatUsd(center.costToday) })}</p>
+        <p className="truncate text-[12px] text-muted-foreground">{t('workbench.home.agents.costToday', { cost: center.budget ? formatUsd(center.budget.spentUsd) : t('common.unavailable') })}</p>
       </div>
     </WidgetFrame>
   )
@@ -960,27 +979,48 @@ function FeedWidget({ edit, span }: WidgetProps) {
   const fmt = useFormat()
   const now = useNow(60_000)
   const workspace = useActiveWorkspace()
-  const feed = useFeedItems(workspace?.id ?? null)
+  const feed = useFeedItems(workspace?.id ?? null, { retainStale: true })
   const latest = feed.items.slice(0, span >= 12 ? 10 : 5)
   return (
     <WidgetFrame testId="feed" title={t('workbench.home.w.feed')} onOpen={() => navigate(routes.view.feed())} edit={edit}>
-      {!feed.available ? (
-        <WidgetEmpty text={t('workbench.home.feed.unavailable')} />
+      {feed.refreshing && !feed.loaded ? (
+        <WidgetEmpty text={t('workbench.home.feed.loading')} />
+      ) : !feed.available && latest.length === 0 ? (
+        <WidgetEmpty
+          text={t('workbench.home.feed.unavailable')}
+          hint={feed.error ? t('workbench.home.feed.refreshFailed') : undefined}
+          action={feed.error ? { label: t('workbench.home.feed.retry'), onClick: feed.retry } : undefined}
+        />
       ) : feed.loaded && latest.length === 0 ? (
-        <WidgetEmpty text={t('workbench.home.feed.empty')} hint={t('workbench.home.feed.emptyHint')} />
+        <WidgetEmpty
+          text={t('workbench.home.feed.empty')}
+          hint={feed.error ? t('workbench.home.feed.refreshFailed') : t('workbench.home.feed.emptyHint')}
+          action={feed.error ? { label: t('workbench.home.feed.retry'), onClick: feed.retry } : undefined}
+        />
       ) : (
-        <WidgetList columns={span >= 12 ? 2 : 1}>
-          {latest.map((item) => (
-            <WidgetRow
-              key={item.id}
-              testId={item.id}
-              onClick={() => navigate(routes.view.feed(item.id))}
-              leading={item.status === 'error' ? <Dot tone="danger" /> : item.status === 'running' ? <Dot tone="accent" /> : item.tab === 'agents' ? <Bot className="h-3.5 w-3.5" /> : <Rss className="h-3.5 w-3.5" />}
-              title={item.title || item.summary || item.id}
-              trailing={fmt.ago(item.at, now)}
-            />
-          ))}
-        </WidgetList>
+        <>
+          {feed.error ? (
+            <div className="flex items-center justify-between gap-2 px-1.5 py-1 text-[11px] text-destructive" role="status">
+              <span className="min-w-0">{t('workbench.home.feed.refreshFailed')}</span>
+              <WidgetButton onClick={feed.retry} title={t('workbench.home.feed.retry')} disabled={feed.refreshing}>
+                <RotateCcw className="h-3 w-3" />
+                {t('workbench.home.feed.retry')}
+              </WidgetButton>
+            </div>
+          ) : null}
+          <WidgetList columns={span >= 12 ? 2 : 1}>
+            {latest.map((item) => (
+              <WidgetRow
+                key={item.id}
+                testId={item.id}
+                onClick={() => navigate(routes.view.feed(item.id))}
+                leading={item.status === 'error' ? <Dot tone="danger" /> : item.status === 'running' ? <Dot tone="accent" /> : item.tab === 'agents' ? <Bot className="h-3.5 w-3.5" /> : <Rss className="h-3.5 w-3.5" />}
+                title={item.title || item.summary || item.id}
+                trailing={fmt.ago(item.at, now)}
+              />
+            ))}
+          </WidgetList>
+        </>
       )}
     </WidgetFrame>
   )
@@ -1378,4 +1418,3 @@ export const HOME_WIDGETS: Record<HomeWidgetId, HomeWidgetDef> = {
   calls: { id: 'calls', titleKey: 'workbench.home.w.calls', descriptionKey: 'workbench.home.d.calls', icon: Phone, Component: CallsWidget },
   calendar: { id: 'calendar', titleKey: 'workbench.home.w.calendar', descriptionKey: 'workbench.home.d.calendar', icon: CalendarDays, Component: CalendarWidget },
 }
-

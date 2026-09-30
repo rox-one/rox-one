@@ -5,9 +5,12 @@ import {
   HOME_WIDGET_IDS,
   addWidget,
   availableWidgets,
+  canReadHomeLayout,
   moveWidget,
   normalizeHomeLayout,
   removeWidget,
+  persistHomeLayout,
+  isSupportedHomeLayout,
   resizeWidget,
   shiftWidget,
   widgetSpan,
@@ -58,6 +61,20 @@ describe('home dashboard layout', () => {
     expect([...grouped].sort()).toEqual([...HOME_WIDGET_IDS].sort())
   })
 
+  it('keeps future or damaged layouts from being rewritten as the current default', () => {
+    expect(isSupportedHomeLayout({ version: 1, widgets: [{ id: 'feed', size: 'L' }] })).toBe(true)
+    expect(isSupportedHomeLayout({ version: 2, widgets: [{ id: 'feed', size: 'M' }] })).toBe(true)
+    expect(isSupportedHomeLayout({ version: 3, widgets: [] })).toBe(false)
+    expect(isSupportedHomeLayout({ version: 2, widgets: [{ id: 'pluginWidget', size: 'M' }] })).toBe(false)
+    expect(isSupportedHomeLayout({ version: 2, widgets: 'not-an-array' })).toBe(false)
+    expect(isSupportedHomeLayout({ version: 2, widgets: [{ id: 'feed', size: 'M' }, { id: 'feed', size: 'S' }] })).toBe(false)
+    expect(isSupportedHomeLayout({ version: 2, widgets: [], serverRevision: 4 })).toBe(false)
+    expect(isSupportedHomeLayout({ version: 2, widgets: [{ id: 'feed', size: 'M', sourceIds: ['source-a'] }] })).toBe(false)
+    expect(isSupportedHomeLayout(null)).toBe(false)
+    expect(canReadHomeLayout({ version: 2, widgets: [], ownerId: 'workspace-a', revision: 'r1' }, 'workspace-a')).toBe(true)
+    expect(canReadHomeLayout({ version: 2, widgets: [], ownerId: 'workspace-a', revision: 'r1' }, 'workspace-b')).toBe(false)
+  })
+
   it('adds, removes, resizes and reorders without duplicates', () => {
     let layout = normalizeHomeLayout({ version: 2, widgets: [{ id: 'tasks', size: 'S' }, { id: 'feed', size: 'M' }] })
     expect(availableWidgets(layout)).not.toContain('tasks')
@@ -74,6 +91,27 @@ describe('home dashboard layout', () => {
     layout = removeWidget(layout, 'radar')
     expect(layout.widgets.map((w) => w.id)).toEqual(['tasks', 'feed'])
   })
+  it('restores saved order and widget density after serialization', () => {
+    const saved = { version: 2, widgets: [{ id: 'calendar', size: 'L' }, { id: 'feed', size: 'S' }] }
+    expect(normalizeHomeLayout(JSON.parse(JSON.stringify(saved)))).toEqual({
+      version: 2,
+      widgets: [{ id: 'calendar', size: 'L' }, { id: 'feed', size: 'S' }],
+    })
+  })
+  it('persists stable owner and revision metadata alongside the chosen widgets', () => {
+    expect(persistHomeLayout(
+      { version: 2, widgets: [{ id: 'feed', size: 'L' }] },
+      'workspace-a',
+      'home-layout-rev-1',
+    )).toEqual({
+      version: 2,
+      widgets: [{ id: 'feed', size: 'L' }],
+      ownerId: 'workspace-a',
+      revision: 'home-layout-rev-1',
+    })
+  })
+
+
 
   it('spans never exceed the grid and collapse on narrow containers (no horizontal overflow)', () => {
     for (const width of [400, 800, 1000, 1280, 1440, 1728]) {

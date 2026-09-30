@@ -130,6 +130,28 @@ export function serializeNoteBaseView(view: NoteBaseView): string {
   return JSON.stringify(view)
 }
 
+export function setNotePropertyColumn(view: NoteBaseView, key: string, visible: boolean): NoteBaseView {
+  const normalizedKey = key.trim()
+  if (!/^[A-Za-z0-9_-]+$/.test(normalizedKey)) return view
+  const column = `property:${normalizedKey}`
+  const hasColumn = view.columns.includes(column)
+  if (visible === hasColumn) return view
+  return {
+    ...view,
+    columns: visible ? [...view.columns, column] : view.columns.filter((item) => item !== column),
+  }
+}
+
+export function parseNotePropertyValue(previous: unknown, input: string): unknown {
+  if (typeof previous === 'number' && input.trim() && Number.isFinite(Number(input))) {
+    return Number(input)
+  }
+  if (typeof previous === 'boolean' && /^(true|false)$/i.test(input.trim())) {
+    return input.trim().toLowerCase() === 'true'
+  }
+  return input
+}
+
 export function projectNoteRows(
   notes: ReadonlyArray<{
     id: string

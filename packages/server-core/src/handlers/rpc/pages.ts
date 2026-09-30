@@ -2,6 +2,7 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { loadWorkspacePages, loadPage, loadPageById } from '@craft-agent/shared/pages'
 import type { PageActionRequest } from '@craft-agent/shared/pages'
 import type { PageActionBroker, PageActionExecutors } from '@craft-agent/shared/pages'
 import { assertPageSourceUsable } from '../../pages/source-gate'
@@ -54,7 +55,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   async function broadcastChanged(workspaceId: string, workspaceRootPath: string): Promise<void> {
     const { loadWorkspacePages } = await import('@craft-agent/shared/pages')
-    const pages = loadWorkspacePages(workspaceRootPath)
+    const pages = loadWorkspacePages(workspaceRootPath, workspaceId)
     pushTyped(server, RPC_CHANNELS.pages.CHANGED, { to: 'workspace', workspaceId }, workspaceId, pages)
   }
 
@@ -182,8 +183,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
       log.error(`PAGES_GET: Workspace not found: ${workspaceId}`)
       return []
     }
-    const { loadWorkspacePages } = await import('@craft-agent/shared/pages')
-    return loadWorkspacePages(workspace.rootPath)
+    return loadWorkspacePages(workspace.rootPath, workspace.id)
   })
 
   // Get one page (by slug or id)
@@ -192,9 +192,8 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!isClaimableLive(read.result)) return null
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
-    const { loadPage, loadPageById } = await import('@craft-agent/shared/pages')
-    return loadPage(workspace.rootPath, pageIdOrSlug)
-      ?? loadPageById(workspace.rootPath, pageIdOrSlug)
+    return loadPage(workspace.rootPath, pageIdOrSlug, workspace.id)
+      ?? loadPageById(workspace.rootPath, pageIdOrSlug, workspace.id)
   })
 
   // Create a new page
@@ -213,10 +212,10 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
       refresh: input.refresh,
     })
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${page.slug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
+    await broadcastChanged(workspace.id, workspace.rootPath)
     // A page created with inline content gets a poster; empty pages wait for content.
     if (input.content !== undefined) {
-      deps.sessionManager.enqueuePageThumbnail(workspaceId, workspace.rootPath, page.slug)
+      deps.sessionManager.enqueuePageThumbnail(workspace.id, workspace.rootPath, page.slug)
     }
     log.info(`Created page: ${page.slug}`)
     return page
@@ -234,7 +233,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const { updatePage } = await import('@craft-agent/shared/pages')
     const updated = updatePage(workspace.rootPath, pageSlug, patch)
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
+    await broadcastChanged(workspace.id, workspace.rootPath)
     return updated
   })
 
@@ -253,7 +252,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
       log: (message: string) => log.warn(message),
     })
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
+    await broadcastChanged(workspace.id, workspace.rootPath)
     log.info(`Deleted page ${pageSlug}`)
     return { publicCopyMayRemain }
   })
@@ -276,8 +275,8 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const { savePageContent } = await import('@craft-agent/shared/pages')
     const updated = savePageContent(workspace.rootPath, pageSlug, content)
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
-    deps.sessionManager.enqueuePageThumbnail(workspaceId, workspace.rootPath, pageSlug)
+    await broadcastChanged(workspace.id, workspace.rootPath)
+    deps.sessionManager.enqueuePageThumbnail(workspace.id, workspace.rootPath, pageSlug)
     return updated
   })
 
@@ -309,7 +308,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const { addPageGrant } = await import('@craft-agent/shared/pages')
     const grant = addPageGrant(workspace.rootPath, pageSlug, input)
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
+    await broadcastChanged(workspace.id, workspace.rootPath)
     const target = grant.action.kind === 'script' ? grant.action.script : grant.action.sourceSlug
     log.info(`Issued page grant ${grant.id} on ${pageSlug} (${grant.action.kind}:${target})`)
     return grant
@@ -323,7 +322,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const removed = revokePageGrant(workspace.rootPath, pageSlug, grantId)
     if (removed) {
       deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-      await broadcastChanged(workspaceId, workspace.rootPath)
+      await broadcastChanged(workspace.id, workspace.rootPath)
       log.info(`Revoked page grant ${grantId} on ${pageSlug}`)
     }
     return removed
@@ -420,7 +419,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
       viewOnlyAcknowledged: options.viewOnlyAcknowledged,
     })
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
+    await broadcastChanged(workspace.id, workspace.rootPath)
     return updated
   })
 
@@ -436,7 +435,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const publisher = await buildPublisher()
     const updated = await publisher.setPassword(workspace.rootPath, workspace.id, pageSlug, password)
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
+    await broadcastChanged(workspace.id, workspace.rootPath)
     return updated
   })
 
@@ -450,7 +449,7 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
     const publisher = await buildPublisher()
     const result = await publisher.unpublish(workspace.rootPath, workspace.id, pageSlug)
     deps.sessionManager.notifyConfigFileChange(workspace.rootPath, `pages/${pageSlug}/page.json`)
-    await broadcastChanged(workspaceId, workspace.rootPath)
+    await broadcastChanged(workspace.id, workspace.rootPath)
     return { config: result.config, warning: result.warning }
   })
 

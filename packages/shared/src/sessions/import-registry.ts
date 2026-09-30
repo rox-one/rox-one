@@ -3,7 +3,7 @@
  * Lives in the workspace (.rox), never a DSH store.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { sameRealPath, splitForeignSourceRef } from './import-home.ts'
 import type { ForeignIndexEntry, ForeignRegistryRecord } from './import-types.ts'
@@ -37,7 +37,9 @@ export function saveForeignImportRegistry(
 ): void {
   const path = foreignImportRegistryPath(workspaceRoot)
   mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, `${JSON.stringify({ version: 1, entries }, null, 2)}\n`)
+  const temporaryPath = `${path}.${process.pid}.${Date.now()}.tmp`
+  writeFileSync(temporaryPath, `${JSON.stringify({ version: 1, entries }, null, 2)}\n`)
+  renameSync(temporaryPath, path)
 }
 
 export function lookupImportedSession(

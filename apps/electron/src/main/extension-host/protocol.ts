@@ -18,8 +18,6 @@ export type MainToWorkerMessage =
       extensionId: string
       method: string
       args?: unknown[]
-      /** Declared permissions for this call (basic gate on worker side). */
-      permissions?: string[]
     }
   | { id: string; type: 'unload'; extensionId: string }
   /** Ask worker to describe commands declared by a loaded extension module. */

@@ -20,7 +20,7 @@
 export type CSSColor = string;
 
 /**
- * Core theme colors (6-color semantic system)
+ * Semantic colors plus the supported terminal palette.
  */
 export interface ThemeColors {
   background?: CSSColor;
@@ -29,6 +29,10 @@ export interface ThemeColors {
   info?: CSSColor; // Amber (Ask mode, warnings)
   success?: CSSColor; // Green
   destructive?: CSSColor; // Red
+  terminalBackground?: CSSColor;
+  terminalForeground?: CSSColor;
+  terminalCursor?: CSSColor;
+  terminalSelection?: CSSColor;
 }
 
 /**
@@ -44,9 +48,9 @@ export interface SurfaceColors {
 }
 
 /**
- * Theme mode - solid (default) or scenic (background image with glass panels)
+ * Theme mode - solid (default), scenic (background image), or blurred surfaces.
  */
-export type ThemeMode = 'solid' | 'scenic';
+export type ThemeMode = 'solid' | 'scenic' | 'blurred';
 
 /**
  * Theme overrides - light mode default, optional dark overrides
@@ -57,9 +61,7 @@ export interface ThemeOverrides extends ThemeColors, SurfaceColors {
   dark?: ThemeColors & SurfaceColors;
 
   /**
-   * Theme mode: 'solid' (default) or 'scenic'
-   * - solid: Traditional solid color backgrounds
-   * - scenic: Full-window background image with glass panels
+   * Theme mode: 'solid' (default), 'scenic' (background image), or 'blurred' surfaces.
    */
   mode?: ThemeMode;
 
@@ -81,6 +83,10 @@ const COLOR_KEYS: (keyof ThemeColors)[] = [
   'info',
   'success',
   'destructive',
+  'terminalBackground',
+  'terminalForeground',
+  'terminalCursor',
+  'terminalSelection',
 ];
 
 const SURFACE_KEYS: (keyof SurfaceColors)[] = [
@@ -202,6 +208,10 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
     }
   }
   if (colors.info) vars.push(`--info: ${colors.info};`);
+  if (colors.terminalBackground) vars.push(`--terminal-background: ${colors.terminalBackground};`);
+  if (colors.terminalForeground) vars.push(`--terminal-foreground: ${colors.terminalForeground};`);
+  if (colors.terminalCursor) vars.push(`--terminal-cursor: ${colors.terminalCursor};`);
+  if (colors.terminalSelection) vars.push(`--terminal-selection: ${colors.terminalSelection};`);
   if (colors.success) vars.push(`--success: ${colors.success};`);
   if (colors.destructive) vars.push(`--destructive: ${colors.destructive};`);
 
