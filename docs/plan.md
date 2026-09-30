@@ -1,6 +1,6 @@
 # September program implementation plan
 
-**Goal:** deliver an evidence-backed, non-duplicative Rox/Conation/RMA/Golden Gate program: reconstruct requirements and current state, audit actual screens, freeze common interfaces, implement approved independent work safely, serially integrate, and prove the full platform/product acceptance matrix. The handoff package itself is draft publication material; product program is **NOT STARTED**.
+**Goal:** deliver an evidence-backed, non-duplicative Rox/Conation/RMA/Golden Gate program: reconstruct requirements and current state, audit actual screens, freeze common interfaces, implement approved independent work safely, serially integrate, and prove the full platform/product acceptance matrix. The handoff package is published and verified; product program is **NOT STARTED**.
 
 **Spec:** [`docs/spec.md`](spec.md); product scope/complete U01–U31, Conation seq703 16-row checklist and domain mapping: [`docs/september-program/PRD.md`](september-program/PRD.md).
 
@@ -102,7 +102,7 @@ This plan does not claim any feature gate passed. When executing a separately au
 
 ## Progress and recovery
 
-**Current state:** product program NOT STARTED by this packet. The public preparation contains 109 task contracts and 464 dependency edges, mapping 484 historical requirement rows plus 5 additive OKR rows (489 total), alongside 219 prior Macro controls on 61 screens. All task records remain NOT_RUN; no product execution or acceptance is claimed. A concurrently prepared read-only source reconstruction and active ownership were found and preserved privately; RECON must reuse/reconcile that work before assigning any new product owner. Next product work: current source/owner reconciliation → actual audit → SharedIntegrator interface freeze → bounded independent streams → serial integration → real multi-platform acceptance. Missing runner/credential remains explicit; preserve all user worktrees and changes. Publication status is recorded separately after observed GitHub delivery.
+**Current state:** product program NOT STARTED by this packet. The published handoff contains 109 task contracts and 464 dependency edges, mapping 484 historical requirement rows plus 5 additive OKR rows (489 total), alongside 219 prior Macro controls on 61 screens. All task records remain NOT_RUN; no product execution or acceptance is claimed. All 109 GitHub issues were created without additional creation during resume; exact remote titles, bodies, labels, and dependency links were verified against docs commit `e7b32c9d2b931c71aaa383546aebfbafe50aa4a6` on `docs/september-program-20260930`. The root issue is #1157. A concurrently prepared read-only source reconstruction and active ownership were found and preserved privately; RECON must reuse/reconcile that work before assigning any new product owner. Next product work remains current source/owner reconciliation → actual audit → SharedIntegrator interface freeze → bounded independent streams → serial integration → real multi-platform acceptance. Missing runner/credential remains explicit; preserve all user worktrees and changes. Publication verification records public handoff delivery only and does not pass PROGRAM-01 or any product task.
 
 ## Addendum tasks: project OKR and daily agent monitoring
 

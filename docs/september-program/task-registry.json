@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productStatus": "NOT_STARTED",
-  "packetStatus": "PREPUBLICATION_VALIDATED_DRAFT",
+  "packetStatus": "PUBLISHED_VERIFIED",
   "sourceBaseline": "f63294ba4fffa7238b46b24e918925a313ad0b12",
   "plan": "../plan.md",
   "executionContract": "execution-contract.md",
@@ -109,7 +109,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1157",
+      "issueNumber": 1157
     },
     {
       "id": "RECON-01",
@@ -192,7 +194,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1158",
+      "issueNumber": 1158
     },
     {
       "id": "AUDIT-01",
@@ -279,7 +283,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1159",
+      "issueNumber": 1159
     },
     {
       "id": "DATA-01",
@@ -331,7 +337,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1212",
+      "issueNumber": 1212
     },
     {
       "id": "SHARED-01",
@@ -383,7 +391,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1160",
+      "issueNumber": 1160
     },
     {
       "id": "CHAT-01",
@@ -435,7 +445,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1121",
+      "issueNumber": 1121
     },
     {
       "id": "TEAMS-01",
@@ -494,7 +506,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1123",
+      "issueNumber": 1123
     },
     {
       "id": "SYNC-01",
@@ -555,7 +569,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1133",
+      "issueNumber": 1133
     },
     {
       "id": "CHAT-02",
@@ -630,7 +646,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1122",
+      "issueNumber": 1122
     },
     {
       "id": "TEAMS-02",
@@ -684,7 +702,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1124",
+      "issueNumber": 1124
     },
     {
       "id": "TEAMS-03",
@@ -739,7 +759,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1125",
+      "issueNumber": 1125
     },
     {
       "id": "COLLAB-01",
@@ -803,7 +825,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1126",
+      "issueNumber": 1126
     },
     {
       "id": "COLLAB-02",
@@ -856,7 +880,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1127",
+      "issueNumber": 1127
     },
     {
       "id": "COLLAB-03",
@@ -909,7 +935,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1128",
+      "issueNumber": 1128
     },
     {
       "id": "COLLAB-04",
@@ -967,7 +995,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1129",
+      "issueNumber": 1129
     },
     {
       "id": "COLLAB-05",
@@ -1024,7 +1054,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1130",
+      "issueNumber": 1130
     },
     {
       "id": "INTEGRATIONS-03",
@@ -1077,7 +1109,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1135",
+      "issueNumber": 1135
     },
     {
       "id": "INTEGRATIONS-01",
@@ -1133,7 +1167,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1131",
+      "issueNumber": 1131
     },
     {
       "id": "INTEGRATIONS-02",
@@ -1192,7 +1228,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1132",
+      "issueNumber": 1132
     },
     {
       "id": "CALENDAR-01",
@@ -1268,7 +1306,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1199",
+      "issueNumber": 1199
     },
     {
       "id": "VOICE-01",
@@ -1319,7 +1359,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1185",
+      "issueNumber": 1185
     },
     {
       "id": "TRANSCRIPTIONS-01",
@@ -1376,7 +1418,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1188",
+      "issueNumber": 1188
     },
     {
       "id": "MEETINGS-01",
@@ -1450,7 +1494,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1187",
+      "issueNumber": 1187
     },
     {
       "id": "CALLS-01",
@@ -1502,7 +1548,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1134",
+      "issueNumber": 1134
     },
     {
       "id": "UX-01",
@@ -1568,7 +1616,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1136",
+      "issueNumber": 1136
     },
     {
       "id": "UX-02",
@@ -1620,7 +1670,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1137",
+      "issueNumber": 1137
     },
     {
       "id": "DESIGN-01",
@@ -1679,7 +1731,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1138",
+      "issueNumber": 1138
     },
     {
       "id": "ONBOARD-01",
@@ -1735,7 +1789,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1139",
+      "issueNumber": 1139
     },
     {
       "id": "THEME-01",
@@ -1790,7 +1846,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1140",
+      "issueNumber": 1140
     },
     {
       "id": "PROFILE-01",
@@ -1840,7 +1898,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1141",
+      "issueNumber": 1141
     },
     {
       "id": "L10N-01",
@@ -1917,7 +1977,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1142",
+      "issueNumber": 1142
     },
     {
       "id": "A11Y-01",
@@ -1988,7 +2050,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1143",
+      "issueNumber": 1143
     },
     {
       "id": "SETTINGS-01",
@@ -2047,7 +2111,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1144",
+      "issueNumber": 1144
     },
     {
       "id": "NATIVE-01",
@@ -2105,7 +2171,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1145",
+      "issueNumber": 1145
     },
     {
       "id": "WINDOWS-01",
@@ -2158,7 +2226,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1146",
+      "issueNumber": 1146
     },
     {
       "id": "GG-01",
@@ -2214,7 +2284,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1147",
+      "issueNumber": 1147
     },
     {
       "id": "GG-02",
@@ -2272,7 +2344,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1148",
+      "issueNumber": 1148
     },
     {
       "id": "GG-03",
@@ -2338,7 +2412,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1149",
+      "issueNumber": 1149
     },
     {
       "id": "RMA-01",
@@ -2399,7 +2475,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1150",
+      "issueNumber": 1150
     },
     {
       "id": "RMA-02",
@@ -2461,7 +2539,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1151",
+      "issueNumber": 1151
     },
     {
       "id": "RMA-03",
@@ -2525,7 +2605,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1152",
+      "issueNumber": 1152
     },
     {
       "id": "CONATION-DELIVERY-01",
@@ -2584,7 +2666,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1155",
+      "issueNumber": 1155
     },
     {
       "id": "CONATION-AUTH-01",
@@ -2667,7 +2751,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1153",
+      "issueNumber": 1153
     },
     {
       "id": "CONATION-E2E-01",
@@ -2820,7 +2906,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1154",
+      "issueNumber": 1154
     },
     {
       "id": "DECISION-01",
@@ -2868,7 +2956,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1156",
+      "issueNumber": 1156
     },
     {
       "id": "NOTES-01",
@@ -2932,7 +3022,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1163",
+      "issueNumber": 1163
     },
     {
       "id": "NOTES-02",
@@ -2983,7 +3075,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1164",
+      "issueNumber": 1164
     },
     {
       "id": "NOTES-03",
@@ -3039,7 +3133,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1165",
+      "issueNumber": 1165
     },
     {
       "id": "CANVAS-01",
@@ -3102,7 +3198,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1166",
+      "issueNumber": 1166
     },
     {
       "id": "CANVAS-02",
@@ -3172,7 +3270,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1167",
+      "issueNumber": 1167
     },
     {
       "id": "MEMORY-01",
@@ -3231,7 +3331,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1168",
+      "issueNumber": 1168
     },
     {
       "id": "MEMORY-02",
@@ -3286,7 +3388,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1169",
+      "issueNumber": 1169
     },
     {
       "id": "SKILLS-01",
@@ -3342,7 +3446,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1170",
+      "issueNumber": 1170
     },
     {
       "id": "PLUGINS-01",
@@ -3396,7 +3502,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1171",
+      "issueNumber": 1171
     },
     {
       "id": "MARKETPLACE-01",
@@ -3455,7 +3563,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1172",
+      "issueNumber": 1172
     },
     {
       "id": "IMPORTS-01",
@@ -3512,7 +3622,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1173",
+      "issueNumber": 1173
     },
     {
       "id": "SEARCH-01",
@@ -3577,7 +3689,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1174",
+      "issueNumber": 1174
     },
     {
       "id": "DRIVE-01",
@@ -3644,7 +3758,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1175",
+      "issueNumber": 1175
     },
     {
       "id": "PAGES-01",
@@ -3717,7 +3833,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1176",
+      "issueNumber": 1176
     },
     {
       "id": "SPREADSHEET-01",
@@ -3780,7 +3898,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1178",
+      "issueNumber": 1178
     },
     {
       "id": "PDF-01",
@@ -3836,7 +3956,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1179",
+      "issueNumber": 1179
     },
     {
       "id": "SPLIT-01",
@@ -3892,7 +4014,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1180",
+      "issueNumber": 1180
     },
     {
       "id": "DOCUMENTS-01",
@@ -3949,7 +4073,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1177",
+      "issueNumber": 1177
     },
     {
       "id": "MAIL-01",
@@ -4028,7 +4154,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1181",
+      "issueNumber": 1181
     },
     {
       "id": "MAIL-02",
@@ -4082,7 +4210,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1182",
+      "issueNumber": 1182
     },
     {
       "id": "MAIL-03",
@@ -4140,7 +4270,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1183",
+      "issueNumber": 1183
     },
     {
       "id": "MAIL-04",
@@ -4210,7 +4342,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1184",
+      "issueNumber": 1184
     },
     {
       "id": "VOICE-02",
@@ -4267,7 +4401,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1186",
+      "issueNumber": 1186
     },
     {
       "id": "TRANSCRIPTIONS-02",
@@ -4320,7 +4456,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1189",
+      "issueNumber": 1189
     },
     {
       "id": "MEETINGS-02",
@@ -4378,7 +4516,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1190",
+      "issueNumber": 1190
     },
     {
       "id": "MEETINGS-03",
@@ -4432,7 +4572,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1191",
+      "issueNumber": 1191
     },
     {
       "id": "PROJECTS-01",
@@ -4504,7 +4646,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1194",
+      "issueNumber": 1194
     },
     {
       "id": "OKR-01",
@@ -4558,7 +4702,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1193",
+      "issueNumber": 1193
     },
     {
       "id": "TASKS-01",
@@ -4654,7 +4800,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1195",
+      "issueNumber": 1195
     },
     {
       "id": "HOME-01",
@@ -4711,7 +4859,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1196",
+      "issueNumber": 1196
     },
     {
       "id": "DASHBOARD-01",
@@ -4788,7 +4938,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1197",
+      "issueNumber": 1197
     },
     {
       "id": "INBOX-01",
@@ -4856,7 +5008,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1198",
+      "issueNumber": 1198
     },
     {
       "id": "CRM-01",
@@ -4942,7 +5096,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1200",
+      "issueNumber": 1200
     },
     {
       "id": "REMINDERS-01",
@@ -5004,7 +5160,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1201",
+      "issueNumber": 1201
     },
     {
       "id": "FEED-01",
@@ -5061,7 +5219,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1202",
+      "issueNumber": 1202
     },
     {
       "id": "QUEST-01",
@@ -5115,7 +5275,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1203",
+      "issueNumber": 1203
     },
     {
       "id": "ARENA-01",
@@ -5164,7 +5326,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1204",
+      "issueNumber": 1204
     },
     {
       "id": "COUNCIL-01",
@@ -5212,7 +5376,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1205",
+      "issueNumber": 1205
     },
     {
       "id": "ACTIVITY-01",
@@ -5270,7 +5436,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1206",
+      "issueNumber": 1206
     },
     {
       "id": "DECISIONS-01",
@@ -5326,7 +5494,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1207",
+      "issueNumber": 1207
     },
     {
       "id": "RADAR-01",
@@ -5377,7 +5547,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1208",
+      "issueNumber": 1208
     },
     {
       "id": "DOSSIER-01",
@@ -5436,7 +5608,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1209",
+      "issueNumber": 1209
     },
     {
       "id": "RUNTIME-01",
@@ -5496,7 +5670,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1221",
+      "issueNumber": 1221
     },
     {
       "id": "AGENT-BUDGET-01",
@@ -5550,7 +5726,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1213",
+      "issueNumber": 1213
     },
     {
       "id": "FOCUS-01",
@@ -5604,7 +5782,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1214",
+      "issueNumber": 1214
     },
     {
       "id": "OKR-02",
@@ -5660,7 +5840,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1192",
+      "issueNumber": 1192
     },
     {
       "id": "AGENTCENTER-01",
@@ -5723,7 +5905,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1210",
+      "issueNumber": 1210
     },
     {
       "id": "PAYMENTS-01",
@@ -5781,7 +5965,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1211",
+      "issueNumber": 1211
     },
     {
       "id": "AUTOMATION-01",
@@ -5837,7 +6023,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1215",
+      "issueNumber": 1215
     },
     {
       "id": "AUTOMATION-02",
@@ -5889,7 +6077,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1216",
+      "issueNumber": 1216
     },
     {
       "id": "SCHEDULED-01",
@@ -5938,7 +6128,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1217",
+      "issueNumber": 1217
     },
     {
       "id": "SCHEDULED-02",
@@ -5992,7 +6184,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1218",
+      "issueNumber": 1218
     },
     {
       "id": "REMOTE-01",
@@ -6047,7 +6241,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1219",
+      "issueNumber": 1219
     },
     {
       "id": "REMOTE-02",
@@ -6100,7 +6296,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1220",
+      "issueNumber": 1220
     },
     {
       "id": "RUNTIME-02",
@@ -6154,7 +6352,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1222",
+      "issueNumber": 1222
     },
     {
       "id": "CLI-01",
@@ -6204,7 +6404,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1223",
+      "issueNumber": 1223
     },
     {
       "id": "BACKEND-01",
@@ -6257,7 +6459,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1224",
+      "issueNumber": 1224
     },
     {
       "id": "BACKEND-02",
@@ -6310,7 +6514,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1225",
+      "issueNumber": 1225
     },
     {
       "id": "ORCHESTRATION-01",
@@ -6365,7 +6571,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1226",
+      "issueNumber": 1226
     },
     {
       "id": "SESSIONS-01",
@@ -6419,7 +6627,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1227",
+      "issueNumber": 1227
     },
     {
       "id": "CODING-01",
@@ -6472,7 +6682,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1228",
+      "issueNumber": 1228
     },
     {
       "id": "CONATION-SHARE-01",
@@ -6524,7 +6736,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1229",
+      "issueNumber": 1229
     },
     {
       "id": "INTEGRATE-01",
@@ -6681,7 +6895,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1161",
+      "issueNumber": 1161
     },
     {
       "id": "RELEASE-01",
@@ -6777,7 +6993,9 @@
         "sameOwnerConcurrency": 1,
         "requireDisjointApprovedPaths": true,
         "globalGates": "Lead integration only; workers skip build/lint/tests/formatters mid-flight"
-      }
+      },
+      "issueURL": "https://github.com/rox-one/rox-one/issues/1162",
+      "issueNumber": 1162
     }
   ],
   "scheduling": {
@@ -6797,5 +7015,18 @@
     "noDuplicatePrograms": "Reuse existing Macro52WP and existing RMA/GG/Conation primary implementations; this metadata program does not launch a new cloud coordinator."
   },
   "requirements": "requirements-full.json",
-  "reconciliationNote": "Concurrent read-only historical reconstruction and existing active ownership were discovered; reuse pinned private stage1 artifacts, recheck actual current owners before dispatch. Their stage fields are not fresh authorization and no duplicate audit/cloud product program is launched."
+  "reconciliationNote": "Concurrent read-only historical reconstruction and existing active ownership were discovered; reuse pinned private stage1 artifacts, recheck actual current owners before dispatch. Their stage fields are not fresh authorization and no duplicate audit/cloud product program is launched.",
+  "publication": {
+    "sourceDocsCommit": "e7b32c9d2b931c71aaa383546aebfbafe50aa4a6",
+    "docsBranch": "docs/september-program-20260930",
+    "issueCount": 109,
+    "rootIssueURL": "https://github.com/rox-one/rox-one/issues/1157",
+    "rootIssueStatus": "created; linked dependency read-back verified",
+    "verificationStatus": "PUBLISHED_VERIFIED",
+    "verifiedClaims": [
+      "109 issue titles, bodies, and labels",
+      "all dependency links"
+    ],
+    "creationPreserved": true
+  }
 }

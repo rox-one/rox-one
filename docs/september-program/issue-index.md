@@ -1,115 +1,115 @@
 # September issue index
 
-109 detailed task contracts across 66 areas; publication URLs pending observed creation. This draft lists stable IDs, not fabricated issue numbers. The register maps 484 historical requirement rows plus 5 additive OKR rows (489 total). [Task DAG](task-registry.json), [execution contract](execution-contract.md), [PRD](PRD.md), [original ten prompts](ten-prompts.md), [source backlog](source-backlog.md), [484 historical requirement rows](requirements-full.json), [five additive OKR rows](requirements-addendum.json), [61-screen/219-control audit register](screen-control-coverage.json). Product implementation NOT_STARTED; actual product proof NOT_RUN; publication remains pending observed receipts.
+109 detailed task contracts across 66 areas; all 109 issues have been created and their titles, bodies, labels, and dependency links verified against the published issues. The register maps 484 historical requirement rows plus 5 additive OKR rows (489 total). [Task DAG](task-registry.json), [execution contract](execution-contract.md), [PRD](PRD.md), [original ten prompts](ten-prompts.md), [source backlog](source-backlog.md), [484 historical requirement rows](requirements-full.json), [five additive OKR rows](requirements-addendum.json), [61-screen/219-control audit register](screen-control-coverage.json). Product implementation NOT_STARTED; actual product proof NOT_RUN; publication verified at the source docs commit recorded in the task registry; product execution remains NOT_STARTED.
 
 | ID | Area | Kind | Owner | Requirement rows | GitHub |
 |---|---|---|---|---:|---|
-| PROGRAM-01 | program | requested | ProgramLead | 0 | Pending publication |
-| RECON-01 | program | verification-gap | ReconciliationOwner | 0 | Pending publication |
-| AUDIT-01 | ui/ux | verification-gap | ActualSurfaceAuditor | 6 | Pending publication |
-| DATA-01 | backend | requested | SharedIntegrator | 0 | Pending publication |
-| SHARED-01 | architecture | verification-gap | SharedIntegrator | 0 | Pending publication |
-| CHAT-01 | chats | requested | OwnerChats | 1 | Pending publication |
-| TEAMS-01 | teams | requested | OwnerTeams | 2 | Pending publication |
-| SYNC-01 | sync | requested | OwnerSync | 1 | Pending publication |
-| CHAT-02 | chats | requested | OwnerChats | 3 | Pending publication |
-| TEAMS-02 | teams | requested | OwnerTeams | 1 | Pending publication |
-| TEAMS-03 | teams | requested | OwnerTeams | 1 | Pending publication |
-| COLLAB-01 | collaboration | requested | OwnerCollaboration | 2 | Pending publication |
-| COLLAB-02 | collaboration | requested | OwnerCollaboration | 0 | Pending publication |
-| COLLAB-03 | collaboration | requested | OwnerCollaboration | 1 | Pending publication |
-| COLLAB-04 | collaboration | requested | OwnerCollaboration | 2 | Pending publication |
-| COLLAB-05 | collaboration | requested | OwnerCollaboration | 3 | Pending publication |
-| INTEGRATIONS-03 | integrations | verification-gap | OwnerIntegrations | 1 | Pending publication |
-| INTEGRATIONS-01 | integrations | requested | OwnerIntegrations | 1 | Pending publication |
-| INTEGRATIONS-02 | integrations | requested | OwnerIntegrations | 5 | Pending publication |
-| CALENDAR-01 | calendar | verification-gap | OwnerCalendar | 13 | Pending publication |
-| VOICE-01 | voice | verification-gap | OwnerVoice | 1 | Pending publication |
-| TRANSCRIPTIONS-01 | transcriptions | requested | OwnerTranscriptions | 0 | Pending publication |
-| MEETINGS-01 | meetings | requested | OwnerMeetings | 6 | Pending publication |
-| CALLS-01 | calls | verification-gap | OwnerCalls | 0 | Pending publication |
-| UX-01 | ui/ux | requested | OwnerUiUx | 6 | Pending publication |
-| UX-02 | ui/ux | verification-gap | OwnerUiUx | 0 | Pending publication |
-| DESIGN-01 | design | requested | OwnerDesign | 4 | Pending publication |
-| ONBOARD-01 | onboarding | requested | OwnerOnboarding | 4 | Pending publication |
-| THEME-01 | design | requested | OwnerDesign | 5 | Pending publication |
-| PROFILE-01 | profile | verification-gap | OwnerProfile | 0 | Pending publication |
-| L10N-01 | localization | verification-gap | OwnerLocalization | 20 | Pending publication |
-| A11Y-01 | accessibility | verification-gap | OwnerAccessibility | 14 | Pending publication |
-| SETTINGS-01 | settings | verification-gap | OwnerSettings | 2 | Pending publication |
-| NATIVE-01 | system integration | requested | OwnerSystemIntegration | 4 | Pending publication |
-| WINDOWS-01 | system integration | requested | OwnerSystemIntegration | 3 | Pending publication |
-| GG-01 | golden-gate | verification-gap | OwnerGoldenGate | 1 | Pending publication |
-| GG-02 | golden-gate | verification-gap | OwnerGoldenGate | 2 | Pending publication |
-| GG-03 | golden-gate | verification-gap | OwnerGoldenGate | 6 | Pending publication |
-| RMA-01 | rma | verification-gap | OwnerRma | 3 | Pending publication |
-| RMA-02 | rma | verification-gap | OwnerRma | 6 | Pending publication |
-| RMA-03 | rma | proposal-audit | OwnerRma | 1 | Pending publication |
-| CONATION-DELIVERY-01 | conation | verification-gap | OwnerConation | 6 | Pending publication |
-| CONATION-AUTH-01 | conation | verification-gap | OwnerConation | 32 | Pending publication |
-| CONATION-E2E-01 | conation | verification-gap | OwnerConation | 101 | Pending publication |
-| DECISION-01 | decision-reconciliation | decision-reconciliation | OwnerDecisionReconciliation | 0 | Pending publication |
-| NOTES-01 | notes | verification-gap | OwnerNotes | 1 | Pending publication |
-| NOTES-02 | notes | verification-gap | OwnerNotes | 0 | Pending publication |
-| NOTES-03 | notes | requested | OwnerNotes | 3 | Pending publication |
-| CANVAS-01 | canvas | verification-gap | OwnerCanvas | 3 | Pending publication |
-| CANVAS-02 | canvas | requested | OwnerCanvas | 19 | Pending publication |
-| MEMORY-01 | memory | requested | OwnerMemory | 0 | Pending publication |
-| MEMORY-02 | memory | verification-gap | OwnerMemory | 1 | Pending publication |
-| SKILLS-01 | skills | verification-gap | OwnerSkills | 0 | Pending publication |
-| PLUGINS-01 | plugins | verification-gap | OwnerPlugins | 0 | Pending publication |
-| MARKETPLACE-01 | marketplace | requested | OwnerMarketplace | 4 | Pending publication |
-| IMPORTS-01 | imports | verification-gap | OwnerImports | 2 | Pending publication |
-| SEARCH-01 | search | verification-gap | OwnerSearch | 9 | Pending publication |
-| DRIVE-01 | drive | requested | OwnerDrive | 11 | Pending publication |
-| PAGES-01 | pages | verification-gap | OwnerPages | 0 | Pending publication |
-| SPREADSHEET-01 | documents | requested | OwnerDocuments | 7 | Pending publication |
-| PDF-01 | documents | requested | OwnerDocuments | 3 | Pending publication |
-| SPLIT-01 | documents | requested | OwnerDocuments | 3 | Pending publication |
-| DOCUMENTS-01 | documents | verification-gap | OwnerDocuments | 0 | Pending publication |
-| MAIL-01 | mail | requested | OwnerMail | 7 | Pending publication |
-| MAIL-02 | mail | verification-gap | OwnerMail | 1 | Pending publication |
-| MAIL-03 | mail | verification-gap | OwnerMail | 2 | Pending publication |
-| MAIL-04 | mail | verification-gap | OwnerMail | 18 | Pending publication |
-| VOICE-02 | voice | requested | OwnerVoice | 3 | Pending publication |
-| TRANSCRIPTIONS-02 | transcriptions | verification-gap | OwnerTranscriptions | 0 | Pending publication |
-| MEETINGS-02 | meetings | verification-gap | OwnerMeetings | 1 | Pending publication |
-| MEETINGS-03 | meetings | proposal-audit | OwnerMeetings | 0 | Pending publication |
-| PROJECTS-01 | projects | verification-gap | OwnerProjects | 6 | Pending publication |
-| OKR-01 | okr | requested | ProjectOKROwner | 3 | Pending publication |
-| TASKS-01 | tasks | verification-gap | OwnerTasks | 12 | Pending publication |
-| HOME-01 | home | verification-gap | OwnerHome | 2 | Pending publication |
-| DASHBOARD-01 | dashboard | requested | OwnerDashboard | 27 | Pending publication |
-| INBOX-01 | inbox | verification-gap | OwnerInbox | 14 | Pending publication |
-| CRM-01 | crm | requested | OwnerCrm | 12 | Pending publication |
-| REMINDERS-01 | reminders | requested | OwnerReminders | 6 | Pending publication |
-| FEED-01 | feed | verification-gap | OwnerFeed | 3 | Pending publication |
-| QUEST-01 | quest | requested | OwnerQuest | 3 | Pending publication |
-| ARENA-01 | arena | proposal-audit | OwnerArena | 0 | Pending publication |
-| COUNCIL-01 | council | proposal-audit | OwnerCouncil | 0 | Pending publication |
-| ACTIVITY-01 | activity | verification-gap | OwnerActivity | 2 | Pending publication |
-| DECISIONS-01 | decisions | requested | OwnerDecisions | 0 | Pending publication |
-| RADAR-01 | radar | requested | OwnerRadar | 0 | Pending publication |
-| DOSSIER-01 | dossier | requested | OwnerDossier | 0 | Pending publication |
-| RUNTIME-01 | runtime | requested | OwnerRuntime | 0 | Pending publication |
-| AGENT-BUDGET-01 | agents | requested | OwnerAgents | 3 | Pending publication |
-| FOCUS-01 | focus | requested | OwnerFocus | 3 | Pending publication |
-| OKR-02 | okr | requested | OKRMonitorOwner | 2 | Pending publication |
-| AGENTCENTER-01 | agent-center | verification-gap | OwnerAgentCenter | 5 | Pending publication |
-| PAYMENTS-01 | payments | verification-gap | OwnerPayments | 8 | Pending publication |
-| AUTOMATION-01 | automations | requested | OwnerAutomations | 1 | Pending publication |
-| AUTOMATION-02 | automations | requested | OwnerAutomations | 1 | Pending publication |
-| SCHEDULED-01 | scheduled | proposal-audit | OwnerScheduled | 0 | Pending publication |
-| SCHEDULED-02 | scheduled | proposal-audit | OwnerScheduled | 1 | Pending publication |
-| REMOTE-01 | remote | requested | OwnerRemote | 3 | Pending publication |
-| REMOTE-02 | remote | verification-gap | OwnerRemote | 1 | Pending publication |
-| RUNTIME-02 | runtime | requested | OwnerRuntime | 0 | Pending publication |
-| CLI-01 | cli | verification-gap | OwnerCli | 0 | Pending publication |
-| BACKEND-01 | backend | proposal-audit | OwnerBackend | 0 | Pending publication |
-| BACKEND-02 | backend | requested | OwnerBackend | 0 | Pending publication |
-| ORCHESTRATION-01 | orchestration | proposal-audit | OwnerOrchestration | 0 | Pending publication |
-| SESSIONS-01 | sessions | proposal-audit | OwnerSessions | 0 | Pending publication |
-| CODING-01 | agents | proposal-audit | OwnerAgents | 0 | Pending publication |
-| CONATION-SHARE-01 | conation | requested | OwnerConation | 3 | Pending publication |
-| INTEGRATE-01 | integration | verification-gap | ProgramLead | 0 | Pending publication |
-| RELEASE-01 | release | verification-gap | IndependentReleaseVerifier | 0 | Pending publication |
+| PROGRAM-01 | program | requested | ProgramLead | 0 | [#1157](https://github.com/rox-one/rox-one/issues/1157) |
+| RECON-01 | program | verification-gap | ReconciliationOwner | 0 | [#1158](https://github.com/rox-one/rox-one/issues/1158) |
+| AUDIT-01 | ui/ux | verification-gap | ActualSurfaceAuditor | 6 | [#1159](https://github.com/rox-one/rox-one/issues/1159) |
+| DATA-01 | backend | requested | SharedIntegrator | 0 | [#1212](https://github.com/rox-one/rox-one/issues/1212) |
+| SHARED-01 | architecture | verification-gap | SharedIntegrator | 0 | [#1160](https://github.com/rox-one/rox-one/issues/1160) |
+| CHAT-01 | chats | requested | OwnerChats | 1 | [#1121](https://github.com/rox-one/rox-one/issues/1121) |
+| TEAMS-01 | teams | requested | OwnerTeams | 2 | [#1123](https://github.com/rox-one/rox-one/issues/1123) |
+| SYNC-01 | sync | requested | OwnerSync | 1 | [#1133](https://github.com/rox-one/rox-one/issues/1133) |
+| CHAT-02 | chats | requested | OwnerChats | 3 | [#1122](https://github.com/rox-one/rox-one/issues/1122) |
+| TEAMS-02 | teams | requested | OwnerTeams | 1 | [#1124](https://github.com/rox-one/rox-one/issues/1124) |
+| TEAMS-03 | teams | requested | OwnerTeams | 1 | [#1125](https://github.com/rox-one/rox-one/issues/1125) |
+| COLLAB-01 | collaboration | requested | OwnerCollaboration | 2 | [#1126](https://github.com/rox-one/rox-one/issues/1126) |
+| COLLAB-02 | collaboration | requested | OwnerCollaboration | 0 | [#1127](https://github.com/rox-one/rox-one/issues/1127) |
+| COLLAB-03 | collaboration | requested | OwnerCollaboration | 1 | [#1128](https://github.com/rox-one/rox-one/issues/1128) |
+| COLLAB-04 | collaboration | requested | OwnerCollaboration | 2 | [#1129](https://github.com/rox-one/rox-one/issues/1129) |
+| COLLAB-05 | collaboration | requested | OwnerCollaboration | 3 | [#1130](https://github.com/rox-one/rox-one/issues/1130) |
+| INTEGRATIONS-03 | integrations | verification-gap | OwnerIntegrations | 1 | [#1135](https://github.com/rox-one/rox-one/issues/1135) |
+| INTEGRATIONS-01 | integrations | requested | OwnerIntegrations | 1 | [#1131](https://github.com/rox-one/rox-one/issues/1131) |
+| INTEGRATIONS-02 | integrations | requested | OwnerIntegrations | 5 | [#1132](https://github.com/rox-one/rox-one/issues/1132) |
+| CALENDAR-01 | calendar | verification-gap | OwnerCalendar | 13 | [#1199](https://github.com/rox-one/rox-one/issues/1199) |
+| VOICE-01 | voice | verification-gap | OwnerVoice | 1 | [#1185](https://github.com/rox-one/rox-one/issues/1185) |
+| TRANSCRIPTIONS-01 | transcriptions | requested | OwnerTranscriptions | 0 | [#1188](https://github.com/rox-one/rox-one/issues/1188) |
+| MEETINGS-01 | meetings | requested | OwnerMeetings | 6 | [#1187](https://github.com/rox-one/rox-one/issues/1187) |
+| CALLS-01 | calls | verification-gap | OwnerCalls | 0 | [#1134](https://github.com/rox-one/rox-one/issues/1134) |
+| UX-01 | ui/ux | requested | OwnerUiUx | 6 | [#1136](https://github.com/rox-one/rox-one/issues/1136) |
+| UX-02 | ui/ux | verification-gap | OwnerUiUx | 0 | [#1137](https://github.com/rox-one/rox-one/issues/1137) |
+| DESIGN-01 | design | requested | OwnerDesign | 4 | [#1138](https://github.com/rox-one/rox-one/issues/1138) |
+| ONBOARD-01 | onboarding | requested | OwnerOnboarding | 4 | [#1139](https://github.com/rox-one/rox-one/issues/1139) |
+| THEME-01 | design | requested | OwnerDesign | 5 | [#1140](https://github.com/rox-one/rox-one/issues/1140) |
+| PROFILE-01 | profile | verification-gap | OwnerProfile | 0 | [#1141](https://github.com/rox-one/rox-one/issues/1141) |
+| L10N-01 | localization | verification-gap | OwnerLocalization | 20 | [#1142](https://github.com/rox-one/rox-one/issues/1142) |
+| A11Y-01 | accessibility | verification-gap | OwnerAccessibility | 14 | [#1143](https://github.com/rox-one/rox-one/issues/1143) |
+| SETTINGS-01 | settings | verification-gap | OwnerSettings | 2 | [#1144](https://github.com/rox-one/rox-one/issues/1144) |
+| NATIVE-01 | system integration | requested | OwnerSystemIntegration | 4 | [#1145](https://github.com/rox-one/rox-one/issues/1145) |
+| WINDOWS-01 | system integration | requested | OwnerSystemIntegration | 3 | [#1146](https://github.com/rox-one/rox-one/issues/1146) |
+| GG-01 | golden-gate | verification-gap | OwnerGoldenGate | 1 | [#1147](https://github.com/rox-one/rox-one/issues/1147) |
+| GG-02 | golden-gate | verification-gap | OwnerGoldenGate | 2 | [#1148](https://github.com/rox-one/rox-one/issues/1148) |
+| GG-03 | golden-gate | verification-gap | OwnerGoldenGate | 6 | [#1149](https://github.com/rox-one/rox-one/issues/1149) |
+| RMA-01 | rma | verification-gap | OwnerRma | 3 | [#1150](https://github.com/rox-one/rox-one/issues/1150) |
+| RMA-02 | rma | verification-gap | OwnerRma | 6 | [#1151](https://github.com/rox-one/rox-one/issues/1151) |
+| RMA-03 | rma | proposal-audit | OwnerRma | 1 | [#1152](https://github.com/rox-one/rox-one/issues/1152) |
+| CONATION-DELIVERY-01 | conation | verification-gap | OwnerConation | 6 | [#1155](https://github.com/rox-one/rox-one/issues/1155) |
+| CONATION-AUTH-01 | conation | verification-gap | OwnerConation | 32 | [#1153](https://github.com/rox-one/rox-one/issues/1153) |
+| CONATION-E2E-01 | conation | verification-gap | OwnerConation | 101 | [#1154](https://github.com/rox-one/rox-one/issues/1154) |
+| DECISION-01 | decision-reconciliation | decision-reconciliation | OwnerDecisionReconciliation | 0 | [#1156](https://github.com/rox-one/rox-one/issues/1156) |
+| NOTES-01 | notes | verification-gap | OwnerNotes | 1 | [#1163](https://github.com/rox-one/rox-one/issues/1163) |
+| NOTES-02 | notes | verification-gap | OwnerNotes | 0 | [#1164](https://github.com/rox-one/rox-one/issues/1164) |
+| NOTES-03 | notes | requested | OwnerNotes | 3 | [#1165](https://github.com/rox-one/rox-one/issues/1165) |
+| CANVAS-01 | canvas | verification-gap | OwnerCanvas | 3 | [#1166](https://github.com/rox-one/rox-one/issues/1166) |
+| CANVAS-02 | canvas | requested | OwnerCanvas | 19 | [#1167](https://github.com/rox-one/rox-one/issues/1167) |
+| MEMORY-01 | memory | requested | OwnerMemory | 0 | [#1168](https://github.com/rox-one/rox-one/issues/1168) |
+| MEMORY-02 | memory | verification-gap | OwnerMemory | 1 | [#1169](https://github.com/rox-one/rox-one/issues/1169) |
+| SKILLS-01 | skills | verification-gap | OwnerSkills | 0 | [#1170](https://github.com/rox-one/rox-one/issues/1170) |
+| PLUGINS-01 | plugins | verification-gap | OwnerPlugins | 0 | [#1171](https://github.com/rox-one/rox-one/issues/1171) |
+| MARKETPLACE-01 | marketplace | requested | OwnerMarketplace | 4 | [#1172](https://github.com/rox-one/rox-one/issues/1172) |
+| IMPORTS-01 | imports | verification-gap | OwnerImports | 2 | [#1173](https://github.com/rox-one/rox-one/issues/1173) |
+| SEARCH-01 | search | verification-gap | OwnerSearch | 9 | [#1174](https://github.com/rox-one/rox-one/issues/1174) |
+| DRIVE-01 | drive | requested | OwnerDrive | 11 | [#1175](https://github.com/rox-one/rox-one/issues/1175) |
+| PAGES-01 | pages | verification-gap | OwnerPages | 0 | [#1176](https://github.com/rox-one/rox-one/issues/1176) |
+| SPREADSHEET-01 | documents | requested | OwnerDocuments | 7 | [#1178](https://github.com/rox-one/rox-one/issues/1178) |
+| PDF-01 | documents | requested | OwnerDocuments | 3 | [#1179](https://github.com/rox-one/rox-one/issues/1179) |
+| SPLIT-01 | documents | requested | OwnerDocuments | 3 | [#1180](https://github.com/rox-one/rox-one/issues/1180) |
+| DOCUMENTS-01 | documents | verification-gap | OwnerDocuments | 0 | [#1177](https://github.com/rox-one/rox-one/issues/1177) |
+| MAIL-01 | mail | requested | OwnerMail | 7 | [#1181](https://github.com/rox-one/rox-one/issues/1181) |
+| MAIL-02 | mail | verification-gap | OwnerMail | 1 | [#1182](https://github.com/rox-one/rox-one/issues/1182) |
+| MAIL-03 | mail | verification-gap | OwnerMail | 2 | [#1183](https://github.com/rox-one/rox-one/issues/1183) |
+| MAIL-04 | mail | verification-gap | OwnerMail | 18 | [#1184](https://github.com/rox-one/rox-one/issues/1184) |
+| VOICE-02 | voice | requested | OwnerVoice | 3 | [#1186](https://github.com/rox-one/rox-one/issues/1186) |
+| TRANSCRIPTIONS-02 | transcriptions | verification-gap | OwnerTranscriptions | 0 | [#1189](https://github.com/rox-one/rox-one/issues/1189) |
+| MEETINGS-02 | meetings | verification-gap | OwnerMeetings | 1 | [#1190](https://github.com/rox-one/rox-one/issues/1190) |
+| MEETINGS-03 | meetings | proposal-audit | OwnerMeetings | 0 | [#1191](https://github.com/rox-one/rox-one/issues/1191) |
+| PROJECTS-01 | projects | verification-gap | OwnerProjects | 6 | [#1194](https://github.com/rox-one/rox-one/issues/1194) |
+| OKR-01 | okr | requested | ProjectOKROwner | 3 | [#1193](https://github.com/rox-one/rox-one/issues/1193) |
+| TASKS-01 | tasks | verification-gap | OwnerTasks | 12 | [#1195](https://github.com/rox-one/rox-one/issues/1195) |
+| HOME-01 | home | verification-gap | OwnerHome | 2 | [#1196](https://github.com/rox-one/rox-one/issues/1196) |
+| DASHBOARD-01 | dashboard | requested | OwnerDashboard | 27 | [#1197](https://github.com/rox-one/rox-one/issues/1197) |
+| INBOX-01 | inbox | verification-gap | OwnerInbox | 14 | [#1198](https://github.com/rox-one/rox-one/issues/1198) |
+| CRM-01 | crm | requested | OwnerCrm | 12 | [#1200](https://github.com/rox-one/rox-one/issues/1200) |
+| REMINDERS-01 | reminders | requested | OwnerReminders | 6 | [#1201](https://github.com/rox-one/rox-one/issues/1201) |
+| FEED-01 | feed | verification-gap | OwnerFeed | 3 | [#1202](https://github.com/rox-one/rox-one/issues/1202) |
+| QUEST-01 | quest | requested | OwnerQuest | 3 | [#1203](https://github.com/rox-one/rox-one/issues/1203) |
+| ARENA-01 | arena | proposal-audit | OwnerArena | 0 | [#1204](https://github.com/rox-one/rox-one/issues/1204) |
+| COUNCIL-01 | council | proposal-audit | OwnerCouncil | 0 | [#1205](https://github.com/rox-one/rox-one/issues/1205) |
+| ACTIVITY-01 | activity | verification-gap | OwnerActivity | 2 | [#1206](https://github.com/rox-one/rox-one/issues/1206) |
+| DECISIONS-01 | decisions | requested | OwnerDecisions | 0 | [#1207](https://github.com/rox-one/rox-one/issues/1207) |
+| RADAR-01 | radar | requested | OwnerRadar | 0 | [#1208](https://github.com/rox-one/rox-one/issues/1208) |
+| DOSSIER-01 | dossier | requested | OwnerDossier | 0 | [#1209](https://github.com/rox-one/rox-one/issues/1209) |
+| RUNTIME-01 | runtime | requested | OwnerRuntime | 0 | [#1221](https://github.com/rox-one/rox-one/issues/1221) |
+| AGENT-BUDGET-01 | agents | requested | OwnerAgents | 3 | [#1213](https://github.com/rox-one/rox-one/issues/1213) |
+| FOCUS-01 | focus | requested | OwnerFocus | 3 | [#1214](https://github.com/rox-one/rox-one/issues/1214) |
+| OKR-02 | okr | requested | OKRMonitorOwner | 2 | [#1192](https://github.com/rox-one/rox-one/issues/1192) |
+| AGENTCENTER-01 | agent-center | verification-gap | OwnerAgentCenter | 5 | [#1210](https://github.com/rox-one/rox-one/issues/1210) |
+| PAYMENTS-01 | payments | verification-gap | OwnerPayments | 8 | [#1211](https://github.com/rox-one/rox-one/issues/1211) |
+| AUTOMATION-01 | automations | requested | OwnerAutomations | 1 | [#1215](https://github.com/rox-one/rox-one/issues/1215) |
+| AUTOMATION-02 | automations | requested | OwnerAutomations | 1 | [#1216](https://github.com/rox-one/rox-one/issues/1216) |
+| SCHEDULED-01 | scheduled | proposal-audit | OwnerScheduled | 0 | [#1217](https://github.com/rox-one/rox-one/issues/1217) |
+| SCHEDULED-02 | scheduled | proposal-audit | OwnerScheduled | 1 | [#1218](https://github.com/rox-one/rox-one/issues/1218) |
+| REMOTE-01 | remote | requested | OwnerRemote | 3 | [#1219](https://github.com/rox-one/rox-one/issues/1219) |
+| REMOTE-02 | remote | verification-gap | OwnerRemote | 1 | [#1220](https://github.com/rox-one/rox-one/issues/1220) |
+| RUNTIME-02 | runtime | requested | OwnerRuntime | 0 | [#1222](https://github.com/rox-one/rox-one/issues/1222) |
+| CLI-01 | cli | verification-gap | OwnerCli | 0 | [#1223](https://github.com/rox-one/rox-one/issues/1223) |
+| BACKEND-01 | backend | proposal-audit | OwnerBackend | 0 | [#1224](https://github.com/rox-one/rox-one/issues/1224) |
+| BACKEND-02 | backend | requested | OwnerBackend | 0 | [#1225](https://github.com/rox-one/rox-one/issues/1225) |
+| ORCHESTRATION-01 | orchestration | proposal-audit | OwnerOrchestration | 0 | [#1226](https://github.com/rox-one/rox-one/issues/1226) |
+| SESSIONS-01 | sessions | proposal-audit | OwnerSessions | 0 | [#1227](https://github.com/rox-one/rox-one/issues/1227) |
+| CODING-01 | agents | proposal-audit | OwnerAgents | 0 | [#1228](https://github.com/rox-one/rox-one/issues/1228) |
+| CONATION-SHARE-01 | conation | requested | OwnerConation | 3 | [#1229](https://github.com/rox-one/rox-one/issues/1229) |
+| INTEGRATE-01 | integration | verification-gap | ProgramLead | 0 | [#1161](https://github.com/rox-one/rox-one/issues/1161) |
+| RELEASE-01 | release | verification-gap | IndependentReleaseVerifier | 0 | [#1162](https://github.com/rox-one/rox-one/issues/1162) |
