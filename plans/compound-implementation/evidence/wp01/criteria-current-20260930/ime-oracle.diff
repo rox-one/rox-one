@@ -1,0 +1,49 @@
+--- /tmp/rox-wp01-current-independent-ultra-20260930/baseline/tests/macro-integration/ui/wp-01-electron.test.ts	2026-09-30 17:20:47
++++ /Users/t/Projects/rox-one-compound-implementation/tests/macro-integration/ui/wp-01-electron.test.ts	2026-09-30 18:00:12
+@@ -593,6 +593,8 @@
+       expect(await nameInput.getAttribute('maxlength')).toBe('10000')
+       expect(await nameInput.evaluate(element=>(element as HTMLInputElement).maxLength)).toBe(SHARED_PROJECT_TEXT_MAX_LENGTH)
+       if (ime) {
++        const intentBeforeIme = await target.page!.evaluate(id => window.electronAPI.getSharedProjectCreateIntent(id), target.seed.localWorkspaceId)
++        expect(intentBeforeIme.state).toBe('none')
+         // Playwright inserts through Chromium's input machinery. Test the real
+         // maxlength boundary before native IME; don't assign DOM.value or emit
+         // synthetic composition/keyboard events.
+@@ -629,11 +631,36 @@
+           // insertText operation commits the active candidate, never a mock.
+           if (!composingEvents.some(event=>event.type==='compositionend')) await session.send('Input.insertText',{text:name})
+           await until(async()=>await nameInput.inputValue()===name,'committed exact native IME name')
++          // Electron 39 / Chromium 142 dispatches its native queued compositionend
++          // with isTrusted=false even in a bare HTML input. Require the ordered
++          // genuine IME trace and a trusted non-composing key after the end.
++          await nameInput.press('ArrowRight')
+           const committedEvents = await nameInput.evaluate(element=>(element as HTMLInputElement & {__wp01InputEvents:Record<string,unknown>[]}).__wp01InputEvents)
+-          expect(committedEvents.some(event=>event.type==='compositionend' && event.isTrusted===true)).toBe(true)
+           observed.nativeImeNameEntry = {method:'actual Chromium Input.imeSetComposition + trusted Enter + native commit',
+             name,composingEvents,committedEvents,createRequestsWhileComposing:0,receiptRowsBeforeCommit:beforeCommitRows[0]!.count,
+             nativeMaximum:SHARED_PROJECT_TEXT_MAX_LENGTH,browserTruncatedOverMaximum:true}
++          const startIndex = committedEvents.findIndex(event=>event.type==='compositionstart' && event.isTrusted===true)
++          const updateIndex = committedEvents.findIndex((event,index)=>index>startIndex && event.type==='compositionupdate' && event.data===name && event.isTrusted===true)
++          const inputIndex = committedEvents.findIndex((event,index)=>index>updateIndex && event.type==='input' && event.inputType==='insertCompositionText' && event.isComposing===true && event.isTrusted===true && event.data===name && event.value===name)
++          const enterIndex = committedEvents.findIndex((event,index)=>index>inputIndex && event.type==='keydown' && event.key==='Enter' && event.isComposing===true && event.isTrusted===true)
++          const endIndex = committedEvents.findIndex((event,index)=>index>enterIndex && event.type==='compositionend' && event.data===name && event.value===name)
++          const postCommitIndex = committedEvents.findIndex((event,index)=>index>endIndex && event.type==='keydown' && event.key==='ArrowRight' && event.isComposing===false && event.isTrusted===true && event.value===name)
++          expect(startIndex).toBeGreaterThanOrEqual(0)
++          expect(updateIndex).toBeGreaterThan(startIndex)
++          expect(inputIndex).toBeGreaterThan(updateIndex)
++          expect(enterIndex).toBeGreaterThan(inputIndex)
++          expect(endIndex).toBeGreaterThan(enterIndex)
++          expect(postCommitIndex).toBeGreaterThan(endIndex)
++          expect(await nameInput.inputValue()).toBe(name)
++          expect(await target.page!.getByTestId('shared-project-create-dialog').isVisible()).toBe(true)
++          expect(serviceRequests.slice(start).filter(item=>item.channel==='domain.project.createShared')).toEqual([])
++          const afterCommitRows = await database!.unsafe(`SELECT
++            (SELECT count(*)::integer FROM "${schema}".project) AS projects,
++            (SELECT count(*)::integer FROM "${schema}".project_create_receipt) AS receipts,
++            (SELECT count(*)::integer FROM "${schema}".project_event WHERE type='project.created') AS events`)
++          expect(afterCommitRows).toHaveLength(1)
++          expect(afterCommitRows[0]).toEqual({projects:0,receipts:0,events:0})
++          expect(await target.page!.evaluate(id=>window.electronAPI.getSharedProjectCreateIntent(id),target.seed.localWorkspaceId)).toEqual(intentBeforeIme)
+         } finally {await session.detach()}
+       } else await nameInput.fill(name)
+       if (visibility === 'members') await target.page!.getByTestId('shared-project-visibility').selectOption('members')

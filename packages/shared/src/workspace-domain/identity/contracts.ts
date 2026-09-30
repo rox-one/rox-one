@@ -52,7 +52,7 @@ export interface ProjectPage {
 
 export interface IdentityDomainEvent {
   readonly id: string
-  readonly type: 'workspace.member_joined' | 'project.created'
+  readonly type: 'workspace.member_joined' | 'project.created' | 'audit.license_reviewed'
   readonly workspaceId: string
   readonly entityRef?: Rox2EntityRef
   readonly actorPrincipalId: string

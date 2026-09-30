@@ -1,3 +1,5 @@
+import { ProjectCreateIntentStore, readVerifiedProjectCreateScope } from './project-create-intent'
+import type { ProjectCreateAttempt, ProjectCreateIntentView, ProjectCreateIntentAction, VerifiedProjectCreateScope } from '../shared/project-create-intent'
 import { getCredentialManager, type CredentialManager } from '@craft-agent/shared/credentials'
 import { loadStoredConfig, saveConfig, type StoredConfig } from '@craft-agent/shared/config'
 import { createAuthorityJournalPorts, ProjectAuthorityJournal, type AuthorityJournalPorts } from './project-authority-journal'
@@ -5,7 +7,7 @@ import {
   PROJECT_AUTHORITY_CREDENTIAL_NAME,
   PROJECT_AUTHORITY_LOGIN_MAX_LENGTH, PROJECT_AUTHORITY_PASSWORD_MAX_LENGTH,
   PROJECT_AUTHORITY_RESPONSE_MAX_BYTES, PROJECT_AUTHORITY_REQUEST_TIMEOUT_MS,
-  ProjectAuthorityError,
+  ProjectAuthorityError, safeProjectAuthorityCode,
   requireProjectAuthorityConfiguration,
   type ProjectAuthorityConfiguration,
   type ProjectAuthorityLoginInput,
@@ -108,7 +110,8 @@ export async function authenticateProjectAuthority(input: unknown) {
   if (!membership.ok) { await membership.body?.cancel(); throw responseFailure(membership.status) }
   // Consume only a bounded, authorized response. Titles are neither logged nor returned to Connections.
   await boundedJson(membership)
-  return { configuration: metadata, credential: { token: issued.token, expiresAt: issued.expiresAt } }
+  const createScope = await readVerifiedProjectCreateScope({ ...metadata, token: issued.token })
+  return { configuration: metadata, credential: { token: issued.token, expiresAt: issued.expiresAt }, createScope }
 }
 
 /** Strict ports use the existing encrypted backend and durable canonical configuration writer. */
@@ -125,11 +128,11 @@ async function storagePorts(): Promise<ProjectAuthorityStoragePorts> {
 function safeAuthorityFailure(error: unknown): ProjectAuthorityError {
   return error instanceof ProjectAuthorityError ? error : new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
 }
-interface WorkspaceOperation { generation: number; commit: Promise<void>; blocked: boolean }
+interface WorkspaceOperation { generation: number; commit: Promise<void>; blocked: boolean; createQuiesced: boolean }
 const operations = new Map<string, WorkspaceOperation>()
 function operationFor(workspaceId: string): WorkspaceOperation {
   let operation = operations.get(workspaceId)
-  if (!operation) { operation = { generation: 0, commit: Promise.resolve(), blocked: false }; operations.set(workspaceId, operation) }
+  if (!operation) { operation = { generation: 0, commit: Promise.resolve(), blocked: false, createQuiesced: false }; operations.set(workspaceId, operation) }
   return operation
 }
 function beginOperation(workspaceId: string) {
@@ -165,17 +168,25 @@ async function recoverStoredAuthority(localWorkspaceId: string, operation: Works
 }
 async function commitCredential(localWorkspaceId: string, configuration: ProjectAuthorityConfiguration,
   credential: { readonly token: string; readonly expiresAt: number }, operation: WorkspaceOperation,
-  generation: number, isCurrent: () => boolean, ports: ProjectAuthorityStoragePorts): Promise<void> {
+  generation: number, isCurrent: () => boolean, ports: ProjectAuthorityStoragePorts, createScope?: VerifiedProjectCreateScope): Promise<void> {
   const metadata = requireProjectAuthorityConfiguration(configuration)
   await serializeCommit(operation, async () => {
     requireCurrent(operation, generation, isCurrent)
     await recoverStoredAuthority(localWorkspaceId, operation, ports)
     requireCurrent(operation, generation, isCurrent)
     try {
+      // Refuse unrecognized create records before changing the canonical credential/configuration pair.
+      await new ProjectCreateIntentStore(ports.credentials).hasPending(localWorkspaceId)
+      requireCurrent(operation, generation, isCurrent)
       await new ProjectAuthorityJournal(ports).replace(localWorkspaceId, metadata,
         { value: credential.token, expiresAt: credential.expiresAt, tokenType: 'Bearer' },
         () => operation.generation === generation && isCurrent())
       requireCurrent(operation, generation, isCurrent)
+      if (createScope) {
+        await new ProjectCreateIntentStore(ports.credentials).bind(localWorkspaceId, { ...metadata, token: credential.token }, createScope)
+        requireCurrent(operation, generation, isCurrent)
+      }
+      operation.createQuiesced = false
       operation.blocked = false
     } catch (error) { operation.blocked = true; throw error }
   })
@@ -184,6 +195,7 @@ async function commitCredential(localWorkspaceId: string, configuration: Project
 export async function connectStoredProjectAuthority(localWorkspaceId: string, input: unknown,
   isCurrent: () => boolean, injectedPorts?: ProjectAuthorityStoragePorts): Promise<ProjectAuthorityMutationResult> {
   const { operation, generation } = beginOperation(localWorkspaceId)
+  operation.createQuiesced = true
   try {
     const ports = injectedPorts ?? await storagePorts()
     requireLogin(input)
@@ -196,7 +208,7 @@ export async function connectStoredProjectAuthority(localWorkspaceId: string, in
     const authenticated = await ports.authenticate(input)
     requireCurrent(operation, generation, isCurrent)
     await commitCredential(localWorkspaceId, authenticated.configuration, authenticated.credential,
-      operation, generation, isCurrent, ports)
+      operation, generation, isCurrent, ports, authenticated.createScope)
     return { ok: true }
   } catch (error) { return mutationFailure(error) }
 }
@@ -234,6 +246,9 @@ export async function disconnectStoredProjectAuthority(localWorkspaceId: string,
       await recoverStoredAuthority(localWorkspaceId, operation, ports)
       requireCurrent(operation, generation, isCurrent)
       try {
+        operation.createQuiesced = true
+        await new ProjectCreateIntentStore(ports.credentials).disconnect(localWorkspaceId)
+        requireCurrent(operation, generation, isCurrent)
         // Once the disconnect intent is durable, recovery finishes deletion even after supersession.
         await new ProjectAuthorityJournal(ports).disconnect(localWorkspaceId,
           () => operation.generation === generation && isCurrent())
@@ -269,4 +284,51 @@ export async function storeProjectAuthorityCredential(localWorkspaceId: string,
   const { operation, generation } = beginOperation(localWorkspaceId)
   const ports = injectedPorts ?? await storagePorts()
   await commitCredential(localWorkspaceId, configuration, credential, operation, generation, () => true, ports)
+}
+
+
+/** Window-bound, create-only durable intent port. No background delivery or general command queue. */
+export async function storedProjectCreateIntent(localWorkspaceId: string, action: ProjectCreateIntentAction,
+  input: unknown = undefined, isCurrent: () => boolean = () => true,
+  injectedPorts?: ProjectAuthorityStoragePorts): Promise<ProjectCreateAttempt> {
+  const operation = operationFor(localWorkspaceId)
+  const generation = operation.generation
+  try {
+    const ports = injectedPorts ?? await storagePorts()
+    return await serializeCommit(operation, async () => {
+      requireCurrent(operation, generation, isCurrent)
+      await recoverStoredAuthority(localWorkspaceId, operation, ports)
+      requireCurrent(operation, generation, isCurrent)
+      const store = new ProjectCreateIntentStore(ports.credentials)
+      if (action === 'cancel') {
+        await store.cancel(localWorkspaceId)
+        requireCurrent(operation, generation, isCurrent)
+        return { state: 'none', eligible: false }
+      }
+      if (operation.blocked || operation.createQuiesced) {
+        if (action === 'get' && !await store.hasPending(localWorkspaceId)) return { state: 'none', eligible: false }
+        throw new ProjectAuthorityError('AUTH_FAILED')
+      }
+      const metadata = readStoredProjectAuthorityConfiguration(localWorkspaceId, ports)
+      const target = await resolveProjectAuthorityTarget(localWorkspaceId, metadata ?? undefined, ports.credentials)
+      requireCurrent(operation, generation, isCurrent)
+      if (!target) return await store.hasPending(localWorkspaceId) ? { state: 'blocked', eligible: false, code: 'AUTH_FAILED' } : { state: 'none', eligible: false }
+      if (action === 'get') return await store.view(localWorkspaceId, target)
+      if (action === 'queue') {
+        const result = await store.queue(localWorkspaceId, target, input)
+        requireCurrent(operation, generation, isCurrent)
+        return result
+      }
+      if (action !== 'retry') throw new ProjectAuthorityError('INVALID_PAYLOAD')
+      return await store.retry(localWorkspaceId, target, () => operation.generation === generation && isCurrent())
+    })
+  } catch (error) {
+    return { state: 'blocked', eligible: false, code: safeProjectAuthorityCode(error) }
+  }
+}
+export async function getStoredProjectCreateIntent(localWorkspaceId: string,
+  injectedPorts?: ProjectAuthorityStoragePorts): Promise<ProjectCreateIntentView> {
+  const result = await storedProjectCreateIntent(localWorkspaceId, 'get', undefined, () => true, injectedPorts)
+  if (result.state === 'applied') throw new ProjectAuthorityError('CAPABILITY_UNAVAILABLE')
+  return result
 }

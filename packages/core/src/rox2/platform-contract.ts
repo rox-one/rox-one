@@ -44,6 +44,7 @@ export const ROX2_ENTITY_KINDS = [
   'reminder',
   'workflow',
   'person',
+  'license-component',
 ] as const
 
 export type Rox2EntityKind = (typeof ROX2_ENTITY_KINDS)[number]

@@ -1,0 +1,12 @@
+{
+  "url": "https://chromium.googlesource.com/chromium/src/+/refs/tags/142.0.7444.235/third_party/blink/renderer/core/editing/ime/input_method_controller.cc?format=TEXT",
+  "sha256": "73e5fb8189df0db88136369baa8f03955831c1bf50e5a256efeebed39318d843",
+  "bytes": 77871,
+  "anchors": [
+    392,
+    640,
+    678,
+    772,
+    965
+  ]
+}

@@ -1,0 +1,9 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-48-resource-independent.test.ts:
+(pass) independent real Resource READ revoke after final identity await suppresses HTTP and WS while original receipt survives restore [1455.08ms]
+
+ 1 pass
+ 0 fail
+ 14 expect() calls
+Ran 1 test across 1 file. [1.52s]

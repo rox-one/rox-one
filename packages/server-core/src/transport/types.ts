@@ -45,6 +45,8 @@ export interface RpcHandlerOptions {
   readonly access?: 'localElectron' | 'nativeOrLocalElectron' | 'authenticatedWorkspace'
   /** Native clients are denied unless a handler explicitly declares its grant. */
   readonly nativeAction?: Exclude<NativeAuthorityAction, 'manage'>
+  /** Trusted composition-only Resource guard after fresh identity revalidation, before response serialization. */
+  readonly beforeResponse?: (context: RequestContext, arguments_: readonly unknown[], result: unknown) => Promise<void>
 }
 
 export interface RpcServer {

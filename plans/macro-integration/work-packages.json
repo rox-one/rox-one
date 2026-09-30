@@ -364,46 +364,74 @@
             "properties": {
               "status": {
                 "type": "string",
-                "enum": [
-                  "applied",
-                  "queued",
-                  "reconciling",
-                  "ambiguous",
-                  "pending_fence",
-                  "rejected",
-                  "unavailable"
-                ]
+                "const": "applied"
               },
               "commandId": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "maxLength": 256
               },
               "requestHash": {
                 "type": "string",
-                "minLength": 1
+                "pattern": "^[a-f0-9]{64}$"
               },
               "observedRevision": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
               },
               "entity": {
-                "$ref": "#/$defs/Rox2EntityRef"
+                "$ref": "#/$defs/Wp01ProjectEntityRef"
               },
               "receiptId": {
                 "type": "string",
-                "minLength": 1
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
               },
               "verifiedAt": {
                 "type": "string",
                 "format": "date-time"
               },
               "data": {
-                "type": "object",
-                "description": "Domain result DTO definitions: domainApiContracts for provider/CRM/media; reject unauthorized fields before serialization"
+                "$ref": "#/$defs/Wp01SharedProject"
+              },
+              "executionMode": {
+                "type": "string",
+                "const": "live"
+              },
+              "lifecycle": {
+                "type": "string",
+                "const": "succeeded"
+              },
+              "verification": {
+                "type": "string",
+                "const": "receipt_verified"
+              },
+              "ok": {
+                "type": "boolean",
+                "const": true
+              },
+              "entityId": {
+                "type": "string",
+                "pattern": "^project:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "receipt": {
+                "$ref": "#/$defs/Wp01ProjectReceipt"
               }
             },
             "required": [
               "status",
-              "receiptId"
+              "commandId",
+              "requestHash",
+              "observedRevision",
+              "entity",
+              "receiptId",
+              "verifiedAt",
+              "data",
+              "executionMode",
+              "lifecycle",
+              "verification",
+              "ok",
+              "entityId",
+              "receipt"
             ],
             "$defs": {
               "Rox2EntityRef": {
@@ -550,6 +578,120 @@
                   "sourceRevision",
                   "start",
                   "end"
+                ]
+              },
+              "Wp01ProjectEntityRef": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "workspaceId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "entityId": {
+                    "type": "string",
+                    "pattern": "^project:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "revisionId": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  }
+                },
+                "required": [
+                  "workspaceId",
+                  "entityId",
+                  "revisionId"
+                ]
+              },
+              "Wp01SharedProject": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "entity": {
+                    "$ref": "#/$defs/Wp01ProjectEntityRef"
+                  },
+                  "ownerPrincipalId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10000,
+                    "pattern": "\\S"
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "private",
+                      "members"
+                    ]
+                  },
+                  "schemaVersion": {
+                    "type": "integer",
+                    "const": 1
+                  },
+                  "revision": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  },
+                  "policyEpoch": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "entity",
+                  "ownerPrincipalId",
+                  "name",
+                  "visibility",
+                  "schemaVersion",
+                  "revision",
+                  "policyEpoch",
+                  "createdAt",
+                  "updatedAt"
+                ]
+              },
+              "Wp01ProjectReceipt": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "const": "rox-workspace"
+                  },
+                  "remoteId": {
+                    "type": "string",
+                    "pattern": "^project:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                  },
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "observedRevision": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  },
+                  "verifiedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "provider",
+                  "remoteId",
+                  "requestId",
+                  "observedRevision",
+                  "verifiedAt"
                 ]
               }
             }

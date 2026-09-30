@@ -1,0 +1,40 @@
+bun test v1.4.2 (43848b5a7)
+
+tests/macro-integration/wp-01-runtime.test.ts:
+(pass) WP-01 protected service runtime and actual subprocess persistence > read admission drains actual operations and rejects subsequent work [0.38ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > protected config rejects modes, symlinks, oversized and invalid UTF-8 without secret output [47.80ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > explicit algorithms, issuer, TLS and trusted public keys are mandatory [316.88ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > trusted public RSA keys without optional alg import under the explicit configured algorithm [23.04ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > CLI argument and bounded stdin failures redact input before opening PostgreSQL [316.18ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > actual source CLI provisions crypto accounts; WS and HTTP share authority; key/receipt/cursor survive full restart [1300.75ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > SIGTERM keeps a command blocked on the real PostgreSQL transaction gate alive; release persists one durable receipt [1439.86ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > trusted issuer has no credential fallback and pinned loopback JWKS verifies existing persisted sessions [1242.44ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > actual HTTPS listener permits non-loopback binding only with protected TLS material and explicit public issuer keys [1261.48ms]
+(pass) WP-01 protected service runtime and actual subprocess persistence > built executable starts, retains public issuer key after restart and drains SIGINT [1189.83ms]
+
+tests/macro-integration/wp-01-authority-crash.test.ts:
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers old pair after SIGKILL at prepared [1599.08ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers old pair after SIGKILL at credential_written [1570.96ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers new pair after SIGKILL at configuration_written [1594.96ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > replacement recovers new pair after SIGKILL at journal_removed [1590.91ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > disconnect never resurrects prior credentials after SIGKILL at prepared [1427.35ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > disconnect never resurrects prior credentials after SIGKILL at disconnect_credential_deleted [1471.00ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > disconnect never resurrects prior credentials after SIGKILL at disconnect_configuration_deleted [1414.47ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > recovery itself can be killed between rollback stores and retry still restores the original pair [1921.14ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > concurrent unrelated config metadata survives an incomplete replacement and recovery [1847.53ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > late invalidation rolls back its credential and a subsequent explicit disconnect removes both stores [2631.51ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > real wrong-password HTTP authentication leaves the exact durable files and creates no journal [1444.77ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > corrupt encrypted storage fails closed instead of being treated as absent or overwritten [1441.84ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > unexpected authority metadata conflicts fail closed and preserve the encrypted journal for explicit repair [1494.83ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > target resolution performs durable recovery before reading either half of the authority pair [1981.87ms]
+(pass) actual process-kill recovery with canonical encrypted credential/config stores > failed rollback blocks configuration and private target resolution until strict recovery plus explicit disconnect succeeds [1604.85ms]
+
+tests/macro-integration/wp-01-service-crash.test.ts:
+(pass) WP-01 actual service process dies after SQL commit and before private reply > fresh process retains receipt/key/cursor; concurrent HTTP/WS retries create no duplicate and durable consumer applies once [883.60ms]
+(pass) WP-01 actual service process dies after SQL commit and before private reply > revoked persisted session cannot recover a private receipt after restart; new real login recovers exactly the original receipt [884.09ms]
+(pass) WP-01 actual service process dies after SQL commit and before private reply > current membership removal denies receipt/project/event replay despite a valid old signed session after restart [799.60ms]
+
+ 28 pass
+ 0 fail
+ 693 expect() calls
+Ran 28 tests across 3 files. [36.05s]

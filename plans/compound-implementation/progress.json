@@ -5,7 +5,7 @@
   "sourceBase": "b922e52ed96425732776ff771fdb4fec09fc99b6",
   "specRevision": "242492868a11b4d9af1c1011f20b31a346875f0a",
   "branch": "feat/rox-compound-workspace-20260930",
-  "updatedAt": "2026-09-30T14:14:34.280640+00:00",
+  "updatedAt": "2026-09-30T16:07:02.630408+00:00",
   "packageCount": 143,
   "packages": [
     {
@@ -34,6 +34,31 @@
           "artifact": "plans/compound-implementation/wp01-integration-verification.json",
           "sourceParentRevision": "b9b8aa7197f5d25304ec377a049a8f375eccf3e5",
           "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_DURABLE_ENCRYPTED_CREATE_INTENT_PG_HTTP_WS_VERIFIED",
+          "artifact": "plans/compound-implementation/evidence/wp01/offline-root-applied.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_STRICT_RESPONSE_SCHEMA_PG_HTTP_WS_VERIFIED",
+          "artifact": "plans/compound-implementation/evidence/wp01/response-schema-root-applied.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "CURRENT_INDEPENDENT_SECOND_FAILURE_VARIANT_CAUGHT",
+          "artifact": "plans/compound-implementation/evidence/wp01/current-independent-20260930/root-artifact-readback.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "CURRENT_COLD_BUILT_ARCHIVE_PROCESS_VERIFIED",
+          "artifact": "plans/compound-implementation/evidence/wp01/cold-archive-current.json",
+          "featureImplemented": false
+        },
+        {
+          "kind": "CURRENT54CRITERIA32VERIFIED17NATIVE_PENDING5DECLARED_DOWNSTREAM",
+          "artifact": "plans/compound-implementation/evidence/wp01/criteria-current-20260930/matrix.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
@@ -45,11 +70,10 @@
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-01.json",
       "preflightRunId": "rox-compound-20260930T083916Z",
       "remainingAcceptance": [
-        "Native two-profile UI acceptance, exact DOM/IME boundaries, restart/revoke/themes/200-percent/narrow and viewed screenshots",
-        "Durable offline create intent with principal/session/workspace fencing and native queue/retry/cancel",
-        "Independent second-variant holdout result and provenance",
-        "Current cold artifact byte readback and source-bound Git delivery",
-        "Every WP01 normative criterion independently verified"
+        "Fresh actual primary native two-profile IME/privacy/restart/revocation/theme/200-percent/narrow + viewed pixel/DOM receipts",
+        "Fresh actual offline native queue/uncertain/retry/cancel/revoke/new-session + immutable original receipt",
+        "All own54normative criteria mapping after native evidence; five explicitly downstream capabilities remain program gates",
+        "Source-bound Git delivery and remote exact readback; full143final acceptance remains"
       ]
     },
     {
@@ -1029,7 +1053,7 @@
       "program": "macro",
       "dependencies": [],
       "spec": "plans/macro-integration/work-packages.json",
-      "status": "IMPLEMENTATION_RUNNING",
+      "status": "ROOT_INTEGRATION",
       "runtimeEvidence": [
         {
           "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
@@ -1043,20 +1067,26 @@
           "kind": "ROOT_CLI_SOURCE_BOUND_VERIFICATION",
           "artifact": "plans/compound-implementation/wp48-integration-verification.json",
           "featureImplemented": false
+        },
+        {
+          "kind": "ROOT_PG_HTTP_WS17_146_AND_INDEPENDENT_ADVERSE3_51",
+          "artifact": "plans/compound-implementation/evidence/wp48/backend-v3-root-applied.json",
+          "featureImplemented": false
         }
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "CLI_SCOPED_VERIFIED_DOMAIN_INTEGRATION_OPEN",
+        "mechanism": "CLI_AND_CANONICAL_DOMAIN_SCOPED_VERIFIED_NATIVE_OPEN",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
       "preflightReport": "plans/compound-implementation/worker-reviews/WP-48.json",
       "preflightRunId": "rox-compound-20260930T083916Z",
       "remainingAcceptance": [
-        "Canonical audit.releaseLicense authority/policy/CAS/receipt/outbox and native normative UI",
-        "Accepted applicable dependency/runtime notice bytes in final artifact",
-        "Protected trusted checker/reviewer and actual publisher digest readback"
+        "Native-v2 receipt hash/current-policy/matching-event/privacy-fence corrections and actual Settings UI acceptance",
+        "Final source-bound archive/migrations including optional48 migration; fresh final artifact SBOM/linkage/notices and scoped publisher proof",
+        "Protected trusted reviewer legal decisions remain review_required; no fabricated approval",
+        "Generic durable DLQ and full cross-capability feature completion remain declared program gates"
       ],
       "sourceFiles": [
         "scripts/compliance/generate-sbom.ts",
@@ -1073,7 +1103,23 @@
         "tests/macro-integration/wp-48-runtime.test.ts",
         "tests/macro-integration/wp-48-runtime-archives.test.ts",
         "tests/macro-integration/wp-48-bundle-linkage.test.ts",
-        "docs/macro-integration/wp-48-bundle-linkage.md"
+        "docs/macro-integration/wp-48-bundle-linkage.md",
+        "apps/workspace-service/migrations/48-license-audit.sql",
+        "apps/workspace-service/src/configuration.ts",
+        "apps/workspace-service/src/http.ts",
+        "apps/workspace-service/src/index.ts",
+        "apps/workspace-service/src/modules/identity/repository.ts",
+        "apps/workspace-service/src/modules/licenses/commands.ts",
+        "apps/workspace-service/src/modules/licenses/registry.ts",
+        "apps/workspace-service/src/modules/licenses/repository.ts",
+        "apps/workspace-service/src/server.ts",
+        "packages/core/src/rox2/platform-contract.ts",
+        "packages/server-core/src/transport/server.ts",
+        "packages/server-core/src/transport/types.ts",
+        "packages/shared/package.json",
+        "packages/shared/src/workspace-domain/identity/contracts.ts",
+        "packages/shared/src/workspace-domain/licenses/contracts.ts",
+        "tests/macro-integration/wp-48-domain.test.ts"
       ]
     },
     {
@@ -1289,7 +1335,7 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-AUT-01.md",
       "issue": 1096,
-      "status": "IMPLEMENTATION_RUNNING",
+      "status": "AWAITING_ROOT_REVIEW",
       "runtimeEvidence": [
         {
           "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
@@ -1302,7 +1348,7 @@
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
+        "mechanism": "UNREVIEWED_PROPOSAL_PRESENT_NO_LIVE_WORKER",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
@@ -1312,7 +1358,8 @@
         "Root source-generation/behavioral verification and shared-file integration",
         "Native interface and all normative DoD criteria",
         "Delivered revision and final full-program acceptance"
-      ]
+      ],
+      "workerState": "Historical launch ended; preserved proposal requires independent review and root integration"
     },
     {
       "id": "RS-AUT-02",
@@ -1406,7 +1453,7 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-MTG-01.md",
       "issue": 1101,
-      "status": "IMPLEMENTATION_RUNNING",
+      "status": "AWAITING_ROOT_REVIEW",
       "runtimeEvidence": [
         {
           "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
@@ -1419,7 +1466,7 @@
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
+        "mechanism": "UNREVIEWED_PROPOSAL_PRESENT_NO_LIVE_WORKER",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
@@ -1429,7 +1476,8 @@
         "Root source-generation/behavioral verification and shared-file integration",
         "Native interface and all normative DoD criteria",
         "Delivered revision and final full-program acceptance"
-      ]
+      ],
+      "workerState": "Historical launch ended; preserved proposal requires independent review and root integration"
     },
     {
       "id": "RS-MTG-02",
@@ -1518,7 +1566,7 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-MSG-01.md",
       "issue": 1106,
-      "status": "IMPLEMENTATION_RUNNING",
+      "status": "AWAITING_ROOT_REVIEW",
       "runtimeEvidence": [
         {
           "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
@@ -1531,7 +1579,7 @@
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
+        "mechanism": "UNREVIEWED_PROPOSAL_PRESENT_NO_LIVE_WORKER",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
@@ -1541,7 +1589,8 @@
         "Root source-generation/behavioral verification and shared-file integration",
         "Native interface and all normative DoD criteria",
         "Delivered revision and final full-program acceptance"
-      ]
+      ],
+      "workerState": "Historical launch ended; preserved proposal requires independent review and root integration"
     },
     {
       "id": "RS-MSG-02",
@@ -1589,7 +1638,7 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-DRV-01.md",
       "issue": 1109,
-      "status": "IMPLEMENTATION_RUNNING",
+      "status": "AWAITING_ROOT_REVIEW",
       "runtimeEvidence": [
         {
           "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
@@ -1602,7 +1651,7 @@
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
+        "mechanism": "UNREVIEWED_PROPOSAL_PRESENT_NO_LIVE_WORKER",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
@@ -1612,7 +1661,8 @@
         "Root source-generation/behavioral verification and shared-file integration",
         "Native interface and all normative DoD criteria",
         "Delivered revision and final full-program acceptance"
-      ]
+      ],
+      "workerState": "Historical launch ended; preserved proposal requires independent review and root integration"
     },
     {
       "id": "RS-DOC-01",
@@ -1696,7 +1746,7 @@
       "dependencies": [],
       "spec": "docs/rox-suite/published/RS-ADM-01.md",
       "issue": 1114,
-      "status": "IMPLEMENTATION_RUNNING",
+      "status": "AWAITING_ROOT_REVIEW",
       "runtimeEvidence": [
         {
           "kind": "NATIVE_IMPLEMENTATION_SESSION_STARTED",
@@ -1709,7 +1759,7 @@
       ],
       "fullFeatureDoD": "NOT_VERIFIED",
       "readiness": {
-        "mechanism": "IMPLEMENTATION_IN_PROGRESS",
+        "mechanism": "UNREVIEWED_PROPOSAL_PRESENT_NO_LIVE_WORKER",
         "interface": "NOT_VERIFIED",
         "fullDoD": "NOT_VERIFIED"
       },
@@ -1719,7 +1769,8 @@
         "Root source-generation/behavioral verification and shared-file integration",
         "Native interface and all normative DoD criteria",
         "Delivered revision and final full-program acceptance"
-      ]
+      ],
+      "workerState": "Historical launch ended; preserved proposal requires independent review and root integration"
     },
     {
       "id": "RS-HD-01",
@@ -3092,9 +3143,9 @@
   ],
   "execution": {
     "nativeWorkers": [
-      "implement_content_descriptor",
-      "implement_repo_binding",
-      "implementation_runtime_scout"
+      "legacy_mixed_list_fix",
+      "wp01_closure_ultra",
+      "recovery_core_gate_ultra"
     ],
     "durableRunner": "LOCAL_OMP_IMPLEMENTATION_AND_PREFLIGHT",
     "cloudCodingRunner": "UNPROVISIONED",
@@ -3119,6 +3170,34 @@
       "lastNativePassSha256": "f1e68c77e58dc0f8a2ede1a1cc7c156277a3e764f2c05dbdf3a29c31df313388",
       "nativeScopedAssertions": 204
     },
-    "implementationWorkersReceipt": "plans/compound-implementation/implementation-workers.json"
+    "implementationWorkersReceipt": "plans/compound-implementation/implementation-workers.json",
+    "currentWorkers": {
+      "observedAt": "2026-09-30T16:07:02.630408+00:00",
+      "integrator": "/root",
+      "workers": [
+        {
+          "id": "/root/legacy_mixed_list_fix",
+          "task": "WP48 native-v2 fixes outside root",
+          "state": "RUNNING"
+        },
+        {
+          "id": "/root/wp01_closure_ultra",
+          "task": "WP48 independent native-v2 evaluation",
+          "model": "GPT6.1Sol",
+          "reasoning": "Ultra",
+          "state": "RUNNING"
+        },
+        {
+          "id": "/root/recovery_core_gate_ultra",
+          "task": "WP01 frozen native diagnostic; core gate delivered",
+          "model": "GPT6.1Sol",
+          "reasoning": "Ultra",
+          "state": "RUNNING"
+        }
+      ],
+      "notStarted": 130,
+      "fullDoDClosed": 0,
+      "historicalLaunchesAreNotCompletion": true
+    }
   }
 }

@@ -5,6 +5,8 @@ import { importJWK, type JSONWebKeySet, type JWK } from 'jose'
 import type { WorkspaceServerConfiguration } from './server.ts'
 import type { VerifiedActorConfig } from './auth/verified-actor.ts'
 
+import { TrustedLicenseRegistry } from './modules/licenses/registry.ts'
+
 export const MAX_CONFIGURATION_BYTES = 65536
 export const MAX_TLS_MATERIAL_BYTES = 262144
 export const DEFAULT_POOL_SIZE = 12
@@ -123,7 +125,7 @@ export async function loadRuntimeConfiguration(path: string): Promise<RuntimeCon
   try {
     const parsed: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
     const input = configurationRecord(parsed,
-      ['schemaVersion', 'database', 'schema', 'serverId', 'listen', 'authentication', 'tls', 'migrationsDirectory', 'shutdownTimeoutSeconds'],
+      ['schemaVersion', 'database', 'schema', 'serverId', 'listen', 'authentication', 'tls', 'migrationsDirectory', 'shutdownTimeoutSeconds', 'licenseRegistryPath'],
       ['schemaVersion', 'database', 'schema', 'serverId', 'listen', 'authentication'])
     if (input.schemaVersion !== 1) throw new ConfigurationError('INVALID_CONFIGURATION')
     const database = configurationRecord(input.database, ['url', 'poolSize'], ['url'])
@@ -187,7 +189,7 @@ export async function loadRuntimeConfiguration(path: string): Promise<RuntimeCon
       poolSize: database.poolSize === undefined ? DEFAULT_POOL_SIZE : integer(database.poolSize, 1, MAX_POOL_SIZE),
       shutdownTimeoutSeconds: input.shutdownTimeoutSeconds === undefined ? DEFAULT_SHUTDOWN_TIMEOUT_SECONDS : integer(input.shutdownTimeoutSeconds, 1, 300),
       migrationsDirectory: input.migrationsDirectory === undefined ? resolve(import.meta.dir, '../migrations') : absolute(input.migrationsDirectory),
-      workspace: { schema, serverId, host, port, authentication, ...(tls ? { tls } : {}) },
+      workspace: { schema, serverId, host, port, authentication, ...(tls ? { tls } : {}), ...(input.licenseRegistryPath === undefined ? {} : { licenseRegistry: await TrustedLicenseRegistry.load(absolute(input.licenseRegistryPath)) }) },
     }
   } catch (error) {
     if (error instanceof ConfigurationError) throw error

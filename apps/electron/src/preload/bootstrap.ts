@@ -244,6 +244,27 @@ api.getProjectAuthorityConfiguration = async workspaceId => {
   const value: ProjectAuthorityConfiguration | null = await ipcRenderer.invoke(PROJECT_AUTHORITY_CONFIGURATION_IPC, workspaceId)
   return value
 }
+// Durable intent storage lives in main; renderer/preload retain no JWT or command queue.
+api.getSharedProjectCreateIntent = async workspaceId => {
+  if (!projectAuthority) return { state: 'none', eligible: false }
+  const result: import('../shared/project-create-intent').ProjectCreateIntentView = await ipcRenderer.invoke('__project-create-intent', workspaceId, 'get')
+  return result
+}
+api.queueSharedProjectCreate = async (workspaceId, body) => {
+  if (!projectAuthority || projectAuthority.getState() === 'unconfigured') return { state: 'blocked', eligible: false, code: 'AUTH_FAILED' }
+  const result: import('../shared/project-create-intent').ProjectCreateIntentView = await ipcRenderer.invoke('__project-create-intent', workspaceId, 'queue', body)
+  return result
+}
+api.retrySharedProjectCreate = async workspaceId => {
+  if (!projectAuthority || projectAuthority.getState() === 'unconfigured') return { state: 'blocked', eligible: false, code: 'AUTH_FAILED' }
+  const result: import('../shared/project-create-intent').ProjectCreateAttempt = await ipcRenderer.invoke('__project-create-intent', workspaceId, 'retry')
+  return result
+}
+api.cancelSharedProjectCreate = async workspaceId => {
+  if (!projectAuthority) return { state: 'blocked', eligible: false, code: 'CAPABILITY_UNAVAILABLE' }
+  const result: import('../shared/project-create-intent').ProjectCreateIntentView = await ipcRenderer.invoke('__project-create-intent', workspaceId, 'cancel')
+  return result
+}
 api.connectProjectAuthority = async (workspaceId, input) => {
   if (!projectAuthority) return { ok: false, error: { code: 'CAPABILITY_UNAVAILABLE', status: 503 } }
   const generation = ++projectAuthorityMutationGeneration

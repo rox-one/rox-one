@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "IMMUTABLE_HISTORICAL_ORACLE_SOURCE_ARTIFACT",
+  "originalFileName": "holdout.test.ts",
+  "publicSourceWitness": "holdout.test.ts.source.txt",
+  "sha256": "b8222c7836463af8639e7f9a85475470ffb50effd5ac6a12918e1894803fe741",
+  "originalExecutedOracle": "/tmp/rox-wp01-current-independent-ultra-20260930/holdout.test.ts",
+  "originalBytesUnchanged": true,
+  "reason": "Historical source witness requires the private physical baseline/mutant fixture. It is an evidence text artifact, not an additional automatically-discovered production test. No original executed oracle or registered production test is changed, skipped or disabled."
+}

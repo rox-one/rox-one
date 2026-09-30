@@ -144,7 +144,8 @@
     "./code-intelligence": "./src/code-intelligence/index.ts",
     "./security": "./src/security/index.ts",
     "./projects/roadmap": "./src/projects/roadmap.ts",
-    "./projects/roadmap-ai": "./src/projects/roadmap-ai.ts"
+    "./projects/roadmap-ai": "./src/projects/roadmap-ai.ts",
+    "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

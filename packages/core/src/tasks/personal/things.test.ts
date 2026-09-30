@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, spyOn } from 'bun:test'
 import { startOfLocalDay } from './dates.ts'
 import { nextRepeatDate, parseDateExpression, parseTaskEntry } from './quick-entry.ts'
 import { matchesProjection, projectProgress, upcomingByDay } from './projections.ts'
@@ -114,7 +114,7 @@ describe('Things lists', () => {
   it('start dates: future → Планы, reached → Сегодня; deadline today pulls into Сегодня', () => {
     const store = new PersonalTaskStore()
     const later = store.create({ title: 'Later', now })
-    store.setWhen(later.id, { kind: 'date', at: day(2) })
+    store.setWhen(later.id, { kind: 'date', at: day(2) }, now)
     const t = store.get(later.id)!
     expect(matchesProjection(t, now, 'upcoming')).toBe(true)
     expect(matchesProjection(t, now, 'today')).toBe(false)
@@ -125,17 +125,43 @@ describe('Things lists', () => {
   })
 
   it('upcomingByDay keeps 7 calendar days and groups later by month', () => {
-    const planNow = startOfLocalDay(Date.now()) + 10 * 60 * 60 * 1000
-    const planDay = (n: number) => new Date(new Date(planNow).getFullYear(), new Date(planNow).getMonth(), new Date(planNow).getDate() + n).getTime()
     const store = new PersonalTaskStore()
-    const a = store.create({ title: 'A', now: planNow })
-    store.setWhen(a.id, { kind: 'date', at: planDay(1) })
-    const b = store.create({ title: 'B', now: planNow })
-    store.setWhen(b.id, { kind: 'date', at: planDay(40) })
-    const plan = upcomingByDay(store.list(), planNow, 7)
+    const a = store.create({ title: 'A', now })
+    store.setWhen(a.id, { kind: 'date', at: day(1) }, now)
+    const b = store.create({ title: 'B', now })
+    store.setWhen(b.id, { kind: 'date', at: day(40) }, now)
+    const plan = upcomingByDay(store.list(), now, 7)
     expect(plan.days).toHaveLength(7)
     expect(plan.days[0]!.tasks.map((x) => x.title)).toEqual(['A'])
     expect(plan.later[0]!.tasks.map((x) => x.title)).toEqual(['B'])
+  })
+
+  it('setWhen classifies calendar dates against the supplied clock', () => {
+    const wallClock = spyOn(Date, 'now').mockReturnValue(day(40))
+    try {
+      const store = new PersonalTaskStore()
+      const a = store.create({ title: 'Today', now })
+      const b = store.create({ title: 'Tomorrow', now })
+      store.setWhen(a.id, { kind: 'date', at: now, evening: true }, now)
+      store.setWhen(b.id, { kind: 'date', at: day(1) }, now)
+      expect(store.get(a.id)).toMatchObject({ list: 'today', startAt: undefined, evening: true })
+      expect(store.get(b.id)).toMatchObject({ list: 'upcoming', startAt: day(1), evening: false })
+      expect(upcomingByDay(store.list(), now, 7).days[0]!.tasks.map((task) => task.title)).toEqual(['Tomorrow'])
+    } finally {
+      wallClock.mockRestore()
+    }
+  })
+
+  it('setWhen preserves the wall clock default for existing callers', () => {
+    const wallClock = spyOn(Date, 'now').mockReturnValue(now)
+    try {
+      const store = new PersonalTaskStore()
+      const task = store.create({ title: 'Today', now })
+      store.setWhen(task.id, { kind: 'date', at: now })
+      expect(store.get(task.id)).toMatchObject({ list: 'today', startAt: undefined, evening: false })
+    } finally {
+      wallClock.mockRestore()
+    }
   })
 
   it('projects with headings, move and progress', () => {

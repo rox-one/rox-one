@@ -10,11 +10,15 @@ import { requireActor, requireUuid } from './modules/identity/commands.ts'
 import { AuthenticationError, type createVerifiedActorResolver } from './auth/verified-actor.ts'
 import type { createLocalIssuer } from './auth/local-issuer.ts'
 
+import type { LicenseAuthority } from '../../../packages/shared/src/workspace-domain/licenses/contracts.ts'
+
 export type WorkspaceActorResolver = ReturnType<typeof createVerifiedActorResolver<AuthenticatedActor>>
 export type WorkspaceLocalIssuer = Awaited<ReturnType<typeof createLocalIssuer>>
 
 export interface WorkspaceHttpOptions {
   authority: SharedProjectAuthority
+  licenseAuthority?: LicenseAuthority
+  licenseResponseGuard?: (actor: AuthenticatedActor, workspaceId: string, operation: string, body: unknown, result: unknown) => Promise<void>
   actorResolver: WorkspaceActorResolver
   /** Explicit trusted public key set; no token header or local-mode fallback selects keys. */
   publicJwks?: JSONWebKeySet
@@ -142,6 +146,7 @@ export function createWorkspaceHttpHandler(options: WorkspaceHttpOptions): (req:
   const timeoutMs = options.bodyTimeoutMs ?? 10000
   if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > 1048576 ||
       !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000) throw new Error('Invalid bounded HTTP body configuration')
+  if (options.licenseAuthority && !options.licenseResponseGuard) throw new Error('Configured license authority requires its Resource response guard')
   const jwks = publicKeys(options.publicJwks)
   const { authority, actorResolver, localIssuer } = options
 
@@ -173,11 +178,13 @@ export function createWorkspaceHttpHandler(options: WorkspaceHttpOptions): (req:
       send(res, 200, await localIssuer.authenticate(login, password))
       return
     }
-    const matched = /^\/v1\/workspaces\/([^/]+)\/(commands\/project\.createShared|projects(?:\/([^/]+))?|events)$/.exec(path)
+    const matched = /^\/v1\/workspaces\/([^/]+)\/(commands\/(?:project\.createShared|audit\.releaseLicense)|projects(?:\/([^/]+))?|events|identity|licenses(?:\/([^/]+)(\/events)?)?)$/.exec(path)
     if (!matched) throw new HttpFailure('NOT_FOUND', 404)
     const workspaceSegment = matched[1]
     const routeSegment = matched[2]
     const projectSegment = matched[3]
+    const licenseSegment = matched[4]
+    const licenseEventSegment = matched[5]
     if (workspaceSegment === undefined || routeSegment === undefined) throw new HttpFailure('NOT_FOUND', 404)
     let workspaceId: string
     let projectId: string | undefined
@@ -188,24 +195,38 @@ export function createWorkspaceHttpHandler(options: WorkspaceHttpOptions): (req:
         projectId = requireUuid(id.startsWith('project:') ? id.slice(8) : id)
       }
     } catch { throw new IdentityDomainError('INVALID_PAYLOAD') }
-    const command = routeSegment === 'commands/project.createShared'
+    const identity = routeSegment === 'identity'
+    const licenseCommand = routeSegment === 'commands/audit.releaseLicense'
+    const licenseRoute = licenseCommand || routeSegment.startsWith('licenses')
+    if (licenseRoute && !options.licenseAuthority) throw new HttpFailure('NOT_FOUND', 404)
+    let licenseId: string | undefined
+    try { licenseId = licenseSegment === undefined ? undefined : requireUuid(decodeURIComponent(licenseSegment).replace(/^license-component:/, '')) }
+    catch { throw new IdentityDomainError('INVALID_PAYLOAD') }
+    const command = routeSegment.startsWith('commands/')
     const method = command ? 'POST' : 'GET'
     if (req.method !== method) throw new HttpFailure('METHOD_NOT_ALLOWED', 405, method)
-    const input = query(params, !command && !projectId)
+    const input = query(params, !command && !projectId && !identity && (!licenseId || Boolean(licenseEventSegment)))
     let bound = await actorResolver.authenticate(bearer(req))
     const bytes = await readBody(req, maxBytes, timeoutMs)
     if (!command && bytes.length) throw new IdentityDomainError('INVALID_PAYLOAD')
-    const body = command ? jsonBody(bytes, req) : projectId ? { entityId: 'project:' + projectId } : input
+    const body = command ? jsonBody(bytes, req) : licenseId ? { ...input, entityId: 'license-component:' + licenseId } : projectId ? { entityId: 'project:' + projectId } : input
     bound = await actorResolver.revalidate(bound)
     requireActor(bound.actor, workspaceId)
-    const result = command ? await authority.createSharedProject(bound.actor, workspaceId, body)
+    const result = identity ? null : licenseRoute && options.licenseAuthority
+      ? licenseCommand ? await options.licenseAuthority.auditReleaseLicense(bound.actor, workspaceId, body)
+        : licenseEventSegment ? await options.licenseAuthority.licenseEvents(bound.actor, workspaceId, body)
+        : licenseId ? await options.licenseAuthority.getLicenseComponent(bound.actor, workspaceId, body)
+        : await options.licenseAuthority.listLicenseComponents(bound.actor, workspaceId, body)
+      : command ? await authority.createSharedProject(bound.actor, workspaceId, body)
       : projectId ? await authority.getProject(bound.actor, workspaceId, body)
       : routeSegment === 'events' ? await authority.replayEvents(bound.actor, workspaceId, body)
       : await authority.listProjects(bound.actor, workspaceId, body)
     // Suppress private results if session or membership was revoked while the query/command awaited I/O.
     bound = await actorResolver.revalidate(bound)
     requireActor(bound.actor, workspaceId)
-    send(res, 200, result)
+    if (licenseRoute && options.licenseResponseGuard) await options.licenseResponseGuard(bound.actor,workspaceId,licenseCommand?'audit':licenseEventSegment?'events':licenseId?'get':'list',body,result)
+    send(res, 200, identity ? { issuer: bound.identity.issuer, principalId: bound.identity.principalId,
+      sessionId: bound.identity.sessionId, deviceId: bound.identity.deviceId, workspaceId, expiresAt: bound.identity.expiresAt } : result)
   }
 
   return (req, res) => {

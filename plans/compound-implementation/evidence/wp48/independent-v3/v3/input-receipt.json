@@ -1,0 +1,114 @@
+{
+  "recordedAt": "2026-09-30T15:24:52.447Z",
+  "manifestPath": "/tmp/rox-wp48-domain/backend-v3/manifest.json",
+  "manifestSha256": "f10780ca51d1c0e8cd781df645bd43841dd4f71b332a82251bb10ccd7f07c267",
+  "proposalBindings": [
+    {
+      "path": "apps/workspace-service/migrations/48-license-audit.sql",
+      "resultSha256": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "expected": "57ed39ed25bf89f429fd38e15f5ed1a226b762d71ba0f7653c447a7bc6a69b91",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/configuration.ts",
+      "resultSha256": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "expected": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/http.ts",
+      "resultSha256": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "expected": "7d1e6f94e4baebbbae95d00371c347412f3b9b829fc8f39e17fdb2db0f1c43de",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/index.ts",
+      "resultSha256": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "expected": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "resultSha256": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "expected": "c489acaa04f0cb59bad49755cd150f0ba15225bef88eb6586b4c11d650f1cc8d",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/commands.ts",
+      "resultSha256": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "expected": "0b0971dfb6eb4c68cb16396dae4cd864dbb567cc0e4c3930b9bdfeb5c14a3af7",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/registry.ts",
+      "resultSha256": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "expected": "32a0c2ef4b13a098f2606dc9a02551db22e22486d8225586b9636cb583c59b7f",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/repository.ts",
+      "resultSha256": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "expected": "e9d55eed98a50e03ee2ca24903f3cdfa1231cb292d5c4eff41f5c45a75e4a0cf",
+      "match": true
+    },
+    {
+      "path": "apps/workspace-service/src/server.ts",
+      "resultSha256": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "expected": "e2293944ca83e6b6a45a86d72ab9b00b81368f3c0310ff0c76b167aa44c18d8f",
+      "match": true
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "resultSha256": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "expected": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "match": true
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "resultSha256": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "expected": "f7be63a0edff4e72ad78b3b29216479cc5118dbfa6366f3370e151bece1fffef",
+      "match": true
+    },
+    {
+      "path": "packages/server-core/src/transport/types.ts",
+      "resultSha256": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "expected": "d7da03384d9511f8b78fb027382bcc5f8d7f7199b69c06ec74d13a26c0ca0697",
+      "match": true
+    },
+    {
+      "path": "packages/shared/package.json",
+      "resultSha256": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "expected": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "match": true
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "resultSha256": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "expected": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "match": true
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/licenses/contracts.ts",
+      "resultSha256": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "expected": "ccc60719c7f037e6e2f3d30c471497585ff1ff321ade044217ab82ccb8901ae6",
+      "match": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "resultSha256": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "expected": "87cc9c549e4ffaf2c88c8b02d9ac49abd96dddc0c3e1e97779423f9b163c1618",
+      "match": true
+    }
+  ],
+  "independentOracles": {
+    "originalCorruptionOracleSha256": "cdf8ee20f88d519712fee8389fb749dfd84743226ec90181e3875c154b4686f2",
+    "originalProjectionOracleSha256": "ef6daa3a6fb439e970511d30fd245f82ed284e1037cf8a934bee9157da3d2ec8",
+    "changes": "Only own evidence output paths and exact sole owned schema name; every original control/assertion remains unchanged",
+    "assertionsChanged": false,
+    "productionHooks": false
+  },
+  "fixture": "/tmp/rox-wp48-independent-ultra-20260930/v3/fixture",
+  "sourceOnly": true,
+  "externalDependencySymlink": true,
+  "rootWrites": false
+}

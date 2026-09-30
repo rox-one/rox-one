@@ -84,6 +84,7 @@ interface RegisteredHandler {
   readonly handler: HandlerFn
   readonly access: RpcHandlerOptions['access']
   readonly nativeAction: RpcHandlerOptions['nativeAction']
+  readonly beforeResponse?: RpcHandlerOptions['beforeResponse']
 }
 
 export interface LocalClientBindingCandidate {
@@ -288,7 +289,7 @@ export class WsRpcServer implements RpcServer {
       throw new Error(`Handler already registered for channel: ${channel}`)
     }
     const access = options?.access
-    this.handlers.set(channel, { handler, access, nativeAction: options?.nativeAction })
+    this.handlers.set(channel, { handler, access, nativeAction: options?.nativeAction, beforeResponse: options?.beforeResponse })
     if (access === 'localElectron') {
       this.localElectronChannels.add(channel)
     }
@@ -1123,11 +1124,18 @@ export class WsRpcServer implements RpcServer {
         channel,
         result,
       }
-      const data = serializeEnvelope(response)
-      if (this.workspaceAuthority) {
-        await this.refreshWorkspaceClient(client)
+      const outbound = this.workspaceAuthority ? await this.refreshWorkspaceClient(client) : null
+      if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+      if (registration.beforeResponse) {
+        await registration.beforeResponse({ ...ctx, ...(outbound ? { actor: outbound.actor } : {}) }, args ?? [], result)
+        // A trusted asynchronous Resource guard is another admission boundary:
+        // NativePrincipal grant generations and the current caller binding must
+        // still match after it settles, before any result is serialized.
         if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       }
+      const data = serializeEnvelope(response)
+      if (this.workspaceAuthority) await this.refreshWorkspaceClient(client)
+      if (!this.canReturnResponse(client, registration, ctx, requestFence)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
       this.safeSend(client.ws, data)
     } catch (err) {
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) {

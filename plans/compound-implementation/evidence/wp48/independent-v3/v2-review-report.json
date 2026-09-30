@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-30T15:12:34.759Z",
+  "evaluator": "GPT6.1Sol Ultra independent",
+  "proposal": {
+    "path": "/tmp/rox-wp48-domain/backend-v2/manifest.json",
+    "sha256": "9cacef3af110aede208e279c1e614d1fa52acb1e1b439db2d557ca8ee77f371d",
+    "bytes": 6186,
+    "appliedToRoot": false,
+    "state": "HOLD_CONFIRMED_TARGETED_DEFECTS"
+  },
+  "scope": "WP48 backend foundation only; exact proposed bytes on source-only external fixture; no root writes/build/native execution; no other active checkout access",
+  "execution": {
+    "command": "bun test tests/macro-integration/wp-48-independent-adversarial.test.ts",
+    "cwd": "/tmp/rox-wp48-independent-ultra-20260930/fixture",
+    "actualExitCode": 1,
+    "tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "assertions": 32,
+    "seconds": 8.25,
+    "failedAssertion": "expect(defects).toEqual([]), line153, after all infrastructure/baseline/restored-control assertions passed",
+    "log": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/execution.log",
+      "sha256": "7cf412d67ca9b2be71c83f9f8ee7782fbeaa705348e69df9a597475fa82c3e1a",
+      "bytes": 28663
+    },
+    "oracle": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/tests/macro-integration/wp-48-independent-adversarial.test.ts",
+      "sha256": "cdf8ee20f88d519712fee8389fb749dfd84743226ec90181e3875c154b4686f2",
+      "bytes": 21648
+    }
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "class": "LIST_TRUST_BINDING_BYPASS",
+      "severity": "HIGH",
+      "source": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+        "sha256": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+        "bytes": 20158,
+        "symbol": "LicenseRepository.list → view",
+        "line": 108
+      },
+      "checkSource": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+        "sha256": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+        "bytes": 20158,
+        "symbol": "LicenseRepository.authorized",
+        "line": 42
+      },
+      "variants": [
+        "label",
+        "binding_sha256",
+        "artifact_digest",
+        "sbom_digest"
+      ],
+      "actual": "For each independently corrupted column, owner GET denied HTTP503/WS PROVIDER_UNAVAILABLE; LIST returned HTTP200/WS success with forged row metadata and old review evidence.",
+      "requiredFix": "Run the identical registry row-binding validation for every serialized list row and before producing its cursor."
+    },
+    {
+      "id": "F2",
+      "class": "DIRECT_EVENTS_INVALID_DIGEST_ACCEPTED",
+      "severity": "HIGH",
+      "source": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+        "sha256": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+        "bytes": 20158,
+        "symbol": "LicenseRepository.events rows.map",
+        "line": 122
+      },
+      "actual": "Persisted auditDigest INVALID_DIGEST_PRIVATE_MARKER is returned to owner by direct license HTTP200/WS events. The same row correctly makes receipt replay HTTP503 and inbox roll back without audit effect.",
+      "requiredFix": "Use one strict canonical license event DTO and independent durable event proof before serialization; malformed digest must cause redacted provider denial."
+    },
+    {
+      "id": "F3",
+      "class": "CORRELATION_NOT_IN_INDEPENDENT_EVENT_PROOF",
+      "severity": "HIGH",
+      "source": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+        "sha256": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+        "bytes": 20158,
+        "symbol": "LicenseRepository.retained and audit receipt/event LEFT JOIN",
+        "line": 58
+      },
+      "joinSource": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+        "sha256": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+        "bytes": 20158,
+        "symbol": "LicenseRepository.audit receipt/event join",
+        "line": 74
+      },
+      "inboxSource": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/identity/repository.ts",
+        "sha256": "316fc4ca24ed4b5e3024ca2627bfdb278ca29ff4793dda5b0a0ccc3f53680b4a",
+        "bytes": 22310,
+        "symbol": "IdentityRepository.event license branch",
+        "line": 262
+      },
+      "actual": "Wrong valid UUID correlation is emitted by direct events; HTTP/WS replay returns byte-equivalent applied/receipt_verified original receipt; consumer commits audit inbox1 and watermark2.",
+      "requiredFix": "Bind correlation to canonical command/causation in the independently retained receipt/event proof and validate before any consumer callback/inbox/watermark commit."
+    },
+    {
+      "id": "F4",
+      "class": "INBOX_UNBOUND_CANONICAL_RESOURCE_ACCEPTED",
+      "severity": "HIGH",
+      "source": {
+        "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/identity/repository.ts",
+        "sha256": "316fc4ca24ed4b5e3024ca2627bfdb278ca29ff4793dda5b0a0ccc3f53680b4a",
+        "bytes": 22310,
+        "symbol": "IdentityRepository.event license branch",
+        "line": 262
+      },
+      "actual": "Syntactically valid unregistered zero Resource UUID reaches consumer as canonical entityRef and commits audit inbox1/watermark2, while receipt replay correctly denies HTTP503.",
+      "requiredFix": "A matching UUID regex is insufficient. Validate event Resource/workspace/actor/receipt/cause/correlation/revision/epoch/time/digests against independent durable receipt/resource proof inside the transaction before callback."
+    }
+  ],
+  "variants": [
+    {
+      "id": "RESOURCE_BINDING_label",
+      "httpGetStatus": 503,
+      "httpListStatus": 200,
+      "wsListAccepted": true
+    },
+    {
+      "id": "RESOURCE_BINDING_binding_sha256",
+      "httpGetStatus": 503,
+      "httpListStatus": 200,
+      "wsListAccepted": true
+    },
+    {
+      "id": "RESOURCE_BINDING_artifact_digest",
+      "httpGetStatus": 503,
+      "httpListStatus": 200,
+      "wsListAccepted": true
+    },
+    {
+      "id": "RESOURCE_BINDING_sbom_digest",
+      "httpGetStatus": 503,
+      "httpListStatus": 200,
+      "wsListAccepted": true
+    },
+    {
+      "id": "MALFORMED_EVENT_DIGEST",
+      "httpEventStatus": 200,
+      "wsEventsAccepted": true,
+      "httpReceiptReplayStatus": 503,
+      "inboxCode": "PROVIDER_UNAVAILABLE",
+      "inbox": {
+        "audit_inbox": 0,
+        "watermark": "1"
+      }
+    },
+    {
+      "id": "WRONG_VALID_CORRELATION",
+      "httpEventStatus": 200,
+      "httpReceiptReplayStatus": 200,
+      "httpReceiptExact": true,
+      "wsReplayAccepted": true,
+      "inboxCode": null,
+      "inbox": {
+        "audit_inbox": 1,
+        "watermark": "2"
+      }
+    },
+    {
+      "id": "VALID_UUID_UNREGISTERED_RESOURCE",
+      "httpReceiptReplayStatus": 503,
+      "inboxCode": null,
+      "inbox": {
+        "audit_inbox": 1,
+        "watermark": "2"
+      }
+    }
+  ],
+  "controls": [
+    {
+      "id": "BASELINE",
+      "identityStatus": 200,
+      "httpAudit": 200,
+      "wsReceiptExact": true,
+      "evidenceState": "review_required",
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "NEGATIVE_CONTROL_DIGEST_RETAINED_AND_INBOX_DENY",
+      "httpReceiptReplayStatus": 503,
+      "inboxCode": "PROVIDER_UNAVAILABLE",
+      "persistedAuditInbox": 0
+    },
+    {
+      "id": "RESTORED_RESTART",
+      "originalReceiptExact": true,
+      "currentIdentityPreserved": true,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      },
+      "memberDenied": 403
+    }
+  ],
+  "observations": {
+    "path": "/tmp/rox-wp48-independent-ultra-20260930/observations.json",
+    "sha256": "b05223704c18773ad9ea6640127fdafa92ff2d8700bb3d097a4e6f4cb12fcf41",
+    "bytes": 52501
+  },
+  "input": {
+    "path": "/tmp/rox-wp48-independent-ultra-20260930/input-receipt.json",
+    "sha256": "881ef657b7835a7e8d599558d4a804e37d50259d1571b9d72c674f6e42c3972f",
+    "bytes": 3703
+  },
+  "sourceBindings": [
+    {
+      "path": "apps/workspace-service/migrations/48-license-audit.sql",
+      "expected": "eaaa2f6820cf9bf1c54e678f17a68967a23410aa3554209a14214981cdee954f",
+      "fixtureActual": "eaaa2f6820cf9bf1c54e678f17a68967a23410aa3554209a14214981cdee954f",
+      "producerActual": "eaaa2f6820cf9bf1c54e678f17a68967a23410aa3554209a14214981cdee954f",
+      "match": true,
+      "currentRootBase": null,
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/configuration.ts",
+      "expected": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "fixtureActual": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "producerActual": "173869417c90a9fbba2887a0d99e16d37e807400fd64e7555f745bb3dbdc5dd2",
+      "match": true,
+      "currentRootBase": "fc39c9f4404fbf3b485c47f177a6e3b551933331dc940b73c8d70cc5206a181d",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/http.ts",
+      "expected": "ddd97bace9e9a6e3cc028631cfe8111b376bc1f6b18821c967c39e4debf6e495",
+      "fixtureActual": "ddd97bace9e9a6e3cc028631cfe8111b376bc1f6b18821c967c39e4debf6e495",
+      "producerActual": "ddd97bace9e9a6e3cc028631cfe8111b376bc1f6b18821c967c39e4debf6e495",
+      "match": true,
+      "currentRootBase": "461192aff3985fa5c015ce468b08e54cfc1fb60b8d3dabccd016bbdb9cabf57c",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/index.ts",
+      "expected": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "fixtureActual": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "producerActual": "a0f7e168818bb08e84f6e7e028a2974e5d7d8d570389bd6a59bbe24bf41db028",
+      "match": true,
+      "currentRootBase": "bf390e866e143827ca9e2e67a2e9cf2e514d982e00f3d1d8ddf8a5cdf87b2b96",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/identity/repository.ts",
+      "expected": "316fc4ca24ed4b5e3024ca2627bfdb278ca29ff4793dda5b0a0ccc3f53680b4a",
+      "fixtureActual": "316fc4ca24ed4b5e3024ca2627bfdb278ca29ff4793dda5b0a0ccc3f53680b4a",
+      "producerActual": "316fc4ca24ed4b5e3024ca2627bfdb278ca29ff4793dda5b0a0ccc3f53680b4a",
+      "match": true,
+      "currentRootBase": "9899ca80d645ea243e395debcec2fa9405f64e6e3c945ff706a5e533269e0a6d",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/commands.ts",
+      "expected": "f1a0942211c0313053d4bba28a0e86572d7b6f7e96d48662d6649f7a2015cc64",
+      "fixtureActual": "f1a0942211c0313053d4bba28a0e86572d7b6f7e96d48662d6649f7a2015cc64",
+      "producerActual": "f1a0942211c0313053d4bba28a0e86572d7b6f7e96d48662d6649f7a2015cc64",
+      "match": true,
+      "currentRootBase": null,
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/registry.ts",
+      "expected": "3700f8afa74296e70ecd3751900e7e43af93feffa3bc6028dc44fda286bf3da0",
+      "fixtureActual": "3700f8afa74296e70ecd3751900e7e43af93feffa3bc6028dc44fda286bf3da0",
+      "producerActual": "3700f8afa74296e70ecd3751900e7e43af93feffa3bc6028dc44fda286bf3da0",
+      "match": true,
+      "currentRootBase": null,
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/modules/licenses/repository.ts",
+      "expected": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+      "fixtureActual": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+      "producerActual": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+      "match": true,
+      "currentRootBase": null,
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "apps/workspace-service/src/server.ts",
+      "expected": "4bc2eb709c4e674be0167cd482f987bf8acfe1e643f4e96351c78fc3404e8440",
+      "fixtureActual": "4bc2eb709c4e674be0167cd482f987bf8acfe1e643f4e96351c78fc3404e8440",
+      "producerActual": "4bc2eb709c4e674be0167cd482f987bf8acfe1e643f4e96351c78fc3404e8440",
+      "match": true,
+      "currentRootBase": "b44b1de53867b6d46312e3f350b142ebaa5d1700cc6f7fce3d2e53c875c75621",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "packages/core/src/rox2/platform-contract.ts",
+      "expected": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "fixtureActual": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "producerActual": "773e3c56ffac8b2773ed1fed0ab3c3f4995e74e1ed5669365a45ace27fa376af",
+      "match": true,
+      "currentRootBase": "cd5c85783eabd35ec0b8963cce2e1ec4fcd87d4d3dce1225bca6a502e9d52ca4",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "packages/shared/package.json",
+      "expected": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "fixtureActual": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "producerActual": "ce874ebcb303b39633c460e022eeb6490a592b6c4d46b203f176c9ad63d350bb",
+      "match": true,
+      "currentRootBase": "ca55daa9dc0ec0342e52b695df2efa247d8fd7e6baab7100434813d9a18a0c09",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/identity/contracts.ts",
+      "expected": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "fixtureActual": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "producerActual": "e798c7871b6e2a6bec6101ae8e43e1978a126fc695f3c437a0e7d1fd4aad76eb",
+      "match": true,
+      "currentRootBase": "7bbbae09fa49763bebddfc57f76b2d43a6c5ca7f32b31772c6c858933b82f265",
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "packages/shared/src/workspace-domain/licenses/contracts.ts",
+      "expected": "b4cf05c8fdc6f8aa6445fc6dcaa8196cd480359e69d7b0a5145808f6a5f90ca2",
+      "fixtureActual": "b4cf05c8fdc6f8aa6445fc6dcaa8196cd480359e69d7b0a5145808f6a5f90ca2",
+      "producerActual": "b4cf05c8fdc6f8aa6445fc6dcaa8196cd480359e69d7b0a5145808f6a5f90ca2",
+      "match": true,
+      "currentRootBase": null,
+      "rootBaseUnchanged": true
+    },
+    {
+      "path": "tests/macro-integration/wp-48-domain.test.ts",
+      "expected": "6076f242190c2f29be006df73dfccd6a381fd26e8034a01749fa729291f3f368",
+      "fixtureActual": "6076f242190c2f29be006df73dfccd6a381fd26e8034a01749fa729291f3f368",
+      "producerActual": "6076f242190c2f29be006df73dfccd6a381fd26e8034a01749fa729291f3f368",
+      "match": true,
+      "currentRootBase": null,
+      "rootBaseUnchanged": true
+    }
+  ],
+  "cleanup": {
+    "schema": "wp48_93c1d8cff4e7",
+    "remainingOwnedSchemas": 0,
+    "fixturePrivateStateRemoved": true,
+    "listeners": [
+      {
+        "port": 63909,
+        "open": false
+      },
+      {
+        "port": 63939,
+        "open": false
+      }
+    ]
+  },
+  "reviewedFoundation": {
+    "trustedRegistry": "Protected registry/build bytes, fixed checker+Bun/module hashes, symlink checks, bounded input reads and pre/post checker artifact hashes exist; client command has references only, not executable/approval payload.",
+    "freshIdentity": "Actual current identity HTTP200 initially and after full listener/pool restart; member403 persists. Source re-locks current session/member and resource grants after checker I/O.",
+    "casAndReceipt": "Baseline actual HTTP/WS audit and replay preserve one receipt/event/revision1. Source uses Resource FOR UPDATE, expectedRevision CAS, scoped idempotency/command advisory locks and reconstructed retained result equality. Missing event correlation proof remains F3.",
+    "privacy": "Global project replay excludes private license events in v2; direct events/inbox targeted proof gaps remain F2–F4.",
+    "strictDto": "Strict command/reference/evidence validators exist; current list and direct event response proofs are insufficient as actually demonstrated."
+  },
+  "producerHistory": {
+    "v2ProducerTestLog": {
+      "path": "/tmp/rox-wp48-domain/backend-v2-tests.log",
+      "sha256": "9591b01d284fe358e0bb956c51ada04963a3397c9df95c6af32a0f493054fbaf",
+      "bytes": 1651
+    },
+    "reported": "13 pass/0 fail/76 assertions; preserved and not rerun/replaced by evaluator",
+    "v1RejectedHistoryPreserved": true
+  },
+  "additionalConcreteSourceRisk": {
+    "id": "R1",
+    "source": {
+      "path": "/tmp/rox-wp48-independent-ultra-20260930/fixture/apps/workspace-service/src/modules/licenses/repository.ts",
+      "sha256": "75c9c70f6ce4d3300dad77663102eea45da2f17104737028ed7d9d8ff0c3485b",
+      "bytes": 20158,
+      "symbol": "LicenseRepository.view evidence hash check",
+      "line": 50
+    },
+    "assessment": "Coherent mutation of license_component evidence plus recomputed auditDigest could expose a forged reviewed_exact_artifact projection without matching original receipt/event. Not yet counted as actual defect; producer asked to bind current projected evidence to durable independent receipt/event proof."
+  },
+  "legalApproval": false,
+  "wp48Complete": false,
+  "nativeAcceptance": false,
+  "sourceCheckoutWritten": false,
+  "oldArtifactsRewritten": false
+}

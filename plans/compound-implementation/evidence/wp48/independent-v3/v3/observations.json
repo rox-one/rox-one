@@ -1,0 +1,182 @@
+{
+  "schema": "wp48_93c1d8cff4e7",
+  "fixtureRoot": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-ZCE0dI",
+  "port": 52715,
+  "controls": [
+    {
+      "id": "BASELINE",
+      "identityStatus": 200,
+      "httpAudit": 200,
+      "wsReceiptExact": true,
+      "evidenceState": "review_required",
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "NEGATIVE_CONTROL_DIGEST_RETAINED_AND_INBOX_DENY",
+      "httpReceiptReplayStatus": 503,
+      "inboxCode": "PROVIDER_UNAVAILABLE",
+      "persistedAuditInbox": 0
+    },
+    {
+      "id": "RESTORED_RESTART",
+      "originalReceiptExact": true,
+      "currentIdentityPreserved": true,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      },
+      "memberDenied": 403
+    }
+  ],
+  "variants": [
+    {
+      "id": "RESOURCE_BINDING_label",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 503,
+      "listItems": null,
+      "wsGetDenied": true,
+      "wsListAccepted": false,
+      "wsListItems": null,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "RESOURCE_BINDING_binding_sha256",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 503,
+      "listItems": null,
+      "wsGetDenied": true,
+      "wsListAccepted": false,
+      "wsListItems": null,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "RESOURCE_BINDING_artifact_digest",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 503,
+      "listItems": null,
+      "wsGetDenied": true,
+      "wsListAccepted": false,
+      "wsListItems": null,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "RESOURCE_BINDING_sbom_digest",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 503,
+      "listItems": null,
+      "wsGetDenied": true,
+      "wsListAccepted": false,
+      "wsListItems": null,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "MALFORMED_EVENT_DIGEST",
+      "httpEventStatus": 503,
+      "httpEventBody": {
+        "error": {
+          "code": "PROVIDER_UNAVAILABLE"
+        }
+      },
+      "wsEventsAccepted": false,
+      "wsEventBody": null,
+      "httpReceiptReplayStatus": 503,
+      "inbox": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "observed": [
+          {
+            "type": "workspace.member_joined",
+            "correlationId": "workspace-bootstrap:216a3990-2934-4b44-831b-5bac7fe3e2de",
+            "payload": {
+              "principalId": "f7e72b2a-b233-4df2-8131-cb95a833bd57"
+            }
+          }
+        ],
+        "persisted": {
+          "audit_inbox": 0,
+          "watermark": "1"
+        }
+      }
+    },
+    {
+      "id": "WRONG_VALID_CORRELATION",
+      "originalCommandId": "0f76ea8c-5de9-4e78-923e-4d0a1bdee123",
+      "forgedCorrelation": "6406e7a1-b28b-4420-8943-d85c52611d9c",
+      "httpReceiptReplayStatus": 503,
+      "httpReceiptExact": false,
+      "wsReplayAccepted": false,
+      "wsReceiptExact": false,
+      "httpEventStatus": 503,
+      "httpEventBody": {
+        "error": {
+          "code": "PROVIDER_UNAVAILABLE"
+        }
+      },
+      "inbox": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "observed": [
+          {
+            "type": "workspace.member_joined",
+            "correlationId": "workspace-bootstrap:216a3990-2934-4b44-831b-5bac7fe3e2de",
+            "payload": {
+              "principalId": "f7e72b2a-b233-4df2-8131-cb95a833bd57"
+            }
+          }
+        ],
+        "persisted": {
+          "audit_inbox": 0,
+          "watermark": "1"
+        }
+      }
+    },
+    {
+      "id": "VALID_UUID_UNREGISTERED_RESOURCE",
+      "forgedEntityId": "license-component:00000000-0000-0000-0000-000000000000",
+      "httpReceiptReplayStatus": 503,
+      "inbox": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "observed": [
+          {
+            "type": "workspace.member_joined",
+            "correlationId": "workspace-bootstrap:216a3990-2934-4b44-831b-5bac7fe3e2de",
+            "payload": {
+              "principalId": "f7e72b2a-b233-4df2-8131-cb95a833bd57"
+            }
+          }
+        ],
+        "persisted": {
+          "audit_inbox": 0,
+          "watermark": "1"
+        }
+      }
+    }
+  ],
+  "defects": [],
+  "legalApproval": false,
+  "defectCount": 0,
+  "status": "NO_TARGETED_DEFECTS"
+}

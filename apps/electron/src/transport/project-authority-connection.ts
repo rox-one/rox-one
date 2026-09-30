@@ -73,7 +73,7 @@ export class ProjectAuthorityConnection {
       client.onConnectionStateChanged(state => {
         if (generation !== this.generation) return
         this.publish(state.status === 'connected' ? 'ready'
-          : state.status === 'failed' ? 'denied'
+          : state.status === 'failed' ? (state.lastError?.kind === 'auth' || state.lastError?.kind === 'protocol' ? 'denied' : 'unavailable')
           : state.status === 'connecting' || state.status === 'reconnecting' ? 'connecting' : 'unavailable')
       })
       client.connect()

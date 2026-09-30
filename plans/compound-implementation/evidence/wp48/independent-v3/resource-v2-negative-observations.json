@@ -1,0 +1,45 @@
+{
+  "schema": "wp48_93c1d8cff4e7",
+  "root": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-bUkJ9z",
+  "port": 53980,
+  "transports": [
+    {
+      "transport": "HTTP",
+      "identityRevalidations": 2,
+      "httpStatus": 200,
+      "accepted": true,
+      "code": null,
+      "text": "{\"entity\":{\"workspaceId\":\"986e1313-2452-4656-bce4-c08e3d738d56\",\"entityId\":\"license-component:4e0196ec-843f-41ad-9011-64637911da73\",\"revisionId\":\"1\"},\"label\":\"PRIVATE_WP-48 synthetic artifact\",\"revision\":\"1\",\"policyEpoch\":\"1\",\"artifactDigest\":\"c62d4b1b99a5615a5f125b175363db595876f179c6f36be96ffe685f45027a26\",\"sbomDigest\":\"0599d34e545474c40f19e78fc38bb741b27de746af597663450c476596097d71\",\"decisionManifest\":{\"resourceId\":\"4e0196ec-843f-41ad-9011-64637911da73\",\"policyEpoch\":\"1\",\"reviewRevision\":\"dddddddddddddddddddddddddddddddddddddddd\",\"reviewSha256\":\"f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb\",\"checkerRevision\":\"cccccccccccccccccccccccccccccccccccccccc\",\"checkerSha256\":\"e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64\",\"buildSha256\":\"bcc35f22268812b560416ae45a1a9f012c9b979798016583d028c80a9acf5389\"},\"evidence\":{\"state\":\"review_required\",\"findings\":[{\"code\":\"SCOPED_DECISION_REQUIRED\",\"subject\":\"fixture:fixture\"}],\"components\":[{\"id\":\"fixture\",\"name\":\"@fixture/wp48\",\"version\":\"1.0.0\",\"componentSha256\":\"cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359\",\"licenseExpression\":\"MIT\"}]},\"auditDigest\":\"42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac\",\"auditedAt\":\"2026-09-30T15:28:42.740Z\",\"projectionWatermark\":\"2\",\"canAudit\":true,\"permissionMode\":\"owner_bootstrap\"}",
+      "privateLabelExposed": true,
+      "evidenceExposed": true
+    },
+    {
+      "transport": "WS",
+      "identityRevalidations": 2,
+      "accepted": true,
+      "code": null,
+      "text": "{\"entity\":{\"workspaceId\":\"986e1313-2452-4656-bce4-c08e3d738d56\",\"entityId\":\"license-component:4e0196ec-843f-41ad-9011-64637911da73\",\"revisionId\":\"1\"},\"label\":\"PRIVATE_WP-48 synthetic artifact\",\"revision\":\"1\",\"policyEpoch\":\"2\",\"artifactDigest\":\"c62d4b1b99a5615a5f125b175363db595876f179c6f36be96ffe685f45027a26\",\"sbomDigest\":\"0599d34e545474c40f19e78fc38bb741b27de746af597663450c476596097d71\",\"decisionManifest\":{\"resourceId\":\"4e0196ec-843f-41ad-9011-64637911da73\",\"policyEpoch\":\"2\",\"reviewRevision\":\"dddddddddddddddddddddddddddddddddddddddd\",\"reviewSha256\":\"f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb\",\"checkerRevision\":\"cccccccccccccccccccccccccccccccccccccccc\",\"checkerSha256\":\"e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64\",\"buildSha256\":\"bcc35f22268812b560416ae45a1a9f012c9b979798016583d028c80a9acf5389\"},\"evidence\":{\"state\":\"review_required\",\"findings\":[{\"code\":\"SCOPED_DECISION_REQUIRED\",\"subject\":\"fixture:fixture\"}],\"components\":[{\"id\":\"fixture\",\"name\":\"@fixture/wp48\",\"version\":\"1.0.0\",\"componentSha256\":\"cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359\",\"licenseExpression\":\"MIT\"}]},\"auditDigest\":\"42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac\",\"auditedAt\":\"2026-09-30T15:28:42.740Z\",\"projectionWatermark\":\"2\",\"canAudit\":true,\"permissionMode\":\"owner_bootstrap\"}",
+      "privateLabelExposed": true,
+      "evidenceExposed": true
+    }
+  ],
+  "baseline": {
+    "http": 200,
+    "evidenceState": "review_required",
+    "counts": {
+      "receipts": 1,
+      "events": 1,
+      "revision": "1"
+    }
+  },
+  "restored": {
+    "http": 200,
+    "originalHttpReceiptExact": true,
+    "originalWsReceiptExact": true,
+    "counts": {
+      "receipts": 1,
+      "events": 1,
+      "revision": "1"
+    }
+  }
+}

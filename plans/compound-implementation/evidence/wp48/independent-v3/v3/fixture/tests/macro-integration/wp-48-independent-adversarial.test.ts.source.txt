@@ -1,0 +1,154 @@
+import { afterEach, expect, test, setDefaultTimeout } from 'bun:test'
+import { SQL } from 'bun'
+import { randomBytes, randomUUID } from 'node:crypto'
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { create as createTar } from 'tar'
+import { createWorkspaceServer, loadWorkspaceBootstrapMigrations } from '../../apps/workspace-service/src/server'
+import { loadProtectedWorkspaceDatabaseUrl } from '../../apps/workspace-service/src/auth/postgres-identity'
+import { TrustedLicenseRegistry, licenseCanonical, licenseHash } from '../../apps/workspace-service/src/modules/licenses/registry'
+import { WsRpcClient } from '../../packages/server-core/src/transport/client'
+import { DOMAIN_LICENSE_RPC, type LicenseComponent } from '../../packages/shared/src/workspace-domain/licenses/contracts'
+setDefaultTimeout(30000)
+const cleanups: (() => Promise<void>)[] = []
+afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup() })
+function object(value: unknown): Record<string, unknown> { if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected object'); return Object.fromEntries(Object.entries(value)) }
+function string(value: unknown): string { if (typeof value !== 'string' || !value) throw new Error('Expected string'); return value }
+function required<T>(value: T | undefined | null): T { if (value === undefined || value === null) throw new Error('Missing fixture'); return value }
+function component(value: unknown): LicenseComponent {
+  const data=object(value); const entity=object(data.entity); const reference=object(data.decisionManifest)
+  if(!string(entity.entityId).startsWith('license-component:')||string(reference.resourceId)!==string(entity.entityId).slice(18)||typeof data.canAudit!=='boolean')throw new Error('Invalid component response')
+  // Actual external response port; test assertions below independently check canonical fields and DB evidence.
+  return value as LicenseComponent
+}
+async function fixture(delayChecker = false) {
+  const root=realpathSync(mkdtempSync(join(tmpdir(),'wp48-domain-')));const schema='wp48_93c1d8cff4e7'
+  const url=await loadProtectedWorkspaceDatabaseUrl(process.env.ROX_WORKSPACE_TEST_CONFIG??join(homedir(),'.agents/state/rox-compound-workspace/postgres-environment.json'))
+  let database=new SQL(url,{max:12});const workspaceId=randomUUID();const resourceId=randomUUID();const issuer='urn:rox:wp48:'+randomUUID();const password='synthetic-wp48-'+randomUUID()
+  const authDirectory=join(root,'auth');mkdirSync(authDirectory,{mode:0o700});const stateDirectory=join(root,'audit-state');mkdirSync(stateDirectory,{mode:0o700})
+  const migrations=await loadWorkspaceBootstrapMigrations(resolve(import.meta.dir,'../../apps/workspace-service/migrations'),true)
+  let service:Awaited<ReturnType<typeof createWorkspaceServer>>|undefined;const clients:WsRpcClient[]=[]
+  const current=()=>required(service)
+  async function stop(){for(const client of clients.splice(0))client.destroy();if(service){service.server.close();service=undefined}}
+  cleanups.push(async()=>{await stop();try{await database.unsafe(`DROP SCHEMA "${schema}" CASCADE`)}finally{await database.close();rmSync(root,{recursive:true,force:true})}})
+  await database.unsafe(`CREATE SCHEMA "${schema}"`)
+  async function start(registry?:TrustedLicenseRegistry){service=await createWorkspaceServer({database,schema,migrations,host:'127.0.0.1',port:0,serverId:'wp48-'+schema,licenseRegistry:registry,authentication:{mode:'local-bootstrap',configuration:{mode:'local-bootstrap',issuer,audience:'wp48-test',stateDirectory:authDirectory,checkoutDirectory:process.cwd(),tokenLifetimeSeconds:300}}});await service.server.listen()}
+  await start()
+  const account=async(label:string)=>{const login=label+'-'+randomUUID()+'@example.invalid';return {login,...await current().identity.provisionAccount(login,password)}}
+  const owner=await account('owner'),member=await account('member'),outsider=await account('outsider')
+  await current().repository.provisionWorkspace(owner.principalId,workspaceId,'Synthetic WP48 workspace')
+  await database.unsafe(`INSERT INTO "${schema}".workspace_member(workspace_id,principal_id,role) VALUES($1,$2,'member')`,[workspaceId,member.principalId])
+  const staging=join(root,'staged'),payload=join(staging,'payload');mkdirSync(payload,{recursive:true})
+  const notice='MIT License\nCopyright synthetic WP48 fixture only\n';writeFileSync(join(staging,'LICENSE'),notice);writeFileSync(join(payload,'LICENSE'),notice);writeFileSync(join(payload,'code.js'),"export const release = 'fixture bytes'")
+  await createTar({cwd:payload,file:join(staging,'release.tgz'),gzip:true,portable:true},['LICENSE','code.js'])
+  const lock=JSON.stringify({lockfileVersion:1,workspaces:{'packages/fixture':{name:'@fixture/wp48',version:'1.0.0'}},packages:{}});writeFileSync(join(root,'bun.lock'),lock)
+  const codeHash=licenseHash(readFileSync(join(payload,'code.js'))),noticeHash=licenseHash(notice)
+  const release={schemaVersion:1,sourceRevision:'a'.repeat(40),lockSha256:licenseHash(lock),artifacts:[{id:'fixture',kind:'workspace',path:'release.tgz',contentRoot:'payload',sha256:licenseHash(readFileSync(join(staging,'release.tgz'))),platform:'darwin',arch:'arm64',buildFlags:{format:'esm',minify:false},files:[{path:'LICENSE',sha256:noticeHash,componentId:'fixture'},{path:'code.js',sha256:codeHash,componentId:'fixture'}]}],components:[{id:'fixture',kind:'workspace',name:'@fixture/wp48',version:'1.0.0',licenseExpression:'MIT',origin:{repository:'SYNTHETIC_FIXTURE_NOT_PRODUCTION',revision:'b'.repeat(40),path:'packages/fixture/source.ts',sha256:codeHash,modifications:'',transfer:'independent'},notices:[{path:'LICENSE',sha256:noticeHash}]}]}
+  const review={schemaVersion:1,policy:'LICENSE_REVIEW_REQUIRED',reviewers:[],preservedNotices:[],knownScopes:[],decisions:[]}
+  writeFileSync(join(root,'release.json'),JSON.stringify(release));writeFileSync(join(root,'review.json'),JSON.stringify(review));writeFileSync(join(root,'notices.txt'),notice)
+  let checker=resolve(import.meta.dir,'../../scripts/compliance/generate-sbom.ts');
+  if(delayChecker){const directory=join(root,'checker');mkdirSync(directory);for(const name of ['generate-sbom.ts','collect-build-attribution.ts','verify-registry-attribution.ts']){let source=readFileSync(join(checker,'..',name),'utf8');if(name==='generate-sbom.ts')source=source.replace('if (import.meta.main) {','if (import.meta.main) { await Bun.sleep(1500)');writeFileSync(join(directory,name),source)}checker=join(directory,'generate-sbom.ts')}
+  const modules=['generate-sbom.ts','collect-build-attribution.ts','verify-registry-attribution.ts'].map(name=>{const path=join(checker,'..',name);return {path,sha256:licenseHash(readFileSync(path))}})
+  const preflight=join(root,'preflight.json');const checkerRevision='c'.repeat(40),reviewRevision='d'.repeat(40)
+  const preflightProcess=Bun.spawnSync([process.execPath,checker,'check','--release',join(root,'release.json'),'--root',staging,'--lock',join(root,'bun.lock'),'--decisions',join(root,'review.json'),'--notices',join(root,'notices.txt'),'--source-revision',release.sourceRevision,'--review-revision',reviewRevision,'--auditor-revision',checkerRevision,'--output',preflight],{stdout:'pipe',stderr:'pipe'})
+  if(preflightProcess.exitCode!==1)throw new Error('Expected actual unreviewed checker result: '+preflightProcess.stderr.toString())
+  const audit=object(JSON.parse(readFileSync(preflight,'utf8')));if(!Array.isArray(audit.artifactDigests))throw new Error('Missing checker digests')
+  const build={schemaVersion:1,artifactDigest:licenseHash(licenseCanonical(audit.artifactDigests)),sbomDigest:string(audit.sbomSha256),releaseSha256:licenseHash(readFileSync(join(root,'release.json'))),lockSha256:licenseHash(lock),reviewSha256:licenseHash(readFileSync(join(root,'review.json'))),noticeSha256:noticeHash,sourceRevision:release.sourceRevision,reviewRevision,checkerRevision,checkerSha256:licenseHash(readFileSync(checker)),producerRevision:'e'.repeat(40)}
+  writeFileSync(join(root,'build.json'),JSON.stringify(build),{mode:0o600})
+  const file=(name:string)=>({path:join(root,name),sha256:licenseHash(readFileSync(join(root,name)))})
+  const registryConfig={schemaVersion:1,stateDirectory,checker:{path:checker,sha256:build.checkerSha256,revision:checkerRevision,bunSha256:licenseHash(readFileSync(process.execPath)),modules},resources:[{resourceId,workspaceId,label:'PRIVATE_WP-48 synthetic artifact',root:staging,release:file('release.json'),lock:file('bun.lock'),review:file('review.json'),notices:file('notices.txt'),build:file('build.json'),policy:{mode:'owner_bootstrap',read:true,write:true,action:true}}]}
+  const configPath=join(root,'registry.json');writeFileSync(configPath,JSON.stringify(registryConfig),{mode:0o600})
+  const registry=await TrustedLicenseRegistry.load(configPath);await stop();await start(registry)
+  async function http(path:string,token?:string,body?:unknown){const response=await fetch(`http://127.0.0.1:${current().server.port}${path}`,{method:body===undefined?'GET':'POST',headers:{...(token?{authorization:'Bearer '+token}:{}),...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)});const text=await response.text();return {status:response.status,text,body:JSON.parse(text) as unknown}}
+  const token=async(login:string)=>string(object((await http('/v1/auth/local/token',undefined,{login,password})).body).token)
+  const ownerToken=await token(owner.login),memberToken=await token(member.login),outsiderToken=await token(outsider.login)
+  async function ws(token:string){const client=new WsRpcClient(`ws://127.0.0.1:${current().server.port}`,{token,workspaceId,mode:'remote',autoReconnect:false,connectTimeout:2000,requestTimeout:15000});clients.push(client);await new Promise<void>((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('WS handshake timeout')),2500);const off=client.onConnectionStateChanged(state=>{if(state.status==='connected'){clearTimeout(timer);off();resolve()}else if(state.status==='failed'||state.status==='disconnected'){clearTimeout(timer);off();reject(new Error('WS handshake denied'))}});client.connect()});return client}
+  const prefix='/v1/workspaces/'+workspaceId;const entityId='license-component:'+resourceId
+  const get=async()=>component((await http(prefix+'/licenses/'+resourceId,ownerToken)).body)
+  const command=async()=>{const row=await get();return {commandId:randomUUID(),schemaVersion:2,workspaceId,idempotencyKey:randomUUID(),expectedRevision:row.revision,payload:{artifactDigest:row.artifactDigest,sbomDigest:row.sbomDigest,decisionManifest:row.decisionManifest}}}
+  const counts=async()=>{const [row]=await database.unsafe<{receipts:number;events:number;revision:string}[]>(`SELECT (SELECT count(*)::integer FROM "${schema}".license_audit_receipt) AS receipts,(SELECT count(*)::integer FROM "${schema}".project_event WHERE type='audit.license_reviewed') AS events,(SELECT revision::text FROM "${schema}".license_component WHERE resource_id=$1) AS revision`,[resourceId]);return required(row)}
+  const restart=async()=>{await stop();await database.close();database=new SQL(url,{max:12});await start(await TrustedLicenseRegistry.load(configPath))}
+  return {root,get database(){return database},restart,schema,workspaceId,resourceId,entityId,registry,configPath,registryConfig,current,start,stop,http,ws,prefix,owner,member,outsider,ownerToken,memberToken,outsiderToken,get,command,counts,stateDirectory}
+}
+
+test('independent one-schema actual v2 baseline and retained-row/event corruption controls',async()=>{
+ const f=await fixture()
+ const observationPath='/tmp/rox-wp48-independent-ultra-20260930/v3/observations.json'
+ const observations:Record<string,unknown>={schema:f.schema,fixtureRoot:f.root,port:f.current().server.port,controls:[],variants:[],defects:[],legalApproval:false}
+ const controls=observations.controls as unknown[],variants=observations.variants as unknown[],defects=observations.defects as unknown[]
+ const save=()=>writeFileSync(observationPath,JSON.stringify(observations,null,2)+'\n')
+ const client=await f.ws(f.ownerToken)
+ const invoke=async(channel:string,args:unknown)=>{try{return {accepted:true,result:await client.invoke(channel,f.workspaceId,args)}}catch(error){return {accepted:false,code:object(error).code??null,message:object(error).message??null}}}
+ const listPath=f.prefix+'/licenses',getPath=listPath+'/'+f.resourceId,eventPath=getPath+'/events',auditPath=f.prefix+'/commands/audit.releaseLicense'
+ const identity=await f.http(f.prefix+'/identity',f.ownerToken)
+ expect(identity.status).toBe(200);expect(object(identity.body).principalId).toBe(f.owner.principalId)
+ const initialList=await f.http(listPath,f.ownerToken);expect(initialList.status).toBe(200)
+ expect((object(initialList.body).items as unknown[])).toHaveLength(1)
+ const command=await f.command()
+ const baseline=await f.http(auditPath,f.ownerToken,command);expect(baseline.status).toBe(200)
+ const baselineWs=await invoke(DOMAIN_LICENSE_RPC.AUDIT,command);expect(baselineWs.accepted).toBe(true);expect(baselineWs.result).toEqual(baseline.body)
+ const baselineData=component(object(baseline.body).data);expect(baselineData.evidence?.state).toBe('review_required')
+ expect(await f.counts()).toEqual({receipts:1,events:1,revision:'1'})
+ controls.push({id:'BASELINE',identityStatus:identity.status,httpAudit:baseline.status,wsReceiptExact:true,evidenceState:baselineData.evidence?.state,counts:await f.counts()})
+ const [resource]=await f.database.unsafe<Record<string,unknown>[]>(`SELECT label,binding_sha256,artifact_digest,sbom_digest FROM "${f.schema}".license_component WHERE resource_id=$1`,[f.resourceId])
+ for(const [column,value] of [['label','FORGED_WP48_DB_LIST_LABEL'],['binding_sha256','f'.repeat(64)],['artifact_digest','f'.repeat(64)],['sbom_digest','f'.repeat(64)]]){
+  await f.database.unsafe(`UPDATE "${f.schema}".license_component SET ${column}=$2 WHERE resource_id=$1`,[f.resourceId,value])
+  const get=await f.http(getPath,f.ownerToken),list=await f.http(listPath,f.ownerToken),wsGet=await invoke(DOMAIN_LICENSE_RPC.GET,{entityId:f.entityId}),wsList=await invoke(DOMAIN_LICENSE_RPC.LIST,{})
+  const row={id:'RESOURCE_BINDING_'+column,httpGetStatus:get.status,httpGetCode:object(object(get.body).error).code,httpListStatus:list.status,listItems:object(list.body).items??null,wsGetDenied:!wsGet.accepted,wsListAccepted:wsList.accepted,wsListItems:wsList.accepted?object(wsList.result).items:null,counts:await f.counts()}
+  variants.push(row)
+  expect(get.status).toBe(503);expect(wsGet.accepted).toBe(false)
+  if(list.status===200||wsList.accepted)defects.push({id:'LIST_TRUST_BINDING_BYPASS',variant:column,expected:'HTTP503/WSPROVIDER_UNAVAILABLE before serializing any forged row',actual:row})
+  await f.database.unsafe(`UPDATE "${f.schema}".license_component SET ${column}=$2 WHERE resource_id=$1`,[f.resourceId,required(resource)[column]])
+  expect((await f.http(getPath,f.ownerToken)).status).toBe(200)
+ }
+ const [event]=await f.database.unsafe<{event_id:string;payload:unknown;correlation_id:string;sequence:string}[]>(`SELECT event_id,payload,correlation_id,sequence::text FROM "${f.schema}".project_event WHERE type='audit.license_reviewed'`)
+ const originalEvent=required(event)
+ const inbox=async(consumer:string)=>{
+  const observed:unknown[]=[];let code:string|null=null
+  for(let i=0;i<8;i++){
+   try{if(!await f.current().repository.consumeNextEvent(consumer,async(_tx,e)=>{observed.push({type:e.type,entityRef:e.entityRef,correlationId:e.correlationId,payload:e.payload})}))break}
+   catch(error){code=string(object(error).code);break}
+  }
+  const [persisted]=await f.database.unsafe<{audit_inbox:number;watermark:string|null}[]>(`SELECT
+    (SELECT count(*)::integer FROM "${f.schema}".project_event_inbox WHERE consumer_id=$1 AND event_id=$2) AS audit_inbox,
+    (SELECT sequence::text FROM "${f.schema}".project_projection_watermark WHERE consumer_id=$1 AND workspace_id=$3) AS watermark`,[consumer,originalEvent.event_id,f.workspaceId])
+  return {code,observed,persisted}
+ }
+ // Concrete malformed-digest negative control: retained receipt must deny and inbox must rollback.
+ const malformedPayload={...object(originalEvent.payload),auditDigest:'INVALID_DIGEST_PRIVATE_MARKER'}
+ await f.database.unsafe(`UPDATE "${f.schema}".project_event SET payload=$2::jsonb WHERE event_id=$1`,[originalEvent.event_id,malformedPayload])
+ const malformedEvents=await f.http(eventPath,f.ownerToken),malformedWs=await invoke(DOMAIN_LICENSE_RPC.EVENTS,{entityId:f.entityId}),malformedReplay=await f.http(auditPath,f.ownerToken,command),malformedInbox=await inbox('independent-malformed-digest')
+ expect(malformedReplay.status).toBe(503);expect(malformedInbox.code).toBe('PROVIDER_UNAVAILABLE');expect(malformedInbox.persisted?.audit_inbox).toBe(0)
+ const malformed={id:'MALFORMED_EVENT_DIGEST',httpEventStatus:malformedEvents.status,httpEventBody:malformedEvents.body,wsEventsAccepted:malformedWs.accepted,wsEventBody:malformedWs.result??null,httpReceiptReplayStatus:malformedReplay.status,inbox:malformedInbox}
+ variants.push(malformed);controls.push({id:'NEGATIVE_CONTROL_DIGEST_RETAINED_AND_INBOX_DENY',httpReceiptReplayStatus:malformedReplay.status,inboxCode:malformedInbox.code,persistedAuditInbox:malformedInbox.persisted?.audit_inbox})
+ if(malformedEvents.status===200||malformedWs.accepted)defects.push({id:'DIRECT_EVENTS_INVALID_DIGEST_ACCEPTED',expected:'Malformed persisted event rejects redacted before serialization on both transports',actual:malformed})
+ await f.database.unsafe(`UPDATE "${f.schema}".project_event SET payload=$2::jsonb WHERE event_id=$1`,[originalEvent.event_id,originalEvent.payload])
+ // Valid-shaped but wrong correlation currently is not part of receipt's independent event proof.
+ const wrongCorrelation=randomUUID()
+ await f.database.unsafe(`UPDATE "${f.schema}".project_event SET correlation_id=$2 WHERE event_id=$1`,[originalEvent.event_id,wrongCorrelation])
+ const correlatedReplay=await f.http(auditPath,f.ownerToken,command),correlatedWs=await invoke(DOMAIN_LICENSE_RPC.AUDIT,command),correlatedEvents=await f.http(eventPath,f.ownerToken),correlatedInbox=await inbox('independent-wrong-correlation')
+ const correlation={id:'WRONG_VALID_CORRELATION',originalCommandId:command.commandId,forgedCorrelation:wrongCorrelation,httpReceiptReplayStatus:correlatedReplay.status,httpReceiptExact:JSON.stringify(correlatedReplay.body)===JSON.stringify(baseline.body),wsReplayAccepted:correlatedWs.accepted,wsReceiptExact:correlatedWs.accepted&&JSON.stringify(correlatedWs.result)===JSON.stringify(baseline.body),httpEventStatus:correlatedEvents.status,httpEventBody:correlatedEvents.body,inbox:correlatedInbox}
+ variants.push(correlation)
+ if(correlatedReplay.status===200||correlatedWs.accepted||correlatedInbox.persisted?.audit_inbox!==0)defects.push({id:'CORRELATION_NOT_IN_INDEPENDENT_EVENT_PROOF',expected:'Wrong correlation causes receipt/events/inbox deny with no audit effect or advanced watermark',actual:correlation})
+ await f.database.unsafe(`UPDATE "${f.schema}".project_event SET correlation_id=$2 WHERE event_id=$1`,[originalEvent.event_id,originalEvent.correlation_id])
+ // A syntactically valid canonical UUID is not enough to prove the persisted audit event's Resource identity.
+ const wrongEntity='license-component:00000000-0000-0000-0000-000000000000'
+ await f.database.unsafe(`UPDATE "${f.schema}".project_event SET payload=$2::jsonb WHERE event_id=$1`,[originalEvent.event_id,{...object(originalEvent.payload),entityId:wrongEntity}])
+ const wrongEntityReplay=await f.http(auditPath,f.ownerToken,command),wrongEntityInbox=await inbox('independent-unregistered-resource')
+ expect(wrongEntityReplay.status).toBe(503)
+ const unbound={id:'VALID_UUID_UNREGISTERED_RESOURCE',forgedEntityId:wrongEntity,httpReceiptReplayStatus:wrongEntityReplay.status,inbox:wrongEntityInbox}
+ variants.push(unbound)
+ if(wrongEntityInbox.persisted?.audit_inbox!==0)defects.push({id:'INBOX_UNBOUND_CANONICAL_RESOURCE_ACCEPTED',expected:'Valid-shaped but wrong/unregistered resource ID is rejected against independent receipt/resource proof before effect/inbox/watermark',actual:unbound})
+ await f.database.unsafe(`UPDATE "${f.schema}".project_event SET payload=$2::jsonb WHERE event_id=$1`,[originalEvent.event_id,originalEvent.payload])
+ expect((await f.http(auditPath,f.ownerToken,command)).body).toEqual(baseline.body)
+ // Full restore and restart are controls, not legal approval or package completion.
+ await f.restart();expect((await f.http(f.prefix+'/identity',f.ownerToken)).status).toBe(200)
+ expect((await f.http(auditPath,f.ownerToken,command)).body).toEqual(baseline.body)
+ expect(await f.counts()).toEqual({receipts:1,events:1,revision:'1'})
+ const denied=await f.http(listPath,f.memberToken);expect(denied.status).toBe(403);expect(denied.text).not.toContain('PRIVATE_WP-48')
+ controls.push({id:'RESTORED_RESTART',originalReceiptExact:true,currentIdentityPreserved:true,counts:await f.counts(),memberDenied:denied.status})
+ observations.defectCount=defects.length;observations.status=defects.length?'CONFIRMED_DEFECTS':'NO_TARGETED_DEFECTS';save()
+ console.log(JSON.stringify({status:observations.status,schema:f.schema,port:f.current().server.port,defectCount:defects.length,artifact:observationPath}))
+ expect(defects).toEqual([])
+})

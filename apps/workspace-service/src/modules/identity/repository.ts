@@ -92,7 +92,7 @@ function retainedReceipt(row: ReceiptRow, actor: AuthenticatedActor, command: Ro
 /** Only the composition root creates the SQL adapter. No renderer I/O or second local writer. */
 export class IdentityRepository implements IdentityRepositoryPort {
   private readonly prefix: string
-  constructor(private readonly database: SQL, private readonly schema = 'public', private readonly observability = new IdentityObservability()) {
+  constructor(private readonly database: SQL, private readonly schema = 'public', private readonly observability = new IdentityObservability(), private readonly licenseEvents?: { verifyEvent(tx: TransactionSQL, eventId: string): Promise<IdentityDomainEvent> }) {
     if (!/^[a-z][a-z0-9_]*$/.test(schema)) throw new Error('Invalid identity database schema')
     this.prefix = `"${schema}".`
   }
@@ -259,6 +259,7 @@ export class IdentityRepository implements IdentityRepositoryPort {
   }
 
   private event(row: EventRow): IdentityDomainEvent {
+    if (row.type === 'audit.license_reviewed') throw new IdentityDomainError('PROVIDER_UNAVAILABLE')
     const payload: Record<string, string> = row.project_id ? { entityId: formatRox2EntityId('project', row.project_id) } : { principalId: row.actor_principal_id }
     if (!isDeepStrictEqual(row.payload, payload)) throw new IdentityDomainError('PROVIDER_UNAVAILABLE')
     return {
@@ -279,7 +280,7 @@ export class IdentityRepository implements IdentityRepositoryPort {
       const rows = await this.query<EventRow>(tx, `SELECT e.* FROM ${this.prefix}project_event e
         LEFT JOIN ${this.prefix}project p ON p.workspace_id = e.workspace_id AND p.project_id = e.project_id
         WHERE e.workspace_id = $1 AND e.sequence > $2 AND
-          (e.type = 'workspace.member_joined' OR (p.deleted_at IS NULL AND
+          (e.type = 'workspace.member_joined' OR (e.type = 'project.created' AND p.deleted_at IS NULL AND
             (p.owner_principal_id = $3 OR p.visibility = 'members')))
         ORDER BY e.sequence LIMIT $4`, [workspaceId, position?.sequence ?? '0', actor.principalId, limit])
       const last = rows[rows.length - 1]
@@ -309,7 +310,9 @@ export class IdentityRepository implements IdentityRepositoryPort {
       }
       attemptedKey = this.observability.attemptKey(consumerId, row.event_id)
       retried = this.observability.wasFailed(attemptedKey)
-      await effect(tx, this.event(row))
+      const event = row.type === 'audit.license_reviewed' ? await this.licenseEvents?.verifyEvent(tx,row.event_id) : this.event(row)
+      if (!event) throw new IdentityDomainError('PROVIDER_UNAVAILABLE')
+      await effect(tx, event)
       await this.query(tx, `INSERT INTO ${this.prefix}project_event_inbox (consumer_id, event_id) VALUES ($1,$2)`, [consumerId, row.event_id])
       await this.query(tx, `INSERT INTO ${this.prefix}project_projection_watermark (consumer_id, workspace_id, sequence)
         VALUES ($1,$2,$3) ON CONFLICT (consumer_id,workspace_id) DO UPDATE

@@ -1,0 +1,284 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/core/src/tasks/personal/things.test.ts:
+(pass) quick entry (RU/EN natural language) > parses завтра / послезавтра / через неделю [11.90ms]
+(pass) quick entry (RU/EN natural language) > parses weekdays: в пт / во вторник / fri [2.12ms]
+(pass) quick entry (RU/EN natural language) > parses сегодня, вечером, когда-нибудь, в любое время [0.22ms]
+(pass) quick entry (RU/EN natural language) > parses tags, deadlines and reminder times [0.43ms]
+(pass) quick entry (RU/EN natural language) > parses repeat rules [0.71ms]
+(pass) quick entry (RU/EN natural language) > leaves plain titles untouched [0.70ms]
+(pass) quick entry (RU/EN natural language) > parses numeric dates [0.16ms]
+(pass) repeat rules > computes the next fixed / after-completion date [6.89ms]
+(pass) repeat rules > completeTask spawns the next occurrence with a fresh checklist [1.52ms]
+(pass) Things lists > trash / restore / emptyTrash [0.32ms]
+(pass) Things lists > start dates: future → Планы, reached → Сегодня; deadline today pulls into Сегодня [0.56ms]
+114 |     store.setWhen(a.id, { kind: 'date', at: day(1) }, now)
+115 |     const b = store.create({ title: 'B', now })
+116 |     store.setWhen(b.id, { kind: 'date', at: day(40) }, now)
+117 |     const plan = upcomingByDay(store.list(), now, 7)
+118 |     expect(plan.days).toHaveLength(7)
+119 |     expect(plan.days[0]!.tasks.map((x) => x.title)).toEqual(['A'])
+                                                          ^
+error: expect(received).toEqual(expected)
+
+- [
+-   "A",
+- ]
++ []
+
+- Expected  - 3
++ Received  + 1
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/tasks/personal/things.test.ts:119:53)
+(fail) Things lists > upcomingByDay keeps 7 calendar days and groups later by month [8.11ms]
+126 |       const store = new PersonalTaskStore()
+127 |       const a = store.create({ title: 'Today', now })
+128 |       const b = store.create({ title: 'Tomorrow', now })
+129 |       store.setWhen(a.id, { kind: 'date', at: now, evening: true }, now)
+130 |       store.setWhen(b.id, { kind: 'date', at: day(1) }, now)
+131 |       expect(store.get(a.id)).toMatchObject({ list: 'today', startAt: undefined, evening: true })
+                                    ^
+error: expect(received).toMatchObject(expected)
+
+  {
++   "areaId": undefined,
++   "createdAt": 1790676000000,
++   "dueAt": undefined,
+    "evening": true,
+-   "list": "today",
+-   "startAt": undefined,
++   "headingId": undefined,
++   "id": "task-8",
++   "links": [],
++   "list": "upcoming",
++   "notes": "",
++   "order": 1,
++   "parentId": undefined,
++   "priority": "none",
++   "projectId": undefined,
++   "recurrence": undefined,
++   "startAt": 1790640000000,
++   "tags": [],
++   "title": "Today",
+  }
+
+- Expected  - 2
++ Received  + 16
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/tasks/personal/things.test.ts:131:31)
+(fail) Things lists > setWhen classifies calendar dates against the supplied clock [1.54ms]
+(pass) Things lists > setWhen preserves the wall clock default for existing callers [0.23ms]
+(pass) Things lists > projects with headings, move and progress [0.53ms]
+(pass) Things lists > create keeps a source link and inserts after an anchor [0.16ms]
+
+packages/core/src/platform/identity/attach-credential-ref.test.ts:
+(pass) attachCredentialRef > writes a cred uuid and does not accept a raw value [4.03ms]
+(pass) attachCredentialRef > rejects raw fields and a fake registry before mutation [0.63ms]
+(pass) attachCredentialRef > leaves the input connection unchanged when registry validation fails [0.10ms]
+127 |       status: 'connected',
+128 |     }, registry, {
+129 |       kind: 'bearer_token',
+130 |       providerId: 'local',
+131 |       locator: locator as never,
+132 |     })).toThrow();
+              ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "svc-github",
+  workspaceId: "ws",
+  provider: "github",
+  status: "connected",
+  credentialRef: "cred_abcf10a0-cfd2-46b3-bebe-e401ca0beea6",
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/platform/identity/attach-credential-ref.test.ts:132:9)
+(fail) attachCredentialRef > rejects non-enumerable declared fields before registration [2.44ms]
+143 |       status: 'connected',
+144 |     }, registry, {
+145 |       kind: 'bearer_token',
+146 |       providerId: 'local',
+147 |       locator,
+148 |     } as never)).toThrow();
+                       ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "svc-github",
+  workspaceId: "ws",
+  provider: "github",
+  status: "connected",
+  credentialRef: "cred_2f206eec-cdab-4075-a836-9c79c8f3c296",
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/platform/identity/attach-credential-ref.test.ts:148:18)
+(fail) attachCredentialRef > rejects prototype-derived locators before registry mutation [0.18ms]
+
+packages/core/src/platform/identity/credential-types.test.ts:
+(pass) CredentialRefRegistry > creates opaque stable refs and stores metadata only [0.13ms]
+(pass) CredentialRefRegistry > keeps the ref identity while replacing provider metadata [0.12ms]
+(pass) CredentialRefRegistry > tracks versions as metadata and clears the current version on revoke [0.26ms]
+(pass) CredentialRefRegistry > rejects an invalid version status at runtime [0.06ms]
+(pass) CredentialRefRegistry > rejects malformed metadata instead of accepting a secret payload [0.10ms]
+139 |       const registry = createRegistry();
+140 |       expect(() => registry.register({
+141 |         kind: 'api_key',
+142 |         providerId: 'local',
+143 |         locator: createLocator() as never,
+144 |       })).toThrow();
+                ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "cred_123e4567-e89b-12d3-a456-426614174000",
+  kind: "api_key",
+  providerId: "local",
+  locator: {
+    type: "local",
+    key: "github/default",
+  },
+  createdAt: 1790783540446,
+  updatedAt: 1790783540446,
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/platform/identity/credential-types.test.ts:144:11)
+(fail) CredentialRefRegistry > rejects locator prototype-derived fields before registration or provider replacement [0.15ms]
+139 |       const registry = createRegistry();
+140 |       expect(() => registry.register({
+141 |         kind: 'api_key',
+142 |         providerId: 'local',
+143 |         locator: createLocator() as never,
+144 |       })).toThrow();
+                ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "cred_123e4567-e89b-12d3-a456-426614174000",
+  kind: "api_key",
+  providerId: "local",
+  locator: {
+    type: "local",
+    key: "github/default",
+  },
+  createdAt: 1790783540447,
+  updatedAt: 1790783540447,
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/platform/identity/credential-types.test.ts:144:11)
+(fail) CredentialRefRegistry > rejects locator non-enumerable fields before registration or provider replacement [0.13ms]
+139 |       const registry = createRegistry();
+140 |       expect(() => registry.register({
+141 |         kind: 'api_key',
+142 |         providerId: 'local',
+143 |         locator: createLocator() as never,
+144 |       })).toThrow();
+                ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "cred_123e4567-e89b-12d3-a456-426614174000",
+  kind: "api_key",
+  providerId: "local",
+  locator: {
+    type: "local",
+    key: "github/default",
+  },
+  createdAt: 1790783540447,
+  updatedAt: 1790783540447,
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/platform/identity/credential-types.test.ts:144:11)
+(fail) CredentialRefRegistry > rejects locator symbol fields before registration or provider replacement [0.09ms]
+165 |         get: () => {
+166 |           reads += 1;
+167 |           return field === 'type' ? 'local' : 'github/default';
+168 |         },
+169 |       });
+170 |       expect(() => registry.register({ kind: 'api_key', providerId: 'local', locator: locator as never })).toThrow();
+                                                                                                                 ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "cred_123e4567-e89b-12d3-a456-426614174000",
+  kind: "api_key",
+  providerId: "local",
+  locator: {
+    type: "local",
+    key: "github/default",
+  },
+  createdAt: 1790783540447,
+  updatedAt: 1790783540447,
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/platform/identity/credential-types.test.ts:170:108)
+(fail) CredentialRefRegistry > rejects locator type accessors without executing them [0.14ms]
+165 |         get: () => {
+166 |           reads += 1;
+167 |           return field === 'type' ? 'local' : 'github/default';
+168 |         },
+169 |       });
+170 |       expect(() => registry.register({ kind: 'api_key', providerId: 'local', locator: locator as never })).toThrow();
+                                                                                                                 ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: {
+  id: "cred_123e4567-e89b-12d3-a456-426614174000",
+  kind: "api_key",
+  providerId: "local",
+  locator: {
+    type: "local",
+    key: "github/default",
+  },
+  createdAt: 1790783540447,
+  updatedAt: 1790783540447,
+}
+
+      at <anonymous> (/private/tmp/rox-core-integration-gate-ultra-20260930/proposed/packages/core/src/platform/identity/credential-types.test.ts:170:108)
+(fail) CredentialRefRegistry > rejects locator key accessors without executing them [0.07ms]
+(pass) CredentialRefRegistry > accepts enumerable readonly and frozen locator data fields [0.28ms]
+(pass) CredentialRefRegistry > rejects hidden and nested secret fields at the registry boundary [0.17ms]
+(pass) CredentialRefRegistry > rejects a duplicate CredentialRef id and keeps the first record [0.06ms]
+(pass) CredentialRefRegistry > rejects register with an orphan currentVersionId [0.03ms]
+(pass) CredentialRefRegistry > rejects reviving a revoked version to active [0.05ms]
+(pass) CredentialRefRegistry > rejects reviving an invalid version to active [0.04ms]
+(pass) CredentialRefRegistry > keeps terminal version statuses irreversible [0.05ms]
+(pass) CredentialRefRegistry > makes a reactivated superseded version the sole current active version [0.05ms]
+(pass) CredentialRefRegistry > leaves version state unchanged when reactivation cannot read the clock [0.08ms]
+(pass) CredentialRefRegistry > rejects a version fingerprint that is not 64 hex characters [0.30ms]
+(pass) CredentialRefRegistry > rejects infisical locators with empty projectId or secretKey [0.11ms]
+(pass) CredentialRefRegistry > rejects unknown version payload fields [0.07ms]
+(pass) CredentialRefRegistry > generates browser-safe cred UUID identifiers [0.01ms]
+(pass) CredentialRefRegistry > returns clones instead of mutable registry state [0.03ms]
+(pass) CredentialRefRegistry > accepts P0 locators and still rejects unknown locator types [0.07ms]
+(pass) CredentialRefRegistry > rejects an expiry before creation [0.03ms]
+(pass) CredentialRefRegistry > does not silently replace the current version with an older active version [0.05ms]
+(pass) CredentialRefRegistry > keeps ref timestamps monotonic by clamping instead of blocking revocation [0.04ms]
+(pass) CredentialRefRegistry > revokes a version whose createdAt is far in the future [0.03ms]
+(pass) CredentialRefRegistry > moves ref updatedAt forward only when provider metadata changes [0.04ms]
+(pass) CredentialRefRegistry > does not let an untrimmed id overwrite an existing version [0.06ms]
+(pass) CredentialRefRegistry > treats credential ref ids as case-sensitive [0.04ms]
+(pass) CredentialRefRegistry > bounds caller-controlled text interpolated into errors [0.46ms]
+(pass) CredentialRefRegistry > lists versions deterministically by creation time and id [0.35ms]
+
+9 tests failed:
+(fail) Things lists > upcomingByDay keeps 7 calendar days and groups later by month [8.11ms]
+(fail) Things lists > setWhen classifies calendar dates against the supplied clock [1.54ms]
+(fail) attachCredentialRef > rejects non-enumerable declared fields before registration [2.44ms]
+(fail) attachCredentialRef > rejects prototype-derived locators before registry mutation [0.18ms]
+(fail) CredentialRefRegistry > rejects locator prototype-derived fields before registration or provider replacement [0.15ms]
+(fail) CredentialRefRegistry > rejects locator non-enumerable fields before registration or provider replacement [0.13ms]
+(fail) CredentialRefRegistry > rejects locator symbol fields before registration or provider replacement [0.09ms]
+(fail) CredentialRefRegistry > rejects locator type accessors without executing them [0.14ms]
+(fail) CredentialRefRegistry > rejects locator key accessors without executing them [0.07ms]
+
+ 46 pass
+ 9 fail
+ 170 expect() calls
+Ran 55 tests across 3 files. [377.00ms]

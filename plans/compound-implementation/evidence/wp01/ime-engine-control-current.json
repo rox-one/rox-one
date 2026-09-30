@@ -1,0 +1,304 @@
+{
+  "level": "bare-html-engine-negative-control",
+  "productUiAcceptance": false,
+  "serviceStarted": false,
+  "noPreload": true,
+  "trials": [
+    {
+      "method": "Input.insertText",
+      "value": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+      "events": [
+        {
+          "type": "compositionstart",
+          "isTrusted": true,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": "",
+          "value": ""
+        },
+        {
+          "type": "compositionupdate",
+          "isTrusted": true,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+          "value": ""
+        },
+        {
+          "type": "beforeinput",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": null,
+          "inputType": "insertCompositionText",
+          "data": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+          "value": ""
+        },
+        {
+          "type": "input",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": null,
+          "inputType": "insertCompositionText",
+          "data": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "keydown",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": "Enter",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "beforeinput",
+          "isTrusted": true,
+          "isComposing": false,
+          "key": null,
+          "inputType": "insertLineBreak",
+          "data": null,
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "keyup",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": "Enter",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "compositionupdate",
+          "isTrusted": true,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "beforeinput",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": null,
+          "inputType": "insertCompositionText",
+          "data": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "input",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": null,
+          "inputType": "insertCompositionText",
+          "data": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "compositionend",
+          "isTrusted": false,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "keydown",
+          "isTrusted": true,
+          "isComposing": false,
+          "key": "ArrowRight",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        },
+        {
+          "type": "keyup",
+          "isTrusted": true,
+          "isComposing": false,
+          "key": "ArrowRight",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_Input.insertText_入力_🧭"
+        }
+      ],
+      "compositionEndTrusted": false,
+      "finishedCompositionVerified": true,
+      "finalValue": "КОНТРОЛЬ_Input.insertText_入力_🧭",
+      "screenshot": {
+        "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-ime-engine-control-tab-1790779722238/Input-insertText.png",
+        "sha256": "7bed5627a9869bd456036e33013277ea4dd6f1a9a6a9eaae1dee965c77cab8b4"
+      }
+    },
+    {
+      "method": "native-Tab",
+      "value": "КОНТРОЛЬ_native-Tab_入力_🧭",
+      "events": [
+        {
+          "type": "compositionstart",
+          "isTrusted": true,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": "",
+          "value": ""
+        },
+        {
+          "type": "compositionupdate",
+          "isTrusted": true,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": "КОНТРОЛЬ_native-Tab_入力_🧭",
+          "value": ""
+        },
+        {
+          "type": "beforeinput",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": null,
+          "inputType": "insertCompositionText",
+          "data": "КОНТРОЛЬ_native-Tab_入力_🧭",
+          "value": ""
+        },
+        {
+          "type": "input",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": null,
+          "inputType": "insertCompositionText",
+          "data": "КОНТРОЛЬ_native-Tab_入力_🧭",
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "keydown",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": "Enter",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "beforeinput",
+          "isTrusted": true,
+          "isComposing": false,
+          "key": null,
+          "inputType": "insertLineBreak",
+          "data": null,
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "keyup",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": "Enter",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "keydown",
+          "isTrusted": true,
+          "isComposing": true,
+          "key": "Tab",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "compositionend",
+          "isTrusted": false,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": "КОНТРОЛЬ_native-Tab_入力_🧭",
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "blur",
+          "isTrusted": true,
+          "isComposing": null,
+          "key": null,
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "keydown",
+          "isTrusted": true,
+          "isComposing": false,
+          "key": "ArrowRight",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        },
+        {
+          "type": "keyup",
+          "isTrusted": true,
+          "isComposing": false,
+          "key": "ArrowRight",
+          "inputType": null,
+          "data": null,
+          "value": "КОНТРОЛЬ_native-Tab_入力_🧭"
+        }
+      ],
+      "compositionEndTrusted": false,
+      "finishedCompositionVerified": true,
+      "finalValue": "КОНТРОЛЬ_native-Tab_入力_🧭",
+      "screenshot": {
+        "path": "/Users/t/Pictures/Shots/Agents/rox-wp01-ime-engine-control-tab-1790779722238/native-Tab.png",
+        "sha256": "b77ddfea4e1de8130f2bee6351df5e942e45eb2470bf0bdb11af719a377616e1"
+      }
+    }
+  ],
+  "errors": [],
+  "evidence": "/Users/t/Pictures/Shots/Agents/rox-wp01-ime-engine-control-tab-1790779722238",
+  "executableSha256": "277ebdcb4a1949e8d8fbc498f330416c1300c80b086dbe148d1f7cbae26cefcf",
+  "sourceSha256": {
+    "main.cjs": "738c2499a21bea232b2e2c0869d04d157c136832d7639c571221d2aeb8e2d009",
+    "input.html": "a03be8768aa6a4348f4ec65dfd65040583ccd646abe46164726725a36caf3e27",
+    "driver.ts": "b5cfab8ad8e7819bc0c08e0d2a16d532c62ac8310b3b6d3bf0f52084210007a9",
+    "package.json": "67a191c60678a81966933c81c1f12a87ee8d663d68aaf9c4365a50ef5efd562c"
+  },
+  "runtime": {
+    "versions": {
+      "node": "22.21.1",
+      "acorn": "8.15.0",
+      "ada": "2.9.2",
+      "amaro": "1.1.4",
+      "ares": "1.34.5",
+      "brotli": "1.0.9",
+      "cjs_module_lexer": "2.1.0",
+      "cldr": "44.1",
+      "icu": "74.2",
+      "llhttp": "9.3.0",
+      "modules": "140",
+      "napi": "10",
+      "nbytes": "0.1.1",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.64.0",
+      "openssl": "0.0.0",
+      "simdjson": "3.13.0",
+      "simdutf": "7.3.3",
+      "sqlite": "3.50.4",
+      "tz": "2025b",
+      "undici": "6.22.0",
+      "unicode": "15.1",
+      "uv": "1.51.0",
+      "uvwasi": "0.0.23",
+      "v8": "14.2.231.21-electron.0",
+      "zlib": "1.3.1",
+      "zstd": "1.5.8",
+      "electron": "39.2.7",
+      "chrome": "142.0.7444.235"
+    },
+    "pid": 42267
+  },
+  "status": "PASS_ENGINE_MECHANISM_CONTROL",
+  "finishedAt": "2026-09-30T14:48:44.035Z"
+}

@@ -1,0 +1,1281 @@
+{
+  "schema": "wp48_93c1d8cff4e7",
+  "fixtureRoot": "/private/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/wp48-domain-O4TnXV",
+  "port": 63909,
+  "controls": [
+    {
+      "id": "BASELINE",
+      "identityStatus": 200,
+      "httpAudit": 200,
+      "wsReceiptExact": true,
+      "evidenceState": "review_required",
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "NEGATIVE_CONTROL_DIGEST_RETAINED_AND_INBOX_DENY",
+      "httpReceiptReplayStatus": 503,
+      "inboxCode": "PROVIDER_UNAVAILABLE",
+      "persistedAuditInbox": 0
+    },
+    {
+      "id": "RESTORED_RESTART",
+      "originalReceiptExact": true,
+      "currentIdentityPreserved": true,
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      },
+      "memberDenied": 403
+    }
+  ],
+  "variants": [
+    {
+      "id": "RESOURCE_BINDING_label",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 200,
+      "listItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "FORGED_WP48_DB_LIST_LABEL",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+          "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "wsGetDenied": true,
+      "wsListAccepted": true,
+      "wsListItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "FORGED_WP48_DB_LIST_LABEL",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+          "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "RESOURCE_BINDING_binding_sha256",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 200,
+      "listItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "PRIVATE_WP-48 synthetic artifact",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+          "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "wsGetDenied": true,
+      "wsListAccepted": true,
+      "wsListItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "PRIVATE_WP-48 synthetic artifact",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+          "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "RESOURCE_BINDING_artifact_digest",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 200,
+      "listItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "PRIVATE_WP-48 synthetic artifact",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "wsGetDenied": true,
+      "wsListAccepted": true,
+      "wsListItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "PRIVATE_WP-48 synthetic artifact",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "RESOURCE_BINDING_sbom_digest",
+      "httpGetStatus": 503,
+      "httpGetCode": "PROVIDER_UNAVAILABLE",
+      "httpListStatus": 200,
+      "listItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "PRIVATE_WP-48 synthetic artifact",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+          "sbomDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "wsGetDenied": true,
+      "wsListAccepted": true,
+      "wsListItems": [
+        {
+          "entity": {
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "revisionId": "1"
+          },
+          "label": "PRIVATE_WP-48 synthetic artifact",
+          "revision": "1",
+          "policyEpoch": "1",
+          "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+          "sbomDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "decisionManifest": {
+            "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+            "policyEpoch": "1",
+            "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+            "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+            "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+            "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+            "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+          },
+          "evidence": {
+            "state": "review_required",
+            "findings": [
+              {
+                "code": "SCOPED_DECISION_REQUIRED",
+                "subject": "fixture:fixture"
+              }
+            ],
+            "components": [
+              {
+                "id": "fixture",
+                "name": "@fixture/wp48",
+                "version": "1.0.0",
+                "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                "licenseExpression": "MIT"
+              }
+            ]
+          },
+          "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+          "auditedAt": "2026-09-30T15:09:42.369Z",
+          "projectionWatermark": "2",
+          "canAudit": true,
+          "permissionMode": "owner_bootstrap"
+        }
+      ],
+      "counts": {
+        "receipts": 1,
+        "events": 1,
+        "revision": "1"
+      }
+    },
+    {
+      "id": "MALFORMED_EVENT_DIGEST",
+      "httpEventStatus": 200,
+      "httpEventBody": {
+        "events": [
+          {
+            "id": "09bb98a5-32c5-4457-81e4-991aa4ca720b",
+            "type": "audit.license_reviewed",
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityRef": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "actorPrincipalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159",
+            "schemaVersion": 1,
+            "aggregateRevision": "1",
+            "policyEpoch": "1",
+            "causationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+            "correlationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+            "at": "2026-09-30T15:09:42.369Z",
+            "payload": {
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+              "auditDigest": "INVALID_DIGEST_PRIVATE_MARKER",
+              "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+            }
+          }
+        ],
+        "nextCursor": "7caae2ee-1f5f-47ee-affd-c912410e7a4c"
+      },
+      "wsEventsAccepted": true,
+      "wsEventBody": {
+        "events": [
+          {
+            "id": "09bb98a5-32c5-4457-81e4-991aa4ca720b",
+            "type": "audit.license_reviewed",
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityRef": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "actorPrincipalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159",
+            "schemaVersion": 1,
+            "aggregateRevision": "1",
+            "policyEpoch": "1",
+            "causationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+            "correlationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+            "at": "2026-09-30T15:09:42.369Z",
+            "payload": {
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+              "auditDigest": "INVALID_DIGEST_PRIVATE_MARKER",
+              "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+            }
+          }
+        ],
+        "nextCursor": "d744d8bb-1b5f-410f-a8b3-329ec0ec81f1"
+      },
+      "httpReceiptReplayStatus": 503,
+      "inbox": {
+        "code": "PROVIDER_UNAVAILABLE",
+        "observed": [
+          {
+            "type": "workspace.member_joined",
+            "correlationId": "workspace-bootstrap:9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "payload": {
+              "principalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159"
+            }
+          }
+        ],
+        "persisted": {
+          "audit_inbox": 0,
+          "watermark": "1"
+        }
+      }
+    },
+    {
+      "id": "WRONG_VALID_CORRELATION",
+      "originalCommandId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+      "forgedCorrelation": "5d1d6984-0f2d-490e-a8b5-3645413bb829",
+      "httpReceiptReplayStatus": 200,
+      "httpReceiptExact": true,
+      "wsReplayAccepted": true,
+      "wsReceiptExact": true,
+      "httpEventStatus": 200,
+      "httpEventBody": {
+        "events": [
+          {
+            "id": "09bb98a5-32c5-4457-81e4-991aa4ca720b",
+            "type": "audit.license_reviewed",
+            "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "entityRef": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "actorPrincipalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159",
+            "schemaVersion": 1,
+            "aggregateRevision": "1",
+            "policyEpoch": "1",
+            "causationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+            "correlationId": "5d1d6984-0f2d-490e-a8b5-3645413bb829",
+            "at": "2026-09-30T15:09:42.369Z",
+            "payload": {
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+              "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+              "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+            }
+          }
+        ],
+        "nextCursor": "21c7af4f-8b90-4982-a56f-98f4060ab288"
+      },
+      "inbox": {
+        "code": null,
+        "observed": [
+          {
+            "type": "workspace.member_joined",
+            "correlationId": "workspace-bootstrap:9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "payload": {
+              "principalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159"
+            }
+          },
+          {
+            "type": "audit.license_reviewed",
+            "entityRef": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "correlationId": "5d1d6984-0f2d-490e-a8b5-3645413bb829",
+            "payload": {
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+              "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+              "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+            }
+          }
+        ],
+        "persisted": {
+          "audit_inbox": 1,
+          "watermark": "2"
+        }
+      }
+    },
+    {
+      "id": "VALID_UUID_UNREGISTERED_RESOURCE",
+      "forgedEntityId": "license-component:00000000-0000-0000-0000-000000000000",
+      "httpReceiptReplayStatus": 503,
+      "inbox": {
+        "code": null,
+        "observed": [
+          {
+            "type": "workspace.member_joined",
+            "correlationId": "workspace-bootstrap:9e389ab0-478d-42bb-84f3-e767ca100ddf",
+            "payload": {
+              "principalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159"
+            }
+          },
+          {
+            "type": "audit.license_reviewed",
+            "entityRef": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:00000000-0000-0000-0000-000000000000",
+              "revisionId": "1"
+            },
+            "correlationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+            "payload": {
+              "entityId": "license-component:00000000-0000-0000-0000-000000000000",
+              "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+              "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+              "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+            }
+          }
+        ],
+        "persisted": {
+          "audit_inbox": 1,
+          "watermark": "2"
+        }
+      }
+    }
+  ],
+  "defects": [
+    {
+      "id": "LIST_TRUST_BINDING_BYPASS",
+      "variant": "label",
+      "expected": "HTTP503/WSPROVIDER_UNAVAILABLE before serializing any forged row",
+      "actual": {
+        "id": "RESOURCE_BINDING_label",
+        "httpGetStatus": 503,
+        "httpGetCode": "PROVIDER_UNAVAILABLE",
+        "httpListStatus": 200,
+        "listItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "FORGED_WP48_DB_LIST_LABEL",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+            "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "wsGetDenied": true,
+        "wsListAccepted": true,
+        "wsListItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "FORGED_WP48_DB_LIST_LABEL",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+            "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "counts": {
+          "receipts": 1,
+          "events": 1,
+          "revision": "1"
+        }
+      }
+    },
+    {
+      "id": "LIST_TRUST_BINDING_BYPASS",
+      "variant": "binding_sha256",
+      "expected": "HTTP503/WSPROVIDER_UNAVAILABLE before serializing any forged row",
+      "actual": {
+        "id": "RESOURCE_BINDING_binding_sha256",
+        "httpGetStatus": 503,
+        "httpGetCode": "PROVIDER_UNAVAILABLE",
+        "httpListStatus": 200,
+        "listItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "PRIVATE_WP-48 synthetic artifact",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+            "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "wsGetDenied": true,
+        "wsListAccepted": true,
+        "wsListItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "PRIVATE_WP-48 synthetic artifact",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+            "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "counts": {
+          "receipts": 1,
+          "events": 1,
+          "revision": "1"
+        }
+      }
+    },
+    {
+      "id": "LIST_TRUST_BINDING_BYPASS",
+      "variant": "artifact_digest",
+      "expected": "HTTP503/WSPROVIDER_UNAVAILABLE before serializing any forged row",
+      "actual": {
+        "id": "RESOURCE_BINDING_artifact_digest",
+        "httpGetStatus": 503,
+        "httpGetCode": "PROVIDER_UNAVAILABLE",
+        "httpListStatus": 200,
+        "listItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "PRIVATE_WP-48 synthetic artifact",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "wsGetDenied": true,
+        "wsListAccepted": true,
+        "wsListItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "PRIVATE_WP-48 synthetic artifact",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "counts": {
+          "receipts": 1,
+          "events": 1,
+          "revision": "1"
+        }
+      }
+    },
+    {
+      "id": "LIST_TRUST_BINDING_BYPASS",
+      "variant": "sbom_digest",
+      "expected": "HTTP503/WSPROVIDER_UNAVAILABLE before serializing any forged row",
+      "actual": {
+        "id": "RESOURCE_BINDING_sbom_digest",
+        "httpGetStatus": 503,
+        "httpGetCode": "PROVIDER_UNAVAILABLE",
+        "httpListStatus": 200,
+        "listItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "PRIVATE_WP-48 synthetic artifact",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+            "sbomDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "wsGetDenied": true,
+        "wsListAccepted": true,
+        "wsListItems": [
+          {
+            "entity": {
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "revisionId": "1"
+            },
+            "label": "PRIVATE_WP-48 synthetic artifact",
+            "revision": "1",
+            "policyEpoch": "1",
+            "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646",
+            "sbomDigest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "decisionManifest": {
+              "resourceId": "7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+              "policyEpoch": "1",
+              "reviewRevision": "dddddddddddddddddddddddddddddddddddddddd",
+              "reviewSha256": "f8fa662af968f185b9f329199093fd0c190a333477c226dceac9f67ece7874cb",
+              "checkerRevision": "cccccccccccccccccccccccccccccccccccccccc",
+              "checkerSha256": "e6ed20463149f6753b949612d0d74563dc8ab171a58fe7e1cade43d7d712ff64",
+              "buildSha256": "fe6847e2be8ce2b44aa3cbd790208930dba581dbc66113b15b42a21a19dfa30c"
+            },
+            "evidence": {
+              "state": "review_required",
+              "findings": [
+                {
+                  "code": "SCOPED_DECISION_REQUIRED",
+                  "subject": "fixture:fixture"
+                }
+              ],
+              "components": [
+                {
+                  "id": "fixture",
+                  "name": "@fixture/wp48",
+                  "version": "1.0.0",
+                  "componentSha256": "cbe0f4310c58a63f303f2e3546f0550b626a913d3ff5320c25418365960e9359",
+                  "licenseExpression": "MIT"
+                }
+              ]
+            },
+            "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+            "auditedAt": "2026-09-30T15:09:42.369Z",
+            "projectionWatermark": "2",
+            "canAudit": true,
+            "permissionMode": "owner_bootstrap"
+          }
+        ],
+        "counts": {
+          "receipts": 1,
+          "events": 1,
+          "revision": "1"
+        }
+      }
+    },
+    {
+      "id": "DIRECT_EVENTS_INVALID_DIGEST_ACCEPTED",
+      "expected": "Malformed persisted event rejects redacted before serialization on both transports",
+      "actual": {
+        "id": "MALFORMED_EVENT_DIGEST",
+        "httpEventStatus": 200,
+        "httpEventBody": {
+          "events": [
+            {
+              "id": "09bb98a5-32c5-4457-81e4-991aa4ca720b",
+              "type": "audit.license_reviewed",
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityRef": {
+                "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "revisionId": "1"
+              },
+              "actorPrincipalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159",
+              "schemaVersion": 1,
+              "aggregateRevision": "1",
+              "policyEpoch": "1",
+              "causationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+              "correlationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+              "at": "2026-09-30T15:09:42.369Z",
+              "payload": {
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+                "auditDigest": "INVALID_DIGEST_PRIVATE_MARKER",
+                "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+              }
+            }
+          ],
+          "nextCursor": "7caae2ee-1f5f-47ee-affd-c912410e7a4c"
+        },
+        "wsEventsAccepted": true,
+        "wsEventBody": {
+          "events": [
+            {
+              "id": "09bb98a5-32c5-4457-81e4-991aa4ca720b",
+              "type": "audit.license_reviewed",
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityRef": {
+                "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "revisionId": "1"
+              },
+              "actorPrincipalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159",
+              "schemaVersion": 1,
+              "aggregateRevision": "1",
+              "policyEpoch": "1",
+              "causationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+              "correlationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+              "at": "2026-09-30T15:09:42.369Z",
+              "payload": {
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+                "auditDigest": "INVALID_DIGEST_PRIVATE_MARKER",
+                "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+              }
+            }
+          ],
+          "nextCursor": "d744d8bb-1b5f-410f-a8b3-329ec0ec81f1"
+        },
+        "httpReceiptReplayStatus": 503,
+        "inbox": {
+          "code": "PROVIDER_UNAVAILABLE",
+          "observed": [
+            {
+              "type": "workspace.member_joined",
+              "correlationId": "workspace-bootstrap:9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "payload": {
+                "principalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159"
+              }
+            }
+          ],
+          "persisted": {
+            "audit_inbox": 0,
+            "watermark": "1"
+          }
+        }
+      }
+    },
+    {
+      "id": "CORRELATION_NOT_IN_INDEPENDENT_EVENT_PROOF",
+      "expected": "Wrong correlation causes receipt/events/inbox deny with no audit effect or advanced watermark",
+      "actual": {
+        "id": "WRONG_VALID_CORRELATION",
+        "originalCommandId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+        "forgedCorrelation": "5d1d6984-0f2d-490e-a8b5-3645413bb829",
+        "httpReceiptReplayStatus": 200,
+        "httpReceiptExact": true,
+        "wsReplayAccepted": true,
+        "wsReceiptExact": true,
+        "httpEventStatus": 200,
+        "httpEventBody": {
+          "events": [
+            {
+              "id": "09bb98a5-32c5-4457-81e4-991aa4ca720b",
+              "type": "audit.license_reviewed",
+              "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "entityRef": {
+                "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "revisionId": "1"
+              },
+              "actorPrincipalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159",
+              "schemaVersion": 1,
+              "aggregateRevision": "1",
+              "policyEpoch": "1",
+              "causationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+              "correlationId": "5d1d6984-0f2d-490e-a8b5-3645413bb829",
+              "at": "2026-09-30T15:09:42.369Z",
+              "payload": {
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+                "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+                "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+              }
+            }
+          ],
+          "nextCursor": "21c7af4f-8b90-4982-a56f-98f4060ab288"
+        },
+        "inbox": {
+          "code": null,
+          "observed": [
+            {
+              "type": "workspace.member_joined",
+              "correlationId": "workspace-bootstrap:9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "payload": {
+                "principalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159"
+              }
+            },
+            {
+              "type": "audit.license_reviewed",
+              "entityRef": {
+                "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "revisionId": "1"
+              },
+              "correlationId": "5d1d6984-0f2d-490e-a8b5-3645413bb829",
+              "payload": {
+                "entityId": "license-component:7b2da1fc-87af-4890-b787-0ccbbc7bf4e8",
+                "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+                "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+                "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+              }
+            }
+          ],
+          "persisted": {
+            "audit_inbox": 1,
+            "watermark": "2"
+          }
+        }
+      }
+    },
+    {
+      "id": "INBOX_UNBOUND_CANONICAL_RESOURCE_ACCEPTED",
+      "expected": "Valid-shaped but wrong/unregistered resource ID is rejected against independent receipt/resource proof before effect/inbox/watermark",
+      "actual": {
+        "id": "VALID_UUID_UNREGISTERED_RESOURCE",
+        "forgedEntityId": "license-component:00000000-0000-0000-0000-000000000000",
+        "httpReceiptReplayStatus": 503,
+        "inbox": {
+          "code": null,
+          "observed": [
+            {
+              "type": "workspace.member_joined",
+              "correlationId": "workspace-bootstrap:9e389ab0-478d-42bb-84f3-e767ca100ddf",
+              "payload": {
+                "principalId": "87916bcb-64cf-4dc9-91fc-5c481fb37159"
+              }
+            },
+            {
+              "type": "audit.license_reviewed",
+              "entityRef": {
+                "workspaceId": "9e389ab0-478d-42bb-84f3-e767ca100ddf",
+                "entityId": "license-component:00000000-0000-0000-0000-000000000000",
+                "revisionId": "1"
+              },
+              "correlationId": "35b8c44d-68c4-4029-a472-304f4e39aaca",
+              "payload": {
+                "entityId": "license-component:00000000-0000-0000-0000-000000000000",
+                "sbomDigest": "80ef4964fdcdde18599fcc1a6a744eaf703d9917f93e5d5f6c279a9d03f5831f",
+                "auditDigest": "42d4520dcd84e02300c08867e2359a22c4ecd5bf4163489855a26b7329e844ac",
+                "artifactDigest": "2828be5805afd5280b2a2c78cd85e51b6de4a62aa8a1fa4f595b0ccdb9866646"
+              }
+            }
+          ],
+          "persisted": {
+            "audit_inbox": 1,
+            "watermark": "2"
+          }
+        }
+      }
+    }
+  ],
+  "legalApproval": false,
+  "defectCount": 7,
+  "status": "CONFIRMED_DEFECTS"
+}

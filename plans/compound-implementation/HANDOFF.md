@@ -1,74 +1,70 @@
-# IMPLEMENT_IT_ALL — продолжение после проверенного integration checkpoint
+# IMPLEMENT_IT_ALL — текущий проверяемый checkpoint
 
-Программа ACTIVE: 143 пакета, полных DoD пока 0. Checkout `/Users/t/Projects/rox-one-compound-implementation`, branch `feat/rox-compound-workspace-20260930`. Только root пишет существующие/shared paths; работники готовят exact outside proposals. Пользователь разрешил implementation, tests, Electron, commit/push/main merges без вопросов. Исходный `/Users/t/Projects/rox-one` с чужими CSS edits сохраняется. Checkpoint не является cloud worker.
+ACTIVE: 143 compound packages, 130 NOT_STARTED, 0 Full DoD. Полные143/109September/297remaining не закрыты локальными или Cloud checks. Root solewriter checkout `/Users/t/Projects/rox-one-compound-implementation`, branch `feat/rox-compound-workspace-20260930`; parent8106f22185fb3b3e9a6a585320d48b1bf5f10fbd push/readback подтверждён. Следующий partial checkpoint сохраняет review-integrated queue, spec, proofs; не объявляет WP01/48 complete. Main ещё не merged.
 
-## Доставленные состояния
+## Владение и recovery
 
-Parent HEAD `b9b8aa7197f5d25304ec377a049a8f375eccf3e5` был push/readback подтверждён. Текущий следующий commit сохраняет partial WP01 integration, без закрытия пакета; свой SHA проверяется через git/remote после commit. Main не merged. Product base b922e52ed96425732776ff771fdb4fec09fc99b6; normative spec242492868a11b4d9af1c1011f20b31a346875f0a.
+Не читать/писать active cloud-core/roadmap/native recovery checkouts. Safe registry `/Users/t/Projects/rox-session-recovery-20260930/docs/session-recovery-20260930.md` прочитан; latest instruction acknowledged in `recovery-coordination-20260930.json`. Exact remote objects fetched in OUR repo, source не менялся: core#1292 01889b4a; roadmap#1313 5a9bf9ca; SQLite#1315 45045490; requested CI#1317 6cf191dd. CI current head уже bbb30156, automatically accepted=false. Port только scoped hunks после независимого gate с current source/custody/ACL/original receipt, не blanket branch merge. Старый0ccsnapshot не использовать. Recovery fixes не означают completion всей программы.
 
-## WP01: реально интегрировано
+Новые independent workers GPT-6.1 Sol Ultra where supported. Настоящий Ultra evaluator `/root/wp01_closure_ultra`. Исторические137preflight/7impl receipts сохранены: preflight exit0 НЕ feature completion. `worker-reconciliation-20260930.json` содержит реальные текущие результаты. Не запускать descendants пока собственные foundation acceptance не закрыты. Full DAG/capability coverage не дублировать.
 
-Canonical AuthenticatedActor, pinned cryptographic issuer/audience/JWKS, persisted immutable identity/session/device, live membership и session-row locks. Реальный PostgreSQL17.11 127.0.0.1:54379. Protected environment config ВНЕ Git `/Users/t/.agents/state/rox-compound-workspace/postgres-environment.json`; не печатать URL/пароли.
+## WP01: реализовано и проверено механизмом
 
-HTTP/WS используют одну authority; Project/receipt/reference-event атомарны; пересечение idempotency и corrupted JSON denied. Event commit-order lock перед sequence; consumer effect/inbox/watermark одна транзакция. Existing Connections сохраняет JWT только через encrypted CredentialManager; existing Projects общий каталог/list/create/details, прежние local folder Projects сохранены без fake paths.
+Canonical authenticated Actor, pinned asymmetric issuer/JWKS/audience, persisted Argon2 accounts/session/device, live membership locks; one HTTP/WS authority. Minimal shared Project identity/ownerprivate policy, atomic Project/receipt/reference-event, independent original receipt checks, idempotency/CAS, commit-order event append, consumer effect/inbox/watermark. Existing Connections+Projects/local folders сохранены. Durable encrypted credential/config journal fsync/recovery, actual main/service SIGKILL/restart receipt tests. Protected PG17.11 127.0.0.1:54379; config outsideGit `/Users/t/.agents/state/rox-compound-workspace/postgres-environment.json`; NEVERprint URL/password.
 
-Durable encrypted credential/config journal уже интегрирован: primary/backup/config fsync; partial replacement rollback; prepared disconnect deletion never resurrects; unknown/corrupt/third fingerprint fail closed. Main recovery перед read, generation fences late response. Реальные main/service SIGKILL subprocess tests: service убит после SQL commit и до reply, restart возвращает тот же receipt; consumer durable recovery.
+NEW24paths reviewed/applied exactmanifest: encrypted offline queued/uncertain immutable create intent + verified identity bindingproof + explicit retry/cancel; actor/session/device/workspace/token/config fingerprint fences; unknown bytes failclosed, no automatic CREATE; existing credential storage only. All12locales synced.
 
-Actual Bun CLI, protected config0600/stdin provisioning, persistent issuer keys, TLS non-loopback, request-drain после lostreply. Rootpackage+lock workspace registration уже интегрированы. Build metafile есть; baseline-notice packaging не является WP48 legal-cleared release.
+Actual latest root proofs (not additive overlapping totals):
 
-Connections DOM Inputs исправлены после actual native FAIL: maxLength10000/320/4096, совпадают с service contracts. Shared Project field boundary10000 Unicode accepted/10001 rejected without DB effect. Fixed-label observability интегрирована: actual aftercommit applied/replayed/conflicts/failures + consumer retry/inbox metrics; host-only diagnostics, no public private totals.
+- Offline/service/HTTPWS28/0/601,3files `/tmp/rox-wp01-offline-root-tests.log`.
+- Locale parity57/0/45; own main-IPC channel parity4/0.
+- Complete strict amended response schema29/0/282 `/tmp/rox-wp01-response-schema-root-test.log`; scope-diff proves ONLYWP01responseSchema changed, all143/DAG/DoD unchanged. 26 actual corrupted retained receipts denied503/PROVIDER_UNAVAILABLE; original1Project/1receipt/1event retained, actualrestartsameoutcome.
+- Current unchanged independentoracle baseline6/0/64, private-list SQLmutant4/2/41 HTTP+WS leaks caught. `evidence/wp01/current-independent-20260930/` has exact artifact hashes and rootreadback; historicaloriginal34artifacts/1802hashes intact.
+- Current cold built6memberarchive3/0/93 `/tmp/rox-wp01-offline-root-cold-archive.log`; twoactualaccounts/HTTPWSprivate403/restartsameJWKS/receipt; tamperedbundle andmissingmigrationdeny. Archive baseline notice is NOTWP48legalclearedrelease.
+- Main/preload/renderer and workspace-service buildsPASS at queue runtime bytes. `/tmp/rox-wp01-offline-root-{main,preload,renderer}-build.log`, service package log. Electron current43/prior43/new0; strictserviceTS0. Direct mainIPC exemptions correctly included without disabling transport exhaustiveness.
+- Earlier current mechanism leaves:27/0/465domain/observability;47/0/3478native routing/mainjournal;28/0/693actualcrashes/CLI. Preserved individually in verification metadata.
+- Independent exact54row owncriteria mapping `evidence/wp01/criteria-current-20260930/`:32verified,17nativepending,5explicitdeclareddownstreamcapabilities. Source presence nevercountsverification.
 
-## Текущие evidence
+## Native: НЕ PASS
 
-`wp01-integration-verification.json` schema2 содержит73current sourcehashes и historical snapshots в `evidence/wp01/`. Не переписывать старые receipts под новую source generation.
+Fresh actual primary1790777966380 stopped74assert at false `compositionend.isTrusted`. TwoactualbareHTML controls in sameElectron39.2.7/Chrome142 reproduced falseend with trustedstart/update/input/composingEnter and exactcandidate, then trustedArrowRight noncomposing. Root corrected mistaken oracle with MORE strict ordered sequence, exacttext, zeroCREATE+allSQL0 aftercommit and exactunchanged encryptedintent. Originalfailure/control/source hashes retained; decision `docs/decisions/2026-09-30-wp01-native-ime-and-intent-readback.md`.
 
-- Root observability + domain/service:27pass/0fail/465assertions/3files18.09s `/tmp/rox-wp01-observability-root-tests.log`.
-- Main journal + native routing/parity:47pass/0fail/3478assertions/4files46.66s `/tmp/rox-wp01-final-native-mechanism.log`.
-- Main/service actual crash + CLI:28pass/0fail/693assertions/3files36.05s `/tmp/rox-wp01-root-real-crashes-final.log`.
-- Credential neighbors13pass/0fail/44assertions/3files `/tmp/rox-wp01-durable-credentials-root.log`.
-- Prior composed domain/auth/HTTP/WS90pass848assertions10files; canonical status195pass1130assertions2files. Эти earlier generations сохранены отдельно.
-- Main/preload buildPASS `/tmp/rox-wp01-final-{main,preload}-build.log`; latest rendererPASS `/tmp/rox-wp01-max-input-renderer-build.log`40.94s; service buildPASS `/tmp/rox-wp01-observability-root-build.log`.
-- Electron43prior errors/base46/new0 `/tmp/rox-wp01-max-input-typecheck-comparison.json`; server24/base25/new0; service strictTS0 `/tmp/rox-wp01-observability-root-ts.log`.
+Offline first900fixture corrected frominvalid1800; actual67assert run queued A/B but wrong public token reader hid JSON intent. Root switched test-readback to actualstrict `createAuthorityJournalPorts`; independentread-only closedA/B verifiedtruepresent/immutablecommands/scope/encryption/noJWTplaintext withoutdiskchanges. Allassertions retained. Then preparation90s deadline failedbeforeElectron; separate bounded240s immutablefilesystemprep, original product/UI deadlines unchanged. Latestfresh1790781015037 failed14assert at native page/contextclosed during Connections screenshot. Bothgenuinecoretooltrees passed10tools/31824files/1.696GB fullhash/modes/links/ensureAllnodownload, 57source+1295buildhashes unchanged. Actualcause unknown, nofakevisualpass/no crash inferredfromfinallyquit.
 
-## Native status — PASS не заявлен
+Current scout prepares OUTSIDE passive native lifecycle observer; rootreview/apply then newprimaryFIRST andofflinesequential. No further source/build changes while nativelease runs. EveryfreshPNGmustview andcompareDOM/pixels; previous8offline67failure images independentlyviewed/hash/RGBAverified. No screenshotexistsforlatest14failure. Do not kill another worker'sElectron or use synthetickeyboard/storetrust.
 
-8failure receipts сохранены. Последний `/Users/t/Pictures/Shots/Agents/rox-wp01-electron-1790771776871/`: native DOM отсутствовал maxlength, root исправил три inputs/rebuilt renderer. Root просмотрел actual failure screenshot. Нового fullnativePASS ещё нет. Hidden resize-handle interception ранее исправлена в AppShell только реальным sidebar visibility gate. IME проверяется actual Chromium `Input.imeSetComposition`, а не synthetic DOM event; OS keyboard method не заявлен.
+## WP48: CLI delivered, backend/adverse/native integration open
 
-Genuine hostcoretools pinned copies предотвращают background download/ENOSPC; actual securityPaths=[] через supported loadShellEnv/owned bashprofile, без executable keychain shim. Environment-ready proof `/Users/t/Pictures/Shots/Agents/rox-wp01-runtime-proof-1790771339135/` содержит bytes/modes/links readback. Только завершённые owned caches были удалены; configs/credentials/evidence/host .rox сохранены.
+8106checkpoint actual63/0/157 sevenCLIchecks, focusedstrictTS0, immutableemittedbundles/SBOM/registry/runtime/BunHomebrewbottle/source/license/provenance. Real BunincludesLGPL; MacroAGPL lineage not blanketapproved; protectedreviewers/publisherapproval not fabricated. FullDoD remainsopen.
 
-## Реальные active workers / следующие действия
+Backendv1 exact14outsidepatches REJECTED by root: removed requiredidentityendpoint. v2 held after independentUltra adverse probes: immutableLISTbinding bypass, malformed/correlation/absentResource events reachinginbox, coherent forgedreviewedprojection. Producerpreparesv3 + outboundResourceguard afteractualchecker/identityawait. Nativeoutside18/153+Projectoffline9/241 preliminarypasses; cannotacceptuntilv3/currentrootnative gate. Preserve v1/v2 failures and unchangedindependentoracle. No rootbackendapplyyet.
 
-1. `/root/implementation_pool_producer`: external-only durable offline Project create intent в existing encrypted backend; explicit queue/retry/cancel, sameimmutablecommand/key, actor/session/workspace fences, unknownfuturebytes failclosed. Checkout current React ref НЕ является offline_queued. Producer/scout согласовали actual UI stopservice→queue→restartoffline→retry samekey→one outcome. Exact patches root review/apply, tests, rebuild required.
-2. `/root/implementation_runtime_scout`: NEW cold archive test preparation, затем новый native lease после root GO. Root регенерирует archive; текущие oldarchives содержат старый dist и не доказывают current cold readback. Scout не запускает Electron до queue integration/final builds.
-3. `/root/legacy_mixed_list_fix`: WP48 multi-component bundle↔existingSBOM linkage outsidefixture. Nine earlier NEW collector files ещё не integrated. Runtime Bun bottle/source license/ROX lineage hashes verified; legal approval/release clearance не fabricated. Trusted publisher/reviewer vars and domain audit command остаются настоящими gates.
-4. Independent OMP GPT6.1Sol/high holdout: pid67919, actual session01a0f25d-dc35-74a5-9a53-5f72dcbeacf4, `/Users/t/.agents/state/rox-compound-70/wp01-holdout-20260930T125031Z/work/report.json` ожидается;1802 inputs в source-manifest. Не считать launch/result completion. Localhost, не cloud. Семь earlier impl+63+4preflight returned records сохраняются; не утверждать70currentrunning.
+## Реальные workers и следующий executable шаг
 
-## Приоритет
+- `/root/implementation_runtime_scout`: native lifecycle observer outsideproposal, then primary/offline actuallease afterrootGO; no sourcewrites/builds.
+- `/root/legacy_mixed_list_fix`: WP48v3/securitycorrections/nativeSettings/oneencryptedintentmechanism outsideproposal. Rootsoleintegrator; backendcurrentbase/identity/Projectqueue mustremain.
+- `/root/wp01_closure_ultra`: independentWP48adverseproof/reprobe v3; genuine6.1SolUltra, no rootwrites.
 
-Полный WP01 критерий bootstrap закрывается после own native/offline/independentholdout/coldartifact/delivery. WP02 registry, WP03 general ACL, WP04 generic outbox — laterGeneralization, не circular WP01 prereqs. Финальная приёмка143 и WP41 release scenarios обязательны ПОСЛЕ dependent implementation, не являются блокером каждого bootstrap пакета. Criticalpath WP01→02→03→04→08→09→11→12→31→32→33→34→38→41→46.
-
-Сохранить прогресс/коммиты/push постоянно. Другие RSADM/AUT/DRV/MSG/MTG NEW files не stage без review/integration. Не gitaddall; не stage `.impeccable`, standalone unfinished content adapters или чужие NEW proposals. Root shared ownership единственный. Продолжать автономно, не заканчивать на этом handoff.
+Unreviewed RSADM/AUT/DRV/MSG/MTG and content-adapter NEWpaths preserved, notstaged/no phantomrunningstatus. `.impeccable` andoriginalcheckoutdirtyCSS untouched. Criticalpath01→02→03→04→08→09→11→12→31→32→33→34→38→41→46.
 
 ## Команды
 
 ```sh
 cd /Users/t/Projects/rox-one-compound-implementation
 git status --short
-bun run --cwd apps/workspace-service build
-bun run --cwd apps/workspace-service typecheck
-bun test tests/macro-integration/wp-01-observability.test.ts tests/macro-integration/wp-01-server.test.ts tests/macro-integration/wp-01.test.ts
-bun run --cwd apps/electron build:main
-bun run --cwd apps/electron build:preload
-bun run --cwd apps/electron build:renderer
+bun test tests/macro-integration/wp-01-response-schema.test.ts
 ROX_WP01_PRODUCT_E2E=1 bun test tests/macro-integration/ui/wp-01-electron.test.ts
+ROX_WP01_OFFLINE_PRODUCT_E2E=1 bun test tests/macro-integration/ui/wp-01-offline-electron.test.ts
 python3 plans/compound-implementation/prepare-dispatch.py --self-test
 git diff --check
 ```
 
-## Координация recovery 2026-09-30
+Кommit/push/revisionreadback каждогоacceptedpartial/package, полный143FullDoD/native/finalfullrepositorygate сохраняется. Checkpoint сохраняет context; действующие перечисленныеworkers исполняют задачи. Продолжать автономно.
 
-Сообщение пользователя принято: `recovery-coordination-20260930.json`. Compound checkout остаётся у /root; cloud/core baseline и orphan roadmap принадлежат отдельным recovery workers, их active checkouts не читаем и не изменяем. 137 reported preflight запусков не являются completion; 7 implementation workers не закрывают 130 NOT_STARTED. Новые independent workers: GPT-6.1 Sol Ultra where supported. Внешние CI runner/Vercel gates записаны как reported, не как проверенные нами. Следующее действие: integrate exact WP01 queue → build → native primary/offline; WP48 canonical review independently.
+## Latest transition: canonical WP48 backend integrated, native held
 
-## WP48 CLI checkpoint
+665ba43 checkpoint push/readback confirmed. Root exact16v3 applied; actualPGHTTPWS17/0/146 and WP01neighbors74/0/1093, serviceTS0/Electron43prior43current0new. Immutable independent3separateactualruns3/0/51 + unchangedv2race negative0/1/7 copied/hashchecked. Nativev1 PRODUCT held: newepoch/readback/hash/event/privacy defects, producer+Ultra preparev2 outside. Root owns actual primary native session47937 (`/tmp/rox-wp01-root-primary-responsive.log`), source/build frozen; responsive title/UUID repair + settled-scroll harness remain uncommitted until native evidence. Offline observer also remains dirty. No descendant dispatch until ownfoundationclosure. Current real core recoveryworker `/root/recovery_core_gate_ultra` validates exact1292 + scopedparentf898 on frozenoutsidearchive; no otheractivecheckouts used. 143/130NOT_STARTED/0FullDoD retained.
 
-Root reviewed/applied multi-component bundle linkage. Actual 63pass/0fail/157assertions/7files, strict focused TS0; original 50/124 proof retained separately. Canonical audit.releaseLicense/native/reviewer/publisher gates remain open, package is NOT full DoD. Pending implementation owned by legacy_mixed_list_fix outside proposal.
+## Core recovery integrated; current native failure retained
+
+Root accepted exactly7 core1292+parent repairs with live preimage/result hashes and preserved7 critical hashes. Current root fullcore816/0/3499 in77files, strictcoreTS0. Evidence `evidence/core-recovery-1292/root-applied.json`; no wholesale recovery merge. a0fea0034 WP48 backend push+exactremote readback verified. Fresh primary1790783527281 FAIL270assert127s at light-theme class wait (line847), AFTER dark200%narrow overflow/hit checks passed. FailurePNG Settings/Marketplace requires frozen PNG/DOM diagnosis; not native PASS. Root UI lease ended; offline not run. Historical5suite RUNNING markers reconciled to AWAITING_ROOT_REVIEW; preserved proposals, no live workers claimed. Current3workers are WP48producer, independentUltra, frozennativeUltra diagnostic.143coverage130NOT_STARTED0FullDoD retained. Next: theme/focus diagnostic→freshprimary→offline; sealednativev2 rootreview→integration→nativeSettings; no descendant dispatch without dependencies.
