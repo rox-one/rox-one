@@ -60,14 +60,44 @@ function logRpc(obj) {
 }
 
 function send(obj) {
-  process.stdout.write(JSON.stringify(obj) + '\n');
+  const json = JSON.stringify(obj);
+  const bytes = Buffer.from(json, 'utf8');
+  if (bytes.length + 1 <= 1048576) {
+    process.stdout.write(json + '\n');
+    return;
+  }
+  if (rpcProtocol !== 2) {
+    process.stdout.write(JSON.stringify({ id: obj.id, type: 'response', command: obj.command,
+      success: false, error: 'RPC response exceeded the transport limit' }) + '\n');
+    return;
+  }
+  const count = Math.ceil(bytes.length / 262144);
+  const chunks = Array.from({ length: count }, (_, index) => ({ type: 'rpc_chunk', chunkId: 'fake-chunk-' + (++chunkId),
+    index, count, byteLength: bytes.length, data: bytes.subarray(index * 262144, (index + 1) * 262144).toString('base64') }));
+  for (const chunk of chunks) chunk.chunkId = chunks[0].chunkId;
+  if (readScenario() === 'transport-out-of-order') chunks.reverse();
+  if (readScenario() === 'transport-bad-base64') chunks[0].data = '%%%';
+  if (readScenario() === 'transport-oversize') chunks[0].byteLength = 67108865;
+  if (readScenario() === 'transport-interrupted') chunks.splice(1, chunks.length, { type: 'response', success: true, data: {} });
+  for (const chunk of chunks) {
+    process.stdout.write(JSON.stringify(chunk) + '\n');
+    if (readScenario() === 'transport-incomplete') {
+      process.stdout.write('', () => process.exit(0));
+      break;
+    }
+  }
 }
+
+let rpcProtocol = 1;
+let chunkId = 0;
+let incomingChunks = [];
 
 const READY_FRAME = {
   type: 'ready',
   protocolVersion: 1,
-  supportedProtocolVersions: [1, 2],
-  maxFrameBytes: 1048576,
+  supportedProtocolVersions: readScenario() === 'transport-v1' ? [1] : [1, 2],
+  maxFrameBytes: readScenario() === 'transport-wrong-limits' ? 2097152 : 1048576,
+  ...(readScenario() === 'transport-missing-limits' ? {} : { maxReassembledFrameBytes: 67108864 }),
 };
 
 // ---------- print mode (omp -p <prompt>) — queryLlm / runMiniCompletion ----------
@@ -86,6 +116,16 @@ if (pIdx !== -1) {
 
 const scenario = readScenario();
 let hostToolResultsReceived = 0;
+let selectedModel = scenario.startsWith('model-') || scenario.startsWith('transport-')
+  ? { provider: 'cursor', id: 'claude-4.6-opus-high' }
+  : { provider: 'rox', id: 'kimi-k3' };
+const availableModels = [
+  { provider: 'rox', id: 'kimi-k3', name: 'Kimi K3' },
+  { provider: 'rox', id: 'kimi-k2', name: 'Kimi K2' },
+  ...((scenario.startsWith('model-') || scenario.startsWith('transport-')) && scenario !== 'model-legacy-catalog'
+    ? [{ provider: 'rox', id: 'standard', name: 'ROX R1' }]
+    : []),
+];
 
 function hang() {
   setInterval(() => {}, 60000);
@@ -133,12 +173,22 @@ function rpcLoop() {
     if (!trimmed) return;
     let msg;
     try { msg = JSON.parse(trimmed); } catch { return; }
-    logRpc(msg);
+    if (msg.type === 'rpc_chunk') {
+      incomingChunks.push(Buffer.from(msg.data, 'base64'));
+      if (msg.index !== msg.count - 1) return;
+      msg = JSON.parse(Buffer.concat(incomingChunks).toString('utf8'));
+      incomingChunks = [];
+    }
+    logRpc(msg.type === 'prompt' ? { ...msg, observedModel: selectedModel } : msg);
     const id = msg.id;
     const respond = (data) => {
       if (id !== undefined) send({ id, type: 'response', command: msg.type, success: true, data });
     };
     switch (msg.type) {
+      case 'negotiate_protocol':
+        respond({ protocolVersion: scenario === 'transport-bad-ack' ? 1 : 2 });
+        rpcProtocol = 2;
+        break;
       case 'prompt':
         respond(true);
         if (scenario === 'host-tool') {
@@ -169,19 +219,35 @@ function rpcLoop() {
         respond({
           sessionId: 'fake-omp-session-id',
           sessionFile: TRANSCRIPT_FILE || undefined,
-          model: 'rox/kimi-k3',
+          model: scenario === 'model-missing-readback' ? undefined : selectedModel,
         });
         break;
       case 'set_host_tools':
         respond({ toolNames: (msg.tools || []).map((t) => t.name) });
         break;
       case 'get_available_models':
-        respond([
-          { provider: 'rox', id: 'kimi-k3', name: 'Kimi K3' },
-          { provider: 'rox', id: 'kimi-k2', name: 'Kimi K2' },
-        ]);
+        if (scenario === 'transport-unterminated') {
+          process.stdout.write('x'.repeat(1048576 + 1));
+          break;
+        }
+        if (scenario.startsWith('transport-') && !['transport-v1', 'transport-bad-ack', 'transport-large-command'].includes(scenario)) {
+          respond({ models: [...availableModels, ...Array.from({ length: 858 }, (_, i) =>
+            ({ provider: 'fixture', id: 'catalog-' + i, name: 'x'.repeat(1700) }))] });
+        } else respond(availableModels);
         break;
+      case 'set_model': {
+        const target = availableModels.find(m => m.provider === msg.provider && m.id === msg.modelId);
+        if (!target || readScenario() === 'model-reject') {
+          send({ id, type: 'response', command: msg.type, success: false, error: 'Model not found: ' + msg.provider + '/' + msg.modelId });
+        } else {
+          if (scenario !== 'model-wrong-readback') selectedModel = { provider: target.provider, id: target.id };
+          if (scenario === 'model-delayed' && msg.modelId === 'standard') setTimeout(() => respond(target), 100);
+          else respond(target);
+        }
+        break;
+      }
       case 'switch_session':
+        if (scenario === 'model-branch') selectedModel = { provider: 'cursor', id: 'claude-4.6-opus-high' };
         respond({ cancelled: false });
         break;
       case 'branch':

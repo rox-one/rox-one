@@ -105,7 +105,9 @@ import {
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
 import { runGithubUserSessionTool } from '../connections/github-user-tool.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
-import { resolveOmpSetModelTarget } from '../config/rox-public-models.ts';
+import type { OmpModelCandidate } from '../config/rox-public-models.ts';
+import { ompStateHasModel, resolveVerifiedOmpModelTarget } from './omp-model-selection.ts';
+import { OmpRpcLineGuard, OmpRpcTransport, supportsOmpRpcV2 } from './omp-rpc-transport.ts';
 import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
@@ -328,6 +330,9 @@ export class OmpAgent extends BaseAgent {
    * retry after a failed startup spawns fresh.
    */
   private spawnPromise: Promise<void> | null = null;
+  private modelSelectionPromise: Promise<void> | null = null;
+  private rpcTransport = new OmpRpcTransport();
+  private supportsRpcV2 = false;
   /** True from spawn until the ready handshake settles (ready / typed failure). */
   private startupInFlight = false;
   /** True once the ready handshake succeeded; cleared again on exit/kill. */
@@ -494,6 +499,14 @@ export class OmpAgent extends BaseAgent {
     // Branch fork: after spawn, attach to the parent OMP transcript and cut
     // it at the persisted anchor. Runs exactly once per agent instance.
     await this.applyOmpBranchHandshake();
+    // A new child (or restored branch) inherits OMP's configured model. Pin
+    // the session's requested model and verify it before any provider prompt.
+    // Repeat if a runtime update arrived while the RPC handshake was running.
+    let requested: string | undefined;
+    do {
+      requested = this._model;
+      if (requested) await this.queueOmpModelSelection(requested);
+    } while (requested !== this._model);
   }
 
   // ============================================================
@@ -781,12 +794,27 @@ export class OmpAgent extends BaseAgent {
     });
 
     this.subprocess = child;
+    this.rpcTransport.reset();
+    this.supportsRpcV2 = false;
 
     // Every child event handler is scoped to THIS child: events from a
     // previously killed child can land during the next child's startup
     // window (observed: a SIGTERMed predecessor's exit settling the new
     // handshake) and must be ignored.
     const isCurrentChild = () => this.subprocess === child;
+    // stdin errors are emitted by the stream, not ChildProcess. In
+    // particular, an asynchronous EPIPE after teardown must not become an
+    // uncaught error or reject requests belonging to a replacement child.
+    child.stdin?.on('error', (error: Error) => {
+      if (!isCurrentChild()) return;
+      this.debug(`OMP stdin error: ${error.message}`);
+      this.failPendingRequests(error);
+      if (this._isProcessing && !this.eventQueue.isComplete) {
+        this.eventQueue.enqueue({ type: 'error', message: `OMP stdin error: ${error.message}` });
+        this.eventQueue.enqueue({ type: 'complete' });
+        this.eventQueue.complete();
+      }
+    });
     // Per-child stderr ring buffer — kept appending until the stream closes
     // so the exit-time classification sees the full evidence ('exit' can
     // fire before the final stderr flush; 'close' trails it).
@@ -797,6 +825,11 @@ export class OmpAgent extends BaseAgent {
     // first classified startup error — the latch survives ring eviction.
     let latchedStartupError: OmpStartupError | null = null;
 
+    const lineGuard = new OmpRpcLineGuard();
+    child.stdout?.on('data', (data: Buffer) => {
+      if (!isCurrentChild()) return;
+      try { lineGuard.accept(data); } catch (error) { this.failRpcTransport(error); }
+    });
     this.readline = createInterface({ input: child.stdout!, crlfDelay: Infinity });
     this.readline.on('line', (line: string) => {
       if (isCurrentChild()) this.handleLine(line);
@@ -829,7 +862,8 @@ export class OmpAgent extends BaseAgent {
         this.debug(`Ignoring exit from stale OMP subprocess (code=${code}, signal=${signal})`);
         return;
       }
-      this.handleSubprocessExit(child, code, signal, () => childStderr, () => latchedStartupError);
+      try { this.rpcTransport.finish(); } catch (error) { this.failRpcTransport(error); }
+      if (isCurrentChild()) this.handleSubprocessExit(child, code, signal, () => childStderr, () => latchedStartupError);
     });
 
     child.on('error', (error) => {
@@ -888,6 +922,20 @@ export class OmpAgent extends BaseAgent {
       }),
     ]);
 
+    // The legitimate native model catalogue exceeds v1's 1 MiB response
+    // ceiling. Negotiate the advertised protocol before any catalogue RPC;
+    // a false/malformed ack fails startup instead of using the default model.
+    if (this.supportsRpcV2) {
+      try {
+        await this.sendCommand('negotiate_protocol', { protocolVersion: 2 });
+      } catch (error) {
+        this.killSubprocessSync();
+        throw new OmpStartupError({ code: 'OMP_PROTOCOL_ERROR',
+          message: `OMP protocol v2 negotiation failed: ${error instanceof Error ? error.message : error}`,
+          cause: error instanceof Error ? error : undefined });
+      }
+    }
+
     // Capture the OMP session id / transcript path before the first prompt
     // so turn anchors can resolve (G3). Fire-and-forget raced set_host_tools
     // and dropped get_state under isolated tests.
@@ -921,6 +969,8 @@ export class OmpAgent extends BaseAgent {
   private teardownUnreadySubprocess(child: ChildProcess): void {
     if (this.subprocess === child) {
       this.subprocess = null;
+      this.rpcTransport.reset();
+      this.supportsRpcV2 = false;
       this.subprocessReady = null;
       this.subprocessReadyResolve = null;
       this.subprocessReadyReject = null;
@@ -998,6 +1048,8 @@ export class OmpAgent extends BaseAgent {
     }
     if (this.subprocess === child) {
       this.subprocess = null;
+      this.rpcTransport.reset();
+      this.supportsRpcV2 = false;
     }
     this.subprocessReady = null;
     this.subprocessReadyResolve = null;
@@ -1020,6 +1072,8 @@ export class OmpAgent extends BaseAgent {
     // Do not block destroy() on exit; process will be reaped or SIGKILLed by
     // the OS on parent teardown. detach-free children die with us.
     this.subprocess = null;
+    this.rpcTransport.reset();
+    this.supportsRpcV2 = false;
     if (this.readline) {
       this.readline.close();
       this.readline = null;
@@ -1085,6 +1139,8 @@ export class OmpAgent extends BaseAgent {
     }
 
     this.subprocess = null;
+    this.rpcTransport.reset();
+    this.supportsRpcV2 = false;
     this.readline = null;
     this.subprocessReady = null;
     if (!wasStartupPending) {
@@ -1135,7 +1191,7 @@ export class OmpAgent extends BaseAgent {
       this.debug(`Cannot send to OMP subprocess (stdin closed): ${JSON.stringify(msg).slice(0, 120)}`);
       return;
     }
-    this.subprocess.stdin.write(JSON.stringify(msg) + '\n');
+    for (const frame of this.rpcTransport.encodeFrames(msg)) this.subprocess.stdin.write(frame);
   }
 
   /**
@@ -1166,21 +1222,41 @@ export class OmpAgent extends BaseAgent {
         },
       });
 
-      this.send({ type: command, id, ...extra });
+      try { this.send({ type: command, id, ...extra }); } catch (error) {
+        this.pendingRequests.delete(id);
+        clearTimeout(timer);
+        rejectPromise(error);
+      }
     });
+  }
+
+  private failRpcTransport(cause: unknown): void {
+    const error = new OmpStartupError({ code: 'OMP_PROTOCOL_ERROR',
+      message: cause instanceof Error ? cause.message : 'OMP RPC transport failed',
+      cause: cause instanceof Error ? cause : undefined });
+    this.settleReady(error);
+    this.failPendingRequests(error);
+    if (this._isProcessing && !this.eventQueue.isComplete) {
+      this.eventQueue.enqueue({ type: 'error', message: error.message });
+      this.eventQueue.enqueue({ type: 'complete' });
+      this.eventQueue.complete();
+    }
+    this.killSubprocessSync();
+    this.rpcTransport.reset();
   }
 
   private handleLine(line: string): void {
     const trimmed = line.trim();
     if (!trimmed) return;
 
-    let msg: Record<string, unknown>;
+    let msg: Record<string, unknown> | undefined;
     try {
-      msg = JSON.parse(trimmed);
-    } catch {
-      this.debug(`OMP non-JSON stdout line ignored: ${trimmed.slice(0, 200)}`);
+      msg = this.rpcTransport.decodeLine(line);
+    } catch (error) {
+      this.failRpcTransport(error);
       return;
     }
+    if (!msg) return;
 
     const type = msg.type as string;
 
@@ -1190,6 +1266,16 @@ export class OmpAgent extends BaseAgent {
       const pending = this.pendingRequests.get(id);
       if (pending) {
         this.pendingRequests.delete(id);
+        if (pending.command === 'negotiate_protocol') {
+          const data = msg.data as { protocolVersion?: unknown } | undefined;
+          if (msg.command !== 'negotiate_protocol' || msg.success !== true || data?.protocolVersion !== 2) {
+            pending.reject(new Error('OMP sent an invalid protocol v2 acknowledgement'));
+            return;
+          }
+          // Activate before resolving: readline may deliver subsequent chunk
+          // lines in the same stdout batch as the acknowledgement.
+          this.rpcTransport.enableV2();
+        }
         if (msg.success === false) {
           pending.reject(new Error(String(msg.error ?? `omp ${pending.command} failed`)));
         } else {
@@ -1223,6 +1309,7 @@ export class OmpAgent extends BaseAgent {
           break;
         }
         this.debug(`OMP ready (protocol v${msg.protocolVersion ?? '?'})`);
+        this.supportsRpcV2 = supportsOmpRpcV2(msg);
         this.settleReady();
         break;
       }
@@ -2070,35 +2157,48 @@ export class OmpAgent extends BaseAgent {
   override setModel(model: string): void {
     super.setModel(model);
     if (!this.subprocess) return;
-    void this.applyOmpModel(model);
+    void this.queueOmpModelSelection(model).catch((error) => {
+      this.debug(`OMP model update failed; next prompt must verify it: ${error}`);
+    });
   }
 
-  /**
-   * Resolve a craft model id to an OMP {provider, modelId} via a fuzzy match
-   * against get_available_models, then send set_model. Public `rox/standard`
-   * becomes `{provider:'rox', modelId:'standard'}`. Legacy craft id "kimi-K3"
-   * still matches OMP entry `{provider: 'rox', id: 'kimi-k3'}`.
-   */
-  private async applyOmpModel(model: string): Promise<void> {
-    try {
-      const data = (await this.sendCommand('get_available_models', {})) as
-        | Array<{ id?: string; modelId?: string; provider?: string; name?: string }>
-        | { models?: Array<{ id?: string; modelId?: string; provider?: string; name?: string }> }
-        | null;
-
-      const models = (Array.isArray(data) ? data : data?.models) ?? [];
-      const target = resolveOmpSetModelTarget(model, models);
-
-      if (!target) {
-        this.debug(`No OMP model match for craft model "${model}" — keeping OMP default`);
-        return;
+  private queueOmpModelSelection(model: string): Promise<void> {
+    const child = this.subprocess;
+    const assertCurrentChild = () => {
+      if (!child || this.subprocess !== child) {
+        throw new OmpStartupAbortedError('OMP subprocess changed during model selection');
       }
+    };
+    const selection = (this.modelSelectionPromise ?? Promise.resolve())
+      .catch(() => {})
+      .then(async () => {
+        if (this.spawnPromise) await this.spawnPromise;
+        assertCurrentChild();
+        await this.applyOmpModel(model, assertCurrentChild);
+      });
+    this.modelSelectionPromise = selection;
+    return selection;
+  }
 
-      await this.sendCommand('set_model', { provider: target.provider, modelId: target.modelId });
-      this.debug(`OMP model set to ${target.provider}/${target.modelId}`);
-    } catch (error) {
-      this.debug(`applyOmpModel(${model}) failed: ${error}`);
+  /** An acknowledgement alone is insufficient: require the actual selected model. */
+  private async applyOmpModel(model: string, assertCurrentChild: () => void): Promise<void> {
+    const data = (await this.sendCommand('get_available_models', {})) as
+      | OmpModelCandidate[]
+      | { models?: OmpModelCandidate[] }
+      | null;
+    assertCurrentChild();
+    const models = (Array.isArray(data) ? data : data?.models) ?? [];
+    const target = resolveVerifiedOmpModelTarget(model, models);
+    if (!target) throw new Error(`Model not found: ${model} in the OMP catalog`);
+
+    await this.sendCommand('set_model', { provider: target.provider, modelId: target.modelId });
+    assertCurrentChild();
+    const state = await this.sendCommand('get_state', {});
+    assertCurrentChild();
+    if (!ompStateHasModel(state, target)) {
+      throw new Error(`Model not found: ${model} was not confirmed by OMP get_state`);
     }
+    this.debug(`OMP model verified as ${target.provider}/${target.modelId}`);
   }
 
   override setThinkingLevel(level: ThinkingLevel): void {
@@ -2250,7 +2350,7 @@ export class OmpAgent extends BaseAgent {
     this.config = { ...this.config, model: update.model };
     this._model = update.model;
     if (this.subprocess && update.model) {
-      void this.applyOmpModel(update.model);
+      await this.queueOmpModelSelection(update.model);
     }
     return true;
   }

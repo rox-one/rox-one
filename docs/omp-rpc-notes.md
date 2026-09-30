@@ -4,12 +4,22 @@ Verified empirically against `omp` v17.2.9 (2026-08-06) with probe scripts. Tran
 
 > **Version note (2026-08-12):** the toolchain manifest installs **17.2.10** (`packages/shared/src/toolchain/manifest-data.ts`). The 17.2.10 binary was probe-verified against this document during the 2026-08-12 integration audit: identical ready frame (`{protocolVersion:1, supportedProtocolVersions:[1,2], maxFrameBytes:1048576, maxReassembledFrameBytes:67108864}`), `extension_ui_request` flow, `get_state` / `get_available_models` / `set_host_tools` shapes all unchanged. This doc remains accurate for 17.2.10.
 
+## Bounded protocol 2 transport (2026-09-30)
+
+The native limits are 1,048,576 bytes per physical NDJSON frame **including the newline**, 67,108,864 bytes per reassembled logical frame, and 262,144 bytes per raw chunk. The adapter validates advertised limits before negotiation, bounds stdout before readline, and validates ordered chunks, canonical base64, byte counts, UTF-8 and JSON before dispatch. Large outgoing commands use the same negotiated framing. Interrupted, malformed or incomplete frames fail the request; partial messages never reach model selection or prompt dispatch. Child replacement resets transport state and ignores callbacks from the previous process.
+
+A read-only probe against managed OMP 17.2.10 returned 861 models in a 1,424,866-byte logical response, encoded as six protocol 2 chunks. Independent checks connected the native encoder and candidate decoder in both directions. The final nine-file OMP suite passed 125 tests / 411 assertions. Prior runner timeouts under substantial host load remain recorded; the final run increased the test runner timeout without changing production deadlines. Shared typecheck still has 17 diagnostics outside the changed files and is not a global pass.
+
+Transport acceptance does not establish a gateway model contract. The observed catalog did not contain the exact requested `rox/standard` route. Rejecting an unavailable model is required; substituting another provider is not an accepted successful Rox turn.
+
 ## Lifecycle
 
 1. Spawn: `omp --mode rpc` (optional flags: `--approval-mode <mode>`, `--auto-approve` yolo, `--model`, `--session <dir>`…). cwd = workspace root; OMP session files live in its own session dir (under `~/.omp`), keyed by cwd.
 2. Server immediately sends `{"type":"ready","protocolVersion":1,"supportedProtocolVersions":[1,2],"maxFrameBytes":1048576,"maxReassembledFrameBytes":67108864}` followed by `extension_ui_request` (e.g. `setWidget`) and `available_commands_update`.
 3. **CRITICAL (the turn-stall blocker): the host MUST answer every `extension_ui_request`.** An unanswered request blocks extension init / the prompt pipeline: after `{"type":"prompt"}` you get `success` + `agent_start` and then nothing (no `message_start`, >170 s stall). Respond with `{"id":<request id>,"type":"extension_ui_response","approved":true,"value":true}` (id as string). Once answered, the full event stream flows.
-4. Protocol v2 is optional: `{"id":N,"type":"negotiate_protocol","protocolVersion":2}` — only needed for >1 MiB frames (chunking). v1 (default) is fine for us.
+4. For a peer advertising protocol 2 with the native limits, the host negotiates `{"id":N,"type":"negotiate_protocol","protocolVersion":2}` before fetching the catalog. Enable chunking only after a successful response confirming `data.protocolVersion === 2`. Older peers retain bounded v1 behavior. A real managed 17.2.10 catalog exceeded the v1 transport limit; v1 is insufficient for that configuration.
+
+**Requested model gate.** After startup and any branch restoration, the host resolves the requested model against `get_available_models`, sends `set_model`, and confirms the actual provider/model with `get_state` before `prompt`. This gate also runs after a child respawn and serializes runtime model updates. A qualified `provider/model` requires an exact catalog identity; suffix matching is retained only for legacy unqualified names. Missing, rejected or mismatched selections end the turn with an error without executing the prompt on the child's inherited default. Public Rox aliases require an advertised compatible catalog entry; an unrelated internal model is not inferred. This RPC gate does not establish that the selected provider authorizes a subsequent real completion.
 
 ## Commands (stdin)
 

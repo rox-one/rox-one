@@ -8,6 +8,8 @@
 
 Source snapshot: 70 критериев реализованы в проверенном коде, 297 частично, 69 не найдены в проверенном пути, 48 не установлены. Эти состояния не утверждают runtime PASS или доставку. Подготовлено 82 поверхности, 788 отдельных сценариев и 14 межэкранных трассировок; стартовое состояние всех сценариев — NOT_RUN.
 
+Текущие наблюдения и границы приёмки — [S02 audit status](stage2-audit-status.md). Исправление подтверждённого дефекта, который блокирует сам аудит, допускается внутри S02 с отдельным RED → fix → installed acceptance. Это не запускает весь backlog S03–S10 и не закрывает S02 без полной матрицы.
+
 ## Этапные gates
 
 | ID | Входы и зависимости | Результат и приёмка | Следующее исполнимое действие |
@@ -65,3 +67,13 @@ Source snapshot: 70 критериев реализованы в провере�
 4. После изменений evidence повторяется для изменённой версии. Не использовать старый screenshot/PASS для нового bundle.
 5. Delivery: owned branch → targeted verification → commit → предусмотренный PR/push → readback. Установка новой сборки и приёмка установленной версии — отдельный gate.
 6. В публичную доставку входят только относящиеся код, производная документация и обезличенные доказательства. Частные экспорт/agent missions/credentials сохраняются локально.
+
+## S02: текущий ограниченный ремонт препятствий аудита
+
+| Задача | Владелец и границы | Входы и зависимости | Результат и приёмка | Состояние |
+| --- | --- | --- | --- | --- |
+| Точный requested-model gate и OMP v2 | runtime owner: OMP adapter/model-selection/transport/tests; root интеграция | Истинный first-turn mismatch; managed 17.2.10 ready/catalog contract | Set/readback до prompt и после respawn; bounded chunks; malformed/unavailable fail без fallback; настоящий выбранный provider turn отдельно | Source tests/review и native unavailable-model gate проверены; успешный R1 зависит от gateway/runtime route |
+| Штатный packaging matcher | root: electron-builder.yml и config regression test | Negative-only платформенный matcher включал посторонние каталоги | Реальный package collector, пять platform/arch selectors, candidate composition/codesign | Проверены local macOS arm64 package и selector tests; Windows/Linux runtime не приняты |
+| Projects nonempty library | root: MainContentPanel.tsx, ProjectsHomeInMain.tsx | Полные LoadedProject records вместо компактной context projection | Nonempty → detail/settings/task → library; adjacent picker; controlled restart | Source review и настоящий candidate path проверены; restart/installed gate pending |
+
+Эти исправления позволяют продолжить S02 и не запускают весь S04/S06 backlog. Native канал временно недоступен; независимый read-only Tasks note-link diagnosis продолжается, доставка исходников отделена от установки. Полная программа сохраняет первоначальные десять последовательных этапов.
