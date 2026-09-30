@@ -193,3 +193,16 @@ The native creation revision `47f4e336aeb4c238b18871374d4101f4ada40bdb` addition
 Root restarted the preserved sole native profile and recovered a supported Apple automation/screenshot readback after Sky timeouts and the separate cmux onboarding blocker. The screenshot shows the workspace-denial banner; read-only authority/root checks found no mismatch, and source traces the native caller's unclassified legacy session-list request. This does not prove a Notes creation regression or positive creation acceptance. Focus changed and root released the desktop lease. Actual private custody, creation UI, complete platforms/providers, eligible self-hosted CI runners and full original acceptance remain pending.
 
 Draft PR #1316 publishes only an isolated, independently reviewed, unwired legacy Markdown inventory against the existing compound branch. It always denies native activation; concurrent overlays and complete migration are excluded. All 297 remaining rows, 109 September tasks, 489 requirements and 464 dependency edges remain in scope; no full task is accepted by this follow-up.
+
+## Current native publication runtime recovery (2026-09-30)
+
+This additive technical recovery does not replace any of the existing 109 program tasks or mark their product acceptance complete. The published dependency is native PR #1293 head `c358bd0ce0670cf6baaf0b3579933956c7009eb5`; previously tested old WIP stack PR #1315 is historical portability evidence.
+
+| Work | Owner | Dependency | Owned artifact | Verification / delivery |
+|---|---|---|---|---|
+| Isolate latest published native source and reproduce pinned Bun import failure | CloudRecovery | Exact remote #1293 head readback | New `fix/september-sqlite-runtime-20260930` checkout; baseline log | Absolute root/ref; clean baseline; unchanged native creation/outbox source |
+| Transplant reviewed runtime adapter and fixtures | CloudRecovery | Reviewed adapter SHA256 `8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831` | Six consumer imports, three direct-DB fixture imports, shared adapter/cross-runtime fixtures | SQL/schema/auth and native changes preserved; frozen install without lock changes; domain tests and five types |
+| Exercise actual built runtime with strict helper | CloudRecovery | Final reviewed helper SHA256 `c02452b78951a13e58e0279191d2be895c7220ce62ab91cf4c8e28b6f9b75e68` | Built subprocess, WebUI and server from own checkout; scoped workflow | Real HTTP/WS auth, private config, required live SIGTERM/exit0, stopped endpoints, persistence, pre-exited0/17 negatives |
+| Independently review, publish and read back exact hosted execution | Root / GatesReviewer; CloudRecovery delivers after approval | Frozen source manifest plus local logs | Runtime recovery receipt; draft stacked PR based on `feat/september-program-20260930` | Review before commit/push; exact remote head; Ubuntu/macOS job logs, actual checkout SHAs/parents, counts and preserved failure history |
+
+The scoped workflow preserves frozen install scripts, contents:read permission, package checks, actual builds and assertions. Existing ephemeral install token and bounded 4096MiB Node compiler/build heap settings repeat the already observed hosted remedies. No runner registration, account credential, network policy or original active-worktree change is part of this recovery.

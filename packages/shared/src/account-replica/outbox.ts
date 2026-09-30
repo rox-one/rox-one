@@ -1,7 +1,7 @@
 import { chmodSync, lstatSync, realpathSync } from 'node:fs';
 import { createHmac } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync } from '../utils/sqlite-runtime.ts';
 import { decryptBytes, encryptBytes } from './crypto.ts';
 import { isReplicaCategory, type ReplicaEnvelope, type ReplicaOperation } from './types.ts';
 import type { NativeDataEntitySnapshot, NativeDataReceipt } from '../protocol/dto.ts';
