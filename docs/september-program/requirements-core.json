@@ -1,0 +1,2744 @@
+[
+  {
+    "requirementId": "U01-R001",
+    "group": "U01",
+    "requirement": "Полная матрица каждого экрана, действия и перехода актуальной сборки",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "AUDIT-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Полная матрица каждого экрана, действия и перехода актуальной сборки; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе полная матрица каждого экрана, действия и перехода актуальной сборки не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R002",
+    "group": "U01",
+    "requirement": "На каждом экране: успех, загрузка, пустое состояние, ошибка, повтор, сохранение и открытие",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "AUDIT-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: На каждом экране: успех, загрузка, пустое состояние, ошибка, повтор, сохранение и открытие; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия на каждом экране: успех, загрузка, пустое состояние, ошибка, повтор, сохранение и открытие остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R003",
+    "group": "U01",
+    "requirement": "Карта общих сущностей и переходов данных между экранами",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "AUDIT-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Карта общих сущностей и переходов данных между экранами; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе карта общих сущностей и переходов данных между экранами не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R004",
+    "group": "U01",
+    "requirement": "Актуальная PRD/spec с обязательными дефектами отдельно от новых предложений",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "AUDIT-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальная PRD/spec с обязательными дефектами отдельно от новых предложений; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальная prd/spec с обязательными дефектами отдельно от новых предложений не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R005",
+    "group": "U01",
+    "requirement": "По 2–3 обоснованных улучшения в категориях интерфейс, функция и компоновка для каждого экрана",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "AUDIT-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: По 2–3 обоснованных улучшения в категориях интерфейс, функция и компоновка для каждого экрана; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе по 2–3 обоснованных улучшения в категориях интерфейс, функция и компоновка для каждого экрана не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R006",
+    "group": "U01",
+    "requirement": "Notes: реальная конверсия в задачу, поиск, переходы и редактор после перезапуска",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "NOTES-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Notes: реальная конверсия в задачу, поиск, переходы и редактор после перезапуска; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия notes: реальная конверсия в задачу, поиск, переходы и редактор после перезапуска остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R007",
+    "group": "U01",
+    "requirement": "Tasks: полнота Things-подобного сценария, клавиатура доски, семантика таблицы и сохранение",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "TASKS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Tasks: полнота Things-подобного сценария, клавиатура доски, семантика таблицы и сохранение; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия tasks: полнота things-подобного сценария, клавиатура доски, семантика таблицы и сохранение остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R008",
+    "group": "U01",
+    "requirement": "Memory: проверить требование более развитого экрана без объявления готовой поверхности отсутствующей",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "MEMORY-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Memory: проверить требование более развитого экрана без объявления готовой поверхности отсутствующей; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе memory: проверить требование более развитого экрана без объявления готовой поверхности отсутствующей не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R009",
+    "group": "U01",
+    "requirement": "Home: готовые виджеты задач, входящих, автоматизаций, встреч, звонков и недельного календаря связаны с данными",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "HOME-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Home: готовые виджеты задач, входящих, автоматизаций, встреч, звонков и недельного календаря связаны с данными; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе home: готовые виджеты задач, входящих, автоматизаций, встреч, звонков и недельного календаря связаны с данными не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R010",
+    "group": "U01",
+    "requirement": "Home: персонализация и выбор виджетов восстанавливаются после повторного запуска",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "HOME-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Home: персонализация и выбор виджетов восстанавливаются после повторного запуска; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия home: персонализация и выбор виджетов восстанавливаются после повторного запуска остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R011",
+    "group": "U01",
+    "requirement": "Feed: список подписок/источников и реальные обновления",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "FEED-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Feed: список подписок/источников и реальные обновления; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе feed: список подписок/источников и реальные обновления не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R012",
+    "group": "U01",
+    "requirement": "Feed: сортировка и фильтрация по цветам, тегам и содержанию",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "FEED-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Feed: сортировка и фильтрация по цветам, тегам и содержанию; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе feed: сортировка и фильтрация по цветам, тегам и содержанию не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R013",
+    "group": "U01",
+    "requirement": "Feed: запрошенная группировка по дням и порядок внутри дня",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "FEED-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Feed: запрошенная группировка по дням и порядок внутри дня; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе feed: запрошенная группировка по дням и порядок внутри дня не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R014",
+    "group": "U01",
+    "requirement": "Connections: реальные действия подключения/импорта и релевантные отказы",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "IMPORTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Connections: реальные действия подключения/импорта и релевантные отказы; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе connections: реальные действия подключения/импорта и релевантные отказы не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U01-R015",
+    "group": "U01",
+    "requirement": "Проверить применимость старых требований терминала, встроенного браузера и upstream-обновлений; не считать их автоматически отменёнными",
+    "sourceRefs": [
+      "U01",
+      "seq75",
+      "seq299",
+      "seq370",
+      "seq1276",
+      "seq1288",
+      "seq1315",
+      "seq1335",
+      "seq1352"
+    ],
+    "primaryIssue": "AUDIT-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Проверить применимость старых требований терминала, встроенного браузера и upstream-обновлений; не считать их автоматически отменёнными; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Если экран/переход/контрол недоступен или не проверяем, отметить точную блокировку; не записывать отсутствующее наблюдение как PASS и не выводить несуществующую функцию.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе проверить применимость старых требований терминала, встроенного браузера и upstream-обновлений; не считать их автоматически отменёнными не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Closest bounded owner AUDIT-01: issue body covers current route/control audit but does not explicitly enumerate the historical terminal, embedded-browser, or upstream-update criteria; keep status NOT_RUN and add the supplemental clause reported to lead."
+  },
+  {
+    "requirementId": "U02-R001",
+    "group": "U02",
+    "requirement": "Постоянный локальный Stalwart для rox.one с запуском при входе",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Постоянный локальный Stalwart для rox.one с запуском при входе; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия постоянный локальный stalwart для rox.one с запуском при входе остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U02-R002",
+    "group": "U02",
+    "requirement": "Создание персонального ящика при предусмотренной регистрации",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Создание персонального ящика при предусмотренной регистрации; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе создание персонального ящика при предусмотренной регистрации не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U02-R003",
+    "group": "U02",
+    "requirement": "JMAP-подключение с безопасным хранением учётных данных",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: JMAP-подключение с безопасным хранением учётных данных; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе jmap-подключение с безопасным хранением учётных данных не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U02-R004",
+    "group": "U02",
+    "requirement": "Список реальных писем и открытие письма",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Список реальных писем и открытие письма; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе список реальных писем и открытие письма не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U02-R005",
+    "group": "U02",
+    "requirement": "Ответ на письмо и составление/отправка нового",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Ответ на письмо и составление/отправка нового; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе ответ на письмо и составление/отправка нового не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U02-R006",
+    "group": "U02",
+    "requirement": "Новые письма появляются без ручного обновления",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Новые письма появляются без ручного обновления; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе новые письма появляются без ручного обновления не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U02-R007",
+    "group": "U02",
+    "requirement": "Локальная доставка с восстановлением после перезапуска",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Локальная доставка с восстановлением после перезапуска; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия локальная доставка с восстановлением после перезапуска остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U02-R008",
+    "group": "U02",
+    "requirement": "Отдельная внешняя отправка/получение с доказательством доставки и проверкой DNS",
+    "sourceRefs": [
+      "U02",
+      "seq1335",
+      "seq1343",
+      "seq1348"
+    ],
+    "primaryIssue": "MAIL-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Отдельная внешняя отправка/получение с доказательством доставки и проверкой DNS; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе отдельная внешняя отправка/получение с доказательством доставки и проверкой dns не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U03-R001",
+    "group": "U03",
+    "requirement": "Установить точный движок, модель, место исполнения и путь голосовой транскрипции обычной сессии",
+    "sourceRefs": [
+      "U03",
+      "seq1352"
+    ],
+    "primaryIssue": "VOICE-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Установить точный движок, модель, место исполнения и путь голосовой транскрипции обычной сессии; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе установить точный движок, модель, место исполнения и путь голосовой транскрипции обычной сессии не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U04-R001",
+    "group": "U04",
+    "requirement": "Русская озвучка сообщения через edge-tts внутри приложения",
+    "sourceRefs": [
+      "U04",
+      "seq1352"
+    ],
+    "primaryIssue": "VOICE-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Русская озвучка сообщения через edge-tts внутри приложения; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе русская озвучка сообщения через edge-tts внутри приложения не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U04-R002",
+    "group": "U04",
+    "requirement": "Остановка текущей озвучки без рассинхронизации",
+    "sourceRefs": [
+      "U04",
+      "seq1352"
+    ],
+    "primaryIssue": "VOICE-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Остановка текущей озвучки без рассинхронизации; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе остановка текущей озвучки без рассинхронизации не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U04-R003",
+    "group": "U04",
+    "requirement": "Системный голос работает как резерв при отсутствии сети",
+    "sourceRefs": [
+      "U04",
+      "seq1352"
+    ],
+    "primaryIssue": "VOICE-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Системный голос работает как резерв при отсутствии сети; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе системный голос работает как резерв при отсутствии сети не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U05-R001",
+    "group": "U05",
+    "requirement": "Автоматическое резюме встречи после транскрипции",
+    "sourceRefs": [
+      "U05",
+      "seq1319",
+      "seq1352"
+    ],
+    "primaryIssue": "MEETINGS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Автоматическое резюме встречи после транскрипции; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе автоматическое резюме встречи после транскрипции не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U05-R002",
+    "group": "U05",
+    "requirement": "Выделенные решения встречи",
+    "sourceRefs": [
+      "U05",
+      "seq1319",
+      "seq1352"
+    ],
+    "primaryIssue": "MEETINGS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Выделенные решения встречи; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе выделенные решения встречи не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U05-R003",
+    "group": "U05",
+    "requirement": "Задачи и открытые вопросы из встречи",
+    "sourceRefs": [
+      "U05",
+      "seq1319",
+      "seq1352"
+    ],
+    "primaryIssue": "MEETINGS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Задачи и открытые вопросы из встречи; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе задачи и открытые вопросы из встречи не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U05-R004",
+    "group": "U05",
+    "requirement": "Разделение спикеров и их переименование",
+    "sourceRefs": [
+      "U05",
+      "seq1319",
+      "seq1352"
+    ],
+    "primaryIssue": "MEETINGS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Разделение спикеров и их переименование; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе разделение спикеров и их переименование не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U05-R005",
+    "group": "U05",
+    "requirement": "Метки времени и переход к исходному аудио",
+    "sourceRefs": [
+      "U05",
+      "seq1319",
+      "seq1352"
+    ],
+    "primaryIssue": "MEETINGS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Метки времени и переход к исходному аудио; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе метки времени и переход к исходному аудио не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U05-R006",
+    "group": "U05",
+    "requirement": "Документы/вложения встречи доступны из её поверхности",
+    "sourceRefs": [
+      "U05",
+      "seq1319",
+      "seq1352"
+    ],
+    "primaryIssue": "MEETINGS-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Документы/вложения встречи доступны из её поверхности; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе документы/вложения встречи доступны из её поверхности не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U05-R007",
+    "group": "U05",
+    "requirement": "Результаты сохранены и связаны с Tasks/Notes с проверкой после перезапуска",
+    "sourceRefs": [
+      "U05",
+      "seq1319",
+      "seq1352"
+    ],
+    "primaryIssue": "MEETINGS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Результаты сохранены и связаны с Tasks/Notes с проверкой после перезапуска; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При отсутствующем/неподдерживаемом аудио или ошибке обработки не создавать ложный transcript/playback/meeting result и не терять источник.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия результаты сохранены и связаны с tasks/notes с проверкой после перезапуска остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U06-R001",
+    "group": "U06",
+    "requirement": "Все необходимые экраны доступны в верхней панели с рабочей прокруткой/переполнением",
+    "sourceRefs": [
+      "U06",
+      "seq1362"
+    ],
+    "primaryIssue": "UX-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Все необходимые экраны доступны в верхней панели с рабочей прокруткой/переполнением; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе все необходимые экраны доступны в верхней панели с рабочей прокруткой/переполнением не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U06-R002",
+    "group": "U06",
+    "requirement": "Отдельная иконка Home вне таблетки без текстовой подписи",
+    "sourceRefs": [
+      "U06",
+      "seq1362"
+    ],
+    "primaryIssue": "UX-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Отдельная иконка Home вне таблетки без текстовой подписи; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе отдельная иконка home вне таблетки без текстовой подписи не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U06-R003",
+    "group": "U06",
+    "requirement": "Компактный выровненный сайдбар с небольшими иконками и промежутками",
+    "sourceRefs": [
+      "U06",
+      "seq1362"
+    ],
+    "primaryIssue": "UX-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Компактный выровненный сайдбар с небольшими иконками и промежутками; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе компактный выровненный сайдбар с небольшими иконками и промежутками не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U06-R004",
+    "group": "U06",
+    "requirement": "Inter действительно загружается и применяется во всём интерфейсе",
+    "sourceRefs": [
+      "U06",
+      "seq1362"
+    ],
+    "primaryIssue": "DESIGN-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Inter действительно загружается и применяется во всём интерфейсе; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе inter действительно загружается и применяется во всём интерфейсе не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U07-R001",
+    "group": "U07",
+    "requirement": "Найти оригинальный прозрачный rox copy.png по данным вложения",
+    "sourceRefs": [
+      "U07",
+      "seq1258",
+      "seq1263",
+      "seq1268",
+      "seq1276",
+      "seq1362"
+    ],
+    "primaryIssue": "DESIGN-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Найти оригинальный прозрачный rox copy.png по данным вложения; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе найти оригинальный прозрачный rox copy.png по данным вложения не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U07-R002",
+    "group": "U07",
+    "requirement": "Оригинал используется во всех согласованных местах брендинга",
+    "sourceRefs": [
+      "U07",
+      "seq1258",
+      "seq1263",
+      "seq1268",
+      "seq1276",
+      "seq1362"
+    ],
+    "primaryIssue": "DESIGN-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Оригинал используется во всех согласованных местах брендинга; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе оригинал используется во всех согласованных местах брендинга не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U07-R003",
+    "group": "U07",
+    "requirement": "Проверить прозрачность, малые размеры и обновление кэша иконок",
+    "sourceRefs": [
+      "U07",
+      "seq1258",
+      "seq1263",
+      "seq1268",
+      "seq1276",
+      "seq1362"
+    ],
+    "primaryIssue": "DESIGN-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Проверить прозрачность, малые размеры и обновление кэша иконок; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе проверить прозрачность, малые размеры и обновление кэша иконок не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U08-R001",
+    "group": "U08",
+    "requirement": "В onboarding остаётся только имя, затем вход в приложение",
+    "sourceRefs": [
+      "U08",
+      "seq1329",
+      "seq1362"
+    ],
+    "primaryIssue": "ONBOARD-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: В onboarding остаётся только имя, затем вход в приложение; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе в onboarding остаётся только имя, затем вход в приложение не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U08-R002",
+    "group": "U08",
+    "requirement": "Rox runtime и предусмотренные модели выбраны по умолчанию",
+    "sourceRefs": [
+      "U08",
+      "seq1329",
+      "seq1362"
+    ],
+    "primaryIssue": "ONBOARD-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Rox runtime и предусмотренные модели выбраны по умолчанию; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе rox runtime и предусмотренные модели выбраны по умолчанию не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U08-R003",
+    "group": "U08",
+    "requirement": "Провайдеры подключаются через Settings",
+    "sourceRefs": [
+      "U08",
+      "seq1329",
+      "seq1362"
+    ],
+    "primaryIssue": "ONBOARD-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Провайдеры подключаются через Settings; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе провайдеры подключаются через settings не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U08-R004",
+    "group": "U08",
+    "requirement": "Выявить и устранить причину повторного onboarding; состояние сохраняется после перезапуска",
+    "sourceRefs": [
+      "U08",
+      "seq1329",
+      "seq1362"
+    ],
+    "primaryIssue": "ONBOARD-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Выявить и устранить причину повторного onboarding; состояние сохраняется после перезапуска; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия выявить и устранить причину повторного onboarding; состояние сохраняется после перезапуска остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U09-R001",
+    "group": "U09",
+    "requirement": "Roadmap проекта вместо неуместного правого инспектора",
+    "sourceRefs": [
+      "U09",
+      "seq1362"
+    ],
+    "primaryIssue": "PROJECTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Roadmap проекта вместо неуместного правого инспектора; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе roadmap проекта вместо неуместного правого инспектора не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U09-R002",
+    "group": "U09",
+    "requirement": "Цель, результат, исходные материалы, файлы и заметки проекта сохраняются",
+    "sourceRefs": [
+      "U09",
+      "seq1362"
+    ],
+    "primaryIssue": "PROJECTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Цель, результат, исходные материалы, файлы и заметки проекта сохраняются; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия цель, результат, исходные материалы, файлы и заметки проекта сохраняются остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U09-R003",
+    "group": "U09",
+    "requirement": "Этапы и вехи проекта",
+    "sourceRefs": [
+      "U09",
+      "seq1362"
+    ],
+    "primaryIssue": "PROJECTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Этапы и вехи проекта; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе этапы и вехи проекта не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U09-R004",
+    "group": "U09",
+    "requirement": "Функциональные, технические, количественные и качественные требования проекта",
+    "sourceRefs": [
+      "U09",
+      "seq1362"
+    ],
+    "primaryIssue": "PROJECTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Функциональные, технические, количественные и качественные требования проекта; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе функциональные, технические, количественные и качественные требования проекта не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U09-R005",
+    "group": "U09",
+    "requirement": "AI преобразует реальные материалы в сохранённую спецификацию",
+    "sourceRefs": [
+      "U09",
+      "seq1362"
+    ],
+    "primaryIssue": "PROJECTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: AI преобразует реальные материалы в сохранённую спецификацию; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия ai преобразует реальные материалы в сохранённую спецификацию остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U09-R006",
+    "group": "U09",
+    "requirement": "AI декомпозирует спецификацию в связанные задачи; прогресс отражает их состояния",
+    "sourceRefs": [
+      "U09",
+      "seq1362"
+    ],
+    "primaryIssue": "PROJECTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: AI декомпозирует спецификацию в связанные задачи; прогресс отражает их состояния; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе ai декомпозирует спецификацию в связанные задачи; прогресс отражает их состояния не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U10-R001",
+    "group": "U10",
+    "requirement": "Выбрать готовое решение каналов/чатов по возможностям, лицензии и сопровождению",
+    "sourceRefs": [
+      "U10",
+      "seq1362"
+    ],
+    "primaryIssue": "CHAT-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Выбрать готовое решение каналов/чатов по возможностям, лицензии и сопровождению; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе выбрать готовое решение каналов/чатов по возможностям, лицензии и сопровождению не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U10-R002",
+    "group": "U10",
+    "requirement": "Каналы и личные чаты с настоящими участниками",
+    "sourceRefs": [
+      "U10",
+      "seq1362"
+    ],
+    "primaryIssue": "CHAT-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Каналы и личные чаты с настоящими участниками; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе каналы и личные чаты с настоящими участниками не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U10-R003",
+    "group": "U10",
+    "requirement": "Боты/агенты участвуют в предусмотренных каналах и чатах",
+    "sourceRefs": [
+      "U10",
+      "seq1362"
+    ],
+    "primaryIssue": "CHAT-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Боты/агенты участвуют в предусмотренных каналах и чатах; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе боты/агенты участвуют в предусмотренных каналах и чатах не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U10-R004",
+    "group": "U10",
+    "requirement": "Интеграция под брендом Rox и реальная доставка между двумя идентичностями",
+    "sourceRefs": [
+      "U10",
+      "seq1362"
+    ],
+    "primaryIssue": "CHAT-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Интеграция под брендом Rox и реальная доставка между двумя идентичностями; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе интеграция под брендом rox и реальная доставка между двумя идентичностями не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U11-R001",
+    "group": "U11",
+    "requirement": "Компактная Mac-панель отображается при сворачивании",
+    "sourceRefs": [
+      "U11",
+      "seq1368"
+    ],
+    "primaryIssue": "NATIVE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Компактная Mac-панель отображается при сворачивании; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Ошибка/отказ не отображается как успешный результат и не повреждает предыдущие данные.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе компактная mac-панель отображается при сворачивании не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U11-R002",
+    "group": "U11",
+    "requirement": "Мини-иконки, название разговора и живой статус",
+    "sourceRefs": [
+      "U11",
+      "seq1368"
+    ],
+    "primaryIssue": "NATIVE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Мини-иконки, название разговора и живой статус; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Ошибка/отказ не отображается как успешный результат и не повреждает предыдущие данные.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе мини-иконки, название разговора и живой статус не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U11-R003",
+    "group": "U11",
+    "requirement": "Действия send/stop/note/voice/expand воздействуют на основную сессию",
+    "sourceRefs": [
+      "U11",
+      "seq1368"
+    ],
+    "primaryIssue": "NATIVE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Действия send/stop/note/voice/expand воздействуют на основную сессию; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Ошибка/отказ не отображается как успешный результат и не повреждает предыдущие данные.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе действия send/stop/note/voice/expand воздействуют на основную сессию не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U11-R004",
+    "group": "U11",
+    "requirement": "Синхронизация панели и основного окна при повторном открытии",
+    "sourceRefs": [
+      "U11",
+      "seq1368"
+    ],
+    "primaryIssue": "NATIVE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Синхронизация панели и основного окна при повторном открытии; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Ошибка/отказ не отображается как успешный результат и не повреждает предыдущие данные.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе синхронизация панели и основного окна при повторном открытии не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U12-R001",
+    "group": "U12",
+    "requirement": "Единый стиль и читаемый контраст Settings",
+    "sourceRefs": [
+      "U12",
+      "seq1377"
+    ],
+    "primaryIssue": "SETTINGS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Единый стиль и читаемый контраст Settings; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе единый стиль и читаемый контраст settings не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U12-R002",
+    "group": "U12",
+    "requirement": "Поиск расширений",
+    "sourceRefs": [
+      "U12",
+      "seq1377"
+    ],
+    "primaryIssue": "MARKETPLACE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Поиск расширений; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе поиск расширений не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U12-R003",
+    "group": "U12",
+    "requirement": "Фильтры/теги расширений",
+    "sourceRefs": [
+      "U12",
+      "seq1377"
+    ],
+    "primaryIssue": "MARKETPLACE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Фильтры/теги расширений; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе фильтры/теги расширений не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U12-R004",
+    "group": "U12",
+    "requirement": "Группировка расширений",
+    "sourceRefs": [
+      "U12",
+      "seq1377"
+    ],
+    "primaryIssue": "MARKETPLACE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Группировка расширений; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе группировка расширений не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U12-R005",
+    "group": "U12",
+    "requirement": "Сортировка расширений",
+    "sourceRefs": [
+      "U12",
+      "seq1377"
+    ],
+    "primaryIssue": "MARKETPLACE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Сортировка расширений; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе сортировка расширений не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U12-R006",
+    "group": "U12",
+    "requirement": "Видимая hover-линия сайдбара удалена, изменение ширины сохранено",
+    "sourceRefs": [
+      "U12",
+      "seq1377"
+    ],
+    "primaryIssue": "UX-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Видимая hover-линия сайдбара удалена, изменение ширины сохранено; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия видимая hover-линия сайдбара удалена, изменение ширины сохранено остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U13-R001",
+    "group": "U13",
+    "requirement": "Entertainment Quest с реальными предусмотренными заданиями",
+    "sourceRefs": [
+      "U13",
+      "seq1377"
+    ],
+    "primaryIssue": "QUEST-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Entertainment Quest с реальными предусмотренными заданиями; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе entertainment quest с реальными предусмотренными заданиями не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U13-R002",
+    "group": "U13",
+    "requirement": "Прогресс и награды отражают реальные действия",
+    "sourceRefs": [
+      "U13",
+      "seq1377"
+    ],
+    "primaryIssue": "QUEST-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Прогресс и награды отражают реальные действия; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе прогресс и награды отражают реальные действия не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U13-R003",
+    "group": "U13",
+    "requirement": "Серии активности и результаты сохраняются после перезапуска",
+    "sourceRefs": [
+      "U13",
+      "seq1377"
+    ],
+    "primaryIssue": "QUEST-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Серии активности и результаты сохраняются после перезапуска; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия серии активности и результаты сохраняются после перезапуска остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U14-R001",
+    "group": "U14",
+    "requirement": "Team показывает настоящих участников и роли",
+    "sourceRefs": [
+      "U14",
+      "seq1305",
+      "seq1377"
+    ],
+    "primaryIssue": "TEAMS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Team показывает настоящих участников и роли; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе team показывает настоящих участников и роли не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U14-R002",
+    "group": "U14",
+    "requirement": "Реальное присутствие участников",
+    "sourceRefs": [
+      "U14",
+      "seq1305",
+      "seq1377"
+    ],
+    "primaryIssue": "TEAMS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Реальное присутствие участников; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе реальное присутствие участников не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U14-R003",
+    "group": "U14",
+    "requirement": "Индивидуальные балансы и расходы участников",
+    "sourceRefs": [
+      "U14",
+      "seq1305",
+      "seq1377"
+    ],
+    "primaryIssue": "TEAMS-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Индивидуальные балансы и расходы участников; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе индивидуальные балансы и расходы участников не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U14-R004",
+    "group": "U14",
+    "requirement": "Общие проекты и память команды с контролем доступа",
+    "sourceRefs": [
+      "U14",
+      "seq1305",
+      "seq1377"
+    ],
+    "primaryIssue": "TEAMS-03",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Общие проекты и память команды с контролем доступа; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе общие проекты и память команды с контролем доступа не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U15-R001",
+    "group": "U15",
+    "requirement": "Рабочая палитра Flexoki Dark",
+    "sourceRefs": [
+      "U15",
+      "seq1380"
+    ],
+    "primaryIssue": "THEME-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Рабочая палитра Flexoki Dark; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе рабочая палитра flexoki dark не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U15-R002",
+    "group": "U15",
+    "requirement": "Рабочая палитра Snazzy",
+    "sourceRefs": [
+      "U15",
+      "seq1380"
+    ],
+    "primaryIssue": "THEME-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Рабочая палитра Snazzy; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе рабочая палитра snazzy не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U15-R003",
+    "group": "U15",
+    "requirement": "Рабочая палитра Snazzy Blurred",
+    "sourceRefs": [
+      "U15",
+      "seq1380"
+    ],
+    "primaryIssue": "THEME-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Рабочая палитра Snazzy Blurred; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе рабочая палитра snazzy blurred не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U15-R004",
+    "group": "U15",
+    "requirement": "Выбор, предпросмотр и сохранение темы после перезапуска",
+    "sourceRefs": [
+      "U15",
+      "seq1380"
+    ],
+    "primaryIssue": "THEME-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Выбор, предпросмотр и сохранение темы после перезапуска; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия выбор, предпросмотр и сохранение темы после перезапуска остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U15-R005",
+    "group": "U15",
+    "requirement": "Читаемость интерфейса, кода и терминала в каждой теме",
+    "sourceRefs": [
+      "U15",
+      "seq1380"
+    ],
+    "primaryIssue": "THEME-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Читаемость интерфейса, кода и терминала в каждой теме; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе читаемость интерфейса, кода и терминала в каждой теме не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U16-R001",
+    "group": "U16",
+    "requirement": "Правила выбора связанных заметок/черновиков в контекст обычной сессии",
+    "sourceRefs": [
+      "U16",
+      "seq370",
+      "seq1254"
+    ],
+    "primaryIssue": "CANVAS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Правила выбора связанных заметок/черновиков в контекст обычной сессии; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе правила выбора связанных заметок/черновиков в контекст обычной сессии не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U16-R002",
+    "group": "U16",
+    "requirement": "Обычный запуск использует связанный контекст и показывает источник",
+    "sourceRefs": [
+      "U16",
+      "seq370",
+      "seq1254"
+    ],
+    "primaryIssue": "CANVAS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Обычный запуск использует связанный контекст и показывает источник; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе обычный запуск использует связанный контекст и показывает источник не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U16-R003",
+    "group": "U16",
+    "requirement": "Отрицательная проверка без связи не получает постороннюю заметку",
+    "sourceRefs": [
+      "U16",
+      "seq370",
+      "seq1254"
+    ],
+    "primaryIssue": "CANVAS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Отрицательная проверка без связи не получает постороннюю заметку; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподходящий или несвязанный источник не создаёт/не получает чужую сущность; отмена или ошибка не отображается как сохранённый результат.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе отрицательная проверка без связи не получает постороннюю заметку не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R001",
+    "group": "U17",
+    "requirement": "Рабочий Slack backend",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "INTEGRATIONS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Рабочий Slack backend; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе рабочий slack backend не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R002",
+    "group": "U17",
+    "requirement": "Реальное разрешённое подключение Telegram",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "INTEGRATIONS-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Реальное разрешённое подключение Telegram; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе реальное разрешённое подключение telegram не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R003",
+    "group": "U17",
+    "requirement": "Реальное разрешённое подключение Discord",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "INTEGRATIONS-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Реальное разрешённое подключение Discord; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе реальное разрешённое подключение discord не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R004",
+    "group": "U17",
+    "requirement": "Реальное разрешённое подключение Lark",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "INTEGRATIONS-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Реальное разрешённое подключение Lark; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе реальное разрешённое подключение lark не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R005",
+    "group": "U17",
+    "requirement": "Реальное разрешённое подключение WeChat",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "INTEGRATIONS-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Реальное разрешённое подключение WeChat; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе реальное разрешённое подключение wechat не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R006",
+    "group": "U17",
+    "requirement": "Реальное разрешённое подключение WhatsApp",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "INTEGRATIONS-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Реальное разрешённое подключение WhatsApp; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе реальное разрешённое подключение whatsapp не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R007",
+    "group": "U17",
+    "requirement": "Автоматический импорт предусмотренных источников",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "IMPORTS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Автоматический импорт предусмотренных источников; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе автоматический импорт предусмотренных источников не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U17-R008",
+    "group": "U17",
+    "requirement": "Разрешённые действия аккаунтов/cookies с понятными состояниями отказа и отсутствия источника",
+    "sourceRefs": [
+      "U17",
+      "seq1288"
+    ],
+    "primaryIssue": "INTEGRATIONS-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Разрешённые действия аккаунтов/cookies с понятными состояниями отказа и отсутствия источника; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе разрешённые действия аккаунтов/cookies с понятными состояниями отказа и отсутствия источника не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R001",
+    "group": "U18",
+    "requirement": "Комментарии к сообщениям чата",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Комментарии к сообщениям чата; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе комментарии к сообщениям чата не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R002",
+    "group": "U18",
+    "requirement": "Комментарии к узлам карты",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Комментарии к узлам карты; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе комментарии к узлам карты не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R003",
+    "group": "U18",
+    "requirement": "Упоминания в заметках с доставкой адресату",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-03",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Упоминания в заметках с доставкой адресату; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе упоминания в заметках с доставкой адресату не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R004",
+    "group": "U18",
+    "requirement": "Общие skills организации",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-05",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Общие skills организации; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе общие skills организации не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R005",
+    "group": "U18",
+    "requirement": "Общие automations организации",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-05",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Общие automations организации; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе общие automations организации не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R006",
+    "group": "U18",
+    "requirement": "Общая memory организации",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-05",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Общая memory организации; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе общая memory организации не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R007",
+    "group": "U18",
+    "requirement": "Права и отказ при недостаточном доступе",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-04",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Права и отказ при недостаточном доступе; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе права и отказ при недостаточном доступе не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R008",
+    "group": "U18",
+    "requirement": "Recipient Inbox, handoff/review и активность команды",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "COLLAB-04",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Recipient Inbox, handoff/review и активность команды; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе recipient inbox, handoff/review и активность команды не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U18-R009",
+    "group": "U18",
+    "requirement": "Переподключение/восстановление общей информации между двумя идентичностями",
+    "sourceRefs": [
+      "U18",
+      "seq1305"
+    ],
+    "primaryIssue": "SYNC-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Переподключение/восстановление общей информации между двумя идентичностями; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Вторая неавторизованная идентичность не видит и не меняет чужие данные; отказ доступа не возвращает успешное пустое/подтверждённое состояние.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия переподключение/восстановление общей информации между двумя идентичностями остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U19-R001",
+    "group": "U19",
+    "requirement": "Установить согласованную семантику лимита бюджета",
+    "sourceRefs": [
+      "U19",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "AGENT-BUDGET-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Установить согласованную семантику лимита бюджета; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе установить согласованную семантику лимита бюджета не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U19-R002",
+    "group": "U19",
+    "requirement": "Лимит ограничивает настоящие исполнения, включая фоновые процессы",
+    "sourceRefs": [
+      "U19",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "AGENT-BUDGET-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Лимит ограничивает настоящие исполнения, включая фоновые процессы; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе лимит ограничивает настоящие исполнения, включая фоновые процессы не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U19-R003",
+    "group": "U19",
+    "requirement": "Границы лимита и повторное исполнение проверены на настоящем исполнителе",
+    "sourceRefs": [
+      "U19",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "AGENT-BUDGET-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Границы лимита и повторное исполнение проверены на настоящем исполнителе; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе границы лимита и повторное исполнение проверены на настоящем исполнителе не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U20-R001",
+    "group": "U20",
+    "requirement": "Focus подавляет/откладывает предусмотренные вопросы и уведомления",
+    "sourceRefs": [
+      "U20",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "FOCUS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Focus подавляет/откладывает предусмотренные вопросы и уведомления; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе focus подавляет/откладывает предусмотренные вопросы и уведомления не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U20-R002",
+    "group": "U20",
+    "requirement": "Выход/истечение Focus корректно доставляет отложенное",
+    "sourceRefs": [
+      "U20",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "FOCUS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Выход/истечение Focus корректно доставляет отложенное; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе выход/истечение focus корректно доставляет отложенное не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U20-R003",
+    "group": "U20",
+    "requirement": "Повторный интервал и перезапуск не теряют/не дублируют уведомления",
+    "sourceRefs": [
+      "U20",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "FOCUS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Повторный интервал и перезапуск не теряют/не дублируют уведомления; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия повторный интервал и перезапуск не теряют/не дублируют уведомления остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U21-R001",
+    "group": "U21",
+    "requirement": "Автоматика продолжает существующую сессию там, где предусмотрено",
+    "sourceRefs": [
+      "U21",
+      "seq1288",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "AUTOMATION-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Автоматика продолжает существующую сессию там, где предусмотрено; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе автоматика продолжает существующую сессию там, где предусмотрено не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U21-R002",
+    "group": "U21",
+    "requirement": "Webhook редактируется и сохраняется",
+    "sourceRefs": [
+      "U21",
+      "seq1288",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "AUTOMATION-02",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Webhook редактируется и сохраняется; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия webhook редактируется и сохраняется остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U21-R003",
+    "group": "U21",
+    "requirement": "Повторный запуск и восстановление автоматики без поломки существующего CRUD",
+    "sourceRefs": [
+      "U21",
+      "seq1288",
+      "seq1299",
+      "seq1315"
+    ],
+    "primaryIssue": "SCHEDULED-02",
+    "kind": "proposal-audit",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Повторный запуск и восстановление автоматики без поломки существующего CRUD; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия повторный запуск и восстановление автоматики без поломки существующего crud остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U22-R001",
+    "group": "U22",
+    "requirement": "Connection/status/balance handlers подключены к реально загружаемому runtime",
+    "sourceRefs": [
+      "U22",
+      "seq1254",
+      "seq1288",
+      "seq1315"
+    ],
+    "primaryIssue": "REMOTE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Connection/status/balance handlers подключены к реально загружаемому runtime; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе connection/status/balance handlers подключены к реально загружаемому runtime не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U22-R002",
+    "group": "U22",
+    "requirement": "Успешное Rox cloud подключение и состояния соединения",
+    "sourceRefs": [
+      "U22",
+      "seq1254",
+      "seq1288",
+      "seq1315"
+    ],
+    "primaryIssue": "REMOTE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Успешное Rox cloud подключение и состояния соединения; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе успешное rox cloud подключение и состояния соединения не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U22-R003",
+    "group": "U22",
+    "requirement": "Настоящие ошибки cloud показываются корректно",
+    "sourceRefs": [
+      "U22",
+      "seq1254",
+      "seq1288",
+      "seq1315"
+    ],
+    "primaryIssue": "REMOTE-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Настоящие ошибки cloud показываются корректно; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе настоящие ошибки cloud показываются корректно не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U22-R004",
+    "group": "U22",
+    "requirement": "Daytona execution проверен отдельно при наличии разрешённого provider key",
+    "sourceRefs": [
+      "U22",
+      "seq1254",
+      "seq1288",
+      "seq1315"
+    ],
+    "primaryIssue": "REMOTE-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Daytona execution проверен отдельно при наличии разрешённого provider key; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При ошибке, повторной доставке или недоступности зависимости нет двойного списания/действия и нет ложного статуса успеха.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе daytona execution проверен отдельно при наличии разрешённого provider key не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U23-R001",
+    "group": "U23",
+    "requirement": "Актуальные скругления и отступы основных панелей",
+    "sourceRefs": [
+      "U23",
+      "seq1315",
+      "seq1339",
+      "seq1377"
+    ],
+    "primaryIssue": "UX-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальные скругления и отступы основных панелей; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальные скругления и отступы основных панелей не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U23-R002",
+    "group": "U23",
+    "requirement": "Устаревшая группа ЕЩЁ удалена, если сохранилась",
+    "sourceRefs": [
+      "U23",
+      "seq1315",
+      "seq1339",
+      "seq1377"
+    ],
+    "primaryIssue": "UX-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Устаревшая группа ЕЩЁ удалена, если сохранилась; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия устаревшая группа ещё удалена, если сохранилась остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U23-R003",
+    "group": "U23",
+    "requirement": "Актуальные переводы и wording источника",
+    "sourceRefs": [
+      "U23",
+      "seq1315",
+      "seq1339",
+      "seq1377"
+    ],
+    "primaryIssue": "L10N-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальные переводы и wording источника; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальные переводы и wording источника не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U23-R004",
+    "group": "U23",
+    "requirement": "Дубли статусов задач устранены",
+    "sourceRefs": [
+      "U23",
+      "seq1315",
+      "seq1339",
+      "seq1377"
+    ],
+    "primaryIssue": "TASKS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Дубли статусов задач устранены; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе дубли статусов задач устранены не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U23-R005",
+    "group": "U23",
+    "requirement": "Применимость и выравнивание заголовков Settings сверены с текущим дизайном",
+    "sourceRefs": [
+      "U23",
+      "seq1315",
+      "seq1339",
+      "seq1377"
+    ],
+    "primaryIssue": "SETTINGS-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Применимость и выравнивание заголовков Settings сверены с текущим дизайном; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На узком/повторно открытом экране не возвращается устаревший вариант оформления; недоступная функция/asset фиксируется как блокировка, а не как выполненная.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе применимость и выравнивание заголовков settings сверены с текущим дизайном не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U24-R001",
+    "group": "U24",
+    "requirement": "Windows atomic replace сохраняет целое состояние",
+    "sourceRefs": [
+      "U24",
+      "seq45"
+    ],
+    "primaryIssue": "WINDOWS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Windows atomic replace сохраняет целое состояние; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На отказе записи/замены предыдущее целое состояние остаётся читаемым; POSIX прогон не засчитывается как Windows acceptance.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия windows atomic replace сохраняет целое состояние остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U24-R002",
+    "group": "U24",
+    "requirement": "Отказ записи/замены не повреждает предыдущее состояние",
+    "sourceRefs": [
+      "U24",
+      "seq45"
+    ],
+    "primaryIssue": "WINDOWS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Отказ записи/замены не повреждает предыдущее состояние; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На отказе записи/замены предыдущее целое состояние остаётся читаемым; POSIX прогон не засчитывается как Windows acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе отказ записи/замены не повреждает предыдущее состояние не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U24-R003",
+    "group": "U24",
+    "requirement": "Прерывание и восстановление проверены именно в Windows",
+    "sourceRefs": [
+      "U24",
+      "seq45"
+    ],
+    "primaryIssue": "WINDOWS-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Прерывание и восстановление проверены именно в Windows; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: На отказе записи/замены предыдущее целое состояние остаётся читаемым; POSIX прогон не засчитывается как Windows acceptance.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия прерывание и восстановление проверены именно в windows остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U27-R001",
+    "group": "U27",
+    "requirement": "Актуальные предпосылки RMA #385 E3 установлены",
+    "sourceRefs": [
+      "U27",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальные предпосылки RMA #385 E3 установлены; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальные предпосылки rma #385 e3 установлены не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U27-R002",
+    "group": "U27",
+    "requirement": "Настоящий E3 product path исполнен с доказательством",
+    "sourceRefs": [
+      "U27",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Настоящий E3 product path исполнен с доказательством; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе настоящий e3 product path исполнен с доказательством не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U27-R003",
+    "group": "U27",
+    "requirement": "Electron RPC/storage readback/lifecycle и релевантные отказы удовлетворяют issue-specific критериям",
+    "sourceRefs": [
+      "U27",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Electron RPC/storage readback/lifecycle и релевантные отказы удовлетворяют issue-specific критериям; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе electron rpc/storage readback/lifecycle и релевантные отказы удовлетворяют issue-specific критериям не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U28-R001",
+    "group": "U28",
+    "requirement": "Подтверждённое закрытие зависимости RMA #385",
+    "sourceRefs": [
+      "U28",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Подтверждённое закрытие зависимости RMA #385; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе подтверждённое закрытие зависимости rma #385 не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U28-R002",
+    "group": "U28",
+    "requirement": "RMA #387 packaged delivery",
+    "sourceRefs": [
+      "U28",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: RMA #387 packaged delivery; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе rma #387 packaged delivery не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U28-R003",
+    "group": "U28",
+    "requirement": "RMA #387 upgrade",
+    "sourceRefs": [
+      "U28",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: RMA #387 upgrade; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе rma #387 upgrade не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U28-R004",
+    "group": "U28",
+    "requirement": "RMA #387 web",
+    "sourceRefs": [
+      "U28",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: RMA #387 web; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе rma #387 web не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U28-R005",
+    "group": "U28",
+    "requirement": "RMA #387 локализация",
+    "sourceRefs": [
+      "U28",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: RMA #387 локализация; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе rma #387 локализация не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U28-R006",
+    "group": "U28",
+    "requirement": "RMA #387 доступность",
+    "sourceRefs": [
+      "U28",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: RMA #387 доступность; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе rma #387 доступность не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U29-R001",
+    "group": "U29",
+    "requirement": "Актуальное содержимое и prerequisites Conation Mail #380",
+    "sourceRefs": [
+      "U29",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "MAIL-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальное содержимое и prerequisites Conation Mail #380; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальное содержимое и prerequisites conation mail #380 не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U29-R002",
+    "group": "U29",
+    "requirement": "Реальная приёмка Conation Mail #380",
+    "sourceRefs": [
+      "U29",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "MAIL-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Реальная приёмка Conation Mail #380; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе реальная приёмка conation mail #380 не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U29-R003",
+    "group": "U29",
+    "requirement": "Актуальное содержимое и реальная приёмка CRM #381",
+    "sourceRefs": [
+      "U29",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "CRM-01",
+    "kind": "requested",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальное содержимое и реальная приёмка CRM #381; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальное содержимое и реальная приёмка crm #381 не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U29-R004",
+    "group": "U29",
+    "requirement": "Актуальное содержимое и реальная приёмка Calendar #382",
+    "sourceRefs": [
+      "U29",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "CALENDAR-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальное содержимое и реальная приёмка Calendar #382; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальное содержимое и реальная приёмка calendar #382 не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U29-R005",
+    "group": "U29",
+    "requirement": "Найти точное содержание/приоритет #389; сохранить задачу без выдуманного названия",
+    "sourceRefs": [
+      "U29",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "RMA-03",
+    "kind": "proposal-audit",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Найти точное содержание/приоритет #389; сохранить задачу без выдуманного названия; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: При неверных учетных данных, недоступном endpoint или отказе доставки показать фактическую ошибку; не выдавать локальную отправку за внешнюю доставку.",
+      "Повторное открытие/перезапуск: После перезапуска/повторного открытия найти точное содержание/приоритет #389; сохранить задачу без выдуманного названия остаётся видимым и связанным с тем же объектом; повтор не создаёт дубль."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U30-R001",
+    "group": "U30",
+    "requirement": "Актуальные критерии и реализация Golden Gate #556 shell-grid",
+    "sourceRefs": [
+      "U30",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-01",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальные критерии и реализация Golden Gate #556 shell-grid; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальные критерии и реализация golden gate #556 shell-grid не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U30-R002",
+    "group": "U30",
+    "requirement": "Актуальные критерии и реализация Golden Gate #557 spatial/native",
+    "sourceRefs": [
+      "U30",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальные критерии и реализация Golden Gate #557 spatial/native; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальные критерии и реализация golden gate #557 spatial/native не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U30-R003",
+    "group": "U30",
+    "requirement": "Актуальные критерии и реализация Golden Gate #558 device",
+    "sourceRefs": [
+      "U30",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-02",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Актуальные критерии и реализация Golden Gate #558 device; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе актуальные критерии и реализация golden gate #558 device не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U31-R001",
+    "group": "U31",
+    "requirement": "Легитимные исходные критерии #541/#578 и история их изменения",
+    "sourceRefs": [
+      "U31",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Легитимные исходные критерии #541/#578 и история их изменения; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе легитимные исходные критерии #541/#578 и история их изменения не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U31-R002",
+    "group": "U31",
+    "requirement": "Полная матрица дочерних задач без потерь и двойного счёта",
+    "sourceRefs": [
+      "U31",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Полная матрица дочерних задач без потерь и двойного счёта; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе полная матрица дочерних задач без потерь и двойного счёта не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U31-R003",
+    "group": "U31",
+    "requirement": "Предусмотренное функциональное покрытие на реальном продукте",
+    "sourceRefs": [
+      "U31",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Предусмотренное функциональное покрытие на реальном продукте; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе предусмотренное функциональное покрытие на реальном продукте не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U31-R004",
+    "group": "U31",
+    "requirement": "Предусмотренные измерения производительности",
+    "sourceRefs": [
+      "U31",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Предусмотренные измерения производительности; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе предусмотренные измерения производительности не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U31-R005",
+    "group": "U31",
+    "requirement": "Предусмотренная упаковка/доставка",
+    "sourceRefs": [
+      "U31",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Предусмотренная упаковка/доставка; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе предусмотренная упаковка/доставка не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  },
+  {
+    "requirementId": "U31-R006",
+    "group": "U31",
+    "requirement": "Итоговая приёмка с доказательством; пропущенный вопрос не сужает критерии",
+    "sourceRefs": [
+      "U31",
+      "seq993",
+      "seq1003"
+    ],
+    "primaryIssue": "GG-03",
+    "kind": "verification-gap",
+    "status": "NOT_RUN",
+    "acceptance": [
+      "Позитивный сценарий: Итоговая приёмка с доказательством; пропущенный вопрос не сужает критерии; зафиксировать точную операцию/поверхность и наблюдаемое значение или результат на реальном test data.",
+      "Отрицательный контроль: Неподтверждённая зависимость или неполный исходный критерий остаётся BLOCKED/NOT_RUN; merge, smoke или сокращённый набор не засчитывается как полная acceptance.",
+      "Повторное открытие/перезапуск: При повторном открытии/повторе итоговая приёмка с доказательством; пропущенный вопрос не сужает критерии не превращается в неподтверждённый успех и не дублирует побочное действие."
+    ],
+    "disposition": "Historical requirement mapped to this existing issue; status remains NOT_RUN, and this row does not independently authorize implementation beyond that issue’s bounded scope."
+  }
+]
