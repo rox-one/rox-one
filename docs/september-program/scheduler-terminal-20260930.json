@@ -4,8 +4,21 @@
   "observedAt": "2026-09-30T15:10:46.564Z",
   "inputSourceRevision": "ea083e387e170552ee6102e29c2cf31adc8b6973",
   "publication": {
-    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
-    "fullProductDelivery": "PENDING"
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+    "revision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+    "pullRequestHeadReadback": "8dae0422f38b14bdb67c0fa449febb163abcb0ca",
+    "observedAt": "2026-09-30T15:13:57.841Z",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "sourceCount": 4849,
+    "sourceManifestSha256": "4d37380d37354832e8959c47e2126b3c9ae3367733ff55df36e555a0daa7058c",
+    "committedSourceMatchesTestedManifest": true,
+    "bindingLimit": "Shared/server/Electron full unions and types bind to exact source. Exact validate:ci interrupted document dependencies and is incomplete. Actual native creation, providers, iOS/Windows and GitHub eligible-runner acceptance remain pending. Later docs-only commits have a different head."
   },
   "sourceBinding": {
     "sourceCount": 4849,
@@ -16,7 +29,8 @@
       "apps/electron/.impeccable/hook.cache.json"
     ],
     "beforeAfterIdentical": true,
-    "committedSourceMatchesTestedManifest": false
+    "committedSourceMatchesTestedManifest": true,
+    "sourceRevision": "8dae0422f38b14bdb67c0fa449febb163abcb0ca"
   },
   "sources": [
     {
