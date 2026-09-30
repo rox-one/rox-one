@@ -1262,6 +1262,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
     else if (link.kind === 'meeting') navigate(routes.view.meetings(link.id))
     else if (link.kind === 'feed') navigate(routes.view.feed(link.id))
     else if (link.kind === 'mail') navigate(routes.view.inbox(link.id))
+    else if (link.kind === 'note') navigate(routes.view.notes(link.id))
   }
 
   const onExport = () => {
