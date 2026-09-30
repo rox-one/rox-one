@@ -4,6 +4,10 @@
 
 Remote `main` перепроверен при доставке: `f63294ba4fffa7238b46b24e918925a313ad0b12`. `git diff --name-only e953786… f63294b… -- apps packages` пуст: проверенные product source files совпадают; docs branch продолжает прежний delivery lineage без изменения чужой ветки.
 
+## Доставка и issues
+
+[Квитанция доставки и ссылки на все 61 issue](DELIVERY.md): immutable package commit/digest, 96/96 remote blob checks, 61/61 exact GitHub issue readbacks и порядок подготовки cloud execution. Новые продуктовые возможности не реализованы этим пакетом.
+
 ## Начать здесь
 
 1. [Executive summary](00-executive-summary.md) — короткое решение и critical path.
@@ -31,7 +35,7 @@ Directory [plans/lark-suite-reference](../../plans/lark-suite-reference):
 - `work-packages.json` + `dependency-dag.json` — implementation slices with owner/input/output/exact files/API/DB/events/ACL/UI/tests/acceptance/risk/cloud preflight.
 - `code-intelligence.json` — pinned reference repositories, integration contracts and additional work packages.
 - `execution-packages.json` + `execution-dag.json` — combined **61 packages /161 edges /255 proposed owned paths**, including the three explicit Docs↔Code Intelligence dependencies and one shared integration owner.
-- `issue-drafts.json` + `publication-catalog.json` + `issues/*.md` —61 separate requirements prepared for GitHub; `publication.json` records exact actual remote bodies when published.
+- `issue-drafts.json` + `publication-catalog.json` + `issues/*.md` —61 separate requirements published in GitHub; `publication.json` records exact verified remote body hashes and issue links.
 - `validation-report.json` — actual artifact checks; explicitly not product runtime proof.
 - `delivery.json` — immutable package commit/digest/readback gate; no provider tokens/private data.
 

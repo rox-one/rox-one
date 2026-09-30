@@ -2,20 +2,22 @@
 
 Latest Code Intelligence extension: `/root/lark_core_research` owns13/code-intelligence.json; root owns14 and integration/validation; `/root/rox_knowledge_design` owns independent12 review including new source/UX contracts. Snapshot authority and source-private boundaries extend the existing Lark acceptance; previous completed issues and Macro artifacts remain delivered.
 
-## Lark Suite reference — активное продолжение
+## Lark Suite reference — исследование и публикация завершены
 
 | Task | Owner | Inputs | Artifact | Verification | Status |
 |---|---|---|---|---|---|
-| live-audit | lead | installed Lark + existing authorized tabs | private captures + sanitized observation manifest | actual screen/controls, documented failures | in_progress |
-| core-research | lark_core_research | official HC/API/SDK | 02-core-suite + core-catalog.json | documented facts/precise source limitations | in_progress |
-| business-research | lark_business_research | official directory/vendor/HC | 03-business-ecosystem + business-catalog.json | native/template/vendor classification | in_progress |
-| portability-bases | rox_knowledge_design | 11 sources + ROX HEAD | 04-audit,05-bases,obsidian-sources | SHA/license/code/probe evidence | in_progress |
-| docs-design | lead | live + current Notes/Tiptap | 06-design + shared entity model | single authority, lossless MD, CRDT boundaries | in_progress |
-| plans-integration | lead | all research | typed packages, DAG, PRD/tests | coverage/schema/deps/privacy | pending |
-| challenge | independent worker | combined artifacts | review + corrections | reproduce contract inconsistencies | pending |
-| delivery | lead | corrected bundle | commit/push/readback | clean scoped files and remote hashes | pending |
+| live-audit | lead | installed Lark + existing authorized tabs | private captures + sanitized observation manifest | actual screen/controls, documented failures | complete |
+| core-research | lark_core_research | official HC/API/SDK | 02-core-suite + core-catalog.json | documented facts/precise source limitations | complete |
+| business-research | lark_business_research | official directory/vendor/HC | 03-business-ecosystem + business-catalog.json | native/template/vendor classification | complete |
+| portability-bases | rox_knowledge_design | 11 sources + ROX HEAD | 04-audit,05-bases,obsidian-sources | SHA/license/code/probe evidence | complete |
+| docs-design | lead | live + current Notes/Tiptap | 06-design + shared entity model | single authority, lossless MD, CRDT boundaries | complete |
+| plans-integration | lead | all research | typed packages, DAG, PRD/tests | coverage/schema/deps/privacy | complete |
+| challenge | independent worker | combined artifacts | review + corrections | reproduce contract inconsistencies | complete |
+| delivery | lead | corrected bundle | commit/push/readback | clean scoped files and remote hashes | complete |
 
 Owned paths are split under docs/lark-suite-reference and plans/lark-suite-reference; lead alone controls native Lark and authenticated Chrome. Existing Macro and RS issues remain delivered, referenced by IDs; this follow-up does not claim product implementation.
+
+Delivery: [receipt](lark-suite-reference/DELIVERY.md), immutable spec commit `242492868a11b4d9af1c1011f20b31a346875f0a`,96 remote blobs PASS,61 new issues exact readback PASS. Concurrent publisher negative control PASS; controlled crash NOT_RUN. All product/cloud jobs remain PREPARED_NOT_LAUNCHED.
 
 ## ROX Suite — новый task graph
 
