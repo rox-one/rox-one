@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "id": "LOCAL-MEETING-BLOB-MEDIA-20260930",
+  "observedAt": "2026-09-30T16:17:33.654Z",
+  "inputSourceRevision": "f3987fd7ffcb7f3d582f09d9a8d8a04669877d13",
+  "publication": {
+    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING"
+  },
+  "sourceBinding": {
+    "sourceCount": 4851,
+    "sourceManifestSha256": "71f75eae45c849c76bda2c64ef9d1f0a398f2ccbbc4f89e57a7c0fd18e4be3ae",
+    "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+    "excluded": [
+      "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+      "apps/electron/.impeccable/hook.cache.json"
+    ],
+    "beforeAfterIdentical": true,
+    "committedSourceMatchesTestedManifest": false
+  },
+  "sources": [
+    {
+      "path": "apps/electron/src/renderer/index.html",
+      "sha256": "2a29a37b1cdfd664c7a51af25c4e91b90670602d6d4916fda0f8a36aa580170b"
+    }
+  ],
+  "ownerAndDependencies": "Isolated producer; independent actual Electron/CSP reviewer; root serial integration/publication. Existing LocalMeetingDetail audio bytes, Notes/native authority, capture consent and provider contracts remain unchanged. No old voice-overlay transplant.",
+  "behavior": "LocalMeetingDetail creates and revokes a Blob URL from authorized local recording bytes, assigning it to audio. Existing CSP default-src self blocked this actual consumer. Add only media-src self/blob. All other directives remain byte-identical; data and unallowed external-origin media remain denied. This does not change autoplay, grants, capture, provider consent or current native/WebSpeech TTS.",
+  "actualRuntime": {
+    "electron": "39.2.7",
+    "node": "22.21.1",
+    "chrome": "142",
+    "execution": "Task-owned hidden sandboxed muted window; silent synthetic WAV, load-only; no playback/speaker/foreground/provider/user-profile operations.",
+    "before": "Self WAV canplay; Blob/data denied with enforced media-src violation; external origin denied before network.",
+    "acceptedNarrowPolicy": "Self and Blob WAV canplay, readyState4, duration0.2; data and external origin denied; external server request count0.",
+    "independentReview": "Fresh baseline/candidate/narrow actual Electron controls, 26 broad before/after assertions plus narrow-policy and cleanup checks. Review rejected unnecessary data permission.",
+    "producerFinalVerification": "18 exact narrow-policy receipt assertions pass; explicit cleanup before success/error/timeout exit."
+  },
+  "gates": {
+    "electronUiCore": {
+      "exit": 0,
+      "pass": 4203,
+      "fail": 0,
+      "assertions": 20022,
+      "files": 609,
+      "seconds": 24.19,
+      "logSHA256": "5e01cf438a99534138e4d767b4bb3d4cb512b12eade57782a59ee09e4a87c9a0"
+    },
+    "rendererBuild": {
+      "exit": 0,
+      "command": "bun run electron:build:renderer",
+      "privateLogSHA256": "fdbf1805493a5eb047d43d355fb608d3009754a83c46066efcf3c240eae53bcd",
+      "builtIndex": {
+        "bytes": 2916,
+        "sha256": "be88a9d5f9d199e9dbc0b3061cdfeb6a73e7b1dcfda82324ec20a07909c0e417",
+        "exactSourceCSP": true
+      },
+      "outputs": {
+        "count": 892,
+        "bytes": 83697416,
+        "manifestSHA256": "6c264bae5ad6ab467b08e3e1c825f6512c5239ec702ebd07c48fbfe81c4f1e13"
+      },
+      "limitation": "Actual renderer output inventory; retained outputs may exist. Not release package/SBOM/signing/byte-budget acceptance."
+    },
+    "unchangedEarlierSourceProof": {
+      "sourceRevision": "121ebea725df3cffe10e261611f2eb9b752c8f2e",
+      "changedPathsSinceWholeRepositoryGates": [
+        "apps/electron/src/renderer/index.html"
+      ],
+      "scope": "All other 4850 selected source blobs unchanged; Shared/server/exact local CI/main/preload whole gates retain this earlier revision, not relabeled as a new full CI run."
+    }
+  },
+  "artifacts": [
+    {
+      "id": "review-narrow.md",
+      "sha256": "29fd6ff234dff5f2149857b3ab123230cc3ded0f1893d311692a523d5e071292",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "verification-narrow.json",
+      "sha256": "60bded63bed6856a4694e2078169409d8f0db461796cfe077e63abcdfe53a140",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "after-narrow.json",
+      "sha256": "8d2cc8be4f5fb75dbb116faa505229f2a4944c58194aa98745dff1388e44aeea",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "probe-narrow.cjs",
+      "sha256": "fb383ad5aebb48b212a06ad3ff35fe5dbad9893125a5679798f579be6114a7af",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "independent/review.md",
+      "sha256": "b384a1396493270668c388dae4ef2229523a486ee703452ce9601cd1e054c74c",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "independent/narrow.json",
+      "sha256": "8d2cc8be4f5fb75dbb116faa505229f2a4944c58194aa98745dff1388e44aeea",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "independent/cleanup-verification.json",
+      "sha256": "10688de2185b8864563ca3f5f02da65354afc98fbdf34869b1e4e290f4913280",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "integrated.gate-proof.json",
+      "sha256": "53f6bdf5a798cd896829a1af76a12ffd6ab3f8caadbfc38850816cabe63a58e2",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    },
+    {
+      "id": "integrated.renderer-output-manifest.json",
+      "sha256": "6c264bae5ad6ab467b08e3e1c825f6512c5239ec702ebd07c48fbfe81c4f1e13",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized summary only in public packet"
+    }
+  ],
+  "limits": [
+    "Actual hidden media decoding and renderer build are bounded component acceptance, not visible LocalMeetingDetail navigation or complete native UI.",
+    "No recording/capture/speaker/transcription/summary/source-navigation/retention/provider acceptance; MEETINGS-02 remains unexecuted by this wave.",
+    "Current TTS uses native/WebSpeech and is not accepted by this media CSP change.",
+    "Full package/CI gates bind to earlier owner/status source; new complete CI was not rerun for one HTML directive. New affected Electron/UI/core and renderer gates bind separately.",
+    "Packaging, signing, upgrade, Windows, genuine Conation iOS and remote required runners remain pending."
+  ],
+  "fullOriginalTasksAccepted": 0
+}

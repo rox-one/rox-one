@@ -193,3 +193,7 @@ After a webhook effect, persist an exact terminal history intent in the durable 
 This contract covers a single scheduler owner and process loss. Existing atomic helpers do not establish power-loss durability. Older binaries cannot read terminal_pending safely: finish recovery using the current version before rollback, or preserve/isolate the private queue for explicit migration. No automatic downgrade is accepted.
 
 OMP acceptance must count actual parent spawn results and establish child readiness before testing the 80ms artificial handshake deadline. Production timeout/cancel/retry/escalation remain unchanged. Full provider, schedule/DST, reminder, UI and platform criteria retain their original scope.
+
+## Local meeting Blob media policy (2026-09-30)
+
+Permit the existing local recording Blob audio consumer through an explicit media-src self/blob directive. Keep all other CSP directives and recording/provider/consent behavior unchanged. Data and disallowed external-origin media stay denied before network. Hidden load-only media controls and renderer build do not accept visible meeting UI, capture or provider delivery.

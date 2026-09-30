@@ -502,5 +502,9 @@
     "sourceManifestSha256": "0264916bf956c3ce3f886091d39296a7f34abe88fc39a5f2f2e4af60ef3030d5",
     "committedSourceMatchesTestedManifest": true,
     "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact local validate:ci and standard root Electron build bind to these exact source blobs. Prepared-host offline cache is not remote required CI. Packaging/signing, actual new native creation/custody, providers, Windows and genuine Conation iOS remain pending. Later docs-only commits have a different head."
+  },
+  "mediaCspFollowupPublication": {
+    "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING"
   }
 }

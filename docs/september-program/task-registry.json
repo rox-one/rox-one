@@ -2052,7 +2052,7 @@
       "title": "[Sep-meetings] Анализ встречи с говорящими, итогами, источниками и аудионавигацией",
       "area": "meetings",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerMeetings",
       "dependsOn": [
         "RECON-01",
@@ -2125,16 +2125,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "LOCAL-MEETING-BLOB-MEDIA-20260930"
+          ],
+          "summary": "Actual local recording Blob loading repaired and verified with hidden Electron media controls; full speakers/summary/sources/audio-navigation UI/provider criteria remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "LOCAL-MEETING-BLOB-MEDIA-20260930"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -9913,7 +9917,8 @@
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
-            "BUDGET-OWNER-SOURCE-STATUS-20260930"
+            "BUDGET-OWNER-SOURCE-STATUS-20260930",
+            "LOCAL-MEETING-BLOB-MEDIA-20260930"
           ],
           "summary": "Root serially integrated four reviewed production/test paths and one scheduler comment correction; complete package unions, exact local CI and standard Electron build pass on an unchanged manifest. Full program integration and product acceptance remain pending."
         },
@@ -9949,7 +9954,8 @@
             "RUNTIME-ACCEPTANCE-WAVE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
             "SCHEDULER-TERMINAL-OMP-ACCEPTANCE-20260930",
-            "BUDGET-OWNER-SOURCE-STATUS-20260930"
+            "BUDGET-OWNER-SOURCE-STATUS-20260930",
+            "LOCAL-MEETING-BLOB-MEDIA-20260930"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10139,7 +10145,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T16:02:34.173Z",
+    "asOf": "2026-09-30T16:17:33.654Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10218,12 +10224,12 @@
     },
     "facetCounts": {
       "implementation": {
-        "IN_PROGRESS": 26,
-        "NOT_RUN": 83
+        "IN_PROGRESS": 27,
+        "NOT_RUN": 82
       },
       "verification": {
-        "IN_PROGRESS": 24,
-        "NOT_RUN": 85
+        "IN_PROGRESS": 25,
+        "NOT_RUN": 84
       },
       "fullAccepted": 0
     },
@@ -10356,6 +10362,11 @@
       ],
       "rule": "NOT_RUN top-level status aligned to existing IN_PROGRESS additive implementation/verification facets; original acceptance untouched.",
       "newlyAcceptedTasks": 0
+    },
+    "mediaCspEvidence": "media-csp-20260930.json",
+    "mediaCspCandidate": {
+      "status": "REVIEWED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING"
     }
   }
 }
