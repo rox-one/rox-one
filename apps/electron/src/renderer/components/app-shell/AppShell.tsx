@@ -226,23 +226,6 @@ interface AppShellProps {
   workbenchOperatorCapability?: unknown
 }
 
-/** Screens that render full-width and do not use the sessions sidebar. */
-export function shouldHideSessionsSidebar(navState: NavigationState): boolean {
-  return isSettingsNavigation(navState)
-    || isHomeNavigation(navState)
-    || isTasksNavigation(navState)
-    || isMeetingsNavigation(navState)
-    || isInboxNavigation(navState)
-    || isFeedNavigation(navState)
-    || isScreenNavigation(navState)
-    || isNotesNavigation(navState)
-    || isMemoryNavigation(navState)
-    || isProjectsNavigation(navState)
-    || isPagesNavigation(navState)
-    || isKnowledgeNavigation(navState)
-    || isConnectionsNavigation(navState)
-}
-
 export function AppShell(props: AppShellProps) {
   // Wrap with EscapeInterruptProvider so AppShellContent can use useEscapeInterrupt
   return (
@@ -328,14 +311,9 @@ function AppShellContent({
   const unifiedRailOffset = activityRailMounted
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
-  // The sessions sidebar (statuses / labels / views) is contextual to Chats:
-  // Settings and the full-width module screens hide it so their content is
-  // not squeezed. Only when the activity rail is mounted (it keeps navigation
-  // reachable). Display-only: the persisted visibility is untouched.
-  const earlyNavState = useNavigationState()
-  const routeHidesSessionsSidebar = activityRailMounted
-    && shouldHideSessionsSidebar(earlyNavState)
-  const isSidebarVisible = storedSidebarVisible && !routeHidesSessionsSidebar
+  // Keep the user's sidebar preference across all routes. Hiding it for
+  // full-width modules made the visible sidebar toggle ineffective there.
+  const isSidebarVisible = storedSidebarVisible
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(null).sidebarWidth
   })
