@@ -1,0 +1,26 @@
+{
+  "verifiedAtUTC": "2026-10-01T04:28:25.838622+00:00",
+  "remotePublication": "c31ba50793db9ef676e220054dc3211693a63f3e",
+  "sourceCandidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "actualRemoteReceiptBytesEqualPreviouslyReviewedBytes": true,
+  "remoteReceiptGitBlob": "b5ef21d360e66239ef2d3e031010270b2fbfcc1e",
+  "remoteReceiptSha256": "b139d48d7ec55f3808a222f3b9eba46a37b0cc16c206903e88e73df7ea063e39",
+  "allPublishedEvidenceHashesVerified": 103,
+  "screenshotsVerified": 64,
+  "actualOptimizedEntry": "main-CdNrFgjS.js",
+  "optimizedEntrySha256": "1edc630af4a8a6cbd878602eaa1a7d0b5c7d538f8ce970808917a3b68200e9a6",
+  "browserExecutedRevision": "a4cacaa1d91c205de5d2c543d565e7edb79edd0e",
+  "browserResult": {
+    "trueExit": 0,
+    "pass": 99,
+    "fail": 0,
+    "phaseErrors": 0,
+    "lifetimePageExceptionCount": 0,
+    "rootRoutes": 22,
+    "settingsRoutes": 22,
+    "modeClicks": 7
+  },
+  "newBrowserRunPerformedThisCheckpoint": false,
+  "uniqueRestartSocketACKCount": 1,
+  "fullDoDAccepted": false
+}

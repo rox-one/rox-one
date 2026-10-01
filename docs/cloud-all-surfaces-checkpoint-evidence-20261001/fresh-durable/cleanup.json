@@ -1,0 +1,33 @@
+{
+  "completedAtUtc": "2026-10-01T04:44:54.834995+00:00",
+  "ownedSuiteProcessGroups": [
+    108462,
+    108795,
+    109160
+  ],
+  "ownLiveProcessesRemaining": [],
+  "privateConfigTmpCacheTestDataRemoved": true,
+  "privateTreeLogicalBytesRemoved": 2758012065,
+  "checkoutRetainedForRootPublication": "/tmp/rox-r15-durable-recheck-20261001/checkout",
+  "sourceCheckoutRemoved": false,
+  "configuredEnvironmentSecretsNetworkPermissionsChanged": false,
+  "rawLogsPreservedWithoutParentTmpFiltering": true,
+  "credentialShapeScan": [
+    {
+      "log": "fresh-frozen-install.log",
+      "credentialShapeMatches": 0,
+      "matchingLineNumbers": []
+    },
+    {
+      "log": "fresh-workflow-durable.log",
+      "credentialShapeMatches": 0,
+      "matchingLineNumbers": []
+    },
+    {
+      "log": "fresh-workflow-september.log",
+      "credentialShapeMatches": 0,
+      "matchingLineNumbers": []
+    }
+  ],
+  "credentialShapeScanLimits": "Pattern-only additional check; child environment excluded provider/OAuth/token credentials and used isolated app config. No credential values were read or printed."
+}

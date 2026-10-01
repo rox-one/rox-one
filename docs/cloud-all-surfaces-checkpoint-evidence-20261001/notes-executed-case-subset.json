@@ -1,0 +1,312 @@
+{
+  "basis": "Actual recorded final integrated invocation rows; unchanged source carry to010; no new tests executed20261001",
+  "sourceBatch": "daa7 checkpoint to010 with unchanged test/application bytes",
+  "rows": [
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "authenticated Notes producer and two independent transport consumers retain a durable offline operation through renderer loss and receipt loss",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 51,
+      "sourceDeclarationLine": 130
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "real preload source cache permits durable known-note authoring after socket loss, then reauthorizes and flushes the exact draft",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 52,
+      "sourceDeclarationLine": 195
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "moved and renamed Notes retain immutable identity for durable saves, while a stale cached path conflicts without recreating bytes",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 53,
+      "sourceDeclarationLine": 242
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "renderer-fabricated receipts cannot acknowledge an unsubmitted draft or alter an observed trusted response",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 54,
+      "sourceDeclarationLine": 286
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "closing custody during a committed but delayed RPC response fences receipt registration until stable server replay",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 55,
+      "sourceDeclarationLine": 318
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "preload native creation persists before the first server write and retains exact revision-one receipt and ACK",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 56,
+      "sourceDeclarationLine": 357
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "durable native creation recovers before-submit through renderer loss and stable authenticated replay",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 57,
+      "sourceDeclarationLine": 403
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "durable native creation recovers after-commit through renderer loss and stable authenticated replay",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 58,
+      "sourceDeclarationLine": 403
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "creation plan loses authority after grant change and after managed workspace switch without enqueue or file writes",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 59,
+      "sourceDeclarationLine": 455
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "concurrent same-path native creation rejects the losing mutation, retaining its outbox without overwrite",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 60,
+      "sourceDeclarationLine": 494
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing preload while an actual creation plan response is in flight cannot enqueue or commit",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 61,
+      "sourceDeclarationLine": 527
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "private creation custody rejects foreign owners and malformed plans while public save enqueue remains snapshot-only",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 62,
+      "sourceDeclarationLine": 558
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing creation during context-open cannot submit and preserves only already-persisted intent",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 63,
+      "sourceDeclarationLine": 581
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing creation during ipc-open cannot submit and preserves only already-persisted intent",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 64,
+      "sourceDeclarationLine": 581
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "disposing creation during enqueue cannot submit and preserves only already-persisted intent",
+      "file": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+      "logLine": 65,
+      "sourceDeclarationLine": 581
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native metadata routes only to the durable writer even when a legacy callback exists",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 189,
+      "sourceDeclarationLine": 12
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native writer failure never falls back to the MarkdownCommit file writer",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 190,
+      "sourceDeclarationLine": 22
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "missing native revision, switched source, read-only projection, stale hash and other workspace refuse before either writer",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 191,
+      "sourceDeclarationLine": 31
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "an explicit bound non-native document retains the Compound CAS writer",
+      "file": "apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts",
+      "logLine": 192,
+      "sourceDeclarationLine": 42
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "workspace switch during authoritative read never queues the old snapshot",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 201,
+      "sourceDeclarationLine": 32
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "workspace switch while loading the durable queue never submits the old mutation",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 202,
+      "sourceDeclarationLine": 45
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "stop fences an in-flight server receipt and leaves it for idempotent retry",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 203,
+      "sourceDeclarationLine": 60
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "overlapping workspace starts keep the last requested workspace and close obsolete opens",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 204,
+      "sourceDeclarationLine": 74
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a canonical read for another native identity cannot enter the durable Notes outbox",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 205,
+      "sourceDeclarationLine": 88
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a concurrent canonical revision discovered after the await preserves the opened draft",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 206,
+      "sourceDeclarationLine": 98
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "missing opened native revision cannot be upgraded to a fresh write grant",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 207,
+      "sourceDeclarationLine": 112
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "a matching opened identity and revision uses the existing main-owned enqueue and receipt ACK",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 208,
+      "sourceDeclarationLine": 122
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "only an observed main ACK advances the same opened draft through its own queued revision chain",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 209,
+      "sourceDeclarationLine": 136
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "an unacknowledged or mismatched receipt cannot grant revision progression",
+      "file": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+      "logLine": 210,
+      "sourceDeclarationLine": 174
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "routed Electron API follows native Notes authority; marker writes use only journal CAS and survive real reopen",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 229,
+      "sourceDeclarationLine": 77
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native projection never reads or recovers legacy WAL; persisted descriptors remain readable by another authorized principal",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 230,
+      "sourceDeclarationLine": 131
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "revocation and regrant while descriptor lookup awaits cannot return native bytes or edit capabilities",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 231,
+      "sourceDeclarationLine": 165
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "active native authority denies missing-principal legacy requests before any read or write",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 232,
+      "sourceDeclarationLine": 185
+    },
+    {
+      "invocation": "r24-final-integrated-controls",
+      "subInvocationIndex": 0,
+      "outcome": "pass",
+      "actualName": "native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback",
+      "file": "packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts",
+      "logLine": 233,
+      "sourceDeclarationLine": 196
+    }
+  ]
+}

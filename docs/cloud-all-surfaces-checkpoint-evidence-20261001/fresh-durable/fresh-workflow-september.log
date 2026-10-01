@@ -1,0 +1,38 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/automations/scheduler-process-loss-acceptance.test.ts:
+(pass) SIGKILL after loopback effect before ACK recovers once without repeating HTTP [147.26ms]
+(pass) selected New York zone skips spring gap and persists distinct repeated autumn instants [9.59ms]
+(pass) SIGKILL afterTerminalPersist replays exact terminal history without HTTP [118.48ms]
+(pass) SIGKILL afterHistoryPersist replays exact terminal history without HTTP [127.65ms]
+(pass) history directory obstruction retains terminal intent and recovers once after removal [118.09ms]
+
+packages/server-core/src/transport/__tests__/native-authorization.test.ts:
+(pass) read-only enrolled client cannot invoke writes or unscoped legacy handlers [25.91ms]
+(pass) legacy mode admits existing Notes-style handlers only before native workspace registration [7.10ms]
+(pass) invalid native credentials and enrollment tickets cannot fall back to cookie or global bearer [9.39ms]
+(pass) revocation denies an active writer and subsequent subscription events [8.60ms]
+(pass) revocation and regrant during a request cannot disclose its success payload [10.77ms]
+(pass) revocation and regrant during a request cannot disclose its error payload [11.51ms]
+(pass) losing read access blocks pushes even if subscribe remains granted [7.78ms]
+(pass) losing read access invalidates an active connection for writes [10.30ms]
+(pass) a different enrolled device cannot resume another device buffer [12.54ms]
+(pass) regrant does not replay events retained under a previous subscription fence [9.40ms]
+(pass) native client refuses plaintext remote before connecting [1.12ms]
+(pass) independent CLI client refuses plaintext native credentials before connecting [0.20ms]
+
+packages/shared/src/agent/core/__tests__/budget-owner-process-acceptance.test.ts:
+(pass) live second process cannot steal, release, or redispatch the active reservation [75.56ms]
+(pass) SIGKILL owner retains conservative quota and exact reconciliation remains idempotent [65.93ms]
+(pass) two barrier-synchronized processes reserve within the limit without lock errors [80.39ms]
+(pass) unknown live PID preserves quota while legacy ownerless rows recover conservatively [102.10ms]
+(pass) separate module instances in one process preserve live owner and recover explicit close [37.47ms]
+(pass) trigger-aborted constructor preserves original error and quota for successful recovery [9.14ms]
+
+packages/server-core/src/handlers/rpc/__tests__/source-status-runtime.test.ts:
+(pass) source index status is registered, workspace-bound, and unavailable to native principals [869.84ms]
+
+ 24 pass
+ 0 fail
+ 147 expect() calls
+Ran 24 tests across 4 files. [2.00s]
