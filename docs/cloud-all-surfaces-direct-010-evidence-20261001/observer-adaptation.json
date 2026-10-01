@@ -1,0 +1,14 @@
+{
+  "changes": [
+    "observer taskRoot path",
+    "observer evidence runRoot path",
+    "provisioner allowed own config-root prefix"
+  ],
+  "applicationOrRPCMocks": false,
+  "helperOriginal": "/workspace/rox-r15-evidence-20260930/ui-runtime/run-union/executed-helper.cjs",
+  "helperOriginalSha256": "19bbb4245ca862bbfdf39123ee4e04de7a64bd40867f90b229f5aefb2367d6fc",
+  "helperAdapted": "/tmp/rox-r15-exact-ui-20261001/observe-direct-010.cjs",
+  "helperAdaptedSha256": "0f1622d50a9921b2670a60b7e02d91eba0a7fd1612a7cab07e6ebce499776c07",
+  "provisionerOriginalSha256": "c52bcbb1a2d11ced10f8eb5b0df072efe4f5c4bac666ff1982fdf6655cc9f5ba",
+  "provisionerAdaptedSha256": "7ed896a9c0967cdac736d72fe68bfe312d320cc770575cd30a88b8703d02e216"
+}

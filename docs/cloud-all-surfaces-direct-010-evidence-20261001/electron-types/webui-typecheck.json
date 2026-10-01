@@ -1,0 +1,42 @@
+{
+  "label": "webui-typecheck",
+  "command": [
+    "/workspace/.onboarding-tools/node_modules/.bin/bun",
+    "--no-env-file",
+    "run",
+    "webui:typecheck"
+  ],
+  "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "exit": 0,
+  "seconds": 73.983,
+  "log": "webui-typecheck.log",
+  "logSha256": "2f81eb99ff92fd33b68966d34e38497fde1c57e3efbc3c0a364442498bc88092",
+  "envKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_EXTRA_CA_CERTS",
+    "NODE_OPTIONS",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ],
+  "minimalChildEnvironment": true,
+  "HOMERepurposed": false,
+  "sourceAndLockUnchanged": true,
+  "regularFileCount": 6178,
+  "gitlinkCount": 2
+}

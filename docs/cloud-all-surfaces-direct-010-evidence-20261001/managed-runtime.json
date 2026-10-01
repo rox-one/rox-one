@@ -1,0 +1,25 @@
+{
+  "recordedAtUtc": "2026-10-01 17:11:24 UTC",
+  "observationsCurrent": true,
+  "provider": "cloud",
+  "desiredPhase": "running",
+  "observedPhase": "running",
+  "specRevision": "3",
+  "observedSpecRevision": "3",
+  "connectivity": "connected",
+  "networkPolicy": {
+    "mode": "restricted",
+    "state": "unknown",
+    "allowed_hosts": [
+      "api.github.com",
+      "codeload.github.com",
+      "github.com"
+    ],
+    "presets": [
+      "package_managers"
+    ]
+  },
+  "failure": null,
+  "modelEffortAttestation": "Not exposed by supported runtime tool; worker requests explicitly gpt-6.1-sol/ultra",
+  "credentialBindingsAndValues": "Omitted"
+}

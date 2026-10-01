@@ -1,0 +1,22 @@
+{
+  "fileCount": 4,
+  "files": {
+    "packages/pi-agent-server/dist/index.js": {
+      "bytes": 32933341,
+      "sha256": "93fedc0b282da6704c67a028271bb4b5ffa15c874265bac639e0b4b3a4da8360"
+    },
+    "packages/cloud-runner/dist/stub-runner.js": {
+      "bytes": 2055,
+      "sha256": "1a767e27603687abbeacbbad4e851918eb42b9c38c1f4c2b57274745ceb261d7"
+    },
+    "packages/messaging-whatsapp-worker/dist/worker.cjs": {
+      "bytes": 6071600,
+      "sha256": "3e80684f3525329c0d4e6341dbbfb8396974abaf36576dde352f96e291985f25"
+    },
+    "packages/messaging-discord-worker/dist/worker.cjs": {
+      "bytes": 3918513,
+      "sha256": "1fbeb435b201c412d1a93d655d1c332a84f6c1caaa857bbd0c0566c313deccdf"
+    }
+  },
+  "manifestSha256": "6b067b008c4cf1c6c90630c7d9d6773a5b9c4b6dc0bd8470c708fe8f3417af81"
+}

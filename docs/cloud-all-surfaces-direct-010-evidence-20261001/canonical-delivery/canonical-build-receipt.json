@@ -1,0 +1,41 @@
+{
+  "label": "canonical-build",
+  "argv": [
+    "/workspace/.onboarding-tools/node_modules/.bin/bun",
+    "--no-env-file",
+    "run",
+    "server:build",
+    "--output=../../../workspace/rox-r15-direct-server-dist-20261001"
+  ],
+  "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "startedUtc": "2026-10-01T17:16:25.385418+00:00",
+  "seconds": 8.316,
+  "exit": 0,
+  "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-build.log",
+  "logSha256": "44029ca877ed9db4ada7b930affb0f09cc393d0e6df52baa9c2a879901afec4b",
+  "safeEnvironmentKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "FORCE_COLOR",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_COMPILE_CACHE",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_COLOR",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ]
+}

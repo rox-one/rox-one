@@ -1,0 +1,256 @@
+bun test v1.3.14 (0d9b296a)
+
+scripts/electron-main-cjs.test.ts:
+(pass) Electron main CommonJS flags cold-load the unchanged SQLite adapter on Node with durable runtime controls [295.95ms]
+(pass) Electron main CommonJS module URL follows a relocated bundle with spaces and non-ASCII path characters [91.27ms]
+
+scripts/__tests__/check-i18n-coverage.test.ts:
+(pass) actual CLI skips concatenated key expressions while detecting completed literal arguments [41.69ms]
+(pass) actual CLI retains missing complete keys and exact source lines for all supported reference forms [71.41ms]
+(pass) actual CLI preserves escaped literals and plural key resolution [31.06ms]
+(pass) actual CLI still rejects invalid locale interpolation independently of key coverage [42.28ms]
+
+apps/webui/__tests__/transport-bootstrap.test.ts:
+(pass) authenticated WebUI workspace bootstrap > uses only the authoritative HTTP default, including an exact URL match [0.10ms]
+(pass) authenticated WebUI workspace bootstrap > refuses missing or malformed default null [0.09ms]
+(pass) authenticated WebUI workspace bootstrap > refuses missing or malformed default {}
+(pass) authenticated WebUI workspace bootstrap > refuses missing or malformed default {"defaultWorkspaceId":null}
+(pass) authenticated WebUI workspace bootstrap > refuses missing or malformed default {"defaultWorkspaceId":""}
+(pass) authenticated WebUI workspace bootstrap > refuses missing or malformed default {"defaultWorkspaceId":" "}
+(pass) authenticated WebUI workspace bootstrap > refuses missing or malformed default {"defaultWorkspaceId":" ws "}
+(pass) authenticated WebUI workspace bootstrap > refuses missing or malformed default {"defaultWorkspaceId":42}
+(pass) authenticated WebUI workspace bootstrap > refuses mismatched and empty URL workspace rather than replacing the default [0.04ms]
+(pass) authenticated WebUI workspace bootstrap > requires a real connected ACK with the exact workspace [0.41ms]
+(pass) authenticated WebUI workspace bootstrap > refuses connected ACK with missing workspace [0.09ms]
+(pass) authenticated WebUI workspace bootstrap > refuses connected ACK with mismatched workspace [0.02ms]
+(pass) authenticated WebUI workspace bootstrap > refuses denied handshakes and bounds an unanswered handshake [5.72ms]
+(pass) authenticated WebUI workspace bootstrap > cancels an active waiter and ignores a late ACK [0.38ms]
+(pass) authenticated WebUI workspace bootstrap > removes an immediately satisfied subscription [0.10ms]
+(pass) authenticated WebUI workspace bootstrap > checks browser runtime and actual adapter binding without desktop/provider/native calls [0.72ms]
+(pass) authenticated WebUI workspace bootstrap > refuses a stale fetch completion and permits a separate retry without leaked clients [0.87ms]
+(pass) authenticated WebUI workspace bootstrap > destroys the owned client when an acknowledged workspace is rejected [0.21ms]
+(pass) authenticated WebUI workspace bootstrap > cancels during the handshake and destroys the owned client [0.15ms]
+(pass) authenticated WebUI workspace bootstrap > refuses a stale adapter validation after cancellation [1.33ms]
+(pass) authenticated WebUI workspace bootstrap > does not create an adapter for denied HTTP config or mismatched URL scope [0.26ms]
+(pass) authenticated WebUI workspace bootstrap > finishes renderer readiness through unavailable-host callback before mounting the bound workspace [0.24ms]
+(pass) authenticated WebUI workspace bootstrap > does not apply stale renderer readiness callbacks after cancellation [0.09ms]
+
+apps/webui/__tests__/node-builtins-bundle.test.ts:
+(pass) WebUI browser builtins bundle > cold-imports the real renderer stub with a working browser Buffer [2448.03ms]
+(pass) WebUI browser builtins bundle > refuses a browser bundle that requests an unavailable native SQLite API [279.27ms]
+
+apps/webui/__tests__/browser-bootstrap.test.ts:
+(pass) WebUI browser bootstrap > installs browser globals in a cold JavaScript realm before shared initializers [345.65ms]
+
+packages/pi-agent-server/src/custom-endpoint-registration.test.ts:
+(pass) actual custom endpoint provider registration > preserves main openai-completions reasoning and model defaults [64.77ms]
+(pass) actual custom endpoint provider registration > preserves main openai-responses reasoning and model defaults [19.54ms]
+(pass) actual custom endpoint provider registration > preserves main anthropic-messages reasoning and model defaults [19.99ms]
+
+apps/electron/src/main/__tests__/native-notes-runtime.test.ts:
+(pass) authenticated Notes producer and two independent transport consumers retain a durable offline operation through renderer loss and receipt loss [523.15ms]
+(pass) real preload source cache permits durable known-note authoring after socket loss, then reauthorizes and flushes the exact draft [353.20ms]
+(pass) moved and renamed Notes retain immutable identity for durable saves, while a stale cached path conflicts without recreating bytes [688.11ms]
+(pass) renderer-fabricated receipts cannot acknowledge an unsubmitted draft or alter an observed trusted response [807.51ms]
+(pass) closing custody during a committed but delayed RPC response fences receipt registration until stable server replay [452.04ms]
+(pass) preload native creation persists before the first server write and retains exact revision-one receipt and ACK [214.83ms]
+(pass) durable native creation recovers before-submit through renderer loss and stable authenticated replay [191.84ms]
+(pass) durable native creation recovers after-commit through renderer loss and stable authenticated replay [166.42ms]
+(pass) creation plan loses authority after grant change and after managed workspace switch without enqueue or file writes [202.04ms]
+(pass) concurrent same-path native creation rejects the losing mutation, retaining its outbox without overwrite [165.52ms]
+(pass) disposing preload while an actual creation plan response is in flight cannot enqueue or commit [26.42ms]
+(pass) private creation custody rejects foreign owners and malformed plans while public save enqueue remains snapshot-only [73.03ms]
+(pass) disposing creation during context-open cannot submit and preserves only already-persisted intent [61.58ms]
+(pass) disposing creation during ipc-open cannot submit and preserves only already-persisted intent [101.30ms]
+(pass) disposing creation during enqueue cannot submit and preserves only already-persisted intent [126.34ms]
+
+packages/shared/src/projects/__tests__/storage.test.ts:
+(pass) sanitizeAssetFilename > strips control chars and NUL bytes (the literal-NUL regex fix) [0.36ms]
+(pass) sanitizeAssetFilename > strips path separators and leading dots so an upload stays in the assets dir [0.06ms]
+(pass) sanitizeAssetFilename > falls back to a generated name when the input reduces to empty [0.16ms]
+(pass) uploadProjectAsset sourcePath > refuses to read a sourcePath outside the workspace [1.12ms]
+(pass) loadProjectMemory > returns null when MEMORY.md does not exist [0.32ms]
+(pass) loadProjectMemory > returns null when MEMORY.md is whitespace-only [0.18ms]
+(pass) loadProjectMemory > returns content verbatim when under the token cap [0.21ms]
+(pass) loadProjectMemory > head-truncates and appends a marker when over the cap, staying within budget [0.22ms]
+
+packages/shared/src/projects/__tests__/roadmap.test.ts:
+(pass) project roadmap > normalizes missing/garbled data without throwing [0.72ms]
+(pass) project roadmap > parses spec answers with fences and applies items one by one [1.89ms]
+(pass) project roadmap > parses clarify questions from JSON or bullet fallback [0.13ms]
+(pass) project roadmap > shifts milestones and computes a timeline window [0.21ms]
+(pass) project roadmap > persists roadmap.json + roadmap.md next to config.json and backs up corrupt files [3.36ms]
+(pass) project roadmap > renders markdown export [0.07ms]
+
+packages/shared/src/projects/__tests__/roadmap-storage-recovery.test.ts:
+(pass) roadmap persistence recovery > rejects traversal and project symlinks outside the authorized workspace projects directory [1.08ms]
+(pass) roadmap persistence recovery > rejects a stale second writer and preserves the first canonical and derived bytes [1.06ms]
+(pass) roadmap persistence recovery > refuses an escaped projects-directory symlink and retains the external canonical and Markdown bytes [0.53ms]
+(pass) roadmap persistence recovery > permits only one of two real processes released with the same observed revision [258.75ms]
+(pass) roadmap persistence recovery > detects an external edit even when updatedAt is unchanged [0.64ms]
+(pass) roadmap persistence recovery > does not overwrite corrupt bytes or an existing backup when backup creation fails [0.39ms]
+(pass) roadmap persistence recovery > refuses a busy writer lock without removing its bytes [0.27ms]
+(pass) roadmap persistence recovery > returns an exact revision through normal and corrupt reloads [0.73ms]
+(pass) roadmap persistence recovery > keeps unversioned callers compatible while rejecting an invalid observed token [0.70ms]
+
+packages/shared/src/projects/__tests__/roadmap-save-caller.test.ts:
+(pass) actual settings save keeps the draft and never reports success after a rejected native update [219.17ms]
+(pass) actual settings save reports success only after its native update receipt [160.34ms]
+(pass) actual settings save does not report success when native write authority is unavailable [114.35ms]
+(pass) actual renderer autosave waits for each receipt, retains a newer draft and persists it using the acknowledged revision [70.99ms]
+(pass) actual autosave keeps the draft after failure and ignores a late receipt after scope changes [47.75ms]
+(pass) actual load effect clears an old project and does not arm autosave after a failed read [188.81ms]
+(pass) queue does not advance its observed revision after a refusal or missing receipt [0.46ms]
+(pass) actual route cleanup flushes the pending draft through the captured old project scope [91.33ms]
+
+packages/shared/src/projects/__tests__/roadmap-ai-caller.test.ts:
+(pass) integrated project roadmap AI persistence gate > a refused native save stops AI before any provider request [135.87ms]
+(pass) integrated project roadmap AI persistence gate > AI waits for the current queued native receipt even when debounce has already fired [75.70ms]
+(pass) integrated project roadmap AI persistence gate > accepting a proposal remains pending until its native receipt and fails after refusal [92.95ms]
+
+packages/shared/src/projects/__tests__/okr.test.ts:
+(pass) project OKR calculation > normalizes objective and KR weights independently and preserves partial unknown contribution [36.03ms]
+(pass) project OKR calculation > calculates published weighted progress independently of input order [0.45ms]
+(pass) project OKR calculation > matches the 60/40 project oracle when objective scores are 87.5% and 50% [0.21ms]
+(pass) project OKR calculation > scores decrease targets in the selected direction and rejects an opposing target [0.48ms]
+(pass) project OKR calculation > rejects invalid cycle dates and timezones [6.25ms]
+(pass) project OKR calculation > returns unknown for invalid weights, zero denominators, and missing binary evidence [1.11ms]
+(pass) project OKR persistence > survives reload with stable IDs and rejects a stale writer without replacing the winner [4.32ms]
+(pass) project OKR persistence > keeps published cycles immutable and retains them through archive instead of deletion [3.40ms]
+
+packages/server-core/src/transport/__tests__/before-response-authority.test.ts:
+(pass) native response Resource guard runs with verified principal and preserves authorized result after its await [26.89ms]
+(pass) native revoke and regrant during beforeResponse await retracts bytes before serialization and permits a fresh request [35.69ms]
+(pass) fresh WorkspaceActor revalidation precedes Resource guard and preserves an authorized response [9.29ms]
+(pass) Resource read revoke during third WorkspaceActor revalidation retracts private bytes before the final guard and serialization [13.80ms]
+
+packages/server-core/src/transport/__tests__/acknowledged-workspace.test.ts:
+(pass) real server ACK workspace is visible before connected state callbacks [58.77ms]
+(pass) real missing ACK workspace cannot become the requested workspace [97.22ms]
+(pass) real null ACK workspace cannot become the requested workspace [18.40ms]
+(pass) real number ACK workspace cannot become the requested workspace [79.06ms]
+(pass) real object ACK workspace cannot become the requested workspace [58.55ms]
+(pass) real empty ACK workspace cannot become the requested workspace [62.75ms]
+(pass) real whitespace ACK workspace cannot become the requested workspace [39.34ms]
+(pass) mismatched actual ACK retains the server value and never substitutes requested scope [51.15ms]
+(pass) reconnect clears old ACK before state publication and waits for the new actual ACK [144.67ms]
+(pass) automatic retry clears ACK while the next wire handshake remains unacknowledged [150.40ms]
+(pass) error clears actual ACK before non-connected state and event callbacks [62.78ms]
+(pass) shutdown clears actual ACK before non-connected state and event callbacks [68.50ms]
+(pass) destroy clears actual ACK before non-connected state and event callbacks [79.17ms]
+(pass) late wire ACK after error cannot restore cleared workspace scope [181.91ms]
+(pass) late wire ACK after shutdown cannot restore cleared workspace scope [106.02ms]
+(pass) response and event workspace fields cannot overwrite received ACK scope [24.17ms]
+
+packages/server-core/src/handlers/rpc/projects-scope-projection.test.ts:
+(pass) actual GET and GET_ONE return canonical registry IDs for a custom workspace folder [221.54ms]
+(pass) actual project changed broadcast uses canonical ID and retains current records [174.03ms]
+(pass) a mixed current and foreign-root list fails closed before response or broadcast [133.48ms]
+(pass) a registry root change across the actual import await refuses the stale projection [102.28ms]
+
+packages/server-core/src/handlers/rpc/projects-roadmap-ai.test.ts:
+(pass) actual roadmap AI dispatch refuses a revoked and regranted native permission during shared import [99.00ms]
+(pass) actual roadmap AI dispatch refuses a revoked and regranted native permission during project inputs [40.37ms]
+(pass) actual roadmap AI preserves dispatch for an unchanged native read/write fence [56.30ms]
+(pass) actual roadmap AI checks the read grant generation independently [40.38ms]
+(pass) actual roadmap AI checks the write grant generation independently [70.46ms]
+(pass) actual roadmap AI preserves the standalone caller path without granting native permissions [22.60ms]
+(pass) actual roadmap AI refuses a replaced principal before provider dispatch [50.02ms]
+
+apps/electron/src/renderer/pages/__tests__/notes-read-lifecycle.test.ts:
+(pass) actual NotesPage read callbacks and committed workspace lease > uncommitted render cannot publish or read; committed successful list/assets retain actual data [1.29ms]
+(pass) actual NotesPage read callbacks and committed workspace lease > actual list/assets denial is explicit unavailable and never an available empty result [0.23ms]
+(pass) actual NotesPage read callbacks and committed workspace lease > A → B → A without another list call cannot revive the old A success or denial [0.39ms]
+(pass) actual NotesPage read callbacks and committed workspace lease > dispose fences deferred list/assets success and refusal; newer same-workspace request wins [0.40ms]
+
+apps/electron/src/renderer/lib/__tests__/scoped-capability-read.test.ts:
+(pass) scoped UI capability reads > denied notes/assets stay unavailable instead of publishing an available empty list [0.57ms]
+(pass) scoped UI capability reads > real successful data and retry are retained; actual empty is available only after successful read [0.23ms]
+(pass) scoped UI capability reads > a newer request, workspace switch or unmount suppresses late success and denial [0.27ms]
+(pass) scoped UI capability reads > an obsolete request does not call the transport; synchronous read failures remain explicit [0.20ms]
+(pass) scoped UI capability reads > genuine onAvailable programming errors are not disguised as capability denials [0.15ms]
+(pass) optional real preload subscription > missing subscription installs no event or capability and cleanup is safe [0.09ms]
+(pass) optional real preload subscription > real Electron subscription is preserved and disposed once; late events are ignored [0.07ms]
+(pass) coded subscription refusal is unavailable; synchronous listener bugs remain visible [0.14ms]
+(pass) committed workspace/request lease fences old A after A → B → A and unmount [0.12ms]
+(pass) Notes native transport presence is not document authority > web/missing/partial bridges cannot mount the Notes editor or start its native queue [0.19ms]
+(pass) Notes native transport presence is not document authority > the full real interface is supported without executing operations or granting principal [0.02ms]
+
+apps/electron/src/renderer/lib/__tests__/personal-task-confirmed.integration.test.ts:
+(pass) confirmed quick creation consumes the real native revision-aware receipt and survives reopen [1.44ms]
+(pass) a lost create ACK reconciles the same persisted ID after restart without another revision [4.60ms]
+(pass) an old same-ID retry refuses a changed canonical payload and preserves the foreign update [0.52ms]
+(pass) an empty or rejected native receipt never clears the retained create attempt [0.27ms]
+
+apps/electron/src/renderer/lib/__tests__/notes-write-authority.test.ts:
+(pass) native metadata routes only to the durable writer even when a legacy callback exists [0.31ms]
+(pass) native writer failure never falls back to the MarkdownCommit file writer [0.18ms]
+(pass) missing native revision, switched source, read-only projection, stale hash and other workspace refuse before either writer [0.17ms]
+(pass) an explicit bound non-native document retains the Compound CAS writer [0.15ms]
+
+apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts:
+(pass) workspace switch during authoritative read never queues the old snapshot [0.38ms]
+(pass) workspace switch while loading the durable queue never submits the old mutation [0.16ms]
+(pass) stop fences an in-flight server receipt and leaves it for idempotent retry [0.31ms]
+(pass) overlapping workspace starts keep the last requested workspace and close obsolete opens [0.17ms]
+(pass) a canonical read for another native identity cannot enter the durable Notes outbox [0.15ms]
+(pass) a concurrent canonical revision discovered after the await preserves the opened draft [0.15ms]
+(pass) missing opened native revision cannot be upgraded to a fresh write grant [0.11ms]
+(pass) a matching opened identity and revision uses the existing main-owned enqueue and receipt ACK [0.41ms]
+(pass) only an observed main ACK advances the same opened draft through its own queued revision chain [0.65ms]
+(pass) an unacknowledged or mismatched receipt cannot grant revision progression [0.25ms]
+
+apps/electron/src/renderer/lib/__tests__/desktop-appearance.test.ts:
+(pass) browser appearance never reads host preferences or pretends to have a native snapshot [0.20ms]
+(pass) a partial bridge without runtime metadata is unavailable and never executes host callbacks [0.19ms]
+(pass) desktop denial and missing channel become unavailable, while a separate retry preserves actual values [7.26ms]
+(pass) cancelled appearance initialization ignores late success and refusal [8.18ms]
+(pass) synchronous desktop read failures are observed as unavailable without unhandled promises [1.27ms]
+(pass) browser and failed host persistence cannot advance the saved UI value [0.30ms]
+(pass) a host write finishing after disposal cannot publish a saved UI value [0.09ms]
+
+apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts:
+(pass) useProjects workspace and load generations > clears A from the atom and returned view at B commit before B RPC completes [22.05ms]
+(pass) useProjects workspace and load generations > late A success cannot overwrite an already loaded B [9.78ms]
+(pass) useProjects workspace and load generations > obsolete A failure neither clears B nor reports a current load error [6.91ms]
+(pass) useProjects workspace and load generations > the newest same-workspace refresh wins over an older load [9.91ms]
+(pass) useProjects workspace and load generations > same-workspace broadcast supersedes an older pending query [6.98ms]
+(pass) useProjects workspace and load generations > queued callback from a disposed A subscription cannot alter B [5.90ms]
+(pass) useProjects workspace and load generations > an obsolete refresh closure cannot start a request for the old scope [6.67ms]
+(pass) useProjects workspace and load generations > unmount cancels late RPC and queued broadcasts without atom writes [7.53ms]
+(pass) useProjects workspace and load generations > A-to-B-to-A does not revive the first A lease [7.13ms]
+(pass) useProjects workspace and load generations > effect replay does not revive callbacks from the disposed subscription [7.06ms]
+(pass) useProjects workspace and load generations > RPC and broadcast payloads retain only current-workspace LoadedProjects [6.28ms]
+(pass) useProjects workspace and load generations > null scope clears previous projects and invalidates pending load [7.87ms]
+(pass) useProjects workspace and load generations > same-workspace success, broadcast and current failure retain their supported behavior [9.66ms]
+(pass) useProjects workspace and load generations > actual projectCatalogAtom wrapper preserves shared metadata during local clear and load [6.55ms]
+
+packages/server-core/src/handlers/rpc/__tests__/native-content-integration.test.ts:
+(pass) routed Electron API follows native Notes authority; marker writes use only journal CAS and survive real reopen [320.75ms]
+(pass) native projection never reads or recovers legacy WAL; persisted descriptors remain readable by another authorized principal [185.19ms]
+(pass) revocation and regrant while descriptor lookup awaits cannot return native bytes or edit capabilities [53.14ms]
+(pass) active native authority denies missing-principal legacy requests before any read or write [59.30ms]
+(pass) native SAVE positional wire rejects source-store string in argument five and shifted operation in argument four without legacy fallback [47.46ms]
+
+apps/electron/src/renderer/pages/settings/__tests__/desktop-settings-session.test.ts:
+(pass) web and partial bridges never read, save, or subscribe to desktop settings [0.64ms]
+(pass) desktop read and save publish only the actual successful callback values [0.21ms]
+(pass) sync missing methods and async transport refusals are observed without advancing saved state [0.30ms]
+(pass) a newer reload or save supersedes both late successful and refused results [0.19ms]
+(pass) disposal suppresses pending success, pending refusal, and calls not yet dispatched [0.27ms]
+(pass) runtime changes block later saves and prevent pending desktop values from becoming browser state [0.18ms]
+(pass) runtime loss before queued dispatch prevents the host operation itself [0.11ms]
+(pass) desktop subscriptions dispatch only live events and unsubscribe exactly once on disposal [0.09ms]
+(pass) synchronous subscription refusal is reported and a disposed session cannot register another listener [0.07ms]
+(pass) renderer publication faults remain visible and are never reclassified as transport refusal [0.10ms]
+(pass) an unavailable callback fault remains visible without duplicate unavailable publication [0.10ms]
+(pass) a refused or absent optional history preserves actual voice prefs and health with honest unavailable history [0.51ms]
+(pass) voice history publishes actual rows and treats malformed rows as unavailable without inventing empty success [0.18ms]
+(pass) required voice read refusal is reported even when another getter throws synchronously [0.16ms]
+(pass) runtime getter errors are observed as capability refusal without dispatching any host callback [0.11ms]
+(pass) pending optional history cannot delay actual core prefs or a successful preference save [0.26ms]
+
+ 198 pass
+ 0 fail
+ 930 expect() calls
+Ran 198 tests across 26 files. [16.32s]

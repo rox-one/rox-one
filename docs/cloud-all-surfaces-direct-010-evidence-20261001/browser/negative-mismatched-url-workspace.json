@@ -1,0 +1,26 @@
+{
+  "url": "http://127.0.0.1:42223/?workspace=__invalid_private_workspace__",
+  "title": "Rox",
+  "bodyText": "Connection Failed\n\nRequested workspace does not match the server default workspace\n\nRetry\nLog Out",
+  "appRootChildren": 2,
+  "topBar": null,
+  "modePill": null,
+  "rail": null,
+  "mainNavigation": null,
+  "headers": [],
+  "testIds": [],
+  "modeButtons": [],
+  "railButtons": [],
+  "sourceStates": [],
+  "preferences": {
+    "craft-workbench-enabled": "true",
+    "craft-feature-unified-shell": null,
+    "craft-feature-workbench-top-chrome-v2": null,
+    "craft-feature-workbench-mode-registry-v1": null,
+    "craft-activity-rail-collapsed": "false",
+    "craft-sidebar-width": "320",
+    "craft-session-list-width": "300"
+  },
+  "screenshot": "negative-mismatched-url-workspace.png",
+  "html": "negative-mismatched-url-workspace.html"
+}

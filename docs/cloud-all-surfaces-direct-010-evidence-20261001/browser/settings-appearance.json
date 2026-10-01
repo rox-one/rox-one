@@ -1,0 +1,270 @@
+{
+  "url": "http://127.0.0.1:42223/?route=settings%2Fappearance&ws=e0fbee7a-45ae-f362-0248-d9ceb67a3298",
+  "title": "Rox",
+  "bodyText": "Sessions: Unavailable\nSettings\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox\nMORE\nNew Session\nSessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings\nUser\nStandard · Balance —\nSettings\nAGENT\nRuntime\nAI runtime, thinking level, and command-line tools\nContext & preferences\nUser preferences, context documents, and agent memory\nAI\nModel, thinking, connections\nPermissions\nAgent permission modes: Explore and Execute\nInput\nSend key, spell check\nWORKSPACE\nWorkspace\nName, icon, working directory\nLabels\nManage session labels\nExtensions\nManage skills, sources, automations, and marketplace packs in one place\nImport chats\nImport local chat data into this workspace as Rox sessions\nINTEGRATIONS\nMarketplace\nBrowse and install skills, presets, and packs\nAccounts & Connections\nProfile, service connections, sync, and security\nOrganizations\nTeam organizations, invites, and members\nMessaging\nTelegram, Discord, Lark, WeChat, and WhatsApp messaging bridges for your agents. Slack is not currently supported.\nCloud Runs\nBackground cloud executions that continue when the app is closed\nAPPLICATION\nAccount\nYour name, plan, level, and local credits\nPrivacy\nConsent, export, and remote deletion. Off until you opt in.\nApp\nNotifications and updates\nAppearance\nTheme, font, tool icons\nSecurity\nRisk, permission, and isolation slice for Rox and OpenClaw\nShortcuts\nKeyboard shortcuts\nAppearance\nDefault Theme\nMode\nSystem\nLight\nDark\nContrast\nStronger borders and text for dark and light themes\nSystem\nStandard\nHigh\nColor theme\npierre\nInterface\nFont for panels, menus, and settings\nArial Narrow\nInter\nSystem\nAgent chat\nFont for session messages\nArial Narrow\nInter\nSystem\nTerminal\nFont for the terminal and code blocks\nROX\nJetBrains Mono\nSystem\nLanguage\nEnglish\nModel activity details\nChoose whether tool calls and intermediate model activity open by default in chat.\nCollapsed\nExpanded\n\nTheme warning: electronAPI.loadPresetTheme is unavailable for \"pierre\". (using bundled fallback)\n\nInterface\nDefault zoom level\nSet the permanent app zoom level for all windows\n90%\nConnection icons\nShow provider icons in the session list and model selector\nWorkspace icon rail\nShow workspace icons in a left-side rail instead of the top-bar dropdown\nRich tool descriptions\nAdd action names and intent descriptions to all tool calls. Provides richer activity context in sessions.\nBackground session alerts\nShow an in-app alert above the chat when a background session finishes\nProject color highlight\nHow sessions bound to a project are highlighted in the session list\nStripe + tint\nZen Shell\n\nNative window material, glass chrome, and opaque content. Off by default; the current shell stays unchanged until you enable it.\n\nEnable Zen Shell\nApply native glass or opaque window material after the first healthy paint. Accessibility settings always win.\nWindow material\nGlass follows the system when available. Opaque keeps a solid background. System uses the platform default.\nSystem\nWorkbench (experimental)\n\nPreview of the new shell chrome. Experimental features are on by default.\n\nActivity rail, tabs, inspector\nUnified shell layout with tabs around the panel stack\nMode bar\nShow Sessions, Meetings, Tasks and other modes in the top bar\nTop chrome v2\nMode bar plus a utility rail (search, new session, settings)\nTab groups\nGroup the tab strip by split columns\nBrowser as surface\nShow OS browser windows in the surface tab strip instead of the top-bar badges\nStatus bar\nDurable Local / Remote / Offline status at the bottom of the window\nSession inspector\nFiles, git, and browser in the session inspector. On by default.\nChat chrome\nPrompt history, turn progress, and session cost in the status area. On by default.\nAgent context\nContext dashboard, MCP lens, and fallback status. Needs the session inspector.\nExtension Center\nSkills, sources, and automations on one screen. On by default.\nAgent Teams\nCaptain skill using spawn_session and messaging. Cordis dsh-agent-teams stays not installed. On by default.\n“More” screens\n\nExtra screens in the left rail. Turning one off hides it; its data is kept.\n\nDossier\nPeople & company cards, pre-call summary · workbench.mode.dossier.v1\nRadar\nTopics, competitors and keywords; a daily agent sweep and a morning digest. · workbench.mode.radar.v1\nDecisions\nA log of decisions from sessions, meetings and messages; agents see it and don’t re-propose rejected options. · workbench.mode.decisions.v1\nAgent center\nAll agents and background runs: running, waiting for you, stuck, cost, stop and pause. · workbench.mode.agents.v1\nFocus\nThe day on one screen: calendar, top three tasks, Inbox and a deep-work timer. · workbench.mode.focus.v1\nMode screens\n\nScreens in the titlebar mode pill (⌥⌘1…7). Turning one off hides it from the pill; your data stays.\n\nTasks\nShow this mode in the titlebar pill and on its ⌥⌘ shortcut\nMeetings\nShow this mode in the titlebar pill and on its ⌥⌘ shortcut\nInbox\nShow this mode in the titlebar pill and on its ⌥⌘ shortcut\nFeed\nShow this mode in the titlebar pill and on its ⌥⌘ shortcut\nNot installed\n\nThese runtimes stay out of Rox. The list is frozen.\n\nSecond chat client\nNotifications already live in this app. Not a second client.\nNot installed\nExtra memory runtime\nMemory already lives in Rox. We will not add another memory host.\nNot installed\nPlugin hot reload\nFlags and RPC refresh are the hot path. No plugin HMR runtime.\nNot installed\nAgent-teams runtime\nCordis plugin stays out. Opt-in Rox skill is Appearance → Agent Teams (workbench.harness.agentTeams).\nNot installed\nVision CLI plugin\nVision models and the browser tool already cover this.\nNot installed\nSearch CLI plugin\nUse MCP or API sources. Do not embed search keys.\nNot installed\nExtra automation runtime\nAutomations are already first-party.\nNot installed\nRemote-control compatibility\nNot a Rox goal. No compatibility-mode host.\nNot installed\nConation\n\nOpt-in Conation data-plane panes in Rox. All off by default; no Timeline mode.\n\nConation shell\nMaster gate for Conation panes (workbench.conation.shell). Default off.\nConation inspector host\nEmpty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.\nConation surfaces skill\nGate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.\nSoup client\nRead-only Conation Soup GraphQL client (workbench.conation.soupClient). Default off.\nNotes bridge\nRead-only Conation Notes bridge (workbench.conation.notesBridge). Default off.\nDSS client\nRead-only Conation DSS/Drive HTTP client (workbench.conation.dssClient). Default off.\nSessionApply (Conation)\nSessionApply consumer stub linked to AgentTeamsStore (workbench.conation.sessionApply). Default off. Not Cordis.\nFund canvas link\nOpen the Fund canvas in Conation via a link. Off by default.\nBoard link\nOpen the board in Conation via a link. Off by default.\nKanban board\n\nCustomize the board's column colors and motion\n\nBacklog\nTask\nIn progress\nNeeds review\nDone\nAnimate active tasks\nPulse tasks with a running turn in the In Progress column\nStatus on move\n\nWhen you drag a task into a column, set its status to the chosen one\n\nBacklog\nbacklog\nTask\ntodo\nIn progress\nin-progress\nNeeds review\nneeds-review\nDone\ndone\nTool Icons\n\nIcons shown next to CLI commands in chat activity. Stored in ~/.craft-agent/tool-icons/.\n\nIcon\n\t\nTool\n\t\nCommands\n\nNo tool icon mappings found\nInfo\nTITLE\nSettings\nRemote\nSync OK\n0 runs\n0 approvals",
+  "appRootChildren": 2,
+  "topBar": {
+    "visible": true,
+    "tag": "DIV",
+    "text": "Settings\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": null,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1440,
+      "height": 40
+    }
+  },
+  "modePill": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Home\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": "Modes",
+    "rect": {
+      "x": 459.0703125,
+      "y": 7,
+      "width": 521.859375,
+      "height": 26
+    }
+  },
+  "rail": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "MORE",
+    "ariaLabel": "Activity rail",
+    "rect": {
+      "x": 0,
+      "y": 74.75,
+      "width": 44,
+      "height": 901.25
+    }
+  },
+  "mainNavigation": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Sessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings",
+    "ariaLabel": "Main navigation",
+    "rect": {
+      "x": 44,
+      "y": 119.75,
+      "width": 320,
+      "height": 718.75
+    }
+  },
+  "headers": [
+    "Settings",
+    "Agent",
+    "Workspace",
+    "Integrations",
+    "Application",
+    "Appearance",
+    "Default Theme",
+    "Interface",
+    "Zen Shell",
+    "Workbench (experimental)",
+    "“More” screens",
+    "Mode screens",
+    "Not installed",
+    "Conation",
+    "Kanban board",
+    "Status on move",
+    "Tool Icons"
+  ],
+  "testIds": [
+    "bottom-terminal-toggle",
+    "titlebar-mode-pill",
+    "rail-extra-screens",
+    "profile-strip-balance",
+    "settings-navigator-search",
+    "harness-skip-list"
+  ],
+  "modeButtons": [
+    {
+      "mode": "home",
+      "label": "Home",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "chat",
+      "label": "Sessions",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "meetings",
+      "label": "Meetings",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "tasks",
+      "label": "Tasks",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "notes",
+      "label": "Notes",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "feed",
+      "label": "Feed",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "inbox",
+      "label": "Inbox",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "railButtons": [
+    {
+      "label": "Sessions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Projects",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Pages",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Memory",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Tasks",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Meetings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Sources",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Skills",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Notes",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Automations",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Connections",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Settings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Dossier",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Radar",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Decisions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Agent center",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Focus",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Collapse activity rail",
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "sourceStates": [
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "Sessions: Unavailable",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "SPAN",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    }
+  ],
+  "preferences": {
+    "craft-workbench-enabled": "true",
+    "craft-feature-unified-shell": null,
+    "craft-feature-workbench-top-chrome-v2": null,
+    "craft-feature-workbench-mode-registry-v1": null,
+    "craft-activity-rail-collapsed": "false",
+    "craft-sidebar-width": "320",
+    "craft-session-list-width": "300"
+  },
+  "screenshot": "settings-appearance.png",
+  "html": "settings-appearance.html"
+}

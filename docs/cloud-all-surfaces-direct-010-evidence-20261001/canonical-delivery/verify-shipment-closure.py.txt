@@ -1,0 +1,287 @@
+#!/usr/bin/env python3
+"""Read-only shipment comparison; writes only its own evidence JSON when invoked."""
+
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import stat
+import subprocess
+import sys
+
+
+CHECKOUT = Path('/tmp/rox-r15-exact-ui-20261001/checkout')
+DELIVERY = Path('/workspace/rox-r15-direct-server-dist-20261001')
+EXPECTED_REVISION = '010fa8c040e3a84cd40cd8195473f52d8582f159'
+EVIDENCE = Path(__file__).resolve().parent / 'verify-shipment-closure.json'
+PACKAGES = (
+    'server', 'server-core', 'shared', 'core', 'session-tools-core',
+    'messaging-gateway', 'messaging-whatsapp-worker',
+    'messaging-discord-worker', 'cloud-runner',
+)
+PLATFORM_KEY = 'linux-x64'
+report = {
+    'started_utc': datetime.now(timezone.utc).isoformat(),
+    'checkout': str(CHECKOUT),
+    'delivery': str(DELIVERY),
+    'expected_revision': EXPECTED_REVISION,
+    'platform_key': PLATFORM_KEY,
+    'checks': [],
+    'comparisons': {},
+    'acceptance_scope': 'Shipment inventories and links only; no runtime or provider execution.',
+    'native_or_provider_acceptance': False,
+}
+
+
+def sha256(path):
+    result = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            result.update(chunk)
+    return result.hexdigest()
+
+
+def check(name, passed, **details):
+    report['checks'].append({'name': name, 'pass': bool(passed), **details})
+
+
+def inventory():
+    return {'files': {}, 'symlinks': {}, 'directories': []}
+
+
+def leaf(result, path, relative):
+    mode = path.lstat().st_mode
+    if stat.S_ISLNK(mode):
+        target = os.readlink(path)
+        result['symlinks'][relative] = {
+            'target': target,
+            'sha256': hashlib.sha256(('symlink:' + target).encode()).hexdigest(),
+        }
+    elif stat.S_ISREG(mode):
+        result['files'][relative] = {'sha256': sha256(path), 'bytes': path.stat().st_size}
+    else:
+        raise ValueError(f'Unsupported filesystem entry: {path}')
+
+
+def add_file(result, source, relative):
+    if not source.is_file() or source.is_symlink():
+        raise ValueError(f'Required regular source file is absent: {source}')
+    leaf(result, source, relative)
+
+
+def add_tree(result, source, relative):
+    if not source.is_dir() or source.is_symlink():
+        raise ValueError(f'Required source directory is absent: {source}')
+    result['directories'].append(relative)
+    for directory, dirs, files in os.walk(source, followlinks=False):
+        dirs.sort()
+        files.sort()
+        for name in dirs + files:
+            path = Path(directory) / name
+            key = str(Path(relative) / path.relative_to(source))
+            mode = path.lstat().st_mode
+            if stat.S_ISDIR(mode):
+                result['directories'].append(key)
+            else:
+                leaf(result, path, key)
+
+
+def delivered_tree(root, relative):
+    result = inventory()
+    if root.is_dir() and not root.is_symlink():
+        add_tree(result, root, relative)
+    return result
+
+
+def canonicalize(result):
+    result['files'] = dict(sorted(result['files'].items()))
+    result['symlinks'] = dict(sorted(result['symlinks'].items()))
+    result['directories'] = sorted(set(result['directories']))
+    return result
+
+
+def compare(name, expected, delivered, mappings):
+    expected = canonicalize(expected)
+    delivered = canonicalize(delivered)
+    differences = {}
+    for kind in ('files', 'symlinks', 'directories'):
+        left, right = expected[kind], delivered[kind]
+        left_keys, right_keys = set(left), set(right)
+        mismatch = [] if kind == 'directories' else [
+            key for key in sorted(left_keys & right_keys) if left[key] != right[key]
+        ]
+        differences[kind] = {
+            'missing': sorted(left_keys - right_keys),
+            'unexpected': sorted(right_keys - left_keys),
+            'mismatched': mismatch,
+        }
+        check(f'{name}: exact {kind} inventory', left == right, **differences[kind])
+    report['comparisons'][name] = {
+        'source_mappings': mappings,
+        'expected': expected,
+        'delivered': delivered,
+        'differences': differences,
+        'exact': expected == delivered,
+    }
+
+
+def git(*args):
+    return subprocess.check_output(
+        ['git', '--no-optional-locks', *args], cwd=CHECKOUT, text=True,
+    ).strip()
+
+
+def verify():
+    check('canonical checkout directory exists', CHECKOUT.is_dir() and not CHECKOUT.is_symlink())
+    check('delivery directory exists', DELIVERY.is_dir() and not DELIVERY.is_symlink())
+    checkout_resolved = CHECKOUT.resolve(strict=True)
+    delivery_resolved = DELIVERY.resolve(strict=True)
+    check('checkout path resolves exactly', checkout_resolved == CHECKOUT)
+    check('delivery path resolves exactly', delivery_resolved == DELIVERY)
+    report['observed_revision'] = git('rev-parse', 'HEAD')
+    check('checkout is the exact candidate revision', report['observed_revision'] == EXPECTED_REVISION)
+
+    expected = inventory()
+    expected['directories'].append('packages')
+    mappings, package_names, expected_links = [], {}, {}
+    for package in PACKAGES:
+        source = CHECKOUT / 'packages' / package
+        relative = f'packages/{package}'
+        expected['directories'].append(relative)
+        for name in ('package.json', 'tsconfig.json'):
+            add_file(expected, source / name, f'{relative}/{name}')
+        add_tree(expected, source / 'src', f'{relative}/src')
+        has_dist = (source / 'dist').exists() or (source / 'dist').is_symlink()
+        if has_dist:
+            add_tree(expected, source / 'dist', f'{relative}/dist')
+        package_name = json.loads((source / 'package.json').read_text())['name']
+        check(f'{package}: source package has craft-agent scope', package_name.startswith('@craft-agent/'))
+        package_names[package] = package_name
+        link = f'node_modules/{package_name}'
+        expected_links[link] = f'../../packages/{package}'
+        mappings.append({'source': str(source), 'delivery_prefix': relative,
+                         'copied_entries': ['package.json', 'tsconfig.json', 'src'] + (['dist'] if has_dist else [])})
+    check('nine unique source workspace names', len(set(package_names.values())) == len(PACKAGES) == 9)
+    report['workspace_package_names'] = package_names
+    compare('workspace', expected, delivered_tree(DELIVERY / 'packages', 'packages'), mappings)
+
+    source_resources = CHECKOUT / 'apps/electron/resources'
+    expected = inventory()
+    expected['directories'].extend(['resources', 'resources/scripts', 'resources/bin'])
+    mappings = []
+    for name in ('docs', 'themes', 'permissions', 'tool-icons'):
+        add_tree(expected, source_resources / name, f'resources/{name}')
+        mappings.append({'source': str(source_resources / name), 'delivery_prefix': f'resources/{name}', 'rule': 'recursive'})
+    add_file(expected, source_resources / 'config-defaults.json', 'resources/config-defaults.json')
+    mappings.append({'source': str(source_resources / 'config-defaults.json'), 'delivery_path': 'resources/config-defaults.json'})
+    for folder in ('scripts', 'bin'):
+        source = source_resources / folder
+        if not source.is_dir() or source.is_symlink():
+            raise ValueError(f'Required resource source directory is absent: {source}')
+        for path in sorted(source.iterdir()):
+            if folder == 'scripts' and path.name == 'tests':
+                continue
+            if folder == 'bin' and path.name.endswith('.cmd'):
+                continue
+            if stat.S_ISREG(path.lstat().st_mode):
+                add_file(expected, path, f'resources/{folder}/{path.name}')
+        mappings.append({'source': str(source), 'delivery_prefix': f'resources/{folder}',
+                         'rule': 'direct regular files; exclude tests' if folder == 'scripts' else 'direct regular files; exclude .cmd'})
+
+    binary_sources = {
+        'resources/bin/uv': source_resources / 'bin' / PLATFORM_KEY / 'uv',
+        'vendor/bun/bun': CHECKOUT / 'apps/electron/vendor/bun/bun',
+    }
+    add_file(expected, binary_sources['resources/bin/uv'], 'resources/bin/uv')
+    mappings.append({'source': str(binary_sources['resources/bin/uv']), 'delivery_path': 'resources/bin/uv', 'rule': 'flatten platform binary'})
+    compare('resources', expected, delivered_tree(DELIVERY / 'resources', 'resources'), mappings)
+
+    expected, delivered = inventory(), inventory()
+    report['binary_modes'] = {}
+    for relative, source in binary_sources.items():
+        add_file(expected, source, relative)
+        target = DELIVERY / relative
+        source_mode = source.stat().st_mode & 0o777
+        target_mode = target.lstat().st_mode if target.exists() or target.is_symlink() else 0
+        regular = stat.S_ISREG(target_mode)
+        check(f'{relative}: delivered binary is a regular file', regular)
+        if regular:
+            leaf(delivered, target, relative)
+        check(f'{relative}: source and delivery are executable', bool(source_mode & 0o111) and bool(target_mode & 0o111))
+        report['binary_modes'][relative] = {'source_mode': oct(source_mode), 'delivered_mode': oct(target_mode & 0o777), 'source': str(source)}
+    compare('runtime_binaries', expected, delivered,
+            [{'source': str(source), 'delivery_path': relative} for relative, source in binary_sources.items()])
+
+    source_ui = CHECKOUT / 'apps/webui/dist'
+    expected = inventory()
+    add_tree(expected, source_ui, 'webui')
+    delivered = delivered_tree(DELIVERY / 'webui', 'webui')
+    check('generated UI has exactly 855 regular files', len(expected['files']) == 855)
+    check('staged UI has exactly 855 regular files', len(delivered['files']) == 855)
+    check('generated and staged UI contain no symlinks', not expected['symlinks'] and not delivered['symlinks'])
+    compare('webui', expected, delivered, [{'source': str(source_ui), 'delivery_prefix': 'webui', 'rule': 'full generated UI tree'}])
+
+    stub = 'packages/cloud-runner/dist/stub-runner.js'
+    source_stub, delivery_stub = CHECKOUT / stub, DELIVERY / stub
+    check('cloud-runner generated stub is present as regular source and delivery files',
+          source_stub.is_file() and not source_stub.is_symlink() and delivery_stub.is_file() and not delivery_stub.is_symlink())
+    stub_exact = source_stub.is_file() and delivery_stub.is_file() and sha256(source_stub) == sha256(delivery_stub)
+    check('cloud-runner generated stub hash is exact', stub_exact)
+    report['cloud_runner_stub'] = {'source': str(source_stub), 'delivery': str(delivery_stub),
+                                  'expected_sha256': sha256(source_stub) if source_stub.is_file() else None,
+                                  'delivered_sha256': sha256(delivery_stub) if delivery_stub.is_file() else None,
+                                  'exact': bool(stub_exact)}
+
+    scope = delivered_tree(DELIVERY / 'node_modules/@craft-agent', 'node_modules/@craft-agent')
+    actual_links = {key: value['target'] for key, value in scope['symlinks'].items()}
+    check('nine workspace symlinks have exact source names and targets', actual_links == expected_links and len(actual_links) == 9)
+    check('workspace scope contains only its nine symlinks', not scope['files'] and scope['directories'] == ['node_modules/@craft-agent'])
+    report['workspace_links'] = {'expected': dict(sorted(expected_links.items())), 'delivered': dict(sorted(actual_links.items()))}
+    all_links = []
+    for directory, dirs, files in os.walk(DELIVERY, followlinks=False):
+        for name in sorted(dirs + files):
+            path = Path(directory) / name
+            if not path.is_symlink():
+                continue
+            resolved = path.resolve(strict=False)
+            inside = resolved == delivery_resolved or delivery_resolved in resolved.parents
+            exists = path.exists()
+            relative = str(path.relative_to(DELIVERY))
+            all_links.append({'path': relative, 'target': os.readlink(path),
+                              'resolved': str(resolved), 'target_exists': exists,
+                              'resolved_inside_delivery': inside})
+            check(f'{relative}: symlink target exists inside delivery', exists and inside)
+            if relative in expected_links:
+                package = expected_links[relative].split('/')[-1]
+                check(f'{relative}: workspace link resolves to exact package',
+                      resolved == delivery_resolved / 'packages' / package and path.is_dir())
+    report['all_delivery_symlinks'] = sorted(all_links, key=lambda row: row['path'])
+    report['observed_revision_after_comparison'] = git('rev-parse', 'HEAD')
+    check('candidate revision remains exact after comparison', report['observed_revision_after_comparison'] == EXPECTED_REVISION)
+
+
+try:
+    verify()
+except Exception as error:
+    report['observer_error'] = {'type': type(error).__name__, 'message': str(error)}
+    check('observer completed without an exception', False)
+
+failed = [row['name'] for row in report['checks'] if not row['pass']]
+report['summary'] = {
+    'pass': not failed,
+    'checks': len(report['checks']),
+    'passed': len(report['checks']) - len(failed),
+    'failed': failed,
+    'components': {name: {'exact': row['exact'],
+                         'expected_files': len(row['expected']['files']),
+                         'delivered_files': len(row['delivered']['files'])}
+                   for name, row in report['comparisons'].items()},
+    'workspace_symlink_count': len(report.get('workspace_links', {}).get('delivered', {})),
+    'total_delivery_symlink_count': len(report.get('all_delivery_symlinks', [])),
+}
+report['finished_utc'] = datetime.now(timezone.utc).isoformat()
+report['observer_sha256'] = sha256(Path(__file__).resolve())
+EVIDENCE.write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps({'evidence': str(EVIDENCE), 'evidence_sha256': sha256(EVIDENCE), **report['summary']}))
+sys.exit(0 if report['summary']['pass'] else 1)

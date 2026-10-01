@@ -1,0 +1,76 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const ts = require('/tmp/rox-r15-exact-ui-20261001/checkout/node_modules/typescript');
+const root = '/tmp/rox-r15-exact-ui-20261001/checkout';
+const evidence = __dirname;
+const hash = value => crypto.createHash('sha256').update(value).digest('hex');
+const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const save = (name, data) => fs.writeFileSync(path.join(evidence, name), JSON.stringify(data, null, 2) + '\n');
+const declarations = new Map();
+function fileDeclarations(file) {
+  if (declarations.has(file)) return declarations.get(file);
+  const source = fs.readFileSync(path.join(root, file), 'utf8');
+  const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
+  const result = [];
+  function walk(node) {
+    if (ts.isCallExpression(node) && /^(?:it|test)(?:\.|$)/.test(node.expression.getText(sourceFile))) {
+      const arg = node.arguments[0];
+      let regex = null;
+      if (arg && (ts.isStringLiteralLike(arg))) regex = escape(arg.text);
+      else if (arg && ts.isTemplateExpression(arg)) {
+        regex = escape(arg.head.text);
+        for (const span of arg.templateSpans) regex += '.*?' + escape(span.literal.text);
+      }
+      if (regex !== null) result.push({line: sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1,
+        nameExpression: arg.getText(sourceFile), declarationText: node.getText(sourceFile).split('\n')[0],
+        regex: new RegExp('(?:^| > )' + regex + '$'), sourceSha256: hash(source)});
+    }
+    ts.forEachChild(node, walk);
+  }
+  walk(sourceFile);
+  declarations.set(file, result);
+  return result;
+}
+const cases = [], perFile = [], results = [];
+for (const label of ['integrated-controls', 'strict-built-smoke']) {
+  const text = fs.readFileSync(path.join(evidence, label + '.log'), 'utf8');
+  const result = JSON.parse(fs.readFileSync(path.join(evidence, label + '.json'), 'utf8'));
+  const match = text.match(/^[ \t]*(\d+) pass\r?\n[ \t]*(\d+) fail\r?\n[ \t]*(\d+) expect\(\) calls\r?\nRan (\d+) tests across (\d+) files?/m);
+  if (!match) throw new Error('Missing real runner counts: ' + label);
+  result.actualBunCounts = Object.fromEntries(['pass', 'fail', 'expect', 'tests', 'files'].map((key, index) => [key, +match[index + 1]]));
+  let file = null;
+  for (const [index, line] of text.split('\n').entries()) {
+    const heading = line.match(/^([^\s].*\.(?:test|spec)\.[cm]?[jt]sx?):$/);
+    if (heading) file = heading[1];
+    const test = line.match(/^\((pass|fail|skip|todo)\) (.*?)(?: \[([\d.]+)(ms|s)\])?$/);
+    if (!test) continue;
+    if (!file) throw new Error('Missing file heading: ' + line);
+    const matching = fileDeclarations(file).filter(declaration => declaration.regex.test(test[2]));
+    if (matching.length !== 1) throw new Error(`Declaration count ${matching.length}: ${file}: ${test[2]}`);
+    const declaration = matching[0];
+    cases.push({invocation: label, candidate: result.candidate, outcome: test[1], actualName: test[2], file,
+      logLine: index + 1, sourceDeclarationLine: declaration.line, sourceNameExpression: declaration.nameExpression,
+      sourceDeclarationText: declaration.declarationText, sourceSha256: declaration.sourceSha256,
+      duration: test[3] ? +test[3] : null, durationUnit: test[4] || null});
+  }
+  const labelCases = cases.filter(row => row.invocation === label);
+  if (labelCases.length !== result.actualBunCounts.tests) throw new Error('Case mismatch ' + label);
+  result.executedCaseReceipt = path.join(evidence, 'executed-cases.json');
+  result.caseDeclarationRowsResolved = labelCases.length;
+  result.logSha256 = hash(fs.readFileSync(path.join(evidence, label + '.log')));
+  save(label + '.json', result);
+  results.push(result);
+  for (const file of [...new Set(labelCases.map(row => row.file))]) {
+    const rows = labelCases.filter(row => row.file === file);
+    perFile.push({invocation: label, file, ...Object.fromEntries(['pass', 'fail', 'skip', 'todo'].map(outcome => [outcome, rows.filter(row => row.outcome === outcome).length]))});
+  }
+}
+save('executed-cases.json', {cases, perFile, sourceDeclarationLinesResolved: cases.length,
+  recordedCaseRows: cases.length, noCrossInvocationTotalsClaimed: true});
+const batch = JSON.parse(fs.readFileSync(path.join(evidence, 'batch-receipt.json'), 'utf8'));
+batch.results = results;
+batch.executedCaseReceipt = path.join(evidence, 'executed-cases.json');
+batch.executedCaseReceiptSha256 = hash(fs.readFileSync(path.join(evidence, 'executed-cases.json')));
+save('batch-receipt.json', batch);
+console.log(JSON.stringify({results: results.map(({label, actualBunCounts, seconds, caseDeclarationRowsResolved}) => ({label, actualBunCounts, seconds, caseDeclarationRowsResolved})), declarationRows: cases.length}, null, 2));

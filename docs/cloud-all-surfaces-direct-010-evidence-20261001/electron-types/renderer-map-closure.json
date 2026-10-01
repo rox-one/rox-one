@@ -1,0 +1,2901 @@
+{
+  "candidate": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "rendererMapCount": 408,
+  "textualSourceEntryCount": 1192,
+  "exactTextualMatches": 1192,
+  "textualMismatches": [],
+  "generatedAssetWrapperCount": 23,
+  "allGeneratedAssetWrappers": true,
+  "wrapperExplanation": "Vite sourcesContent contains generated export-default JavaScript for 23 SVG/PNG imports; those are compared as wrappers, while all 1192 textual source entries must byte-match exact010 tracked source.",
+  "requiredShellSourcesCompiled": {
+    "components/app-shell/AppShell.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "components/app-shell/TopBar.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "components/app-shell/LeftSidebar.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "components/app-shell/HeaderStatusLane.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "components/app-shell/MiniSessionSurface.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "platform/HomeFrontPage.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "platform/home/widgets.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "platform/home/QuickTaskInput.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "pages/SearchPage.tsx": [
+      "SearchPage-BWQ6yg5h.js"
+    ],
+    "pages/NotesPage.tsx": [
+      "NotesPage-DjHM-WOY.js"
+    ],
+    "pages/ProjectInfoPage.tsx": [
+      "ProjectInfoPage-CmWe8x-U.js"
+    ],
+    "pages/project/ProjectAiPanel.tsx": [
+      "ProjectInfoPage-CmWe8x-U.js"
+    ],
+    "pages/project/ProjectInputs.tsx": [
+      "ProjectInfoPage-CmWe8x-U.js"
+    ],
+    "pages/project/ProjectRequirements.tsx": [
+      "ProjectInfoPage-CmWe8x-U.js"
+    ],
+    "pages/project/ProjectTimeline.tsx": [
+      "ProjectInfoPage-CmWe8x-U.js"
+    ],
+    "pages/project/roadmap-ui.tsx": [
+      "ProjectInfoPage-CmWe8x-U.js"
+    ],
+    "components/projects/SharedProjectProjection.tsx": [
+      "main-5xh0A_22.js"
+    ],
+    "components/projects/ProjectAuthorityConnectionPanel.tsx": [
+      "ConnectionsPage-CsQs9iWA.js"
+    ],
+    "components/code-intelligence/RepositorySnapshotPanel.tsx": [
+      "ProjectInfoPage-CmWe8x-U.js"
+    ]
+  },
+  "allRequiredShellSourcesCompiled": true,
+  "compiledPagesAndPlatformInventory": [
+    {
+      "chunk": "AccountSettingsPage-DRiCMujH.js",
+      "source": "apps/electron/src/renderer/pages/settings/AccountSettingsPage.tsx"
+    },
+    {
+      "chunk": "AccountsSettingsPage-CsOLUvgR.js",
+      "source": "apps/electron/src/renderer/pages/settings/CredentialMigrationCard.tsx"
+    },
+    {
+      "chunk": "AccountsSettingsPage-CsOLUvgR.js",
+      "source": "apps/electron/src/renderer/pages/settings/AccountsSettingsPage.tsx"
+    },
+    {
+      "chunk": "AgentCenterPage-CjqeZYdg.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/agents/AgentCenterPage.tsx"
+    },
+    {
+      "chunk": "AiSettingsPage-Dx0ZhkQi.js",
+      "source": "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx"
+    },
+    {
+      "chunk": "AppSettingsPage-D0dnV4tk.js",
+      "source": "apps/electron/src/renderer/pages/settings/EnvironmentSettingsSection.tsx"
+    },
+    {
+      "chunk": "AppSettingsPage-D0dnV4tk.js",
+      "source": "apps/electron/src/renderer/pages/settings/AppSettingsPage.tsx"
+    },
+    {
+      "chunk": "AppearanceSettingsPage-4Oq8dAAo.js",
+      "source": "apps/electron/src/renderer/pages/settings/ExtraScreensSettings.tsx"
+    },
+    {
+      "chunk": "AppearanceSettingsPage-4Oq8dAAo.js",
+      "source": "apps/electron/src/renderer/pages/settings/WorkbenchChromeSettings.tsx"
+    },
+    {
+      "chunk": "AppearanceSettingsPage-4Oq8dAAo.js",
+      "source": "apps/electron/src/renderer/pages/settings/ConationShellSettings.tsx"
+    },
+    {
+      "chunk": "AppearanceSettingsPage-4Oq8dAAo.js",
+      "source": "apps/electron/src/renderer/pages/settings/ZenShellSettings.tsx"
+    },
+    {
+      "chunk": "AppearanceSettingsPage-4Oq8dAAo.js",
+      "source": "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx"
+    },
+    {
+      "chunk": "CloudRunSurfacePage-C3E1ibHp.js",
+      "source": "apps/electron/src/renderer/pages/CloudRunSurfacePage.tsx"
+    },
+    {
+      "chunk": "CloudRunsSettingsPage-B-rdIp_v.js",
+      "source": "apps/electron/src/renderer/pages/settings/CloudRunsSettingsPage.tsx"
+    },
+    {
+      "chunk": "ConnectionsPage-CsQs9iWA.js",
+      "source": "apps/electron/src/renderer/pages/connections-overview.tsx"
+    },
+    {
+      "chunk": "ConnectionsPage-CsQs9iWA.js",
+      "source": "apps/electron/src/renderer/pages/ConnectionsPage.tsx"
+    },
+    {
+      "chunk": "ContextSettingsPage-e2a_v4JT.js",
+      "source": "apps/electron/src/renderer/pages/settings/PreferencesPage.tsx"
+    },
+    {
+      "chunk": "ContextSettingsPage-e2a_v4JT.js",
+      "source": "apps/electron/src/renderer/pages/settings/ContextSettingsPage.tsx"
+    },
+    {
+      "chunk": "DecisionsPage-u_zgLdXS.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/decisions/DecisionsPage.tsx"
+    },
+    {
+      "chunk": "DossierPage-CpjEajX_.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/dossier/dossier-model.ts"
+    },
+    {
+      "chunk": "DossierPage-CpjEajX_.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/dossier/DossierPage.tsx"
+    },
+    {
+      "chunk": "ExtensionSurfacePage-B2-tY-cT.js",
+      "source": "apps/electron/src/renderer/pages/ExtensionSurfacePage.tsx"
+    },
+    {
+      "chunk": "ExtensionsSettingsPage-BOQIMyxY.js",
+      "source": "apps/electron/src/renderer/pages/settings/ExtensionsSettingsPage.tsx"
+    },
+    {
+      "chunk": "ExtraScreenHost-DRRAuC5P.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/ui.tsx"
+    },
+    {
+      "chunk": "ExtraScreenHost-DRRAuC5P.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/ExtraScreenHost.tsx"
+    },
+    {
+      "chunk": "FeedPage-DNzAjoLk.js",
+      "source": "apps/electron/src/renderer/pages/feed/feed-model.ts"
+    },
+    {
+      "chunk": "FeedPage-DNzAjoLk.js",
+      "source": "apps/electron/src/renderer/pages/feed/FeedParts.tsx"
+    },
+    {
+      "chunk": "FeedPage-DNzAjoLk.js",
+      "source": "apps/electron/src/renderer/pages/feed/FeedSources.tsx"
+    },
+    {
+      "chunk": "FeedPage-DNzAjoLk.js",
+      "source": "apps/electron/src/renderer/pages/FeedPage.tsx"
+    },
+    {
+      "chunk": "FocusPage-CnOhVvtI.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/focus/FocusPage.tsx"
+    },
+    {
+      "chunk": "ImportSettingsPage-BoDbnErq.js",
+      "source": "apps/electron/src/renderer/pages/settings/BrowserProfileImportPanel.tsx"
+    },
+    {
+      "chunk": "ImportSettingsPage-BoDbnErq.js",
+      "source": "apps/electron/src/renderer/pages/settings/ImportSettingsPage.tsx"
+    },
+    {
+      "chunk": "InboxPage-BM2_F_EY.js",
+      "source": "apps/electron/src/renderer/pages/inbox/mail/useMail.ts"
+    },
+    {
+      "chunk": "InboxPage-BM2_F_EY.js",
+      "source": "apps/electron/src/renderer/pages/inbox/mail/mail-sanitize.ts"
+    },
+    {
+      "chunk": "InboxPage-BM2_F_EY.js",
+      "source": "apps/electron/src/renderer/pages/inbox/mail/mail-view.ts"
+    },
+    {
+      "chunk": "InboxPage-BM2_F_EY.js",
+      "source": "apps/electron/src/renderer/pages/inbox/mail/MailPanels.tsx"
+    },
+    {
+      "chunk": "InboxPage-BM2_F_EY.js",
+      "source": "apps/electron/src/renderer/pages/InboxPage.tsx"
+    },
+    {
+      "chunk": "InputSettingsPage-6M7ax60j.js",
+      "source": "apps/electron/src/renderer/pages/settings/VoiceSettingsSection.tsx"
+    },
+    {
+      "chunk": "InputSettingsPage-6M7ax60j.js",
+      "source": "apps/electron/src/renderer/pages/settings/InputSettingsPage.tsx"
+    },
+    {
+      "chunk": "KnowledgeEntityPage-BMTEfxM3.js",
+      "source": "apps/electron/src/renderer/pages/KnowledgeEntityPage.tsx"
+    },
+    {
+      "chunk": "KnowledgeSettingsPage-CXg0P7hs.js",
+      "source": "apps/electron/src/renderer/pages/settings/KnowledgeSettingsPage.tsx"
+    },
+    {
+      "chunk": "KnowledgeSurfacePage-Bj4m7_QT.js",
+      "source": "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx"
+    },
+    {
+      "chunk": "LabelsSettingsPage-Ce_0q9wL.js",
+      "source": "apps/electron/src/renderer/pages/settings/LabelsSettingsPage.tsx"
+    },
+    {
+      "chunk": "MarketplaceSettingsPage-BZNzYQSk.js",
+      "source": "apps/electron/src/renderer/pages/settings/MarketplaceSettingsPage.tsx"
+    },
+    {
+      "chunk": "MeetingsPage-CuHRRx-y.js",
+      "source": "apps/electron/src/renderer/pages/meetings/local-meetings-model.ts"
+    },
+    {
+      "chunk": "MeetingsPage-CuHRRx-y.js",
+      "source": "apps/electron/src/renderer/pages/meetings/LocalMeetingDetail.tsx"
+    },
+    {
+      "chunk": "MeetingsPage-CuHRRx-y.js",
+      "source": "apps/electron/src/renderer/pages/MeetingsPage.tsx"
+    },
+    {
+      "chunk": "MessagingSettingsPage-BPcAU64O.js",
+      "source": "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx"
+    },
+    {
+      "chunk": "NotesPage-DjHM-WOY.js",
+      "source": "apps/electron/src/renderer/pages/notes/NoteInspector.tsx"
+    },
+    {
+      "chunk": "NotesPage-DjHM-WOY.js",
+      "source": "apps/electron/src/renderer/pages/notes/NotesAIMenu.tsx"
+    },
+    {
+      "chunk": "NotesPage-DjHM-WOY.js",
+      "source": "apps/electron/src/renderer/pages/notes/NotesDialogs.tsx"
+    },
+    {
+      "chunk": "NotesPage-DjHM-WOY.js",
+      "source": "apps/electron/src/renderer/pages/notes/comment-highlights.ts"
+    },
+    {
+      "chunk": "NotesPage-DjHM-WOY.js",
+      "source": "apps/electron/src/renderer/pages/notes-rox2-surface.ts"
+    },
+    {
+      "chunk": "NotesPage-DjHM-WOY.js",
+      "source": "apps/electron/src/renderer/pages/NotesPage.tsx"
+    },
+    {
+      "chunk": "OrganizationsSettingsPage-WfWFfLaW.js",
+      "source": "apps/electron/src/renderer/pages/settings/organization-team-spaces.ts"
+    },
+    {
+      "chunk": "OrganizationsSettingsPage-WfWFfLaW.js",
+      "source": "apps/electron/src/renderer/pages/settings/organization-member-identity.ts"
+    },
+    {
+      "chunk": "OrganizationsSettingsPage-WfWFfLaW.js",
+      "source": "apps/electron/src/renderer/pages/settings/OrganizationsSettingsPage.tsx"
+    },
+    {
+      "chunk": "PagesHome-YKHuZ2lg.js",
+      "source": "apps/electron/src/renderer/components/pages/PageTile.tsx"
+    },
+    {
+      "chunk": "PagesHome-YKHuZ2lg.js",
+      "source": "apps/electron/src/renderer/components/pages/PagesHome.tsx"
+    },
+    {
+      "chunk": "PermissionsSettingsPage-C2tpOMFn.js",
+      "source": "apps/electron/src/renderer/pages/settings/PermissionsSettingsPage.tsx"
+    },
+    {
+      "chunk": "PrivacySettingsPage-Cz99Ud6a.js",
+      "source": "apps/electron/src/renderer/pages/settings/PrivacySettingsPage.tsx"
+    },
+    {
+      "chunk": "ProjectInfoPage-CmWe8x-U.js",
+      "source": "apps/electron/src/renderer/pages/project/roadmap-ui.tsx"
+    },
+    {
+      "chunk": "ProjectInfoPage-CmWe8x-U.js",
+      "source": "apps/electron/src/renderer/pages/project/ProjectTimeline.tsx"
+    },
+    {
+      "chunk": "ProjectInfoPage-CmWe8x-U.js",
+      "source": "apps/electron/src/renderer/pages/project/ProjectRequirements.tsx"
+    },
+    {
+      "chunk": "ProjectInfoPage-CmWe8x-U.js",
+      "source": "apps/electron/src/renderer/pages/project/ProjectInputs.tsx"
+    },
+    {
+      "chunk": "ProjectInfoPage-CmWe8x-U.js",
+      "source": "apps/electron/src/renderer/pages/project/ProjectAiPanel.tsx"
+    },
+    {
+      "chunk": "ProjectInfoPage-CmWe8x-U.js",
+      "source": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx"
+    },
+    {
+      "chunk": "RadarPage-CPet1O6O.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/radar/RadarPage.tsx"
+    },
+    {
+      "chunk": "RuntimeSettingsPage-F_jIA0F4.js",
+      "source": "apps/electron/src/renderer/pages/settings/secret-refs-ui.tsx"
+    },
+    {
+      "chunk": "RuntimeSettingsPage-F_jIA0F4.js",
+      "source": "apps/electron/src/renderer/pages/settings/SecretRefsSection.tsx"
+    },
+    {
+      "chunk": "RuntimeSettingsPage-F_jIA0F4.js",
+      "source": "apps/electron/src/renderer/pages/settings/RuntimeSettingsPage.tsx"
+    },
+    {
+      "chunk": "SearchPage-BWQ6yg5h.js",
+      "source": "apps/electron/src/renderer/pages/SearchPage.tsx"
+    },
+    {
+      "chunk": "SecuritySettingsPage-DZ9Qv6Fa.js",
+      "source": "apps/electron/src/renderer/pages/settings/security/SecuritySnake.tsx"
+    },
+    {
+      "chunk": "SecuritySettingsPage-DZ9Qv6Fa.js",
+      "source": "apps/electron/src/renderer/pages/settings/security/security-actions.ts"
+    },
+    {
+      "chunk": "SecuritySettingsPage-DZ9Qv6Fa.js",
+      "source": "apps/electron/src/renderer/pages/settings/security/security-validation.ts"
+    },
+    {
+      "chunk": "SecuritySettingsPage-DZ9Qv6Fa.js",
+      "source": "apps/electron/src/renderer/pages/settings/SecuritySettingsPage.tsx"
+    },
+    {
+      "chunk": "ServerSettingsPage-KGj624fi.js",
+      "source": "apps/electron/src/renderer/pages/settings/native-sidecar-health.ts"
+    },
+    {
+      "chunk": "ServerSettingsPage-KGj624fi.js",
+      "source": "apps/electron/src/renderer/pages/settings/ServerSettingsPage.tsx"
+    },
+    {
+      "chunk": "ShortcutsPage-CItSGgK6.js",
+      "source": "apps/electron/src/renderer/pages/settings/ShortcutsPage.tsx"
+    },
+    {
+      "chunk": "SkillInfoPage-CNptVikx.js",
+      "source": "apps/electron/src/renderer/pages/SkillInfoPage.tsx"
+    },
+    {
+      "chunk": "SourceInfoPage-r5Dbu9cF.js",
+      "source": "apps/electron/src/renderer/pages/SourceInfoPage.tsx"
+    },
+    {
+      "chunk": "TasksPage-DYLXATbq.js",
+      "source": "apps/electron/src/renderer/pages/tasks/atoms.ts"
+    },
+    {
+      "chunk": "TasksPage-DYLXATbq.js",
+      "source": "apps/electron/src/renderer/pages/tasks/parts.tsx"
+    },
+    {
+      "chunk": "TasksPage-DYLXATbq.js",
+      "source": "apps/electron/src/renderer/pages/tasks/QuickEntry.tsx"
+    },
+    {
+      "chunk": "TasksPage-DYLXATbq.js",
+      "source": "apps/electron/src/renderer/pages/tasks/MoveDialog.tsx"
+    },
+    {
+      "chunk": "TasksPage-DYLXATbq.js",
+      "source": "apps/electron/src/renderer/pages/tasks/TaskDetail.tsx"
+    },
+    {
+      "chunk": "TasksPage-DYLXATbq.js",
+      "source": "apps/electron/src/renderer/pages/TasksPage.tsx"
+    },
+    {
+      "chunk": "TerminalSurfacePage-Bh8m1U-u.js",
+      "source": "apps/electron/src/renderer/pages/TerminalSurfacePage.tsx"
+    },
+    {
+      "chunk": "WorkspaceSettingsPage-DDjZmqvX.js",
+      "source": "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx"
+    },
+    {
+      "chunk": "desktop-settings-session-BQdzCqF0.js",
+      "source": "apps/electron/src/renderer/pages/settings/desktop-settings-session.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/ChatPage.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/home/dashboard-layout.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/agents/agent-center-model.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/decisions/decisions-model.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/decisions/decisions-store.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/radar/radar-model.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/radar/radar-store.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/home/home-data.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/home/widget-kit.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/home/QuickTaskInput.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/home/widgets.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/HomeFrontPage.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/settings/settings-pages.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/settings/SettingsOverviewPage.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "packages/shared/src/pages/types.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/page-visuals.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/grant-visuals.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/PageGrantRequestDialog.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/PageFrame.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/DeletePageDialog.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/PageGrantsDialog.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/PageSourceAuthBanner.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/SharePageDialog.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/components/pages/PageView.tsx"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/promo-slot.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/viewport-band.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/platform/useModeHotkeys.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/focus/focus-model.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/focus/focus-summary.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/background.ts"
+    },
+    {
+      "chunk": "main-5xh0A_22.js",
+      "source": "apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx"
+    },
+    {
+      "chunk": "note-ai-CNWW5VnN.js",
+      "source": "apps/electron/src/renderer/pages/notes/note-ai.ts"
+    },
+    {
+      "chunk": "settings-rox2-surface-CQbfgP7s.js",
+      "source": "apps/electron/src/renderer/pages/settings/settings-rox2-surface.ts"
+    },
+    {
+      "chunk": "task-model-BvqWuYDM.js",
+      "source": "apps/electron/src/renderer/pages/tasks/task-model.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/identity/types.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/pages/connections-ui.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/context-keys/evaluate-when.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/context-keys/service.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/panels/ordering.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/panels/registry.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/modes/registry.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/workbench/extra-screen-flags.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/workbench/flags.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/workbench/harness-skip-list.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/commands/registry.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/resources/registry.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/identity/os-discovery-host.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/core/src/platform/agent-teams/store.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "packages/shared/src/pages/validation.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/chrome-density.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/registry.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/pages/extra-screens/ExtraScreensRailGroup.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/ActivityRail.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/pages/connections-list.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/connection-inspector-model.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/pages/BrowserPanelPage.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/inspector-model.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/inspector-layout.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/InspectorHost.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/layout-snapshot.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/panel-registry-state.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/core-panels.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/KnowledgeInspectorPanel.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/conation-inspector-model.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/conation-panels.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/ConationInspectorPanel.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/conation-notes-panels.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/ConationNotesPanel.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/conation-fund-panels.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/ConationFundPanel.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/conation-board-panels.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/ConationBoardPanel.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/conation-mail-panels.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/conation/ConationMailPanel.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/surface-tab-model.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/PanelHost.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/inspector-suppression.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/workbench-chrome.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/modes-seed.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/mode-registry-bootstrap.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/SurfaceTabs.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/pages/inbox/inbox-model.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/ModeBar.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/status-model.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/StatusBarHost.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/omnibox-helpers.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/Omnibox.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/omnibox-providers.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/omnibox-conation.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/omnibox-bootstrap.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/OmniboxHost.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/workbench-rollout.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/WorkspaceSurfaceHost.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/index.tsx"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/mini-dashboard.ts"
+    },
+    {
+      "chunk": "team-labels-0t5tl75z.js",
+      "source": "apps/electron/src/renderer/platform/home-model.ts"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/note-views.ts"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/document-ia.ts"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/NotesViewHost.tsx"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/NotesDocumentChrome.tsx"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/NotesReadingChrome.tsx"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/VaultIndexHealthPanel.tsx"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/VaultInsightsPanel.tsx"
+    },
+    {
+      "chunk": "wiki-autocomplete-C9ulQiZ5.js",
+      "source": "apps/electron/src/renderer/pages/notes/wiki-autocomplete.ts"
+    }
+  ],
+  "htmlEntries": [
+    "apps/electron/dist/renderer/browser-empty-state.html",
+    "apps/electron/dist/renderer/browser-toolbar.html",
+    "apps/electron/dist/renderer/index.html",
+    "apps/electron/dist/renderer/playground.html",
+    "apps/electron/dist/renderer/voice-overlay.html"
+  ],
+  "artifactCount": 1618,
+  "sourceMapArtifacts": [
+    {
+      "path": "apps/electron/dist/renderer/assets/AccountSettingsPage-DRiCMujH.js.map",
+      "bytes": 33153,
+      "sha256": "0da04a018e458919c08cba7ec5f231b50aa0dd2fbc2b50d4e91dc16ef1040554"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/AccountsSettingsPage-CsOLUvgR.js.map",
+      "bytes": 49988,
+      "sha256": "54932dcbee57d0bf19a6bae80052b408ae8f1c575e579c4aacfbd56c3eb680d5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/AgentCenterPage-CjqeZYdg.js.map",
+      "bytes": 37326,
+      "sha256": "b84f0cff106bf53547db46d7db73a0f9a83d1a527a68531b4653d8c949646c25"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/AiSettingsPage-Dx0ZhkQi.js.map",
+      "bytes": 95669,
+      "sha256": "8e2ffae5f564c190ad3a829c42a9bd2ae70b1ca777162e004b38c7948bcf68fa"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/AppSettingsPage-D0dnV4tk.js.map",
+      "bytes": 37753,
+      "sha256": "d5bc0ac9b036cfac5a86498e9b40bb44b655db27b840c559691a7d1a207cc45c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/AppearanceSettingsPage-4Oq8dAAo.js.map",
+      "bytes": 90000,
+      "sha256": "4f4811d037c2d54f987cfcde79d136087df2fbe2a90be18f01c99189172ae6af"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/AutomationEditor-apFXab1z.js.map",
+      "bytes": 82163,
+      "sha256": "fd059965b52fae67fd3530cca6c84578c5465f32b676f298749b40ef5d1d4cce"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/BrowserPreview-ry9B1Eww.js.map",
+      "bytes": 20594,
+      "sha256": "cf0709d4be8d6ff328c23b060fd2fe56bef3e3596e9633385ae016a73484914f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/CloudRunSurfacePage-C3E1ibHp.js.map",
+      "bytes": 13603,
+      "sha256": "ed231a986f64f3e6b99ce54e915924367769e266c9635940e0d228523e10ea06"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/CloudRunsSettingsPage-B-rdIp_v.js.map",
+      "bytes": 33207,
+      "sha256": "319cd14bf24860665a1adc57076e2ae19d33a145c9b82f251852c89d9184be82"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ConnectionsPage-CsQs9iWA.js.map",
+      "bytes": 110020,
+      "sha256": "67451e562969d477db1cbaba7f52f3cd410f9fccb1b6d702a5825c4e6e17e1a5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ContextSettingsPage-e2a_v4JT.js.map",
+      "bytes": 62203,
+      "sha256": "a211e26e10c18fb65551a31acfc0cf881ef6a5c0f7901ffa834ab41cfa7de444"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/DecisionsPage-u_zgLdXS.js.map",
+      "bytes": 45969,
+      "sha256": "095776edaa68c5defbdb8e2fc369e343b5181ab22a7cad917b2350e936cbe8b1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/DossierPage-CpjEajX_.js.map",
+      "bytes": 68367,
+      "sha256": "ccfe1e9a051972e542e5092bbdbdc0b3b168baaa275204d4cf753107dba3810c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ExtensionSurfacePage-B2-tY-cT.js.map",
+      "bytes": 10872,
+      "sha256": "d3cb6ab278303832e3620701f8a5ebd0d6793cfabdaa717a809e50b773b388b2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ExtensionsSettingsPage-BOQIMyxY.js.map",
+      "bytes": 82767,
+      "sha256": "db4b09c00d7e505c93c0800ed0aa44cb18e3e38c1f4355eaa9e9ca2abddc4f1c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ExtraScreenHost-DRRAuC5P.js.map",
+      "bytes": 14491,
+      "sha256": "01c29124b2c59b00a988f11fb628a290bb9f1c137823f02d5a0b8f6b4c2d09bb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/FeedPage-DNzAjoLk.js.map",
+      "bytes": 185041,
+      "sha256": "a144229efc71abae053c7e10724973b2dd7971d9119cb6e72ac8d7f08a363898"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/FocusPage-CnOhVvtI.js.map",
+      "bytes": 27337,
+      "sha256": "0abc3829dc0614de01419230d4dd6a49c969ad94d91ae983f4e01ef4f0eece9d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/HeaderIconButton-D_PAq02Z.js.map",
+      "bytes": 7535,
+      "sha256": "df6a6cf47e7d8508d50a4361c74497042267e55dc1f7da2306e3c8315715dd6d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ImportSettingsPage-BoDbnErq.js.map",
+      "bytes": 53719,
+      "sha256": "e0d6b050657fab425be40749bd4cbe0d4d6316a0e62145e90c29435c6c6923eb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/InboxPage-BM2_F_EY.js.map",
+      "bytes": 159324,
+      "sha256": "979ed53149bdb34b3b9b3a04a5a68e1cb022955cf3cbf3bc5a8b100ec84de4a1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/InputSettingsPage-6M7ax60j.js.map",
+      "bytes": 29808,
+      "sha256": "158717c6f7efdd03521dff635649eb34e6312d6e6aeee08b3121c818d8949c4d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/KanbanBoard-DPjzSRo5.js.map",
+      "bytes": 134367,
+      "sha256": "8ca7804b98d7d6dea15112c4f43144f0cf64b483e01dd53026f47a5f4aabaa77"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/KanbanBoardContainer-D9UTYbdR.js.map",
+      "bytes": 204371,
+      "sha256": "cfa0c554e770caf74bf8dc04ed9abd95b408f2ca7d55e90387fc7e5d582c9c57"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/KnowledgeDiff-CbDTRFcW.js.map",
+      "bytes": 23317,
+      "sha256": "3aecf1e9dbc98f08e8c34c95f81ad9f48560d531bd65aece0a40a31ce6944138"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/KnowledgeEntityPage-BMTEfxM3.js.map",
+      "bytes": 9764,
+      "sha256": "c92d09a15eed84dd1bdc241aabe052c7b6dcfaabad1eb99e3388b199d86990e8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/KnowledgeSettingsPage-CXg0P7hs.js.map",
+      "bytes": 23896,
+      "sha256": "0b8f9b1c899e30dce9fd27bf9b3fadf13b4b5869f18e1542b2a5ff025dbea7a7"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/KnowledgeSurfacePage-Bj4m7_QT.js.map",
+      "bytes": 33048,
+      "sha256": "13c65c105cc5102993752ddc9751ac75b319b01f665b106aebc904028d46419c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/LabelsSettingsPage-Ce_0q9wL.js.map",
+      "bytes": 35321,
+      "sha256": "55d3d34bdbfaf47ea4ecb62311b9200cd2271ba25ddd1397dbba83952464149f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/MarketplaceSettingsPage-BZNzYQSk.js.map",
+      "bytes": 187540,
+      "sha256": "15297f56306d88980787e016d93b42dcd31e5d50e8a18b45f0b73bbfa92f39a8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/MeetingsPage-CuHRRx-y.js.map",
+      "bytes": 156081,
+      "sha256": "7c1e2a32fc0ab42712fdb360e36d7b877d71657e46348bbbd04240e394adc35c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/MessagingPlatformIcon-C_9ZrecY.js.map",
+      "bytes": 10081,
+      "sha256": "993d7c23e4e9df59fcd5ad83b37feb5bfb778547da09070c6fcdd97dc8edec63"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/MessagingSettingsPage-BPcAU64O.js.map",
+      "bytes": 143086,
+      "sha256": "ca55e8cb8e89e6ebc2a8b8b609b6239ee2f44078cddac292ef7d881cdc0c7d2b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/MindMapHost-BUF7OWxz.js.map",
+      "bytes": 262926,
+      "sha256": "098f0ad7ac90f9255ae2212ecc308b7e384621c8b6cf791b8a646fe4af26f3d5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ModeScreen-CVg-7uri.js.map",
+      "bytes": 15859,
+      "sha256": "7b8941941b9c1b786ed6667a29aa7364c11ae2b6cf228aa579a2c08ec164a470"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/NotesPage-DjHM-WOY.js.map",
+      "bytes": 828048,
+      "sha256": "719b7c74fc491145fca39498839336cf9c4739bb5caf8360ee58623c897985d2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/OrganizationsSettingsPage-WfWFfLaW.js.map",
+      "bytes": 59365,
+      "sha256": "a7cba314ccec883a75ad4d719902a133a2091b37b792ac600c67625f0ddac404"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/PagesHome-YKHuZ2lg.js.map",
+      "bytes": 27300,
+      "sha256": "ee3b2641f893242936b004c23cf5618aba24000f164be41f3fee22b061d6d2d2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/PermissionsSettingsPage-C2tpOMFn.js.map",
+      "bytes": 24795,
+      "sha256": "c43bf38d208405f6e1fca3ade5d3f731015d36f449fed972643bc910be279ca4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/PrivacySettingsPage-Cz99Ud6a.js.map",
+      "bytes": 13090,
+      "sha256": "a22c1cd122b02a238f5c31eba705021e0613b0b734f6f2134690ff0fa53a75b7"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ProjectInfoPage-CmWe8x-U.js.map",
+      "bytes": 402290,
+      "sha256": "4107930be79cc166373c6640f3df80b10afd40e77461e706bfed5f9ee5793f4d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ProjectMultiSelectFilter-CWOOqiOf.js.map",
+      "bytes": 6999,
+      "sha256": "01cca32f5d8363732de743653eeb3f8100b9e690f9c26d013c4c6d6a76a65904"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/RadarPage-CPet1O6O.js.map",
+      "bytes": 34251,
+      "sha256": "c9ecb807532ed660808c2a1a67a5b6c6d5bf8b49c2d3c25bf7678a632d6cff60"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/RuntimeSettingsPage-F_jIA0F4.js.map",
+      "bytes": 70054,
+      "sha256": "f2177238bd050c4ae1f896191f3cf1fccaf99d72209c9eb0c4cf0629a00f964e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SearchPage-BWQ6yg5h.js.map",
+      "bytes": 16826,
+      "sha256": "3c8986450909fc023db4d9cdbfd595f1c5c2246397fc8860ecee3b58c310b0e0"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SecuritySettingsPage-DZ9Qv6Fa.js.map",
+      "bytes": 75484,
+      "sha256": "5c3faf373a2cf7084eb3fce91de3a29b6450bf9d480dcaa3f119e9266654dbc3"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ServerSettingsPage-KGj624fi.js.map",
+      "bytes": 25136,
+      "sha256": "ce8a51af7e361f133c426cd33f9b9929a86986cd75723c1cd3da9ecb6e169cac"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SessionGitOutline-91vo43rf.js.map",
+      "bytes": 12363,
+      "sha256": "41954b4a5282c5a04945fd4b58d4158927031bbb92bc00f96b10e567f9ddf0eb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SessionTableHost-Cet1L4We.js.map",
+      "bytes": 63656,
+      "sha256": "d3beb410d4a5b1720262802e8eb104957a9588130738e2e0bd5c1a06baabedbc"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SessionTableRow-CUCZJj2l.js.map",
+      "bytes": 35458,
+      "sha256": "ac458aa7ffbb1f5df9fdba7d415df227e5c8df997dbfb92d997ae282eaa8efbf"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SessionWorkflowEditor-BjORFvkM.js.map",
+      "bytes": 193773,
+      "sha256": "c899ff5655439d76ab4d18dae1fdc28ea05a97e61c1bb9a8523adc48bd20f116"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ShortcutsPage-CItSGgK6.js.map",
+      "bytes": 8574,
+      "sha256": "9dc10d2f0134fbc9d16ff29249030aca9d47e83c01cf4ee9941a657df8845382"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SkillInfoPage-CNptVikx.js.map",
+      "bytes": 25915,
+      "sha256": "1a490dd4a71801f510834689b21a17d8837da13258c61ec2d4ab7e61d90d2dfd"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/SourceInfoPage-r5Dbu9cF.js.map",
+      "bytes": 39102,
+      "sha256": "8df6c47d45aae8dda382a5454424286bcbc1497d2310684522fd0758c5787280"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/TasksPage-DYLXATbq.js.map",
+      "bytes": 276803,
+      "sha256": "3060c412a455daeaf364a6aaaad85d8d6abc1f0e7933e9bc1d02850f35e30b3d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/TerminalSurfacePage-Bh8m1U-u.js.map",
+      "bytes": 4271,
+      "sha256": "3e63f74d942b3d2ffbdeb3b9e4ad67d648b5c09acf825a4f104ac2f2f4337ea0"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/WorkspaceSettingsPage-DDjZmqvX.js.map",
+      "bytes": 43276,
+      "sha256": "0307c7da54538d93c6a0949082011491b7f7a735df90633a6273e7d8b93a1942"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/_commonjsHelpers-DKzcA3ze.js.map",
+      "bytes": 109,
+      "sha256": "4032d4242fd82eb6698bc40f19899822819ab88daa8be6c709146187d0b30ba6"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/abap-BdImnpbu.js.map",
+      "bytes": 18835,
+      "sha256": "5002de2e446addf2d767c86be07463407918957f2e231d439c964e9b2f40766b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/actionscript-3-CfeIJUat.js.map",
+      "bytes": 19830,
+      "sha256": "9e219d38013da7449bde989c8393064f5267187c366138cf563674b726b31a0d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ada-bCR0ucgS.js.map",
+      "bytes": 70947,
+      "sha256": "f904fdb2715746a3403b200e74948d9120d207c9ce9715162f13797e7fc6e60c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/andromeeda-C-Jbm3Hp.js.map",
+      "bytes": 11886,
+      "sha256": "0fee770613610f7a584c6291df6d4cda8f60acaa1e870d1cee419e764f1f34f1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/angular-html-CU67Zn6k.js.map",
+      "bytes": 35392,
+      "sha256": "22b18026f845793b10880ea61d8dcef9af77b1c8d3e3b8de32d9b5a303d8c63b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/angular-ts-BwZT4LLn.js.map",
+      "bytes": 249304,
+      "sha256": "5434919184ef4984ce3dc02f0a12800037cc026e2aed4654363fb5d324dcc1de"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/anthropic-messages-DbXv4zqJ.js.map",
+      "bytes": 1014229,
+      "sha256": "e4474a91d23478c629d8572866ffe8011c0e58f44e7f36ee4339d6558f74c460"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/apache-Pmp26Uib.js.map",
+      "bytes": 15946,
+      "sha256": "13dbaddbbe2ebdf215d903f6683078faee94cb1b2ee563ed7a2f3b1bc024aedb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/apex-D8_7TLub.js.map",
+      "bytes": 65705,
+      "sha256": "589bbe5dda7bf7db72c115dc5ca6e913190f5149aef7c0df9b40c6b88449afcf"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/apl-dKokRX4l.js.map",
+      "bytes": 33314,
+      "sha256": "195661fabed8f72016e8148fe36a84748f8dcf6357378d88cca5eb36bc9a4d85"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/applescript-Co6uUVPk.js.map",
+      "bytes": 39337,
+      "sha256": "b0dfe4cd4a1aec4149f03f944010d9a751f2d4ec9415b559740c9d3868735eb5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ara-BRHolxvo.js.map",
+      "bytes": 9244,
+      "sha256": "5e5a976d9e832e4210790a8bcfa4bb80e2e28809523f2506d29544c71db64392"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/asciidoc-Dv7Oe6Be.js.map",
+      "bytes": 189085,
+      "sha256": "b3bf9751c2899875e94200535ec35167656ea8d44dfc6e2490ddf77b8fd2bce5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/asm-D_Q5rh1f.js.map",
+      "bytes": 52985,
+      "sha256": "c4016cd73bdd3ae206fffa7ffcd320caeeb3b7112ca1b718183a74168909a4aa"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/astro-CbQHKStN.js.map",
+      "bytes": 29122,
+      "sha256": "360e503acdb896749757072520b85775812e2578e55eb715e791b2213acf42ff"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/aurora-x-D-2ljcwZ.js.map",
+      "bytes": 17556,
+      "sha256": "8e1bd93dbeb0a33302fdfada241a21779686f791c7a5d96f949a8cd07cfab4ec"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/awk-DMzUqQB5.js.map",
+      "bytes": 7985,
+      "sha256": "d2817198b6930a07d81ff1f9f14cf1edb45068f1d5eeebfadd3355d5f436c249"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ayu-dark-CmMr59Fi.js.map",
+      "bytes": 26688,
+      "sha256": "b0c2acf8e50c6bbaaaeca062e752d6779703e12a4b0f0e9e585257c79a2ced94"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/azure-openai-responses-DMHDIMLJ.js.map",
+      "bytes": 25005,
+      "sha256": "d385b57b719759f6d422086ace983ed293055fab4e65d577c3967633eee5c57b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ballerina-BFfxhgS-.js.map",
+      "bytes": 81522,
+      "sha256": "0ae5205792c5954d3c098d35ecf23a246e9cc7b744dc55e1cec516ba553107e4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/bat-BkioyH1T.js.map",
+      "bytes": 17387,
+      "sha256": "d2cce44bcdc41d0bc675f12b15d29f96285c2866a851d40ff1b2b90d2385cd91"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/beancount-k_qm7-4y.js.map",
+      "bytes": 15034,
+      "sha256": "e98ea7588f557b434ed3b4506314a0a7df157d2c174120373f5e3c397d9f7e5e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/berry-uYugtg8r.js.map",
+      "bytes": 4834,
+      "sha256": "0b4a71fd9f0703116b7c3fa9e59d34106537c1d92e0aaf358c3424a8c8f4ac81"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/bibtex-CHM0blh-.js.map",
+      "bytes": 7017,
+      "sha256": "674fffb2f56cf455383c46aea4dc14174c8de4c3f8b29e59a6e18a876a4e9b9f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/bicep-Bmn6On1c.js.map",
+      "bytes": 7903,
+      "sha256": "e46c4d6d1e1c7b0a96a59b9e16160a458ebf452eb1479f109b9daaae1798eaf9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/blade-D4QpJJKB.js.map",
+      "bytes": 130932,
+      "sha256": "f424b1749c4d828e821b34ccf6053335abdc558f0a8556402ef1889f6e75f765"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/browser-CEJ-OIJq.js.map",
+      "bytes": 16441,
+      "sha256": "ffdf36f1fc137b17b31f2521e0c9576cce252ac174682787dbd43795e0604974"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/browser-empty-state-CUdwDCop.js.map",
+      "bytes": 3443,
+      "sha256": "71a355e17d6cf4deea19f16005dd8ecd98123fb3d6c692c3c47ef2a776773852"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/browser-toolbar-CfsIPxQi.js.map",
+      "bytes": 16710,
+      "sha256": "c6c662b998a991ce1463a8a212a012d8e23581347afe0c7e171b5adf511e3b50"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/bsl-BO_Y6i37.js.map",
+      "bytes": 37583,
+      "sha256": "2ab0d420d1f13ded49c3ae25b575280396c407ae059f6da91bb732c8011d78c3"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/c-BIGW1oBm.js.map",
+      "bytes": 95369,
+      "sha256": "7f78e51d1822ce76e01c45eb53a538763943cef70288b3378d40c3ea9140e0db"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/c3-VCDPK7BO.js.map",
+      "bytes": 36113,
+      "sha256": "ce5b46f5534013768e9b22bd044a7b8d27a944e0e5af85e666d79ce5c85b290f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/cadence-Bv_4Rxtq.js.map",
+      "bytes": 33575,
+      "sha256": "896caed7ba49d786867a9befbb16d0a1a65f85990ec587ff66f18a520826b1b2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/cairo-KRGpt6FW.js.map",
+      "bytes": 4515,
+      "sha256": "0dfad465e735a4e5cc5a4e7dc591223f936d24f2f8e719fdc49ee088357d37ba"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/catppuccin-frappe-DFWUc33u.js.map",
+      "bytes": 62005,
+      "sha256": "80ad9f0d2fefb9df04728f7bf51b84e3c05ce5359cb969488d719f73fc7a672d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/catppuccin-latte-C9dUb6Cb.js.map",
+      "bytes": 61999,
+      "sha256": "a931544686c673f45461b46c5767cda94c9b8cb487cd0d2dca4c764604a06ae4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/catppuccin-macchiato-DQyhUUbL.js.map",
+      "bytes": 62022,
+      "sha256": "2c1f9a8e93d76891fb2d29679e6d955c6452e4623f1d76d058f9c2a3c3ed4cbc"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/catppuccin-mocha-D87Tk5Gz.js.map",
+      "bytes": 61998,
+      "sha256": "523ab10b63465bd4bec86a34e1d5f7d9de44a83af001a5e25c8dfd01234c434b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/clarity-D53aC0YG.js.map",
+      "bytes": 19938,
+      "sha256": "8788f1dac4027836959bb4e1c20f0228f248313e2659dee71c4b432dedf1e583"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/client-cAEYnBoD.js.map",
+      "bytes": 637617,
+      "sha256": "7a3b6d34441f6f8496c5689fab9c1433283ace4494b0b80c7c8dc63f48928ea4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/clojure-P80f7IUj.js.map",
+      "bytes": 9279,
+      "sha256": "4fcec8dca4371bad8924364befef31f84884339b47a31f43c1f688763f9f9f16"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/cmake-D1j8_8rp.js.map",
+      "bytes": 11258,
+      "sha256": "f1bd22b7f015ef4ecc58bcc0a960fe3efce0973021876638905901330e6e8dd1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/cobol-nwyudZeR.js.map",
+      "bytes": 47352,
+      "sha256": "b007b9673c14650eb120072db4e3d25a264324ffbb37e692a972d67f04283c37"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/codeowners-Bp6g37R7.js.map",
+      "bytes": 1078,
+      "sha256": "7cf69f772cfffb5eaab49afaf25bde3179275804b2aeed54222b6e991e98b7fe"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/codeql-DsOJ9woJ.js.map",
+      "bytes": 36001,
+      "sha256": "df367af89c0824cefb26171ff0978c4e4e58abb98577b9ddeb6476777cc8129a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/coffee-Ch7k5sss.js.map",
+      "bytes": 36060,
+      "sha256": "0f78e1a6d52b6506964a9a71200739c034a57f5db5af39dbdf77ec56b0812b97"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/color-picker-Mly-2yHx.js.map",
+      "bytes": 33200,
+      "sha256": "773f7468e4295aeb71459f16cf3ce9fb99bd93fc1a35c3523866b88f9c0b5533"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/common-lisp-Cg-RD9OK.js.map",
+      "bytes": 26677,
+      "sha256": "fe15533dcfebe09cb2252d9c56e3d5f07f0000d978931a9898fb055a74635d2d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/coq-DkFqJrB1.js.map",
+      "bytes": 7502,
+      "sha256": "3c3ff08c7064182145c58fda991c5e8ea0c3dc7fff62b858a240e173b9e0a248"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/cpp-CofmeUqb.js.map",
+      "bytes": 816076,
+      "sha256": "63b8fcf1cf9ef3703cf199d8513e7b88d5480b571cd7d3567e89a1d9f166e4f0"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/crystal-tKQVLTB8.js.map",
+      "bytes": 41156,
+      "sha256": "05c7290d3b824b3b21957e7719d97cb985823bfb6d82e80fccdcaea543a1f847"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/csharp-K5feNrxe.js.map",
+      "bytes": 122994,
+      "sha256": "3ef842e1890d63498403e6e9aef9a34e1f1b80b2b02fdf7376641e136b4b06f1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/css-DPfMkruS.js.map",
+      "bytes": 60613,
+      "sha256": "fb96192b5aaa445f35be5aaf16a90d0752c5865af4fd9596269fd5833494e302"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/csv-fuZLfV_i.js.map",
+      "bytes": 1982,
+      "sha256": "c80a8cf73811ed971c312a57399e4c94ca759041711ed95b756a14f9d37bf432"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/cue-D82EKSYY.js.map",
+      "bytes": 23784,
+      "sha256": "79dde741379d5fe656158ec0e316bfa17a139ae0a7579a404d823dd49d29e83d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/cypher-COkxafJQ.js.map",
+      "bytes": 8430,
+      "sha256": "d60de8633ddbaae1e8fb3e801feb3aefb7ab5322ff647e94fa2d901ea3b92fa5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/d-85-TOEBH.js.map",
+      "bytes": 62675,
+      "sha256": "911539498efc2f9fb032a1a9ff945cc4e95fd80c060f0c4ac92700d2347ba6f9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/dark-plus-C3mMm8J8.js.map",
+      "bytes": 12404,
+      "sha256": "5107fdcc3b7ce6ae298d479e97e43868c2b0d8ecbb51793138bba2b8cb1394ed"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/dart-CF10PKvl.js.map",
+      "bytes": 11516,
+      "sha256": "a4645b948b45a390010c7816d65680f5028b414c6fb772766b32bcab055e0e2c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/dax-CEL-wOlO.js.map",
+      "bytes": 6756,
+      "sha256": "a588e9fd795c188ecaf6c97b70d76eeb7f0d0cf3b55059967eb364082958d7e7"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/deferred-tools-BH-n8mgx.js.map",
+      "bytes": 2589,
+      "sha256": "282cad694dfbc49ca9ff36dae01ccb0b5d7c588e23a1fc912d9c61ce62e6faed"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/desktop-BmXAJ9_W.js.map",
+      "bytes": 2750,
+      "sha256": "03b6bf12e8d5ffe96c80b554b07c7405b66fdd094fb427d2b432aa291fdfdefa"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/desktop-settings-session-BQdzCqF0.js.map",
+      "bytes": 7232,
+      "sha256": "4bd698a7f17ee4e3ed6b6f5558a637fbd28f8b125cac9d786d260497e5283bc1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/diff-D97Zzqfu.js.map",
+      "bytes": 3849,
+      "sha256": "dc30a93c59f462eba8b6c30462417e21bfd50f48b1e4d258779819d671bb17fa"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/docker-BcOcwvcX.js.map",
+      "bytes": 2635,
+      "sha256": "a7b5016829b06f00393775053329f5c14699510f6099ac6be95f94c97a1967ac"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/dotenv-Da5cRb03.js.map",
+      "bytes": 2323,
+      "sha256": "022042be12ecf2ab37ddcc61093a4396b82f8f1201cf5e814636e5f4db3fc876"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/dracula-BzJJZx-M.js.map",
+      "bytes": 27476,
+      "sha256": "7f1399acdccdc5ef3017d7635652a78babae7d62400fa941cb67c9477b39b1a8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/dracula-soft-BXkSAIEj.js.map",
+      "bytes": 27505,
+      "sha256": "c5be84529a0386536a0a984bbb2b0c5790f930127c21894d9d01fd73077f714f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/dream-maker-BtqSS_iP.js.map",
+      "bytes": 15110,
+      "sha256": "d6aea81110e7e39018d6ba8fd22da5b5de1d7b06784e1318fbfe0c5ce55a0fee"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/edge-BkV0erSs.js.map",
+      "bytes": 3532,
+      "sha256": "7a86b084c1ed5bd042518cdf8d1b4058aecc1ee452ac1ebbd37c0ce7e313ccac"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/elixir-CDX3lj18.js.map",
+      "bytes": 23125,
+      "sha256": "944ab5efe7c3f3c2c36738f40dd428730eb53627cab0fa38d2912ea4c3f279eb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/elm-DbKCFpqz.js.map",
+      "bytes": 16017,
+      "sha256": "94a780f003f351b84a30dd5185b42b01b899103ee2c3c62c20159c2699631ab9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/emacs-lisp-C9XAeP06.js.map",
+      "bytes": 789799,
+      "sha256": "1ab4ed9b0779d2ab94b65ea74d62728e69ae744fc752508367d27a5a26704cdc"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/empty-state-prompts-M9iEjfbd.js.map",
+      "bytes": 3502,
+      "sha256": "5e90f5be52494a59300b0593262518037b8169acd649fc9dffa9e3b0da40f7c4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/erb-BOJIQeun.js.map",
+      "bytes": 3277,
+      "sha256": "bac70cdee47e0181e6a544fe008262f761dbbdd77cdb0d40d312343b619329af"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/erlang-DsQrWhSR.js.map",
+      "bytes": 51532,
+      "sha256": "854ea84b98ec8b7251bb80c9a78bbad9ecce1b4d346908ac214c67be4ec268b9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/error-body-xORG9LSo.js.map",
+      "bytes": 8356,
+      "sha256": "c11ae045f8edc8aa3e8718cdb54d76106fb9c51af0c398d265be04d337876af1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/everforest-dark-BgDCqdQA.js.map",
+      "bytes": 68244,
+      "sha256": "f0eaff7fa18de272a923794b3de9e23da127df88cb038af23a51cfbba2a52548"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/everforest-light-C8M2exoo.js.map",
+      "bytes": 68251,
+      "sha256": "280302e175b308f040ba1581118bfc22db2407fa023a1cfd1538092202ea38ea"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/fennel-BYunw83y.js.map",
+      "bytes": 6412,
+      "sha256": "5c4f6821a24dc5bda13df7d497659155b078095974bc5f565874412b0deebb40"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/fish-BvzEVeQv.js.map",
+      "bytes": 16850,
+      "sha256": "6ee8cab43ed90511abf8f57faea3077de32a17a1ea1e10eadd892a1483b3d14a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/fluent-C4IJs8-o.js.map",
+      "bytes": 5196,
+      "sha256": "4185b3c0b0b014636c541dbc84d80bd4e0abcc427226ebd81173e5066a051c0f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/fortran-fixed-form-CkoXwp7k.js.map",
+      "bytes": 2703,
+      "sha256": "cc679566698a6acd86c3dc6cb686104023e10b68a9d8a214f9c2205e816f4239"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/fortran-free-form-BxgE0vQu.js.map",
+      "bytes": 124050,
+      "sha256": "880131e65882677cb4dfc63d1ea73bf1ead3a937051c22763c497fc1df54109a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/fsharp-CXgrBDvD.js.map",
+      "bytes": 35848,
+      "sha256": "d4fc6a43203248b08879745c790ac277d14046ee1492f65426ded07ae321b36c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gdresource-B7Tvp0Sc.js.map",
+      "bytes": 7690,
+      "sha256": "029f41455ae2a2162c56671d9bba56cce41a3210b571856345dd06f60ce24c29"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gdscript-DTMYz4Jt.js.map",
+      "bytes": 26221,
+      "sha256": "9627affbc7b85e84d0253260ff3553046a2367b9ab0dce1eda7e9937364c6d8e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gdshader-DkwncUOv.js.map",
+      "bytes": 9182,
+      "sha256": "d2b53d64304d036ab9d0d3705983a230f9208c4d533ca100d319a8c73e7212e7"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/genie-D0YGMca9.js.map",
+      "bytes": 4859,
+      "sha256": "54d5a278b910f4cbd776b6fed4d4eac5101c51ecb9975a424b25795baf6ea3a6"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gherkin-DyxjwDmM.js.map",
+      "bytes": 13117,
+      "sha256": "e52caa9329320f391d8bb025b555bccd178fffe982871a1adf309487dcd65735"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/git-commit-F4YmCXRG.js.map",
+      "bytes": 2016,
+      "sha256": "dd6bb97a47e41934839c34c9116f9f5684e1ca1d6590f9d1df676e26b4e08cc9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/git-rebase-r7XF79zn.js.map",
+      "bytes": 1664,
+      "sha256": "974b1aa6369b68ac682c50d2f4de4a1d7677a9f6c5d5affbd3fe1d6db896e7ff"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-copilot-headers-CrHPofPv.js.map",
+      "bytes": 2017,
+      "sha256": "a16f52a62937f4ac4a07a3c9b280aab4b7a0d06c29a66f9c035ace01cf418f95"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-dark-DHJKELXO.js.map",
+      "bytes": 15668,
+      "sha256": "cc838c61b567b930932f1c5f9282d7a626f591780d6ee870013f867331096e8b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-dark-default-Cuk6v7N8.js.map",
+      "bytes": 19641,
+      "sha256": "862f458eab38c09203d3691c8f9f38c5eca82b515bd58b07d53b707d105730bc"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-dark-dimmed-DH5Ifo-i.js.map",
+      "bytes": 19635,
+      "sha256": "fb810aea46862af70b3b501174e7cad7466ce22084ac866a4f96b1f6ac859a8a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-dark-high-contrast-E3gJ1_iC.js.map",
+      "bytes": 19872,
+      "sha256": "efe473dbc40ddf24d5966947f986ae24073009cd03fb2a9f2463d93a08cb2fa2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-light-DAi9KRSo.js.map",
+      "bytes": 15403,
+      "sha256": "fa1f0a8b0a86e99f03675bdeda2f5c1aac9a27b7129d0e5cb36d4a14fd3f79cd"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-light-default-D7oLnXFd.js.map",
+      "bytes": 19264,
+      "sha256": "682c85ec607ebe46cf189fdaa0688a4e306d88b47b72282f882fcbc8ca8082a1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/github-light-high-contrast-BfjtVDDH.js.map",
+      "bytes": 19442,
+      "sha256": "f9fc13386df8d9d71a4b55dcd4057902e190b6e15e2d0af391192628a89a7a49"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gleam-BspZqrRM.js.map",
+      "bytes": 3980,
+      "sha256": "8563bc8183595fcf763a29d960e738af78ee604493cc0fa8a36a08a4d283e7a5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/glimmer-js-Rg0-pVw9.js.map",
+      "bytes": 28584,
+      "sha256": "c23eca7649a9e9f22a8b2aaba39b779ba0220bc4b2f3795174cdebdf3842499c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/glimmer-ts-U6CK756n.js.map",
+      "bytes": 28584,
+      "sha256": "85706b4d3a6e8073b200b32c13084af33f418517b6cc904590b4300efd6e3bf3"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/glsl-DplSGwfg.js.map",
+      "bytes": 4364,
+      "sha256": "b13da59a630239426ad0e07d64984a13b5869f2bbd4e0dbeda1b19e7e0b06b52"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gn-n2N0HUVH.js.map",
+      "bytes": 5265,
+      "sha256": "3067bb354ea4a7bce7e6aec0e7975ae8800210da957812dbbfb6f6bce58710b1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gnuplot-DdkO51Og.js.map",
+      "bytes": 20812,
+      "sha256": "387c3da0a67c7b2e4d916fdbc0139f4c740531611cf318b50017a6df74e3cdb1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/go-Dn2_MT6a.js.map",
+      "bytes": 66530,
+      "sha256": "54a3a1581f915533c10d3d32e19508b8e90ef2ed18faa2f4567bf2d101275bdf"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/google-generative-ai-CIC7AOCV.js.map",
+      "bytes": 28087,
+      "sha256": "bb2ba724d3e91207cb2032bca37e2a72f55113c04172cb4d4e5e278af241912c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/google-shared-D6WpgPB2.js.map",
+      "bytes": 1290661,
+      "sha256": "0a661d51cb5b4c005f3d29306a8f3ec80679ac2f8d67535a8f5722e6d9c84033"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/google-vertex-Bo5jViSf.js.map",
+      "bytes": 31692,
+      "sha256": "4b4dcdbf53ef15ff6ccc1998445a1540b458ad95f37b52ef07825a5c983b921c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/graphql-ChdNCCLP.js.map",
+      "bytes": 25447,
+      "sha256": "a4646cd5bc0c41b320807b92703d6229f73a4e931e7d369653ac75abdf3c88ae"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/groovy-gcz8RCvz.js.map",
+      "bytes": 27516,
+      "sha256": "07433990cead203bb63c6c858db5bbc2c67b2116ae4a191d66af8a74980fab03"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gruvbox-dark-hard-CFHQjOhq.js.map",
+      "bytes": 30551,
+      "sha256": "b3a88eeae6b01800dea8ab3bd671727e256690217926f544973225eb15281fe7"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gruvbox-dark-medium-GsRaNv29.js.map",
+      "bytes": 30563,
+      "sha256": "920dff645c440a777f5649856093ec6e2571368a9d59816ebb4748dbe99281da"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gruvbox-dark-soft-CVdnzihN.js.map",
+      "bytes": 30551,
+      "sha256": "9ba1c2d530003eae4379e470bb1b52a6cc68a68f95bc650988ccaca453dab392"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gruvbox-light-hard-CH1njM8p.js.map",
+      "bytes": 30558,
+      "sha256": "98286bc79ffd2f84fcc96b925275be106188beae12efe20d1219a2467f53ca42"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gruvbox-light-medium-DRw_LuNl.js.map",
+      "bytes": 30570,
+      "sha256": "b4519d6422b6c938d5245372e4e73335a24fd2bea4d81f8bd9afdbfc213f718f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/gruvbox-light-soft-hJgmCMqR.js.map",
+      "bytes": 30558,
+      "sha256": "e3cd755cae9ebddffacb43be36da38e7d326c19de532026256fd9cdd7541a071"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hack-CaT9iCJl.js.map",
+      "bytes": 97280,
+      "sha256": "a7bf111a125e5986e8e6a77a0972265657dbe91eb1638d2710756118e5a673b9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/haml-B8DHNrY2.js.map",
+      "bytes": 12353,
+      "sha256": "01c0f5cb3fe506d91ebcd4f726b1b47516020223870debc31efe4bdf091ef621"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/handlebars-BL8al0AC.js.map",
+      "bytes": 17364,
+      "sha256": "3ae046c89b6af8ab7c37a7ab94c2968332ab8df79b2dc4f68028ef7bc84001a1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hash-DMDecQcg.js.map",
+      "bytes": 1275,
+      "sha256": "6384a7dc1d0a841c38de01d0af2da207dc1985dc211b43213a76c579efed4942"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/haskell-Df6bDoY_.js.map",
+      "bytes": 57839,
+      "sha256": "c11f37844aeb8f476abc51b9cb834ca7ad5949e3b897b79e3e3dd6740024faf7"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/haxe-CzTSHFRz.js.map",
+      "bytes": 49506,
+      "sha256": "92c1662d378e48109e02240de0e6a76c0153e74bb0c32d19e47fe8fc2dafdd2e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hcl-BWvSN4gD.js.map",
+      "bytes": 14783,
+      "sha256": "b51ae4b2d6dbbb6e0744dbb3cac2d294d6380a1e517a939e5783154ec1a5ec93"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/headers-z0zMURwp.js.map",
+      "bytes": 1143,
+      "sha256": "b2bdf107b4a2631cbf85f8775591137180c7bb01fc22f6bc60ef956cea555c61"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hjson-D5-asLiD.js.map",
+      "bytes": 17280,
+      "sha256": "bf0bb8eef3a0f374420651571aca34e85f85b6aaff0acd8a147adf13e1c5be48"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hlsl-D3lLCCz7.js.map",
+      "bytes": 9232,
+      "sha256": "4c556a5edfb2bdd21f44d558cb810007b5249a22acb3eb1ee5b08a130dd780f1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/houston-DnULxvSX.js.map",
+      "bytes": 46368,
+      "sha256": "0c346ee50a15c7a42d552993d13f3174d5e9491be0f1e5cd519f95842658a98b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/html-GMplVEZG.js.map",
+      "bytes": 72976,
+      "sha256": "8d0c26c9e4d7215d226f58824bec57c71f95ef4c8827d8efff6e44e1a8932615"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/html-derivative-BFtXZ54Q.js.map",
+      "bytes": 1411,
+      "sha256": "cf1f281a7f2550736ac2f2f5ab3dccfdd1608a16817aa09587719b8523b6b138"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/http-jrhK8wxY.js.map",
+      "bytes": 6672,
+      "sha256": "da05fcd0391c54706e1dc65cbdad300d7e2f99117d594cf0f2885292f26fcb91"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hurl-irOxFIW8.js.map",
+      "bytes": 5399,
+      "sha256": "babfd4847abe7bfecdd756bf8d1244d3c5922aa3ac85c0944653c1e0a06c4253"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hxml-Bvhsp5Yf.js.map",
+      "bytes": 2456,
+      "sha256": "db236ab20daa45d50f6e88d40972b0ad4f704c3740210dc20d94b9dd1b0d6d74"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/hy-DFXneXwc.js.map",
+      "bytes": 3677,
+      "sha256": "4f1180d4272243fb58a53a540bb1f89c088fb512848b727c171f1c99f6e7cfb6"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/i18nextBrowserLanguageDetector-ClvlpAgo.js.map",
+      "bytes": 23952,
+      "sha256": "ea953680e353fdfbb23b7af9d8683540021e76f3b60bbffbbf1f4ab3c90dbe3d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/imba-DGztddWO.js.map",
+      "bytes": 68069,
+      "sha256": "18ced154d533f3bf8d73cb70ba4a98fa37879690d1d2f8b3b1ba7e0189152ff9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/index-BDBQFsnu.js.map",
+      "bytes": 104930,
+      "sha256": "3fa408ea3564f5b55b25e795fa5aca5e1280009ffda48a187b999df3688be59b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/index-BO-obEEy.js.map",
+      "bytes": 12136,
+      "sha256": "e07a010bc8fa13c3949f615ffc5f73ea1f1e450b0605aa3059f8708b708b0ca2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/index-BSJks8_4.js.map",
+      "bytes": 351845,
+      "sha256": "8c5d42cb71ca65fd9b6e57ca738493c6e0e724e0437164bed044c8c45d010c08"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/index-Br2xMWjN.js.map",
+      "bytes": 78611,
+      "sha256": "d4f38048fbf044dbe0daf0d8f75896146c8d2a3b279fb8fa6544d36b9857dfcb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/index-hUNCewSd.js.map",
+      "bytes": 16246105,
+      "sha256": "e38662a01b3b34f08c16775f5df40d76e83d4547053ba0e14e71d74951c67ff0"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ini-BEwlwnbL.js.map",
+      "bytes": 2458,
+      "sha256": "c3df3a231157f722d0eb82cc2bec1ebe79add3327221879a90c999ee47c7ccea"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/java-CylS5w8V.js.map",
+      "bytes": 38620,
+      "sha256": "442dbf143eee14b72bb3f06ece07228b5487f896ec0c85d7615ef33c1e860dac"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/javascript-wDzz0qaB.js.map",
+      "bytes": 236055,
+      "sha256": "39c0aea51e34b4d3a750e15b5d2511f36312b70f950bd1ad08976b10004495ee"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/jinja-4LBKfQ-Z.js.map",
+      "bytes": 8445,
+      "sha256": "4d65c8868b8fca4553d590fb43a95c57687f884acfa47d25fe5f100312a4ffda"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/jison-wvAkD_A8.js.map",
+      "bytes": 14085,
+      "sha256": "10bacabaae7c153280e021d8626cd40b604d9e9aad1449d2ff2cbf62b1876b87"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/json-Cp-IABpG.js.map",
+      "bytes": 4309,
+      "sha256": "5ce5dac00ea0e4aa72808117bdbd8dc2f8f21b1af44b3d32e459caae4c816d62"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/json-parse-BEi6mSap.js.map",
+      "bytes": 22999,
+      "sha256": "87c17ee9c4142e757ffd04d65f3e90f5f955c392dc40336c89638b0903a9f71a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/json5-C9tS-k6U.js.map",
+      "bytes": 4941,
+      "sha256": "31baef62d7f50e7da1db2e6c9014da6ed1ef2a6cf4f289a59f300ba22cd905c8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/jsonc-Des-eS-w.js.map",
+      "bytes": 4597,
+      "sha256": "bd22c3817251b33b3891d97db3ef2b0d8fbda4db7a6555466fb7698df1efca9f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/jsonl-DcaNXYhu.js.map",
+      "bytes": 4499,
+      "sha256": "6a64b795c360593fd3249a160bfae486172e091edb3f8f132c40717a8a86b2b6"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/jsonnet-DFQXde-d.js.map",
+      "bytes": 5411,
+      "sha256": "94fa60800f4bf2ac97353188eda8b555755bde7465b446ede0540c0718cc9b98"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/jssm-C2t-YnRu.js.map",
+      "bytes": 3379,
+      "sha256": "94dc9e591431a4120d1a014d255750e1c0fbf5e09e4f35390d66c7fc5a2a1e22"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/jsx-g9-lgVsj.js.map",
+      "bytes": 238975,
+      "sha256": "c0bb6bff800e62890d57a4d4be2d70116bc083409731cae647af97e4bc47c30d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/julia-CxzCAyBv.js.map",
+      "bytes": 40525,
+      "sha256": "a9a7d3e1edb35643a773f94a0900821a7052ff334de8ce91ecfc1f2d70f0720c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/kanagawa-dragon-CkXjmgJE.js.map",
+      "bytes": 22272,
+      "sha256": "a8c3d38bd59df255e8fc9ff61aea316cdfc7beaa4356aede2e1c477b6a52d961"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/kanagawa-lotus-CfQXZHmo.js.map",
+      "bytes": 22267,
+      "sha256": "a39e9c64e17e598ed98b570879255d19746faef209ae12d4e26cd5c17ae6551c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/kanagawa-wave-DWedfzmr.js.map",
+      "bytes": 22260,
+      "sha256": "e88fe1fe0780d4caaf9dbff2dc3b8e38186304e670df1f0c5d7bdbf608ff9dd3"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/kanban-colors-5acvmwTc.js.map",
+      "bytes": 4474,
+      "sha256": "c65096b457adf1bd6fd02aa0a8d6e092a088f7b36e89a4bb088d2f77b7cfb109"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/kdl-DV7GczEv.js.map",
+      "bytes": 5499,
+      "sha256": "bb4546f7248016c32c0852152e7fa3213007a4cd2cfa9656f9b6e92d54a03791"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/kotlin-BdnUsdx6.js.map",
+      "bytes": 12773,
+      "sha256": "49f14dc0729c3c8a84645af939b5e6bf0f609ecd6397fca95e2d50a0ad1453a5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/kusto-DZf3V79B.js.map",
+      "bytes": 19612,
+      "sha256": "c77ae273949dcdb2972de183154bc405fe122cf59b807e3572ffc1ad8add654b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/laserwave-DUszq2jm.js.map",
+      "bytes": 14687,
+      "sha256": "dc4e7772c972564b5f070613a47b036414470bbe05440051a345fda1d1169357"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/latex-B4uzh10-.js.map",
+      "bytes": 99888,
+      "sha256": "cfd3b6da0b853b97547c1c25601d7d9048cf9085a79f8af7cd0604490dce2148"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/lean-BZvkOJ9d.js.map",
+      "bytes": 7862,
+      "sha256": "2c40f7788b9e6e3f302a02782df3ee53b1b7863a9622e518b002f68f0dadc1ab"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/less-B1dDrJ26.js.map",
+      "bytes": 131840,
+      "sha256": "9a571a25c372a827324936e1b0ca1ff660ab06b7d64d40eade791da057794337"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/light-plus-B7mTdjB0.js.map",
+      "bytes": 13402,
+      "sha256": "a9e2e2445a10b0193faf35aea7b111783aa2ab767ed1832aae41e42f61cdc15a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/liquid-DYVedYrR.js.map",
+      "bytes": 25212,
+      "sha256": "0ac2798442b46c00b98378c0b235b06d4eec463356f963c61560a49849cca5c0"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/llvm-BtvRca6l.js.map",
+      "bytes": 6652,
+      "sha256": "07a1b9f3e9429794e0c389c010659e610ea1e8a50c4d00bd69d3e4c2067a7bdb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/log-2UxHyX5q.js.map",
+      "bytes": 4340,
+      "sha256": "df1cc48db149ebc28a058d441801b3d178c820a12ba51cae46c346925f6293bb"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/logo-BtOb2qkB.js.map",
+      "bytes": 3804,
+      "sha256": "df5072073d7e02dc0e526e1cb8cdb43f356cd307b10af8dc00b0e2f2d47528e3"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/lua-BbnMAYS6.js.map",
+      "bytes": 21624,
+      "sha256": "a3c0cb50ef136daba9a660cfd243dc09b76702fefc733221fc63aa44911b8b1d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/luau-C-HG3fhB.js.map",
+      "bytes": 19620,
+      "sha256": "b9f744386460ef2c3f7e68095c08156c0aa2720101feeba2b5890e4b0a519798"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/main-5xh0A_22.js.map",
+      "bytes": 2833444,
+      "sha256": "a0d6a4dcd1e1e26626d503bf94ce4fb490ba4c0517047c3c9a7868c0c13be6cf"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/main-BjKAcKvV.js.map",
+      "bytes": 8602,
+      "sha256": "51be4a213a0bc134fef1d007d1148e9cf515f14ad67a9726bbe31e02118d82fc"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/make-CHLpvVh8.js.map",
+      "bytes": 12853,
+      "sha256": "aef632a77cb176ceb50fceec8eb0c3358e962fddfb6b730edab86a64c9191887"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/markdown-Cvjx9yec.js.map",
+      "bytes": 82319,
+      "sha256": "20a5b6437b04b55bf17c92a7af77409da25c52f52bed0f77346d402c614025d4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/marko-DZsq8hO1.js.map",
+      "bytes": 35891,
+      "sha256": "c26d1fba81d572640e81b45b861b9569a3b07ed34d221a48fb5e0f8274d435bf"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/material-theme-D5KoaKCx.js.map",
+      "bytes": 24104,
+      "sha256": "5bb6a0e2ca590fba16745874df09efcd7ab919c782d9917b4e7e859e5f524a83"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/material-theme-darker-BfHTSMKl.js.map",
+      "bytes": 24145,
+      "sha256": "474746545858d213bc955f3eee9535b6bc3b2089baf72c7eb2e6cb5fc9b5a83c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/material-theme-lighter-B0m2ddpp.js.map",
+      "bytes": 24154,
+      "sha256": "d7bb917b24f3cf8dc97b07b091faa84208153244146423d35d7e413bf955f5e1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/material-theme-ocean-CyktbL80.js.map",
+      "bytes": 24141,
+      "sha256": "db5c17e6d89ca325e9db9e8e5cb3f8445aefbfb93397a6164876d2ffd026a4c9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/material-theme-palenight-Csfq5Kiy.js.map",
+      "bytes": 24163,
+      "sha256": "0153d3d557381bf78547f737eee766b21a9a89913c029e8a5c976c807a94fd53"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/matlab-D7o27uSR.js.map",
+      "bytes": 23359,
+      "sha256": "2aec0c5210decbac7bd07c1290799cd242120c74875ba0ac7ca4af2c03d14bbe"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/mdc-DUICxH0z.js.map",
+      "bytes": 23070,
+      "sha256": "cc58bd8ad0a009cc2fd41d6457e3ce9d76bd3a61a920aa68cdd40246bd69a3e9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/mdx-Cmh6b_Ma.js.map",
+      "bytes": 176708,
+      "sha256": "83d60bc237bc669cfc77084f18c3d0b024c2bcd8564295982c6f88b7e19f7794"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/meetings-local-BVJauF2W.js.map",
+      "bytes": 8262,
+      "sha256": "e13a2c59312eff18fa247fffd4b826e1cb0eb479d5a68cac3840f18a3740e5f8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/mermaid-mWjccvbQ.js.map",
+      "bytes": 44108,
+      "sha256": "bcadde19cc6aa20ea29a45836c39861de1583c0f59b5ffea1cf0d614439ade54"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/min-dark-CafNBF8u.js.map",
+      "bytes": 8598,
+      "sha256": "be7c842df038edba94c0aa707e160802bc5fcfbb73cc746f293d3278e7f32c79"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/min-light-CTRr51gU.js.map",
+      "bytes": 9520,
+      "sha256": "a227ee8f31245e8e4bd8fbe23bb8ab582739dc2acc3d46da3de8fe2e118180f0"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/mipsasm-CKIfxQSi.js.map",
+      "bytes": 4669,
+      "sha256": "5897e7780fe3bd4434c420c7ae45ae42fda81e11400325b029e028028f035748"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/mistral-conversations-BDktI9ho.js.map",
+      "bytes": 49584,
+      "sha256": "a360a656d09f2e74bfaa4d8e4bc7bd9a5d46b889be1bf4d936ae45d96019f289"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/mojo-B93PlW-d.js.map",
+      "bytes": 94217,
+      "sha256": "e15b21aad3a7161b97af63bd83e0f13cd94cd42dcbcb8cd3cdfdee0147977933"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/monokai-D4h5O-jR.js.map",
+      "bytes": 11082,
+      "sha256": "59227ffb93d4abc4091981fc3320cfd5a7488a16c56f5b17c94b9a4a45e47996"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/moonbit-Ba13S78F.js.map",
+      "bytes": 8181,
+      "sha256": "0c35a9bb04f3d0354ed54835f19ba1dc4ae5c1d4eb3829bd57b26f27ddf6d6fd"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/move-Bu9oaDYs.js.map",
+      "bytes": 25986,
+      "sha256": "d53dc7f1705e4bf415daaa933f76ec3544a5dbae5c0c75f2317cd92138e12d6e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/narrat-DRg8JJMk.js.map",
+      "bytes": 5416,
+      "sha256": "ccf6799e319524db715c5883c6765c9d825fc342d40d79484ab2e4847fa157a9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/native-notes-sync-BMfA0LIE.js.map",
+      "bytes": 13269,
+      "sha256": "065ce4a4684791a7deabef40f1a29bbf342091958ff6c96defcc73760c5b58c5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/nextflow-BrzmwbiE.js.map",
+      "bytes": 6656,
+      "sha256": "f27e3c899611384e31d25d7b4fe5eb8d5b92e1bf21c0ae4598069d7fa256943b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/nginx-DknmC5AR.js.map",
+      "bytes": 48454,
+      "sha256": "5d2d6e3d8602310f1db333281f0adb19c701617170e1c37a7c467d8ac9030662"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/night-owl-C39BiMTA.js.map",
+      "bytes": 39026,
+      "sha256": "78df1fe0d16f035211510ee154679ce146537053ec2eabaaf33e1f371073a778"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/nim-CVrawwO9.js.map",
+      "bytes": 32731,
+      "sha256": "7d2f41f8b0c0fb5e788987b6ce7caf9054c70c12d44f929be13b8e924cbde862"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/nix-CwoSXNpI.js.map",
+      "bytes": 22840,
+      "sha256": "94c0d55db676420c5db218bf360fe37f1fe7f1540e40b2bd5c09a3befc8102cc"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/node.browser-BhfgtfuR.js.map",
+      "bytes": 6510,
+      "sha256": "bcb3eedeed4e4d389fd7c7a65ae1de4f159f410314af96f6e0a3519105a283b2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/node.browser-TDXqbZha.js.map",
+      "bytes": 1474,
+      "sha256": "1949920ac58181577e4b3f32548c275c4a61e4f550772abd20032ccf94a10024"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/nord-Ddv68eIx.js.map",
+      "bytes": 35323,
+      "sha256": "283ed4a47184f54426901ae23a0bfb52802f23eed9e542cfe6e28963f913252d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/note-ai-CNWW5VnN.js.map",
+      "bytes": 2945,
+      "sha256": "0b75f79a38b2398817c396ab81a523af55ca87ffbfbc0c756176943e93f3015e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/nushell-C-sUppwS.js.map",
+      "bytes": 27640,
+      "sha256": "9848dc1b7d1ce6036f551f31bf44aa4fd6e55664437333230cfe26e4a5632105"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/objective-c-DXmwc3jG.js.map",
+      "bytes": 129640,
+      "sha256": "987e60d9272fe93f558276f8b88e8d8ea75a4a756ff880e5ccc7363dd9c66744"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/objective-cpp-CLxacb5B.js.map",
+      "bytes": 218525,
+      "sha256": "e6ab50fbd353ad36f9b45cbbb9e850cccf9e06f216dde06f5880a2a599818c0f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ocaml-C0hk2d4L.js.map",
+      "bytes": 81092,
+      "sha256": "1277b1be12c64d0335629f9512ae3037ce9471d7c5211510133c55f2dcb41e2f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/one-dark-pro-DVMEJ2y_.js.map",
+      "bytes": 44475,
+      "sha256": "90425504cfc0e0cdadb03ad8fc0695fb255c79f1951bad4393618bd2aea78c3f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/one-light-PoHY5YXO.js.map",
+      "bytes": 33773,
+      "sha256": "4f5ea9a8b0557f2103e5555c696a0bfc4cb9f02bb49ccf2ef6681c5656bbc2e8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/openai-codex-responses-Cf5l4EM5.js.map",
+      "bytes": 101296,
+      "sha256": "aefc60079d3c7ad5c941f11f3723e9ebd72c3cfbba0b4c31ef3111d43526069a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/openai-completions-D6JbsuuL.js.map",
+      "bytes": 97049,
+      "sha256": "8e29f48a30bee5bb2e5ff745d790e0766839990db217b41dad33ab383b574042"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/openai-prompt-cache-h_V5PL7P.js.map",
+      "bytes": 819,
+      "sha256": "71d9c118443344fd812d9e7055ad3ea1bacbb76906d06707e6b5e639533717b4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/openai-responses-DrYmRGLT.js.map",
+      "bytes": 21483,
+      "sha256": "b7224fc7f5b91b9cdd91925be877fb4b1500771b1794aac14062a11931b122be"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/openai-responses-shared-BkB4GAtI.js.map",
+      "bytes": 48721,
+      "sha256": "3aa7cd54d471d1817891b2002b1fb81d0920cd189a7a02f616fba794b41c4d9f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/openrouter-images-CvxaYdU9.js.map",
+      "bytes": 9070,
+      "sha256": "a0d781b804622196c85e88b3523170830f86e6b43d1867f9c468b0566dcf71c1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/openscad-C4EeE6gA.js.map",
+      "bytes": 4218,
+      "sha256": "e505b69f827510a762c4a19f27ab59df6ba4d9c8f8f0cd26fc38691896d013f9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/pascal-D93ZcfNL.js.map",
+      "bytes": 5526,
+      "sha256": "6e22e7ac788f940d3786088961d4fdea827a05c516064c0d561e9ad813d964bc"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/perl-C0TMdlhV.js.map",
+      "bytes": 60726,
+      "sha256": "07377a0fe9faaa17a74979a53f75455c344f048e0af7d7d1e417277c22207f79"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/php-CDn_0X-4.js.map",
+      "bytes": 139260,
+      "sha256": "558ec5c12f3d510dfc1e2a555dac0f9280aa2a4d137e030ce67fe80c511a4b1e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/pi-messages-Dig6jpkF.js.map",
+      "bytes": 20106,
+      "sha256": "f6cd5e61a4ee883ce132dd433276ef5e8759e8e332cd0671425279ca6842145f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/pierre-dark-BXuwtOqb.js.map",
+      "bytes": 56533,
+      "sha256": "7b931ef5f5fea2231a5f35075e81af8b7c39bdea09001c8b1ef066e9ac5a89bd"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/pierre-light-dckrK0oj.js.map",
+      "bytes": 56542,
+      "sha256": "99437ced5add27dbc70735b5464206801d5a9166ee662672aee43a12c9ba3a89"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/pkl-u5AG7uiY.js.map",
+      "bytes": 15467,
+      "sha256": "400b093b1f723e8fff5055e777867198e6d485f04125428d45c0e09bb4d82638"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/plastic-3e1v2bzS.js.map",
+      "bytes": 12469,
+      "sha256": "23e45a95650dfb79d9d73f9411fd4b61130d6711c3115bb0236146983cb0322b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/playground-CF23n9TJ.js.map",
+      "bytes": 1977952,
+      "sha256": "165590ed09e7d10e6d05adade723efdb4abe10c91c88bb69819e80d789aeedd4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/plsql-ChMvpjG-.js.map",
+      "bytes": 10884,
+      "sha256": "2866222bad64d6eeb91859b7286d424bedecccc943e222696429e188ba41817c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/po-BTJTHyun.js.map",
+      "bytes": 5073,
+      "sha256": "cd8083ba4797a929588011e6d419b36a1e4938b7fbb4a3f50cd0a9acf4e1fede"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/poimandres-CS3Unz2-.js.map",
+      "bytes": 43036,
+      "sha256": "e6bd2ee346be8c62133acc29724d0506f3c893172355afe64342edd3634600a2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/polar-C0HS_06l.js.map",
+      "bytes": 7245,
+      "sha256": "88527fdda4c124f7220016345debdac466d814556afd3707e5f71d4053ed82b5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/postcss-CXtECtnM.js.map",
+      "bytes": 9102,
+      "sha256": "3a08a28612910d7469492ee062b86e7b85ede95a58409a554ed4b7a9660bda30"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/powerquery-CEu0bR-o.js.map",
+      "bytes": 8507,
+      "sha256": "87e8409c6b2a16caebe6ebf4912188a8e5e1ea379f6c1355b5856e2b1695d1ea"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/powershell-Dpen1YoG.js.map",
+      "bytes": 26588,
+      "sha256": "27c2a5eb653eb7d980550c7e762374b0518294a0d069dd02e884190d8d668d94"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/preload-helper-Dp1pzeXC.js.map",
+      "bytes": 107,
+      "sha256": "2c5cdc3542c61f7ee09c42843b89f85003e1bf94a82b1bf7aaee47915b112866"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/prisma-Dd19v3D-.js.map",
+      "bytes": 9262,
+      "sha256": "ee262532d8015085a7c025a5e5c362e1cd58db40258dc190078963cf9dbb4d7c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/prolog-CbFg5uaA.js.map",
+      "bytes": 13296,
+      "sha256": "e09a8c4484d73670b45db543b8c6ed6158eb7fbb211f919c1ef0603ba6ff0d6f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/proto-C7zT0LnQ.js.map",
+      "bytes": 9895,
+      "sha256": "a14e1364f862d740b49b0f4b7fa18be364494639ba0759b0f1157d3c472144ee"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/provider-env-DKPB4oH1.js.map",
+      "bytes": 2693,
+      "sha256": "ffe18bf092076f340d50af56601eac490d9fe9b9bb8440ad1e22f56f487afa3d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/provider-retry-D1QnC69n.js.map",
+      "bytes": 6706,
+      "sha256": "061be93baef3d430ab73c6d9244cb0d23de23d08bd2541330176b10ad9a77305"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/pug-CGlum2m_.js.map",
+      "bytes": 20489,
+      "sha256": "d3fcbb65e0676bd2c4e156c41806340752e29b1281c00d849df52e22330981c2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/puppet-BMWR74SV.js.map",
+      "bytes": 16311,
+      "sha256": "7e98be237203da87643522bc2a85c7321b98b15b760134a1ced3152a2463d950"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/purescript-CklMAg4u.js.map",
+      "bytes": 34882,
+      "sha256": "05587fdd335ba8c0821165a0aa1e73520fb1ce3d9e0f7eaf682cae4e614a8e57"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/python-B6aJPvgy.js.map",
+      "bytes": 95227,
+      "sha256": "1716bc244ee9db969cf61b6e752ef0e24cf11d2f499d8641592eaa8cfb179b73"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/qml-3beO22l8.js.map",
+      "bytes": 8112,
+      "sha256": "72e460f796dc1804a48114fa29644551a1be0574d164a0aaf0908496ea6cac5e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/qmldir-C8lEn-DE.js.map",
+      "bytes": 1726,
+      "sha256": "e6d80b7531b4d2c2c15f396de671f93c4a342ce7254c22273a35a5365394a090"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/qss-IeuSbFQv.js.map",
+      "bytes": 9393,
+      "sha256": "4e103c2c67cd7a69dfe14bf0ea0c1075c7fb31af5ccc068f3028b65b116f0f93"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/r-Dspwwk_N.js.map",
+      "bytes": 10123,
+      "sha256": "daea6fe0dd782a25e5471dcd0f506b5d54cbdade1ec1f658cf240629d91ab85f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/racket-BqYA7rlc.js.map",
+      "bytes": 106175,
+      "sha256": "ea42381c93466dac25e420cacd38aa91248c22b72075c809022711cf8f7a747e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/raku-DXvB9xmW.js.map",
+      "bytes": 12903,
+      "sha256": "77570bbc4740b1a147f7bbc42f8ef6cd8d178f5c52dfd2fd6cee48dd2c477fbe"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/razor-C1TweQQi.js.map",
+      "bytes": 38283,
+      "sha256": "562bdff42a62e56ffa9c947476a4cb6a0ebdb5f07cf077fe182d8c7ea24fa587"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/red-bN70gL4F.js.map",
+      "bytes": 8856,
+      "sha256": "cc708a0695c859ed4fbdd035fe67e48e009ca356e6caaa631423f03bab84d450"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/reg-C-SQnVFl.js.map",
+      "bytes": 3498,
+      "sha256": "64d55b47658b19b6d2c26a1cf9b612888463af2279cddc257f3eb7857d2f17e5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/regexp-CDVJQ6XC.js.map",
+      "bytes": 11182,
+      "sha256": "7f79ee2014c4018daae743ede5d3227f4a78d3cc9515a1daa808091ee1381b56"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/rel-C3B-1QV4.js.map",
+      "bytes": 4863,
+      "sha256": "50c1ba10f80a9d11ae4340ea8cf3395526deffa8cc35aa93dd4d0ba6bd1a1993"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/riscv-BM1_JUlF.js.map",
+      "bytes": 9589,
+      "sha256": "d5288d42b72c776637f2c532d3965a2b466d02aec826123745e6effcecb7fbc5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/rose-pine-dawn-DHQR4-dF.js.map",
+      "bytes": 28778,
+      "sha256": "cdc47f3238fcc190f83ad5e5b5ba8616b747149fdf1c5b9bcb8220b7bf7d4814"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/rose-pine-moon-D4_iv3hh.js.map",
+      "bytes": 28777,
+      "sha256": "550d0029501e1649772994f3b9e84171bfc155943b6bf2426548c9fd358685e1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/rose-pine-qdsjHGoJ.js.map",
+      "bytes": 28748,
+      "sha256": "f1bb04f115b686a4c05d802408cf67a075a29ba61a9aa9f7e6a080a55340c92b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/rosmsg-BJDFO7_C.js.map",
+      "bytes": 6747,
+      "sha256": "a1c88609fc3130822c25bbffd4adb3108093e7280da9d8599a2d920c0bf37ffa"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/routes-BF5XaudK.js.map",
+      "bytes": 19407,
+      "sha256": "d16bd9622fef7f6e516797f919a7a90659b40b1b467921640817e539f987ba18"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/rst-B0xPkSld.js.map",
+      "bytes": 15550,
+      "sha256": "31b81e5447620eda2dab5d92eb01b0f966e05060e5649f0c2027480d0f4a30ae"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ruby-BvKwtOVI.js.map",
+      "bytes": 65224,
+      "sha256": "752304bfff5133fea5bb1fbb3ebe2d5ef2d39d43eb0302abe92bde42e91d50c6"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/rust-B1yitclQ.js.map",
+      "bytes": 21454,
+      "sha256": "d62159943ab0f8cbf22495291f0444a3c1baab5222f2b299b77b8463574a3c6f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/sanitize-unicode-B62XMGgN.js.map",
+      "bytes": 1569,
+      "sha256": "710835265cc92d26815904593ef51ed2aa8aa034d4286d248d9fdfd7a098e679"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/sas-cz2c8ADy.js.map",
+      "bytes": 11090,
+      "sha256": "9bb8f7ac40883fd5de5470512904e50dbd4aa8edd6c73862ab763caf89918ed9"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/sass-Cj5Yp3dK.js.map",
+      "bytes": 13407,
+      "sha256": "f6c120b2105dd2e7f9f73e73fcfd78cce8c0453ae4d908cf3d95d695fbcdb8b4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/scala-C151Ov-r.js.map",
+      "bytes": 40101,
+      "sha256": "93553eaed6f3a1dcaa4bb2a80e7750a22546c67b7f9b61313b4d75c518604aa4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/scheme-C98Dy4si.js.map",
+      "bytes": 9782,
+      "sha256": "abde507ddb7c0aec7195057e98f0229e6f6ada0a62e782f69b721fd1e2065f9c"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/scss-OYdSNvt2.js.map",
+      "bytes": 38314,
+      "sha256": "25cf87c613a6d2c181121d5886f582d5a8a2d1950312fefcb359055f12c84d43"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/sdbl-DVxCFoDh.js.map",
+      "bytes": 5883,
+      "sha256": "c8bdff8b14c0981d3d61c56be594ccc2780923e48e3a0bfd4d99cdfe2dfa4df4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/settings-rox2-surface-CQbfgP7s.js.map",
+      "bytes": 10278,
+      "sha256": "a40dfae875d155a9e568af77a02288679d18a4b7a44df5f111a451cf67183321"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/shaderlab-Dg9Lc6iA.js.map",
+      "bytes": 7683,
+      "sha256": "49244fb132346b391df77e35a2f6e323b2956ef60ff8e095ee9bd7a703f802ad"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/shell-layout-preferences-BFUjKYRs.js.map",
+      "bytes": 143648,
+      "sha256": "fcd248b82e82eb9f5551e58885eba760bd6bdefbe9c541b8eb4c909a3b79d445"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/shellscript-Yzrsuije.js.map",
+      "bytes": 56517,
+      "sha256": "f1d92421746a2a130f91a0791b815f9be42889ccee19e4d94605e1e0625daa8a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/shellsession-BADoaaVG.js.map",
+      "bytes": 1313,
+      "sha256": "7457f5b02b0cbb3c551a927363a1c6fb5edf777e6f68b5aeaee0c4fff3903449"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/slack-dark-BthQWCQV.js.map",
+      "bytes": 12500,
+      "sha256": "bf49ac103566e24266276825b2153f8dfe04737b884083a95afc8e005dacb212"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/slack-ochin-DqwNpetd.js.map",
+      "bytes": 13094,
+      "sha256": "8fbdf4f2ca837f865790bf4322294c1dbc4b74d7607c67f6d5839268f99a7b99"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/smalltalk-BERRCDM3.js.map",
+      "bytes": 9242,
+      "sha256": "a5b602a74d4733b8d80588e59d97e4bb308c1c7429d86ae28780822f187895ea"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/snazzy-light-Bw305WKR.js.map",
+      "bytes": 27994,
+      "sha256": "baabdc567addd8c2bb07be19c7349852999260467885ac5e91dd6fc66ec209d3"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/solarized-dark-DXbdFlpD.js.map",
+      "bytes": 9675,
+      "sha256": "5dd97d8db2c507a15deba969c19de02015efd48133dc4ab9d1dc543292fad07f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/solarized-light-L9t79GZl.js.map",
+      "bytes": 9217,
+      "sha256": "3eb26b2ae55f7ddf35a093ddfd770934f185ba18fcc02a05ecb35086481c7bd5"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/solidity-rGO070M0.js.map",
+      "bytes": 23444,
+      "sha256": "36ce7278fe3f3f4c16cd6dc190c2d0c1c5f428036fd7a4a9237e9cbdf953ce2e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/soy-Brmx7dQM.js.map",
+      "bytes": 10693,
+      "sha256": "73ecfa5cd089f3bdb37d228e4df9b488e61dfbe810883daf394bad2177b8e15f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/sparql-rVzFXLq3.js.map",
+      "bytes": 2089,
+      "sha256": "41fa388cda44818018b9e99ea413bad5236248a0a252dad99b1ab89ec2d78ed2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/splunk-BtCnVYZw.js.map",
+      "bytes": 4431,
+      "sha256": "e143f8edf32e3ba753fb804af7a6368c38afc52a46c33f2fd0f3089a199de072"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/sql-BLtJtn59.js.map",
+      "bytes": 27903,
+      "sha256": "aea02083786b25beddfba05aa9672e339e8de92bf01052d76d09fb68fa229957"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ssh-config-_ykCGR6B.js.map",
+      "bytes": 4482,
+      "sha256": "45640e0353f21ff939ea3f04938286df5ded11232b30b8860729c35020c0409b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/stata-BH5u7GGu.js.map",
+      "bytes": 74151,
+      "sha256": "ef2cd89683205552257c8926acc3f9f90a061e14e31caff56acfa49cdd86fc0b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/style-Bjxl_Tsj.js.map",
+      "bytes": 804970,
+      "sha256": "a048ec171aadbd9185d7bc370b0f1cd69a4168dd5e01105450d858e600ec38a6"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/stylus-BEDo0Tqx.js.map",
+      "bytes": 38866,
+      "sha256": "3d15619bd8fee3289a1a0b951382b29ab0f06a51d93ca4596daf3869104bed8d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/svelte-zxCyuUbr.js.map",
+      "bytes": 25426,
+      "sha256": "c6e6d6e43f08bb5347d8ae2fc171e3377af90987e4835aea2c728e66d68c221d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/swift-Dg5xB15N.js.map",
+      "bytes": 114390,
+      "sha256": "67135d317d51900811111ab48c351da12c679447c2508cf26fd5c96833325f95"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/synthwave-84-CbfX1IO0.js.map",
+      "bytes": 19083,
+      "sha256": "b33f4db6f4bbd4c02d3089c65a81cf62d49143bef0c9383ca873453b5ef5ba4f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/system-verilog-CnnmHF94.js.map",
+      "bytes": 36258,
+      "sha256": "93a7cfc8461ee13939eff4c27e021ac51e1c4f6466751558961a54895c42c705"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/systemd-4A_iFExJ.js.map",
+      "bytes": 10630,
+      "sha256": "beb29fb3b3425c4ef3c448d8142c686460cd7d5f493c2eb6f0e07d203d213f96"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/table-virtualization-w6Be7ntP.js.map",
+      "bytes": 5937,
+      "sha256": "ca8c55c9a681263f5dd7f49ee9e4c0a7b362aceb0e5a6ced86f6fde668af9502"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/talonscript-CkByrt1z.js.map",
+      "bytes": 10068,
+      "sha256": "a3c04cb282d8045e5d4173402c5697171d55166c41b14a984e27566d2854a6ef"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/task-model-BvqWuYDM.js.map",
+      "bytes": 12608,
+      "sha256": "3c0634a559551f48dd1b65d4a46cac3b41b6499e2635986cd3922aa98947884e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/tasl-QIJgUcNo.js.map",
+      "bytes": 5118,
+      "sha256": "d7a8e5f80eed6c7022e6f95bea78ac825b83c4c81dd26bb494f8a583d15b7eea"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/tcl-dwOrl1Do.js.map",
+      "bytes": 6469,
+      "sha256": "9861f290d7b046aa4e23bcab96d54ef93292e66b1537cee951a8c4b1398670ac"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/team-labels-0t5tl75z.js.map",
+      "bytes": 10957811,
+      "sha256": "c4129d9148fb93ed39ae45c3f175bc3122a1535ae6c7985592eb8abb48f5959d"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/templ-W15q3VgB.js.map",
+      "bytes": 30874,
+      "sha256": "a4bbdc6b9f9a367a6f12b6ed0730605f41ad42c1716c698a010194dbbac362a2"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/terraform-BETggiCN.js.map",
+      "bytes": 16215,
+      "sha256": "0a7013f40764f962b8c3246a3a8066d2839953ea629bf7c9840c01ac73f8394e"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/tex-CvyZ59Mk.js.map",
+      "bytes": 12386,
+      "sha256": "4d02c793d80e7c69d79ec11531be97d868ba79dce4f21913ed2aba57ecdf90ce"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/tokyo-night-hegEt444.js.map",
+      "bytes": 45318,
+      "sha256": "5a0865aae7686f62b4c72be2f3b3b06d77ff6bbb2f7ffe5a9015c08c62976162"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/toml-vGWfd6FD.js.map",
+      "bytes": 9464,
+      "sha256": "fad448c6f788ec523eb32a016887bfe7e38ec10094144ee1a348523258cd2133"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/transform-messages-D3zjeV6T.js.map",
+      "bytes": 40927,
+      "sha256": "66ba3a7d6541bc69b68989b33d2dc1354882749c4732bd70ba83b4d183a4e214"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/ts-tags-zn1MmPIZ.js.map",
+      "bytes": 14276,
+      "sha256": "20a7fbfba54eb08d7450a03ff011d24f4847ea9d78718a7691218b0a4709ec74"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/tsv-B_m7g4N7.js.map",
+      "bytes": 1364,
+      "sha256": "797c3be01ba4e18d3a93f2536d65c886942f56b32d6eaa3dff4b7995fba34a8a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/tsx-COt5Ahok.js.map",
+      "bytes": 236719,
+      "sha256": "c04b3c03b921bf34a939a50d0049b9ed35b2e2930d0a0f0ecf3aa2ec299f1132"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/turtle-BsS91CYL.js.map",
+      "bytes": 5482,
+      "sha256": "4a63559cf073394c2dcf3da3a9f71691fcbf399524b3f49c469dd0fe274bbe95"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/twig-CO9l9SDP.js.map",
+      "bytes": 29204,
+      "sha256": "fe1e116e3668bc0547c834cfa906d0c1e997cf90752e191ce0e8df0878675a61"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/typescript-BPQ3VLAy.js.map",
+      "bytes": 244395,
+      "sha256": "2f19157e61c5a52c7a25f618bbaf6ad58ae7f01aaec30ed087dba3d22d95e087"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/typespec-BGHnOYBU.js.map",
+      "bytes": 33438,
+      "sha256": "a4f5ff8b5cd7ccfac74bb4a2623f8f8b7730d9b960aa9a45f01e146618e6534a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/typst-DHCkPAjA.js.map",
+      "bytes": 12292,
+      "sha256": "ddd6d4d46b8963d395fa8b7432c75f77da103ab972a1e72fb0e268995d6db99b"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/useTranslation-l4p_kc9c.js.map",
+      "bytes": 417135,
+      "sha256": "b96651a5d6d26f7ebc9c2fa876e3d74cc39a4aa2271f2201ddd3eecff59aab32"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/v-BcVCzyr7.js.map",
+      "bytes": 19257,
+      "sha256": "2b3cbd712b8ec71de75ecd007bef23e4f1e38b0707ac95a4f31f5448d38a7bf4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vala-CsfeWuGM.js.map",
+      "bytes": 4882,
+      "sha256": "fbb1f20b822e7c0f2bb7c4c0c21d0b94d92ca2f5efbca63e62802de49b26d346"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vb-D17OF-Vu.js.map",
+      "bytes": 8033,
+      "sha256": "77b659808e760ca07eaf9f738d20fca472fe264fce6a8c15cc420658e972b662"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/verilog-BQ8w6xss.js.map",
+      "bytes": 8013,
+      "sha256": "ceb619d50afd34bb640e943219eab646ba4e500373556cf91a3f82428eac7703"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vesper-DU1UobuO.js.map",
+      "bytes": 16150,
+      "sha256": "28b669af63a3abd4b958c223065174e099737385ab7d5dedb33822f68d60324f"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vhdl-CeAyd5Ju.js.map",
+      "bytes": 33368,
+      "sha256": "77b0ad83537f1622693620df3453f47e0b6230cc3b5d0d4fddb18af90a688624"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/viml-CJc9bBzg.js.map",
+      "bytes": 23492,
+      "sha256": "7d0d0ae87e8e9eadacc296be3db7173ad7dafeccb1b73ca8301925b75a45ba52"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vitesse-black-Bkuqu6BP.js.map",
+      "bytes": 18620,
+      "sha256": "c8eefe03ac6f27e6c0b97e5b001cd89a6a3a49f32c4848a1c590ef425e01e1cf"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vitesse-dark-D0r3Knsf.js.map",
+      "bytes": 18698,
+      "sha256": "92fbcc8ce2eaa41c8036f8127116d08e6a52e7bf73f11792a538253817435739"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vitesse-light-CVO1_9PV.js.map",
+      "bytes": 18535,
+      "sha256": "a521e353e6b18ccf4c9bab89e1493ac2eb78e8743c764134c9cc1629263902b4"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/voice-overlay-BCNHrCpN.js.map",
+      "bytes": 5435,
+      "sha256": "c83525bc91088e31f47b1104caa9138225d5179988b50ddc888940be8794bece"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vue-DN_0RTcg.js.map",
+      "bytes": 36541,
+      "sha256": "686be1acfcafd72ca19a1c09819e52e455edcc6ed220ca13c48d9171db0c9dab"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vue-html-AaS7Mt5G.js.map",
+      "bytes": 11968,
+      "sha256": "e358d93f2f4ddbf7068c2f249fe7c6b9dcc652c78f7567c106be0d6ee9102e37"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vue-vine-CQOfvN7w.js.map",
+      "bytes": 255131,
+      "sha256": "30efb38c4163ad969a1c7509d85cb59d11d8e7bfb8938f59fa89bb410604f710"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/vyper-CDx5xZoG.js.map",
+      "bytes": 100696,
+      "sha256": "61de7f6ca01dad4811a3ded9a0141c6848b85c219519d998e0bb8e5766b73a43"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wasm-CG6Dc4jp.js.map",
+      "bytes": 622885,
+      "sha256": "55744b9843ec4cbb181773f357a959823fc9d889bdaa6308bf045d7bb21d5134"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wasm-MzD3tlZU.js.map",
+      "bytes": 16834,
+      "sha256": "c77e25812662239995bbcafa5be9d59b55865ffc47b4ce513d72f7e629916d67"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wenyan-BV7otONQ.js.map",
+      "bytes": 3175,
+      "sha256": "a248c3b98b408893a5e498e253da289f4308083f549eb261b7affb3e1339a1d8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wgsl-Dx-B1_4e.js.map",
+      "bytes": 7492,
+      "sha256": "db147ad57624a25561638889514f1096651630379ba200f82bfd9f12a25638d3"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wiki-autocomplete-C9ulQiZ5.js.map",
+      "bytes": 216051,
+      "sha256": "9c67de529c0e3a7922529d4ac5926e0c6b3a625731c7a0005ccfbe3773dde521"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wikitext-BhOHFoWU.js.map",
+      "bytes": 77628,
+      "sha256": "90f507bfea57d585da95b25642ce883903b7e30cab43daee756699735334f957"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wit-5i3qLPDT.js.map",
+      "bytes": 30091,
+      "sha256": "dd1218f1685d35a3ba7848541e23516dc3b031fd6e10453b5be54f721d2804d1"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wolfram-lXgVvXCa.js.map",
+      "bytes": 279646,
+      "sha256": "a24aae3b55028d43948efb1ddd00ee2a09f83aad6dc9e1ed171ad03f6c2d9955"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/wrench-ByBKGtNA.js.map",
+      "bytes": 5226,
+      "sha256": "9aac5f12db52ab0723b3b701d4ccaeea9168ef2d0082058a76aa0e24c3f8d9ab"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/xml-sdJ4AIDG.js.map",
+      "bytes": 7828,
+      "sha256": "0e1bba5d9e78a1ca73350622716a66182401b1f8d0d627c1a8c9265309c5e157"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/xsl-CtQFsRM5.js.map",
+      "bytes": 2167,
+      "sha256": "f3311ff15e53fcbf7f256537672370e95d49d88df11f7f447deaf66be64d5f55"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/yaml-Buea-lGh.js.map",
+      "bytes": 14889,
+      "sha256": "f754fc7a9975f913db55fbd3b480ff3c5fe303f27c8c0af1e9d009e4b3b79fa8"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/zenscript-DVFEvuxE.js.map",
+      "bytes": 5746,
+      "sha256": "b98d84faa2ece46e4e362bc7b17cbf013051c5b831d5ab0d2bb45cf3b3c8978a"
+    },
+    {
+      "path": "apps/electron/dist/renderer/assets/zig-VOosw3JB.js.map",
+      "bytes": 7860,
+      "sha256": "2729a9770f8b22e85dc07c23aa39051467441d5a4338845416d051eb539a5129"
+    }
+  ],
+  "mainPreloadSourceMapScope": "No main/preload maps emitted by repository build scripts; their provenance is full6178/2gitlinks before-after integrity + built output hashes + actual compiled probes.",
+  "sqliteAdapterOwnerSha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+  "sqliteAdapterOwnerBytesExpected": true
+}

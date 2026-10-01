@@ -1,0 +1,68 @@
+import hashlib, json, os, pathlib, shutil, subprocess, sys, time
+
+ROOT = pathlib.Path('/tmp/rox-r15-exact-ui-20261001')
+CHECKOUT = ROOT / 'checkout'
+EVIDENCE = pathlib.Path('/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001')
+BUN = '/workspace/.onboarding-tools/node_modules/.bin/bun'
+REVISION = '010fa8c040e3a84cd40cd8195473f52d8582f159'
+
+def capture(args, cwd=CHECKOUT):
+    return subprocess.check_output(args, cwd=cwd, text=True).strip()
+
+def manifest():
+    files = subprocess.check_output(['git','ls-files','-z'], cwd=CHECKOUT).split(b'\0')
+    return {f.decode(): hashlib.sha256((CHECKOUT / f.decode()).read_bytes()).hexdigest() for f in files if f and (CHECKOUT/f.decode()).is_file()}
+
+def save(name, data):
+    (EVIDENCE/name).write_text(json.dumps(data, ensure_ascii=False, indent=2)+'\n')
+
+allow = ['PATH','HTTP_PROXY','HTTPS_PROXY','NO_PROXY','http_proxy','https_proxy','no_proxy','NODE_EXTRA_CA_CERTS','SSL_CERT_FILE','REQUESTS_CA_BUNDLE']
+child_env = {k:os.environ[k] for k in allow if k in os.environ}
+for directory in ['private-config','cache/bun','cache/npm','cache/xdg','tmp']:
+    (ROOT/directory).mkdir(parents=True, exist_ok=True)
+child_env.update(PATH=str(pathlib.Path(BUN).parent)+':'+child_env.get('PATH',''), LANG='C.UTF-8', LC_ALL='C.UTF-8',
+    ROX_CONFIG_DIR=str(ROOT/'private-config'), CRAFT_CONFIG_DIR=str(ROOT/'private-config'),
+    BUN_INSTALL_CACHE_DIR=str(ROOT/'cache/bun'), npm_config_cache=str(ROOT/'cache/npm'),
+    XDG_CACHE_HOME=str(ROOT/'cache/xdg'), TMPDIR=str(ROOT/'tmp'), ELECTRON_SKIP_BINARY_DOWNLOAD='1',
+    NODE_OPTIONS='--max-old-space-size=6144')
+
+def run(label, args):
+    start=time.time()
+    log=EVIDENCE/(label+'.log')
+    with log.open('w') as stream:
+        proc=subprocess.run(args,cwd=CHECKOUT,env=child_env,stdout=stream,stderr=subprocess.STDOUT)
+    receipt={'label':label,'command':args,'cwd':str(CHECKOUT),'revision':capture(['git','rev-parse','HEAD']),
+        'exit':proc.returncode,'seconds':round(time.time()-start,3),'log':log.name,
+        'logSha256':hashlib.sha256(log.read_bytes()).hexdigest(),'envKeys':sorted(child_env),
+        'dotenvDisabled': '--no-env-file' in args,'minimalChildEnvironment':True,'HOMERepurposed':False}
+    save(label+'.json',receipt)
+    print(json.dumps(receipt),flush=True)
+    if proc.returncode: sys.exit(proc.returncode)
+
+mode=sys.argv[1]
+assert capture(['git','rev-parse','HEAD']) == REVISION
+if mode == 'install':
+    assert not capture(['git','status','--porcelain=v1','--untracked-files=no'])
+    assert not (CHECKOUT/'.env').exists()
+    assert not (CHECKOUT/'.env.local').exists()
+    save('source-before-install.json',manifest())
+    save('initial-provenance.json',{'isolatedCheckout':str(CHECKOUT),'isolatedBranch':'detached exact source; cloned cloud/all-surfaces-20260930',
+        'sourceCandidate':REVISION,'clonedBranchHead':capture(['git','rev-parse','origin/cloud/all-surfaces-20260930']),
+        'bunVersion':capture([BUN,'--version']),'nodeVersion':capture(['node','--version']),
+        'originalRevision':capture(['git','rev-parse','HEAD'],pathlib.Path('/workspace/rox-one')),
+        'originalStatus':capture(['git','status','--porcelain=v1'],pathlib.Path('/workspace/rox-one')),
+        'sourceAndLockUnchangedRequired':True,'noApplicationSourceEdits':True})
+    run('frozen-install',[BUN,'--no-env-file','install','--frozen-lockfile'])
+    after=manifest(); save('source-after-install.json',after)
+    assert after==json.loads((EVIDENCE/'source-before-install.json').read_text())
+elif mode == 'build':
+    save('source-before-build.json',manifest())
+    for generated in ['apps/webui/dist','dist-server']:
+        target=CHECKOUT/generated
+        if target.exists(): shutil.rmtree(target)
+    run('server-subprocess-build',[BUN,'--no-env-file','run','server:build:subprocess'])
+    run('webui-production-build',[BUN,'--no-env-file','run','webui:build'])
+    run('bun-server-build',[BUN,'--no-env-file','build','packages/server/src/index.ts','--target','bun','--outdir','dist-server','--external','xlsx'])
+    after=manifest(); save('source-after-build.json',after)
+    assert after==json.loads((EVIDENCE/'source-before-build.json').read_text())
+else: raise ValueError(mode)

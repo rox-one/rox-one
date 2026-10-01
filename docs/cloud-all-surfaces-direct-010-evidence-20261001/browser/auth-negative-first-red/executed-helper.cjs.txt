@@ -1,0 +1,262 @@
+/** Temporary real-browser observer. Application source, RPC implementations and responses remain untouched. */
+const fs = require('node:fs')
+const fsp = require('node:fs/promises')
+const path = require('node:path')
+const crypto = require('node:crypto')
+const cp = require('node:child_process')
+const net = require('node:net')
+const { createRequire } = require('node:module')
+
+const checkout = path.resolve(process.argv[2])
+const expectedRevision = process.argv[3]
+const allowOwnedToolingDirty = process.argv.includes('--allow-owned-tooling-dirty')
+if (!/^[0-9a-f]{40}$/.test(expectedRevision || '')) throw new Error('Exact candidate revision argument required')
+const taskRoot = '/tmp/rox-r15-exact-ui-20261001'
+const runRoot = '/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/browser/auth-negative'
+const bun = '/workspace/.onboarding-tools/node_modules/.bin/bun'
+const secrets = new Set()
+const children = new Set()
+const childClosePromises = new Map()
+function trackChild(child) {
+  children.add(child)
+  childClosePromises.set(child, new Promise(resolve => child.once('close', resolve)))
+}
+const profiles = new Set()
+let browser
+let browserTmp
+const result = { kind: 'actual-optimized-browser-authentication-negatives', revision: expectedRevision, checkout, startedAt: new Date().toISOString(), phases: [], assertions: [], servers: [], pages: [], limitations: [], errors: [] }
+
+function redact(value) {
+  let s = String(value)
+  for (const token of secrets) s = s.replaceAll(token, '[ephemeral test token redacted]')
+  return s.replace(/CRAFT_SERVER_TOKEN=[^\r\n]*/g, 'CRAFT_SERVER_TOKEN=[redacted]')
+    .replace(/((?:Cookie|Set-Cookie|Authorization)\s*[:=])[^\r\n]*/gi, '$1[redacted]')
+    .replace(/(\b(?:accessToken|refreshToken|password|token)\s*[=:]\s*["']?)[^\s,"'}]+/gi, '$1[redacted]')
+}
+function safeValues(value) {
+  if (typeof value === 'string') return redact(value)
+  if (Array.isArray(value)) return value.map(safeValues)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, safeValues(v)]))
+  return value
+}
+function writeJson(name, data) { fs.writeFileSync(path.join(runRoot, name), JSON.stringify(safeValues(data), null, 2)) }
+function assert(name, ok, detail) { result.assertions.push({ name, pass: Boolean(ok), detail }); if (!ok) throw new Error(name) }
+function check(name, ok, detail) { result.assertions.push({ name, pass: Boolean(ok), detail }) }
+function checkpoint() { writeJson('results.json', result) }
+async function within(promise, ms, message) {
+  let timer
+  try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), ms) })]) }
+  finally { clearTimeout(timer) }
+}
+async function phase(name, fn) {
+  const entry = { name, startedAt: new Date().toISOString() }; result.phases.push(entry)
+  try { entry.evidence = await fn(); entry.status = 'completed' }
+  catch (e) { entry.status = 'failed'; entry.error = redact(e.stack || e); result.errors.push({ phase: name, error: entry.error }); }
+  entry.finishedAt = new Date().toISOString(); checkpoint(); console.log(`${name}: ${entry.status}`)
+  return entry
+}
+function trackedStatus() { return cp.execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=no'], { cwd: checkout, encoding: 'utf8' }) }
+function applicationStatus(status) { return status.split('\n').filter(line => line && !(allowOwnedToolingDirty && line.slice(3) === 'scripts/electron-build-main.ts')).join('\n') }
+function hashFile(file) { return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') }
+async function reservePort() {
+  const server = net.createServer(); await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve) })
+  const port = server.address().port; await new Promise(resolve => server.close(resolve)); return port
+}
+async function spawnServer(profile, label, sameProfile = {}) {
+  const token = sameProfile.token || crypto.randomBytes(32).toString('hex'); secrets.add(token)
+  const port = sameProfile.port || await reservePort()
+  const child = cp.spawn(bun, [path.join(checkout, 'dist-server/index.js')], {
+    cwd: checkout, detached: true,
+    env: { PATH: path.dirname(bun) + ':' + (process.env.PATH || ''), LANG: 'C.UTF-8', TMPDIR: path.join(runRoot, 'tmp'),
+      ROX_CONFIG_DIR: profile, CRAFT_CONFIG_DIR: profile, ROX_SERVER_TOKEN: token, CRAFT_SERVER_TOKEN: token,
+      CRAFT_RPC_HOST: '127.0.0.1', CRAFT_RPC_PORT: String(port), CRAFT_HEALTH_PORT: '0',
+      CRAFT_WEBUI_DIR: path.join(checkout, 'apps/webui/dist'), CRAFT_BROWSER_BACKEND: 'none',
+      CRAFT_BUNDLED_ASSETS_ROOT: path.join(checkout, 'apps/electron'), CRAFT_DISABLE_MESSAGING: 'true' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  trackChild(child)
+  let output = ''; let readyResolve; const ready = new Promise(resolve => { readyResolve = resolve })
+  const exited = new Promise(resolve => { child.once('exit', (code, signal) => resolve({ code, signal })); child.once('error', error => resolve({ error: error.message })) })
+  const closed = childClosePromises.get(child)
+  function collect(chunk) { output += chunk.toString(); if (output.includes(`CRAFT_SERVER_URL=ws://127.0.0.1:${port}`)) readyResolve() }
+  child.stdout.on('data', collect); child.stderr.on('data', collect)
+  const audit = { label, pid: child.pid, profile, origin: `http://127.0.0.1:${port}`, sentSigterm: false, usedSigkill: false }
+  result.servers.push(audit)
+  const server = { child, exited, origin: audit.origin, token, audit, profile,
+    async stop() {
+      if (audit.exit) return
+      audit.preStopExitCode = child.exitCode
+      if (child.exitCode === null && child.signalCode === null) { audit.sentSigterm = child.kill('SIGTERM') }
+      try { audit.exit = await within(exited, 10_000, 'UI baseline server SIGTERM timeout') }
+      catch (error) { audit.usedSigkill = true; try { process.kill(-child.pid, 'SIGKILL') } catch { child.kill('SIGKILL') } audit.exit = await within(exited, 5000, 'Owned server did not exit after SIGKILL'); audit.stopError = String(error) }
+      await within(closed, 5000, 'Owned server did not close after stop'); fs.writeFileSync(path.join(runRoot, `${label}-server.log`), redact(output)); audit.fullEphemeralTokenLogged = output.includes(token)
+      children.delete(child); checkpoint()
+    },
+  }
+  try { await within(Promise.race([ready, exited.then(e => { throw new Error(`Server exited before readiness: ${JSON.stringify(e)}`) })]), 45_000, 'UI server readiness timeout') }
+  catch (error) { await server.stop(); throw new Error(`${error}\n${redact(output)}`) }
+  return server
+}
+async function createProfile(label, provisioned) {
+  const profile = await fsp.mkdtemp(path.join(runRoot, `${label}-profile-`))
+  profiles.add(profile)
+  await fsp.copyFile(path.join(checkout, 'apps/electron/resources/config-defaults.json'), path.join(profile, 'config-defaults.json'))
+  if (provisioned) {
+    const proc = cp.spawn(bun, [path.join(taskRoot, 'provision-private-union-profile.ts'), checkout], { cwd: checkout,
+      env: { PATH: path.dirname(bun) + ':' + (process.env.PATH || ''), LANG: 'C.UTF-8', TMPDIR: path.join(runRoot, 'tmp'), ROX_CONFIG_DIR: profile, CRAFT_CONFIG_DIR: profile, CRAFT_BUNDLED_ASSETS_ROOT: path.join(checkout, 'apps/electron') }, stdio: ['ignore', 'pipe', 'pipe'] })
+    trackChild(proc); let log = ''; proc.stdout.on('data', c => { log += c }); proc.stderr.on('data', c => { log += c })
+    const code = await within(new Promise((resolve, reject) => { proc.once('error', reject); proc.once('close', resolve) }), 20_000, 'Private config utility timeout')
+    children.delete(proc); fs.writeFileSync(path.join(runRoot, 'provision.log'), redact(log))
+    assert('Actual config utility provisioning exited 0', code === 0, { code })
+  }
+  return profile
+}
+function observe(page, label) {
+  const log = { label, pageErrors: [], consoleErrors: [], consoleWarnings: [], failedRequests: [], badResponses: [], webSockets: [] }
+  result.pages.push(log)
+  page.on('pageerror', error => log.pageErrors.push(redact(error.stack || error.message)))
+  page.on('console', msg => { if (msg.type() === 'error') log.consoleErrors.push(redact(msg.text())); if (msg.type() === 'warning') log.consoleWarnings.push(redact(msg.text())) })
+  page.on('requestfailed', req => log.failedRequests.push({ url: redact(req.url()), method: req.method(), error: req.failure()?.errorText }))
+  page.on('response', response => { if (response.status() >= 400) log.badResponses.push({ url: redact(response.url()), status: response.status() }) })
+  page.on('websocket', ws => {
+    const requests = new Map()
+    const socket = { url: redact(ws.url()), sentChannels: [], receivedTypes: [], rpcRefusals: [], acknowledgedWorkspaceIds: [], errors: [], closed: false }; log.webSockets.push(socket)
+    ws.on('framesent', ({ payload }) => { try { const data = JSON.parse(String(payload)); if (typeof data.channel === 'string') { socket.sentChannels.push(data.channel); if (data.id) requests.set(data.id, data.channel) } } catch {} })
+    ws.on('framereceived', ({ payload }) => { try { const data = JSON.parse(String(payload)); if (typeof data.type === 'string') socket.receivedTypes.push(data.type); if (data.type === 'handshake_ack') socket.acknowledgedWorkspaceIds.push(typeof data.workspaceId === 'string' ? data.workspaceId : null); if (data.error) socket.rpcRefusals.push({ channel: data.channel || requests.get(data.id), code: data.error.code, message: redact(data.error.message || '') }) } catch {} })
+    ws.on('socketerror', error => socket.errors.push(redact(error))); ws.on('close', () => { socket.closed = true })
+  })
+  return log
+}
+async function snapshot(page, name) {
+  const state = await page.evaluate(() => {
+    const visible = el => Boolean(el && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0 && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none')
+    const describe = el => { if (!el) return null; const r = el.getBoundingClientRect(); return { visible: visible(el), tag: el.tagName, text: (el.innerText || '').slice(0, 1800), ariaLabel: el.getAttribute('aria-label'), rect: { x: r.x, y: r.y, width: r.width, height: r.height } } }
+    return { url: location.href, title: document.title, bodyText: document.body.innerText.slice(0, 18_000),
+      appRootChildren: document.getElementById('root')?.childElementCount,
+      topBar: describe(document.querySelector('.chrome-topbar')),
+      modePill: describe(document.querySelector('[data-testid="titlebar-mode-pill"]')),
+      rail: describe(document.querySelector('[data-shell-role="activity-rail"]')),
+      mainNavigation: describe(document.querySelector('nav[aria-label="Main navigation"]')),
+      headers: [...document.querySelectorAll('h1,h2,h3,[role="heading"]')].filter(visible).map(e => e.textContent?.trim()),
+      testIds: [...document.querySelectorAll('[data-testid]')].filter(visible).map(e => e.getAttribute('data-testid')),
+      modeButtons: [...document.querySelectorAll('[data-testid="titlebar-mode-pill"] button')].map(e => ({ mode: e.getAttribute('data-mode'), label: e.getAttribute('aria-label'), current: e.getAttribute('aria-current'), disabled: e.getAttribute('aria-disabled'), visible: visible(e) })),
+      railButtons: [...document.querySelectorAll('[data-shell-role="activity-rail"] button')].map(e => ({ label: e.getAttribute('aria-label'), disabled: e.getAttribute('aria-disabled'), visible: visible(e) })),
+      sourceStates: [...document.querySelectorAll('[data-authority-state],[data-project-authority-state],[data-source],[data-error-code],[role="alert"],[role="status"],[data-home-quick-add]')].filter(visible).map(e => ({ tag: e.tagName, testId: e.getAttribute('data-testid'), authority: e.getAttribute('data-authority-state') || e.getAttribute('data-project-authority-state'), source: e.getAttribute('data-source'), error: e.getAttribute('data-error-code'), role: e.getAttribute('role'), text: (e.innerText || '').slice(0,1200), disabled: e.getAttribute('data-disabled'), failed: e.getAttribute('data-error') })),
+      preferences: Object.fromEntries(['craft-workbench-enabled','craft-feature-unified-shell','craft-feature-workbench-top-chrome-v2','craft-feature-workbench-mode-registry-v1','craft-activity-rail-collapsed','craft-sidebar-width','craft-session-list-width'].map(k => [k, localStorage.getItem(k)])),
+    }
+  })
+  state.screenshot = `${name}.png`; state.html = `${name}.html`
+  await page.screenshot({ path: path.join(runRoot, state.screenshot), fullPage: true })
+  fs.writeFileSync(path.join(runRoot, state.html), redact(await page.content()))
+  writeJson(`${name}.json`, state); return state
+}
+async function settle(page) {
+  await page.waitForTimeout(1800)
+  const dialog = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: translated('memory.onboardingTitle'), exact: true }) }).first()
+  if (await dialog.isVisible()) {
+    if (!result.firstRunMemoryDialog) result.firstRunMemoryDialog = await snapshot(page, 'genuine-first-run-memory-dialog')
+    await dialog.getByRole('button', { name: translated('memory.onboardingSkip'), exact: true }).click()
+    result.firstRunMemoryDialogDismissals ??= []
+    result.firstRunMemoryDialogDismissals.push({ realUiClick: 'Skip', noSeedLessonsRequested: true, markerMayPersistInOwnProfile: true, at: new Date().toISOString() })
+    await page.waitForTimeout(300)
+  }
+}
+async function login(page, server) {
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'en')
+    window.addEventListener('unhandledrejection', event => {
+      const reason = event.reason
+      console.error('[actual-unhandled-rejection]', JSON.stringify({ type: typeof reason, name: reason?.name, code: reason?.code, message: reason?.message, stack: reason?.stack }))
+    })
+  })
+  await page.goto(server.origin + '/login', { waitUntil: 'domcontentloaded' })
+  await page.locator('#password').fill(server.token)
+  await Promise.all([page.waitForURL(url => !url.pathname.startsWith('/login'), { timeout: 15_000, waitUntil: 'domcontentloaded' }), page.locator('#submit-btn').click()])
+  await settle(page)
+  const cookie = (await page.context().cookies()).find(c => c.name === 'craft_session')
+  assert('Real login stores HttpOnly cookie', cookie?.httpOnly === true, { present: Boolean(cookie), httpOnly: cookie?.httpOnly })
+}
+
+const en = JSON.parse(fs.readFileSync(path.join(checkout, 'packages/shared/src/i18n/locales/en.json'), 'utf8'))
+function translated(key) {
+  if (typeof en[key] === 'string') return en[key]
+  let value = en
+  for (const part of key.split('.')) value = value?.[part]
+  return typeof value === 'string' ? value : key
+}
+async function main() {
+  await fsp.mkdir(runRoot, { recursive: true }); await fsp.mkdir(path.join(runRoot, 'tmp'), { recursive: true })
+  await fsp.copyFile(__filename, path.join(runRoot, 'executed-helper.cjs'))
+  result.command = ['node', __filename, checkout, expectedRevision]
+  result.helperSha256 = hashFile(__filename)
+  assert('Authentication observer exact source revision', cp.execFileSync('git', ['rev-parse', 'HEAD'], {cwd: checkout, encoding:'utf8'}).trim() === expectedRevision, {})
+  assert('Authentication observer tracked source clean', trackedStatus() === '', {})
+  result.artifacts = Object.fromEntries(['dist-server/index.js','apps/webui/dist/index.html','apps/webui/dist/login.html'].map(file => [file, { sha256: hashFile(path.join(checkout,file)), bytes: fs.statSync(path.join(checkout,file)).size }]))
+  const { chromium } = createRequire(path.join(checkout,'package.json'))('playwright')
+  browserTmp = await fsp.mkdtemp('/tmp/rox-ui-a-')
+  browser = await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,chromiumSandbox:false,env:{PATH:process.env.PATH,LANG:'C.UTF-8',TMPDIR:browserTmp}})
+  result.browserVersion = browser.version()
+  const profile = await createProfile('auth-negative', true)
+  const server = await spawnServer(profile, 'auth-negative')
+  const context = await browser.newContext({viewport:{width:1440,height:1000},locale:'en-US'})
+  const page = await context.newPage(); const log = observe(page, 'real-unauth-and-bad-auth')
+  try {
+    const unauthorizedApi = await page.request.get(server.origin+'/api/config')
+    assert('Actual unauthenticated config API returns401', unauthorizedApi.status()===401,{status:unauthorizedApi.status()})
+    await page.goto(server.origin+'/',{waitUntil:'domcontentloaded'})
+    await page.locator('#password').waitFor({state:'visible'})
+    result.unauthenticated = await snapshot(page,'unauthenticated-login-redirect')
+    assert('Actual unauthenticated browser redirects to login without shell', new URL(page.url()).pathname==='/login' && !result.unauthenticated.topBar?.visible, {actualUrl:page.url(),topBarVisible:result.unauthenticated.topBar?.visible})
+    const invalidToken=crypto.randomBytes(32).toString('hex'); secrets.add(invalidToken)
+    await page.locator('#password').fill(invalidToken)
+    const badResponse = page.waitForResponse(response=>new URL(response.url()).pathname==='/api/auth' && response.request().method()==='POST')
+    await page.locator('#submit-btn').click()
+    const response = await badResponse
+    await page.locator('.error.visible').waitFor({state:'visible'})
+    const cookies=await context.cookies()
+    result.badAuthentication={status:response.status(),actualUrl:page.url(),errorText:await page.locator('.error').innerText(),sessionCookiePresent:cookies.some(cookie=>cookie.name==='craft_session'),webSocketCount:log.webSockets.length}
+    assert('Actual bad-token login UI refuses authentication without session cookie or WebSocket', response.status()===401 && new URL(page.url()).pathname==='/login' && !result.badAuthentication.sessionCookiePresent && log.webSockets.length===0,result.badAuthentication)
+    await snapshot(page,'bad-token-login-refusal')
+    await login(page,server)
+    const config=await (await page.request.get(server.origin+'/api/config/workspaces')).json()
+    const acks=log.webSockets.flatMap(socket=>socket.acknowledgedWorkspaceIds)
+    result.correctAuthentication={defaultWorkspaceId:config.defaultWorkspaceId,acknowledgments:acks}
+    assert('Actual correct browser login gets real default workspace ACK', typeof config.defaultWorkspaceId==='string' && acks.includes(config.defaultWorkspaceId) && acks.every(id=>id===config.defaultWorkspaceId),result.correctAuthentication)
+    await snapshot(page,'correct-login-mounted-production-shell')
+    assert('Authentication browser has zero page exceptions', log.pageErrors.length===0,log.pageErrors)
+  } finally {
+    await context.close()
+    await server.stop()
+    assert('Authentication owned server SIGTERM exit0 without SIGKILL',server.audit.exit.code===0 && !server.audit.usedSigkill,server.audit)
+    assert('Authentication server logs do not contain full ephemeral token',!server.audit.fullEphemeralTokenLogged,{})
+    await fsp.rm(profile,{recursive:true,force:true});profiles.delete(profile)
+    await browser.close();browser=null
+  }
+}
+async function finalCleanup() {
+  const audit = { browserClosed: !browser, childAudits: [], profilesDeleted: [], errors: [] }
+  if (browser) try { await within(browser.close(), 15_000, 'Owned browser cleanup timed out'); browser = null; audit.browserClosed = true } catch (error) { audit.errors.push(String(error)) }
+  for (const child of children) {
+    const childAudit = { pid: child.pid, initiallyExited: child.exitCode !== null || child.signalCode !== null, usedSigkill: false }
+    const closed = childClosePromises.get(child)
+    if (!childAudit.initiallyExited) {
+      try { child.kill('SIGTERM') } catch {}
+      try { await within(closed, 3_000, 'Owned child cleanup SIGTERM timed out') }
+      catch { childAudit.usedSigkill = true; try { process.kill(-child.pid, 'SIGKILL') } catch { try { child.kill('SIGKILL') } catch {} } }
+    }
+    try { await within(closed, 5_000, 'Owned child did not close after cleanup'); childAudit.confirmedStopped = true; children.delete(child) }
+    catch (error) { childAudit.confirmedStopped = false; audit.errors.push(String(error)) }
+    childAudit.exitCode = child.exitCode; childAudit.signalCode = child.signalCode; audit.childAudits.push(childAudit)
+  }
+  for (const profile of profiles) try { await fsp.rm(profile, { recursive: true, force: true }); profiles.delete(profile); audit.profilesDeleted.push(profile) } catch (error) { audit.errors.push(String(error)) }
+  try { await fsp.rm(path.join(runRoot, 'tmp'), { recursive: true, force: true }) } catch (error) { audit.errors.push(String(error)) }
+  if (browserTmp) try { await fsp.rm(browserTmp, { recursive: true, force: true }); audit.shortBrowserTmpDeleted = true } catch (error) { audit.errors.push(String(error)) }
+  audit.remainingChildren = children.size; audit.remainingProfiles = profiles.size; result.finalCleanup = audit
+  if (audit.errors.length || children.size || profiles.size || !audit.browserClosed) result.errors.push({ phase: 'final cleanup', evidence: audit })
+}
+main().catch(error => { result.errors.push({ phase: 'runner', error: redact(error.stack || error) }); console.error(redact(error.stack || error)) }).finally(async () => {
+  await finalCleanup()
+  result.finishedAt = new Date().toISOString(); result.assertionsPassed = result.assertions.filter(a => a.pass).length; result.assertionsFailed = result.assertions.filter(a => !a.pass).length
+  checkpoint(); console.log(`UI OBSERVATION DONE: ${result.assertionsPassed} passed checks, ${result.assertionsFailed} failed checks, ${result.errors.length} phase errors`)
+  process.exitCode = result.errors.length || result.assertionsFailed ? 1 : 0
+})

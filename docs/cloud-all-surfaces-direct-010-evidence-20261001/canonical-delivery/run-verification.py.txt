@@ -1,0 +1,211 @@
+import datetime, difflib, hashlib, json, os, pathlib, re, shutil, subprocess, time
+
+CHECKOUT = pathlib.Path('/tmp/rox-r15-exact-ui-20261001/checkout')
+ORIGINAL = pathlib.Path('/workspace/rox-one')
+DELIVERY = pathlib.Path('/workspace/rox-r15-direct-server-dist-20261001')
+EVIDENCE = pathlib.Path(__file__).resolve().parent
+PRIVATE = pathlib.Path('/tmp/rox-r15-direct-delivery-private-20261001')
+RETAINED = pathlib.Path('/workspace/rox-r15-evidence-20260930/union-validation')
+BUN = '/workspace/.onboarding-tools/node_modules/.bin/bun'
+EXPECTED = '010fa8c040e3a84cd40cd8195473f52d8582f159'
+
+def digest(path):
+    h = hashlib.sha256()
+    with pathlib.Path(path).open('rb') as stream:
+        for part in iter(lambda: stream.read(1024 * 1024), b''):
+            h.update(part)
+    return h.hexdigest()
+
+def digest_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+def save(name, value):
+    (EVIDENCE / name).write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\n')
+
+def git(repo, *args):
+    return subprocess.check_output(['git', '-C', str(repo), *args]).decode().strip()
+
+def source(repo):
+    files, links, gitlinks = {}, {}, {}
+    for record in filter(None, subprocess.check_output(['git', '-C', str(repo), 'ls-files', '-s', '-z']).decode().split('\0')):
+        meta, name = record.split('\t', 1)
+        mode, object_id, stage = meta.split()
+        if mode == '160000':
+            gitlinks[name] = object_id
+        elif mode == '120000':
+            target = os.readlink(repo / name)
+            links[name] = {'target': target, 'sha256': digest_bytes(target.encode())}
+        else:
+            files[name] = digest(repo / name)
+    return {'head': git(repo, 'rev-parse', 'HEAD'), 'status': git(repo, 'status', '--porcelain'),
+            'regularFileCount': len(files), 'gitlinkCount': len(gitlinks), 'symlinkCount': len(links),
+            'files': files, 'gitlinks': gitlinks, 'symlinks': links}
+
+def artifacts(folders):
+    files = {}
+    for folder in folders:
+        for file in sorted((CHECKOUT / folder).rglob('*')):
+            if file.is_file():
+                files[str(file.relative_to(CHECKOUT))] = {'bytes': file.stat().st_size, 'sha256': digest(file)}
+    return {'fileCount': len(files), 'files': files,
+            'manifestSha256': digest_bytes(json.dumps(files, sort_keys=True, separators=(',', ':')).encode())}
+
+def run(label, argv):
+    log = EVIDENCE / (label + '.log')
+    start = time.monotonic()
+    began = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    with log.open('wb') as stream:
+        completed = subprocess.run(argv, cwd=CHECKOUT, env=ENV, stdout=stream, stderr=subprocess.STDOUT)
+    receipt = {'label': label, 'argv': argv, 'cwd': str(CHECKOUT), 'startedUtc': began,
+               'seconds': round(time.monotonic() - start, 3), 'exit': completed.returncode,
+               'log': str(log), 'logSha256': digest(log), 'safeEnvironmentKeys': sorted(ENV)}
+    output = log.read_text(errors='replace')
+    counts = re.search(r'\s+(\d+) pass\s+\n\s*(\d+) fail\s+\n\s*(\d+) expect\(\) calls\s+\nRan (\d+) tests across (\d+) files', output)
+    if counts:
+        receipt['actualBunCounts'] = dict(zip(['pass', 'fail', 'expect', 'tests', 'files'], map(int, counts.groups())))
+    RESULTS.append(receipt)
+    save(label + '-receipt.json', receipt)
+    print(json.dumps(receipt, ensure_ascii=False), flush=True)
+    if completed.returncode:
+        raise RuntimeError(label + ' failed; inspect retained safe log')
+    return receipt
+
+EVIDENCE.mkdir(parents=True, exist_ok=True)
+PRIVATE.mkdir(parents=True, exist_ok=False)
+for folder in ['config', 'tmp', 'profiles', 'cache/bun', 'cache/npm', 'cache/xdg', 'cache/node']:
+    (PRIVATE / folder).mkdir(parents=True, exist_ok=True)
+ENV = {'PATH': str(pathlib.Path(BUN).parent) + ':' + os.environ.get('PATH', ''),
+       'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'TZ': 'UTC', 'TMPDIR': str(PRIVATE / 'tmp'),
+       'ROX_CONFIG_DIR': str(PRIVATE / 'config'), 'CRAFT_CONFIG_DIR': str(PRIVATE / 'config'),
+       'BUN_INSTALL_CACHE_DIR': str(PRIVATE / 'cache/bun'), 'npm_config_cache': str(PRIVATE / 'cache/npm'),
+       'XDG_CACHE_HOME': str(PRIVATE / 'cache/xdg'), 'NODE_COMPILE_CACHE': str(PRIVATE / 'cache/node'),
+       'ELECTRON_SKIP_BINARY_DOWNLOAD': '1', 'NO_COLOR': '1', 'FORCE_COLOR': '0'}
+for name in ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy',
+             'SSL_CERT_FILE', 'REQUESTS_CA_BUNDLE', 'NODE_EXTRA_CA_CERTS', 'NODE_OPTIONS']:
+    if name in os.environ:
+        ENV[name] = os.environ[name]
+RESULTS = []
+original_before = source(ORIGINAL)
+before = source(CHECKOUT)
+live_before = artifacts(['apps/webui/dist', 'dist-server'])
+runtime_before = artifacts(['packages/pi-agent-server/dist', 'packages/cloud-runner/dist',
+                            'packages/messaging-whatsapp-worker/dist', 'packages/messaging-discord-worker/dist'])
+save('source-before.json', before)
+save('original-source-before.json', original_before)
+save('live-artifacts-before.json', live_before)
+save('internal-build-artifacts-before.json', runtime_before)
+assert before['head'] == EXPECTED
+assert original_before['status'] == ''
+assert not (CHECKOUT / '.env').exists()
+assert not DELIVERY.exists(), 'refuse to replace any existing shipment'
+assert subprocess.check_output([BUN, '--version'], env=ENV).decode().strip() == '1.3.14'
+assert subprocess.check_output(['node', '--version'], env=ENV).decode().strip().startswith('v24.')
+
+helper_src = RETAINED / 'canonical-delivery-smoke.test.ts'
+helper_original = helper_src.read_text()
+adapt = [
+    ("const CHECKOUT = join(import.meta.dir, '..', 'all-surfaces')", "const CHECKOUT = '/tmp/rox-r15-exact-ui-20261001/checkout'"),
+    ("const DELIVERY = '/workspace/rox-union-server-dist-final-20260930'", "const DELIVERY = '/workspace/rox-r15-direct-server-dist-20261001'"),
+    ("const PROFILE_PARENT = join(import.meta.dir, 'tmp')", "const PROFILE_PARENT = '/tmp/rox-r15-direct-delivery-private-20261001/profiles'"),
+    ("const RESULT = join(import.meta.dir, 'canonical-delivery-phases.json')", "const RESULT = join(import.meta.dir, 'canonical-delivery-phases.json')"),
+    ("const LOG = join(import.meta.dir, 'canonical-delivery-child-redacted.log')", "const LOG = join(import.meta.dir, 'canonical-delivery-child-redacted.log')"),
+]
+helper = helper_original
+for old, new in adapt:
+    assert helper.count(old) == 1
+    helper = helper.replace(old, new)
+(EVIDENCE / 'canonical-delivery-smoke.original.ts.txt').write_text(helper_original)
+(EVIDENCE / 'canonical-delivery-smoke.test.ts').write_text(helper)
+(EVIDENCE / 'helper-path-only.diff').write_text(''.join(difflib.unified_diff(helper_original.splitlines(True), helper.splitlines(True), fromfile=str(helper_src), tofile=str(EVIDENCE / 'canonical-delivery-smoke.test.ts'))))
+manifest_src = RETAINED / 'canonical-delivery-manifest.py'
+manifest_original = manifest_src.read_text()
+manifest = manifest_original.replace("CHECKOUT = ROOT.parent / 'all-surfaces'", "CHECKOUT = Path('/tmp/rox-r15-exact-ui-20261001/checkout')").replace("DELIVERY = Path('/workspace/rox-union-server-dist-final-20260930')", "DELIVERY = Path('/workspace/rox-r15-direct-server-dist-20261001')")
+assert manifest != manifest_original
+(EVIDENCE / 'canonical-delivery-manifest.original.py.txt').write_text(manifest_original)
+(EVIDENCE / 'canonical-delivery-manifest.py').write_text(manifest)
+(EVIDENCE / 'manifest-path-only.diff').write_text(''.join(difflib.unified_diff(manifest_original.splitlines(True), manifest.splitlines(True), fromfile=str(manifest_src), tofile=str(EVIDENCE / 'canonical-delivery-manifest.py'))))
+save('helper-provenance.json', {'smokeRetainedPath': str(helper_src), 'smokeRetainedSha256': digest(helper_src),
+    'smokeOriginalCopySha256': digest(EVIDENCE / 'canonical-delivery-smoke.original.ts.txt'),
+    'smokeAdaptedSha256': digest(EVIDENCE / 'canonical-delivery-smoke.test.ts'),
+    'smokeChangesOnly': ['CHECKOUT', 'DELIVERY', 'PROFILE_PARENT'], 'assertionsOrTimeoutsChanged': False,
+    'manifestRetainedPath': str(manifest_src), 'manifestRetainedSha256': digest(manifest_src),
+    'manifestAdaptedSha256': digest(EVIDENCE / 'canonical-delivery-manifest.py'),
+    'manifestChangesOnly': ['CHECKOUT', 'DELIVERY'],
+    'sourceCandidate': EXPECTED, 'outerBun': '1.3.14', 'shippedBunPin': '1.3.9',
+    'node': subprocess.check_output(['node', '--version'], env=ENV).decode().strip(),
+    'internalMandatoryPiCloudRunnerBuildAuthorized': True, 'noHOMERepurpose': True,
+    'originalSourceNeverModified': True, 'sourceApplicationFixesAllowed': False,
+    'expectedBuildOutputArgument': '../../../workspace/rox-r15-direct-server-dist-20261001',
+    'relativeOutputReason': 'scripts/build-server.ts:837 uses join(rootDir, values.output); absolute output misjoins'})
+
+error = None
+try:
+    run('manifest-before', ['python3', str(EVIDENCE / 'canonical-delivery-manifest.py'), 'before', EXPECTED])
+    run('canonical-build', [BUN, '--no-env-file', 'run', 'server:build', '--output=../../../workspace/rox-r15-direct-server-dist-20261001'])
+    # Canonical builder does not copy WebUI. Stage the already built exact010 UI
+    # as an explicit output-only operation, with complete hash evidence.
+    ui_source = CHECKOUT / 'apps/webui/dist'
+    ui_destination = DELIVERY / 'webui'
+    assert not ui_destination.exists()
+    ui_copy_started = time.monotonic()
+    shutil.copytree(ui_source, ui_destination, symlinks=True)
+    source_ui = {str(p.relative_to(ui_source)): {'bytes': p.stat().st_size, 'sha256': digest(p)}
+                 for p in sorted(ui_source.rglob('*')) if p.is_file()}
+    staged_ui = {str(p.relative_to(ui_destination)): {'bytes': p.stat().st_size, 'sha256': digest(p)}
+                 for p in sorted(ui_destination.rglob('*')) if p.is_file()}
+    save('canonical-ui-copy.json', {'sourceCandidate': EXPECTED, 'source': str(ui_source),
+        'destination': str(ui_destination), 'performedAfterCanonicalBuild': True,
+        'canonicalBuilderCopiesUI': False, 'UIRebuilt': False, 'sourceFileCount': len(source_ui),
+        'seconds': round(time.monotonic() - ui_copy_started, 3),
+        'sourceFiles': source_ui, 'stagedFiles': staged_ui, 'exact': source_ui == staged_ui})
+    assert source_ui and source_ui == staged_ui
+    runtime_after = artifacts(['packages/pi-agent-server/dist', 'packages/cloud-runner/dist',
+                               'packages/messaging-whatsapp-worker/dist', 'packages/messaging-discord-worker/dist'])
+    save('internal-build-artifacts-after.json', runtime_after)
+    run('manifest-before-runtime', ['python3', str(EVIDENCE / 'canonical-delivery-manifest.py'), 'after', EXPECTED])
+    shutil.copyfile(EVIDENCE / 'canonical-delivery-after.json', EVIDENCE / 'shipment-before-runtime-manifest.json')
+    shipment = json.loads((EVIDENCE / 'shipment-before-runtime-manifest.json').read_text())
+    assert shipment['tracked_content_unchanged'] and shipment['same_observed_revision']
+    assert shipment['staged_webui_exact'] and shipment['copied_workspace_source_exact']
+    assert all(link['target_exists'] and link['resolved_inside_delivery'] for link in shipment['symlinks'])
+    assert live_before == artifacts(['apps/webui/dist', 'dist-server'])
+    run('shipment-closure', ['python3', str(EVIDENCE / 'verify-shipment-closure.py')])
+    run('canonical-delivery-smoke', [BUN, '--no-env-file', 'test', str(EVIDENCE / 'canonical-delivery-smoke.test.ts')])
+    run('manifest-after-runtime', ['python3', str(EVIDENCE / 'canonical-delivery-manifest.py'), 'after', EXPECTED])
+    shipment_after = json.loads((EVIDENCE / 'canonical-delivery-after.json').read_text())
+    assert shipment['files'] == shipment_after['files'] and shipment['symlinks'] == shipment_after['symlinks']
+    phases = json.loads((EVIDENCE / 'canonical-delivery-phases.json').read_text())
+    assert phases['profilesRemoved'] and all(server['exit'] is not None for server in phases['servers'])
+    assert all(not server['tokenWasLogged'] for server in phases['servers'])
+    assert all(phase['pass'] for phase in phases['phases'])
+except BaseException as exc:
+    error = str(exc)
+    raise
+finally:
+    after, original_after = source(CHECKOUT), source(ORIGINAL)
+    live_after = artifacts(['apps/webui/dist', 'dist-server'])
+    save('source-after.json', after)
+    save('original-source-after.json', original_after)
+    save('live-artifacts-after.json', live_after)
+    phases_path = EVIDENCE / 'canonical-delivery-phases.json'
+    phases = json.loads(phases_path.read_text()) if phases_path.exists() else None
+    cleanup = {'sourceAndLockPreserved': before == after, 'originalSourceAndStatusPreserved': original_before == original_after,
+        'originalCleanBeforeAndAfter': original_before['status'] == original_after['status'] == '',
+        'liveArtifactsPreserved': live_before == live_after, 'liveArtifactFileCount': live_after['fileCount'],
+        'ownChildProcessesExited': bool(phases) and all(s['exit'] is not None for s in phases['servers']),
+        'ownProfilesRemovedByUnchangedHelper': bool(phases) and phases['profilesRemoved'],
+        'canonicalOutputRetainedForRootVerification': DELIVERY.exists(),
+        'sharedCheckoutDependenciesAndArtifactsRetained': True,
+        'sourceRegularFileCount': before['regularFileCount'], 'gitlinkCount': before['gitlinkCount'],
+        'privateTemporaryRootRemoved': False}
+    # The unchanged helper owns and terminates its launched children in afterAll.
+    # Never delete private state if a child is reported live.
+    if not phases or cleanup['ownChildProcessesExited']:
+        shutil.rmtree(PRIVATE)
+        cleanup['privateTemporaryRootRemoved'] = not PRIVATE.exists()
+    save('cleanup-receipt.json', cleanup)
+    save('verification-receipt.json', {'candidate': EXPECTED, 'results': RESULTS, 'error': error,
+        'cleanup': cleanup, 'runtimePhases': phases,
+        'scopeLimitations': ['no installed/native Electron or macOS', 'no provider or OAuth', 'no iOS',
+                            'no PG', 'no full109/full143', 'no security scan acceptance']})
+    print(json.dumps({'error': error, 'cleanup': cleanup}, ensure_ascii=False), flush=True)

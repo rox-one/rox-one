@@ -1,0 +1,38 @@
+SERVER 1
+2026-10-01T17:19:56.770Z INFO  [bootstrap] Config artifacts initialized
+2026-10-01T17:19:56.772Z INFO  [bootstrap] Initialized missing global config
+2026-10-01T17:19:56.782Z INFO  [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-01T17:19:56.813Z INFO  [session] Reinitializing auth for connection: rox-kimi (none)
+2026-10-01T17:19:56.813Z INFO  [session] Auth env vars set for connection: rox-kimi
+2026-10-01T17:19:56.814Z INFO  [session] Loaded 0 sessions from disk (metadata only)
+2026-10-01T17:19:56.814Z INFO  Rox server listening on ws://127.0.0.1:34625
+CRAFT_SERVER_URL=ws://127.0.0.1:34625
+CRAFT_SERVER_TOKEN=ab17…e1f7
+CRAFT_WEBUI_URL=http://0.0.0.0:34625
+2026-10-01T17:19:56.895Z INFO  [bootstrap] Toolchain ensureAll scheduled
+[webui] Failed auth attempt from direct
+[webui] Successful auth from direct
+2026-10-01T17:19:57.156Z INFO  Shutting down...
+2026-10-01T17:19:59.160Z INFO  [session] Cleaning up resources...
+2026-10-01T17:19:59.161Z INFO  [session] Cleanup complete
+
+SERVER 2
+2026-10-01T17:20:00.659Z INFO  [bootstrap] Config artifacts initialized
+2026-10-01T17:20:00.662Z INFO  [bootstrap] Global config found
+2026-10-01T17:20:00.673Z INFO  [session] [browser-pane] setRpcServer called — remote browser bridge is now available
+2026-10-01T17:20:00.688Z INFO  [session] Reinitializing auth for connection: rox-kimi (none)
+2026-10-01T17:20:00.689Z INFO  [session] Auth env vars set for connection: rox-kimi
+2026-10-01T17:20:00.699Z INFO  [session] Loaded 0 sessions from disk (metadata only)
+2026-10-01T17:20:00.700Z INFO  Rox server listening on ws://127.0.0.1:44587
+CRAFT_SERVER_URL=ws://127.0.0.1:44587
+CRAFT_SERVER_TOKEN=ab17…e1f7
+CRAFT_WEBUI_URL=http://0.0.0.0:44587
+2026-10-01T17:20:00.764Z INFO  [bootstrap] Toolchain ensureAll scheduled
+[webui] Failed auth attempt from direct
+[webui] Successful auth from direct
+2026-10-01T17:20:01.034Z INFO  Shutting down...
+2026-10-01T17:20:03.037Z INFO  [session] Cleaning up resources...
+2026-10-01T17:20:03.037Z INFO  [session] Cleanup complete
+
+SERVER 3
+Weak server token: Token too short (5 chars, minimum 16). Use a cryptographically random value.

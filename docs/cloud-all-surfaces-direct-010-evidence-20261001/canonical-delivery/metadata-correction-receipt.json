@@ -1,0 +1,27 @@
+{
+  "changedOnly": "External receipt metadata naming and retained artifact/hash references",
+  "previousSummaryFile": "summary-before-metadata-correction.json",
+  "previousSummarySha256": "847ed783304ca7f694ebd075138aaaf933bc9038eafb25919bf9a532075c81cd",
+  "incorrectPreviousField": "source.ownerAdapterSha256 referred to secure-storage.ts",
+  "correctedFields": [
+    {
+      "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+      "sha256": "5127a51963ccc422b1a2ddec397c5beb4500afde17ba6eb523d89a2658e104fd",
+      "beforeAndAfterAndActualExact": true
+    },
+    {
+      "path": "packages/shared/src/utils/sqlite-runtime.ts",
+      "sha256": "8cd80233dc566a9433cd1b589222ca7cebbcf61ff5a09fff81c29702f5bfc831",
+      "beforeAndAfterAndActualExact": true
+    }
+  ],
+  "sourceManifestBeforeSha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12",
+  "sourceManifestAfterSha256": "40c018a1279c770cef9f4ed9e18ba10269e00716ea6e3f21a3ab59b83b519e12",
+  "completeTrackedSourceAndLockBeforeAfterActualExact": true,
+  "sourceRegularFiles": 6178,
+  "sourceGitlinks": 2,
+  "originalSourceAndStatusUnchangedAndClean": true,
+  "completeVerificationDriverSha256": "be253d1b65bd14a4249b3e377b8861b2e475a74375d66cafc7e68ce775ccd55a",
+  "applicationSourceChanged": false,
+  "buildTestSmokeOrClosureRerun": false
+}

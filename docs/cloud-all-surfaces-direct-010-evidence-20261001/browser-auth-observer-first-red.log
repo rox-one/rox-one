@@ -1,0 +1,8 @@
+page.waitForURL: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "domcontentloaded"
+  navigated to "http://127.0.0.1:43523/"
+============================================================
+    at login (/tmp/rox-r15-exact-ui-20261001/observe-auth-negative.cjs:174:27)
+    at async main (/tmp/rox-r15-exact-ui-20261001/observe-auth-negative.cjs:220:5)
+UI OBSERVATION DONE: 8 passed checks, 0 failed checks, 1 phase errors

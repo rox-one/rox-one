@@ -1,0 +1,40 @@
+{
+  "label": "compiled-main-host",
+  "command": [
+    "node",
+    "/tmp/rox-r15-exact-ui-20261001/electron-types-private/compiled-main-host.cjs"
+  ],
+  "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "exit": 0,
+  "seconds": 2.035,
+  "log": "compiled-main-host.log",
+  "logSha256": "2c87ddfd6ec6ecc29bc76d42d67d2529354a4ba88af292246b62cae847fe6478",
+  "envKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_EXTRA_CA_CERTS",
+    "NODE_OPTIONS",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ],
+  "minimalChildEnvironment": true,
+  "HOMERepurposed": false,
+  "sourceAndLockUnchanged": true,
+  "regularFileCount": 6178,
+  "gitlinkCount": 2
+}

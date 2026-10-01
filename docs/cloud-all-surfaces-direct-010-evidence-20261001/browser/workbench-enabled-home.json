@@ -1,0 +1,276 @@
+{
+  "url": "http://127.0.0.1:42223/?route=home&ws=e0fbee7a-45ae-f362-0248-d9ceb67a3298",
+  "title": "Rox",
+  "bodyText": "Sessions: Unavailable\nHome\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox\nMORE\nNew Session\nSessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings\nUser\nStandard · Balance —\nHome\nCustomize\nOVERVIEW\n0\nSESSIONS\n0\nACTIVE AGENTS\n—\nAGENT TASKS\n—\nTOKENS\n—\nCOST\nCloud connected\nSYNC / CLOUD\nQUICK ACTIONS\nNew session\nRecord meeting\nNew note\nSearch\n⌘K\nWEEK CALENDAR\nEvents: 0\nTHU\nOct 1\nFRI\nOct 2\nSAT\nOct 3\nSUN\nOct 4\nMON\nOct 5\nTUE\nOct 6\nWED\nOct 7\n\nNo external calendar connected — showing Rox meetings, task due dates, automation runs and notes\n\nTASK TRACKER\n0\nOPEN\n0\nOVERDUE\n0\nTODAY\n0\nDONE IN 7 DAYS\n\nTasks from meetings, notes and sessions will land here.\n\n?\n\nINBOX TRACKER\n0\nTO DECIDE\n0\nBLOCKERS\n0\nMESSAGES\nBY TYPE\n\nNothing is waiting for you\n\nACTIVE AGENTS\n0\nRUNNING\n0\nWAITING\n0\nSTUCK\n\nNo agent is running right now.\n\nSpent today: Unavailable\n\nRECENT SESSIONS\n\nNo recent sessions\n\nYour conversations with agents will show up here.\n\nNew session\nMEETINGS\n\nMeetings are unavailable in this build\n\nCALLS\n\nMeetings are unavailable in this build\n\nSPEND AND TOKENS\n7 days\n\nNo usage data for the last 7 days\n\nSessions in this workspace reported no tokens or cost.\n\nMODELS\n7 days\n\nNo models connected\n\nConnect a provider in AI settings.\n\nConnect\nBALANCE\n—\nROX CREDITS\n\nBalance is unavailable right now\n\nAUTOMATIONS\n\nAutomations are unavailable\n\nTASKS\n\nNo open tasks\n\nTasks from meetings, notes and sessions will land here.\n\nOpen tasks\nINBOX\n\nNothing is waiting for you\n\nPermissions, plans, memory and skill proposals land here.\n\nFOCUS\noff\nTIMER\n0 min\nFOCUS TODAY\nTODAY'S TOP 3\n\nNot picked yet — pin them on the Focus screen.\n\nFEED\nsession:261001-grand-coral\n1 min. ago\nNOTES\n\nNotes are unavailable\n\nDECISIONS\n\nNo accepted decisions\n\nDecisions are extracted from sessions and meetings on the Decisions screen.\n\nOpen decisions\nInfo\nTITLE\nHome\nRemote\nSync OK\n0 runs\n0 approvals",
+  "appRootChildren": 2,
+  "topBar": {
+    "visible": true,
+    "tag": "DIV",
+    "text": "Home\nHome\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": null,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1440,
+      "height": 40
+    }
+  },
+  "modePill": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Home\nSessions\nMeetings\nTasks\nNotes\nFeed\nInbox",
+    "ariaLabel": "Modes",
+    "rect": {
+      "x": 459.0703125,
+      "y": 7,
+      "width": 521.859375,
+      "height": 26
+    }
+  },
+  "rail": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "MORE",
+    "ariaLabel": "Activity rail",
+    "rect": {
+      "x": 0,
+      "y": 74.75,
+      "width": 44,
+      "height": 901.25
+    }
+  },
+  "mainNavigation": {
+    "visible": true,
+    "tag": "NAV",
+    "text": "Sessions\n0\nFavorites\n0\nArchive\nLabels\nProjects\n1\nCloud UI Genuine Project\nPages\n0\nMemory\nTasks\nMeetings\nSources\n10\nAPIs\n2\nMCPs\n0\nLocal Folders\n8\nSkills\n0\nNotes\nAutomations\n30\nScheduled\n10\nEvent-based\n10\nAgentic\n10\nSettings",
+    "ariaLabel": "Main navigation",
+    "rect": {
+      "x": 44,
+      "y": 119.75,
+      "width": 320,
+      "height": 718.75
+    }
+  },
+  "headers": [
+    "Home",
+    "Overview",
+    "Quick actions"
+  ],
+  "testIds": [
+    "bottom-terminal-toggle",
+    "titlebar-mode-pill",
+    "rail-extra-screens",
+    "profile-strip-balance"
+  ],
+  "modeButtons": [
+    {
+      "mode": "home",
+      "label": "Home",
+      "current": "page",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "chat",
+      "label": "Sessions",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "meetings",
+      "label": "Meetings",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "tasks",
+      "label": "Tasks",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "notes",
+      "label": "Notes",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "feed",
+      "label": "Feed",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "mode": "inbox",
+      "label": "Inbox",
+      "current": null,
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "railButtons": [
+    {
+      "label": "Sessions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Projects",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Pages",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Memory",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Tasks",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Meetings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Sources",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Skills",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Notes",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Automations",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Connections",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Settings",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Dossier",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Radar",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Decisions",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Agent center",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Focus",
+      "disabled": null,
+      "visible": true
+    },
+    {
+      "label": "Collapse activity rail",
+      "disabled": null,
+      "visible": true
+    }
+  ],
+  "sourceStates": [
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "Sessions: Unavailable",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "SPAN",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "FORM",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": null,
+      "text": "?",
+      "disabled": null,
+      "failed": null
+    },
+    {
+      "tag": "DIV",
+      "testId": null,
+      "authority": null,
+      "source": null,
+      "error": null,
+      "role": "status",
+      "text": "",
+      "disabled": null,
+      "failed": null
+    }
+  ],
+  "preferences": {
+    "craft-workbench-enabled": "true",
+    "craft-feature-unified-shell": null,
+    "craft-feature-workbench-top-chrome-v2": null,
+    "craft-feature-workbench-mode-registry-v1": null,
+    "craft-activity-rail-collapsed": "false",
+    "craft-sidebar-width": "320",
+    "craft-session-list-width": "300"
+  },
+  "screenshot": "workbench-enabled-home.png",
+  "html": "workbench-enabled-home.html"
+}

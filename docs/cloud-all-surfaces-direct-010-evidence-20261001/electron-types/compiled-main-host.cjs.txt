@@ -1,0 +1,130 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const Module = require('node:module');
+const { EventEmitter } = require('node:events');
+const { fileURLToPath } = require('node:url');
+const crypto = require('node:crypto');
+const task = '/tmp/rox-r15-exact-ui-20261001';
+const checkout = path.join(task, 'checkout');
+const bundle = path.join(checkout, 'apps/electron/dist/main.cjs');
+const profile = fs.mkdtempSync(path.join(process.env.TMPDIR, 'whole-built-main-'));
+const stats = { electronRequires: 0, whenReadyCalls: 0, windowConstructions: 0, networkAttempts: 0, childAttempts: 0,
+  outsideReads: 0, outsideWrites: 0, publicSystemMetadataReads: 0, outsideFileDetails: [], protocolRegistrations: 0, ipcHandlers: 0, requireReturned: false };
+const originalStdout = process.stdout.write.bind(process.stdout);
+const originalStderr = process.stderr.write.bind(process.stderr);
+const bundleHash = crypto.createHash('sha256').update(fs.readFileSync(bundle)).digest('hex');
+process.env.ROX_CONFIG_DIR = path.join(profile, 'config');
+process.env.CRAFT_CONFIG_DIR = path.join(profile, 'config');
+process.type = 'browser';
+process.resourcesPath = path.join(checkout, 'apps/electron/dist/resources');
+Object.defineProperty(process.versions, 'electron', { configurable: true, value: '39.2.7' });
+Object.defineProperty(process.versions, 'chrome', { configurable: true, value: '0.0.0-host-probe' });
+
+function denied(category) {
+  stats[category]++;
+  const error = new Error(`Controlled host probe refused ${category}`);
+  error.code = 'CLOUD_PROBE_GUARD';
+  throw error;
+}
+function inside(base, target) { const relative = path.relative(base, target); return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative)); }
+function guardFile(value, write) {
+  if (typeof value === 'number') return;
+  const target = path.resolve(value instanceof URL ? fileURLToPath(value) : String(value));
+  if (!write && target === '/proc/version') { stats.publicSystemMetadataReads++; return; }
+  if (!(write ? inside(profile, target) : inside(task, target))) {
+    stats.outsideFileDetails.push({ operation: write ? 'write' : 'read',
+      target: target.startsWith('/etc/') ? target : `<outside-task>/${path.basename(target)}`,
+      credentialLikePath: /credential|auth|token|secret|oauth|config\.ya?ml|\.env/i.test(target),
+      caller: new Error('outside file guard').stack });
+    denied(write ? 'outsideWrites' : 'outsideReads');
+  }
+}
+for (const name of ['readFileSync', 'readFile']) {
+  const original = fs[name]; fs[name] = function(file, ...args) { guardFile(file, false); return original.call(this, file, ...args); };
+}
+for (const name of ['writeFileSync', 'writeFile', 'appendFileSync', 'appendFile', 'mkdirSync', 'mkdir', 'rmSync', 'rm', 'unlinkSync', 'unlink']) {
+  const original = fs[name]; fs[name] = function(file, ...args) { guardFile(file, true); return original.call(this, file, ...args); };
+}
+for (const [name, write] of [['readFile', false], ['writeFile', true], ['appendFile', true], ['mkdir', true], ['rm', true], ['unlink', true]]) {
+  const original = fs.promises[name]; fs.promises[name] = function(file, ...args) { guardFile(file, write); return original.call(this, file, ...args); };
+}
+for (const name of ['openSync', 'open']) {
+  const original = fs[name]; fs[name] = function(file, flags, ...args) {
+    const write = typeof flags === 'string' ? /[wa+]/.test(flags) : !!(flags & (fs.constants.O_WRONLY | fs.constants.O_RDWR | fs.constants.O_CREAT | fs.constants.O_TRUNC | fs.constants.O_APPEND));
+    guardFile(file, write); return original.call(this, file, flags, ...args);
+  };
+}
+for (const module of ['node:http', 'node:https']) {
+  const api = require(module); for (const name of ['request', 'get']) api[name] = () => denied('networkAttempts');
+}
+const net = require('node:net');
+net.connect = net.createConnection = () => denied('networkAttempts');
+net.Server.prototype.listen = () => denied('networkAttempts');
+require('node:tls').connect = () => denied('networkAttempts');
+global.fetch = () => denied('networkAttempts');
+const children = require('node:child_process');
+for (const name of ['spawn', 'spawnSync', 'fork', 'exec', 'execSync', 'execFile', 'execFileSync']) children[name] = () => denied('childAttempts');
+
+const ready = new Promise(() => {});
+const app = new EventEmitter();
+app.isPackaged = false; app.name = 'Rox Cloud Host Probe';
+app.getName = () => app.name; app.setName = name => { app.name = name; };
+app.getVersion = () => '0.0.0-host-probe';
+app.getAppPath = () => path.join(checkout, 'apps/electron');
+app.getPath = name => { const target = path.join(profile, name); fs.mkdirSync(target, { recursive: true }); return target; };
+app.setPath = (_name, value) => guardFile(value, true);
+app.isReady = () => false; app.whenReady = () => { stats.whenReadyCalls++; return ready; };
+app.requestSingleInstanceLock = () => true; app.releaseSingleInstanceLock = () => {};
+app.setAsDefaultProtocolClient = () => true; app.isDefaultProtocolClient = () => false;
+app.commandLine = { appendSwitch() {}, hasSwitch() { return false; }, getSwitchValue() { return ''; } };
+app.getAppMetrics = () => []; app.getLocale = () => 'en'; app.getPreferredSystemLanguages = () => ['en'];
+app.getLoginItemSettings = () => ({ openAtLogin: false }); app.setLoginItemSettings = () => {};
+app.quit = () => {}; app.exit = () => {};
+const ipcMain = new EventEmitter(); ipcMain.handle = () => { stats.ipcHandlers++; }; ipcMain.removeHandler = () => {};
+class BrowserWindow extends EventEmitter {
+  constructor() { super(); stats.windowConstructions++; throw new Error('Readiness gate must prevent all BrowserWindow creation'); }
+  static getAllWindows() { return []; } static getFocusedWindow() { return null; } static fromWebContents() { return null; }
+}
+const nativeTheme = new EventEmitter(); nativeTheme.shouldUseDarkColors = false;
+const emptyImage = { isEmpty: () => true, resize() { return this; }, toPNG: () => Buffer.alloc(0) };
+const session = { defaultSession: { getPreloads: () => [], setPreloads() {}, webRequest: { onBeforeRequest() {}, onBeforeSendHeaders() {} } } };
+const electron = { app, BrowserWindow, ipcMain, nativeTheme, session,
+  protocol: { registerSchemesAsPrivileged() { stats.protocolRegistrations++; } },
+  webContents: { getAllWebContents: () => [] },
+  Menu: { setApplicationMenu() {}, buildFromTemplate: () => ({}) },
+  nativeImage: { createEmpty: () => emptyImage, createFromPath: () => emptyImage },
+  clipboard: { readText: () => '', writeText() {} },
+  shell: { openExternal: () => denied('networkAttempts') }, dialog: {},
+  crashReporter: { getParameters: () => ({}), addExtraParameter() {}, removeExtraParameter() {} },
+  safeStorage: { isEncryptionAvailable: () => false },
+  screen: { getAllDisplays: () => [] }, powerMonitor: new EventEmitter(),
+  utilityProcess: { fork: () => denied('childAttempts') },
+  net: { fetch: () => denied('networkAttempts'), request: () => denied('networkAttempts') },
+};
+const load = Module._load;
+Module._load = function(request, parent, isMain) {
+  if (request === 'electron') { stats.electronRequires++; return electron; }
+  return load.call(this, request, parent, isMain);
+};
+let finished = false;
+function finish(error) {
+  if (finished) return; finished = true;
+  const result = { bundleSha256: bundleHash, actualNode: process.versions.node, mockedElectronHost: true,
+    declaredMockElectronVersion: '39.2.7', installedElectronOrMacAcceptance: false, readinessHeld: true,
+    ...stats, error: error ? { code: error.code, message: error.message, stack: error.stack } : null };
+  originalStdout(JSON.stringify(result) + '\n');
+  process.exit(error ? 1 : 0);
+}
+process.on('uncaughtException', finish); process.on('unhandledRejection', finish);
+try {
+  require(bundle);
+  stats.requireReturned = true;
+  setTimeout(() => {
+    if (!stats.whenReadyCalls) return finish(new Error('Built main never reached the readiness gate'));
+    if (stats.windowConstructions || stats.networkAttempts || stats.childAttempts || stats.outsideReads || stats.outsideWrites) {
+      return finish(new Error('Whole-main probe crossed an isolated side-effect boundary'));
+    }
+    finish();
+  }, 100);
+} catch (error) { finish(error); }

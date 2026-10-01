@@ -1,0 +1,42 @@
+{
+  "label": "validate-ci",
+  "command": [
+    "/workspace/.onboarding-tools/node_modules/.bin/bun",
+    "--no-env-file",
+    "run",
+    "validate:ci"
+  ],
+  "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "revision": "010fa8c040e3a84cd40cd8195473f52d8582f159",
+  "exit": 0,
+  "seconds": 199.679,
+  "log": "validate-ci.log",
+  "logSha256": "5b0225ed4c0f98b6e39aece940694e05a08b9acce53033bcc5c627c7283d5c61",
+  "envKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_EXTRA_CA_CERTS",
+    "NODE_OPTIONS",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ],
+  "minimalChildEnvironment": true,
+  "HOMERepurposed": false,
+  "sourceAndLockUnchanged": true,
+  "regularFileCount": 6178,
+  "gitlinkCount": 2
+}

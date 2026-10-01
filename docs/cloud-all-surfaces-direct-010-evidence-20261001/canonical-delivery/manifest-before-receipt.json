@@ -1,0 +1,40 @@
+{
+  "label": "manifest-before",
+  "argv": [
+    "python3",
+    "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/canonical-delivery-manifest.py",
+    "before",
+    "010fa8c040e3a84cd40cd8195473f52d8582f159"
+  ],
+  "cwd": "/tmp/rox-r15-exact-ui-20261001/checkout",
+  "startedUtc": "2026-10-01T17:16:25.161431+00:00",
+  "seconds": 0.223,
+  "exit": 0,
+  "log": "/workspace/rox-r15-evidence-20260930/direct-010-ui-20261001/canonical-delivery/manifest-before.log",
+  "logSha256": "2d9cada00efbb6dce495f6d86fb85fac34fa4e742d4ef87720447f0665ee9a08",
+  "safeEnvironmentKeys": [
+    "BUN_INSTALL_CACHE_DIR",
+    "CRAFT_CONFIG_DIR",
+    "ELECTRON_SKIP_BINARY_DOWNLOAD",
+    "FORCE_COLOR",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "LANG",
+    "LC_ALL",
+    "NODE_COMPILE_CACHE",
+    "NODE_EXTRA_CA_CERTS",
+    "NO_COLOR",
+    "NO_PROXY",
+    "PATH",
+    "REQUESTS_CA_BUNDLE",
+    "ROX_CONFIG_DIR",
+    "SSL_CERT_FILE",
+    "TMPDIR",
+    "TZ",
+    "XDG_CACHE_HOME",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+    "npm_config_cache"
+  ]
+}
