@@ -303,3 +303,19 @@ Registry now records30 partial implementation and28 partial verification facets,
 `/root/native_boundary` owns native foreground UI; `/root/recovery_scout` independently reads only the new task Note and its two operation IDs; root owns registry and publication. Standard full product main PID2566 creates/edits the Note, native menu reload restores it, menu quit exits0 and fresh main12111 restores the same route/text. Canonical193bytes remain identical; journalrev2 andcreate3/1+edit4/2 match persisted ACK metadata, pending0/one encrypted receipt row each. Receipt envelope contents and OS custody are not independently validated.
 
 All4876 gated source entries remain unchanged. No extra complete task or requirement acceptance is recorded. Actual Tasks route reports unavailable persistence/local cache, so Task-to-Note click/reopen remains pending and no cache-only task was created. Next owner recon identifies the failing real Task persistence call before any bounded writer lease; no new task store or grant expansion is implied. Ordinary reload/restart does not accept crash/offline/conflict/revoke/platform criteria.
+
+
+## Projects generation follow-up — 2026-10-02
+
+1. Producer: read exact PR1323 and current September atom/caller contract — complete.
+2. Producer: port only hook and actual-function regression harness — complete; old control 2 pass/12 fail, candidate 14 pass/0 fail/32 assertions.
+3. Producer: initial scoped TypeScript failed TS2688; shell follow-up masked its exit. Failure retained. Archive-only ambient types/module marker correction then standalone strict consumed-contract TypeScript exits 0; actual current DTO/atom and exact two existing IPC signatures unchanged. Whitespace check exits 0.
+4. Independent reviewer: separate phased actual-callback/Jotai lifecycle probe passes 14 cases; exact old-hook control fails 12 of 14. Narrow strict typing and source/hash review pass. Controlled scheduling is not ReactDOM/native acceptance.
+5. Root: exact serial hook/test transfer complete; full relevant gates, DOM/native/product acceptance and publication remain separately pending.
+
+Current projectsAtom is primitive; Cloud projectCatalogAtom/shared catalog wrapper is absent and not imported. Metadata DTO preservation tested; catalog-wrapper retention N/A. No provider calls, installs, UI/profile mutations or producer commit/push.
+
+
+## Integrated Projects generation gates (2026-10-02)
+
+Root serially transferred one production hook and one behavioral test after independent phased lifecycle and exact old-hook negative controls. `/root/native_boundary` ran five complete serial standard gates on frozen4877 source `1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412`. Current primitive atom, shared contracts, previous Roadmap/SQLite/localization/parser/native modules and retained overlays are preserved. Browser DOM evidence, actual native workspace switching and source publication are separately recorded; no full original criterion is accepted by these gates.

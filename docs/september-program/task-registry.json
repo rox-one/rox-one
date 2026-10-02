@@ -533,7 +533,8 @@
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-CREATE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
-            "L10N-LINEAR-PARSING-20261002"
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002"
           ],
           "summary": "Reviewed shared mention/path parsing and locale catalog changes integrated under one source writer, preserving contracts/outputs. Complete shared entity identity and two-consumer runtime acceptance remain pending."
         },
@@ -553,7 +554,8 @@
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
             "NATIVE-NOTES-CREATE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
-            "L10N-LINEAR-PARSING-20261002"
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -584,6 +586,11 @@
           "originalCriteriaAcceptedByPublication": 0,
           "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
           "fullTaskAccepted": false
+        },
+        "projectsGeneration": {
+          "evidenceRef": "PROJECTS-GENERATION-20261002",
+          "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
         }
       }
     },
@@ -6740,7 +6747,8 @@
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
             "ROADMAP-SQLITE-JOINT-20260930",
-            "L10N-LINEAR-PARSING-20261002"
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002"
           ],
           "summary": "Existing Roadmap model provenance now resolves translated production catalog resources in ten locales; requested/effective/unknown remain distinct under actual server rendering. Complete product/project/provider acceptance remains pending."
         },
@@ -6750,7 +6758,8 @@
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
             "ROADMAP-SQLITE-JOINT-20260930",
-            "L10N-LINEAR-PARSING-20261002"
+            "L10N-LINEAR-PARSING-20261002",
+            "PROJECTS-GENERATION-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -6781,6 +6790,11 @@
           "originalCriteriaAcceptedByPublication": 0,
           "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
           "fullTaskAccepted": false
+        },
+        "projectsGeneration": {
+          "evidenceRef": "PROJECTS-GENERATION-20261002",
+          "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
         }
       }
     },
@@ -10100,7 +10114,8 @@
             "ROADMAP-SQLITE-JOINT-20260930",
             "PORTABLE-ELECTRON-BRIDGE-20260930",
             "L10N-LINEAR-PARSING-20261002",
-            "NATIVE-PRODUCT-NOTE-20261002"
+            "NATIVE-PRODUCT-NOTE-20261002",
+            "PROJECTS-GENERATION-20261002"
           ],
           "summary": "All4876 combined source entries have complete Shared/server/Electron unions, exact local CI, standard build and fresh portable bridge evidence. Original DAG predecessors, private native UI/custody, remote CI and platform integration remain pending."
         },
@@ -10141,7 +10156,8 @@
             "ROADMAP-SQLITE-JOINT-20260930",
             "PORTABLE-ELECTRON-BRIDGE-20260930",
             "L10N-LINEAR-PARSING-20261002",
-            "NATIVE-PRODUCT-NOTE-20261002"
+            "NATIVE-PRODUCT-NOTE-20261002",
+            "PROJECTS-GENERATION-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10180,6 +10196,11 @@
           "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
           "fullOriginalCriteriaAccepted": false,
           "taskToNoteAccepted": false
+        },
+        "projectsGeneration": {
+          "evidenceRef": "PROJECTS-GENERATION-20261002",
+          "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
         }
       }
     },
@@ -10340,7 +10361,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-10-02T18:22:29.665Z",
+    "asOf": "2026-10-02T18:52:45.935Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10366,7 +10387,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "dataContractFreeze": "NOT_ACCEPTED",
     "sharedContractFreeze": "NOT_ACCEPTED",
-    "build": "STANDARD_ROOT_ELECTRON_BUILD_PASSED_ON_FROZEN_4876_SOURCE; FRESH_PORTABLE_BRIDGE_ENTRY_COMMANDS_PASS; PACKAGING_NATIVE_UI_PENDING",
+    "build": "STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4877_SOURCE; NATIVE_PRODUCT_AND_PACKAGING_PENDING",
     "fullPlatformMatrix": "PENDING",
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
@@ -10384,7 +10405,7 @@
       "committedSourceMatchesTestedManifest": true,
       "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
     },
-    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_CI_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4876_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
+    "finalFullGateRefresh": "FIVE_COMPLETE_SERIAL_LOCAL_GATES_PASS_ON_FROZEN_4877_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
       "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
@@ -10672,6 +10693,12 @@
       "originalCriteriaAcceptedByPublication": 0,
       "fullTaskAccepted": false,
       "limits": "Visible Note create/edit/reload/normal restart plus independent canonical/journal/ACK metadata only; receipt bodies/OS custody, Tasks persistence/click, crash/offline/platform/full original tasks remain pending. Later evidence-binding commit has a different head."
+    },
+    "projectsGenerationEvidence": "projects-generation-20261002.json",
+    "projectsGenerationCandidate": {
+      "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0
     }
   }
 }

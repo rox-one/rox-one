@@ -699,5 +699,10 @@
     "originalCriteriaAcceptedByPublication": 0,
     "fullTaskAccepted": false,
     "limits": "Visible Note create/edit/reload/normal restart plus independent canonical/journal/ACK metadata only; receipt bodies/OS custody, Tasks persistence/click, crash/offline/platform/full original tasks remain pending. Later evidence-binding commit has a different head."
+  },
+  "projectsGenerationPublication": {
+    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0
   }
 }

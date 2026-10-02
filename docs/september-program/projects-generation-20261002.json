@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "id": "PROJECTS-GENERATION-20261002",
+  "observedAt": "2026-10-02T18:52:45.935Z",
+  "publication": {
+    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0
+  },
+  "sourceBinding": {
+    "sourceCount": 4877,
+    "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
+    "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+    "excluded": [
+      "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+      "apps/electron/.impeccable/hook.cache.json"
+    ],
+    "beforeAfterIdentical": true,
+    "committedSourceMatchesTestedManifest": false
+  },
+  "sources": [
+    {
+      "path": "apps/electron/src/renderer/hooks/useProjects.ts",
+      "sha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/useProjects-scope.test.ts",
+      "sha256": "bf3e47fc9d5bede727681bc051385f77020b6cc2d600d2c6f0a392c9bba4d381"
+    }
+  ],
+  "owners": {
+    "producer": "/root/native_boundary",
+    "independentLifecycleReview": "/root/focus_recon",
+    "completeJointGates": "/root/native_boundary",
+    "serialIntegrationAndDelivery": "/root"
+  },
+  "lineage": {
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1323",
+    "head": "3cc2483d61e587fa3e3b54331b1bf623206f16b1",
+    "exactHookCopied": true,
+    "originalHookSha256": "13543daf34873c044fb089504e6d6146878cdb327b6e94d6a43f776ecd243d31",
+    "candidateHookSha256": "2b87d14b619e470a531e82f5e10f94af0fd916dee1e8abcbfdfb64590f0186ac",
+    "broaderCloudR15Merged": false
+  },
+  "behavior": {
+    "committedWorkspaceLease": true,
+    "lateLoadSuccessAndFailureFenced": true,
+    "newestSameWorkspaceQueryOrBroadcastWins": true,
+    "disposedAndUnmountedCallbacksFenced": true,
+    "returningWorkspaceCreatesNewLease": true,
+    "oldViewExcludedDuringRender": true,
+    "atomClearedAtLayoutBeforePaint": true,
+    "completeValidDtoPreserved": true,
+    "atomSha256": "b3ba7e579ea30cbf2d9da437b828e7e12401671efb2c7e303030654be2cd9d2e",
+    "sharedCatalogWrapper": "N/A; absent in current September base; no wrapper or schema imported",
+    "producerTests": {
+      "pass": 14,
+      "fail": 0,
+      "assertions": 32
+    },
+    "independentPhasedTests": {
+      "candidatePass": 14,
+      "candidateFail": 0,
+      "beforePass": 2,
+      "beforeFail": 12
+    },
+    "controlledSchedulerLimit": "Actual hook closures and real Jotai atom/store; React render/layout/passive scheduling and IPC are controlled."
+  },
+  "failureHistory": {
+    "producerInitialTypecheckExit": 2,
+    "producerInitialDiagnostic": "TS2688 implicit uuid ambient type; shell follow-up masked exit",
+    "retained": "projects-generation-20261002/typecheck.initial-failure.log",
+    "correction": "Archive-only ambient discovery types:[react] and export{} global augmentation module marker",
+    "correctedStandaloneTypecheckExit": 0,
+    "productionSourcesChangedForTyping": false
+  },
+  "currentValidation": {
+    "gates": [
+      {
+        "name": "shared",
+        "command": [
+          "bun",
+          "test",
+          "./packages/shared"
+        ],
+        "exitCode": 0,
+        "seconds": 90.636,
+        "tests": {
+          "pass": 4951,
+          "skip": 12,
+          "fail": 0,
+          "assertions": 21752,
+          "files": 478
+        },
+        "logSha256": "d54bcb66a36993c797c5f5a8fcbbcd06813511bde57db742201625e77e8f7648"
+      },
+      {
+        "name": "server",
+        "command": [
+          "bun",
+          "test",
+          "./packages/server-core"
+        ],
+        "exitCode": 0,
+        "seconds": 24.626,
+        "tests": {
+          "pass": 1511,
+          "skip": 8,
+          "fail": 0,
+          "assertions": 6155,
+          "files": 240
+        },
+        "logSha256": "7f91f30d012a9b649e7ab98e963f8c42e7beddb8dd931167190e67d06fcb0809"
+      },
+      {
+        "name": "electron-ui-core",
+        "command": [
+          "bun",
+          "test",
+          "./apps/electron/src",
+          "./packages/ui",
+          "./packages/core"
+        ],
+        "exitCode": 0,
+        "seconds": 24.311,
+        "tests": {
+          "pass": 4219,
+          "skip": 0,
+          "fail": 0,
+          "assertions": 20079,
+          "files": 611
+        },
+        "logSha256": "0da0bd27f2ce5648d1314d3dbce91f2bb57700398911d7a5403886f5362af8fc"
+      },
+      {
+        "name": "validate",
+        "command": [
+          "bun",
+          "run",
+          "validate:ci"
+        ],
+        "exitCode": 0,
+        "seconds": 91.666,
+        "tests": null,
+        "logSha256": "5370f42747dc3681abbd6432612438b90dbedb80af5bb516f85d4af35b44b877"
+      },
+      {
+        "name": "build",
+        "command": [
+          "bun",
+          "run",
+          "electron:build"
+        ],
+        "exitCode": 0,
+        "seconds": 44.333,
+        "tests": null,
+        "logSha256": "8c75da96549c85bd0f7d5a6017b04941a8445ad35f6c7516c699bc1d91ebe52d"
+      }
+    ],
+    "sourceBeforeAfterIdentical": true
+  },
+  "browserDom": {
+    "status": "PASS_BOUNDED_REACTDOM_SYNTHETIC_IPC",
+    "candidate": {
+      "pass": 10,
+      "fail": 0
+    },
+    "exactOldHookNegativeControl": {
+      "pass": 1,
+      "fail": 9,
+      "expectedNegativeControlFailures": true
+    },
+    "browser": {
+      "chromiumVersion": "153.0.8010.52",
+      "ReactVersion": "18.3.1",
+      "agentBrowserVersion": "0.26.0",
+      "headless": true,
+      "isolated": true
+    },
+    "realStrictModeEffectReplay": true,
+    "coverage": [
+      "null-workspace",
+      "A-B-before-next-frame",
+      "A-B-A-stale-success-broadcast",
+      "late-error-old-workspace",
+      "broadcast-supersedes-pending-success",
+      "broadcast-supersedes-pending-error",
+      "same-workspace-overlap-dto-retention",
+      "unmount-late-success-callback",
+      "null-transition-stale-query",
+      "actual-StrictMode-effect-replay"
+    ],
+    "allOwnedProcessesExited": true,
+    "actualNativeRpc": false,
+    "scope": "Actual ReactDOM createRoot and unchanged Jotai atom; deferred synthetic IPC only"
+  },
+  "artifacts": [
+    {
+      "id": "projects-generation-20261002/root-transfer.json",
+      "sha256": "1ef2e64815bf6861bb40e741ffe0e745a23d08890bcf6eb73e8cff2a6f8d88b0",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/frozen-manifest.json",
+      "sha256": "41a62b57d4e15c7a0b73202a7a219145137072df98647469ce5ebd3721a3a21e",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/independent-receipt.json",
+      "sha256": "24cb0c2b8e37fd1b1541d8796ffac4688f7dfc323f5c42deaa5d18aede9fa8c6",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/independent-review.md",
+      "sha256": "83ddb805a0e20c272d596941baf0729db30a22c0870328371c3366b35b0f03cf",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/independent-lifecycle-results.json",
+      "sha256": "7f6d48c5156de91fcccf1eb2ef2ba8b5419d0820e04ba83836bc406901cb4e5f",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/joint-gates/gates.json",
+      "sha256": "f1b19ff548044e12b8d5697b48663c4ae1e46c953e2d7f337cf51aa09474be25",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/mounted-dom-receipt.json",
+      "sha256": "a1f2ac49e8ce27d220fe71e34bb6d5187f5c46f561c338a1cb09a650b3bd68b7",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/mounted-dom-review.md",
+      "sha256": "a5a0f84fa77e5b868bffbb319d1d96b844a002b1c75b142f0ea246707cf24f3f",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    },
+    {
+      "id": "projects-generation-20261002/mounted-dom-results.json",
+      "sha256": "64c3aaee319302f7aaee569dcb35aa9b013d32f27ab3b8794ea84c3f9476bc7e",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection in public packet"
+    }
+  ],
+  "limits": [
+    "Full Projects provenance/ACL/AI preview/create/apply, linked Tasks persistence, collaboration and the original acceptance criteria remain pending.",
+    "Controlled hook tests are not native workspace switching. Any independent browser mount uses synthetic IPC and remains separate from real Electron product RPC/storage acceptance.",
+    "Prior native Note reload/restart/ACK metadata evidence remains bound to production source db8413; this patch does not repeat or expand its acceptance.",
+    "No catalog wrapper, shared schema, native grant, store, provider or dependency changes. Cloud/R15 and PR1323 are not automatically merged.",
+    "Local complete gates do not replace required remote CI, independent hosted-alert review or macOS/Windows/Linux/cloud/iOS release matrix.",
+    "Original109 tasks,489 requirements,464 dependency edges and297 backlog rows remain intact; zero full original tasks accepted."
+  ],
+  "fullOriginalTasksAccepted": 0
+}
