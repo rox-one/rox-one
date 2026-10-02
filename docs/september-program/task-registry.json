@@ -565,7 +565,26 @@
           "evidenceRefs": [],
           "remaining": "Baseline source published in draft PR #1293; follow-up source publication, serial integration and required original product/platform acceptance remain distinct."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "revision": "db8413d0b25c6795297480e994fc872991414f74",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "observedAt": "2026-10-02T16:59:30.702Z",
+          "sourceCount": 4876,
+          "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -1279,7 +1298,26 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "revision": "db8413d0b25c6795297480e994fc872991414f74",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "observedAt": "2026-10-02T16:59:30.702Z",
+          "sourceCount": 4876,
+          "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -2874,7 +2912,26 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "sourcePublication": {
+          "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "revision": "db8413d0b25c6795297480e994fc872991414f74",
+          "branch": "feat/september-program-20260930",
+          "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+          "isDraft": true,
+          "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "observedAt": "2026-10-02T16:59:30.702Z",
+          "sourceCount": 4876,
+          "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "fullProductDelivery": "PENDING",
+          "originalCriteriaAcceptedByPublication": 0,
+          "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
+          "fullTaskAccepted": false
+        }
       }
     },
     {
@@ -6688,20 +6745,21 @@
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
         "sourcePublication": {
           "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-          "sourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
-          "revision": "b512d93d23ad842fa0a233f0708a5194314fce75",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "revision": "db8413d0b25c6795297480e994fc872991414f74",
           "branch": "feat/september-program-20260930",
           "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
           "isDraft": true,
-          "remoteHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
-          "pullRequestHeadReadback": "b512d93d23ad842fa0a233f0708a5194314fce75",
-          "observedAt": "2026-09-30T17:27:29.813Z",
+          "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "observedAt": "2026-10-02T16:59:30.702Z",
+          "sourceCount": 4876,
+          "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+          "committedSourceMatchesTestedManifest": true,
+          "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
           "fullProductDelivery": "PENDING",
           "originalCriteriaAcceptedByPublication": 0,
-          "sourceCount": 4870,
-          "sourceManifestSha256": "1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54",
-          "committedSourceMatchesTestedManifest": true,
-          "bindingLimit": "Complete Shared/server/Electron src/UI/core unions, exact prepared-host validate:ci and standard Electron build bind to every frozen source blob. Actual Node/Electron built-in SQLite fixture is separate bounded runtime proof. Packaged native UI/private custody, provider cost/cancellation, Windows, genuine Conation iOS, compound integration and required remote CI remain pending. Later docs-only commits have a different head.",
+          "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
           "fullTaskAccepted": false
         }
       }
@@ -10076,23 +10134,21 @@
         "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
         "sourcePublication": {
           "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-          "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
-          "revision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "revision": "db8413d0b25c6795297480e994fc872991414f74",
           "branch": "feat/september-program-20260930",
           "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
           "isDraft": true,
-          "remoteHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
-          "pullRequestHeadReadback": "7525b690d709ccffeb07272622f2eefc5951f70e",
-          "observedAt": "2026-09-30T17:39:30.972Z",
-          "sourceCount": 4873,
-          "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+          "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+          "observedAt": "2026-10-02T16:59:30.702Z",
+          "sourceCount": 4876,
+          "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
           "committedSourceMatchesTestedManifest": true,
-          "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75",
-          "previous4870SourcesUnchanged": true,
-          "addedDeveloperScripts": 3,
+          "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
           "fullProductDelivery": "PENDING",
           "originalCriteriaAcceptedByPublication": 0,
-          "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
+          "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
           "fullTaskAccepted": false
         }
       }
@@ -10254,7 +10310,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-10-02T16:55:35.905Z",
+    "asOf": "2026-10-02T16:59:30.702Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10286,35 +10342,36 @@
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
-      "observedAt": "2026-09-30T17:39:30.972Z",
-      "sourceCount": 4873,
-      "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "observedAt": "2026-10-02T16:59:30.702Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
         "apps/electron/.impeccable/hook.cache.json"
       ],
       "committedSourceMatchesTestedManifest": true,
-      "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75"
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
     },
     "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_CI_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4876_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
-      "revision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "revision": "db8413d0b25c6795297480e994fc872991414f74",
       "branch": "feat/september-program-20260930",
       "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
       "isDraft": true,
-      "remoteHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
-      "pullRequestHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
-      "observedAt": "2026-09-30T14:08:40.065Z",
+      "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "observedAt": "2026-10-02T16:59:30.702Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
       "fullProductDelivery": "PENDING",
       "originalCriteriaAcceptedByPublication": 0,
-      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
-      "sourceCount": 4846,
-      "committedSourceMatchesTestedManifest": true,
-      "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
+      "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
     },
     "nativeCreationEvidence": "native-create-20260930.json",
     "historicalNamedCandidateSnapshot": {
@@ -10361,7 +10418,7 @@
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Explicit Electron/UI/core/shared-src/server-core-src package gate scope. Subsequent scheduler terminal recovery and OMP fixture are excluded. Runtime shared/server gates bind separately to c1c81e66; complete desktop/platform acceptance pending."
     },
-    "latestPublishedSourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
     "schedulerTerminalEvidence": "scheduler-terminal-20260930.json",
     "schedulerTerminalCandidate": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
@@ -10532,9 +10589,39 @@
     },
     "l10nLinearEvidence": "l10n-linear-parsing-20261002.json",
     "l10nLinearCandidate": {
-      "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "revision": "db8413d0b25c6795297480e994fc872991414f74",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "observedAt": "2026-10-02T16:59:30.702Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
       "fullProductDelivery": "PENDING",
-      "originalCriteriaAcceptedByPublication": 0
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
+    },
+    "historicalGitPublication": {
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "revision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "pullRequestHeadReadback": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
+      "observedAt": "2026-09-30T14:08:40.065Z",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0,
+      "sourceManifestSha256": "3c84b18b01dc516f8be356211a4ed2fd3178e128f894ddb92208324bd0e35777",
+      "sourceCount": 4846,
+      "committedSourceMatchesTestedManifest": true,
+      "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
     }
   }
 }

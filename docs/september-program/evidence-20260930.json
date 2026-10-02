@@ -9,20 +9,20 @@
     "deliveredRevision": null,
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
-      "observedAt": "2026-09-30T17:39:30.972Z",
-      "sourceCount": 4873,
-      "sourceManifestSha256": "4ff3098c35ce303b5ab634d199c059aa61ef7bf6b0fcb86af5fbfd154a34ed3c",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "observedAt": "2026-10-02T16:59:30.702Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
         "apps/electron/.impeccable/hook.cache.json"
       ],
       "committedSourceMatchesTestedManifest": true,
-      "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75"
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
     },
-    "publishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "latestPublishedSourceRevision": "7525b690d709ccffeb07272622f2eefc5951f70e",
+    "publishedRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
     "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -412,7 +412,8 @@
         }
       ],
       "doesNotBindPriorGateInvocations": true
-    }
+    },
+    "historicalFirstPublishedRevision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0"
   },
   "environment": {
     "os": "macOS 27.0",
@@ -2922,360 +2923,21 @@
   ],
   "gitPublication": {
     "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-    "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "gitTree": "2e887bd16058863272abb29ac847d973784a9858",
+    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "revision": "db8413d0b25c6795297480e994fc872991414f74",
     "branch": "feat/september-program-20260930",
     "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
     "isDraft": true,
-    "remoteHeadReadback": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-    "observedAt": "2026-09-30T11:46:48.859Z",
-    "originalCandidateSourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
-    "originalNamedSourcesExactMatchCount": 75,
-    "namedSourceCount": 76,
-    "explainedWhitespaceChanges": [
-      {
-        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
-        "candidateSha256": "1731037ccfd643ff1ac2fbb4ae345f0de99dc974dcedc7e5c5f9f17020f3e91d",
-        "committedSha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696",
-        "reason": "One extra final newline removed during staged diff --check; no other bytes changed."
-      }
-    ],
-    "committedNamedSourceManifest": [
-      {
-        "path": "apps/electron/src/__tests__/transport-resolve-target.test.ts",
-        "sha256": "ac107dd204516a2aa15303a9113affb17df7a2f686598d7637b4fc30fb3ece59"
-      },
-      {
-        "path": "apps/electron/src/__tests__/transport.test.ts",
-        "sha256": "34cff30e362dca648ee52bfcc52b1b18e8c320327203a29a9908dc743ee6cc03"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/browser-cookie-consent.test.ts",
-        "sha256": "4ccee767a2ee07d545e4efc313a9c3e1218312667d2956110d7ad42e653f1427"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
-        "sha256": "2e17e5d5588695bc2c6fc9cbf3b8e880d72fb66615e687cb3bba977afc21288c"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/native-replica.test.ts",
-        "sha256": "aa59b78e8c3303ca7084673c3eb5c3615c18c24c2508a91345b3f8758fbfef6c"
-      },
-      {
-        "path": "apps/electron/src/main/__tests__/native-transport-credential.test.ts",
-        "sha256": "8ba9abcd91c09d22834fc0276b248ed88460ea77596446e3502d25b2f3832f9a"
-      },
-      {
-        "path": "apps/electron/src/main/browser-cookie-auto-import.ts",
-        "sha256": "1b3e64f8204bfc133286b72789385df71be960ecec2472c0cba916738d56d142"
-      },
-      {
-        "path": "apps/electron/src/main/index.ts",
-        "sha256": "715b2c0ab4fed46bc9709be1e567926c2ffbd80ce631dc5f6818be3654f9e740"
-      },
-      {
-        "path": "apps/electron/src/main/local-client-binding.ts",
-        "sha256": "6e9db6254eb89c8f72d63fbe15268e9a27bbda879972f588effec08f39ddfe91"
-      },
-      {
-        "path": "apps/electron/src/main/native-replica.ts",
-        "sha256": "cc7772f69a0c942ac1331f2892f88b936a6a3c85e3a908db292f37ea5473f2b7"
-      },
-      {
-        "path": "apps/electron/src/main/native-transport-credential.ts",
-        "sha256": "f8c39342c41bce0c4d6b04a31b618062a34d8523c45d8fd1b4e61352d432d6cd"
-      },
-      {
-        "path": "apps/electron/src/preload/bootstrap.ts",
-        "sha256": "430f176d64563ed99d5d662563b36f8d595a02a38f072c26cc8062dd8f1407e0"
-      },
-      {
-        "path": "apps/electron/src/preload/native-replica.ts",
-        "sha256": "85876b733efd60d997552909c966687881d57837f34c56b3420d26c09841130c"
-      },
-      {
-        "path": "apps/electron/src/renderer/App.tsx",
-        "sha256": "4f4bce09432a7df46ab568bcf3fdb120a4d538248b27b4ae181644dc73799d68"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/automations/types.ts",
-        "sha256": "3869be1cb2f46c8de8917d0e438613aa77593f808f67319165a19a9a31405b07"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx",
-        "sha256": "e552d5af2643a1e8196da9fe8a2b6be92e4e05510e8da8df01122be03a373e02"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/__tests__/onboarding-username.test.ts",
-        "sha256": "894c79a7717da55ad0ccdf617b089862ddff8ace7abc74a3df709792ced94ed5"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/__tests__/rox-runtime-default.test.ts",
-        "sha256": "cca022c4d1a6223a872f001cf28b4e63373947e1220532d6d447988f5056ab8c"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/onboarding-username.ts",
-        "sha256": "745d6dd3a004e20433642913bfd6f9c83f183ca9aa8b09d94065431df701d760"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/onboarding/rox-runtime-default.ts",
-        "sha256": "a0d2ed6ece99a3085538f12c3d3fa499e6a89745e6a2b196f91f04595bd3a260"
-      },
-      {
-        "path": "apps/electron/src/renderer/components/team/team-store.ts",
-        "sha256": "b0e65c86e20509b2eb11c6bb6b725bda6e0e8e0541a11d64f1b9f5fd3079a50f"
-      },
-      {
-        "path": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
-        "sha256": "c8c993f307657a84b6f0d0e1b4bf3dcd10d1b7c37ac40d66f5d756ef2cc385cc"
-      },
-      {
-        "path": "apps/electron/src/renderer/lib/message-tts.ts",
-        "sha256": "7216e6fbd9ce2fca10f4ba270fdb3693314cd1c2257ce3345bf3f6e8d61be24b"
-      },
-      {
-        "path": "apps/electron/src/renderer/lib/native-notes-sync.ts",
-        "sha256": "212d6cb14b9f573ac82e420ed42de5ec11db7fb3829f901095332dddc3d06cbd"
-      },
-      {
-        "path": "apps/electron/src/shared/types.ts",
-        "sha256": "31b7b89dfbe3cdf5f9ec54315a0484dd9fb407e9e1469e5a45e64038fcab0506"
-      },
-      {
-        "path": "packages/server-core/src/authority/native-authority.ts",
-        "sha256": "5672dd82decf337699e69a243aed10ac44c0e6585dcab7282a8670a80ef905b2"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/browser-profile-import.test.ts",
-        "sha256": "82d8a39afbbfd7cd181d6ff49070ca2493ce7bb48bd037c348fe58d18ec81a8c"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts",
-        "sha256": "44fafc1fa6216141fd44f9bb593ce76607a3a07ed91cfff50d7c6f041cfd41a9"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts",
-        "sha256": "9e0f2d596caea5b5d56b3a597a04dc74dbd51f3a48c5d9988b5ca33eb85212e4"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts",
-        "sha256": "b4885a43143a42b52b8bf321b9a18b033d1c2dfa877605955b675c857ac6d4f5"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/__tests__/orgs.test.ts",
-        "sha256": "89ab1466ad5b3a6b89a99fbe79625960dcfa33a30e2152ea6515f84e4338734e"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
-        "sha256": "8393f33506979754c9f92242e3684a6e81afca648559d1f1c4a751459669eed1"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/llm-connections.ts",
-        "sha256": "d75ae41f1924f29720745e9a6066ce41e71b2f21af14cd4d7ca2116db2c35582"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
-        "sha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/notes.ts",
-        "sha256": "0c4535bbc1c5a6b56f434814087014c9dcd262d433491010517e54e9d48a90cf"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/orgs.ts",
-        "sha256": "cc97990aa4c52a9cdec2f5b514788b72af15339c3429c285a9ad7e874c0adc4f"
-      },
-      {
-        "path": "packages/server-core/src/handlers/rpc/workspace.ts",
-        "sha256": "55fc1ccc3b8aada91dc1383e59c47274d304733c982cdedac5d43ac6f57087ac"
-      },
-      {
-        "path": "packages/server-core/src/meetings/__tests__/budgets.test.ts",
-        "sha256": "45a8d574ad60402e4354dfbfc077ea569d5f619e54f1a4e1376d0f36907475de"
-      },
-      {
-        "path": "packages/server-core/src/meetings/__tests__/followup.test.ts",
-        "sha256": "cb6a396426a5e5923ab5f85b24a663157c0152cded5607d8b4772ad94ed368ab"
-      },
-      {
-        "path": "packages/server-core/src/meetings/conation/native-shells.ts",
-        "sha256": "9dd8e2562745b2c9d9b70fdd35109fa7e88b51c4ab08a8125bbc85549992671c"
-      },
-      {
-        "path": "packages/server-core/src/meetings/manual.ts",
-        "sha256": "51572a04bb6982df80b7d3779030514a8c1d31cdfa8c8f0302f9bace9b1608d3"
-      },
-      {
-        "path": "packages/server-core/src/meetings/tracker-actions.ts",
-        "sha256": "38e40828c6ac1a8977b9c8f0ab0e32de5b4887dd98337dbf48d162f895c1637c"
-      },
-      {
-        "path": "packages/server-core/src/meetings/types.ts",
-        "sha256": "f4297356c7ccf7dbe6af59a017e6192e3b9f0593f2138e02105479ef73091b81"
-      },
-      {
-        "path": "packages/server-core/src/sessions/SessionManager.ts",
-        "sha256": "5c40bf4e6940b2ee47728a53d4671b6083fc2ceabd78fb6305a8359acdcc0994"
-      },
-      {
-        "path": "packages/server-core/src/transport/__tests__/server-lifecycle.test.ts",
-        "sha256": "e84519a0bbdb763d792b20aa5f07bdaf718a9be6ed231691dedcf8781615d4b0"
-      },
-      {
-        "path": "packages/server-core/src/transport/server.ts",
-        "sha256": "b5487b1e7ece70969c81334ced984a06d8789bd3b9e28a1b1acf1f1eabf62644"
-      },
-      {
-        "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
-        "sha256": "1ccfd0694d96ad59f8cd1ce23dea820da5f1d6ce87dc216cc971418fc5eba324"
-      },
-      {
-        "path": "packages/shared/src/account-replica/outbox.ts",
-        "sha256": "b6b7da4943e0511c58a47d0f78ebe644fb9367ec7a0327b3cdbb26a39d871d79"
-      },
-      {
-        "path": "packages/shared/src/account-replica/replica.ts",
-        "sha256": "08e6059f1d60b19969a212eaa317a0f1743b83f39c8d2de0c8261690cc99e9c2"
-      },
-      {
-        "path": "packages/shared/src/agent/__tests__/omp-first-run.test.ts",
-        "sha256": "30d01df83017dc5134d0d089398297d1181bf15be26f93b3640b4b8f0d6cb358"
-      },
-      {
-        "path": "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts",
-        "sha256": "7c3ba5ac8973c20e0a249148586ab7144d313486dfc4c6eef7fc1724200e6edb"
-      },
-      {
-        "path": "packages/shared/src/agent/core/agent-budget.ts",
-        "sha256": "a40f940fd07d236e47ca1f9c209e76c6c694e57cb330f438a4acd6a286ff3b96"
-      },
-      {
-        "path": "packages/shared/src/agent/omp-agent.ts",
-        "sha256": "933a8595da18e025a0c6843960709c4e16deb47694674ab4f0f5710e1e208ace"
-      },
-      {
-        "path": "packages/shared/src/agent/omp-first-run.ts",
-        "sha256": "64e0558d959e15eaaf762a0fe0189491f9367261b5e0636a4b9cf3c574d6893e"
-      },
-      {
-        "path": "packages/shared/src/automations/handlers/prompt-handler.ts",
-        "sha256": "3b689e450604c955d53ea7f4fa88c496ff823c3cb2ac1be6a9280fed2138cefb"
-      },
-      {
-        "path": "packages/shared/src/automations/occurrence-ledger.ts",
-        "sha256": "ca23b4299c25a9fb17fd03f89a75f4177db2be6ca61a092dab2bcb14ab948f4f"
-      },
-      {
-        "path": "packages/shared/src/browser/__tests__/profile-import.test.ts",
-        "sha256": "b45a3af0be94c9880484676bf9be51fe6b4a10a6979016fc9c962b8cdaae9dc2"
-      },
-      {
-        "path": "packages/shared/src/browser/profile-import.ts",
-        "sha256": "9ed4c6e5f10aac6a5c3771eff9764d02c627e93ef9184af20f8ab613434da96e"
-      },
-      {
-        "path": "packages/shared/src/credentials/backends/secure-storage.ts",
-        "sha256": "9d9a1536e2bfaafd305b720567a298e96903c547d77242f5b8ee79f3043d6017"
-      },
-      {
-        "path": "packages/shared/src/credentials/manager.ts",
-        "sha256": "4ff7351264b6c6bcceabdfbe353dd174b9aba3e24ad09baabfc35a3095311fc9"
-      },
-      {
-        "path": "packages/shared/src/credentials/types.ts",
-        "sha256": "e13367e3e04e051eba3e164b5e5e2a2a466fe1a05369492420148a4c539fd782"
-      },
-      {
-        "path": "packages/shared/src/gamification/storage.ts",
-        "sha256": "d09276e7ab98a2e175e6eff0e6b7a7583e2a74db4a744e622dce4a0cc5e967d2"
-      },
-      {
-        "path": "packages/shared/src/orgs/types.ts",
-        "sha256": "6e4fa9e1220b884f60cb8222af17089b15d6f7a8717b853b7473703ef579b64d"
-      },
-      {
-        "path": "packages/shared/src/pages/data-store.ts",
-        "sha256": "ce13453d850735e44c6e7c32ea9cb13b5a8d7e750bcb91f3a771cb1b97ea95ce"
-      },
-      {
-        "path": "packages/shared/src/privacy/__tests__/privacy.test.ts",
-        "sha256": "0802dc63f856e8629c57f9df43a436e029361d371d007d39d249a83e2be87110"
-      },
-      {
-        "path": "packages/shared/src/privacy/policy.ts",
-        "sha256": "bed089d6fec868372581ee96a6a33861990f9f0d3026f4dff8949be1b172a4c2"
-      },
-      {
-        "path": "packages/shared/src/privacy/replica-consent.ts",
-        "sha256": "4a8d0119bef1db03457736cbd60e5ee3915370da0d7878391e1035a1a87164aa"
-      },
-      {
-        "path": "packages/shared/src/privacy/store.ts",
-        "sha256": "e872f2c32ac90c76fcf8b4128491b3cead80f8b92151e581bd4633344308d6d3"
-      },
-      {
-        "path": "packages/shared/src/protocol/__tests__/native-replica.test.ts",
-        "sha256": "affee0a3fcd68877dc4b4b43d09af4511dafffd3d50ca4bb006d65d2226b71ec"
-      },
-      {
-        "path": "packages/shared/src/protocol/channels.ts",
-        "sha256": "2533bd9f346a4cd39b4246e2b9a6195c5d36bbe36418f4bf14016a8800e1f2e0"
-      },
-      {
-        "path": "packages/shared/src/protocol/dto.ts",
-        "sha256": "126ad7a9a4268211dba31b19c9a2f40dfd957b94ec73d404e84f24e71c060f1c"
-      },
-      {
-        "path": "packages/shared/src/protocol/native-replica.ts",
-        "sha256": "51d9139ad195130dd0c2b33e2d3643154319242f00212db65ab49dbaac566eee"
-      },
-      {
-        "path": "packages/shared/src/voice/policy.ts",
-        "sha256": "7e9ebf6d4352dddb59be455b7edd28794057cbc9023a24f93870ee91561ce4a5"
-      },
-      {
-        "path": "packages/shared/src/voice/runtime.ts",
-        "sha256": "80365f6b83f8ba0b4de8c78482d30a7bf9c6c0458fa84b7bab5216776a0cd697"
-      },
-      {
-        "path": "packages/shared/src/voice/transcribe.ts",
-        "sha256": "d31a9ae09cc0f238ea673ab2452b22c11ee3c90817467d3d83ca054db15ba6a5"
-      },
-      {
-        "path": "packages/ui/src/components/overlay/pdf-search.ts",
-        "sha256": "0c7cf57fde6d89db6b4c767bac18012f1246c9b93b2c96d8948561c17928d6d0"
-      }
-    ],
-    "sourceScope": "Named hashes plus immutable Git tree; source publication does not accept original product criteria.",
-    "retainedLocalValidation": [
-      {
-        "artifact": "shared.union.delivery-green.txt",
-        "sha256": "0ed09b68f0929da43ef7fb2dc3e65280ef35f3552a87fc9e60f442e44c89582f",
-        "result": "4902 pass / 12 skip / 0 fail; 21420 assertions; 468 files"
-      },
-      {
-        "artifact": "server.union.delivery-green.txt",
-        "sha256": "8f5c123e660b64741f449cd732d1c92381d01267a478b42beea1c5f10fd6af24",
-        "result": "1496 pass / 8 skip / 0 fail; 6080 assertions; 233 files"
-      },
-      {
-        "artifact": "electron.union.native-entry-final.txt",
-        "sha256": "f1bad5b14dbcd0aad6d1f4a84ddeb1f66f882b8778da3b6535530fb7f66353cd",
-        "result": "4186 pass / 0 fail; 19904 assertions; 607 files"
-      }
-    ],
-    "validationLimit": "Retained pre-commit candidate invocations; named-source comparison is a later readback, not an invocation at this Git revision. One explained final-newline change is recorded. Follow-up source changes require new applicable checks.",
+    "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+    "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+    "observedAt": "2026-10-02T16:59:30.702Z",
+    "sourceCount": 4876,
+    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
     "fullProductDelivery": "PENDING",
-    "mergeAcceptance": "PENDING",
     "originalCriteriaAcceptedByPublication": 0,
-    "ci": {
-      "status": "QUEUED_NO_MATCHING_TOOLCHAIN_RUNNER",
-      "requiredLabels": [
-        "self-hosted",
-        "macos-toolchain"
-      ],
-      "executedSteps": 0
-    }
+    "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
   },
   "nativeCreationFollowup": {
     "schemaVersion": 1,
@@ -5246,9 +4908,22 @@
     "id": "L10N-LINEAR-PARSING-20261002",
     "observedAt": "2026-10-02T16:55:35.905Z",
     "publication": {
-      "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "revision": "db8413d0b25c6795297480e994fc872991414f74",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+      "observedAt": "2026-10-02T16:59:30.702Z",
+      "sourceCount": 4876,
+      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
       "fullProductDelivery": "PENDING",
-      "originalCriteriaAcceptedByPublication": 0
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
     },
     "sourceBinding": {
       "sourceCount": 4876,
@@ -5259,7 +4934,9 @@
         "apps/electron/.impeccable/hook.cache.json"
       ],
       "beforeAfterIdentical": true,
-      "committedSourceMatchesTestedManifest": false
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
     },
     "sources": [
       {
@@ -5785,5 +5462,362 @@
       }
     ]
   },
-  "historicalGatesScope": "Existing gates object and older followup packets retain their original revision-bound history; currentValidation and l10nLinearFollowup describe the complete4876 source proof."
+  "historicalGatesScope": "Existing gates object and older followup packets retain their original revision-bound history; currentValidation and l10nLinearFollowup describe the complete4876 source proof.",
+  "historicalGitPublication": {
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "gitTree": "2e887bd16058863272abb29ac847d973784a9858",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "observedAt": "2026-09-30T11:46:48.859Z",
+    "originalCandidateSourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
+    "originalNamedSourcesExactMatchCount": 75,
+    "namedSourceCount": 76,
+    "explainedWhitespaceChanges": [
+      {
+        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
+        "candidateSha256": "1731037ccfd643ff1ac2fbb4ae345f0de99dc974dcedc7e5c5f9f17020f3e91d",
+        "committedSha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696",
+        "reason": "One extra final newline removed during staged diff --check; no other bytes changed."
+      }
+    ],
+    "committedNamedSourceManifest": [
+      {
+        "path": "apps/electron/src/__tests__/transport-resolve-target.test.ts",
+        "sha256": "ac107dd204516a2aa15303a9113affb17df7a2f686598d7637b4fc30fb3ece59"
+      },
+      {
+        "path": "apps/electron/src/__tests__/transport.test.ts",
+        "sha256": "34cff30e362dca648ee52bfcc52b1b18e8c320327203a29a9908dc743ee6cc03"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/browser-cookie-consent.test.ts",
+        "sha256": "4ccee767a2ee07d545e4efc313a9c3e1218312667d2956110d7ad42e653f1427"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/native-notes-runtime.test.ts",
+        "sha256": "2e17e5d5588695bc2c6fc9cbf3b8e880d72fb66615e687cb3bba977afc21288c"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/native-replica.test.ts",
+        "sha256": "aa59b78e8c3303ca7084673c3eb5c3615c18c24c2508a91345b3f8758fbfef6c"
+      },
+      {
+        "path": "apps/electron/src/main/__tests__/native-transport-credential.test.ts",
+        "sha256": "8ba9abcd91c09d22834fc0276b248ed88460ea77596446e3502d25b2f3832f9a"
+      },
+      {
+        "path": "apps/electron/src/main/browser-cookie-auto-import.ts",
+        "sha256": "1b3e64f8204bfc133286b72789385df71be960ecec2472c0cba916738d56d142"
+      },
+      {
+        "path": "apps/electron/src/main/index.ts",
+        "sha256": "715b2c0ab4fed46bc9709be1e567926c2ffbd80ce631dc5f6818be3654f9e740"
+      },
+      {
+        "path": "apps/electron/src/main/local-client-binding.ts",
+        "sha256": "6e9db6254eb89c8f72d63fbe15268e9a27bbda879972f588effec08f39ddfe91"
+      },
+      {
+        "path": "apps/electron/src/main/native-replica.ts",
+        "sha256": "cc7772f69a0c942ac1331f2892f88b936a6a3c85e3a908db292f37ea5473f2b7"
+      },
+      {
+        "path": "apps/electron/src/main/native-transport-credential.ts",
+        "sha256": "f8c39342c41bce0c4d6b04a31b618062a34d8523c45d8fd1b4e61352d432d6cd"
+      },
+      {
+        "path": "apps/electron/src/preload/bootstrap.ts",
+        "sha256": "430f176d64563ed99d5d662563b36f8d595a02a38f072c26cc8062dd8f1407e0"
+      },
+      {
+        "path": "apps/electron/src/preload/native-replica.ts",
+        "sha256": "85876b733efd60d997552909c966687881d57837f34c56b3420d26c09841130c"
+      },
+      {
+        "path": "apps/electron/src/renderer/App.tsx",
+        "sha256": "4f4bce09432a7df46ab568bcf3fdb120a4d538248b27b4ae181644dc73799d68"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/automations/types.ts",
+        "sha256": "3869be1cb2f46c8de8917d0e438613aa77593f808f67319165a19a9a31405b07"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx",
+        "sha256": "e552d5af2643a1e8196da9fe8a2b6be92e4e05510e8da8df01122be03a373e02"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/__tests__/onboarding-username.test.ts",
+        "sha256": "894c79a7717da55ad0ccdf617b089862ddff8ace7abc74a3df709792ced94ed5"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/__tests__/rox-runtime-default.test.ts",
+        "sha256": "cca022c4d1a6223a872f001cf28b4e63373947e1220532d6d447988f5056ab8c"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/onboarding-username.ts",
+        "sha256": "745d6dd3a004e20433642913bfd6f9c83f183ca9aa8b09d94065431df701d760"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/onboarding/rox-runtime-default.ts",
+        "sha256": "a0d2ed6ece99a3085538f12c3d3fa499e6a89745e6a2b196f91f04595bd3a260"
+      },
+      {
+        "path": "apps/electron/src/renderer/components/team/team-store.ts",
+        "sha256": "b0e65c86e20509b2eb11c6bb6b725bda6e0e8e0541a11d64f1b9f5fd3079a50f"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/__tests__/native-notes-sync.test.ts",
+        "sha256": "c8c993f307657a84b6f0d0e1b4bf3dcd10d1b7c37ac40d66f5d756ef2cc385cc"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/message-tts.ts",
+        "sha256": "7216e6fbd9ce2fca10f4ba270fdb3693314cd1c2257ce3345bf3f6e8d61be24b"
+      },
+      {
+        "path": "apps/electron/src/renderer/lib/native-notes-sync.ts",
+        "sha256": "212d6cb14b9f573ac82e420ed42de5ec11db7fb3829f901095332dddc3d06cbd"
+      },
+      {
+        "path": "apps/electron/src/shared/types.ts",
+        "sha256": "31b7b89dfbe3cdf5f9ec54315a0484dd9fb407e9e1469e5a45e64038fcab0506"
+      },
+      {
+        "path": "packages/server-core/src/authority/native-authority.ts",
+        "sha256": "5672dd82decf337699e69a243aed10ac44c0e6585dcab7282a8670a80ef905b2"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/browser-profile-import.test.ts",
+        "sha256": "82d8a39afbbfd7cd181d6ff49070ca2493ce7bb48bd037c348fe58d18ec81a8c"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/native-self-profile.test.ts",
+        "sha256": "44fafc1fa6216141fd44f9bb593ce76607a3a07ed91cfff50d7c6f041cfd41a9"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/native-startup-runtime.test.ts",
+        "sha256": "9e0f2d596caea5b5d56b3a597a04dc74dbd51f3a48c5d9988b5ca33eb85212e4"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/native-workspace-startup.test.ts",
+        "sha256": "b4885a43143a42b52b8bf321b9a18b033d1c2dfa877605955b675c857ac6d4f5"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/__tests__/orgs.test.ts",
+        "sha256": "89ab1466ad5b3a6b89a99fbe79625960dcfa33a30e2152ea6515f84e4338734e"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/browser-profile-import.ts",
+        "sha256": "8393f33506979754c9f92242e3684a6e81afca648559d1f1c4a751459669eed1"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/llm-connections.ts",
+        "sha256": "d75ae41f1924f29720745e9a6066ce41e71b2f21af14cd4d7ca2116db2c35582"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/native-data.test.ts",
+        "sha256": "2857fd57340e3778ce18ffbe1fb6e1e451632905e5539310ea8667b77adb1696"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/notes.ts",
+        "sha256": "0c4535bbc1c5a6b56f434814087014c9dcd262d433491010517e54e9d48a90cf"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/orgs.ts",
+        "sha256": "cc97990aa4c52a9cdec2f5b514788b72af15339c3429c285a9ad7e874c0adc4f"
+      },
+      {
+        "path": "packages/server-core/src/handlers/rpc/workspace.ts",
+        "sha256": "55fc1ccc3b8aada91dc1383e59c47274d304733c982cdedac5d43ac6f57087ac"
+      },
+      {
+        "path": "packages/server-core/src/meetings/__tests__/budgets.test.ts",
+        "sha256": "45a8d574ad60402e4354dfbfc077ea569d5f619e54f1a4e1376d0f36907475de"
+      },
+      {
+        "path": "packages/server-core/src/meetings/__tests__/followup.test.ts",
+        "sha256": "cb6a396426a5e5923ab5f85b24a663157c0152cded5607d8b4772ad94ed368ab"
+      },
+      {
+        "path": "packages/server-core/src/meetings/conation/native-shells.ts",
+        "sha256": "9dd8e2562745b2c9d9b70fdd35109fa7e88b51c4ab08a8125bbc85549992671c"
+      },
+      {
+        "path": "packages/server-core/src/meetings/manual.ts",
+        "sha256": "51572a04bb6982df80b7d3779030514a8c1d31cdfa8c8f0302f9bace9b1608d3"
+      },
+      {
+        "path": "packages/server-core/src/meetings/tracker-actions.ts",
+        "sha256": "38e40828c6ac1a8977b9c8f0ab0e32de5b4887dd98337dbf48d162f895c1637c"
+      },
+      {
+        "path": "packages/server-core/src/meetings/types.ts",
+        "sha256": "f4297356c7ccf7dbe6af59a017e6192e3b9f0593f2138e02105479ef73091b81"
+      },
+      {
+        "path": "packages/server-core/src/sessions/SessionManager.ts",
+        "sha256": "5c40bf4e6940b2ee47728a53d4671b6083fc2ceabd78fb6305a8359acdcc0994"
+      },
+      {
+        "path": "packages/server-core/src/transport/__tests__/server-lifecycle.test.ts",
+        "sha256": "e84519a0bbdb763d792b20aa5f07bdaf718a9be6ed231691dedcf8781615d4b0"
+      },
+      {
+        "path": "packages/server-core/src/transport/server.ts",
+        "sha256": "b5487b1e7ece70969c81334ced984a06d8789bd3b9e28a1b1acf1f1eabf62644"
+      },
+      {
+        "path": "packages/shared/src/account-replica/__tests__/account-replica.test.ts",
+        "sha256": "1ccfd0694d96ad59f8cd1ce23dea820da5f1d6ce87dc216cc971418fc5eba324"
+      },
+      {
+        "path": "packages/shared/src/account-replica/outbox.ts",
+        "sha256": "b6b7da4943e0511c58a47d0f78ebe644fb9367ec7a0327b3cdbb26a39d871d79"
+      },
+      {
+        "path": "packages/shared/src/account-replica/replica.ts",
+        "sha256": "08e6059f1d60b19969a212eaa317a0f1743b83f39c8d2de0c8261690cc99e9c2"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-first-run.test.ts",
+        "sha256": "30d01df83017dc5134d0d089398297d1181bf15be26f93b3640b4b8f0d6cb358"
+      },
+      {
+        "path": "packages/shared/src/agent/__tests__/omp-public-runtime.test.ts",
+        "sha256": "7c3ba5ac8973c20e0a249148586ab7144d313486dfc4c6eef7fc1724200e6edb"
+      },
+      {
+        "path": "packages/shared/src/agent/core/agent-budget.ts",
+        "sha256": "a40f940fd07d236e47ca1f9c209e76c6c694e57cb330f438a4acd6a286ff3b96"
+      },
+      {
+        "path": "packages/shared/src/agent/omp-agent.ts",
+        "sha256": "933a8595da18e025a0c6843960709c4e16deb47694674ab4f0f5710e1e208ace"
+      },
+      {
+        "path": "packages/shared/src/agent/omp-first-run.ts",
+        "sha256": "64e0558d959e15eaaf762a0fe0189491f9367261b5e0636a4b9cf3c574d6893e"
+      },
+      {
+        "path": "packages/shared/src/automations/handlers/prompt-handler.ts",
+        "sha256": "3b689e450604c955d53ea7f4fa88c496ff823c3cb2ac1be6a9280fed2138cefb"
+      },
+      {
+        "path": "packages/shared/src/automations/occurrence-ledger.ts",
+        "sha256": "ca23b4299c25a9fb17fd03f89a75f4177db2be6ca61a092dab2bcb14ab948f4f"
+      },
+      {
+        "path": "packages/shared/src/browser/__tests__/profile-import.test.ts",
+        "sha256": "b45a3af0be94c9880484676bf9be51fe6b4a10a6979016fc9c962b8cdaae9dc2"
+      },
+      {
+        "path": "packages/shared/src/browser/profile-import.ts",
+        "sha256": "9ed4c6e5f10aac6a5c3771eff9764d02c627e93ef9184af20f8ab613434da96e"
+      },
+      {
+        "path": "packages/shared/src/credentials/backends/secure-storage.ts",
+        "sha256": "9d9a1536e2bfaafd305b720567a298e96903c547d77242f5b8ee79f3043d6017"
+      },
+      {
+        "path": "packages/shared/src/credentials/manager.ts",
+        "sha256": "4ff7351264b6c6bcceabdfbe353dd174b9aba3e24ad09baabfc35a3095311fc9"
+      },
+      {
+        "path": "packages/shared/src/credentials/types.ts",
+        "sha256": "e13367e3e04e051eba3e164b5e5e2a2a466fe1a05369492420148a4c539fd782"
+      },
+      {
+        "path": "packages/shared/src/gamification/storage.ts",
+        "sha256": "d09276e7ab98a2e175e6eff0e6b7a7583e2a74db4a744e622dce4a0cc5e967d2"
+      },
+      {
+        "path": "packages/shared/src/orgs/types.ts",
+        "sha256": "6e4fa9e1220b884f60cb8222af17089b15d6f7a8717b853b7473703ef579b64d"
+      },
+      {
+        "path": "packages/shared/src/pages/data-store.ts",
+        "sha256": "ce13453d850735e44c6e7c32ea9cb13b5a8d7e750bcb91f3a771cb1b97ea95ce"
+      },
+      {
+        "path": "packages/shared/src/privacy/__tests__/privacy.test.ts",
+        "sha256": "0802dc63f856e8629c57f9df43a436e029361d371d007d39d249a83e2be87110"
+      },
+      {
+        "path": "packages/shared/src/privacy/policy.ts",
+        "sha256": "bed089d6fec868372581ee96a6a33861990f9f0d3026f4dff8949be1b172a4c2"
+      },
+      {
+        "path": "packages/shared/src/privacy/replica-consent.ts",
+        "sha256": "4a8d0119bef1db03457736cbd60e5ee3915370da0d7878391e1035a1a87164aa"
+      },
+      {
+        "path": "packages/shared/src/privacy/store.ts",
+        "sha256": "e872f2c32ac90c76fcf8b4128491b3cead80f8b92151e581bd4633344308d6d3"
+      },
+      {
+        "path": "packages/shared/src/protocol/__tests__/native-replica.test.ts",
+        "sha256": "affee0a3fcd68877dc4b4b43d09af4511dafffd3d50ca4bb006d65d2226b71ec"
+      },
+      {
+        "path": "packages/shared/src/protocol/channels.ts",
+        "sha256": "2533bd9f346a4cd39b4246e2b9a6195c5d36bbe36418f4bf14016a8800e1f2e0"
+      },
+      {
+        "path": "packages/shared/src/protocol/dto.ts",
+        "sha256": "126ad7a9a4268211dba31b19c9a2f40dfd957b94ec73d404e84f24e71c060f1c"
+      },
+      {
+        "path": "packages/shared/src/protocol/native-replica.ts",
+        "sha256": "51d9139ad195130dd0c2b33e2d3643154319242f00212db65ab49dbaac566eee"
+      },
+      {
+        "path": "packages/shared/src/voice/policy.ts",
+        "sha256": "7e9ebf6d4352dddb59be455b7edd28794057cbc9023a24f93870ee91561ce4a5"
+      },
+      {
+        "path": "packages/shared/src/voice/runtime.ts",
+        "sha256": "80365f6b83f8ba0b4de8c78482d30a7bf9c6c0458fa84b7bab5216776a0cd697"
+      },
+      {
+        "path": "packages/shared/src/voice/transcribe.ts",
+        "sha256": "d31a9ae09cc0f238ea673ab2452b22c11ee3c90817467d3d83ca054db15ba6a5"
+      },
+      {
+        "path": "packages/ui/src/components/overlay/pdf-search.ts",
+        "sha256": "0c7cf57fde6d89db6b4c767bac18012f1246c9b93b2c96d8948561c17928d6d0"
+      }
+    ],
+    "sourceScope": "Named hashes plus immutable Git tree; source publication does not accept original product criteria.",
+    "retainedLocalValidation": [
+      {
+        "artifact": "shared.union.delivery-green.txt",
+        "sha256": "0ed09b68f0929da43ef7fb2dc3e65280ef35f3552a87fc9e60f442e44c89582f",
+        "result": "4902 pass / 12 skip / 0 fail; 21420 assertions; 468 files"
+      },
+      {
+        "artifact": "server.union.delivery-green.txt",
+        "sha256": "8f5c123e660b64741f449cd732d1c92381d01267a478b42beea1c5f10fd6af24",
+        "result": "1496 pass / 8 skip / 0 fail; 6080 assertions; 233 files"
+      },
+      {
+        "artifact": "electron.union.native-entry-final.txt",
+        "sha256": "f1bad5b14dbcd0aad6d1f4a84ddeb1f66f882b8778da3b6535530fb7f66353cd",
+        "result": "4186 pass / 0 fail; 19904 assertions; 607 files"
+      }
+    ],
+    "validationLimit": "Retained pre-commit candidate invocations; named-source comparison is a later readback, not an invocation at this Git revision. One explained final-newline change is recorded. Follow-up source changes require new applicable checks.",
+    "fullProductDelivery": "PENDING",
+    "mergeAcceptance": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0,
+    "ci": {
+      "status": "QUEUED_NO_MATCHING_TOOLCHAIN_RUNNER",
+      "requiredLabels": [
+        "self-hosted",
+        "macos-toolchain"
+      ],
+      "executedSteps": 0
+    }
+  }
 }

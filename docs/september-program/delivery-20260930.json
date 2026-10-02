@@ -1,12 +1,12 @@
 {
   "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-  "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-  "gitTree": "2e887bd16058863272abb29ac847d973784a9858",
+  "revision": "db8413d0b25c6795297480e994fc872991414f74",
+  "gitTree": "e4a2d202c5b9b3b5f9f30b941559f2e47b8196ab",
   "branch": "feat/september-program-20260930",
   "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
   "isDraft": true,
-  "remoteHeadReadback": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
-  "observedAt": "2026-09-30T11:46:48.859Z",
+  "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+  "observedAt": "2026-10-02T16:59:30.702Z",
   "originalCandidateSourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
   "originalNamedSourcesExactMatchCount": 75,
   "namedSourceCount": 76,
@@ -324,35 +324,107 @@
       "sha256": "0c7cf57fde6d89db6b4c767bac18012f1246c9b93b2c96d8948561c17928d6d0"
     }
   ],
-  "sourceScope": "Named hashes plus immutable Git tree; source publication does not accept original product criteria.",
+  "sourceScope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
   "retainedLocalValidation": [
     {
-      "artifact": "shared.union.delivery-green.txt",
-      "sha256": "0ed09b68f0929da43ef7fb2dc3e65280ef35f3552a87fc9e60f442e44c89582f",
-      "result": "4902 pass / 12 skip / 0 fail; 21420 assertions; 468 files"
+      "name": "shared",
+      "command": [
+        "bun",
+        "test",
+        "./packages/shared"
+      ],
+      "exitCode": 0,
+      "seconds": 86.462,
+      "tests": {
+        "pass": 4951,
+        "skip": 12,
+        "fail": 0,
+        "assertions": 21752,
+        "files": 478
+      },
+      "logSha256": "8f4c5df4dc80a3372dd1d6fb7197bc3d89c81a6977fd53ec32e45152ba31a419"
     },
     {
-      "artifact": "server.union.delivery-green.txt",
-      "sha256": "8f5c123e660b64741f449cd732d1c92381d01267a478b42beea1c5f10fd6af24",
-      "result": "1496 pass / 8 skip / 0 fail; 6080 assertions; 233 files"
+      "name": "server",
+      "command": [
+        "bun",
+        "test",
+        "./packages/server-core"
+      ],
+      "exitCode": 0,
+      "seconds": 24.358,
+      "tests": {
+        "pass": 1511,
+        "skip": 8,
+        "fail": 0,
+        "assertions": 6155,
+        "files": 240
+      },
+      "logSha256": "a7e69f1d9ace8c3aec37e5d1a9c9a1e47a01af1368cbe12cea0cc33fb1bb5670"
     },
     {
-      "artifact": "electron.union.native-entry-final.txt",
-      "sha256": "f1bad5b14dbcd0aad6d1f4a84ddeb1f66f882b8778da3b6535530fb7f66353cd",
-      "result": "4186 pass / 0 fail; 19904 assertions; 607 files"
+      "name": "electron-ui-core",
+      "command": [
+        "bun",
+        "test",
+        "./apps/electron/src",
+        "./packages/ui",
+        "./packages/core"
+      ],
+      "exitCode": 0,
+      "seconds": 24.716,
+      "tests": {
+        "pass": 4205,
+        "skip": 0,
+        "fail": 0,
+        "assertions": 20047,
+        "files": 610
+      },
+      "logSha256": "988aab3c5123aae510798cd1b612e70b4558f8532abee170f9997f110eb7d4e6"
+    },
+    {
+      "name": "validate",
+      "command": [
+        "bun",
+        "run",
+        "validate:ci"
+      ],
+      "exitCode": 0,
+      "seconds": 89.118,
+      "tests": null,
+      "logSha256": "55b649cbe97d5c0944c865fec6ca6644a2d71af9da857bd7a699e3a62df534a1"
+    },
+    {
+      "name": "build",
+      "command": [
+        "bun",
+        "run",
+        "electron:build"
+      ],
+      "exitCode": 0,
+      "seconds": 49.849,
+      "tests": null,
+      "logSha256": "5271003228e0ae60c3c3ede77d2cacc49cc4125a93f7978e1b9629b5c1038173"
     }
   ],
-  "validationLimit": "Retained pre-commit candidate invocations; named-source comparison is a later readback, not an invocation at this Git revision. One explained final-newline change is recorded. Follow-up source changes require new applicable checks.",
+  "validationLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
   "fullProductDelivery": "PENDING",
   "mergeAcceptance": "PENDING",
   "originalCriteriaAcceptedByPublication": 0,
   "ci": {
-    "status": "QUEUED_NO_MATCHING_TOOLCHAIN_RUNNER",
+    "status": "REMOTE_REQUIRED_CHECKS_PENDING; LATEST_READONLY_RUNNER_METADATA_ZERO_REGISTERED",
+    "lastObservedAt": "2026-10-02T16:46:18.365834+00:00",
+    "repositoryRegistered": 0,
+    "organizationRegistered": 0,
     "requiredLabels": [
       "self-hosted",
-      "macos-toolchain"
+      "macos-toolchain",
+      "linux-toolchain"
     ],
-    "executedSteps": 0
+    "requiredMacosOnline": 0,
+    "requiredLinuxOnline": 0,
+    "metadataArtifact": "delivery-freshness-20261002.json",
+    "localGatesDoNotSubstituteRemoteCI": true
   },
   "nativeCreationFollowupPublication": {
     "status": "SOURCE_PUBLISHED_FOR_REVIEW",
@@ -558,8 +630,55 @@
     "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head."
   },
   "l10nLinearPublication": {
-    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "revision": "db8413d0b25c6795297480e994fc872991414f74",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+    "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+    "observedAt": "2026-10-02T16:59:30.702Z",
+    "sourceCount": 4876,
+    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
     "fullProductDelivery": "PENDING",
-    "originalCriteriaAcceptedByPublication": 0
-  }
+    "originalCriteriaAcceptedByPublication": 0,
+    "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
+  },
+  "historicalBaselinePublication": {
+    "revision": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "gitTree": "2e887bd16058863272abb29ac847d973784a9858",
+    "remoteHeadReadback": "74506d7d02ac70a0af3afca3fad135cc1236f3e0",
+    "observedAt": "2026-09-30T11:46:48.859Z",
+    "sourceScope": "Named hashes plus immutable Git tree; source publication does not accept original product criteria.",
+    "retainedLocalValidation": [
+      {
+        "artifact": "shared.union.delivery-green.txt",
+        "sha256": "0ed09b68f0929da43ef7fb2dc3e65280ef35f3552a87fc9e60f442e44c89582f",
+        "result": "4902 pass / 12 skip / 0 fail; 21420 assertions; 468 files"
+      },
+      {
+        "artifact": "server.union.delivery-green.txt",
+        "sha256": "8f5c123e660b64741f449cd732d1c92381d01267a478b42beea1c5f10fd6af24",
+        "result": "1496 pass / 8 skip / 0 fail; 6080 assertions; 233 files"
+      },
+      {
+        "artifact": "electron.union.native-entry-final.txt",
+        "sha256": "f1bad5b14dbcd0aad6d1f4a84ddeb1f66f882b8778da3b6535530fb7f66353cd",
+        "result": "4186 pass / 0 fail; 19904 assertions; 607 files"
+      }
+    ],
+    "validationLimit": "Retained pre-commit candidate invocations; named-source comparison is a later readback, not an invocation at this Git revision. One explained final-newline change is recorded. Follow-up source changes require new applicable checks.",
+    "ci": {
+      "status": "QUEUED_NO_MATCHING_TOOLCHAIN_RUNNER",
+      "requiredLabels": [
+        "self-hosted",
+        "macos-toolchain"
+      ],
+      "executedSteps": 0
+    }
+  },
+  "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
 }

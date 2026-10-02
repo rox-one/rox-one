@@ -3,9 +3,22 @@
   "id": "L10N-LINEAR-PARSING-20261002",
   "observedAt": "2026-10-02T16:55:35.905Z",
   "publication": {
-    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "revision": "db8413d0b25c6795297480e994fc872991414f74",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+    "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
+    "observedAt": "2026-10-02T16:59:30.702Z",
+    "sourceCount": 4876,
+    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
     "fullProductDelivery": "PENDING",
-    "originalCriteriaAcceptedByPublication": 0
+    "originalCriteriaAcceptedByPublication": 0,
+    "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
   },
   "sourceBinding": {
     "sourceCount": 4876,
@@ -16,7 +29,9 @@
       "apps/electron/.impeccable/hook.cache.json"
     ],
     "beforeAfterIdentical": true,
-    "committedSourceMatchesTestedManifest": false
+    "committedSourceMatchesTestedManifest": true,
+    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
   },
   "sources": [
     {
