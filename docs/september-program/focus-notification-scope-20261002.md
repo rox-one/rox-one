@@ -1,0 +1,7 @@
+# Focus notification workspace and settings repair
+
+Two workspaces sharing a session ID previously overwrote one another in the global renderer Focus queue. Disabled notifications also persisted private previews before checking the setting. The queue now coalesces by workspace/session together; disabled notifications return before queue access. FocusPage shows only current-workspace entries, uses pair row keys, removes only the clicked pair and clears only the current workspace. Existing navigation and enabled notification behavior are retained.
+
+Independent actual hook/storage cases11/0 versus old6/5. Actual mounted ReactDOM FocusPage/UI/storage with fixture dependencies passes12/0; exact old page3/9. Focused suite11/0/40; narrow strict typing0. Initial failures, partial fix, cached-old browser attempt and evidence correction remain archived. Full4879 source manifest `4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923` passed all five complete standard local gates.
+
+Facets31 partial implementation and29 partial verification, full acceptance0. Full Focus worker questions, actor custody, automatic draining/delivery, timer/restart/crash/native OS/product criteria remain pending. Original109/489/464/297 contracts are retained. Prior native Note source db841 and Projects source1c keep their historical runtime bindings. Publication binds exact committed source after push/readback.

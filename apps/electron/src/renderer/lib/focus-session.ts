@@ -112,9 +112,9 @@ export function settleFocus(state: FocusState, now: number): FocusState {
 }
 
 export function deferNotification(state: FocusState, item: Omit<DeferredNotification, 'count'>): FocusState {
-  const existing = state.queue.find((q) => q.sessionId === item.sessionId)
+  const existing = state.queue.find((q) => q.workspaceId === item.workspaceId && q.sessionId === item.sessionId)
   const queue = existing
-    ? state.queue.map((q) => (q.sessionId === item.sessionId ? { ...q, ...item, count: q.count + 1 } : q))
+    ? state.queue.map((q) => (q.workspaceId === item.workspaceId && q.sessionId === item.sessionId ? { ...q, ...item, count: q.count + 1 } : q))
     : [...state.queue, { ...item, count: 1 }]
   return { ...state, queue: queue.slice(-100) }
 }

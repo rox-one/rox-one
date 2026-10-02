@@ -534,7 +534,8 @@
             "NATIVE-NOTES-CREATE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
             "L10N-LINEAR-PARSING-20261002",
-            "PROJECTS-GENERATION-20261002"
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
           "summary": "Reviewed shared mention/path parsing and locale catalog changes integrated under one source writer, preserving contracts/outputs. Complete shared entity identity and two-consumer runtime acceptance remain pending."
         },
@@ -555,7 +556,8 @@
             "NATIVE-NOTES-CREATE-20260930",
             "NATIVE-CALLER-INVENTORY-20260930",
             "L10N-LINEAR-PARSING-20261002",
-            "PROJECTS-GENERATION-20261002"
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -590,6 +592,10 @@
         "projectsGeneration": {
           "evidenceRef": "PROJECTS-GENERATION-20261002",
           "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
+        },
+        "focusNotificationScope": {
+          "evidenceRef": "FOCUS-NOTIFICATION-SCOPE-20261002",
           "fullOriginalCriteriaAccepted": false
         }
       }
@@ -8340,7 +8346,7 @@
       "title": "[Sep-focus] Откладывать вопросы и уведомления workers в Focus",
       "area": "focus",
       "kind": "requested",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerFocus",
       "dependsOn": [
         "DATA-01",
@@ -8393,16 +8399,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
+          ],
+          "summary": "Existing deferred notifications use workspace/session identity; disabled notifications do not enqueue private previews. FocusPage projects and clears current-workspace records and dismisses only the selected pair. Worker questions, actor custody, delivery/drain, timer recovery and full Focus criteria remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -8413,7 +8423,11 @@
           "evidenceRefs": [],
           "remaining": "Root-owned integration, commit/push/readback and required product/platform acceptance remain outstanding."
         },
-        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged"
+        "dependencyAcceptance": "NOT_ESTABLISHED_BY_THIS_PACKET; original DAG and contract-freeze gates remain unchanged",
+        "focusNotificationScope": {
+          "evidenceRef": "FOCUS-NOTIFICATION-SCOPE-20261002",
+          "fullOriginalCriteriaAccepted": false
+        }
       }
     },
     {
@@ -10115,7 +10129,8 @@
             "PORTABLE-ELECTRON-BRIDGE-20260930",
             "L10N-LINEAR-PARSING-20261002",
             "NATIVE-PRODUCT-NOTE-20261002",
-            "PROJECTS-GENERATION-20261002"
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
           "summary": "All4876 combined source entries have complete Shared/server/Electron unions, exact local CI, standard build and fresh portable bridge evidence. Original DAG predecessors, private native UI/custody, remote CI and platform integration remain pending."
         },
@@ -10157,7 +10172,8 @@
             "PORTABLE-ELECTRON-BRIDGE-20260930",
             "L10N-LINEAR-PARSING-20261002",
             "NATIVE-PRODUCT-NOTE-20261002",
-            "PROJECTS-GENERATION-20261002"
+            "PROJECTS-GENERATION-20261002",
+            "FOCUS-NOTIFICATION-SCOPE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10200,6 +10216,10 @@
         "projectsGeneration": {
           "evidenceRef": "PROJECTS-GENERATION-20261002",
           "status": "BOUNDED_RENDERER_GENERATION_REPAIR_VERIFIED",
+          "fullOriginalCriteriaAccepted": false
+        },
+        "focusNotificationScope": {
+          "evidenceRef": "FOCUS-NOTIFICATION-SCOPE-20261002",
           "fullOriginalCriteriaAccepted": false
         }
       }
@@ -10361,7 +10381,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-10-02T18:54:22.566Z",
+    "asOf": "2026-10-02T19:18:18.682Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10387,7 +10407,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "dataContractFreeze": "NOT_ACCEPTED",
     "sharedContractFreeze": "NOT_ACCEPTED",
-    "build": "STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4877_SOURCE; NATIVE_PRODUCT_AND_PACKAGING_PENDING",
+    "build": "STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4879_SOURCE; NATIVE_PLATFORM_AND_PACKAGING_PENDING",
     "fullPlatformMatrix": "PENDING",
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
@@ -10405,7 +10425,7 @@
       "committedSourceMatchesTestedManifest": true,
       "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903"
     },
-    "finalFullGateRefresh": "FIVE_COMPLETE_SERIAL_LOCAL_GATES_PASS_ON_FROZEN_4877_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
+    "finalFullGateRefresh": "FIVE_COMPLETE_SERIAL_LOCAL_GATES_PASS_ON_FROZEN_4879_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
       "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
@@ -10442,12 +10462,12 @@
     },
     "facetCounts": {
       "implementation": {
-        "IN_PROGRESS": 30,
-        "NOT_RUN": 79
+        "IN_PROGRESS": 31,
+        "NOT_RUN": 78
       },
       "verification": {
-        "IN_PROGRESS": 28,
-        "NOT_RUN": 81
+        "IN_PROGRESS": 29,
+        "NOT_RUN": 80
       },
       "fullAccepted": 0
     },
@@ -10712,6 +10732,12 @@
       "fullProductDelivery": "PENDING",
       "originalCriteriaAcceptedByPublication": 0,
       "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
+    },
+    "focusNotificationScopeEvidence": "focus-notification-scope-20261002.json",
+    "focusNotificationScopeCandidate": {
+      "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0
     }
   }
 }

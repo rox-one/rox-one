@@ -319,3 +319,14 @@ Current projectsAtom is primitive; Cloud projectCatalogAtom/shared catalog wrapp
 ## Integrated Projects generation gates (2026-10-02)
 
 Root serially transferred one production hook and one behavioral test after independent phased lifecycle and exact old-hook negative controls. `/root/native_boundary` ran five complete serial standard gates on frozen4877 source `1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412`. Current primitive atom, shared contracts, previous Roadmap/SQLite/localization/parser/native modules and retained overlays are preserved. Browser DOM evidence, actual native workspace switching and source publication are separately recorded; no full original criterion is accepted by these gates.
+
+## Focus notification isolation slice (2026-10-02)
+
+Owner: isolated Focus producer; root integrates after independent review. Change only focus-session queue pair matching and useNotifications enabled-check ordering. Verify actual production pure functions and isolated hook closures with real Focus local-storage helpers: two workspaces sharing session id, same-pair count/order, 100-entry retention, disabled active Focus zero writes/native calls, enabled Focus queue, normal notification truncation and focused/headless/no-workspace guards. Preserve exact baseline red evidence, run focused existing Focus tests and strict consumed-type checking. No queue-drain/navigation/actor/timer/native-authority expansion; complete original Focus criteria remain pending.
+
+Expanded consumer lease: FocusPage.tsx joins the two production fixes and two test/fixture paths. Independently mount the actual component in a headless DOM with injected synthetic workspace/source dependencies; prove current-only projection, null-workspace empty, pair-key identity, clicking one same-ID pair preserves foreign rows and navigates existing route, and Clear Queue retains other workspaces. Initial four-path manifest is historical, not integration approval. Keep full Focus DoD pending.
+
+
+## Integrated Focus notification gates (2026-10-02)
+
+Independent review required and accepted the additional FocusPage consumer seam after the initial queue-only candidate. Root transferred three production modules and two test/fixture files. `/root/focus_recon` ran five complete serial local gates on frozen4879 source `4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923`. Scoped hook/storage and actual mounted component negative controls are recorded separately from native product and OS notification evidence. Registry records31/29 partial facets and0 full original acceptance; original contracts and all prior unrelated overlays remain preserved.

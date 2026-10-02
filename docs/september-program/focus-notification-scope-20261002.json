@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "id": "FOCUS-NOTIFICATION-SCOPE-20261002",
+  "observedAt": "2026-10-02T19:18:18.682Z",
+  "publication": {
+    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0
+  },
+  "sourceBinding": {
+    "sourceCount": 4879,
+    "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+    "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+    "excluded": [
+      "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+      "apps/electron/.impeccable/hook.cache.json"
+    ],
+    "beforeAfterIdentical": true,
+    "committedSourceMatchesTestedManifest": false
+  },
+  "sources": [
+    {
+      "path": "apps/electron/src/renderer/lib/focus-session.ts",
+      "sha256": "51755fed0b4e5e20099fc343b4505242b5ed7c0681c00cb866281209ebf1ebf9"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useNotifications.ts",
+      "sha256": "8affc88f11ab0bbc48b094e53e6688d4aab42230f4ea4b0b5cc967d4a8e324d4"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/focus-notification-scope.test.ts",
+      "sha256": "5a5afc8af1aab61831417c6423999e0063db7a520293248176de6aa55a504944"
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/fixtures/focus-notification-runner.ts",
+      "sha256": "cd5ee92c40e76834481faade48645ef08acfe84af669620aefcc34a6c88a7292"
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/extra-screens/focus/FocusPage.tsx",
+      "sha256": "3c1672d9307e985646f40ce99dfaaa19069a9009a958e0be049e4d4aefb10503"
+    }
+  ],
+  "owners": {
+    "producer": "/root/recovery_scout",
+    "independentReviewAndMountedComponent": "/root/native_boundary",
+    "completeSerialGates": "/root/focus_recon",
+    "serialIntegrationAndDelivery": "/root"
+  },
+  "behavior": {
+    "coalescingKey": [
+      "workspaceId",
+      "sessionId"
+    ],
+    "samePairCountAndFirstPositionPreserved": true,
+    "newest100DistinctEntriesRetained": true,
+    "disabledNotificationsReturnBeforeFocusQueueReadOrWrite": true,
+    "otherEnabledFocusedHeadlessNoWorkspaceBehaviorPreserved": true,
+    "page": {
+      "currentWorkspaceProjection": true,
+      "nullWorkspaceEmpty": true,
+      "rowIdentity": "JSON-encoded workspace/session pair",
+      "dismissal": "Only clicked pair",
+      "clear": "Only current workspace; foreign records retained",
+      "navigation": "Existing current-workspace session route; no new cross-workspace route"
+    }
+  },
+  "focusedSuite": {
+    "pass": 11,
+    "fail": 0,
+    "assertions": 40,
+    "files": 2,
+    "exit": 0
+  },
+  "independentHookAndProductionStorage": {
+    "candidatePass": 11,
+    "candidateFail": 0,
+    "oldPass": 6,
+    "oldFail": 5
+  },
+  "mountedComponent": {
+    "candidatePass": 12,
+    "candidateFail": 0,
+    "oldPass": 3,
+    "oldFail": 9,
+    "browserRuntime": "\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36\"",
+    "actualComponents": "ReactDOM + unchanged UI primitives + frozen FocusPage + real Focus/storage helpers",
+    "fixtureDI": "Synthetic workspace/datahooks/inbox/i18n/navigation/summary; actual DOM click handlers and task-only browser localStorage",
+    "session": "rox-focus-dom-20261002 headless; no userprofile/autoconnect",
+    "cleanup": "Owned agent-browser session close success logged in close-final.log; both task-owned HTTP server exec sessions81955 and60589 returned exit0 afterCtrl-C. Browser/server OS PIDs and absent-process readback were not captured, so no PID-level cleanup claim.",
+    "initialCachedOldControl": "Retained old.initial-cached.log; not counted; separate bundleURLs fixed cached source reuse",
+    "actualNativeNotifications": false,
+    "pointerOrKeyboardAcceptance": false,
+    "browserClickMethod": "Actual DOM button.click handlers in mounted component fixture",
+    "osPidAbsenceClaimed": false
+  },
+  "failureHistory": [
+    "Exact original production red tests and initial fixture path failure retained.",
+    "Partial pair fix changed lookup before update; tests rejected it; final source fixes both.",
+    "Extra outside-checkout Bun alias baseline probe hung and its owned child was terminated; not a product failure or counted negative control.",
+    "Initial browser old control reused cached bundle and is retained but not counted; separate bundle URLs produced actual old component3/9 vs candidate12/0.",
+    "Initial two-production candidate was rejected for missing FocusPage consumer correction; expanded exact page bytes resolve that finding.",
+    "Independent receipt self-reference hashes corrected; prior receipt retained, all26 remaining artifacts rehashed. Cleanup limited to session/server exit receipts; OS PID absence was not captured."
+  ],
+  "currentValidation": {
+    "gates": [
+      {
+        "name": "shared",
+        "command": [
+          "bun",
+          "test",
+          "./packages/shared"
+        ],
+        "exitCode": 0,
+        "seconds": 88.171,
+        "tests": {
+          "pass": 4951,
+          "skip": 12,
+          "fail": 0,
+          "assertions": 21752,
+          "files": 478
+        },
+        "logSha256": "a0a1651409e7f56ec0a119e6c484d96c915dc61f5d1032b3fe92b8d0008eb7c2"
+      },
+      {
+        "name": "server",
+        "command": [
+          "bun",
+          "test",
+          "./packages/server-core"
+        ],
+        "exitCode": 0,
+        "seconds": 24.846,
+        "tests": {
+          "pass": 1511,
+          "skip": 8,
+          "fail": 0,
+          "assertions": 6155,
+          "files": 240
+        },
+        "logSha256": "d7e6d00fa6d7598351af4f17029e5a37aeb7401bb1afa1d5a87f712ddbb16e40"
+      },
+      {
+        "name": "electron-ui-core",
+        "command": [
+          "bun",
+          "test",
+          "./apps/electron/src",
+          "./packages/ui",
+          "./packages/core"
+        ],
+        "exitCode": 0,
+        "seconds": 27.018,
+        "tests": {
+          "pass": 4222,
+          "skip": 0,
+          "fail": 0,
+          "assertions": 20087,
+          "files": 612
+        },
+        "logSha256": "cba62eaf458c2b6b68fa5634fe8d319bde70d126c4ea981751b8e4c3c0dec143"
+      },
+      {
+        "name": "validate",
+        "command": [
+          "bun",
+          "run",
+          "validate:ci"
+        ],
+        "exitCode": 0,
+        "seconds": 92.243,
+        "tests": {
+          "pass": 242,
+          "skip": 0,
+          "fail": 0,
+          "assertions": 687,
+          "files": 17,
+          "scope": "AGGREGATED_SELECTED_BUN_INVOCATIONS_WITHIN_VALIDATE; filesCountedAcrossInvocations"
+        },
+        "logSha256": "3c8f7ce6d0b3b6bdf3b0d3984633b8c32df2313567a08f0ddd208251710b3f5d"
+      },
+      {
+        "name": "build",
+        "command": [
+          "bun",
+          "run",
+          "electron:build"
+        ],
+        "exitCode": 0,
+        "seconds": 55.258,
+        "tests": null,
+        "logSha256": "75dbd7e25390b410a5b2fb8cd6b0f5a5f7f7e9a2719498cb2863785d3504b742"
+      }
+    ],
+    "sourceBeforeAfterIdentical": true
+  },
+  "historicalEvidence": {
+    "nativeNoteAndBridgeSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "projectsGenerationSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "priorRuntimeProofRerunByThisWave": false
+  },
+  "artifacts": [
+    {
+      "id": "focus-notification-scope-20261002/frozen-manifest.json",
+      "sha256": "7436047ab7a42cbdd065cfe7810d23ce6ecece5368fd1180d2095bb00d59994f",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "focus-notification-scope-20261002/report.md",
+      "sha256": "86e76527a7ab5a29e4f0bdb1f7fcf1bb73f20f1308a21c40f7679d89b771a430",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "focus-notification-scope-20261002/independent-review.json",
+      "sha256": "891428cd736220d9c6d0eed009ff291b03ec9183fce892e04df43fd86b7dcd84",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "focus-notification-scope-20261002/independent-review.md",
+      "sha256": "e57d1b10c3f8a8d30f845c5f8972a3e5d53cba97638e16673687fde71dc8621e",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "focus-notification-scope-20261002/root-transfer.json",
+      "sha256": "ce61f52fc1d605733a3d6ab09ab7b35ebcdf4dad3ab1fc5457ec835bf9eb70fb",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "focus-notification-scope-20261002/joint-gates/gates.json",
+      "sha256": "65043fa90bfbd12eaa2fb83f345fee94d147f49e9a817eb51e005328ea321687",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "focus-notification-scope-20261002/independent-dom/candidate-final.log",
+      "sha256": "edacc3b18dbbb4e9db6dd49db6e76017a48783fe0dfd35f04e0cfac3529688c6",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    },
+    {
+      "id": "focus-notification-scope-20261002/independent-dom/old-final.log",
+      "sha256": "9ae7cae175e3f0641e06f87ff1728cb81a42a6069fd0503b856c484424dada6c",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized projection only in public packet"
+    }
+  ],
+  "limits": [
+    "This patch repairs existing renderer queue identity, notification-setting ordering and current-workspace component actions. It does not establish authenticated actor custody or workspace authorization.",
+    "Mounted ReactDOM uses actual FocusPage, UI and Focus/storage functions with synthetic workspace/data/inbox/i18n/navigation/summary adapters and task-only browser storage. Native OS notification, Electron pointer/keyboard and full product acceptance are pending.",
+    "Worker question/answer lifecycle, waiting_focus, automatic expiry/drain/delivery acknowledgment, persisted timer/queue crash recovery, cancellation and critical exceptions remain unaccepted.",
+    "Global localStorage timer/history and existing read-modify-write persistence remain unchanged; no durable multi-user queue, second store or speculative question API was introduced.",
+    "Prior native Notes and Projects runtime evidence retain original source revisions; no rerun or acceptance expansion is claimed.",
+    "Required remote CI, hosted-alert review, real providers/recipients and complete macOS/Windows/Linux/cloud/Conation iOS release matrix remain pending.",
+    "All109 original tasks,489 requirements,464 dependencies and297 backlog rows remain intact; zero complete original tasks accepted."
+  ],
+  "fullOriginalTasksAccepted": 0
+}
