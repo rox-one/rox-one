@@ -1,12 +1,12 @@
 {
   "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-  "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
-  "gitTree": "281096e2c5158ea8dee9f070c01b32d66380e380",
+  "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+  "gitTree": "f3bb01279326fa7be61b510d6a06ae0a2960e00a",
   "branch": "feat/september-program-20260930",
   "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
   "isDraft": true,
-  "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
-  "observedAt": "2026-10-02T18:54:22.566Z",
+  "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+  "observedAt": "2026-10-02T19:20:31.005Z",
   "originalCandidateSourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
   "originalNamedSourcesExactMatchCount": 75,
   "namedSourceCount": 76,
@@ -334,7 +334,7 @@
         "./packages/shared"
       ],
       "exitCode": 0,
-      "seconds": 90.636,
+      "seconds": 88.171,
       "tests": {
         "pass": 4951,
         "skip": 12,
@@ -342,7 +342,7 @@
         "assertions": 21752,
         "files": 478
       },
-      "logSha256": "d54bcb66a36993c797c5f5a8fcbbcd06813511bde57db742201625e77e8f7648"
+      "logSha256": "a0a1651409e7f56ec0a119e6c484d96c915dc61f5d1032b3fe92b8d0008eb7c2"
     },
     {
       "name": "server",
@@ -352,7 +352,7 @@
         "./packages/server-core"
       ],
       "exitCode": 0,
-      "seconds": 24.626,
+      "seconds": 24.846,
       "tests": {
         "pass": 1511,
         "skip": 8,
@@ -360,7 +360,7 @@
         "assertions": 6155,
         "files": 240
       },
-      "logSha256": "7f91f30d012a9b649e7ab98e963f8c42e7beddb8dd931167190e67d06fcb0809"
+      "logSha256": "d7e6d00fa6d7598351af4f17029e5a37aeb7401bb1afa1d5a87f712ddbb16e40"
     },
     {
       "name": "electron-ui-core",
@@ -372,15 +372,15 @@
         "./packages/core"
       ],
       "exitCode": 0,
-      "seconds": 24.311,
+      "seconds": 27.018,
       "tests": {
-        "pass": 4219,
+        "pass": 4222,
         "skip": 0,
         "fail": 0,
-        "assertions": 20079,
-        "files": 611
+        "assertions": 20087,
+        "files": 612
       },
-      "logSha256": "0da0bd27f2ce5648d1314d3dbce91f2bb57700398911d7a5403886f5362af8fc"
+      "logSha256": "cba62eaf458c2b6b68fa5634fe8d319bde70d126c4ea981751b8e4c3c0dec143"
     },
     {
       "name": "validate",
@@ -390,9 +390,16 @@
         "validate:ci"
       ],
       "exitCode": 0,
-      "seconds": 91.666,
-      "tests": null,
-      "logSha256": "5370f42747dc3681abbd6432612438b90dbedb80af5bb516f85d4af35b44b877"
+      "seconds": 92.243,
+      "tests": {
+        "pass": 242,
+        "skip": 0,
+        "fail": 0,
+        "assertions": 687,
+        "files": 17,
+        "scope": "AGGREGATED_SELECTED_BUN_INVOCATIONS_WITHIN_VALIDATE; filesCountedAcrossInvocations"
+      },
+      "logSha256": "3c8f7ce6d0b3b6bdf3b0d3984633b8c32df2313567a08f0ddd208251710b3f5d"
     },
     {
       "name": "build",
@@ -402,12 +409,12 @@
         "electron:build"
       ],
       "exitCode": 0,
-      "seconds": 44.333,
+      "seconds": 55.258,
       "tests": null,
-      "logSha256": "8c75da96549c85bd0f7d5a6017b04941a8445ad35f6c7516c699bc1d91ebe52d"
+      "logSha256": "75dbd7e25390b410a5b2fb8cd6b0f5a5f7f7e9a2719498cb2863785d3504b742"
     }
   ],
-  "validationLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending.",
+  "validationLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending.",
   "fullProductDelivery": "PENDING",
   "mergeAcceptance": "PENDING",
   "originalCriteriaAcceptedByPublication": 0,
@@ -680,7 +687,7 @@
       "executedSteps": 0
     }
   },
-  "latestPublishedSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+  "latestPublishedSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
   "nativeProductEvidencePublication": {
     "status": "EVIDENCE_PUBLISHED_FOR_REVIEW",
     "evidenceRevision": "050230079351d81d2fe6a3d51f3ba0214934826c",
@@ -719,8 +726,21 @@
     "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
   },
   "focusNotificationScopePublication": {
-    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "revision": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "pullRequestHeadReadback": "d917e429615e1b8053156a60fa3051b96fdb9284",
+    "observedAt": "2026-10-02T19:20:31.005Z",
+    "sourceCount": 4879,
+    "sourceManifestSha256": "4370b0ce7124f1f46acbf967cdf3d6e066458b47dbfba331157f289aff10d923",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "d917e429615e1b8053156a60fa3051b96fdb9284",
     "fullProductDelivery": "PENDING",
-    "originalCriteriaAcceptedByPublication": 0
+    "originalCriteriaAcceptedByPublication": 0,
+    "bindingLimit": "All4879 committed source blobs match the source used by five complete serial local gates. Bounded Focus hook/storage and mounted ReactDOM component proof use fixture dependencies and do not accept native OS notification, actor, worker question, delivery/drain, timer/recovery or full original Focus criteria. Historical native Notes/bridge remains db841; Projects browser proof remains1c. Required remote CI, hosted-alert review, providers and complete platform/product acceptance remain pending."
   }
 }
