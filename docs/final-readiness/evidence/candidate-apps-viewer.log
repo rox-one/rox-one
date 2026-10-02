@@ -1,0 +1,3 @@
+../../packages/core/src/rox2/platform-contract.ts(698,16): error TS2550: Property 'hasOwn' does not exist on type 'ObjectConstructor'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+../../packages/core/src/rox2/platform-contract.ts(700,16): error TS2550: Property 'hasOwn' does not exist on type 'ObjectConstructor'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+$ tsc --noEmit && tsc --noEmit -p tsconfig.functions.json

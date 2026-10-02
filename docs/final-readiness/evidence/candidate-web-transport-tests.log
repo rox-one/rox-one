@@ -1,0 +1,50 @@
+bun test v1.4.2 (43848b5a7)
+
+packages/server-core/src/bootstrap/lock-identity.test.ts:
+(pass) parseTasklistImageName > extracts the image name from a CSV data row [0.12ms]
+(pass) parseTasklistImageName > returns null for the no-tasks INFO message [0.02ms]
+(pass) parseTasklistImageName > returns null for empty or malformed output [0.02ms]
+(pass) parseTasklistImageName > uses only the first row of multi-line output [0.06ms]
+(pass) lockHolderMatchesLock (#978) > matches on identical execName [0.13ms]
+(pass) lockHolderMatchesLock (#978) > matches execName case-insensitively [0.04ms]
+(pass) lockHolderMatchesLock (#978) > matches dev shapes the legacy heuristic missed (bun holding the lock)
+(pass) lockHolderMatchesLock (#978) > rejects a different executable even when its name contains "craft"
+(pass) lockHolderMatchesLock (#978) > fails open when the live exec name cannot be determined
+(pass) lockHolderMatchesLock (#978) > ignores the command line when execName is recorded
+(pass) lockHolderMatchesLock (#978) > legacy locks without execName > falls back to the craft-substring heuristic on the command line [0.02ms]
+(pass) lockHolderMatchesLock (#978) > legacy locks without execName > fails open when the command line cannot be read
+
+packages/server-core/src/bootstrap/__tests__/token-hygiene.test.ts:
+(pass) secureTokenCompare (RX-SEC-0007) > accepts the exact token [0.15ms]
+(pass) secureTokenCompare (RX-SEC-0007) > rejects a wrong token [0.03ms]
+(pass) secureTokenCompare (RX-SEC-0007) > rejects empty and mismatched lengths without throwing [0.02ms]
+(pass) maskTokenForDisplay (RX-SEC-0003) > never returns the full secret [0.04ms]
+(pass) maskTokenForDisplay (RX-SEC-0003) > keeps a short prefix/suffix hint for long tokens [0.02ms]
+(pass) maskTokenForDisplay (RX-SEC-0003) > fully masks short tokens instead of leaking them
+
+packages/server-core/src/bootstrap/__tests__/token-entropy.test.ts:
+(pass) generateServerToken > produces a 48-character hex string [0.20ms]
+(pass) generateServerToken > generates unique tokens [3.46ms]
+(pass) generateServerToken > has high character diversity [0.07ms]
+
+packages/server-core/src/webui/__tests__/oauth-callback.test.ts:
+(pass) WebUI /api/oauth/callback > completes OAuth when the relay forwards the inner flow state [17.10ms]
+(pass) WebUI /api/oauth/callback > renders an OAuth failure page when the relay forwards provider errors [1.39ms]
+
+packages/server-core/src/webui/__tests__/http-server.test.ts:
+(pass) startWebuiHttpServer > allows plain-http login even when the RPC transport is wss [493.82ms]
+(pass) startWebuiHttpServer > rejects invalid credentials [326.79ms]
+(pass) startWebuiHttpServer > honors an explicit secure-cookie override [338.46ms]
+(pass) startWebuiHttpServer > infers secure cookies from proxy https headers when no override is set [260.83ms]
+(pass) startWebuiHttpServer > derives a browser-facing websocket URL from forwarded public host headers [431.37ms]
+(pass) startWebuiHttpServer > returns an explicit public websocket URL override from /api/config [275.81ms]
+(pass) WebUI login rate-limit IP keying > rate-limits each resolved client IP independently [996.48ms]
+(pass) WebUI login rate-limit IP keying > ignores spoofed X-Forwarded-For when the socket is not a trusted proxy [846.25ms]
+(pass) WebUI login rate-limit IP keying > uses X-Forwarded-For only when the socket IP is a trusted proxy [1492.14ms]
+(pass) resolveWebuiFile > keeps assets inside the webui dir and rejects traversal [4.96ms]
+(pass) WebUI static path containment > does not serve files outside webuiDir via unauthenticated login-assets [2.50ms]
+
+ 34 pass
+ 0 fail
+ 82 expect() calls
+Ran 34 tests across 5 files. [6.48s]
