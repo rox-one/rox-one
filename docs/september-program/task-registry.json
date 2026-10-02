@@ -3612,7 +3612,8 @@
           "status": "IN_PROGRESS",
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
-            "PORTABLE-ELECTRON-BRIDGE-20260930"
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
           "summary": "Reusable actual Electron bridge harness implemented and independently run through production preload/IPC/WS/SQLite with synthetic task adapters. Full product UI E3, OS custody and platform gates remain pending."
         },
@@ -3621,7 +3622,8 @@
           "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
-            "PORTABLE-ELECTRON-BRIDGE-20260930"
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -3654,6 +3656,14 @@
           "originalCriteriaAcceptedByPublication": 0,
           "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
           "fullTaskAccepted": false
+        },
+        "nativeProductObservation": {
+          "evidenceRef": "NATIVE-PRODUCT-NOTE-20261002",
+          "status": "BOUNDED_NATIVE_NOTE_CREATE_EDIT_RELOAD_NORMAL_RESTART_AND_ACK_METADATA_VERIFIED",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+          "fullOriginalCriteriaAccepted": false,
+          "taskToNoteAccepted": false
         }
       }
     },
@@ -4364,7 +4374,8 @@
             "NATIVE-TRANSPORT-BOOTSTRAP-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "PORTABLE-ELECTRON-BRIDGE-20260930"
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
           "summary": "Existing native create/edit mechanism retained; portable actual Electron bridge adds exact observed ACK, pending restart/replay, forged-receipt and revoked/foreign-window runtime controls. Full Notes conversion/views, private OS custody and native UI acceptance remain pending."
         },
@@ -4379,7 +4390,8 @@
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "PORTABLE-ELECTRON-BRIDGE-20260930"
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -4412,6 +4424,14 @@
           "originalCriteriaAcceptedByPublication": 0,
           "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head.",
           "fullTaskAccepted": false
+        },
+        "nativeProductObservation": {
+          "evidenceRef": "NATIVE-PRODUCT-NOTE-20261002",
+          "status": "BOUNDED_NATIVE_NOTE_CREATE_EDIT_RELOAD_NORMAL_RESTART_AND_ACK_METADATA_VERIFIED",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+          "fullOriginalCriteriaAccepted": false,
+          "taskToNoteAccepted": false
         }
       }
     },
@@ -10079,7 +10099,8 @@
             "LOCAL-MEETING-BLOB-MEDIA-20260930",
             "ROADMAP-SQLITE-JOINT-20260930",
             "PORTABLE-ELECTRON-BRIDGE-20260930",
-            "L10N-LINEAR-PARSING-20261002"
+            "L10N-LINEAR-PARSING-20261002",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
           "summary": "All4876 combined source entries have complete Shared/server/Electron unions, exact local CI, standard build and fresh portable bridge evidence. Original DAG predecessors, private native UI/custody, remote CI and platform integration remain pending."
         },
@@ -10119,7 +10140,8 @@
             "LOCAL-MEETING-BLOB-MEDIA-20260930",
             "ROADMAP-SQLITE-JOINT-20260930",
             "PORTABLE-ELECTRON-BRIDGE-20260930",
-            "L10N-LINEAR-PARSING-20261002"
+            "L10N-LINEAR-PARSING-20261002",
+            "NATIVE-PRODUCT-NOTE-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10150,6 +10172,14 @@
           "originalCriteriaAcceptedByPublication": 0,
           "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
           "fullTaskAccepted": false
+        },
+        "nativeProductObservation": {
+          "evidenceRef": "NATIVE-PRODUCT-NOTE-20261002",
+          "status": "BOUNDED_NATIVE_NOTE_CREATE_EDIT_RELOAD_NORMAL_RESTART_AND_ACK_METADATA_VERIFIED",
+          "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+          "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+          "fullOriginalCriteriaAccepted": false,
+          "taskToNoteAccepted": false
         }
       }
     },
@@ -10310,7 +10340,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-10-02T16:59:30.702Z",
+    "asOf": "2026-10-02T18:22:29.665Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10622,6 +10652,13 @@
       "sourceCount": 4846,
       "committedSourceMatchesTestedManifest": true,
       "bindingLimit": "Runtime shared/server unions and independent reviews bind to this source revision. Electron full union/main/preload remain at 47f4e336 with identical Electron source. The subsequent renderer candidate is excluded. Documentation-only commits have a different head."
+    },
+    "nativeProductEvidence": "native-product-acceptance-20261002.json",
+    "nativeProductCandidate": {
+      "status": "REVIEWED_OBSERVED_EVIDENCE_PENDING_PUBLICATION",
+      "newProductionSources": 0,
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0
     }
   }
 }

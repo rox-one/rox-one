@@ -680,5 +680,11 @@
       "executedSteps": 0
     }
   },
-  "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
+  "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+  "nativeProductEvidencePublication": {
+    "status": "REVIEWED_OBSERVED_EVIDENCE_PENDING_PUBLICATION",
+    "newProductionSources": 0,
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0
+  }
 }
