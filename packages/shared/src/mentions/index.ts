@@ -80,6 +80,33 @@ export interface ParsedMentions {
 // Parsing Functions
 // ============================================================================
 
+/** Leftmost nonempty path tokens; an unmatched suffix cannot contain a complete token. */
+function* pathMentionTokens(text: string, kind: 'file' | 'folder'): Generator<{ start: number; end: number; path: string }> {
+  const prefix = `[${kind}:`
+  let cursor = 0
+  while (cursor < text.length) {
+    const start = text.indexOf(prefix, cursor)
+    if (start < 0) return
+    const valueStart = start + prefix.length
+    const close = text.indexOf(']', valueStart)
+    if (close < 0) return
+    cursor = close + 1
+    if (close > valueStart) yield { start, end: cursor, path: text.slice(valueStart, close) }
+  }
+}
+
+/** Preserve the historical nonempty, first-closing-bracket path grammar without suffix rescans. */
+export function replacePathMentions(text: string, kind: 'file' | 'folder', replace: (path: string) => string): string {
+  const parts: string[] = []
+  let cursor = 0
+  for (const token of pathMentionTokens(text, kind)) {
+    parts.push(text.slice(cursor, token.start), replace(token.path))
+    cursor = token.end
+  }
+  parts.push(text.slice(cursor))
+  return parts.join('')
+}
+
 /**
  * Parse all mentions from message text
  *
@@ -134,20 +161,20 @@ export function parseMentions(
   }
 
   // Match file mentions: [file:path] (path can contain any chars except ])
-  const filePattern = /\[file:([^\]]+)\]/g
-  while ((match = filePattern.exec(text)) !== null) {
-    const filePath = match[1]!
-    if (!result.files.includes(filePath)) {
-      result.files.push(filePath)
+  const files = new Set<string>()
+  for (const token of pathMentionTokens(text, 'file')) {
+    if (!files.has(token.path)) {
+      files.add(token.path)
+      result.files.push(token.path)
     }
   }
 
   // Match folder mentions: [folder:path]
-  const folderPattern = /\[folder:([^\]]+)\]/g
-  while ((match = folderPattern.exec(text)) !== null) {
-    const folderPath = match[1]!
-    if (!result.folders.includes(folderPath)) {
-      result.folders.push(folderPath)
+  const folders = new Set<string>()
+  for (const token of pathMentionTokens(text, 'folder')) {
+    if (!folders.has(token.path)) {
+      folders.add(token.path)
+      result.folders.push(token.path)
     }
   }
 
@@ -254,19 +281,18 @@ export function resolveKnowledgeMentions(text: string): string {
  * Leaves other mention types ([skill:...], [source:...]) untouched.
  */
 export function resolveFileMentions(text: string, workingDirectory: string): string {
-  return text
-    .replace(/\[file:([^\]]+)\]/g, (_match, filePath: string) => {
-      const resolved = filePath.startsWith('/') || filePath.startsWith('~')
-        ? filePath
-        : joinPath(workingDirectory, filePath)
-      const name = filePath.split('/').pop() || filePath
-      return `[Mentioned file: ${name} (at ${resolved})]`
-    })
-    .replace(/\[folder:([^\]]+)\]/g, (_match, folderPath: string) => {
-      const resolved = folderPath.startsWith('/') || folderPath.startsWith('~')
-        ? folderPath
-        : joinPath(workingDirectory, folderPath)
-      const name = folderPath.split('/').pop() || folderPath
-      return `[Mentioned folder: ${name} (at ${resolved})]`
-    })
+  const filesResolved = replacePathMentions(text, 'file', (filePath) => {
+    const resolved = filePath.startsWith('/') || filePath.startsWith('~')
+      ? filePath
+      : joinPath(workingDirectory, filePath)
+    const name = filePath.split('/').pop() || filePath
+    return `[Mentioned file: ${name} (at ${resolved})]`
+  })
+  return replacePathMentions(filesResolved, 'folder', (folderPath) => {
+    const resolved = folderPath.startsWith('/') || folderPath.startsWith('~')
+      ? folderPath
+      : joinPath(workingDirectory, folderPath)
+    const name = folderPath.split('/').pop() || folderPath
+    return `[Mentioned folder: ${name} (at ${resolved})]`
+  })
 }

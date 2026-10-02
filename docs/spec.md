@@ -216,6 +216,14 @@ Both native ESM and the production esbuild CommonJS format must load and execute
 
 The Node CommonJS execution regression is mandatory. The separate Electron regression executes when its installed binary is available and skips explicitly when a frozen-lock headless installation has the Electron package but deliberately omits its binary download. A present runtime's load/execution error fails. The controlled missing-binary fixture copies only public loader/package metadata into its own temporary directory; it changes no installed binary or global environment. An entirely missing declared dependency is outside that fixture's acceptance.
 
+## Roadmap locale completion boundary (2026-09-30)
+
+Replace only the 158 newly introduced Roadmap values in each of Arabic, German, Spanish, French, Hungarian, Japanese, Korean, Polish, Simplified Chinese and Traditional Chinese. Preserve every existing key/value outside that feature and the English/Russian catalogs. Keep exact interpolation multisets, file names, URL prefix, keyboard shortcuts and the 50 MB limit. Consent must still mean transmission on click only; requested, actual and unknown model provenance remain distinct in every language. Preserve all original task/requirement criteria.
+
+Locale-specific zero/two forms are allowed by the existing plural-family contract when English defines one/other. Arabic requires four additional variants for the day and pending-review families: the 158-key fragment alone falls back to English at count0/2 in the actual engine. Preserve that failed observation and exercise the corrected production resources at0/1/2/3/11/1.5. These four derived variants do not add a new domain field or change the English schema. Independently reviewed terminology corrections distinguish Chinese qualitative/quantitative labels and Hungarian page sections from roadmap stages.
+
+Acceptance distinguishes mechanical schema/parity/coverage, independent model language judgment, actual production i18next resource/plural resolution and React rendering from native-speaker review, mounted layout, Arabic RTL/bidi, keyboard accessibility, persistence and the full L10N-01/Golden Gate platform criteria. No complete locale task is accepted by the isolated translation packet.
+
 Resource acceptance uses real constructor faults and throwing operations with the exact adapter on Bun, Node and Electron. Preserve both the original CommonJS import failure and earlier Bun descriptor growth evidence. A plateau while a second fixture connection remains open is distinct from immediate cleanup after that connection closes. No production garbage collection, real-provider receipt, application UI, power-loss or platform acceptance follows from this compatibility fixture.
 
 ## Portable native Electron bridge harness (2026-09-30)
@@ -223,3 +231,9 @@ Resource acceptance uses real constructor faults and throwing operations with th
 Provide a reusable developer probe from the independently accepted revision-2 bridge fixture without embedding host paths, precompiled private bundles, keys or receipt logs. Resolve the checkout and installed Electron dynamically; compile service dependencies from that checkout, load the standard built production preload and bind its checksum plus production source hashes. Preserve actual IPC/window proof/authenticated WS/authority/journal/encrypted queue, exact observed ACK, complete unobserved receipt denial, revocation, foreign-window denial and normal child restart controls.
 
 Only runner-generated synthetic profiles and credentials are permitted. Whitelist child environment and supported ROX/CRAFT configuration directories; never repurpose HOME or use host credential custody. Match production BrowserWindow isolation preferences and keep windows hidden/muted. Record actual main PIDs/exits/cleanup and retain readiness failures. This establishes bounded bridge composition, not full product main/OS custody/UI E3/provider/platform acceptance; no implicit CJS/source SQLite adapter transplant or global dependency installation.
+
+## Bounded linear delimiter parsing (2026-09-30)
+
+The stable team-handle trailing-dot cleanup, bracket file/folder token parsing/resolution and title XML/edit-request stripping must not repeatedly rescan unmatched suffixes. Use forward delimiter scans or backward trailing-dot trim; retain complete input/output, Unicode, encounter order, nonempty path/tag grammar, first closing delimiter, legacy non-nesting behavior and existing sequential replacement order. Do not introduce truncation, new token grammar, identity/storage or authorization changes.
+
+Acceptance is actual existing/adversarial behavior, seeded differential comparison against exact baseline functions and separate bounded timing observations. This narrow repair does not attest linearity of every mention family or eliminate all CodeQL alerts. Timing observations are not brittle unit thresholds or a security-clean claim.

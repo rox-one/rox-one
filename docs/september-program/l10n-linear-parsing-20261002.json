@@ -1,0 +1,381 @@
+{
+  "schemaVersion": 1,
+  "id": "L10N-LINEAR-PARSING-20261002",
+  "observedAt": "2026-10-02T16:55:35.905Z",
+  "publication": {
+    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "fullProductDelivery": "PENDING",
+    "originalCriteriaAcceptedByPublication": 0
+  },
+  "sourceBinding": {
+    "sourceCount": 4876,
+    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "scope": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
+    "excluded": [
+      "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
+      "apps/electron/.impeccable/hook.cache.json"
+    ],
+    "beforeAfterIdentical": true,
+    "committedSourceMatchesTestedManifest": false
+  },
+  "sources": [
+    {
+      "path": "packages/shared/src/i18n/locales/ar.json",
+      "sha256": "ecfb97c2845d7ba266c840f5ec2be0ba6755e3753c1b327e80a1a5cd64e1ebc8"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "sha256": "d8591cf7041b647c35449586c02d46cec7854b3d59c1f421c885eeeef17f81f1"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "sha256": "764697afe0e2cffc7ed60a00d3df63517a7c09fe6ccb423ba60130d30d591185"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/fr.json",
+      "sha256": "79000f8207d4dcde2c4251ff7567fe145a9b4ca8b575b5ef46dd929290d30201"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "sha256": "3e377460f8a79f55e67f34d7935e77bf498bc8062eec25b57e7461ef526736b3"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "sha256": "16012cdec375a6943f1fc999f3a26b75954f58e78958d7b71efe14bb6aa263e2"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ko.json",
+      "sha256": "e9fd9d62ba11f0f1c82da03b94257e9f9137b5932fd6861ad2610882d3591880"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "sha256": "66d39b8b128df9457b79377b7f0f4a3737497e60e0fd8438f1d5d6f28f073c2b"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "sha256": "4b94c2f446f42cbb06e1726c3783543979ce98863e6d0460a225bf7145ef7e1d"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hant.json",
+      "sha256": "9523b1244625ccb40e80985485042adc254c85dc2d1afc963849cbee2a7c4ee5"
+    },
+    {
+      "path": "packages/shared/src/team/mentions.ts",
+      "sha256": "b5a0ec80007b597790a77d97e80cc09db4695c9045c305f945aece4e3335d8e0"
+    },
+    {
+      "path": "packages/shared/src/mentions/index.ts",
+      "sha256": "d1bb62a2bc322c9962241e05027cb5dd82eb1acf57a11befa84b93270562a93c"
+    },
+    {
+      "path": "packages/server-core/src/domain/title-sanitizer.ts",
+      "sha256": "d7c9a0ca01dc1c6f4ea054811313128b5de53cc05e5d6e257635af9c3dfdc61a"
+    },
+    {
+      "path": "packages/shared/src/team/__tests__/mentions-linear.test.ts",
+      "sha256": "0fce76d9af815fb241b1af2ff126f31a8b9b71508c4430c3c3f200f391475b02"
+    },
+    {
+      "path": "packages/shared/src/mentions/__tests__/path-mentions-linear.test.ts",
+      "sha256": "a84d3dfe970e248540dba25fd29e91efd6a4188ba68468b6b093ede1f3598652"
+    },
+    {
+      "path": "packages/server-core/src/domain/title-sanitizer-linear.test.ts",
+      "sha256": "9b1dcf21e44f4f7f2756b3efd35a57876b94bad5e1de2c004b7c771dcd57865f"
+    }
+  ],
+  "owners": {
+    "localeFragmentProducers": [
+      "/root/native_boundary",
+      "/root/recovery_scout",
+      "/root/september_gates"
+    ],
+    "localeIndependentCrossReviews": [
+      "/root/native_boundary",
+      "/root/recovery_scout"
+    ],
+    "parserProducer": "/root/native_boundary",
+    "parserIndependentReview": "/root/recovery_scout",
+    "combinedGateRuntime": "/root/recovery_scout",
+    "serialSourceWriterAndDelivery": "/root"
+  },
+  "localization": {
+    "localeCodes": [
+      "ar",
+      "de",
+      "es",
+      "fr",
+      "hu",
+      "ja",
+      "ko",
+      "pl",
+      "zh-Hans",
+      "zh-Hant"
+    ],
+    "originalEnglishRoadmapKeys": 158,
+    "translatedOriginalValues": 1580,
+    "additionalArabicZeroAndDualKeys": 4,
+    "unrelatedValuesPreserved": true,
+    "englishAndRussianChanged": false,
+    "runtimeChecks": {
+      "exactSelectedLocaleResources": 1580,
+      "exactPluralResolution": 120,
+      "actualRoadmapModelResultReactSSR": 70
+    },
+    "focusedTests": {
+      "pass": 280,
+      "fail": 0,
+      "assertions": 6013,
+      "files": 88
+    },
+    "description": "All ten selected production catalogs resolve Roadmap resources with exact placeholders. Four Arabic zero/dual variants prevent observed English fallbacks for existing plural families. Actual component rendering distinguishes requested/effective/unknown model provenance and escapes model/warning content."
+  },
+  "parsing": {
+    "productionModules": 3,
+    "newBehavioralTests": 3,
+    "focusedTests": {
+      "pass": 142,
+      "fail": 0,
+      "assertions": 269,
+      "files": 8
+    },
+    "strictTypecheckExit": 0,
+    "actualBaselineComparisons": 18048,
+    "freshUnicodeAndMalformedCases": 12,
+    "description": "Backward trailing-dot cleanup and forward first-closing-delimiter scans preserve historical Unicode, nonempty token grammar, encounter order, file-before-folder replacement and non-nesting edit-request stripping. Actual old/new functions are compared, with separate observed scaling measurements and no length cap or timing assertion."
+  },
+  "currentValidation": {
+    "gates": [
+      {
+        "name": "shared",
+        "command": [
+          "bun",
+          "test",
+          "./packages/shared"
+        ],
+        "exitCode": 0,
+        "seconds": 86.462,
+        "tests": {
+          "pass": 4951,
+          "skip": 12,
+          "fail": 0,
+          "assertions": 21752,
+          "files": 478
+        },
+        "logSha256": "8f4c5df4dc80a3372dd1d6fb7197bc3d89c81a6977fd53ec32e45152ba31a419"
+      },
+      {
+        "name": "server",
+        "command": [
+          "bun",
+          "test",
+          "./packages/server-core"
+        ],
+        "exitCode": 0,
+        "seconds": 24.358,
+        "tests": {
+          "pass": 1511,
+          "skip": 8,
+          "fail": 0,
+          "assertions": 6155,
+          "files": 240
+        },
+        "logSha256": "a7e69f1d9ace8c3aec37e5d1a9c9a1e47a01af1368cbe12cea0cc33fb1bb5670"
+      },
+      {
+        "name": "electron-ui-core",
+        "command": [
+          "bun",
+          "test",
+          "./apps/electron/src",
+          "./packages/ui",
+          "./packages/core"
+        ],
+        "exitCode": 0,
+        "seconds": 24.716,
+        "tests": {
+          "pass": 4205,
+          "skip": 0,
+          "fail": 0,
+          "assertions": 20047,
+          "files": 610
+        },
+        "logSha256": "988aab3c5123aae510798cd1b612e70b4558f8532abee170f9997f110eb7d4e6"
+      },
+      {
+        "name": "validate",
+        "command": [
+          "bun",
+          "run",
+          "validate:ci"
+        ],
+        "exitCode": 0,
+        "seconds": 89.118,
+        "tests": null,
+        "logSha256": "55b649cbe97d5c0944c865fec6ca6644a2d71af9da857bd7a699e3a62df534a1"
+      },
+      {
+        "name": "build",
+        "command": [
+          "bun",
+          "run",
+          "electron:build"
+        ],
+        "exitCode": 0,
+        "seconds": 49.849,
+        "tests": null,
+        "logSha256": "5271003228e0ae60c3c3ede77d2cacc49cc4125a93f7978e1b9629b5c1038173"
+      }
+    ],
+    "sourceBeforeAfterIdentical": true,
+    "bridgeRuns": [
+      {
+        "entryRuntime": "bun",
+        "actualChildRuntime": "Electron39.2.7/embeddedNode22.21.1",
+        "stages": [
+          {
+            "phase": "single",
+            "pid": 79084,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "prepare",
+            "pid": 79116,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "replay",
+            "pid": 79130,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          }
+        ],
+        "sourceBindingCount": 361,
+        "preloadSha256": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7",
+        "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+        "ownedFixtureRemoved": true,
+        "receipt": {
+          "id": "l10n-linear-parsing-20261002/combined-bun/receipt.json",
+          "sha256": "70fb7f98b7503db817efe8658808c7d9f7d0e866432b3264cccfe64e7a58412e"
+        }
+      },
+      {
+        "entryRuntime": "node",
+        "actualChildRuntime": "Electron39.2.7/embeddedNode22.21.1",
+        "stages": [
+          {
+            "phase": "single",
+            "pid": 79223,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "prepare",
+            "pid": 79249,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          },
+          {
+            "phase": "replay",
+            "pid": 79255,
+            "exit": 0,
+            "signal": null,
+            "timedOut": false,
+            "pidExited": true
+          }
+        ],
+        "sourceBindingCount": 361,
+        "preloadSha256": "a89c1fc7e0f67fbcbc1b133dee5c5cce0975c97d5a121c2c5a7f457644e546f7",
+        "externalSdkSha256": "4d9286bd9ca8f802e27c9be2cfa2e0769502dfabb693a6e3d16b62e4fbe3e69a",
+        "ownedFixtureRemoved": true,
+        "receipt": {
+          "id": "l10n-linear-parsing-20261002/combined-node/receipt.json",
+          "sha256": "425851d8a63d34ff206b49795dc4011a43a9d8d283713794bd294670092abede"
+        }
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "roadmap-l10n-20260930/root-transfer.json",
+      "sha256": "7a0b3a5600cde916c462f1e4df5383e28aac78ecd4c6a4ee0facc14022fc2d3a",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "roadmap-l10n-20260930/runtime-language-review.md",
+      "sha256": "01eeddbc4e9577c703869255863965f76bc080bd769b6a2645b7b5ed4ff99094",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "roadmap-l10n-20260930/runtime-language-review.json",
+      "sha256": "9a6481666100aa582aa4ec0b346a346a71c43166fd6447a86f8b54dd64b5ebb2",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "roadmap-l10n-20260930/ar-plural-extension.json",
+      "sha256": "4bc38881b70196f0f13737abc86e2fbff524e0f7eb9abeaf6abcdf375316080e",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "linear-parsing-20260930/frozen-manifest.json",
+      "sha256": "3d955ca144061b4a1c38f3e298b180fe811b062a50b48286cb277771a22ccb7b",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "linear-parsing-20260930/independent-review.md",
+      "sha256": "011331b58edd09e3663f6cb59a144ae57f0da4cb05bbbfadc89b783b6eb70b42",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "linear-parsing-20260930/independent-review.json",
+      "sha256": "1611f7a8ee9afb9d3c2a58be3517c22281eb20dccc239d33a7c1b045bc5897c3",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "linear-parsing-20260930/root-transfer.json",
+      "sha256": "e4bb3932f95b60021b649caca077612c3a6f6e7073d32139cdb67cd14396d3e3",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "l10n-linear-parsing-20261002/gates.json",
+      "sha256": "c622bb1f425686e2cfc2c23d56e945a78bbbbcd742f214fba570e6319d8e4ccf",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "delivery-freshness-20261002.json",
+      "sha256": "dfeaabd0aa3144742f1fe676794d93ee437c254998ea73723b9ebda903ac026e",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "l10n-linear-parsing-20261002/combined-bun/receipt.json",
+      "sha256": "70fb7f98b7503db817efe8658808c7d9f7d0e866432b3264cccfe64e7a58412e",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    },
+    {
+      "id": "l10n-linear-parsing-20261002/combined-node/receipt.json",
+      "sha256": "425851d8a63d34ff206b49795dc4011a43a9d8d283713794bd294670092abede",
+      "distribution": "PRIVATE_ARCHIVE_RETAINED; sanitized observations only in public packet"
+    }
+  ],
+  "limits": [
+    "Translation acceptance covers production resource/plural resolution and actual React server rendering. Mounted UI, RTL/bidi layout, native-speaker review, accessibility and the full L10N-01 criteria remain pending.",
+    "The parser repair covers only identified delimiter/dot paths. Other regex families and whole-module complexity remain outside this evidence; no universal performance or complete security acceptance is claimed.",
+    "The independent hosted alert review remains unfinished after the reviewing agent was stopped by the platform risk restriction. Original check evidence is retained; ordinary parser/test acceptance does not close alerts or accept the hosted check.",
+    "Both portable bridge entry runners execute real Electron children with production preload/services, synthetic fixture enrollment/key injection and hidden sandbox=false production-compatible windows. Normal restart/replay is not SIGKILL, power loss, full product UI E3 or OS secure-store custody.",
+    "Fresh GitHub metadata observes zero registered repository/organization runners and no required macos-toolchain/linux-toolchain labels. Local gates do not replace required trusted remote CI.",
+    "All109 task contracts,489 original requirement rows,464 dependencies and297 original backlog rows remain intact. Native product/provider/recipient/platform, packaging/signing, compound integration and all complete original acceptance remain pending."
+  ],
+  "fullOriginalTasksAccepted": 0
+}

@@ -532,9 +532,10 @@
             "NATURAL-SHUTDOWN-RECONNECT-20260930",
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "NATIVE-CALLER-INVENTORY-20260930"
+            "NATIVE-CALLER-INVENTORY-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
-          "summary": "Bounded native Notes identity/authorization/durable mutation groundwork is implemented and runtime checked. Full original entity, product-consumer, UI and frozen-contract acceptance remains pending."
+          "summary": "Reviewed shared mention/path parsing and locale catalog changes integrated under one source writer, preserving contracts/outputs. Complete shared entity identity and two-consumer runtime acceptance remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -551,7 +552,8 @@
             "NATIVE-NOTES-UI-BOUNDED-20260930",
             "NATIVE-NOTES-DURABLE-EDIT-AUDIT-20260930",
             "NATIVE-NOTES-CREATE-20260930",
-            "NATIVE-CALLER-INVENTORY-20260930"
+            "NATIVE-CALLER-INVENTORY-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -1253,9 +1255,10 @@
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
             "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
-            "NATIVE-SELF-PROFILE-20260930"
+            "NATIVE-SELF-PROFILE-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
-          "summary": "Viewer-scoped collaboration and revision-bound queued changes survive local cold-cache reload. Server-delivered comments, consent and observed recipient Inbox remain unaccepted."
+          "summary": "Existing handle extraction retains Unicode and encounter-order results through backward trailing-dot trimming; targeted grammar/performance checked against actual baseline. Recipient identity, consent, delivery and complete mention workflow remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -1263,7 +1266,8 @@
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
             "RUNTIME-TEAM-AUTOMATION-TTS-20260930",
-            "NATIVE-SELF-PROFILE-20260930"
+            "NATIVE-SELF-PROFILE-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -2770,7 +2774,7 @@
       "title": "[Sep-localization] Точная остаточная локализация и паритет всех локалей",
       "area": "localization",
       "kind": "verification-gap",
-      "status": "NOT_RUN",
+      "status": "IN_PROGRESS",
       "owner": "OwnerLocalization",
       "dependsOn": [
         "AUDIT-01",
@@ -2846,16 +2850,20 @@
       "executionProgress": {
         "schemaVersion": 1,
         "implementation": {
-          "status": "NOT_RUN",
-          "scope": "NO_CURRENT_IMPLEMENTATION_EVIDENCE_MAPPED",
-          "evidenceRefs": [],
-          "summary": "No new current task-specific acceptance evidence is attributed by this reconciliation."
+          "status": "IN_PROGRESS",
+          "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
+          "evidenceRefs": [
+            "L10N-LINEAR-PARSING-20261002"
+          ],
+          "summary": "Roadmap158 keys translated in ten production catalogs plus four Arabic zero/dual forms; exact production i18next/plural checks and actual model-result React SSR verified. Mounted UI/RTL/accessibility/native-speaker/full residual localization remain pending."
         },
         "verification": {
-          "status": "NOT_RUN",
-          "scope": "NOT_RUN",
+          "status": "IN_PROGRESS",
+          "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
-          "evidenceRefs": [],
+          "evidenceRefs": [
+            "L10N-LINEAR-PARSING-20261002"
+          ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
         },
@@ -6654,16 +6662,18 @@
           "status": "IN_PROGRESS",
           "scope": "BOUNDED_MECHANISMS_OR_COORDINATION",
           "evidenceRefs": [
-            "ROADMAP-SQLITE-JOINT-20260930"
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
-          "summary": "Additive Roadmap tab, canonical storage/CAS, ordered save/readback, local caller workspace isolation and honest effective-model provenance are independently verified. Full AI/native UI/provider/product criteria remain pending."
+          "summary": "Existing Roadmap model provenance now resolves translated production catalog resources in ten locales; requested/effective/unknown remain distinct under actual server rendering. Complete product/project/provider acceptance remains pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
           "scope": "PARTIAL_EVIDENCE_ONLY",
           "acceptanceStatus": "NOT_ACCEPTED",
           "evidenceRefs": [
-            "ROADMAP-SQLITE-JOINT-20260930"
+            "ROADMAP-SQLITE-JOINT-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10010,9 +10020,10 @@
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
             "LOCAL-MEETING-BLOB-MEDIA-20260930",
             "ROADMAP-SQLITE-JOINT-20260930",
-            "PORTABLE-ELECTRON-BRIDGE-20260930"
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
-          "summary": "Reviewed portable developer harness adds three source scripts without changing the4870 previously gated production inputs; scoped typing and both current-revision entry commands pass. Original program predecessors/product/platform remain pending."
+          "summary": "All4876 combined source entries have complete Shared/server/Electron unions, exact local CI, standard build and fresh portable bridge evidence. Original DAG predecessors, private native UI/custody, remote CI and platform integration remain pending."
         },
         "verification": {
           "status": "IN_PROGRESS",
@@ -10049,7 +10060,8 @@
             "BUDGET-OWNER-SOURCE-STATUS-20260930",
             "LOCAL-MEETING-BLOB-MEDIA-20260930",
             "ROADMAP-SQLITE-JOINT-20260930",
-            "PORTABLE-ELECTRON-BRIDGE-20260930"
+            "PORTABLE-ELECTRON-BRIDGE-20260930",
+            "L10N-LINEAR-PARSING-20261002"
           ],
           "originalCriteriaRetained": true,
           "remaining": "Every original verification and definitionOfDone criterion remains applicable; bounded tests do not mark this task or its requirement rows complete."
@@ -10242,7 +10254,7 @@
   },
   "executionProgress": {
     "schemaVersion": 1,
-    "asOf": "2026-09-30T17:37:07.007Z",
+    "asOf": "2026-10-02T16:55:35.905Z",
     "evidence": "evidence-20260930.json",
     "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
     "sourceState": "SOURCE_PUBLISHED_FOR_REVIEW; FULL_PRODUCT_DELIVERY_PENDING",
@@ -10268,7 +10280,7 @@
     "fullTaskAcceptance": "NOT_ACCEPTED",
     "dataContractFreeze": "NOT_ACCEPTED",
     "sharedContractFreeze": "NOT_ACCEPTED",
-    "build": "STANDARD_ROOT_ELECTRON_BUILD_PASSED_ON_FROZEN_4870_SOURCE_b512d93d; THREE_LATER_DEVELOPER_HARNESS_SCRIPTS_SCOPED_TYPED_AND_EXECUTED_WITH_SAME_BUILT_PRELOAD; PACKAGING_NATIVE_UI_PENDING",
+    "build": "STANDARD_ROOT_ELECTRON_BUILD_PASSED_ON_FROZEN_4876_SOURCE; FRESH_PORTABLE_BRIDGE_ENTRY_COMMANDS_PASS; PACKAGING_NATIVE_UI_PENDING",
     "fullPlatformMatrix": "PENDING",
     "issuePublication": "Existing PUBLISHED_VERIFIED packet/publication fields describe authored issues and dependency links only; they do not prove code delivery.",
     "facetsRule": "Additive progress facets distinguish current bounded implementation, partial verification and undelivered code. Original schemaVersion, criteria, sourceRefs, requirementIDs, owners, file bounds, task IDs and dependencies remain unchanged.",
@@ -10286,7 +10298,7 @@
       "committedSourceMatchesTestedManifest": true,
       "wholeRepositoryGateSourceRevision": "b512d93d23ad842fa0a233f0708a5194314fce75"
     },
-    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_CI_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4870_ROADMAP_SQLITE_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
+    "finalFullGateRefresh": "FULL_SHARED_SERVER_ELECTRON_UNIONS_EXACT_LOCAL_CI_STANDARD_ELECTRON_BUILD_PASS_ON_FROZEN_4876_SOURCE; REMOTE_PRODUCT_PLATFORM_PENDING",
     "gitPublication": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
       "sourceRevision": "c1c81e66db2db42d53856af3205350ea5bb5fc68",
@@ -10322,12 +10334,12 @@
     },
     "facetCounts": {
       "implementation": {
-        "IN_PROGRESS": 29,
-        "NOT_RUN": 80
+        "IN_PROGRESS": 30,
+        "NOT_RUN": 79
       },
       "verification": {
-        "IN_PROGRESS": 27,
-        "NOT_RUN": 82
+        "IN_PROGRESS": 28,
+        "NOT_RUN": 81
       },
       "fullAccepted": 0
     },
@@ -10517,6 +10529,12 @@
       "fullProductDelivery": "PENDING",
       "originalCriteriaAcceptedByPublication": 0,
       "bindingLimit": "All4873 source blobs match tested manifest; three new developer scripts have scoped TypeScript and actual Bun/Node entry commands with real Electron children. Previously gated4870 production subset remains identical to b512d93d whole suites/exact CI/build. Task bootstrap and credential DI, graceful restart, hidden sandbox:false windows; no full application UI E3, OS custody, SIGKILL/provider/platform/remote CI acceptance. Later evidence-only commits have a different head."
+    },
+    "l10nLinearEvidence": "l10n-linear-parsing-20261002.json",
+    "l10nLinearCandidate": {
+      "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+      "fullProductDelivery": "PENDING",
+      "originalCriteriaAcceptedByPublication": 0
     }
   }
 }

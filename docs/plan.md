@@ -259,7 +259,19 @@ Dependencies: current September source/head `bac082301aed341fe078cb5bd539c4ba074
 5. On that unchanged union, run complete Shared, server-core, Electron src/UI/core tests, exact `validate:ci` and standard root `electron:build` serially. Use the existing verified task-private document cache without changing normal commands. Record failures, skips, log hashes, output scope and before/after source digests. Prepared-host success does not establish a fresh network runner or packaged native UI.
 6. Update only bounded progress/evidence while preserving all 109 task IDs, 489 requirements and 464 dependency edges. Commit the exact reviewed files, push PR1293, compare every frozen source entry with its committed blob and read back the exact remote/PR revision. Preserve original 297-row scope and do not infer issue closure from partial checks or published draft code.
 
-Final joint gates pass on all 4870 unchanged source entries (SHA256 1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54). Shared 4944/0, server-core 1508/0, Electron/UI/core 4205/0; exact local CI and standard root Electron build exit0. Registry records 28 partial implementation and 26 partial verification facets; zero complete original tasks. All original contracts remain byte-identical. Root binds each committed blob and remote PR revision after publication.
+## Roadmap translations and CodeQL follow-up (2026-09-30)
+
+Owners: three GPT-6.1 Sol workers prepare disjoint archive-only locale fragments; independent cross-review covers each producer's other languages; root alone writes the common catalogs. Dependencies: published Roadmap/SQLite source and portable harness, current English158-key feature slice, existing locale registry/plural rules and unchanged cached dependencies. No provider requests, foreground UI, language registry expansion or unrelated catalog edits.
+
+1. Translate ten existing locale catalogs, preserving placeholders/literals and consent/model provenance. Freeze all original fragments and retain producer/cross-review hashes. Apply three accepted terminology corrections without overwriting that original evidence.
+2. Reproduce actual Arabic count0/2 fallback, add only four derived zero/two variants under the existing English one/other contract and independently exercise corrected resource resolution. Keep English/Russian and all unrelated values unchanged.
+3. Run production setupI18n/locale registry and actual RoadmapModelResult React rendering with real translations, adversarial escaped warning/model inputs and plural counts. Run existing locale tests and standard parity/sorted/coverage commands. Source-bind this bounded evidence; mounted native/RTL/native-speaker acceptance remains separate.
+4. Independently inventory all90 actual CodeQL annotations from the published PR check, tracing dataflow and caller authority before classifying findings. Preserve configuration-missing Swift diagnostics separately from alerts. Do not suppress checks or assume authenticated callers are automatically authorized.
+5. Real owned probes confirmed quadratic parsing in existing mention and title paths. A separate bounded producer owns linear parsing repairs and behavioral/adversarial compatibility tests; the independent reviewer retains failure history and verifies actual candidate functions. Root accepts only the reviewed delta, freezes the combined source and completes affected shared/server/Electron/CI/build checks before exact source/Git/PR publication.
+
+All109tasks/489requirements/464edges and all297originalrows retain their criteria. Translation or CodeQL pattern counts do not establish complete product/security/platform acceptance. Required trusted CI runners, actual native creation/private custody, provider receipts/cancellation, compound integration and genuine Conation iOS remain independently required.
+
+Historical Roadmap/SQLite joint gates passed on all 4870 unchanged source entries (SHA256 1d9767e912b07a5f688c51169c3743b67e70289497ec50b5a8840f2ce4609a54). Shared 4944/0, server-core 1508/0, Electron/UI/core 4205/0; exact local CI and standard root Electron build exit0. Registry records 28 partial implementation and 26 partial verification facets; zero complete original tasks. All original contracts remain byte-identical. Root binds each committed blob and remote PR revision after publication.
 
 ## Portable Electron bridge developer probe (2026-09-30)
 
@@ -269,3 +281,18 @@ Owner `/root/native_boundary` produces an isolated harness from exact September 
 2. Carry create/exact receipt, full-shaped unobserved ACK denial, revoke/no canonical effect, real second-window IPC and graceful stable-operation restart controls. Keep synthetic bootstrap/key adapters explicit and separate from OS/product main acceptance.
 3. Exercise both Bun and Node entry commands on the same isolated source, retain missing-preload/type/readiness failures and stdout, verify strict scoped TypeScript, exact PID exits and root cleanup. Freeze source manifest for independent review before public delivery.
 4. Root integrates accepted harness only and maps it as bounded composition. Product UI E3, OS custody, provider/media/platform and crash/power-loss criteria remain pending; no original full requirement is marked accepted by this probe.
+
+## Linear parsing repair — isolated candidate (2026-09-30)
+
+Owner `/root/native_boundary`: three parser modules and focused behavioral tests in isolated base `5c2cacfab76b8b5be6c111dee75df22f6d4ed1b4`. Root owns serial integration/Git/delivery; `/root/recovery_scout` owns independent read-only review. Dependencies: existing Bun/cache and exact baseline source snapshots; no provider, credentials, user data or new installation.
+
+1. Retain actual original quadratic counterexamples and source snapshots; replace only dot trim, path-token scans and title delimiter scans, preserving historical outputs.
+2. Run relevant existing plus new tests, strict scoped TypeScript, seeded normal/malformed differential functions and bounded old/new timing observations. Preserve unsuccessful commands/assertions and disclose their causes.
+3. Freeze exact three source/three test/additive doc hashes and archive evidence for independent review. Root may integrate only after independent acceptance; full CodeQL/security and original program acceptance remain pending.
+
+
+## Combined localization and parsing validation (2026-10-02)
+
+Parser candidate independently accepted by `/root/recovery_scout`:142 tests,18048 actual old/new comparisons, strict scoped typing and unchanged frozen hashes. Root serially transferred three modules/three tests, preserving ten previously reviewed locale catalogs and all other sources. The combined4876 source manifest `560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e` passed five complete serial local gates and both fresh portable Electron entry commands on the new build. `/root/recovery_scout` owns these integrated gate observations; root owns exact Git/remote publication.
+
+Registry now records30 partial implementation and28 partial verification facets, zero original full acceptance. Original contract hashes, requirement rows and DAG are unchanged. The separate hosted-alert reviewing agent was stopped by the platform risk restriction; the review remains unfinished and is not retried through this validation workflow. Current source publication and complete local proof are distinct from historical packets and required remote/product/platform acceptance.
