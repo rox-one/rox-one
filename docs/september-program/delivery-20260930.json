@@ -682,9 +682,22 @@
   },
   "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
   "nativeProductEvidencePublication": {
-    "status": "REVIEWED_OBSERVED_EVIDENCE_PENDING_PUBLICATION",
+    "status": "EVIDENCE_PUBLISHED_FOR_REVIEW",
+    "evidenceRevision": "050230079351d81d2fe6a3d51f3ba0214934826c",
+    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "evidenceSourceHead": "f3b7f8665ce276b4a09f511edf7bd0e26749abbd",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "remoteHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+    "pullRequestHeadReadback": "050230079351d81d2fe6a3d51f3ba0214934826c",
+    "isDraft": true,
+    "observedAt": "2026-10-02T18:27:58.010Z",
+    "sourceCount": 4876,
+    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "allCommittedSourceBlobsMatchGatedManifest": true,
     "newProductionSources": 0,
     "fullProductDelivery": "PENDING",
-    "originalCriteriaAcceptedByPublication": 0
+    "originalCriteriaAcceptedByPublication": 0,
+    "fullTaskAccepted": false,
+    "limits": "Visible Note create/edit/reload/normal restart plus independent canonical/journal/ACK metadata only; receipt bodies/OS custody, Tasks persistence/click, crash/offline/platform/full original tasks remain pending. Later evidence-binding commit has a different head."
   }
 }
