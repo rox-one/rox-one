@@ -21,7 +21,7 @@ Captured source state: 2026-10-02T22:56:35.644Z. Main baseline: `f63294ba4fffa72
 | PR history records | 928 | GitHub all-state query returned17 open,602 merged,309 closed. Branch-name matches are discovery evidence. |
 | Registered/current plus previous audit checkouts | 6 | Includes this audit and the clean test candidate; dirty path/status metadata only. |
 | Original task blocks reconciled | 495 | Every original parent/subtask has source progress, remaining work and evidence limits. |
-| Added task blocks | 123 | New feature hosts, service contracts and integration/test/recheck tasks. |
+| Added task blocks | 130 | New feature hosts, service contracts and integration/test/recheck tasks. |
 
 **Coverage is explicit:** all catalogued refs receive ancestry, changed paths, PR-name matches and original-task file ownership discovery. Semantic review concentrates on the active accumulated ROX candidates and source owners; path overlap alone is never interpreted as completed implementation. Historical/closed/unmatched branches have a required patch/behavior disposition under RECHECK-004.1. No claim is made that every old experiment was independently run.
 
@@ -83,3 +83,7 @@ These counts are a dated capture, not a promise that concurrently active worktre
 6. Close RECHECK tasks using immutable source, actual artifacts/deployments and persisted/provider readback.
 
 Task-specific details remain in02–05 and10–13; all original task descriptions now display reconciled implementation/integration/verification/remaining-work fields before their original ending acceptance requirements.
+
+## [DEPENDENCY-ALERTS] Fresh dependency security evidence
+
+GitHub Dependabot reports **6 open High alerts / 5 distinct advisories**: four Electron alerts and the same Sharp advisory in desktop and server manifests. Candidate constraints remain Electron ^39.2.7 and Sharp0.35.0. These are version/dependency alerts; product exposure has not been demonstrated. [QA-013 and six explicit subtasks](13-integration-reconciliation-backlog.md#qa-013-resolve-and-qualify-the-six-open-high-dependency-alerts) specify patched version selection, actual applicability, native binary/ABI closure and installed/server regression tests. [Captured API evidence](evidence/open-dependency-alerts.json) includes advisory IDs, affected ranges and first patched versions; public official advisories were independently opened.

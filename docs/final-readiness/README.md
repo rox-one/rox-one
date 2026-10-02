@@ -2,7 +2,7 @@
 
 **Canonical repository:** [rox-one/rox-one](https://github.com/rox-one/rox-one). **Audit branch:** `audit/reconciled-readiness-2026-10-03`, created from canonical main `f63294ba4fffa7238b46b24e918925a313ad0b12`. **Independently rechecked candidate:** PR1322 `de805e0dc7103b49d4c7f0a092d88c8b4222367a`. **Language:** English.
 
-This audit accounts for accumulated ROX source beyond main: active branches, PRs, registered worktrees and uncommitted progress. The earlier main-only report is preserved as historical baseline evidence. Each original task now separates branch implementation, integration, bounded verification and remaining work. 618 independently described tasks/subtasks cover A Windows10/11, B macOS and C hosted authenticated web.
+This audit accounts for accumulated ROX source beyond main: active branches, PRs, registered worktrees and uncommitted progress. The earlier main-only report is preserved as historical baseline evidence. Each original task now separates branch implementation, integration, bounded verification and remaining work. 625 independently described tasks/subtasks cover A Windows10/11, B macOS and C hosted authenticated web.
 
 ## [ROX-FINAL-START] Read the current source and evidence first
 
@@ -42,10 +42,10 @@ This audit accounts for accumulated ROX source beyond main: active branches, PRs
 | MAC | 6 | 12 |
 | WEB | 9 | 18 |
 | INT | 18 | 36 |
-| QA | 12 | 24 |
+| QA | 13 | 30 |
 | REL | 2 | 4 |
 | RECHECK | 4 | 8 |
-| **Total blocks** | **181** | **437** |
+| **Total blocks** | **182** | **443** |
 
 Each task and subtask ends with **Requirements / DoD / Full functional verification / Test method**, and has its own immutable ROX code reference. Checkboxes remain unchecked until complete task acceptance is established. Source implementation, branch integration, scoped compiler/unit/fixture evidence and full target release DoD are independent. Do not recreate already implemented branch features merely because the baseline described their earlier absence.
 
@@ -70,3 +70,7 @@ git diff --check
 ```
 
 Source snapshots and reviewed dispositions are inputs; refreshing them is a separate read-only action via final-readiness-progress.ts and the recorded GitHub history query. The validator resolves every immutable code path/line against its exact Git commit, validates unique IDs/parents and concluding acceptance fields, and exports task progress and navigation. This audit branch changes documentation/evidence/tooling only; product branches and active dirty state are preserved.
+
+## [DEPENDENCY-ALERTS] Fresh dependency security evidence
+
+GitHub Dependabot reports **6 open High alerts / 5 distinct advisories**: four Electron alerts and the same Sharp advisory in desktop and server manifests. Candidate constraints remain Electron ^39.2.7 and Sharp0.35.0. These are version/dependency alerts; product exposure has not been demonstrated. [QA-013 and six explicit subtasks](13-integration-reconciliation-backlog.md#qa-013-resolve-and-qualify-the-six-open-high-dependency-alerts) specify patched version selection, actual applicability, native binary/ABI closure and installed/server regression tests. [Captured API evidence](evidence/open-dependency-alerts.json) includes advisory IDs, affected ranges and first patched versions; public official advisories were independently opened.

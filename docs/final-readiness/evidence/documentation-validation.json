@@ -27,8 +27,8 @@
       "subtasks": 36
     },
     "QA": {
-      "tasks": 12,
-      "subtasks": 24
+      "tasks": 13,
+      "subtasks": 30
     },
     "REL": {
       "tasks": 2,
@@ -39,7 +39,7 @@
       "subtasks": 8
     }
   },
-  "totalTaskBlocks": 618,
-  "pinnedReferences": 3131,
+  "totalTaskBlocks": 625,
+  "pinnedReferences": 3141,
   "errors": []
 }

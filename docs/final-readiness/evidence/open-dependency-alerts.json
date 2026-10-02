@@ -1,0 +1,197 @@
+{
+  "capturedAt": "2026-10-02T23:25:48.020Z",
+  "repository": "rox-one/rox-one",
+  "candidateCommit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
+  "openAlerts": 6,
+  "distinctAdvisories": 5,
+  "source": "GitHub Dependabot API; public advisory pages independently opened",
+  "interpretation": "Version/dependency alerts, not proof of exploited application behavior. Exposure and shipping/runtime applicability require triage.",
+  "alerts": [
+    {
+      "advisory": {
+        "cve_id": "CVE-2026-102673",
+        "ghsa_id": "GHSA-hq2x-r82h-9wj4",
+        "html_url": "https://github.com/advisories/GHSA-hq2x-r82h-9wj4",
+        "severity": "high",
+        "summary": "Electron drops inherited HTML sandbox restrictions for popups opened through OpenURLFromTab"
+      },
+      "created_at": "2026-09-29T18:17:46Z",
+      "dependency": {
+        "manifest_path": "package.json",
+        "package": {
+          "ecosystem": "npm",
+          "name": "electron"
+        },
+        "relationship": "direct",
+        "scope": "development"
+      },
+      "number": 8,
+      "state": "open",
+      "updated_at": "2026-09-29T18:17:46Z",
+      "url": "https://github.com/rox-one/rox-one/security/dependabot/8",
+      "vulnerability": {
+        "first_patched_version": {
+          "identifier": "41.10.4"
+        },
+        "severity": "high",
+        "vulnerable_version_range": "< 41.10.4"
+      },
+      "candidateDeclaredConstraint": "^39.2.7"
+    },
+    {
+      "advisory": {
+        "cve_id": "CVE-2026-102674",
+        "ghsa_id": "GHSA-gr2m-v5gq-v685",
+        "html_url": "https://github.com/advisories/GHSA-gr2m-v5gq-v685",
+        "severity": "high",
+        "summary": "Electron: Windows opened from a sandboxed top-level document do not inherit its sandbox restrictions"
+      },
+      "created_at": "2026-09-29T18:17:45Z",
+      "dependency": {
+        "manifest_path": "package.json",
+        "package": {
+          "ecosystem": "npm",
+          "name": "electron"
+        },
+        "relationship": "direct",
+        "scope": "development"
+      },
+      "number": 7,
+      "state": "open",
+      "updated_at": "2026-09-29T18:17:45Z",
+      "url": "https://github.com/rox-one/rox-one/security/dependabot/7",
+      "vulnerability": {
+        "first_patched_version": {
+          "identifier": "41.10.6"
+        },
+        "severity": "high",
+        "vulnerable_version_range": "< 41.10.6"
+      },
+      "candidateDeclaredConstraint": "^39.2.7"
+    },
+    {
+      "advisory": {
+        "cve_id": "CVE-2026-102675",
+        "ghsa_id": "GHSA-j84w-jfhq-vhvj",
+        "html_url": "https://github.com/advisories/GHSA-j84w-jfhq-vhvj",
+        "severity": "high",
+        "summary": "Electron: File and HTTP protocol handlers allow cross-origin reads without corsEnabled"
+      },
+      "created_at": "2026-09-29T18:17:45Z",
+      "dependency": {
+        "manifest_path": "package.json",
+        "package": {
+          "ecosystem": "npm",
+          "name": "electron"
+        },
+        "relationship": "direct",
+        "scope": "development"
+      },
+      "number": 6,
+      "state": "open",
+      "updated_at": "2026-09-29T18:17:45Z",
+      "url": "https://github.com/rox-one/rox-one/security/dependabot/6",
+      "vulnerability": {
+        "first_patched_version": {
+          "identifier": "41.10.6"
+        },
+        "severity": "high",
+        "vulnerable_version_range": "< 41.10.6"
+      },
+      "candidateDeclaredConstraint": "^39.2.7"
+    },
+    {
+      "advisory": {
+        "cve_id": "CVE-2026-102676",
+        "ghsa_id": "GHSA-9qh4-3jw8-366w",
+        "html_url": "https://github.com/advisories/GHSA-9qh4-3jw8-366w",
+        "severity": "high",
+        "summary": "Electron: <webview> can enable Node.js integration in Web Workers despite embedder restrictions"
+      },
+      "created_at": "2026-09-29T18:17:44Z",
+      "dependency": {
+        "manifest_path": "package.json",
+        "package": {
+          "ecosystem": "npm",
+          "name": "electron"
+        },
+        "relationship": "direct",
+        "scope": "development"
+      },
+      "number": 5,
+      "state": "open",
+      "updated_at": "2026-09-29T18:17:44Z",
+      "url": "https://github.com/rox-one/rox-one/security/dependabot/5",
+      "vulnerability": {
+        "first_patched_version": {
+          "identifier": "41.10.6"
+        },
+        "severity": "high",
+        "vulnerable_version_range": "< 41.10.6"
+      },
+      "candidateDeclaredConstraint": "^39.2.7"
+    },
+    {
+      "advisory": {
+        "cve_id": null,
+        "ghsa_id": "GHSA-rgj7-g3m4-5g8c",
+        "html_url": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+        "severity": "high",
+        "summary": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545"
+      },
+      "created_at": "2026-09-10T18:06:38Z",
+      "dependency": {
+        "manifest_path": "packages/server-core/package.json",
+        "package": {
+          "ecosystem": "npm",
+          "name": "sharp"
+        },
+        "relationship": "direct",
+        "scope": "runtime"
+      },
+      "number": 4,
+      "state": "open",
+      "updated_at": "2026-09-10T18:06:38Z",
+      "url": "https://github.com/rox-one/rox-one/security/dependabot/4",
+      "vulnerability": {
+        "first_patched_version": {
+          "identifier": "0.35.4"
+        },
+        "severity": "high",
+        "vulnerable_version_range": "< 0.35.4"
+      },
+      "candidateDeclaredConstraint": "0.35.0"
+    },
+    {
+      "advisory": {
+        "cve_id": null,
+        "ghsa_id": "GHSA-rgj7-g3m4-5g8c",
+        "html_url": "https://github.com/advisories/GHSA-rgj7-g3m4-5g8c",
+        "severity": "high",
+        "summary": "sharp: Vulnerabilities in libheif: GHSA-g89c-p67h-r497 and GHSA-2jg2-4ch7-h545"
+      },
+      "created_at": "2026-09-10T18:06:38Z",
+      "dependency": {
+        "manifest_path": "apps/electron/package.json",
+        "package": {
+          "ecosystem": "npm",
+          "name": "sharp"
+        },
+        "relationship": "direct",
+        "scope": "runtime"
+      },
+      "number": 3,
+      "state": "open",
+      "updated_at": "2026-09-10T18:06:38Z",
+      "url": "https://github.com/rox-one/rox-one/security/dependabot/3",
+      "vulnerability": {
+        "first_patched_version": {
+          "identifier": "0.35.4"
+        },
+        "severity": "high",
+        "vulnerable_version_range": "< 0.35.4"
+      },
+      "candidateDeclaredConstraint": "0.35.0"
+    }
+  ]
+}

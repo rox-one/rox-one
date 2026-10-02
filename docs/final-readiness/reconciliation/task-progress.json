@@ -4,7 +4,7 @@
   "baselineCommit": "f63294ba4fffa7238b46b24e918925a313ad0b12",
   "candidateCommit": "de805e0dc7103b49d4c7f0a092d88c8b4222367a",
   "originalTasks": 495,
-  "totalTasks": 618,
+  "totalTasks": 625,
   "policy": "Source review, branch integration, scoped automated checks and complete release DoD are independent. No full task is marked complete solely from a diff, PR title or green check.",
   "tasks": {
     "UI-001": {
@@ -78587,6 +78587,107 @@
       "sourceChanges": [],
       "codeReferences": [
         "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/package.json#L1"
+      ],
+      "remainingWork": [
+        "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+      ],
+      "discoveryCandidates": []
+    },
+    "QA-013": {
+      "disposition": "newly-discovered-completion-or-qualification-work",
+      "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+      "integrationStatus": "Open; source existence does not close acceptance.",
+      "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+      "sourceChanges": [],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1"
+      ],
+      "remainingWork": [
+        "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+      ],
+      "discoveryCandidates": []
+    },
+    "QA-013.1": {
+      "disposition": "newly-discovered-completion-or-qualification-work",
+      "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+      "integrationStatus": "Open; source existence does not close acceptance.",
+      "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+      "sourceChanges": [],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "remainingWork": [
+        "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+      ],
+      "discoveryCandidates": []
+    },
+    "QA-013.2": {
+      "disposition": "newly-discovered-completion-or-qualification-work",
+      "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+      "integrationStatus": "Open; source existence does not close acceptance.",
+      "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+      "sourceChanges": [],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "remainingWork": [
+        "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+      ],
+      "discoveryCandidates": []
+    },
+    "QA-013.3": {
+      "disposition": "newly-discovered-completion-or-qualification-work",
+      "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+      "integrationStatus": "Open; source existence does not close acceptance.",
+      "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+      "sourceChanges": [],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "remainingWork": [
+        "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+      ],
+      "discoveryCandidates": []
+    },
+    "QA-013.4": {
+      "disposition": "newly-discovered-completion-or-qualification-work",
+      "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+      "integrationStatus": "Open; source existence does not close acceptance.",
+      "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+      "sourceChanges": [],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "remainingWork": [
+        "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+      ],
+      "discoveryCandidates": []
+    },
+    "QA-013.5": {
+      "disposition": "newly-discovered-completion-or-qualification-work",
+      "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+      "integrationStatus": "Open; source existence does not close acceptance.",
+      "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+      "sourceChanges": [],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1"
+      ],
+      "remainingWork": [
+        "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+      ],
+      "discoveryCandidates": []
+    },
+    "QA-013.6": {
+      "disposition": "newly-discovered-completion-or-qualification-work",
+      "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+      "integrationStatus": "Open; source existence does not close acceptance.",
+      "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+      "sourceChanges": [],
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
       ],
       "remainingWork": [
         "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."

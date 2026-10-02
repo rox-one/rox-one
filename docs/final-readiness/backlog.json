@@ -36,8 +36,8 @@
       "subtasks": 36
     },
     "QA": {
-      "tasks": 12,
-      "subtasks": 24
+      "tasks": 13,
+      "subtasks": 30
     },
     "REL": {
       "tasks": 2,
@@ -89246,6 +89246,215 @@
         "https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/package.json#L1"
       ],
       "description": "**Code references:** [ROX main source](https://github.com/rox-one/rox-one/blob/f63294ba4fffa7238b46b24e918925a313ad0b12/package.json#L1).\n\n- **Requirements:** Capture current source/worktree/PR state at delivery; verify canonical remote commit and documentation content separately from local checks. Preserve ongoing product changes and distinguish audit publication, application merge, signed builds and deployed production.\n- **DoD:** Published ROX branch/PR and exported artifacts have verified content/commit identity; active worktrees retain their existing changes; no product merge or production deployment is asserted without its own evidence.\n- **Full functional verification:** Read the published docs and JSON from the canonical remote, validate pinned links and compare artifact checksums; inspect live worktree status and final release evidence boundaries.\n- **Test method:** Remote SHA/blob readback, local documentation integrity gate, archive checksum, Git status verification and final source/evidence manifest review."
+    },
+    {
+      "id": "QA-013",
+      "parentId": null,
+      "family": "QA",
+      "heading": "[QA-013] Resolve and qualify the six open High dependency alerts",
+      "document": "13-integration-reconciliation-backlog.md",
+      "Requirements": "Triage each actual alert against resolved dependencies and shipped/runtime use, select compatible patched versions, update frozen lockfile and optional native binary pins together, and verify A Windows10/11, B macOS and C server/image-processing artifacts. Electron is classified development by Dependabot but is also the shipped desktop runtime. Preserve the declared OS support contract and native ABI/runtime compatibility; do not suppress applicable alerts based only on manifest scope.",
+      "DoD": "All six alerts have a verified patched artifact or explicit evidence-backed non-applicability decision; no unresolved applicable High alert blocks release. Native libraries, Electron/Chromium versions, SBOM and dependency manifests match actual shipped artifacts; functional/security regressions are absent on supported targets.",
+      "Full functional verification": "Install each rebuilt native artifact and run untrusted content/navigation/media cases in isolated fixture profiles; run hosted image-processing with controlled inputs. Inspect actual runtime/native dependency versions and permission boundaries, then re-read Dependabot status for the updated source.",
+      "Test method": "Frozen dependency and SBOM audit, installed Electron boundary tests, platform-specific Sharp/libvips image fixtures, security negative controls and full affected UI/server journeys. Retain alert/advisory IDs, version/artifact identity, triage and observed results.",
+      "progress": {
+        "disposition": "newly-discovered-completion-or-qualification-work",
+        "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+        "integrationStatus": "Open; source existence does not close acceptance.",
+        "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+        "sourceChanges": [],
+        "codeReferences": [
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1",
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1",
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1"
+        ],
+        "remainingWork": [
+          "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+        ],
+        "discoveryCandidates": []
+      },
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1"
+      ],
+      "description": "**Code references:** [Electron dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1); [desktop Sharp dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1); [server Sharp dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1). [Captured API evidence](evidence/open-dependency-alerts.json) records six open alerts and five distinct advisories. These are dependency/version findings; application exposure has not been demonstrated.\n\n- **Requirements:** Triage each actual alert against resolved dependencies and shipped/runtime use, select compatible patched versions, update frozen lockfile and optional native binary pins together, and verify A Windows10/11, B macOS and C server/image-processing artifacts. Electron is classified development by Dependabot but is also the shipped desktop runtime. Preserve the declared OS support contract and native ABI/runtime compatibility; do not suppress applicable alerts based only on manifest scope.\n- **DoD:** All six alerts have a verified patched artifact or explicit evidence-backed non-applicability decision; no unresolved applicable High alert blocks release. Native libraries, Electron/Chromium versions, SBOM and dependency manifests match actual shipped artifacts; functional/security regressions are absent on supported targets.\n- **Full functional verification:** Install each rebuilt native artifact and run untrusted content/navigation/media cases in isolated fixture profiles; run hosted image-processing with controlled inputs. Inspect actual runtime/native dependency versions and permission boundaries, then re-read Dependabot status for the updated source.\n- **Test method:** Frozen dependency and SBOM audit, installed Electron boundary tests, platform-specific Sharp/libvips image fixtures, security negative controls and full affected UI/server journeys. Retain alert/advisory IDs, version/artifact identity, triage and observed results."
+    },
+    {
+      "id": "QA-013.1",
+      "parentId": "QA-013",
+      "family": "QA",
+      "heading": "[QA-013.1] Electron alert8 — sandboxed iframe popup restriction inheritance",
+      "document": "13-integration-reconciliation-backlog.md",
+      "Requirements": "Locate untrusted sandboxed iframe and popup embedding paths; verify popup policy and inherited restrictions. Select a patched supported Electron release or document verified absence of the affected embedding pattern. Combine the update with the other Electron alerts rather than choosing a version that fixes only this one.",
+      "DoD": "Actual installed A/B runtime is outside all applicable affected ranges; sandboxed iframe popup behavior cannot gain unintended origin storage/script access. Exposure decisions cite concrete renderer/main policies.",
+      "Full functional verification": "In an isolated installed build, open controlled iframe content through supported link/popup interactions and inspect origin, storage, navigation and window-open restrictions; repeat denied and allowed product paths.",
+      "Test method": "Installed Electron sandbox/popup boundary suite and navigation regressions with real WebContents; inspect runtime version and setWindowOpenHandler behavior, record advisory applicability and result.",
+      "progress": {
+        "disposition": "newly-discovered-completion-or-qualification-work",
+        "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+        "integrationStatus": "Open; source existence does not close acceptance.",
+        "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+        "sourceChanges": [],
+        "codeReferences": [
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+        ],
+        "remainingWork": [
+          "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+        ],
+        "discoveryCandidates": []
+      },
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "description": "**Code reference:** [root Electron dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1). Advisory: [GHSA-hq2x-r82h-9wj4](https://github.com/advisories/GHSA-hq2x-r82h-9wj4), CVE-2026-102673; captured first patched version41.10.4 for the reported affected range.\n\n- **Requirements:** Locate untrusted sandboxed iframe and popup embedding paths; verify popup policy and inherited restrictions. Select a patched supported Electron release or document verified absence of the affected embedding pattern. Combine the update with the other Electron alerts rather than choosing a version that fixes only this one.\n- **DoD:** Actual installed A/B runtime is outside all applicable affected ranges; sandboxed iframe popup behavior cannot gain unintended origin storage/script access. Exposure decisions cite concrete renderer/main policies.\n- **Full functional verification:** In an isolated installed build, open controlled iframe content through supported link/popup interactions and inspect origin, storage, navigation and window-open restrictions; repeat denied and allowed product paths.\n- **Test method:** Installed Electron sandbox/popup boundary suite and navigation regressions with real WebContents; inspect runtime version and setWindowOpenHandler behavior, record advisory applicability and result."
+    },
+    {
+      "id": "QA-013.2",
+      "parentId": "QA-013",
+      "family": "QA",
+      "heading": "[QA-013.2] Electron alert7 — top-level sandbox popup restriction inheritance",
+      "document": "13-integration-reconciliation-backlog.md",
+      "Requirements": "Review top-level sandboxed document/window embedding and all popup creation paths; preserve sandbox and permission restrictions in newly opened windows. Verify a compatible patched runtime or demonstrate that affected paths are unavailable in the product.",
+      "DoD": "Installed A/B builds enforce the chosen popup/sandbox contract and use a runtime with this and other applicable alerts resolved; no newly opened window bypasses intended restrictions.",
+      "Full functional verification": "Open controlled sandboxed top-level content, exercise allowed and denied popup creation, inspect window preferences/origin and verify permissions and stored data stay constrained after restart.",
+      "Test method": "Real Electron window creation and sandbox inheritance behavior tests on Windows10/11 and macOS, plus normal external-link/mini-window workflows and runtime-version readback.",
+      "progress": {
+        "disposition": "newly-discovered-completion-or-qualification-work",
+        "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+        "integrationStatus": "Open; source existence does not close acceptance.",
+        "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+        "sourceChanges": [],
+        "codeReferences": [
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+        ],
+        "remainingWork": [
+          "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+        ],
+        "discoveryCandidates": []
+      },
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "description": "**Code reference:** [root Electron dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1). Advisory: [GHSA-gr2m-v5gq-v685](https://github.com/advisories/GHSA-gr2m-v5gq-v685), CVE-2026-102674; captured first patched version41.10.6.\n\n- **Requirements:** Review top-level sandboxed document/window embedding and all popup creation paths; preserve sandbox and permission restrictions in newly opened windows. Verify a compatible patched runtime or demonstrate that affected paths are unavailable in the product.\n- **DoD:** Installed A/B builds enforce the chosen popup/sandbox contract and use a runtime with this and other applicable alerts resolved; no newly opened window bypasses intended restrictions.\n- **Full functional verification:** Open controlled sandboxed top-level content, exercise allowed and denied popup creation, inspect window preferences/origin and verify permissions and stored data stay constrained after restart.\n- **Test method:** Real Electron window creation and sandbox inheritance behavior tests on Windows10/11 and macOS, plus normal external-link/mini-window workflows and runtime-version readback."
+    },
+    {
+      "id": "QA-013.3",
+      "parentId": "QA-013",
+      "family": "QA",
+      "heading": "[QA-013.3] Electron alert6 — custom file/HTTP protocol cross-origin read boundaries",
+      "document": "13-integration-reconciliation-backlog.md",
+      "Requirements": "Inventory file/HTTP/custom scheme registrations, CORS privileges and application asset/resource handlers. Upgrade compatible Electron and preserve explicit authorized origins/path containment. Determine actual application exposure from registered protocols and request paths.",
+      "DoD": "Unauthorized origins cannot read protected protocol/resource data; legitimate document/media/navigation paths work in the rebuilt installed A/B artifacts. Runtime version and handler policy satisfy the advisory disposition.",
+      "Full functional verification": "Exercise controlled same-origin and denied-origin requests against real registered handlers; include private workspace assets, traversal/malformed inputs and normal rich document rendering.",
+      "Test method": "Installed Electron protocol/CORS negative and allowed controls, resource path-containment tests and full document/media UI smoke with exact runtime/artifact identity.",
+      "progress": {
+        "disposition": "newly-discovered-completion-or-qualification-work",
+        "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+        "integrationStatus": "Open; source existence does not close acceptance.",
+        "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+        "sourceChanges": [],
+        "codeReferences": [
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+        ],
+        "remainingWork": [
+          "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+        ],
+        "discoveryCandidates": []
+      },
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "description": "**Code reference:** [root Electron dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1). Advisory: [GHSA-j84w-jfhq-vhvj](https://github.com/advisories/GHSA-j84w-jfhq-vhvj), CVE-2026-102675; captured first patched version41.10.6.\n\n- **Requirements:** Inventory file/HTTP/custom scheme registrations, CORS privileges and application asset/resource handlers. Upgrade compatible Electron and preserve explicit authorized origins/path containment. Determine actual application exposure from registered protocols and request paths.\n- **DoD:** Unauthorized origins cannot read protected protocol/resource data; legitimate document/media/navigation paths work in the rebuilt installed A/B artifacts. Runtime version and handler policy satisfy the advisory disposition.\n- **Full functional verification:** Exercise controlled same-origin and denied-origin requests against real registered handlers; include private workspace assets, traversal/malformed inputs and normal rich document rendering.\n- **Test method:** Installed Electron protocol/CORS negative and allowed controls, resource path-containment tests and full document/media UI smoke with exact runtime/artifact identity."
+    },
+    {
+      "id": "QA-013.4",
+      "parentId": "QA-013",
+      "family": "QA",
+      "heading": "[QA-013.4] Electron alert5 — webview worker Node integration restrictions",
+      "document": "13-integration-reconciliation-backlog.md",
+      "Requirements": "Inventory webview/guest configuration and worker creation; enforce host policy for Node integration and untrusted content. Update Electron compatibly or verify affected embedding is absent; do not rely on a label or static preference assertion alone.",
+      "DoD": "Guest workers cannot gain Node capabilities outside the embedder contract, and legitimate Browser/external content workflows retain supported behavior on actual A/B builds.",
+      "Full functional verification": "Load controlled guest content and workers under every supported guest permission mode, verify allowed/denied runtime capabilities and navigate/recreate guests to confirm policy persistence.",
+      "Test method": "Actual installed webview/worker capability tests and Browser workflow regressions; read back runtime versions and effective guest preferences, including negative controls.",
+      "progress": {
+        "disposition": "newly-discovered-completion-or-qualification-work",
+        "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+        "integrationStatus": "Open; source existence does not close acceptance.",
+        "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+        "sourceChanges": [],
+        "codeReferences": [
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+        ],
+        "remainingWork": [
+          "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+        ],
+        "discoveryCandidates": []
+      },
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "description": "**Code reference:** [root Electron dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1). Advisory: [GHSA-9qh4-3jw8-366w](https://github.com/advisories/GHSA-9qh4-3jw8-366w), CVE-2026-102676; captured first patched version41.10.6.\n\n- **Requirements:** Inventory webview/guest configuration and worker creation; enforce host policy for Node integration and untrusted content. Update Electron compatibly or verify affected embedding is absent; do not rely on a label or static preference assertion alone.\n- **DoD:** Guest workers cannot gain Node capabilities outside the embedder contract, and legitimate Browser/external content workflows retain supported behavior on actual A/B builds.\n- **Full functional verification:** Load controlled guest content and workers under every supported guest permission mode, verify allowed/denied runtime capabilities and navigate/recreate guests to confirm policy persistence.\n- **Test method:** Actual installed webview/worker capability tests and Browser workflow regressions; read back runtime versions and effective guest preferences, including negative controls."
+    },
+    {
+      "id": "QA-013.5",
+      "parentId": "QA-013",
+      "family": "QA",
+      "heading": "[QA-013.5] Sharp alert4 — hosted/server image-processing native dependency closure",
+      "document": "13-integration-reconciliation-backlog.md",
+      "Requirements": "Update the server image-processing dependency and native optional libraries consistently; identify whether deployed builds include the affected libheif paths and supported formats. Retain upload limits, resource controls, format validation and isolation on hosted C/server A/B.",
+      "DoD": "Built/deployed server artifacts contain a verified patched native dependency set or a supported, enforced non-applicability boundary; advertised media processing remains functional without unbounded resource or crash behavior.",
+      "Full functional verification": "Process controlled valid, malformed, oversized and supported HEIF/image fixtures through actual authenticated upload/processing paths; inspect native version metadata and server error/recovery behavior.",
+      "Test method": "Frozen-lock/native dependency inventory, Sharp runtime version readback, image-processing fixtures and authenticated server negative controls on supported runtime/OS/container builds.",
+      "progress": {
+        "disposition": "newly-discovered-completion-or-qualification-work",
+        "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+        "integrationStatus": "Open; source existence does not close acceptance.",
+        "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+        "sourceChanges": [],
+        "codeReferences": [
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1"
+        ],
+        "remainingWork": [
+          "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+        ],
+        "discoveryCandidates": []
+      },
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1"
+      ],
+      "description": "**Code reference:** [server-core Sharp dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/packages/server-core/package.json#L1). Advisory: [GHSA-rgj7-g3m4-5g8c](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c); captured first patched Sharp version0.35.4, involving libheif advisories.\n\n- **Requirements:** Update the server image-processing dependency and native optional libraries consistently; identify whether deployed builds include the affected libheif paths and supported formats. Retain upload limits, resource controls, format validation and isolation on hosted C/server A/B.\n- **DoD:** Built/deployed server artifacts contain a verified patched native dependency set or a supported, enforced non-applicability boundary; advertised media processing remains functional without unbounded resource or crash behavior.\n- **Full functional verification:** Process controlled valid, malformed, oversized and supported HEIF/image fixtures through actual authenticated upload/processing paths; inspect native version metadata and server error/recovery behavior.\n- **Test method:** Frozen-lock/native dependency inventory, Sharp runtime version readback, image-processing fixtures and authenticated server negative controls on supported runtime/OS/container builds."
+    },
+    {
+      "id": "QA-013.6",
+      "parentId": "QA-013",
+      "family": "QA",
+      "heading": "[QA-013.6] Sharp alert3 — packaged desktop image-processing native dependency closure",
+      "document": "13-integration-reconciliation-backlog.md",
+      "Requirements": "Update desktop Sharp and all optional platform-native pins together, stage the correct Windows/macOS architectures and verify ASAR/unpacked native library loading. An updated server dependency does not resolve the desktop alert automatically.",
+      "DoD": "Installed Windows10/11 and Intel/AppleSilicon macOS artifacts load the patched compatible native image libraries and have no stale vulnerable copy in bundled resources. Desktop media workflows and memory/resource controls pass.",
+      "Full functional verification": "Import/display/export supported image formats from an installed artifact on each declared architecture; exercise malformed/oversized fixtures, restart and inspect actual loaded Sharp/libvips/native metadata.",
+      "Test method": "Artifact SBOM/archive inspection, native-load/version smoke, controlled image fixtures and installed full attachment/preview/export workflows; re-read the desktop dependency alert after source/lock update.",
+      "progress": {
+        "disposition": "newly-discovered-completion-or-qualification-work",
+        "evidenceLevel": "pinned-source-and-source-review; full acceptance open",
+        "integrationStatus": "Open; source existence does not close acceptance.",
+        "fullTargetVerification": "Execute the task-specific A/B/C requirements, DoD and full verification/test method.",
+        "sourceChanges": [],
+        "codeReferences": [
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1",
+          "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+        ],
+        "remainingWork": [
+          "Complete the explicit task description and record an integrated candidate plus target-specific acceptance evidence."
+        ],
+        "discoveryCandidates": []
+      },
+      "codeReferences": [
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1",
+        "https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1"
+      ],
+      "description": "**Code references:** [desktop Sharp dependency](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/apps/electron/package.json#L1); [root optional native pins](https://github.com/rox-one/rox-one/blob/de805e0dc7103b49d4c7f0a092d88c8b4222367a/package.json#L1). Advisory: [GHSA-rgj7-g3m4-5g8c](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c); same advisory as server alert4, distinct packaged dependency ownership.\n\n- **Requirements:** Update desktop Sharp and all optional platform-native pins together, stage the correct Windows/macOS architectures and verify ASAR/unpacked native library loading. An updated server dependency does not resolve the desktop alert automatically.\n- **DoD:** Installed Windows10/11 and Intel/AppleSilicon macOS artifacts load the patched compatible native image libraries and have no stale vulnerable copy in bundled resources. Desktop media workflows and memory/resource controls pass.\n- **Full functional verification:** Import/display/export supported image formats from an installed artifact on each declared architecture; exercise malformed/oversized fixtures, restart and inspect actual loaded Sharp/libvips/native metadata.\n- **Test method:** Artifact SBOM/archive inspection, native-load/version smoke, controlled image fixtures and installed full attachment/preview/export workflows; re-read the desktop dependency alert after source/lock update."
     }
   ]
 }
