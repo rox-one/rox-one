@@ -9,20 +9,20 @@
     "deliveredRevision": null,
     "codeCurrent": {
       "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-      "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
-      "observedAt": "2026-10-02T16:59:30.702Z",
-      "sourceCount": 4876,
-      "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+      "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "observedAt": "2026-10-02T18:54:22.566Z",
+      "sourceCount": 4877,
+      "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
       "coverage": "All Git-listed nonignored apps/packages/scripts files and root lock/package/tsconfig, excluding documented generated test fixture and machine cache; docs excluded.",
       "excluded": [
         "packages/shared/src/agent/__tests__/__tmp_build_call_llm__/empty.ts",
         "apps/electron/.impeccable/hook.cache.json"
       ],
       "committedSourceMatchesTestedManifest": true,
-      "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74"
+      "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903"
     },
-    "publishedRevision": "db8413d0b25c6795297480e994fc872991414f74",
-    "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "publishedRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "latestPublishedSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
     "historicalNamedCandidateSnapshot": {
       "status": "UNCOMMITTED_WORKING_UNION",
       "baseRevision": "a2a91649a8b7b81e7ce49f59b1d4b7d4ea9a01e2",
@@ -3108,21 +3108,21 @@
   ],
   "gitPublication": {
     "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-    "sourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
-    "revision": "db8413d0b25c6795297480e994fc872991414f74",
+    "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
     "branch": "feat/september-program-20260930",
     "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
     "isDraft": true,
-    "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
-    "pullRequestHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
-    "observedAt": "2026-10-02T16:59:30.702Z",
-    "sourceCount": 4876,
-    "sourceManifestSha256": "560ad52615393ae220a987088eeb4d3bd4879aa881a92c93871db0ae5904c85e",
+    "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "pullRequestHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "observedAt": "2026-10-02T18:54:22.566Z",
+    "sourceCount": 4877,
+    "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
     "committedSourceMatchesTestedManifest": true,
-    "wholeRepositoryGateSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+    "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
     "fullProductDelivery": "PENDING",
     "originalCriteriaAcceptedByPublication": 0,
-    "bindingLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending."
+    "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
   },
   "nativeCreationFollowup": {
     "schemaVersion": 1,
@@ -6111,9 +6111,22 @@
     "id": "PROJECTS-GENERATION-20261002",
     "observedAt": "2026-10-02T18:52:45.935Z",
     "publication": {
-      "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+      "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+      "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "branch": "feat/september-program-20260930",
+      "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+      "isDraft": true,
+      "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "pullRequestHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "observedAt": "2026-10-02T18:54:22.566Z",
+      "sourceCount": 4877,
+      "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
+      "committedSourceMatchesTestedManifest": true,
+      "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
       "fullProductDelivery": "PENDING",
-      "originalCriteriaAcceptedByPublication": 0
+      "originalCriteriaAcceptedByPublication": 0,
+      "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
     },
     "sourceBinding": {
       "sourceCount": 4877,
@@ -6124,7 +6137,9 @@
         "apps/electron/.impeccable/hook.cache.json"
       ],
       "beforeAfterIdentical": true,
-      "committedSourceMatchesTestedManifest": false
+      "committedSourceMatchesTestedManifest": true,
+      "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+      "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903"
     },
     "sources": [
       {

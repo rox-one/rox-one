@@ -1,12 +1,12 @@
 {
   "status": "SOURCE_PUBLISHED_FOR_REVIEW",
-  "revision": "db8413d0b25c6795297480e994fc872991414f74",
-  "gitTree": "e4a2d202c5b9b3b5f9f30b941559f2e47b8196ab",
+  "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+  "gitTree": "281096e2c5158ea8dee9f070c01b32d66380e380",
   "branch": "feat/september-program-20260930",
   "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
   "isDraft": true,
-  "remoteHeadReadback": "db8413d0b25c6795297480e994fc872991414f74",
-  "observedAt": "2026-10-02T16:59:30.702Z",
+  "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+  "observedAt": "2026-10-02T18:54:22.566Z",
   "originalCandidateSourceManifestSha256": "9f2f2c953155aa7350454a561f88c1564f465a69ef61165f668141a7b6ee28c0",
   "originalNamedSourcesExactMatchCount": 75,
   "namedSourceCount": 76,
@@ -334,7 +334,7 @@
         "./packages/shared"
       ],
       "exitCode": 0,
-      "seconds": 86.462,
+      "seconds": 90.636,
       "tests": {
         "pass": 4951,
         "skip": 12,
@@ -342,7 +342,7 @@
         "assertions": 21752,
         "files": 478
       },
-      "logSha256": "8f4c5df4dc80a3372dd1d6fb7197bc3d89c81a6977fd53ec32e45152ba31a419"
+      "logSha256": "d54bcb66a36993c797c5f5a8fcbbcd06813511bde57db742201625e77e8f7648"
     },
     {
       "name": "server",
@@ -352,7 +352,7 @@
         "./packages/server-core"
       ],
       "exitCode": 0,
-      "seconds": 24.358,
+      "seconds": 24.626,
       "tests": {
         "pass": 1511,
         "skip": 8,
@@ -360,7 +360,7 @@
         "assertions": 6155,
         "files": 240
       },
-      "logSha256": "a7e69f1d9ace8c3aec37e5d1a9c9a1e47a01af1368cbe12cea0cc33fb1bb5670"
+      "logSha256": "7f91f30d012a9b649e7ab98e963f8c42e7beddb8dd931167190e67d06fcb0809"
     },
     {
       "name": "electron-ui-core",
@@ -372,15 +372,15 @@
         "./packages/core"
       ],
       "exitCode": 0,
-      "seconds": 24.716,
+      "seconds": 24.311,
       "tests": {
-        "pass": 4205,
+        "pass": 4219,
         "skip": 0,
         "fail": 0,
-        "assertions": 20047,
-        "files": 610
+        "assertions": 20079,
+        "files": 611
       },
-      "logSha256": "988aab3c5123aae510798cd1b612e70b4558f8532abee170f9997f110eb7d4e6"
+      "logSha256": "0da0bd27f2ce5648d1314d3dbce91f2bb57700398911d7a5403886f5362af8fc"
     },
     {
       "name": "validate",
@@ -390,9 +390,9 @@
         "validate:ci"
       ],
       "exitCode": 0,
-      "seconds": 89.118,
+      "seconds": 91.666,
       "tests": null,
-      "logSha256": "55b649cbe97d5c0944c865fec6ca6644a2d71af9da857bd7a699e3a62df534a1"
+      "logSha256": "5370f42747dc3681abbd6432612438b90dbedb80af5bb516f85d4af35b44b877"
     },
     {
       "name": "build",
@@ -402,12 +402,12 @@
         "electron:build"
       ],
       "exitCode": 0,
-      "seconds": 49.849,
+      "seconds": 44.333,
       "tests": null,
-      "logSha256": "5271003228e0ae60c3c3ede77d2cacc49cc4125a93f7978e1b9629b5c1038173"
+      "logSha256": "8c75da96549c85bd0f7d5a6017b04941a8445ad35f6c7516c699bc1d91ebe52d"
     }
   ],
-  "validationLimit": "All4876 Git blobs exactly match frozen source used by complete Shared/server/Electron unions, exact local CI, standard Electron build and fresh actual portable Electron bridge commands. Source-only manifest excludes docs and two documented generated overlays. Subsequent evidence-only commits have a different head. Full native product UI/OS custody, complete localization/UI/platform/provider/remote CI and unfinished hosted-alert review remain pending.",
+  "validationLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending.",
   "fullProductDelivery": "PENDING",
   "mergeAcceptance": "PENDING",
   "originalCriteriaAcceptedByPublication": 0,
@@ -680,7 +680,7 @@
       "executedSteps": 0
     }
   },
-  "latestPublishedSourceRevision": "db8413d0b25c6795297480e994fc872991414f74",
+  "latestPublishedSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
   "nativeProductEvidencePublication": {
     "status": "EVIDENCE_PUBLISHED_FOR_REVIEW",
     "evidenceRevision": "050230079351d81d2fe6a3d51f3ba0214934826c",
@@ -701,8 +701,21 @@
     "limits": "Visible Note create/edit/reload/normal restart plus independent canonical/journal/ACK metadata only; receipt bodies/OS custody, Tasks persistence/click, crash/offline/platform/full original tasks remain pending. Later evidence-binding commit has a different head."
   },
   "projectsGenerationPublication": {
-    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "pullRequestHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "observedAt": "2026-10-02T18:54:22.566Z",
+    "sourceCount": 4877,
+    "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
     "fullProductDelivery": "PENDING",
-    "originalCriteriaAcceptedByPublication": 0
+    "originalCriteriaAcceptedByPublication": 0,
+    "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
   }
 }

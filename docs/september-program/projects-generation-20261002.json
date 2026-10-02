@@ -3,9 +3,22 @@
   "id": "PROJECTS-GENERATION-20261002",
   "observedAt": "2026-10-02T18:52:45.935Z",
   "publication": {
-    "status": "REVIEWED_VERIFIED_UNCOMMITTED_CANDIDATE",
+    "status": "SOURCE_PUBLISHED_FOR_REVIEW",
+    "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "revision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "branch": "feat/september-program-20260930",
+    "pullRequest": "https://github.com/rox-one/rox-one/pull/1293",
+    "isDraft": true,
+    "remoteHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "pullRequestHeadReadback": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "observedAt": "2026-10-02T18:54:22.566Z",
+    "sourceCount": 4877,
+    "sourceManifestSha256": "1b99c05abd3b775b2be436d4dee4e5e0e131e179a75d5960b13806e78b1a9412",
+    "committedSourceMatchesTestedManifest": true,
+    "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
     "fullProductDelivery": "PENDING",
-    "originalCriteriaAcceptedByPublication": 0
+    "originalCriteriaAcceptedByPublication": 0,
+    "bindingLimit": "All4877 committed source blobs match the frozen source used by five complete serial local gates. Independent mounted ReactDOM Chromium tests pass with synthetic IPC; actual native workspace-switch/RPC/storage acceptance remains pending. Prior native Note and bridge proofs retain their original db841 binding; no rerun is claimed. Remote CI, unfinished hosted-alert review, provider and full platform/acceptance matrices remain pending."
   },
   "sourceBinding": {
     "sourceCount": 4877,
@@ -16,7 +29,9 @@
       "apps/electron/.impeccable/hook.cache.json"
     ],
     "beforeAfterIdentical": true,
-    "committedSourceMatchesTestedManifest": false
+    "committedSourceMatchesTestedManifest": true,
+    "sourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903",
+    "wholeRepositoryGateSourceRevision": "1c67730a0b3839963f0593b2d78516bcb7a5c903"
   },
   "sources": [
     {
