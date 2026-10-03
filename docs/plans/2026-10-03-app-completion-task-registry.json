@@ -21,8 +21,8 @@
         "exact_login_error",
         "rox_cloud_approval"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "deepgram_transcription",
@@ -46,13 +46,13 @@
         "production_all_users",
         "provider_live"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "native_voice_access",
       "goal": "Пользовательская изоляция голосовых RPC и доступ нативных пользователей",
-      "status": "backend_real_ws_and_cancel_dom_verified_final_app_pending",
+      "status": "backend_real_ws_and_cancel_dom_verified_local_complete",
       "evidence": "Backend transcription/ownership evidence plus latest 12 production Chromium dictation cases / 45 assertions: four rejected CANCEL sites preserve local cleanup, original startup failure, draft and retry with no page errors. The 12 cases supersede the earlier eight-case dictation run. Provider replies and microphone/recorder remain synthetic; final affected app/build gate pending.",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
@@ -68,13 +68,13 @@
         "voice_dom"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "native_runtime_transport",
       "goal": "Нативные сессии, события, права и запуск приложения под реальным пользователем",
-      "status": "implementation_focused_verified_final_app_pending",
+      "status": "implementation_native_and_focused_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "original_model_defaults",
@@ -98,10 +98,11 @@
         "integrated_meetings_browser",
         "integrated_metadata",
         "integrated_native_core_intermediate",
-        "integrated_native_postfix_partial",
+        "integrated_native_final",
         "integrated_optional_native_effects",
         "integrated_post_startup_gates",
         "integrated_pre_app_gates",
+        "integrated_publication_ci",
         "locale_tests",
         "model_caller",
         "native_bootstrap",
@@ -142,9 +143,9 @@
         "voice_cancel_current"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "All assigned native authority/custody/source/sharing/Notes/startup seams are implemented and focused-verified. Four task conversions pass 19 production Chromium cases / 65 assertions; four voice CANCEL sites pass 12 / 45; native Notes XP authoritative gate passes 37 / 657. Source is frozen; root affected types/main/UI, full native replay and final reviews remain pending.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "All assigned native authority/custody/source/sharing/Notes/startup seams are implemented and focused-verified. Four task conversions pass 19 production Chromium cases / 65 assertions; four voice CANCEL sites pass 12 / 45; native Notes XP authoritative gate passes 37 / 657. Source is frozen; root affected types/builds and all eight native scenarios pass; final published identity is in external reviews/PR records.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "meetings_central_transcription",
@@ -165,14 +166,14 @@
         "production_all_users",
         "provider_live"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
       "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "message_actions_fork",
       "goal": "Лайки своих сообщений, слушать, форк и ветки",
-      "status": "implementation_verified_final_app_pending",
+      "status": "implementation_verified_local_complete",
       "evidence": "Focused action/reaction/fork evidence plus real OMP SDK offline proof; actual native message-button branch creates a durable child from SDK-owned anchors. Own-user like/reload/remove passed in the same partial core run. Its 16 startup/Sessions rejections keep overall app acceptance open.",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
@@ -187,8 +188,8 @@
         "omp_sdk_offline"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "default_service_connections",
@@ -208,14 +209,14 @@
         "production_all_users",
         "provider_live"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "memory_readability",
       "goal": "Читаемая память",
-      "status": "implementation_verified_final_app_pending",
-      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
+      "status": "implementation_focused_verified_local_complete",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. This surface is outside the eight-script installed native acceptance scope; its focused production component/native WS evidence remains the basis of verification.",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "memory"
@@ -224,13 +225,13 @@
         "memory"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "widget_design_presets",
       "goal": "Пресеты, цвет, насыщенность и контраст виджетов",
-      "status": "implementation_verified_final_app_pending",
+      "status": "implementation_verified_local_complete",
       "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
@@ -241,8 +242,8 @@
         "widget_unit"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "skill_installation",
@@ -262,14 +263,14 @@
       "externalBlockers": [
         "native_skill_links"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
       "evidence": "Fresh merged skill/marketplace/native-auth gate 80/2360. Stable aliases/app ownership/foreign preservation and rollback proof survive merge; physical Windows/macOS links remain separate. 330 bundled catalogue entries do not prove live external provider authorization.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "meeting_extraction_editing",
       "goal": "Автоизвлечение решений/задач и ручное редактирование",
-      "status": "implementation_focused_verified_final_app_pending",
+      "status": "implementation_focused_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "meeting_extraction"
@@ -281,9 +282,9 @@
         "integrated_frontend_chromium"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. This surface is outside the eight-script installed native acceptance scope; its focused production component/native WS evidence remains the basis of verification.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "radar_workflow",
@@ -303,14 +304,14 @@
       "externalBlockers": [
         "provider_live"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "quest_gamification",
       "goal": "Карточки, прогресс и соревновательные квесты",
-      "status": "implementation_verified_final_app_pending",
+      "status": "implementation_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "quests"
@@ -322,14 +323,14 @@
         "quests"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "Native task earned receipt/deduplication and Notes post-canonical first_note award verified. Authoritative root combined gate 37/657 across four files includes 28 inner actual WS checks and overlaps older NativeReplica runs. Focused 1/3 wrapper is part of this scope, not additive. Award/retry/restart stays once-only, actor/caller scoped, receipt unchanged; denied/read/plan/assets/stale authority produce no reward. Final affected build/app pending.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "Native task earned receipt/deduplication and Notes post-canonical first_note award verified. Authoritative root combined gate 37/657 across four files includes 28 inner actual WS checks and overlaps older NativeReplica runs. Focused 1/3 wrapper is part of this scope, not additive. Award/retry/restart stays once-only, actor/caller scoped, receipt unchanged; denied/read/plan/assets/stale authority produce no reward. Affected integrated types/builds pass; native Notes replay preserves already-earned XP30. Integrated Notes profile already earned first_note (XP30); five native Notes checks verify identical receipt/XP30 replay. Fresh first-note 15-to-30 award remains original corrected-listener UI plus actual fresh-actor WS evidence.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "security_runtime",
       "goal": "Доступность рантайма в Безопасности",
-      "status": "implementation_verified_final_app_pending",
+      "status": "implementation_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "security"
@@ -344,14 +345,14 @@
         "startup_optional_effects"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
       "evidence": "Rox Runtime remains independent of optional OpenClaw. Earlier App debug/update six-case catch proof plus final desktop/mobile debug/theme eight-case Chromium proof prevent optional denied probes from producing page errors. SessionTable initial optional preference denial is quiet; explicit writes retain normal error handling. Final clean native rerun remains pending.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "inbox_focus",
       "goal": "Входящие, переключатели и спокойное пустое состояние",
-      "status": "implementation_focused_verified_final_app_pending",
+      "status": "implementation_focused_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "inbox"
@@ -365,14 +366,14 @@
         "native_inbox_producer_final"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. This surface is outside the eight-script installed native acceptance scope; its focused production component/native WS evidence remains the basis of verification.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "localization_completion",
       "goal": "Переводы новых и ранее незавершённых интерфейсов",
-      "status": "verified_current_locale_gate_pass_final_app_pending",
+      "status": "verified_integrated_locale_gate_pass_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "final_integration"
@@ -388,14 +389,14 @@
         "sharing_busy_chromium"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
       "evidence": "Focused evidence established; see acceptance rows and verification index for exact run scope and remaining acceptance.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "original_scope_acceptance",
       "goal": "Проверка полного исходного запроса в приложении",
-      "status": "implementation_verified_final_app_pending",
+      "status": "implementation_verified_local_complete_external_acceptance_blocked",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "original_shell",
@@ -427,10 +428,11 @@
         "integrated_meetings_browser",
         "integrated_metadata",
         "integrated_native_core_intermediate",
-        "integrated_native_postfix_partial",
+        "integrated_native_final",
         "integrated_optional_native_effects",
         "integrated_post_startup_gates",
         "integrated_pre_app_gates",
+        "integrated_publication_ci",
         "map",
         "model_caller",
         "native_bootstrap",
@@ -478,7 +480,7 @@
         "referenced_screenshot",
         "windows_macos_compositor"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
       "evidence": "All 9 original areas implemented and focused-verified; preserve per-area hardware/provider/screenshot gaps rather than marking the entire scope unimplemented.",
       "subtasks": [
         {
@@ -488,56 +490,56 @@
           "externalBlockers": [
             "windows_macos_compositor"
           ],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_navigation",
           "implementationStatus": "implemented",
           "verification": "focused_verified",
           "externalBlockers": [],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_top_navigation",
           "implementationStatus": "implemented",
           "verification": "focused_verified",
           "externalBlockers": [],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_profile",
           "implementationStatus": "implemented",
           "verification": "focused_verified",
           "externalBlockers": [],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_widget_sizes",
           "implementationStatus": "implemented",
           "verification": "focused_verified",
           "externalBlockers": [],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_map",
           "implementationStatus": "implemented",
           "verification": "focused_verified",
           "externalBlockers": [],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_model_defaults",
           "implementationStatus": "implemented",
           "verification": "focused_verified",
           "externalBlockers": [],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_session_actions",
           "implementationStatus": "implemented",
           "verification": "focused_verified",
           "externalBlockers": [],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         },
         {
           "id": "original_defaults_import",
@@ -547,15 +549,15 @@
             "referenced_screenshot",
             "os_credential_permission"
           ],
-          "finalAppAcceptance": "pending_integrated_installed_app"
+          "finalAppAcceptance": "scoped_native_gate_pass_or_focused_evidence_per_area_external_limits_retained"
         }
       ],
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "independent_review_completion",
       "goal": "Независимая проверка интеграции",
-      "status": "working_tree_reviewed_immutable_review_pending",
+      "status": "immutable_code_reviewed_local_gates_complete_published_revision_artifact_reference",
       "implementationStatus": "source_reviewed",
       "acceptanceRowIds": [
         "final_integration"
@@ -571,8 +573,10 @@
         "integrated_meetings_browser",
         "integrated_metadata",
         "integrated_native_core_intermediate",
+        "integrated_native_final",
         "integrated_post_startup_gates",
         "integrated_pre_app_gates",
+        "integrated_publication_ci",
         "locale_tests",
         "native_bootstrap",
         "native_transport",
@@ -584,14 +588,14 @@
         "startup_optional_effects"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "Reviewed source seams accepted; final immutable revision verification remains pending. Old ledger findings are historical until current root review is supplied.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "Independent code-commit Spec review has zero open source findings; Standards verifies frozen blobs with zero hard findings and one nonblocking duplicated-marker-restoration smell. All local gates and8native scenarios pass. External artifacts and PR records name final document-inclusive published revision.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "native_tasks_completion",
       "goal": "Нативные задачи: личное хранилище, подтверждённые ревизии и XP",
-      "status": "implementation_focused_verified_final_app_pending",
+      "status": "implementation_focused_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "original_navigation"
@@ -604,14 +608,14 @@
         "native_tasks_current"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "26 tests / 103 assertions across 5 files, including 13 renderer authority/cache/transition recovery cases and a real native WS fixture. Rejected-switch recovery, lost ACK, ABA, unmount and late success are verified; final rebuilt Tasks UI remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "26 tests / 103 assertions across 5 files, including 13 renderer authority/cache/transition recovery cases and a real native WS fixture. Rejected-switch recovery, lost ACK, ABA, unmount and late success are verified; integrated native Tasks create/edit/XP/reload passes. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. Integrated native Tasks now passes three create/edit/first_task-attribution/reload checks with zero page errors; local affected types/builds pass.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "native_feed_completion",
       "goal": "Нативная лента: источники, аннотации и безопасная загрузка",
-      "status": "implementation_focused_verified_final_app_pending",
+      "status": "implementation_focused_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "original_navigation"
@@ -623,14 +627,14 @@
       "externalBlockers": [
         "external_rss_x"
       ],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
       "evidence": "49 tests / 164 assertions across 6 files include 42 inner real native WS checks and 11 Chromium scenarios. Feed explicitly opts into exact native Notes CREATE recovery; the final 71-test creation gate covers its 11 browser cases plus native/outbox/compatibility paths. Active-view refresh and acknowledged Note/Task conversions verified. External RSS/X and final rebuilt Feed UI remain pending.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     },
     {
       "id": "native_inbox_completion",
       "goal": "Нативные входящие: доступные очереди, события и границы извлечения",
-      "status": "implementation_focused_verified_final_app_pending",
+      "status": "implementation_focused_verified_local_complete",
       "implementationStatus": "implemented",
       "acceptanceRowIds": [
         "inbox"
@@ -643,14 +647,14 @@
         "native_inbox_producer_final"
       ],
       "externalBlockers": [],
-      "finalIntegration": "pending_integrated_final_root_types_build_native_revision",
-      "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; final affected build/native review gates remain.",
-      "verificationScope": "Historical original checkpoint plus explicitly indexed integrated selected retests; no integrated installed-app inference"
+      "finalIntegration": "local_implementation_types_builds_and_scoped8scenario35check_native_gate_complete_external_limits_recorded",
+      "evidence": "Trusted native MemoryService and messaging producers are implemented and focused-verified: 119 tests / 253 assertions across 7 files includes 11 scoped Inbox WS cases, real queued-turn actor context and 15 registry/gateway/Commands/WS cases. Durable private pairing, restart/client-close, same-owner repair, forged/foreign/stale/disabled denial and one exact scoped PENDING_CHANGED event passed. 24 Chromium / 32 assertions verifies consumer identity behavior. External messaging adapters/model boundaries are synthetic; actual rebuilt app remains pending. Four task conversion components now await production confirmed persistence with stable retry ID/current identity fences: 19 Chromium cases / 65 assertions, zero page errors. Five production files are frozen; affected integrated types/builds and scoped native gate pass. This surface is outside the eight-script installed native acceptance scope; its focused production component/native WS evidence remains the basis of verification.",
+      "verificationScope": "Historical original checkpoint plus fresh integrated focused retests and8native_scenarios35checks. Native scope excludes Memory/extraction/Radar/Inbox and live external providers."
     }
   ],
   "schema": 2,
-  "updatedAt": "2026-10-03T15:24:32.930201+00:00",
-  "finalized": false,
+  "updatedAt": "2026-10-03T15:52:03.131094+00:00",
+  "finalized": true,
   "acceptanceDocument": "docs/plans/2026-10-03-app-completion-acceptance.md",
   "verificationDocument": "docs/plans/2026-10-03-app-completion-verification.md",
   "countingPolicy": "Separate overlapping runs are never summed into a unique-test total; nested fixture counts are identified.",
@@ -663,26 +667,27 @@
     "renderer": "pass_poststartup_final_frozen_source",
     "webuiBuild": "pass_poststartup_final_frozen_source",
     "localeParitySortingCoverage": "pass7853keys_all12_sorted7597literal5471unique",
-    "routing": "focused_integrated24_pass_1039assertions_final_root_gate_pending",
-    "actualNativeApp": "five_corrected_integrated_scripts22checks0errors_remaining_map_profile_widgets_pending",
-    "immutableReview": "pending_final_integrated_revision_and_SHA",
+    "routing": "focused_integrated24_pass_1039assertions",
+    "actualNativeApp": "pass8scenarios35checks0pageerrors_root_independently_read_all_final_JSON",
+    "immutableReview": "code_d45_reviewed_zero_open_hard_source_findings_final_doc_inclusive_published_commit_named_by_external_review_artifacts",
     "secretScan": "pass_final14802files13values0matches",
     "resourceCopy": "pass_canonical_resource_inclusive_electron_build",
     "assetValidation": "existing_script_target_absent_no_validation_pass_claim",
     "workerPages": "absent_in_current_OSS_export",
-    "productionFreeze": "281current_source_hashes_match_excluding3mutable_completion_docs"
+    "productionFreeze": "282_hashes_match_280_prior_paths_unchanged_release_note_and_project_test_only_updates_three_docs_excluded",
+    "remoteCI": "our_test_only_project_fixture_regression_fixed_focus4_16_exactstep226_1449_remote_rerun_pending_vercel_account_blocked"
   },
   "actualAppProgress": {
     "workspace": "/workspace/rox-one-integration",
-    "finalPass": false,
-    "integratedInstalledAppAcceptance": "pending_root_BUILD_READY",
+    "finalPass": true,
+    "integratedInstalledAppAcceptance": "pass8scenarios35checks_zero_page_errors",
     "originalOnlyNativeEvidence": {
       "baselineScripts": 8,
       "baselineChecks": 34,
       "affectedChecks": 12,
       "pageErrors": 0
     },
-    "runtimePolicy": "Runtime 0.11.8 merged source; installed integrated acceptance pending",
+    "runtimePolicy": "Runtime0.11.8 integrated source verified by selected coexistence tests and scoped actual native app gate; no live model/provider request",
     "offlineSDKBranch": "Genuine OMP18.4.12 proof belongs to original checkpoint; no inferred integrated installed-app pass",
     "integratedCoreIntermediate": {
       "functionalChecks": 7,
@@ -695,23 +700,34 @@
     "readyCheckpoint": {
       "backendSolePort9110Owner": 157262,
       "electronProcess": 157331,
-      "sourceFreezeMatchedPaths": 281,
-      "integratedEightScripts": "running_exclusive_native_acceptance",
-      "overallPass": false
+      "sourceFreezeMatchedPaths": 282,
+      "integratedEightScripts": "complete_8scenarios35checks0pageerrors",
+      "overallPass": true
     },
-    "integratedPostfixPartial": {
-      "scriptsPassed": 5,
-      "checks": 22,
+    "integratedFinal": {
+      "scriptsPassed": 8,
+      "checks": 35,
       "pageErrors": 0,
       "surfaces": {
         "core": 7,
         "notes": 5,
         "tasks": 3,
         "overview": 2,
-        "sharing": 5
+        "sharing": 5,
+        "map": 6,
+        "profile": 3,
+        "widgets": 4
       },
-      "remaining": "map/profile/widgets",
-      "mapPrecondition": "Crowded visible pane correctly refused output with localized no-space/zoom-pan toast; owned drafts cleanup and real Fit/zoom-out rerun pending; no production change"
+      "remaining": null,
+      "mapPrecondition": "composed_physical_phases_plus_continuation_resize_camera_pass_existing440x280_default_if_optional_size_absent_stored709x485_reload_edges_colors_camera_cleanup_verified_no_invented_initial_bbox",
+      "notesXpScope": "already_earned_first_note_XP30_create_and_replay_preserve_receipt_and_XP30_not_a_new_award",
+      "aggregate": "/workspace/scratch/rox-ui-review-2026-10-03/integrated-native-eight-scenario-final.json",
+      "productionHashDrift": {
+        "files": 2382,
+        "changed": 0,
+        "artifact": "/workspace/scratch/rox-ui-review-2026-10-03/integrated-native-sourcehashes-delta.json"
+      },
+      "provenance": "verified_listener157262_Electron157331_integration_tree_independent_all8_JSON_read"
     }
   },
   "sourceSecretScan": {
@@ -778,7 +794,7 @@
       "Windows/macOS compositor/OS consent",
       "Exact unknown supplied login error and absent screenshot"
     ],
-    "finalOutcome": "pending_integrated_installed_app_gate_original8script34_and_affected12_are_historical_only"
+    "finalOutcome": "pass8_integrated_scenarios35checks0pageerrors_original8script34_and_affected12_historical"
   },
   "target": {
     "workspace": "/workspace/rox-one-integration",
@@ -790,13 +806,19 @@
       "status": "merged_before_follow_up",
       "mergeReportedAt": "2026-10-03T12:52:10Z"
     },
-    "followUpPullRequest": null,
+    "followUpPullRequest": {
+      "number": 1435,
+      "url": "https://github.com/rox-one/rox-one/pull/1435",
+      "status": "draft_published",
+      "codeCommit": "d45cfc2439650ffd4afb854ced4cd9710b22a9cf"
+    },
     "immutableRevision": "Final published commit is recorded in external reviews and PR commit records; no self-referential docs SHA",
-    "integrationState": "semantic_conflict_merge_complete_final_types_build_native_review_pending",
+    "integrationState": "local_implementation_types_builds_native_acceptance_complete_external_limits_remain",
     "implementationBase": "234827b0f6ee47d5813291c7c6ae2b36b20f76da",
-    "sourceFreezeManifest": "/tmp/rox-completion-integrated-source-freeze.json",
-    "sourceFreezePaths": 281,
-    "mutableDocsExcluded": 3
+    "sourceFreezeManifest": "/tmp/rox-completion-integrated-final-source-freeze.json",
+    "sourceFreezePaths": 282,
+    "mutableDocsExcluded": 3,
+    "testReleaseCommit": "9e28eb5b3ad6873ff7097c728a032cee1f1b59a1"
   },
   "historicalOriginalCheckpoint": {
     "workspace": "/workspace/rox-one",
@@ -994,7 +1016,7 @@
       "routingAssertions": 1039,
       "pureMeetingBrowserModules": 10,
       "handoff": "/tmp/rox-integration-metadata-handoff.json",
-      "scope": "Canonical @rox imports, union translations/routing and pure browser meeting entry; final consolidated locale gate pending root"
+      "scope": "Canonical @rox imports, union translations/routing and pure browser meeting entry; final consolidated locale gate passes"
     },
     "countingPolicy": "These selected integrated groups are not added to historical runs or inner WS scenario counts.",
     "criticalRegressions": {
@@ -1052,6 +1074,39 @@
   "externalPublishedCommitReviews": {
     "spec": "/tmp/rox-completion-final-spec-review.json",
     "standards": "/tmp/rox-completion-final-standards-review.json",
-    "authority": "Artifacts report against the final published commit; earlier draft/working-tree artifacts do not substitute. Publication and final SHA not yet available."
+    "authority": "Immutable implementation code d45 independently reviewed with no open hard/source findings. External artifacts and PR commit records name the final document-inclusive published commit; documents do not embed their own self-referential SHA."
+  },
+  "publicationCI": {
+    "checkpoint": "/tmp/rox-completion-pr1435-ci-checkpoint.json",
+    "codeCommit": "d45cfc2439650ffd4afb854ced4cd9710b22a9cf",
+    "durableRuntimeUbuntu": "own_missed_test_dependency_and_GET_registration_fixture_fixed_locally",
+    "vercel": "account_access_blocked",
+    "otherChecks": "queued_running_or_completed_as_snapshot",
+    "limits": "Local passing gates do not establish green remote CI, live hosting or production deployment.",
+    "diagnosis": "/tmp/rox-pr1435-durable-runtime-diagnosis.json",
+    "redReproduction": {
+      "passed": 0,
+      "failed": 4
+    },
+    "correction": "test_only_actual_helper_namespace_GET_read_GET_ONE_undefined_boundary_preserved",
+    "remoteRerun": "unconfirmed_latest_pushed9e28_checkpoint",
+    "fixedFocused": {
+      "tests": 4,
+      "failed": 0,
+      "assertions": 16
+    },
+    "exactCIStep": {
+      "tests": 226,
+      "failed": 0,
+      "assertions": 1449,
+      "files": 26,
+      "workflowTargets": 19,
+      "log": "/tmp/rox-pr1435-durable-exact-step-final.log"
+    },
+    "handoff": "/tmp/rox-pr1435-durable-runtime-handoff.json",
+    "matchingFixtureSHA256": "45dd3073ca64ae3f253b32273a9f54ed65d70b6e29d53ecf21ff760e0c6f12f5",
+    "baselineScope": "isolated_upstream_projects_modules_with_current_dependencies4tests15assert_not_full_main_suite",
+    "testReleaseCommit": "9e28eb5b3ad6873ff7097c728a032cee1f1b59a1",
+    "latestCheckpoint": "/tmp/rox-completion-pr1435-ci-latest.json"
   }
 }
