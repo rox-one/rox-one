@@ -1,3 +1,4 @@
+import { getRoxAccountAuthority } from '../auth/rox-account-authority.ts';
 /**
  * OmpAgent — craft-agents backend driving the OMP CLI (`omp --mode rpc`).
  *
@@ -447,8 +448,18 @@ export class OmpAgent extends BaseAgent {
   private branchHandshakeApplied = false;
   private historyCleared = false;
 
+  private accountUnsubscribe?: () => void;
+  private oneShotChildren = new Set<ChildProcess>();
+
   constructor(config: BackendConfig) {
     super(config, config.model || '');
+    if (config.roxExecutionContext) {
+      this.accountUnsubscribe = getRoxAccountAuthority().onInvalidated(caller => {
+        if (caller.issuer !== config.roxExecutionContext!.caller.issuer || caller.subject !== config.roxExecutionContext!.caller.subject) return;
+        this.killSubprocessSync();
+        for (const child of this.oneShotChildren) child.kill('SIGKILL');
+      });
+    }
 
     // OMP branching (G3): supported via transcript entry anchors. The live
     // gate is the supportsBranching getter below — a branch needs at least
@@ -770,13 +781,15 @@ export class OmpAgent extends BaseAgent {
       ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
+    const accountCredential = usesPublicRoxCatalog ? await this.publicAccountCredential(true) : null;
+    if (accountCredential) { env.ROX_API_KEY = accountCredential.apiKey; env.ROX_BASE_URL = accountCredential.baseUrl; }
     // Public Rox routes have their own canonical catalog. User/named OMP
     // profiles remain untouched, and inherited env overrides cannot redirect
     // this child to a different profile or provider.
     const runtimeConfig = prepareOmpRoxRuntimeConfig({
       runtimeRoot: join(resolveConfigDir(), 'runtime', 'omp'),
       apiKey: env.ROX_API_KEY,
-      baseUrl: getLlmConnection(connectionSlug)?.baseUrl,
+      baseUrl: accountCredential?.baseUrl ?? getLlmConnection(connectionSlug)?.baseUrl,
       publicRoxCatalog: usesPublicRoxCatalog,
       sourceAgentDir: env.PI_CODING_AGENT_DIR,
       configFiles: env.PI_CONFIG_FILES,
@@ -788,6 +801,7 @@ export class OmpAgent extends BaseAgent {
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       throw error;
     }
+    if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
     env.OMP_APP_NAME = 'rox';
     let child: ChildProcess;
     try {
@@ -2028,6 +2042,7 @@ export class OmpAgent extends BaseAgent {
     });
 
     try {
+      if (isRoxPublicModelId(this._model ?? '')) await this.publicAccountCredential(true);
       await this.ensureSubprocess();
 
       await this.sendCommand('set_thinking_level', { level: 'max' });
@@ -2066,6 +2081,7 @@ export class OmpAgent extends BaseAgent {
 
     try {
       for await (const event of this.eventQueue.drain()) {
+        if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
         yield event;
       }
     } finally {
@@ -2275,6 +2291,11 @@ export class OmpAgent extends BaseAgent {
   // One-shot LLM calls (`omp -p <prompt>`)
   // ============================================================
 
+  private async publicAccountCredential(paid: boolean) {
+    if (!this.config.roxExecutionContext) throw new Error('ROX_TRUSTED_ACCOUNT_REQUIRED');
+    return getRoxAccountAuthority().inference(this.config.roxExecutionContext, paid);
+  }
+
   private async runOneShot(prompt: string, model?: string): Promise<string> {
     this.debug(`runOneShot: resolving bin (prompt ${prompt.length} chars)`);
     const bin = await resolveOmpExecutableOrExplain();
@@ -2295,11 +2316,13 @@ export class OmpAgent extends BaseAgent {
       ...(this.config.envOverrides ?? {}),
     });
 
+    const accountCredential = publicRoxCatalog ? await this.publicAccountCredential(true) : null;
+    if (accountCredential) { env.ROX_API_KEY = accountCredential.apiKey; env.ROX_BASE_URL = accountCredential.baseUrl; }
     const runtimeConfig = prepareOmpRoxRuntimeConfig({
       runtimeRoot: join(resolveConfigDir(), 'runtime', 'omp'),
       publicRoxCatalog,
       apiKey: env.ROX_API_KEY,
-      baseUrl: getLlmConnection(connectionSlug)?.baseUrl,
+      baseUrl: accountCredential?.baseUrl ?? getLlmConnection(connectionSlug)?.baseUrl,
       sourceAgentDir: env.PI_CODING_AGENT_DIR,
       configFiles: env.PI_CONFIG_FILES,
     });
@@ -2320,6 +2343,7 @@ export class OmpAgent extends BaseAgent {
       try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
       throw error;
     }
+    if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
     env.OMP_APP_NAME = 'rox';
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
@@ -2334,6 +2358,8 @@ export class OmpAgent extends BaseAgent {
         try { runtimeConfig.dispose(); } catch { this.debug('OMP runtime profile cleanup could not complete'); }
         try { nativeInvocation.dispose(); } catch { this.debug('OMP native overlay cleanup could not complete'); }
       });
+      this.oneShotChildren.add(child);
+      child.once('close', () => this.oneShotChildren.delete(child));
       this.debug(`runOneShot: spawned pid=${child.pid}`);
       const timer = setTimeout(() => {
         child.kill('SIGKILL');
@@ -2353,6 +2379,7 @@ export class OmpAgent extends BaseAgent {
           reject(new Error(`omp -p failed (exit ${code})${stderr ? ` (${stderr.trim().slice(0, 300)})` : ''}`));
           return;
         }
+        try { if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext); } catch (error) { reject(error); return; }
         resolve(stdout.trim());
       });
       child.stdin?.end();
@@ -2383,6 +2410,7 @@ export class OmpAgent extends BaseAgent {
     // truthfully, never fabricated (packages/shared/CLAUDE.md §queryLlm
     // backend contract).
     const requestedModel = request.model?.trim() || undefined;
+    if (isRoxPublicModelId(this._model ?? '') && requestedModel && !isRoxPublicModelId(requestedModel)) throw new Error('ROX_PUBLIC_MODEL_REQUIRED');
     if (requestedModel) {
       try {
         const text = await this.runOneShot(prompt, requestedModel);
@@ -2432,6 +2460,8 @@ export class OmpAgent extends BaseAgent {
   }
 
   destroy(): void {
+    this.accountUnsubscribe?.();
+    for (const child of this.oneShotChildren) child.kill('SIGKILL');
     this.stopConfigWatcher();
 
     this.failPendingRequests(new Error('OmpAgent destroyed'));

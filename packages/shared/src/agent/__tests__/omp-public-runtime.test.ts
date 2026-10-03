@@ -1,3 +1,5 @@
+import { setRoxAccountAuthority, LOCAL_ROX_CALLER } from '../../auth/rox-account-authority.ts';
+import { createPocketFixture, pocketSnapshot } from '../../auth/__tests__/pocket-test-fixture.ts';
 import { afterEach, describe, expect, it } from 'bun:test';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -38,7 +40,12 @@ async function setup(scenario = 'model-public', model = 'rox/standard') {
   savedKey = process.env.ROX_API_KEY;
   delete process.env.ROX_API_KEY;
   connectionSlug = `omp-runtime-fixture-${crypto.randomUUID()}`;
-  await getCredentialManager().setLlmApiKey(connectionSlug, 'isolated-public-runtime-fixture-key');
+  await getCredentialManager().setLlmApiKey(connectionSlug, 'wrong-connection-fixture-key');
+  const pocket = createPocketFixture();
+  await pocket.authority.start(LOCAL_ROX_CALLER);
+  await pocket.authority.state(LOCAL_ROX_CALLER);
+  setRoxAccountAuthority(pocket.authority);
+  const roxExecutionContext = await pocket.authority.capture(LOCAL_ROX_CALLER);
   const hostile = join(fake.dir, 'existing-user-profile');
   mkdirSync(hostile);
   writeFileSync(join(hostile, 'models.yml'), 'providers: existing-user-profile\n');
@@ -50,16 +57,16 @@ const fixturePath = require('node:path');
 const fixtureDir = process.env.PI_CODING_AGENT_DIR;
 const fixtureModels = fixtureFs.readFileSync(fixturePath.join(fixtureDir, 'models.yml'), 'utf8');
 const fixtureIds = [...fixtureModels.matchAll(/- id: (.+)/g)].map(match => match[1]);
-fixtureFs.appendFileSync(${JSON.stringify(join(fake.dir, 'profile-observations.jsonl'))}, JSON.stringify({ agentDir: fixtureDir, profile: process.env.OMP_PROFILE, ids: fixtureIds, secretInFile: fixtureModels.includes('isolated-public-runtime-fixture-key'), credentialMatches: process.env.ROX_API_KEY === 'isolated-public-runtime-fixture-key' }) + '\\n');
+fixtureFs.appendFileSync(${JSON.stringify(join(fake.dir, 'profile-observations.jsonl'))}, JSON.stringify({ agentDir: fixtureDir, profile: process.env.OMP_PROFILE, ids: fixtureIds, secretInFile: fixtureModels.includes('account-key-fixture'), credentialMatches: process.env.ROX_API_KEY === 'account-key-fixture' }) + '\\n');
 `;
   const original = readFileSync(script, 'utf8');
   // This CLI's RPC catalog comes from the actual generated file, not a fixed alias.
   writeFileSync(script, inspect + original.replace(/const availableModels = \[[\s\S]*?\n\];/, "const availableModels = fixtureIds.map(id => ({ provider: 'rox', id, name: id }));"));
   agent = new OmpAgent(makeOmpConfig(fake, {
-    model, connectionSlug,
-    envOverrides: { PI_CODING_AGENT_DIR: hostile, OMP_PROFILE: 'inherited-user-profile' },
+    model, connectionSlug, roxExecutionContext,
+    envOverrides: { PI_CODING_AGENT_DIR: hostile, OMP_PROFILE: 'inherited-user-profile', ROX_API_KEY: 'wrong-session-env-fixture-key', ROX_BASE_URL: 'https://wrong.example.test/v1' },
   }));
-  return { agent, fake, hostile };
+  return { agent, fake, hostile, pocket };
 }
 
 afterEach(async () => {
@@ -85,7 +92,7 @@ describe('actual OmpAgent private public catalog lifecycle', () => {
     expect(fake.readRpcLog().find(frame => frame.type === 'prompt')?.observedModel)
       .toEqual({ provider: 'rox', id: 'rox/r1-max' });
   });
-  it('uses the selected connection credential and generated exact catalog despite conflicting inherited profile', async () => {
+  it('uses trusted account key after final environment assembly despite wrong ambient/connection/session keys', async () => {
     const { agent, fake, hostile } = await setup();
     expect((await chatEvents(agent, 'fixture turn, no provider request', 8000)).some(event => event.type === 'text_complete')).toBe(true);
     const [record] = observations();
@@ -132,4 +139,39 @@ describe('actual OmpAgent private public catalog lifecycle', () => {
     expect(record?.ids).toEqual(ids);
     await waitUntil(() => !!record && !existsSync(record.agentDir));
   });
+  it('runs actual mini/title and call_llm children with the account key and aborts old identity after logout', async () => {
+    const { agent, pocket } = await setup();
+    expect(await agent.runMiniCompletion('title fixture')).toContain('title fixture');
+    expect((await agent.queryLlm({ prompt: 'call fixture', model: 'rox/fast' })).text).toContain('call fixture');
+    expect(observations()).toHaveLength(2);
+    expect(observations().every(record => record.credentialMatches && !record.secretInFile)).toBe(true);
+    await pocket.authority.logout(LOCAL_ROX_CALLER);
+    await expect(agent.queryLlm({ prompt: 'stale call', model: 'rox/fast' })).rejects.toThrow('ROX_ACCOUNT_CHANGED');
+    expect(observations()).toHaveLength(2);
+  });
+  it('never dispatches zero balance or ownerless public executions', async () => {
+    const { agent, pocket, fake } = await setup();
+    pocket.setSnapshot({ ...pocketSnapshot(), balance: { currency: 'ROX', balanceRox: '0.000000', availableRox: '0.000000', heldRox: '0.000000', bonusStatus: 'pending' } });
+    expect((await chatEvents(agent, 'zero budget', 8000)).some(event => event.type === 'error')).toBe(true);
+    expect(fake.readArgvLog()).toHaveLength(0);
+    const unbound = new OmpAgent(makeOmpConfig(fake, { model: 'rox/standard' }));
+    expect((await chatEvents(unbound, 'ownerless', 8000)).some(event => event.type === 'error')).toBe(true);
+    expect(fake.readArgvLog()).toHaveLength(0);
+    unbound.destroy();
+  });
+
+  it('kills an actual in-flight one-shot at logout and never accepts its delayed result', async () => {
+    const { agent, pocket, fake } = await setup();
+    const script = join(fake.dir, 'fake-omp.js');
+    const source = readFileSync(script, 'utf8');
+    // The profile inspector is before this delayed fake invocation, so the test
+    // observes actual process creation before switching identity.
+    writeFileSync(script, source.replace("'use strict';", "if (process.argv.includes('-p')) { setTimeout(() => { process.stdout.write('late account response'); process.exit(0); }, 500); process.stdin.resume(); return; }\n'use strict';"));
+    const pending = agent.queryLlm({ prompt: 'slow fixture', model: 'rox/fast' });
+    await waitUntil(() => observations().length === 1);
+    await pocket.authority.logout(LOCAL_ROX_CALLER);
+    await expect(pending).rejects.toThrow();
+    expect(observations()).toHaveLength(1);
+  });
+
 });
