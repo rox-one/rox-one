@@ -33,6 +33,7 @@ async function bundle() {
     import {createRoot} from 'react-dom/client';
     import {flushSync} from 'react-dom';
     import MeetingsPage from './apps/electron/src/renderer/pages/MeetingsPage';
+    import {buildSummaryPrompt} from './apps/electron/src/renderer/pages/meetings/local-meetings-model';
     import {AutomationEditor} from './apps/electron/src/renderer/components/automations/AutomationEditor';
     import {TourRuntimeContext,TourPanelScope} from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
     const emptyMeeting={schema:1,id:'meeting-a',title:'Native fixture meeting',workspaceId:'ws-a',createdAt:1,updatedAt:10,durationMs:0,status:'ready',source:'none',participants:[],notes:'',audio:null,transcript:{status:'none',progress:0},summary:null,actions:[],documents:[]};
@@ -56,6 +57,7 @@ async function bundle() {
     f.render=()=>flushSync(()=>root.render(<React.StrictMode><TourRuntimeContext.Provider value={f.enabled?runtime:null}><TourPanelScope workspaceId={f.workspaceId} panelId={f.panelId} entityId={f.selectedId??undefined}>{f.surface==='meetings'?<MeetingsPage key={f.workspaceId} workspaceId={f.workspaceId} selectedId={f.selectedId}/>:<AutomationEditor automation={automation} workspaceId={f.workspaceId}/>}</TourPanelScope></TourRuntimeContext.Provider></React.StrictMode>));
     f.select=id=>{f.selectedId=id??null;f.render()};
     f.start=token=>{f.runToken=token??'run-a';f.render()};
+    f.previewProfile=()=>buildSummaryPrompt({title:f.meeting.title,participants:[],segments:[],language:'en',recipeId:'client',slash:'/client'});
     f.finishTranscript=()=>deferredTranscript?.({engine:'fixture',model:'fixture',language:'en',createdAt:10,elapsedMs:1,revision:1,segments:[{id:'segment-a',startMs:0,endMs:1000,text:'Private fixture transcript'}]});
     f.mount=(surface,mode)=>{f.surface=surface;f.selectedId=surface==='automation'?'automation-a':mode==='empty'?null:'meeting-a';
       f.meeting=mode==='summary'?{...emptyMeeting,summary:{text:'Private native summary',generated:false,updatedAt:10}}:mode==='transcript'?{...emptyMeeting,audio:{file:'fixture.webm',mimeType:'audio/webm',bytes:100},transcript:{status:'done',progress:1,segments:1,revision:1,finishedAt:10}}:emptyMeeting;
@@ -68,6 +70,12 @@ async function bundle() {
     bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic', tsconfig: resolve(root, 'apps/electron/tsconfig.json'),
     plugins: [{ name: 'isolated-native-transport', setup(builder) {
       builder.onResolve({ filter: /.*/ }, args => {
+        // The real pure recipe/planning modules avoid the barrel's host-only artifact I/O.
+        // Keep native components and planning logic intact; only narrow their import entry.
+        if (args.path === '@rox/shared/meeting-agents') {
+          return { path: resolve(root, 'packages/shared/src/meeting-agents',
+            args.importer.endsWith('/LocalMeetingDetail.tsx') ? 'recipes.ts' : 'planning.ts') }
+        }
         const name = stubs[args.path] ? args.path : args.path.endsWith('/decisions-store') ? 'decisions-store'
           : args.path.endsWith('/AutomationsListPanel') ? 'AutomationsListPanel' : null
         return name ? { path: name, namespace: 'fixture' } : null
@@ -126,6 +134,10 @@ describe('A11 rendered native surfaces', () => {
     expect(state.accepted[0].name).toBe('meeting.artifact-opened')
     expect(state.accepted[0].level).toBe('observed')
     expect(JSON.stringify(state.events)).not.toContain('Private native summary')
+    expect(await page.getByTestId('meeting-analysis-profile').locator('option').count()).toBe(5)
+    // Execute the latest production view model and actual planner in Chromium.
+    expect(await page.evaluate(() => (window as any).fixture.previewProfile()))
+      .toContain('Role perspectives: rox.meeting.analyst, rox.meeting.scribe.')
     await page.getByRole('tab', { name: 'meetings.local.tab.actions' }).click()
     expect((await inspect(page)).events).toHaveLength(1)
     expect((await inspect(page)).mutations).toEqual([])
