@@ -121,7 +121,8 @@
     "20: native renderer fixture first module startup consumed behavior budget; fixture now warms actual module in startup hook",
     "21: auxiliary YAML parser shadowed require; corrected in 22",
     "23: 8 resource/layout browser behaviors pass, but HTTP fixture teardown times out; close callback is now installed before closing active connections",
-    "25: final combined browser run 16/0; 24: native renderer ownership 5/0"
+    "25: final combined browser run 16/0; 24: native renderer ownership 5/0",
+    "Captured Bun code-frame trailing spaces normalized for diff checks; original byte logs retained in source commit history."
   ],
   "externalPrerequisites": [
     "SVC-003 actual reconnect/capability/current-workspace callbacks and canonical backend receipts for every entity family",
@@ -157,5 +158,6 @@
     "apps/electron/src/shared/__tests__/rox-readiness-ui-001.external-route.test.ts": "1e3aada0195476b234fd10625f1e1d26cb2b982dde1da68f97e6090069f8627a",
     "apps/electron/src/shared/route-parser.ts": "df086f9b1b057a469c6e79b3d901841421f2bba46b5c40de737b6cabdc60d691",
     "apps/electron/src/shared/types.ts": "e76583884065661e9553ede07dce576137f665ab6b62067b25fac55c35c90168"
-  }
+  },
+  "sourceCommit": "bfed5d055da7209ce4ca8decb3c9f68fd6562cd5"
 }

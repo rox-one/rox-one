@@ -160,7 +160,7 @@ apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-9
 34 |     expect(toolbar.some((l) => l.includes('h-6') && l.includes('text-[9px]'))).toBe(true)
 35 |     expect(toolbar.every((l) => !l.includes('text-[11px]') && !l.includes('h-7'))).toBe(true)
 36 |   })
-37 | 
+37 |
 38 |   it('does not reopen inspector strip host from #958/#959', () => {
 39 |     expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
                       ^

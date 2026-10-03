@@ -6,7 +6,7 @@ apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.b
 (pass) UI-001 real Chromium component and persistence fixtures > late resource load cannot replace a new missing address [3503.12ms]
 (pass) UI-001 real Chromium component and persistence fixtures > cloud run switch clears previous content while the new callback is pending [7630.03ms]
 (pass) UI-001 real Chromium component and persistence fixtures > retries rejected lazy imports and keeps the selected route [7820.22ms]
-225 | 
+225 |
 226 |   it('retries rendering failure and a new route clears a previous error', async () => {
 227 |     await page.evaluate(()=>{ (window as any).ui001.failPage(true); (window as any).ui001.navigate('extension/plugin/view') })
 228 |     await page.locator('[data-testid="route-error"]').waitFor()

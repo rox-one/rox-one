@@ -88,7 +88,7 @@ apps/electron/src/shared/__tests__/route-parser-meetings.test.ts:
 
 apps/electron/src/shared/__tests__/ipc-channels.test.ts:
 810 | // End auto-generated
-811 | 
+811 |
 812 | describe('RPC_CHANNELS wire-format stability', () => {
 813 |   it(`contains exactly ${EXPECTED_COUNT} channel strings`, () => {
 814 |     const actual = flattenValues(RPC_CHANNELS)
@@ -103,7 +103,7 @@ Received: 795
 (fail) RPC_CHANNELS wire-format stability > contains exactly 793 channel strings [25.08ms]
 815 |     expect(actual.length).toBe(EXPECTED_COUNT)
 816 |   })
-817 | 
+817 |
 818 |   it('preserves exact wire-format strings (sorted equality)', () => {
 819 |     const actual = flattenValues(RPC_CHANNELS).sort()
 820 |     expect(actual).toEqual(EXPECTED_CHANNELS)
