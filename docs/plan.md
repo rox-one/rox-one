@@ -1,3 +1,10 @@
+## Golden Gate persisted panel workspace recovery plan — 2026-10-03
+
+1. Establish the live gap: current main horizontal flex has no workspace grid modes or persisted row/column tracks. Bind the missing closure to the source manifest.
+2. Recover state/parser/atom/hook/menu/sash and adapt current container/slot/axis resize; preserve current native focus and UI-001 guards.
+3. Verify mode and committed fraction persistence, preview/cancel, workspace isolation, malformed stored data, ragged focus, route identity and retained drafts with production renderer components.
+4. Run complete types, WebUI/Electron renderer and i18n gates; publish separate candidate and exact remote readback. Root retains independent review and serial merge; all source branches remain.
+
 ## Golden Gate native surface ownership recovery plan — 2026-10-03
 
 1. Audit actual missing source closure and current callers. Preserve current deliberate SiYuan removal and cookie consent behavior; exclude historical shell replacements.

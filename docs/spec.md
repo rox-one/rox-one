@@ -1,3 +1,7 @@
+## Golden Gate persisted panel workspace recovery — 2026-10-03
+
+Owner: isolated `codex/recover-golden-panel-layout-20261003`, source Golden Gate `5def9ffd36dc160fdc7c908784e0ef97ba6a732e`. Restore actual per-workspace auto/columns/grid2/grid3/focus modes and durable row/column fractions through the current panel container and toolbar. A flat keyed slot list keeps drafts mounted across layout/focus/compact changes. Resize previews stay in memory; commit persists, cancellation restores, malformed/foreign workspace records fall back safely, and size changes preserve panel identities/routes. Preserve current native spatial-focus subscription and editing/dialog/IME fences, UI-001 geometry/detail/storage guards, current flush shell/navigation and browser-registry lifecycle. Do not replay historical AppShell or source-detail handlers. Acceptance: preference/atom/geometry adverse controls, production panel container/menu/slot and two-axis resize with a bounded editor fixture, cross-workspace/reload persistence, draft retention and focus controls, complete types/bundles/i18n. OS compositor and full release acceptance remain separate.
+
 ## Golden Gate native surface ownership recovery — 2026-10-03
 
 Owner: isolated `codex/recover-golden-native-surfaces-20261003`. Restore the absent owner arbiter, DOM visibility/clipping invalidator, bounds hook, placeholder and retained-surface primitive from preserved Golden Gate revision `5def9ffd36dc160fdc7c908784e0ef97ba6a732e`. `docs/golden-native-source.json` records original file hashes and current-main decisions.
