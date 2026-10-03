@@ -30,6 +30,30 @@ export const isLinux =
   navigator.platform.toLowerCase().includes('linux')
 
 /**
+ * Display a registry-style chord (e.g. mod+shift+d) on the current platform.
+ * Shared by global shortcut help and local hints; does not change bindings.
+ */
+export function formatHotkeyDisplay(hotkey: string, mac = isMac): string {
+  const symbols = hotkey.toLowerCase().split('+').map(part => {
+    if (part === 'mod') return mac ? '⌘' : 'Ctrl'
+    if (part === 'shift') return mac ? '⇧' : 'Shift'
+    if (part === 'alt') return mac ? '⌥' : 'Alt'
+    if (part === 'escape') return 'Esc'
+    if (part === 'tab') return 'Tab'
+    if (part === 'space') return 'Space'
+    if (part === 'enter') return mac ? '↵' : 'Enter'
+    if (part === 'backspace') return mac ? '⌫' : 'Backspace'
+    if (part === 'delete') return mac ? '⌦' : 'Delete'
+    if (part === 'left') return '←'
+    if (part === 'right') return '→'
+    if (part === 'up') return '↑'
+    if (part === 'down') return '↓'
+    return part.toUpperCase()
+  })
+  return mac ? symbols.join('') : symbols.join('+')
+}
+
+/**
  * True when this bundle is running inside the browser-served Web UI
  * (apps/webui), as opposed to the Electron renderer.
  *

@@ -819,3 +819,23 @@ Recover source5def9ffd per-task unsubmitted link/tag input through the existing 
 - Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Recover its offline fast path through the current `KnowledgeNotebookTree` and `KnowledgeHome`, preserving native RPC authority, current Rox Notes routes, search, and saved-view operations.
 - Cache by API identity, explicit workspace and connection. Confirmed probes expire after 30 seconds; missing/error/timeout is unknown with at most one second of reuse. A three-second renderer budget does not cancel the native operation or certify a service is absent. Native changes invalidate once before mounted consumers refresh. Late invalidated responses cannot replace fresh entries.
 - Offline/unknown reads retain workspace-local views/envelopes and skip notebook/title calls. Render hides old-workspace rows immediately; request tickets prevent late event/workspace continuations from publishing rows or starting obsolete kernel reads. No new service, data store, installation CTA or authorization path is introduced.
+
+### 2026-10-04 — Подсказки клавиш по платформе (источник PR #1466)
+
+Tasks, Memory, Meetings, множественный выбор и домашние виджеты отображают Ctrl/Shift/Alt на Windows/Linux и символы Command/Option на macOS через единый форматтер. Реальные сочетания клавиш, нативная авторизация, подтверждения записи Tasks и черновики полей сохраняются. Владение: recent_features; зависимость: свежий main с Pocket SSO и Tasks drafts. Проверка: реальный компонент Tasks в Chromium на трех платформах, SSR Tasks/Memory/Meetings и паритет всех 12 локалей.
+
+## Notes source-path classification recovery — 2026-10-04
+
+Owner: historical branch worker; dependency: externally merged Notes1465 on2338adb95. Validate existing path components from the canonical Notes root toward the requested target before classifying absence. A file in place of a parent directory is a document authority change; a missing requested note remains NOT_FOUND only under a healthy authorized source. Symlinks, inaccessible sources, journal failures and permission revocation retain their existing refusal. This helper is read-only and creates no directory or credential. The temporary-file fixture uses the same canonical native root contract as NativeAuthority, including macOS temporary-directory aliases. Evidence: integration-history/note-read-parent-validation-20261004; bounded RPC/native-port/UI-callback checks do not claim installed Electron or OS identity acceptance.
+
+### OMP hidden Windows launch recovery — 2026-10-04
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Set `windowsHide: true` at the current RPC and one-shot native OMP spawn boundaries, without restoring old external batch launchers or changing models, account generation, native policy, observer lifetime, stdin EOF or prompt argv.
+- Acceptance: both actual OmpAgent callers request hidden windows; literal prompt, private helper model/no-session and shell-free execution remain intact. Controlled protocol fixtures prove launch configuration, not native Windows console visibility or installed18.4.12 acceptance.
+
+
+
+
+### Native OMP launch cancellation recovery — 2026-10-04
+
+Owner recent_features. Recover source1464 through the current OmpAgent. Startup and helper preparation carry launch/account/model-domain generations before every asynchronous boundary; cancelled or destroyed work never spawns a late child. Preparation failures release ready ownership and allow a later valid retry. Managed Bun paths and literal native argv retain policy, source observers and Windows hidden-process options. Runtime guidance is translated in all twelve locales.

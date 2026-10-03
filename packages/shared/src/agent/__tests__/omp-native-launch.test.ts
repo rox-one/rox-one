@@ -5,9 +5,9 @@ import { basename, dirname, join } from 'node:path';
 import { OmpAgent } from '../omp-agent.ts';
 import { AbortReason } from '../backend/types.ts';
 import { withOmpRequiredModes } from '../omp-history.ts';
-import { getCredentialManager } from '../../credentials/manager.ts';
 import { createPocketFixture } from '../../auth/__tests__/pocket-test-fixture.ts';
-import { LOCAL_ROX_CALLER, setRoxAccountAuthority } from '../../auth/rox-account-authority.ts';
+import { setRoxAccountAuthority, LOCAL_ROX_CALLER } from '../../auth/rox-account-authority.ts';
+import { getCredentialManager } from '../../credentials/manager.ts';
 import * as runtime from '../../toolchain-runtime.ts';
 import { LOCALE_REGISTRY, setupI18n } from '../../i18n/index.ts';
 import { chatEvents, makeOmpConfig } from './omp-fake-cli.ts';
@@ -31,14 +31,11 @@ afterEach(async () => {
 async function setup() {
   fixture = createNativeLaunchFixture();
   mocks.push(spyOn(getCredentialManager(), 'getLlmApiKey').mockResolvedValue(null));
-  // Main requires a trusted owner for public models; keep this fixture's
-  // native launch probes on the same synthetic public account contract.
   const pocket = createPocketFixture();
   await pocket.authority.start(LOCAL_ROX_CALLER);
   await pocket.authority.state(LOCAL_ROX_CALLER);
   setRoxAccountAuthority(pocket.authority);
-  const roxExecutionContext = await pocket.authority.capture(LOCAL_ROX_CALLER);
-  agent = new OmpAgent(makeOmpConfig(fixture.fake, { model: 'rox/standard', roxExecutionContext, envOverrides: {
+  agent = new OmpAgent(makeOmpConfig(fixture.fake, { model: 'rox/standard', roxExecutionContext: await pocket.authority.capture(LOCAL_ROX_CALLER), envOverrides: {
     CRAFT_BUN_PATH: process.execPath, ROX_API_KEY: '', PI_CODING_AGENT_DIR: join(fixture.fake.dir, 'empty-user-profile'), PI_CONFIG_FILES: '',
   } }));
   mkdirSync(dirname(blobFile()), { recursive: true });

@@ -22,7 +22,7 @@ const reads=[], saves=[], deletes=[], watchers=[], toasts=[], navigations=[];
 let props={workspaceId:'ws-a',skillSlug:'sample',workingDirectory:'/project-a'};
 window.skillInfo={props,reads,saves,deletes,toasts,navigations};
 window.electronAPI={
- getSkills(workspaceId,cwd){return new Promise((resolve,reject)=>reads.push({workspaceId,cwd,resolve,reject}))},
+ getSkillDetails(workspaceId,slug,cwd){return new Promise((resolve,reject)=>reads.push({workspaceId,slug,cwd,resolve,reject}))},
  onSkillsChanged(callback){const entry={callback,active:true};watchers.push(entry);return()=>{entry.active=false}},
  updateSkill(workspaceId,slug,values){return new Promise((resolve,reject)=>saves.push({workspaceId,slug,values,resolve,reject}))},
  deleteSkill(workspaceId,slug){return new Promise((resolve,reject)=>deletes.push({workspaceId,slug,resolve,reject}))},
@@ -33,7 +33,7 @@ Object.assign(window.skillInfo,{
  item(name='Canonical',description='Description',content='Instructions',source='workspace'){
   return {slug:'sample',metadata:{name,description},content,source,path:'/workspace/skills/sample'};
  },
- resolve(index,items){reads[index].resolve(items)},
+ resolve(index,items){reads[index].resolve(items[0] ?? null)},
  reject(index){reads[index].reject(new Error('fixture offline'))},
  watch(workspaceId='ws-a',items=[]){watchers.filter(w=>w.active).forEach(w=>w.callback(workspaceId,items))},
  retained(index,workspaceId='ws-a'){watchers[index].callback(workspaceId,[])},
@@ -77,7 +77,7 @@ describe('current SkillInfoPage catalog/draft/save ownership', { skip: !enabled 
     try { await browser?.close() } finally { await closed }
   },30_000)
 
-  browserTest('watcher reads the complete same-directory catalog and preserves edited fields', async () => {
+  browserTest('watcher reloads selected detail in the same directory and preserves edited fields', async () => {
     await loadItem()
     await page.locator('input:not([disabled])').fill('Local name')
     await page.locator('textarea').nth(1).fill('Local instructions')

@@ -64,12 +64,13 @@ import type { FileAttachment } from '../utils/files.ts';
 import { getProxyEnvVars } from '../config/proxy-env.ts';
 import { getToolchain, resolveOmpExecutableOrExplain, withToolchainPathPrefix } from '../toolchain-runtime.ts';
 import { prepareOmpNativePolicy } from './omp-native-policy.ts';
-import { whichTool } from '../toolchain/exec.ts';
-import { setupI18n } from '../i18n/index.ts';
 import { randomUUID } from 'node:crypto';
 import { OmpRuntimeObserver } from './omp-runtime-observer.ts';
 import { OmpRuntimeTraceBridge } from './omp-runtime-trace-bridge.ts';
 import { known, unknown, type RuntimeAgentObservation, type RuntimeContent } from '@rox/core/runtime-trace';
+import { whichTool } from '../toolchain/exec.ts';
+import { setupI18n } from '../i18n/index.ts';
+
 
 import { AbortReason } from './backend/types.ts';
 import type {
@@ -333,6 +334,7 @@ export class OmpAgent extends BaseAgent {
   }
   private async prepareNativeInvocation(bin: string, env: NodeJS.ProcessEnv, cwd = this.resolvedCwd()): Promise<{bin:string; prefix:string[]; dispose:()=>void; runtime?:true}> {
     bin = resolve(cwd, bin);
+
     const packageDir = join(dirname(bin), '..', 'package');
     if (!existsSync(join(packageDir, 'src/session/agent-session.ts'))) {
       // Protocol fixtures intentionally have no native package. Production cannot
@@ -750,14 +752,15 @@ export class OmpAgent extends BaseAgent {
   }
 
   private async spawnSubprocess(): Promise<void> {
+    const accountDomainGeneration = this.modelAccountDomainGeneration;
     const launchGeneration = this.launchGeneration;
     this.assertLaunchCurrent(launchGeneration);
-    const accountDomainGeneration = this.modelAccountDomainGeneration;
     const generation = ++this.startupGeneration;
     const assertAttempt = () => {
       this.assertLaunchCurrent(launchGeneration);
       if (generation !== this.startupGeneration) throw new OmpStartupAbortedError();
       if (accountDomainGeneration !== this.modelAccountDomainGeneration) throw new OmpStartupAbortedError('OMP model credential domain changed during startup');
+      if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
     };
     // Own startup before resolving anything: there may be no child to kill yet.
     const readyPromise = new Promise<void>((resolve, reject) => {
@@ -769,6 +772,7 @@ export class OmpAgent extends BaseAgent {
     this.readyAccepted = false;
     this.recentStderr = '';
     readyPromise.catch(() => {});
+
     // OMP_CLI_PATH env → toolchain/PATH lookup → friendly error while the
     // toolchain is still installing → last-resort 'omp' (ENOENT path preserved).
     let bin: string;
@@ -858,8 +862,9 @@ export class OmpAgent extends BaseAgent {
     });
     assertAttempt();
     const accountCredential = usesPublicRoxCatalog ? await this.publicAccountCredential(true) : null;
-    if (accountCredential) { env.ROX_API_KEY = accountCredential.apiKey; env.ROX_BASE_URL = accountCredential.baseUrl; }
     assertAttempt();
+    if (accountCredential) { env.ROX_API_KEY = accountCredential.apiKey; env.ROX_BASE_URL = accountCredential.baseUrl; }
+
     // Public Rox routes have their own canonical catalog. User/named OMP
     // profiles remain untouched, and inherited env overrides cannot redirect
     // this child to a different profile or provider.
@@ -899,7 +904,6 @@ export class OmpAgent extends BaseAgent {
     let child: ChildProcess;
     try {
       assertAttempt();
-      if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
       child = spawn(nativeInvocation.bin, [...nativeInvocation.prefix, ...args], { cwd, env, shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     } catch (error) {
       observer?.dispose();
@@ -2182,9 +2186,10 @@ export class OmpAgent extends BaseAgent {
     attachments?: FileAttachment[],
     _options?: ChatOptions,
   ): AsyncGenerator<AgentEvent> {
-    const launchGeneration = this.launchGeneration;
     const runtimeUserPrompt = this.pendingRuntimeUserPrompt ?? message;
     const runtimeSkills = new Map(this.pendingRuntimeSkills);
+    const launchGeneration = this.launchGeneration;
+
     // Permission changes retire the child asynchronously. Wait before claiming
     // this turn so its predecessor's intentional exit cannot fail the new turn
     // or leave ensureSubprocess using a child whose stdin is already closed.
@@ -2243,12 +2248,13 @@ export class OmpAgent extends BaseAgent {
     try {
       this.assertLaunchCurrent(launchGeneration);
       if (isRoxPublicModelId(this._model ?? '')) await this.publicAccountCredential(true);
-      this.assertLaunchCurrent(launchGeneration);
       assertAccountDomain();
+      this.assertLaunchCurrent(launchGeneration);
       await this.ensureSubprocess();
-      this.assertLaunchCurrent(launchGeneration);
       assertAccountDomain();
+      this.assertLaunchCurrent(launchGeneration);
       this.runtimeObserver?.beginRun(this.runtimeObservationRunId);
+
 
       await this.sendCommand('set_thinking_level', { level: 'max' });
       assertAccountDomain();
@@ -2526,16 +2532,15 @@ export class OmpAgent extends BaseAgent {
     const accountDomainGeneration = this.modelAccountDomainGeneration;
     const invocationModel = model || (isRoxPublicModelId(this._model ?? '') ? this._model : undefined);
     const assertOneShotOwner = () => {
+      // Preserve the account lease error when logout also retires launch work.
       if (this.config.roxExecutionContext) getRoxAccountAuthority().assertCurrent(this.config.roxExecutionContext);
       if (accountDomainGeneration !== this.modelAccountDomainGeneration) throw new OmpStartupAbortedError('OMP helper credential domain changed');
-      // Account revocation retains main's authority error; a current account
-      // still cannot outlive this agent's launch generation or destruction.
       this.assertLaunchCurrent(launchGeneration);
     };
     assertOneShotOwner();
+
     this.debug(`runOneShot: resolving bin (prompt ${prompt.length} chars)`);
     const bin = await resolveOmpExecutableOrExplain();
-    assertOneShotOwner();
     this.debug(`runOneShot: bin=${bin}`);
     assertOneShotOwner();
     const cwd = this.resolvedCwd();
@@ -2543,6 +2548,7 @@ export class OmpAgent extends BaseAgent {
     let storedApiKey: string | null = null;
     try { storedApiKey = await getCredentialManager().getLlmApiKey(connectionSlug); } catch {}
     assertOneShotOwner();
+
     const publicRoxCatalog = isRoxPublicModelId(invocationModel ?? '');
     if (!publicRoxCatalog) ensureOmpRoxFirstRun({ homeDir: homedir(), env: process.env, storedApiKey });
     const credentialEnv = buildOmpSpawnCredentialEnv({ env: process.env, storedApiKey });
@@ -2553,7 +2559,6 @@ export class OmpAgent extends BaseAgent {
       ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
-    assertOneShotOwner();
 
     assertOneShotOwner();
     const accountCredential = publicRoxCatalog ? await this.publicAccountCredential(true) : null;
@@ -2713,6 +2718,7 @@ export class OmpAgent extends BaseAgent {
     this.destroyed = true;
     this.accountUnsubscribe?.();
     for (const child of this.oneShotChildren) child.kill('SIGKILL');
+
     this.stopConfigWatcher();
 
     this.failPendingRequests(new Error('OmpAgent destroyed'));

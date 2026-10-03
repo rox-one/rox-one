@@ -1,0 +1,3 @@
+# Notes parent-path validation recovery
+
+Original source1465 was independently integrated by its author. This follow-up fixes one reproduced classification gap in that merged helper. It changes only read-only path validation order; current Notes/Journals/NativeAuthority remain the owners. Actual current source with canonical native test roots had35passing and2failing controls; ancestor-first validation has37passing/172assertions. Initial source fixture alias failures are retained separately. The loopback RPC test uses explicit deterministic native-authority/journal fixture ports with real filesystem reads; it does not attest real OS account bootstrap. Current UI tests execute the exact Notes page callbacks; mounted installed UI acceptance is not claimed.

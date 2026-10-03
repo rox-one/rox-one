@@ -366,21 +366,23 @@ describe('OMP typed native runtime bridge', () => {
     } finally { internals._isProcessing = false; agent.destroy(); fake.cleanup(); }
   });
 
-  it('creates a new attempt only for an actually started sidecar-to-local fallback', async () => {
+  it('creates a new attempt only for an actually started legacy-port fallback without a managed environment', async () => {
     const fake = createFakeOmp();
     const agent = new OmpAgent(makeOmpConfig(fake));
     const internals = agent as unknown as {
       _isProcessing: boolean; runtimeObservationRunId: string;
-      createHostBashObserver: (toolCallId: string, generation: string, active: () => boolean) => (evidence: HostBashObservation) => void;
       getSessionToolContext: () => SessionToolContext;
+      createHostBashObserver: (toolCallId: string, generation: string, active: () => boolean) => (evidence: HostBashObservation) => void;
       executeHostSessionTool: (name: string, args: Record<string, unknown>, observer?: (evidence: HostBashObservation) => void) => Promise<{ content: string; isError: boolean }>;
       eventQueue: { enqueue: (event: AgentEvent) => void };
     };
     const events: AgentEvent[] = [];
+    // The optional legacy port cannot carry the production managed environment.
+    // This fixture exercises that supported port explicitly; the previous case
+    // retains the actual managed-context local execution and stdout/stderr proof.
+    const currentContext = internals.getSessionToolContext.bind(agent);
+    internals.getSessionToolContext = () => ({ ...currentContext(), getHostBashEnv: undefined });
     let actualSidecarCalls = 0;
-    // Main's prepared-environment route deliberately bypasses the env-less
-    // sidecar port. This probe exercises that port's actual fallback branch.
-    internals.getSessionToolContext().getHostBashEnv = undefined;
     setHostBashPort(async () => { actualSidecarCalls++; throw new Error('fixture sidecar unavailable'); });
     internals._isProcessing = true;
     internals.runtimeObservationRunId = 'actual-fallback-run';
