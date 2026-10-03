@@ -80,6 +80,8 @@ const EXPECTED_CHANNELS: string[] = [
   'browserProfile:cookieAutoRun',
   'browserProfile:cookieAutoSet',
   'browserProfile:cookieAutoStatus',
+  'browserProfile:credentialCapabilities',
+  'browserProfile:dataAutoImport',
   'browserProfile:delete',
   'browserProfile:discover',
   'browserProfile:import',

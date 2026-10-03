@@ -38,6 +38,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'notes':
       return navState.details !== null
     case 'pages':
+    case 'unavailable':
       return true
     case 'memory':
     case 'connections':

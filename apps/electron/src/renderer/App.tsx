@@ -2216,8 +2216,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   const handleSwitchWorkspaceBySlug = useCallback((slug: string) => {
     const target = workspaces.find(w => w.slug === slug)
     if (target) {
-      handleSelectWorkspace(target.id)
+      return handleSelectWorkspace(target.id).then(() => true)
     }
+    return false
   }, [workspaces, handleSelectWorkspace])
 
   // Handle workspace refresh (e.g., after icon upload)

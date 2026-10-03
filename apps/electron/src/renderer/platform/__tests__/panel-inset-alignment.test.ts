@@ -46,7 +46,8 @@ describe('panel inset alignment', () => {
     expect(desktop).not.toContain('marginBottom: -PANEL_STACK_TOP_INSET')
 
     expect(host).toContain('<BottomTerminalDock />')
-    expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
+    expect(host).toContain('<RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>')
+    expect(host).toContain('<InspectorHost />')
     expect(host.indexOf('<BottomTerminalDock />')).toBeLessThan(host.indexOf('<InspectorHost />'))
   })
 })

@@ -212,7 +212,7 @@ describe('platform accessMode disabled (RX-TSK-0416)', () => {
   it('evaluatePreBindingAccess: blocks everyone, even before pairing', async () => {
     const { evaluatePreBindingAccess } = await import('../access-control.ts')
     const r = evaluatePreBindingAccess({ msg: msg('u1'), workspaceConfig: ws('disabled') })
-    expect(r).toEqual({ allow: false, reason: 'mode-disabled' })
+    expect(r).toEqual({ kind: 'reject', reason: 'disabled' })
   })
 
   it('evaluateBindingAccess: beats binding-level open and the owners list', async () => {
@@ -227,12 +227,27 @@ describe('platform accessMode disabled (RX-TSK-0416)', () => {
       workspaceConfig: ws('disabled'),
       binding: { config: { accessMode: 'allow-list', allowedSenderIds: [] } as never },
     })
-    expect(nonOwner).toEqual({ allow: false, reason: 'mode-disabled' })
-    expect(owner).toEqual({ allow: false, reason: 'mode-disabled' })
+    expect(nonOwner).toEqual({ kind: 'reject', reason: 'disabled' })
+    expect(owner).toEqual({ kind: 'reject', reason: 'disabled' })
   })
 
   it('buildRejectionReply explains the disabled mode', async () => {
     const { buildRejectionReply } = await import('../access-control.ts')
-    expect(buildRejectionReply('mode-disabled')).toContain('disabled')
+    expect(buildRejectionReply('disabled')).toContain('disabled')
+  })
+
+  it('denies owners and allowlisted senders for every binding mode and platform while disabled', () => {
+    for (const platform of ['telegram', 'whatsapp', 'lark', 'discord', 'wechat'] as const) {
+      for (const accessMode of ['public-inbox', 'owner-control', 'disabled'] as const) {
+        for (const senderId of [OWNER_ID, STRANGER_ID]) {
+          const verdict = evaluateBindingAccess({
+            msg: buildMsg({ platform, senderId }),
+            workspaceConfig: buildConfig({ platform, accessMode: 'disabled', owners: [OWNER] }),
+            binding: bindingWith({ accessMode, allowedSenderIds: [STRANGER_ID] }),
+          })
+          expect(verdict).toEqual({ kind: 'reject', reason: 'disabled' })
+        }
+      }
+    }
   })
 })

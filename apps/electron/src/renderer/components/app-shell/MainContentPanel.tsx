@@ -12,6 +12,7 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { StoplightProvider } from '@/context/StoplightContext'
 import {
   useNavigationState,
+  useNavigation,
   isSessionsNavigation,
   isSourcesNavigation,
   isSettingsNavigation,
@@ -202,7 +203,8 @@ export function MainContentPanel({
 }: MainContentPanelProps) {
   const { t } = useTranslation()
   const globalNavState = useNavigationState()
-  const navState = navStateOverride ?? globalNavState
+  const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigation()
+  const navState = unavailableWorkspaceSlug ? globalNavState : navStateOverride ?? globalNavState
   const {
     activeWorkspaceId,
     workspaces,
@@ -273,6 +275,8 @@ export function MainContentPanel({
     isScreenNavigation(navState) ? navState.screen : null,
     isSettingsNavigation(navState) ? navState.subpage : null,
     isSessionsNavigation(navState) ? navState.viewMode : null,
+    navState.navigator === 'unavailable' ? navState.route : null,
+    unavailableWorkspaceSlug,
     'details' in navState ? navState.details : null,
   ])
 
@@ -697,6 +701,21 @@ export function MainContentPanel({
       />
     )
     if (navState.details) {
+      const meta = sessionMetaMap.get(navState.details.sessionId)
+      const workspace = workspaces.find(candidate => candidate.id === activeWorkspaceId)
+      const belongsToWorkspace = !!meta && !!activeWorkspaceId && (
+        meta.workspaceId === activeWorkspaceId || meta.workspaceId === workspace?.remoteServer?.remoteWorkspaceId
+      )
+      if (!isSessionsReady || !belongsToWorkspace) {
+        return wrapWithStoplight(
+          <Panel variant="grow" className={className}>
+            <div role="status" data-testid={isSessionsReady ? 'route-session-missing' : 'route-session-loading'}
+              className="flex items-center justify-center h-full text-muted-foreground">
+              <p className="text-sm">{t(isSessionsReady ? 'errors.sessionNotFound' : 'common.loading')}</p>
+            </div>
+          </Panel>
+        )
+      }
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <ChatPage sessionId={navState.details.sessionId} />
@@ -714,8 +733,6 @@ export function MainContentPanel({
     )
   }
 
-  // Historical regression sentinel: terminal/cloud-run precede the generic
-  // branch that formerly rendered session.selectConversation.
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
       <div

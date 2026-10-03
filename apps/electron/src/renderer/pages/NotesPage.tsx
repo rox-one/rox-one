@@ -287,6 +287,32 @@ export default function NotesPage(props: NotesPageProps) {
   return <NativeNotesPage {...props} />
 }
 
+type SelectedNoteFailure = { workspaceId: string | null; noteId: string; kind: 'missing' | 'unavailable' }
+
+function SelectedNoteRecovery({ failure, address, onRetry }: {
+  failure: SelectedNoteFailure
+  address: string | null
+  onRetry: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      data-testid={`note-surface-${failure.kind}`}
+      data-note-id={failure.noteId}
+      data-note-address={address ?? failure.noteId}
+      className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground"
+    >
+      <p className="text-sm">{t(failure.kind === 'missing' ? 'notes.surface.notFound' : 'common.unavailable')}</p>
+      <p className="max-w-full break-all font-mono text-xs">{address ?? failure.noteId}</p>
+      <button type="button" data-testid="note-surface-retry" onClick={onRetry} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        {t('common.retry')}
+      </button>
+    </div>
+  )
+}
+
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
@@ -329,6 +355,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
   const [indexRebuilding, setIndexRebuilding] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
+  const [noteReadError, setNoteReadError] = React.useState<SelectedNoteFailure | null>(null)
+  const selectedReadError = noteReadError?.workspaceId === activeWorkspaceId
+    && selectedNoteId && parseNoteBlockAddress(selectedNoteId).noteId === noteReadError.noteId
+    ? noteReadError : null
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string | null>(null)
@@ -393,6 +423,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const saveTimerRef = React.useRef<number | null>(null)
   const saveQueueRef = React.useRef<Promise<boolean>>(Promise.resolve(true))
   const openNoteRequestRef = React.useRef(0)
+  const selectedNoteIdRef = React.useRef(selectedNoteId)
+  selectedNoteIdRef.current = selectedNoteId
   const searchRequestRef = React.useRef(0)
   const notesListRequestRef = React.useRef(0)
   const assetsRequestRef = React.useRef(0)
@@ -414,6 +446,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       ++assetsRequestRef.current
     }
   }, [activeWorkspaceId])
+  React.useLayoutEffect(() => {
+    // Selection/workspace commits retire old reads even across A → B → A.
+    ++openNoteRequestRef.current
+    return () => { ++openNoteRequestRef.current }
+  }, [activeWorkspaceId, selectedNoteId])
   const taskRequestRef = React.useRef(0)
   const taskCacheWorkspaceRef = React.useRef<string | null>(activeWorkspaceId ?? null)
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
@@ -690,17 +727,29 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const openNote = React.useCallback(async (noteId: string) => {
     const request = ++openNoteRequestRef.current
-    if (!activeWorkspaceId) {
+    const isCurrent = () => readsMountedRef.current && readWorkspaceRef.current === activeWorkspaceId
+      && request === openNoteRequestRef.current && workspaceIdRef.current === activeWorkspaceId
+    if (!isCurrent()) return
+    const clearNote = () => {
+      activeNoteIdRef.current = null
       setActiveNote(null)
       contentRef.current = ''
       dirtyRef.current = false
       setContent('')
       setDirty(false)
+      setSaving(false)
+    }
+    setNoteReadError(null)
+    if (!activeWorkspaceId) {
+      clearNote()
+      setNoteReadError({ workspaceId: activeWorkspaceId, noteId, kind: 'unavailable' })
       setLoading(false)
       return
     }
     const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) {
+      clearNote()
+      setNoteReadError({ workspaceId: activeWorkspaceId, noteId, kind: 'unavailable' })
       setLoading(false)
       return
     }
@@ -708,11 +757,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setContentResolution(null)
     try {
       const note = await window.electronAPI.readNote(activeWorkspaceId, noteId)
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
       const resolution = window.electronAPI.isChannelAvailable(RPC_CHANNELS.content.RESOLVE)
         ? await window.electronAPI.resolveContent({ workspaceId: activeWorkspaceId, entityId: `note:${note.nativeId ?? note.id}` })
         : { status: 'error' as const, code: 'missingDependency' as const }
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
       // Projection metadata never grants a path-based alias a native write authority.
       if (resolution.status !== 'error' && resolution.origin.nativeId !== (note.nativeId ?? note.id)) {
         throw Object.assign(new Error(t('notes.content.authorityChanged')), { code: 'DOCUMENT_AUTHORITY_CHANGED' })
@@ -740,16 +789,16 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
     } catch (error) {
-      if (request !== openNoteRequestRef.current || workspaceIdRef.current !== activeWorkspaceId) return
+      if (!isCurrent()) return
+      const code = capabilityErrorCode(error)
+      setNoteReadError({
+        workspaceId: activeWorkspaceId, noteId,
+        kind: ['NOT_FOUND', 'not_found', 'ENOENT'].includes(code) ? 'missing' : 'unavailable',
+      })
       toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
-      setActiveNote(null)
-      contentRef.current = ''
-      dirtyRef.current = false
-      setContent('')
-      setDirty(false)
-      setSaving(false)
+      clearNote()
     } finally {
-      if (request === openNoteRequestRef.current && workspaceIdRef.current === activeWorkspaceId) setLoading(false)
+      if (isCurrent()) setLoading(false)
     }
   }, [activeWorkspaceId, t])
 
@@ -800,7 +849,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
           setContentResolution(resolution)
           if (resolution.status !== 'ok' || !resolution.capabilities.write) setSaveNeedsReload(true)
         }).catch(() => {
-          if (workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId) {
+          if (workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId && openNoteRequestRef.current === opening) {
             setContentResolution({ status: 'error', code: 'denied' })
             setSaveNeedsReload(true)
           }
@@ -815,7 +864,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       refreshAssets()
       void refreshIndexHealth()
 
-      if (payload.noteId && payload.noteId === activeNoteIdRef.current) {
+      const selectedId = selectedNoteIdRef.current ? parseNoteBlockAddress(selectedNoteIdRef.current).noteId : null
+      if (payload.noteId && (payload.noteId === activeNoteIdRef.current || payload.noteId === selectedId)) {
         if (dirtyRef.current) {
           setExternalChange(payload)
         } else {
@@ -839,6 +889,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       return
     }
     setActiveNote(null)
+    setNoteReadError(null)
     contentRef.current = ''
     dirtyRef.current = false
     setContent('')
@@ -2296,6 +2347,8 @@ h1,h2,h3{margin-top:1.5em}
             <div className="h-full grid place-items-center">
               {loading ? (
                 <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
+              ) : selectedReadError ? (
+                <SelectedNoteRecovery failure={selectedReadError} address={selectedNoteId} onRetry={() => void openNote(selectedReadError.noteId)} />
               ) : (
                 <div className="w-[420px] max-w-[calc(100%-48px)] p-4 text-center" data-notes-empty="">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>

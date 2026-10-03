@@ -9,7 +9,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from '@playwri
 // Explicit opt-in: a real isolated Chromium fixture, never installed/native or hosted acceptance.
 const enabled = process.env.ROX_UI001_BROWSER_TEST === '1'
 const root = join(import.meta.dir, '../../../../../../..')
-const evidence = join(root, 'docs/final-readiness/execution/cloud/OWNER-UI-001/verification/browser')
+const evidence = process.env.ROX_UI001_BROWSER_EVIDENCE_DIR ?? join(root, 'work/ui001-browser-evidence')
 let server: Server, browser: Browser, context: BrowserContext, page: Page, base: string
 
 function productionFunctions(): string {
@@ -46,7 +46,7 @@ async function fixtureBundle() {
     import { loadShellLayout, commitShellLayout } from './apps/electron/src/renderer/lib/shell-layout-preferences';
     import { createStore } from 'jotai/vanilla';
     import * as guards from './apps/electron/src/shared/types';
-    import { parseRouteToNavigationState } from './apps/electron/src/shared/route-parser';
+    import { resolveRouteNavigationState as parseRouteToNavigationState } from './apps/electron/src/shared/route-parser';
     import { inspectorPanelWidthAtom, bottomDockHeightAtom } from './apps/electron/src/renderer/atoms/unified-shell';
     import CloudRunSurfacePage from './apps/electron/src/renderer/pages/CloudRunSurfacePage';
     const { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isMemoryNavigation,
@@ -56,6 +56,7 @@ async function fixtureBundle() {
       isTerminalNavigation, isScreenNavigation } = guards;
     const sources = [{ config: { slug: 'a', name: 'Source A', type: 'local' } }];
     let rows = sources, workspace = 'ws-a', nav = parseRouteToNavigationState('home');
+    let sessionMetas = new Map(), sessionsReady = true, remoteWorkspaceId;
     const sourceListeners = new Set(), skillListeners = new Set(), reads = [];
     let deferredSource, deferredCloud, delaySource = false, delayCloud = false, failSource = false, failPage = false, rejectLazy = false, lazyAttempts = 0;
     window.electronAPI = {
@@ -71,9 +72,10 @@ async function fixtureBundle() {
       }))}), getCloudRunStatus: async () => null,
     };
     const useNavigationState = () => nav;
-    const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]});
+    const useNavigation = () => ({isSessionsReady:sessionsReady});
+    const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace,remoteServer:remoteWorkspaceId?{remoteWorkspaceId}:undefined}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]});
     const useTranslation = () => ({ t: key => key });
-    const useAtomValue = atom => atom === sessionMetaMapAtom ? new Map() : [];
+    const useAtomValue = atom => atom === sessionMetaMapAtom ? sessionMetas : [];
     const useSetAtom = () => () => {};
     const sessionMetaMapAtom = Symbol(), automationsAtom = Symbol(), knowledgeHomeViewAtom = Symbol(), knowledgeActiveViewIdAtom = Symbol();
     const selection = {useIsMultiSelectActive:()=>false,useSelectionCount:()=>0,useSelectedIds:()=>new Set(),useSelection:()=>({clearMultiSelect(){}})};
@@ -82,7 +84,7 @@ async function fixtureBundle() {
     const Panel = Pass, StoplightProvider = Pass, SendResourceToWorkspaceDialog = () => null;
     const SourceInfoPage = props => React.createElement('div', {'data-fixture-source':props.sourceSlug}, 'Address '+props.sourceSlug);
     const SkillInfoPage = () => null, MemoryScreen = () => null, ProjectsHomeInMain = () => null,
-      MultiSelectPanel = () => null, CollectionBulkBar = () => null, ChatPage = () => null, HomeFrontPage = () => null,
+      MultiSelectPanel = () => null, CollectionBulkBar = () => null, HomeFrontPage = () => null,
       SettingsOverviewPage = () => null, PageView = () => null, SessionHeatmapHost = () => null, SearchPage = () => null,
       NotesPage = () => null, ConnectionsPage = () => null, ExtraScreenHost = () => null, TasksPage = () => null,
       MeetingsPage = () => null, InboxPage = () => null, FeedPage = () => null, KnowledgeEntityPage = () => null,
@@ -91,6 +93,7 @@ async function fixtureBundle() {
       SessionTableHost = () => null, AutomationEditor = () => null, KnowledgeDiff = () => null,
       KnowledgeHome = () => null, KnowledgeProposals = () => null;
     const getSettingsPageComponent = () => Pass, recordRecentSetting = () => {};
+    const ChatPage = props => React.createElement('div', {'data-fixture-session':props.sessionId}, 'Session '+props.sessionId);
     ${dispatcher}
     const ExtensionSurfacePage = lazyRoutePage(async () => {
       lazyAttempts++;
@@ -127,6 +130,7 @@ async function fixtureBundle() {
     const store = createStore(); store.sub(inspectorPanelWidthAtom,()=>{}); store.sub(bottomDockHeightAtom,()=>{});
     window.ui001 = {
       navigate(route, ws='ws-a') { workspace=ws; nav=parseRouteToNavigationState(route); rerender(); },
+      sessions(rows, ready=true, alias) { sessionMetas=new Map(rows.map(row=>[row.id,row])); sessionsReady=ready; remoteWorkspaceId=alias; rerender(); },
       emitSources(next, ws=workspace) { rows=next; sourceListeners.forEach(callback=>callback(ws, next)); },
       sourceRows: sources, reads,
       failSource() { failSource=true; },
@@ -161,7 +165,7 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     browser = await chromium.launch({ executablePath: process.env.ROX_UI001_CHROMIUM_EXECUTABLE, channel: process.env.ROX_UI001_CHROMIUM_EXECUTABLE ? undefined : process.env.ROX_UI001_BROWSER_CHANNEL ?? 'chrome', headless:true })
     mkdirSync(evidence,{recursive:true})
   }, 30_000)
-  beforeEach(async () => { context=await browser.newContext(); page=await context.newPage(); page.setDefaultTimeout(2000); await page.goto(base); await page.waitForFunction(()=>!!(window as any).ui001) })
+  beforeEach(async () => { context=await browser.newContext(); page=await context.newPage(); page.setDefaultTimeout(2000); await page.goto(base); await page.waitForFunction(()=>!!(window as any).ui001) }, 30_000)
   afterEach(async () => { await context?.close() }, 15_000)
   afterAll(async () => {
     try { await browser?.close() } finally {
@@ -171,6 +175,40 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
       }
     }
   }, 15_000)
+
+  it('never mounts missing or foreign session content, waits for hydration and restores only its exact workspace entity', async () => {
+    await page.evaluate(() => {
+      (window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}],false)
+      ;(window as any).ui001.navigate('flagged/session/foreign')
+    })
+    await page.locator('[data-testid="route-session-loading"]').waitFor()
+    expect(await page.locator('[data-fixture-session]').count()).toBe(0)
+    await page.evaluate(() => (window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'},{id:'own',workspaceId:'ws-a'}]))
+    await page.locator('[data-testid="route-session-missing"]').waitFor()
+    expect(await page.locator('[data-fixture-session]').count()).toBe(0)
+    expect(await page.evaluate(()=>(window as any).ui001.address())).toMatchObject({nav:{details:{sessionId:'foreign'}}})
+    await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/own'))
+    await page.locator('[data-fixture-session="own"]').waitFor()
+    await page.evaluate(() => (window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))
+    await page.locator('[data-testid="route-session-missing"]').waitFor()
+    expect(await page.locator('[data-fixture-session]').count()).toBe(0)
+    await page.evaluate(() => (window as any).ui001.sessions([{id:'own',workspaceId:'ws-a'}]))
+    await page.locator('[data-fixture-session="own"]').waitFor()
+    await page.evaluate(() => {
+      (window as any).ui001.sessions([{id:'remote',workspaceId:'server-a'}],true,'server-a')
+      ;(window as any).ui001.navigate('allSessions/session/remote')
+    })
+    await page.locator('[data-fixture-session="remote"]').waitFor()
+  })
+
+  it('renders malformed addresses as unavailable while retaining their raw route', async () => {
+    for (const route of ['allSessions/session', 'knowledge/alien/doc', 'cloud-run/%']) {
+      await page.evaluate(route=>(window as any).ui001.navigate(route),route)
+      await page.locator('[data-testid="route-unavailable"]').waitFor()
+      expect(await page.evaluate(()=>(window as any).ui001.address())).toMatchObject({nav:{navigator:'unavailable',route}})
+      expect(await page.locator('[data-fixture-session]').count()).toBe(0)
+    }
+  })
 
   it('selected source deletion and recreation preserve workspace and entity address', async () => {
     await page.evaluate(()=>(window as any).ui001.navigate('sources/source/a'))

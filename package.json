@@ -22,7 +22,7 @@
     "!packages/craft-agents-commands"
   ],
   "scripts": {
-    "test": "bun test && for f in $(find . -name '*.isolated.ts' -not -path './node_modules/*'); do bun test \"$f\" || exit 1; done",
+    "test": "bun run scripts/test-all.ts",
     "typecheck": "bun run typecheck:shared",
     "pages-worker:dev": "cd workers/pages && bun run dev",
     "pages-worker:test": "cd workers/pages && bun test",
