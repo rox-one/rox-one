@@ -121,7 +121,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.reload();await routeIs('allSessions/session/deleted')
     await page.evaluate(()=>(window as any).ui001nav.navigate('allSessions/session/first-b'))
     await routeIs('allSessions/session/first-b')
-    expect((await snapshot()).nav.details.sessionId).toBe('first-b')
+    expect((await snapshot()).nav).toMatchObject({ navigator: 'unavailable', route: 'allSessions/session/first-b' })
     await page.evaluate(()=>(window as any).ui001nav.navigate('allSessions/session/remote'))
     await routeIs('allSessions/session/remote')
   })

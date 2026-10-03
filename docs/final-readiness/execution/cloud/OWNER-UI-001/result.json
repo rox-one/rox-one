@@ -1360,6 +1360,20 @@
       },
       "status": "semantic integration in progress; prior published and local failure histories preserved",
       "fullDoDClosed": false
+    },
+    {
+      "incomingMain": "5211746270f5005d551ddc103970714520b25b67",
+      "incomingResult": {
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history/main-521-owner-result.json",
+        "sha256": "fa1650e70f7a217cfbea5e286e7fab54c1430fdb447325adc65fd038be2c2e53",
+        "bytes": 780995
+      },
+      "previousResult": {
+        "path": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/history/pre-521-root-result.json",
+        "sha256": "3a1748d03bdc1958734baf59c564d6b62215066eba68b2f869ac14ab187b3076",
+        "bytes": 125762
+      },
+      "state": "source integration in progress; final authoritative root result follows"
     }
   ]
 }

@@ -1,0 +1,18 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/skills/__tests__/bundled.test.ts:
+(pass) ensureBundledSkills seed > installs every pack skill into a fresh target root with clean status [12.40ms]
+(pass) ensureBundledSkills seed > is idempotent: a second sync over identical bundle reports no localModified [11.33ms]
+(pass) ensureBundledSkills disabled > skips the whole pack: disabled=['superpowers'] leaves its slug untouched [4.68ms]
+(pass) ensureBundledSkills upgrade merge > preserves user edits on pack upgrade, flags localModified, upgrades the rest [13.25ms]
+(pass) ensureBundledSkills upgrade merge > keeps user-modified copies of files the newer bundle dropped [6.64ms]
+(pass) ensureBundledSkills conflicts > keeps same-named skills from separate packs in separate directories [8.40ms]
+(pass) bundled packs end-to-end (real bundle, synthetic HOME) > ensureBundledSkills installs the vendored packs and loadAllSkills discovers them [4640.40ms]
+(pass) bundled packs end-to-end (real bundle, synthetic HOME) > runs the installed Understand Anything domain scanner without plugin dependencies [1908.38ms]
+(pass) disabled packs hidden from discovery > getDisabledBundledSkillSlugsFromDisk reads pack state skills [5.84ms]
+(pass) legacy disabled pack migration > honors craft-knowledge preference for renamed ROX pack and native discovery [1.93ms]
+
+ 10 pass
+ 0 fail
+ 515 expect() calls
+Ran 10 tests across 1 file. [6.93s]

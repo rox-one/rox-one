@@ -1,0 +1,23 @@
+{
+  "label": "continuation-2-typecheck-final",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "run",
+    "--cwd",
+    "apps/electron",
+    "tsc",
+    "--noEmit"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "startedAt": "2026-10-03T11:47:56.407162+00:00",
+  "finishedAt": "2026-10-03T11:48:27.394649+00:00",
+  "exitCode": 0,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+    "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+  },
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-typecheck-final.log",
+  "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

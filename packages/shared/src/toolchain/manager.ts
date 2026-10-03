@@ -497,6 +497,24 @@ export function createManager(
     return p;
   }
 
+  /** Inspect only bounded regular receipt files through their opened identity. */
+  function readInstallIdentity(file: string, maxBytes: number): string {
+    const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
+    try {
+      const opened = fs.fstatSync(fd);
+      const current = fs.lstatSync(file);
+      if (!opened.isFile() || !current.isFile() || opened.dev !== current.dev || opened.ino !== current.ino
+        || opened.size > maxBytes) throw new Error('Invalid install identity');
+      const bytes = Buffer.alloc(maxBytes + 1);
+      const length = fs.readSync(fd, bytes, 0, bytes.length, 0);
+      const after = fs.fstatSync(fd);
+      const leaf = fs.lstatSync(file);
+      if (length > maxBytes || after.size !== length || leaf.dev !== opened.dev || leaf.ino !== opened.ino)
+        throw new Error('Install identity changed');
+      return bytes.subarray(0, length).toString('utf8');
+    } finally { fs.closeSync(fd); }
+  }
+
   /** A ready git-npm version must retain its verified source and a usable managed launcher. */
   async function hasUsableInstall(entry: ToolEntry, installedPath: string, installedVersion: string, requireCurrent = true): Promise<boolean> {
     if (!fs.existsSync(installedPath)) return false;
@@ -530,17 +548,14 @@ export function createManager(
       const names = executableCandidates(entry.systemBinary ?? entry.name, win).filter((name) => !win || /\.(exe|com|cmd|bat)$/i.test(name));
       for (const layout of layouts) {
         const sourceDir = path.join(layout.directory, 'source');
-        const [sourceRoot, markerRaw, head] = await Promise.all([
-          fs.promises.realpath(sourceDir),
-          fs.promises.readFile(path.join(layout.directory, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 'utf8'),
-          fs.promises.readFile(path.join(sourceDir, '.git', 'HEAD'), 'utf8'),
-        ]);
+        const sourceRoot = await fs.promises.realpath(sourceDir);
         if (!isWithin(layout.realRoot, sourceRoot)) return false;
-        const marker = JSON.parse(markerRaw);
+        const marker = JSON.parse(readInstallIdentity(path.join(layout.directory, TOOLCHAIN_INSTALL_COMPLETE_MARKER), 2048));
         if (marker?.format !== 'git-npm-local-source-v1' || marker.repo !== lock.repo || marker.commit !== lock.commit) return false;
-        if (head.trim() !== lock.commit) return false;
-        const frozenLock = ['bun.lock', 'bun.lockb'].find((name) => fs.existsSync(path.join(sourceDir, name)));
-        if (!frozenLock || !(await fs.promises.stat(path.join(sourceDir, frozenLock))).isFile()) return false;
+        if (readInstallIdentity(path.join(sourceDir, '.git', 'HEAD'), 4096).trim() !== lock.commit) return false;
+        if (!['bun.lock', 'bun.lockb'].some((name) => {
+          try { return fs.lstatSync(path.join(sourceDir, name)).isFile(); } catch { return false; }
+        })) return false;
         let usableLauncher = false;
         for (const name of names) {
           try {

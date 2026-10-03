@@ -141,7 +141,7 @@ describe('UI-001 git-npm same-version recovery', () => {
     expect(installs).toBe(1);
   });
 
-  for (const corruption of ['legacy-empty-directory', 'wrong-completion-pin', 'wrong-source-pin', 'missing-lock', 'external-launcher'] as const) {
+  for (const corruption of ['legacy-empty-directory', 'wrong-completion-pin', 'wrong-source-pin', 'missing-lock', 'external-launcher', 'oversized-marker', 'linked-marker', 'linked-source-head', 'linked-lock'] as const) {
     it(`recovers ${corruption} without trusting the retained same-version state`, async () => {
       const fixture = makeFixture();
       usableInstall(fixture.versionDir);
@@ -156,6 +156,15 @@ describe('UI-001 git-npm same-version recovery', () => {
         writeFileSync(join(fixture.versionDir, 'source', '.git', 'HEAD'), `${'b'.repeat(40)}\n`);
       } else if (corruption === 'missing-lock') {
         rmSync(join(fixture.versionDir, 'source', 'bun.lock'));
+      } else if (corruption === 'oversized-marker') {
+        writeFileSync(join(fixture.versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), ' '.repeat(100_000));
+      } else if (corruption === 'linked-marker' || corruption === 'linked-source-head' || corruption === 'linked-lock') {
+        const leaf = corruption === 'linked-marker' ? join(fixture.versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER)
+          : corruption === 'linked-source-head' ? join(fixture.versionDir, 'source', '.git', 'HEAD')
+          : join(fixture.versionDir, 'source', 'bun.lock');
+        const witness = join(fixture.base, 'outside-identity');
+        writeFileSync(witness, readFileSync(leaf));
+        rmSync(leaf); symlinkSync(witness, leaf);
       } else {
         const foreign = join(fixture.base, 'foreign-cli');
         writeFileSync(foreign, '#!/bin/sh\nexit 0\n', { mode: 0o755 });
@@ -170,6 +179,29 @@ describe('UI-001 git-npm same-version recovery', () => {
       expect(installs).toBe(1);
     });
   }
+
+  it('refuses to publish a launcher-only partial version before flipping current or writing ready state', async () => {
+    const fixture = makeFixture();
+    const manager = makeManager(fixture, async ({ versionDir }) => {
+      mkdirSync(join(versionDir, 'bin'), { recursive: true });
+      writeFileSync(join(versionDir, 'bin', launcherName), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    });
+    expect((await manager.ensureAll({ background: false }))[0]?.phase).toBe('error');
+    expect(existsSync(join(fixture.paths.toolchainDir, entry.name, 'current'))).toBe(false);
+    expect(existsSync(fixture.paths.stateFile)).toBe(false);
+    expect((await manager.status())[0]?.phase).toBe('error');
+  });
+
+  it('does not report a valid retained version ready when current points at a different version', async () => {
+    const fixture = makeFixture();
+    const installer = async ({ versionDir }: GitNpmInstallContext) => usableInstall(versionDir);
+    const manager = makeManager(fixture, installer);
+    expect((await manager.ensureAll({ background: false }))[0]?.phase).toBe('ready');
+    const current = join(fixture.paths.toolchainDir, entry.name, 'current');
+    const other = join(fixture.paths.toolchainDir, entry.name, 'other-version');
+    usableInstall(other); rmSync(current); symlinkSync(other, current, process.platform === 'win32' ? 'junction' : 'dir');
+    expect((await makeManager(fixture, installer).status())[0]?.phase).toBe('missing');
+  });
 
   it('serializes concurrent repair and update through the existing per-tool installer', async () => {
     const fixture = makeFixture();

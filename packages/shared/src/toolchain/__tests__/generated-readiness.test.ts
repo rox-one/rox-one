@@ -5,7 +5,9 @@ import * as path from 'node:path';
 import { createManager } from '../manager';
 import { createResolver } from '../resolver';
 import { toolchainPaths } from '../manifest';
-import { TOOLCHAIN_INSTALL_COMPLETE_MARKER, type ToolEntry } from '../types';
+import { getGitLock } from '../git-locks';
+import { TOOLCHAIN_INSTALL_COMPLETE_MARKER } from '../types';
+import type { ToolEntry } from '../types';
 
 let root: string;
 beforeEach(() => { root = fs.mkdtempSync(path.join(os.tmpdir(), 'tc-generated-ready-')); });
@@ -25,18 +27,16 @@ function put(file: string): void {
   fs.writeFileSync(file, 'fixture', { mode: 0o755 });
 }
 
-// A completed git-npm install retains its pinned source; launchers alone are
-// also produced by the legacy temporary-checkout layout and cannot be adopted.
-function putGitSourceReceipt(versionDir: string): void {
+function frozenSource(versionDir: string): void {
+  const lock = getGitLock(gbrain.name, gbrain.version)!;
   const source = path.join(versionDir, 'source');
-  const commit = '15b9863d13635d173562a54f55a1d388bfcf546b';
   fs.mkdirSync(path.join(source, '.git'), { recursive: true });
-  fs.writeFileSync(path.join(source, '.git', 'HEAD'), `${commit}\n`);
-  fs.writeFileSync(path.join(source, 'bun.lock'), 'fixture frozen upstream lock\n');
+  fs.writeFileSync(path.join(source, '.git', 'HEAD'), `${lock.commit}\n`);
+  fs.writeFileSync(path.join(source, 'bun.lock'), 'retained frozen upstream fixture\n');
   fs.writeFileSync(path.join(source, 'package.json'), '{"name":"gbrain","bin":{"gbrain":"cli.js"}}\n');
   put(path.join(source, 'cli.js'));
   fs.writeFileSync(path.join(versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
-    format: 'git-npm-local-source-v1', repo: 'garrytan/gbrain', commit,
+    format: 'git-npm-local-source-v1', repo: lock.repo, commit: lock.commit,
   }));
 }
 
@@ -70,14 +70,18 @@ for (const platform of ['linux-x64', 'win32-x64'] as const) {
     it('requires the matching git-npm executable in both version and current', async () => {
       const { paths, version, current } = seed(gbrain);
       const manager = createManager(paths, { manifest: [gbrain], platform, pathEnv: '', windowsBootstrap: null });
-      putGitSourceReceipt(version);
       put(path.join(version, 'bin', `gbrain${suffix}`));
       expect((await manager.status())[0]?.phase).toBe('missing');
       put(path.join(current, 'bin', `gbrain${suffix}`));
+      // Two matching launchers still do not prove the retained frozen source
+      // or that the current pointer selects this actual version.
+      expect((await manager.status())[0]?.phase).toBe('missing');
+      frozenSource(version);
+      fs.rmSync(current, { recursive: true });
       if (win) {
+        // The real Windows publication fallback is a complete physical copy.
         fs.cpSync(version, current, { recursive: true, dereference: true });
       } else {
-        fs.rmSync(current, { recursive: true });
         fs.symlinkSync(version, current, 'dir');
       }
       expect((await manager.status())[0]?.phase).toBe('ready');
@@ -111,7 +115,7 @@ for (const platform of ['linux-x64', 'win32-x64'] as const) {
         gitNpmInstallImpl: async ({ versionDir }) => {
           installs++;
           put(path.join(versionDir, 'bin', `gbrain${suffix}`));
-          putGitSourceReceipt(versionDir);
+          frozenSource(versionDir);
         },
       });
       expect((await manager.ensureAll({ background: false }))[0]?.phase).toBe('ready');
@@ -139,6 +143,9 @@ it.skipIf(process.platform === 'win32')('POSIX generated launcher needs executab
     put(file);
     fs.chmodSync(file, 0o644);
   }
+  frozenSource(version);
+  fs.rmSync(current, { recursive: true });
+  fs.symlinkSync(version, current, 'dir');
   const manager = createManager(paths, { manifest: [gbrain], platform: 'linux-x64', pathEnv: '', windowsBootstrap: null });
   expect((await manager.status())[0]?.phase).toBe('missing');
 });

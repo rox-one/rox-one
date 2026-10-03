@@ -1,0 +1,34 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts:
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > initial missing entity never auto-selects an existing chat and survives reload [420.91ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > unknown and malformed routes preserve raw addresses on initial load/reload/deep link [596.82ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > legacy known-root incomplete shapes remain unavailable through auto-selection effects [616.63ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > raw commas, colon suffixes and malformed escapes round-trip within a multi-panel URL [300.90ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > queued nested/encoded raw view and new-panel option are replayed after readiness [186.63ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > queued malformed view survives a session-readiness-only race [213.86ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > actual back/forward, deletion and workspace restoration preserve explicit selection [223.12ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > canonical page broadcasts beat stale list replies and former workspace replies are ignored [234.39ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > popstate received before metadata readiness is reconciled when readiness returns [212.58ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > queued page broadcast from the former A owner cannot publish after A to B to A [194.57ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > blocked popstate retains its exact target through an actual panel resize [179.07ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > workspace restoration waits for full readiness and resize cannot overwrite stored selection [209.40ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > late create replies from former A ownership cannot navigate, prefill or send after A to B to A [408.35ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > already scheduled input and send callbacks retain the original committed owner [194.31ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > new navigation in the same workspace cancels an older deferred create response [370.77ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > actual same-workspace Back cancels an older deferred create response [349.06ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > focusing another existing panel cancels the former panel deferred create response [331.51ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > focus away and back cannot regain an old deferred-create continuation [332.28ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > the current new-panel create retains its own committed focus and delayed prefill [180.99ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > current create actions still navigate, rename, prefill and send using actual callbacks [188.26ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > session-created metadata cannot steal a pending list-route new-chat action and its prefill [328.53ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > retained deep-link listener cannot create or send in a former workspace [305.61ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > retained deep-link listeners stay disposed after workspace ABA and same-workspace readiness reinstall [412.41ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > current deep-link listener retains raw query views and executes current action parameters [189.09ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > remote-only ownership rotation installs a current deep-link listener with stable callbacks [194.71ms]
+(pass) UI-001 mounted NavigationProvider raw URL/readiness/history > retained remote-owner listeners cannot navigate create or send after remote-only ABA [296.22ms]
+
+ 26 pass
+ 0 fail
+ 74 expect() calls
+Ran 26 tests across 1 file. [13.72s]

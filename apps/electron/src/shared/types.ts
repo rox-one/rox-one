@@ -2794,23 +2794,15 @@ export interface TerminalNavigationState {
 export interface UnavailableNavigationState {
   navigator: 'unavailable'
   route: string
-  details: null
+  details?: null
+  reason?: 'unsupported-route' | 'invalid-encoding' | 'workspace-mismatch'
   rightSidebar?: RightSidebarPanel
 }
 
 /**
  * Unified navigation state
  */
-/** An address that cannot be resolved must keep its identity for recovery/history. */
-export interface UnavailableNavigationState {
-  navigator: 'unavailable'
-  route: string
-  details: null
-  rightSidebar?: RightSidebarPanel
-}
-
 export type NavigationState =
-  | UnavailableNavigationState
   | SessionsNavigationState
   | SourcesNavigationState
   | SettingsNavigationState
@@ -2940,7 +2932,7 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 export const getNavigationStateKey = (state: NavigationState): string => {
   if (state.navigator === 'unavailable') {
     // JSON also preserves invalid percent escapes and lone surrogates safely.
-    return `unavailable:${JSON.stringify(state.route)}`
+    return `unavailable:${JSON.stringify(state.reason ? { route: state.route, reason: state.reason } : state.route)}`
   }
   if (state.navigator === 'search') {
     return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
@@ -3077,8 +3069,15 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
     return { navigator: 'unavailable', route: decodeURIComponent(key.slice('unavailable/'.length)), details: null }
   }
   if (key.startsWith('unavailable:')) {
-    const route: unknown = JSON.parse(key.slice('unavailable:'.length))
-    return typeof route === 'string' ? { navigator: 'unavailable', route, details: null } : null
+    const legacy = /^unavailable:(unsupported-route|invalid-encoding|workspace-mismatch):(.*)$/.exec(key)
+    if (legacy) return { navigator: 'unavailable', reason: legacy[1] as UnavailableNavigationState['reason'], route: decodeURIComponent(legacy[2]) }
+    const value: unknown = JSON.parse(key.slice('unavailable:'.length))
+    if (typeof value === 'string') return { navigator: 'unavailable', route: value, details: null }
+    if (value && typeof value === 'object' && 'route' in value && typeof value.route === 'string'
+      && 'reason' in value && ['unsupported-route', 'invalid-encoding', 'workspace-mismatch'].includes(String(value.reason))) {
+      return { navigator: 'unavailable', route: value.route, reason: value.reason as UnavailableNavigationState['reason'] }
+    }
+    return null
   }
   // Handle sources
   if (key === 'sources') return { navigator: 'sources', details: null }
@@ -3293,10 +3292,11 @@ const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null =
     }
   }
 
-  // Check for session details
-  if (key.includes('/session/')) {
-    const [filterPart, , sessionId] = key.split('/')
-    return parseSessionsKey(filterPart, sessionId)
+  // Preserve canonical /chat/ keys and legacy /session/ keys with complete ids.
+  const sessionMarker = key.includes('/session/') ? '/session/' : key.includes('/chat/') ? '/chat/' : null
+  if (sessionMarker) {
+    const index = key.indexOf(sessionMarker)
+    return parseSessionsKey(key.slice(0, index), key.slice(index + sessionMarker.length))
   }
 
   // Simple filter key

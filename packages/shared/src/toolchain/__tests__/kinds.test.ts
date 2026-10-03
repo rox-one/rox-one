@@ -199,6 +199,7 @@ describe('kinds: git-npm (gbrain)', () => {
       pathEnv: stubBunPathEnv(),
       gitNpmInstallImpl: async (ctx) => {
         installs.push(`${ctx.entry.name}@${ctx.entry.version}`);
+        // реальный defaultGitNpmInstall кладёт дерево в versionDir (BUN_INSTALL) — эмулируем факт.
         writeUsableGitNpmFixture(ctx);
       },
     });

@@ -554,10 +554,10 @@ export interface GitNpmPinnedInstall {
  *   1. clone pinned коммита (git fetch <sha> --depth 1, как marketplace.installer);
  *   2. `bun install --frozen-lockfile` В ЧЕКАУТЕ — транзитивы строго по локу,
  *      рассинхрон lock↔package.json → fail-closed (bun падает);
- *   3. materialize checkout + node_modules в versionDir/source, затем
+ *   3. сохраняем checkout + node_modules в versionDir/source, затем выполняем
  *      `bun install --global <sourceDir>` из собственного global project.
- *      Bun 1.3.14 может ссылаться на отдельные файлы локального пакета, поэтому
- *      источник и pinned-зависимости сохраняются на весь срок этой версии.
+ *      Локальные ссылки Bun остаются пригодны после удаления временного checkout;
+ *      runtime использует сохранённые frozen зависимости этой версии.
  *
  * Fail-closed (no legacy unpinned fallback):
  *   - нет bun.lock/bun.lockb в апстрим-чекауте → throw (refuse unpinned transitives);
@@ -565,9 +565,9 @@ export interface GitNpmPinnedInstall {
  */
 export async function installGitNpmPinned(req: GitNpmPinnedInstall): Promise<void> {
   const runCmd = req.runCmd ?? runCommand;
+  const git = req.git ?? 'git';
   const globalDir = path.join(req.versionDir, 'install', 'global');
   const sourceDir = path.join(req.versionDir, 'source');
-  const git = req.git ?? 'git';
   const binDirs = [path.dirname(req.bun), ...(req.git ? [path.dirname(req.git)] : [])];
   const env: NodeJS.ProcessEnv = prependPath({
     ...process.env,
@@ -620,31 +620,24 @@ export async function installGitNpmPinned(req: GitNpmPinnedInstall): Promise<voi
     // Транзитивы — строго по локфайлу апстрима; расхождение lock↔package.json
     // здесь фатально (fail-closed, зеркалит npm ci --frozen-lockfile).
     await runCmd([req.bun, 'install', '--frozen-lockfile'], { cwd: req.workDir, env });
-    // Materialize the frozen dependency tree before publishing local-file
-    // links. Dereferencing also keeps nested package links independent of the
-    // temporary checkout that is removed below.
+    // Retain the frozen tree before publishing Bun's local-file links. Nested
+    // package links are materialized independently of the temporary checkout.
     await fs.promises.rm(sourceDir, { recursive: true, force: true });
     await fs.promises.cp(req.workDir, sourceDir, { recursive: true, dereference: true });
-    // Bun 1.3.14 treats install --global <local path> as add in the nearest
-    // project. BUN_INSTALL only redirects its bin directory, and an empty cwd
-    // still lets it discover an ancestor workspace. Give the managed global
-    // directory its own manifest and cwd so neither the host project nor a
-    // user-supplied global directory can receive this dependency.
+    // An explicit local manifest/cwd prevents Bun from discovering and changing
+    // an ancestor workspace or a caller's global project.
     await fs.promises.mkdir(globalDir, { recursive: true });
     try {
       await fs.promises.writeFile(path.join(globalDir, 'package.json'), '{"private":true}\n', {
-        flag: 'wx',
-        mode: 0o600,
+        flag: 'wx', mode: 0o600,
       });
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
     }
-    // Local-file links now point at this managed version's permanent source;
-    // its nested node_modules retain the upstream frozen transitive versions.
     await runCmd([req.bun, 'install', '--global', sourceDir], { cwd: globalDir, env });
     await fs.promises.writeFile(path.join(req.versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
       format: 'git-npm-local-source-v1', repo: req.repo, commit: req.commit,
-    }) + '\n', { mode: 0o600 });
+    }) + '\n', { flag: 'wx', mode: 0o600 });
   } finally {
     await fs.promises.rm(req.workDir, { recursive: true, force: true });
   }

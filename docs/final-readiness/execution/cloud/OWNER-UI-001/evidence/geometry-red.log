@@ -1,0 +1,108 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:
+50 | 
+51 | describe('ROX UI-001 real persisted layout atoms', () => {
+52 |   it('bounds live writes before consumers read them and saves the same value', () => {
+53 |     const store = mountedStore()
+54 |     store.set(bottomDockHeightAtom, 10_000)
+55 |     expect(store.get(bottomDockHeightAtom)).toBe(480)
+                                                 ^
+error: expect(received).toBe(expected)
+
+Expected: 480
+Received: 10000
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:55:45)
+(fail) ROX UI-001 real persisted layout atoms > bounds live writes before consumers read them and saves the same value [3.72ms]
+60 |   })
+61 | 
+62 |   it('retains the inspector host range instead of narrowing valid saved widths', () => {
+63 |     storage.setItem(getKeyString(KEYS.inspectorPanelWidth), '1100')
+64 |     const store = mountedStore()
+65 |     expect(store.get(inspectorPanelWidthAtom)).toBe(1100)
+                                                    ^
+error: expect(received).toBe(expected)
+
+Expected: 1100
+Received: 720
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:65:48)
+(fail) ROX UI-001 real persisted layout atoms > retains the inspector host range instead of narrowing valid saved widths [0.84ms]
+71 | 
+72 |   it('rounds updater callbacks and reloads canonical values in a fresh store', () => {
+73 |     const store = mountedStore()
+74 |     store.set(bottomDockHeightAtom, 119.6)
+75 |     store.set(bottomDockHeightAtom, value => value + 0.6)
+76 |     expect(store.get(bottomDockHeightAtom)).toBe(121)
+                                                 ^
+error: expect(received).toBe(expected)
+
+Expected: 121
+Received: 120.19999999999999
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:76:45)
+(fail) ROX UI-001 real persisted layout atoms > rounds updater callbacks and reloads canonical values in a fresh store [0.26ms]
+(pass) ROX UI-001 real persisted layout atoms > recovers malformed JSON, wrong types and non-finite JSON on reload [1.02ms]
+87 |   })
+88 | 
+89 |   it('keeps valid live sizes usable when persistence or reset is denied', () => {
+90 |     const store = mountedStore()
+91 |     storage.denied = true
+92 |     expect(() => store.set(bottomDockHeightAtom, 160)).not.toThrow()
+                                                                ^
+error: expect(received).not.toThrow()
+
+Thrown value: DOMException {
+  code: 22,
+  name: "QuotaExceededError",
+  message: "Quota exhausted",
+  INDEX_SIZE_ERR: 1,
+  DOMSTRING_SIZE_ERR: 2,
+  HIERARCHY_REQUEST_ERR: 3,
+  WRONG_DOCUMENT_ERR: 4,
+  INVALID_CHARACTER_ERR: 5,
+  NO_DATA_ALLOWED_ERR: 6,
+  NO_MODIFICATION_ALLOWED_ERR: 7,
+  NOT_FOUND_ERR: 8,
+  NOT_SUPPORTED_ERR: 9,
+  INUSE_ATTRIBUTE_ERR: 10,
+  INVALID_STATE_ERR: 11,
+  SYNTAX_ERR: 12,
+  INVALID_MODIFICATION_ERR: 13,
+  NAMESPACE_ERR: 14,
+  INVALID_ACCESS_ERR: 15,
+  VALIDATION_ERR: 16,
+  TYPE_MISMATCH_ERR: 17,
+  SECURITY_ERR: 18,
+  NETWORK_ERR: 19,
+  ABORT_ERR: 20,
+  URL_MISMATCH_ERR: 21,
+  QUOTA_EXCEEDED_ERR: 22,
+  TIMEOUT_ERR: 23,
+  INVALID_NODE_TYPE_ERR: 24,
+  DATA_CLONE_ERR: 25,
+  toString: [Function: toString],
+}
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:92:60)
+(fail) ROX UI-001 real persisted layout atoms > keeps valid live sizes usable when persistence or reset is denied [1.40ms]
+100 |     const store = mountedStore()
+101 |     const emit = (key: string, newValue: string | null) => fakeWindow.dispatchEvent(
+102 |       Object.assign(new Event('storage'), { key, newValue, storageArea: storage }),
+103 |     )
+104 |     emit(getKeyString(KEYS.bottomDockHeight), '120.6')
+105 |     expect(store.get(bottomDockHeightAtom)).toBe(121)
+                                                  ^
+error: expect(received).toBe(expected)
+
+Expected: 121
+Received: 104
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts:105:45)
+(fail) ROX UI-001 real persisted layout atoms > normalizes cross-window storage events and unsubscribes on unmount [0.60ms]
+
+ 1 pass
+ 5 fail
+ 11 expect() calls
+Ran 6 tests across 1 file. [162.00ms]

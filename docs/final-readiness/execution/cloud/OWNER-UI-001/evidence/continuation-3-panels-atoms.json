@@ -1,0 +1,47 @@
+{
+  "label": "continuation-3-panels-atoms",
+  "command": [
+    "env",
+    "PATH=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/homebrew/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/t/.codex/tmp/arg0/codex-arg0zADpNw:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/t/.cap/bin:/Users/t/.grok/bin:/Users/t/.opencode/bin:/Users/t/.local/bin:/Users/t/.cargo/bin:/Users/t/.orbstack/bin:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/t/.orbstack/bin",
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "--timeout",
+    "30000",
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts",
+    "apps/electron/src/renderer/atoms/__tests__/panel-stack-knowledge.test.ts",
+    "apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "inputHead": "638f0b8d1cc74528508c76ffeea5838466f57c5c",
+  "integrationBase": "97fe78def2000622a09e5b26dca004e1302c360f",
+  "startedAt": "2026-10-03T14:23:13.360932+00:00",
+  "finishedAt": "2026-10-03T14:23:14.201955+00:00",
+  "exitCode": 0,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "fec7441b4678d72776ffcb31996d1bf1b42aaca923ae496d2b63de3a24c2fe3f",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "3139b43eaf3dea66e10aa9ad64948abba3c12c379e4639618a95e2cab8b4ffcb",
+    "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+    "apps/electron/src/shared/types.ts": "6217a93b21662765b4783978892098f48df28ebbd2c8015d9117f971e531ee4a",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "apps/electron/src/renderer/atoms/panel-stack.ts": "a4c7eedc505833c3c32a2ae14a3c18dcb841aecf6a729104def2169a17b52a5b",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  },
+  "sourceAfterSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "fec7441b4678d72776ffcb31996d1bf1b42aaca923ae496d2b63de3a24c2fe3f",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "3139b43eaf3dea66e10aa9ad64948abba3c12c379e4639618a95e2cab8b4ffcb",
+    "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+    "apps/electron/src/shared/types.ts": "6217a93b21662765b4783978892098f48df28ebbd2c8015d9117f971e531ee4a",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "apps/electron/src/renderer/atoms/panel-stack.ts": "a4c7eedc505833c3c32a2ae14a3c18dcb841aecf6a729104def2169a17b52a5b",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  },
+  "sourcesStable": true,
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-panels-atoms.log",
+  "logSha256": "6d11219f00b12b0006a331a29c890ffa45c3143ea87b31a1db4d0f1b95784302"
+}

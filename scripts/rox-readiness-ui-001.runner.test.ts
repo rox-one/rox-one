@@ -365,8 +365,45 @@ describe('UI-001 repository test runner', () => {
     for (const value of ['0', '-1', '1.5', '300001', '1e3', '']) {
       await expect(api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'), environment: { ...process.env, ROX_TEST_TIMEOUT_MS: value } })).rejects.toThrow('ROX_TEST_TIMEOUT_MS')
     }
+    for (const value of ['0', '-1', '1.5', '3600001', '1e3', '']) {
+      await expect(api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'), environment: { ...process.env, ROX_TEST_SUITE_TIMEOUT_MS: value } })).rejects.toThrow('ROX_TEST_SUITE_TIMEOUT_MS')
+    }
     expect(existsSync(join(root, 'evidence'))).toBe(false)
   })
+
+  test('the whole-suite guard terminates a synchronously blocked child tree and retains later coverage', async () => {
+    const root = fixture(), witness = join(root, 'blocked-tree.json'), heartbeat = join(root, 'grandchild-heartbeat')
+    const grandchild = `const {writeFileSync}=require('node:fs'); process.on('SIGTERM',()=>{}); setInterval(()=>writeFileSync(${JSON.stringify(heartbeat)},String(Date.now())),40);`
+    const blockedChild = `const {spawn}=require('node:child_process'); const {writeFileSync}=require('node:fs');
+      const child=spawn(process.execPath,['-e',${JSON.stringify(grandchild)}],{stdio:'inherit'});
+      writeFileSync(${JSON.stringify(witness)},JSON.stringify({pid:process.pid,grandchild:child.pid}));
+      process.on('SIGTERM',()=>{}); setInterval(()=>{},1000);`
+    file(root, 'tests/a.isolated.ts', `import {test,expect} from 'bun:test'; import {spawnSync} from 'node:child_process';
+      test('actual synchronous native-style wait',()=>{console.log('whole-suite-blocked-started');spawnSync('node',['-e',${JSON.stringify(blockedChild)}],{stdio:'inherit'});expect('never reached').toBe('assertions are not waived')},5000);`)
+    file(root, 'tests/z.test.ts', "import {test,expect} from 'bun:test'; test('coverage after real supervisor failure',()=>expect(42).toBe(42));")
+    const api = await runner(), manifest = await api.discoverSuites(root)
+    const report = await api.runSuites({ root, manifest, artifactDirectory: join(root, 'evidence'),
+      environment: { ...process.env, ROX_TEST_TIMEOUT_MS: '5000', ROX_TEST_SUITE_TIMEOUT_MS: '1500' } })
+    expect(report.status).toBe('failed')
+    expect(report.wholeSuiteTimeoutMs).toBe(1500)
+    expect(report.bunTimeoutMs).toBe(5000)
+    expect(report.summary).toMatchObject({ expected: 2, completed: 2, passed: 1, failed: 1, blocked: 0 })
+    expect(report.results[0]).toMatchObject({ path: 'tests/a.isolated.ts', status: 'failed', timedOut: true, error: expect.stringContaining('Whole-suite process deadline exceeded after 1500ms') })
+    expect(readFileSync(report.results[0]!.log, 'utf8')).toContain('whole-suite-blocked-started')
+    expect(readFileSync(report.results[0]!.log, 'utf8')).toContain('Whole-suite process deadline exceeded')
+    expect(report.results[0]!.durationMs).toBeLessThan(10_000)
+    expect(report.results[1]).toMatchObject({ status: 'passed', timedOut: false, testCounts: { pass: 1, fail: 0 } })
+    const tree = JSON.parse(readFileSync(witness, 'utf8')) as { pid: number; grandchild: number }
+    expect(tree.pid).not.toBe(tree.grandchild)
+    const lastHeartbeat = readFileSync(heartbeat, 'utf8')
+    const deadline = Date.now() + 2000
+    const alive = (pid: number) => { try { process.kill(pid, 0); return true } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false; throw error } }
+    while ((alive(tree.pid) || alive(tree.grandchild)) && Date.now() < deadline) await Bun.sleep(40)
+    expect(alive(tree.pid)).toBe(false)
+    expect(alive(tree.grandchild)).toBe(false)
+    expect(readFileSync(heartbeat, 'utf8')).toBe(lastHeartbeat)
+    expect(JSON.parse(readFileSync(report.reportPath, 'utf8')).results[0]).toMatchObject({ status: 'failed', timedOut: true })
+  }, 20_000)
 
   test('one failing file cannot stop later coverage or erase earlier failure history', async () => {
     const root = fixture()

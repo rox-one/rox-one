@@ -1,0 +1,191 @@
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1352:9:
+      1352 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1326:9:
+      1326 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1354:9:
+      1354 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1328:9:
+      1328 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+{
+  "scope": "unapplied lead proposal only; patch is held in a temporary Git index and virtual compiler/bundler modules; actual shared source is unchanged; no runtime/native integration",
+  "patch": "docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.patch",
+  "patchSha256": "77b480684454307b98da13ed666271e3e6cd620f3c77124683d96b558591ba8c",
+  "candidateSourceSha256": {
+    "apps/electron/src/shared/route-parser.ts": "675572121f52e206c51a88866e87d5e8b5f60032e21e05c4f37c99e74943cb38",
+    "apps/electron/src/shared/types.ts": "f9a48bc9dcdcf397b5394722f8bc73e0fcb1b5bc1e4ff5bd13302dbb34169156"
+  },
+  "actualSourceUnchanged": {
+    "apps/electron/src/shared/route-parser.ts": "8afa43adf5397285211597dd6ae08199c5c7f7d8610490dad7bb0345ceadd487",
+    "apps/electron/src/shared/types.ts": "a8edf4a2b0a970b5333a7a7d017f5259ad62958e30f37d0bfafdb05b21024db4"
+  },
+  "results": [
+    {
+      "name": "Unavailable route unknown-surface/one retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route unknown-surface/one survives a persisted panel key",
+      "pass": false,
+      "error": "TypeError: undefined is not an object (evaluating 'f.kind')"
+    },
+    {
+      "name": "Unavailable route knowledge/unknown-kind/one retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/unknown-kind/one survives a persisted panel key",
+      "pass": false,
+      "error": "TypeError: undefined is not an object (evaluating 'f.kind')"
+    },
+    {
+      "name": "Unavailable route knowledge/document/%E0%A4%A retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/document/%E0%A4%A survives a persisted panel key",
+      "pass": false,
+      "error": "TypeError: undefined is not an object (evaluating 'f.kind')"
+    },
+    {
+      "name": "Canonical candidate route round-trip allSessions/session/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip sources/source/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip skills/skill/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip projects/project/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip notes/note/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip pages/page/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip knowledge/document/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip extension/one/view",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip terminal/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip cloud-run/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip dossier/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip radar/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip decisions/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip agents/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip focus/item/one",
+      "pass": true
+    },
+    {
+      "name": "Action routes keep their side-effect-only navigation contract",
+      "pass": true
+    },
+    {
+      "name": "Full Electron typecheck with virtual parser/types overlay",
+      "pass": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n9 !== 0\n"
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": 2322,
+      "file": "apps/electron/src/renderer/lib/nav-helpers.ts",
+      "line": 63,
+      "message": "Type 'UnavailableNavigationState' is not assignable to type 'never'."
+    },
+    {
+      "code": 2322,
+      "file": "apps/electron/src/shared/route-parser.ts",
+      "line": 906,
+      "message": "Type 'null' is not assignable to type 'ParsedRoute'."
+    },
+    {
+      "code": 2339,
+      "file": "apps/electron/src/shared/route-parser.ts",
+      "line": 1614,
+      "message": "Property 'filter' does not exist on type 'SessionsNavigationState | UnavailableNavigationState'.\n  Property 'filter' does not exist on type 'UnavailableNavigationState'."
+    },
+    {
+      "code": 2339,
+      "file": "apps/electron/src/shared/route-parser.ts",
+      "line": 1615,
+      "message": "Property 'viewMode' does not exist on type 'SessionsNavigationState | UnavailableNavigationState'.\n  Property 'viewMode' does not exist on type 'UnavailableNavigationState'."
+    },
+    {
+      "code": 2339,
+      "file": "apps/electron/src/shared/route-parser.ts",
+      "line": 1616,
+      "message": "Property 'details' does not exist on type 'SessionsNavigationState | UnavailableNavigationState'.\n  Property 'details' does not exist on type 'UnavailableNavigationState'."
+    },
+    {
+      "code": 2339,
+      "file": "apps/electron/src/shared/route-parser.ts",
+      "line": 1616,
+      "message": "Property 'details' does not exist on type 'SessionsNavigationState | UnavailableNavigationState'.\n  Property 'details' does not exist on type 'UnavailableNavigationState'."
+    },
+    {
+      "code": 2339,
+      "file": "apps/electron/src/shared/types.ts",
+      "line": 2933,
+      "message": "Property 'filter' does not exist on type 'SessionsNavigationState | UnavailableNavigationState'.\n  Property 'filter' does not exist on type 'UnavailableNavigationState'."
+    },
+    {
+      "code": 2339,
+      "file": "apps/electron/src/shared/types.ts",
+      "line": 2939,
+      "message": "Property 'details' does not exist on type 'SessionsNavigationState | UnavailableNavigationState'.\n  Property 'details' does not exist on type 'UnavailableNavigationState'."
+    },
+    {
+      "code": 2339,
+      "file": "apps/electron/src/shared/types.ts",
+      "line": 2940,
+      "message": "Property 'details' does not exist on type 'SessionsNavigationState | UnavailableNavigationState'.\n  Property 'details' does not exist on type 'UnavailableNavigationState'."
+    }
+  ]
+}

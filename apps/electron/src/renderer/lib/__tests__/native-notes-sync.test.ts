@@ -77,10 +77,12 @@ test('overlapping workspace starts keep the last requested workspace and close o
   const controller = createNativeNotesSyncController()
   const a = controller.start('workspace-a')
   const b = controller.start('workspace-b')
-  const c = controller.start('workspace-c')
-  await c
+  let latestStarted = false
+  const c = controller.start('workspace-c').then(() => { latestStarted = true })
+  await Promise.resolve()
+  expect(latestStarted).toBe(false)
   first.resolve('handle-workspace-a')
-  await Promise.all([a, b])
+  await Promise.all([a, b, c])
   await controller.stop()
   expect(calls.closed).toEqual(['handle-workspace-a', 'handle-workspace-c'])
 })

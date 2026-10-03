@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { TourPanelScope, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { navigationEntity } from '@/features/product-tour/runtime/routes'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -36,7 +38,8 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { isScreenNavigation } from '../../../shared/types'
+import { isScreenNavigation, type LoadedSource, type LoadedSkill } from '../../../shared/types'
+import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
@@ -53,6 +56,18 @@ import {
 
 import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
 export { lazyRoutePage } from '@/lib/route-recovery'
+
+function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
+  const signals = useTourSignals({ workspaceId: workspaceId ?? '' })
+  useEffect(() => {
+    const capability = { state: 'unavailable', reason: 'missing-entity' } as const
+    const removeAvailable = signals.capability('automations.available', capability)
+    const removeEntity = signals.capability('automation.entity-present', capability)
+    return () => { removeEntity(); removeAvailable() }
+  }, [signals])
+  return null
+}
+
 
 const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
@@ -103,7 +118,11 @@ function useSelectedResourceAvailability(
 ): { status: SelectedResourceStatus; retry: () => void } {
   const [attempt, setAttempt] = useState(0)
   const identity = JSON.stringify([workspaceId, kind, slug, workingDirectory])
-  const [state, setState] = useState<{ identity: string; status: SelectedResourceStatus }>({
+  const [state, setState] = useState<{
+    identity: string
+    status: SelectedResourceStatus
+    editableSkill?: boolean
+  }>({
     identity,
     status: kind ? 'loading' : 'ready',
   })
@@ -116,16 +135,33 @@ function useSelectedResourceAvailability(
       setState({ identity, status: 'unavailable' })
       return
     }
-    const load = async () => {
+    const load = async (background = false) => {
       const request = ++revision
-      setState({ identity, status: 'loading' })
+      // Keep a mounted editor while a background snapshot is pending. An
+      // invalidation alone does not prove that its entity was deleted.
+      if (!background) setState({ identity, status: 'loading' })
       try {
-        const exists = kind === 'source'
-          ? (await api.getSources(workspaceId)).some((source) => source.config.slug === slug)
-          : (await api.getSkills(workspaceId, workingDirectory)).some((skill) => skill.slug === slug)
-        if (active && request === revision) setState({ identity, status: exists ? 'ready' : 'missing' })
+        const rows = kind === 'source'
+          ? await api.getSources(workspaceId)
+          : await api.getSkills(workspaceId, workingDirectory)
+        if (!Array.isArray(rows)) throw new Error('Invalid resource snapshot')
+        if (!active || request !== revision) return
+        if (kind === 'source') {
+          const exists = (rows as LoadedSource[]).some((source) => source.config.slug === slug)
+          setState({ identity, status: exists ? 'ready' : 'missing' })
+        } else {
+          const skill = (rows as LoadedSkill[]).find((skill) => skill.slug === slug)
+          setState({
+            identity, status: skill ? 'ready' : 'missing',
+            editableSkill: skill?.source === 'workspace',
+          })
+        }
       } catch {
-        if (active && request === revision) setState({ identity, status: 'unavailable' })
+        if (active && request === revision) {
+          setState((previous) => background && previous.identity === identity
+            && previous.status === 'ready' && previous.editableSkill
+            ? previous : { identity, status: 'unavailable' })
+        }
       }
     }
     const off = kind === 'source'
@@ -139,7 +175,7 @@ function useSelectedResourceAvailability(
           if (!active || changedWorkspaceId !== workspaceId) return
           // Workspace watcher payloads need not contain project/global skills.
           // Re-read the same resolution context as the selected skill host.
-          void load()
+          void load(true)
         })
     void load()
     return () => { active = false; revision += 1; off?.() }
@@ -166,7 +202,7 @@ export function MainContentPanel({
   const { t } = useTranslation()
   const globalNavState = useNavigationState()
   const { isSessionsReady = true, unavailableWorkspaceSlug } = useNavigation()
-  const navState = unavailableWorkspaceSlug ? globalNavState : navStateOverride ?? globalNavState
+  const requestedNavState = unavailableWorkspaceSlug ? globalNavState : navStateOverride ?? globalNavState
   const {
     activeWorkspaceId,
     workspaces,
@@ -176,9 +212,31 @@ export function MainContentPanel({
     labels,
     activeSessionWorkingDirectory,
   } = useAppShellContext()
-
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const remoteWorkspaceId = workspaces.find((workspace) => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
+  const selectedSession = isSessionsNavigation(requestedNavState) && requestedNavState.details
+    ? sessionMetaMap.get(requestedNavState.details.sessionId) : undefined
+  const remoteWorkspaceId = workspaces.find(workspace => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
+  // PanelSlot supplies its own route state, including for unfocused panels.
+  // Validate that state here before a foreign session can mount its ChatPage.
+  const navState: import('../../../shared/types').NavigationState = isSessionsReady && selectedSession && activeWorkspaceId
+    && selectedSession.workspaceId !== activeWorkspaceId && (!remoteWorkspaceId || selectedSession.workspaceId !== remoteWorkspaceId)
+    ? { navigator: 'unavailable', route: buildRouteFromNavigationState(requestedNavState), reason: 'workspace-mismatch',
+        ...(requestedNavState.rightSidebar ? { rightSidebar: requestedNavState.rightSidebar } : {}) }
+    : requestedNavState
+
+  // Detail state belongs to its workspace and entity, including project-level skills.
+  const routeKey = JSON.stringify([
+    activeWorkspaceId,
+    navState.navigator,
+    isSessionsNavigation(navState) ? navState.viewMode : null,
+    'details' in navState ? navState.details : null,
+    isSettingsNavigation(navState) ? navState.subpage : null,
+    isScreenNavigation(navState) ? navState.screen : null,
+    navState.navigator === 'search' ? navState.query : null,
+    navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
+    unavailableWorkspaceSlug,
+    isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
+  ])
   const visibleSessionIds = useMemo(
     () =>
       [...sessionMetaMap.values()]
@@ -231,19 +289,6 @@ export function MainContentPanel({
     activeWorkspaceId, resourceKind, resourceSlug,
     resourceKind === 'skill' ? activeSessionWorkingDirectory : undefined,
   )
-  // Keep session hosts mounted when only their list filter changes. A different
-  // entity/workspace must start with fresh state, including pending async work.
-  const routeIdentity = JSON.stringify([
-    activeWorkspaceId, navState.navigator,
-    navState.navigator === 'unavailable' ? navState.route : null,
-    isScreenNavigation(navState) ? navState.screen : null,
-    isSettingsNavigation(navState) ? navState.subpage : null,
-    isSessionsNavigation(navState) ? navState.viewMode : null,
-    navState.navigator === 'unavailable' ? navState.route : null,
-    unavailableWorkspaceSlug,
-    'details' in navState ? navState.details : null,
-  ])
-
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
   const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
   const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
@@ -267,8 +312,9 @@ export function MainContentPanel({
   )
 
   const wrapWithStoplight = (content: React.ReactNode) => (
-    <StoplightProvider value={isSidebarAndNavigatorHidden}>
-      <RouteErrorBoundary key={routeIdentity} fallback={(retry) => (
+    <TourPanelScope workspaceId={activeWorkspaceId ?? ''} panelId={panelId ?? 'shell'} {...navigationEntity(navState)}>
+    <StoplightProvider key={routeKey} value={isSidebarAndNavigatorHidden}>
+      <RouteErrorBoundary key={routeKey} fallback={(retry) => (
         <Panel variant="grow" className={className}>
           <div role="alert" data-testid="route-error" className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center">
             <p className="text-sm text-muted-foreground">{t('common.errorLoadingContent')}</p>
@@ -290,6 +336,7 @@ export function MainContentPanel({
         activeWorkspaceId={activeWorkspaceId || ''}
       />
     </StoplightProvider>
+    </TourPanelScope>
   )
 
   const resourceMultiSelect = resourceKind === 'source' ? isSourceMultiSelectActive : isSkillMultiSelectActive
@@ -438,6 +485,7 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex h-full items-center justify-center p-8" data-testid="automations-empty-editor">
+          <UnavailableAutomationTour workspaceId={activeWorkspaceId} />
           <div className="max-w-sm text-center text-sm text-muted-foreground">
             <p className="text-base text-foreground">
               {/* A stale selection (e.g. just deleted) falls back to the picker once the list has loaded. */}
@@ -675,8 +723,11 @@ export function MainContentPanel({
           <Panel variant="grow" className={className}>
             <div role="status" aria-live="polite" data-testid={isSessionsReady ? 'route-session-missing' : 'route-session-loading'} data-route-entity={sessionId}
               className="flex h-full items-center justify-center p-4 text-muted-foreground">
-              <p className="text-sm">{t(isSessionsReady ? 'chat.sessionNoLongerExists' : 'common.loading')}</p>
+              <div data-testid={isSessionsReady ? 'route-session-unavailable' : undefined} data-session-id={sessionId}>
+                <p className="text-sm">{t(isSessionsReady ? 'chat.sessionNoLongerExists' : 'common.loading')}</p>
+              </div>
             </div>
+            {sessionsBulkBar}
           </Panel>
         )
       }
@@ -697,6 +748,7 @@ export function MainContentPanel({
     )
   }
 
+  // A stale route stays unavailable instead of falling back to session.selectConversation.
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
       <div
@@ -705,7 +757,14 @@ export function MainContentPanel({
         data-testid="route-unavailable"
       >
         {/* Unknown/stale deep links must not masquerade as an unrelated chat route. */}
-        <p className="text-sm">{t('common.unavailable')}</p>
+        {navState.navigator === 'unavailable' && navState.reason === 'workspace-mismatch'
+          && isSessionsNavigation(requestedNavState) && requestedNavState.details ? (
+          <div data-testid="route-session-missing" data-route-entity={requestedNavState.details.sessionId}>
+            <div data-testid="route-session-unavailable" data-session-id={requestedNavState.details.sessionId}>
+              <p className="text-sm">{t('common.unavailable')}</p>
+            </div>
+          </div>
+        ) : <p className="text-sm">{t('common.unavailable')}</p>}
       </div>
     </Panel>
   )

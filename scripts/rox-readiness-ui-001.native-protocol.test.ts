@@ -9,13 +9,15 @@ interface NativeRegistrationInput {
   argv?: string[]
   scheme?: string
   optOut?: string
+  testOptOut?: string
+  nodeEnv?: string
   register?: (scheme: string, executable?: string, args?: string[]) => boolean
 }
 
 /** Execute the exact product registration block, replacing only the OS operation. */
 function registration(input: NativeRegistrationInput = {}) {
   const path = join(import.meta.dir, '../apps/electron/src/main/index.ts')
-  const source = readFileSync(path, 'utf8')
+  const source = readFileSync(process.env.ROX_PROTOCOL_SOURCE_OVERRIDE ?? path, 'utf8')
   const file = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
   const declarations = file.statements.filter(node => ts.isFunctionDeclaration(node)
     && node.name?.text === 'registerDeeplinkScheme')
@@ -28,7 +30,13 @@ function registration(input: NativeRegistrationInput = {}) {
   }
   const invocations = file.statements.filter(node => !ts.isFunctionDeclaration(node)
     && (ts.isExpressionStatement(node) || ts.isIfStatement(node)) && callsRegistration(node))
-  if (declarations.length !== 1 || invocations.length !== 2) throw new Error('Product registration block unavailable')
+  let callCount = 0
+  const countCalls = (node: ts.Node) => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'registerDeeplinkScheme') callCount++
+    ts.forEachChild(node, countCalls)
+  }
+  invocations.forEach(countCalls)
+  if (declarations.length !== 1 || callCount !== 2) throw new Error('Product registration block unavailable')
   const program = ts.transpileModule([...declarations, ...invocations].map(node => node.getText(file)).join('\n'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText
@@ -44,7 +52,7 @@ function registration(input: NativeRegistrationInput = {}) {
     defaultApp: input.defaultApp ?? true,
     argv: input.argv ?? ['task-electron', '/task/candidate/apps/electron'],
     execPath: '/task/runtime/Electron.app/Contents/MacOS/Electron',
-    env: { ROX_DEV_DISABLE_PROTOCOL_REGISTRATION: input.optOut },
+    env: { ROX_DEV_DISABLE_PROTOCOL_REGISTRATION: input.optOut, ROX_SKIP_PROTOCOL_REGISTRATION: input.testOptOut, NODE_ENV: input.nodeEnv },
   }
   return {
     calls,
@@ -55,6 +63,10 @@ function registration(input: NativeRegistrationInput = {}) {
 }
 
 describe('UI-001 native protocol isolation', () => {
+  it('existing test-only opt-out retains its explicit test environment boundary', () => {
+    const disabled = registration({ testOptOut: '1', nodeEnv: 'test' }); disabled.run(); expect(disabled.calls).toEqual([])
+    const normal = registration({ testOptOut: '1', nodeEnv: 'production', defaultApp: false }); normal.run(); expect(normal.calls).toEqual([['rox'], ['craftagents']])
+  })
   it('explicit isolated dev opt-out prevents every OS association callback', () => {
     const execution = registration({ optOut: '1', register: () => { throw new Error('Unexpected global association') } })
     expect(execution.run).not.toThrow()

@@ -2,7 +2,8 @@
  * Run repository tests serially in separate processes. Module mocks, import-time
  * configuration paths and native test profiles must never leak to another file.
  *
- * bun run test [--root <checkout>] [--list] [--filter <path-substring>] [--timeout <ms>]
+ * bun run test [--root <checkout>] [--list] [--filter <path-substring>]
+ *   [--timeout <test-ms>] [--suite-timeout <process-ms>]
  * ROX_TEST_ROOT and ROX_TEST_ARTIFACT_DIR support immutable baseline comparisons.
  * Every invocation retains its own manifest, logs and incremental result report.
  */
@@ -46,6 +47,8 @@ export interface SuiteResult {
   logSha256: string
   durationMs: number
   testCounts: { pass: number; fail: number; skip: number } | null
+  timedOut?: boolean
+  signal?: NodeJS.Signals | null
   error?: string
 }
 export interface TestReport {
@@ -67,6 +70,7 @@ export interface TestReport {
   finishedAt?: string
   serial: true
   bunTimeoutMs: number
+  wholeSuiteTimeoutMs: number
   summary: { expected: number; completed: number; passed: number; failed: number; blocked: number }
   results: SuiteResult[]
 }
@@ -74,6 +78,7 @@ export interface TestReport {
 const STANDARD_TEST = /[._](?:test|spec)\.(?:js|jsx|ts|tsx|mjs|cjs|mts|cts)$/
 const ISOLATED_TEST = /\.isolated\.ts$/
 const CONFIG_EXTENSIONS = ['ts', 'mts', 'cts', 'js', 'mjs', 'cjs']
+const DEFAULT_WHOLE_SUITE_TIMEOUT_MS = 900_000
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex')
 const portable = (value: string) => value.split('\\').join('/')
 
@@ -88,22 +93,33 @@ const NODE_CAPTURE_DRIVER = [
   "const stdout = openSync(input.stdout, 'wx', 0o600)",
   "const stderr = openSync(input.stderr, 'wx', 0o600)",
   "const log = input.log ? openSync(input.log, 'wx', 0o600) : null",
-  "let stdoutBytes = 0, stderrBytes = 0, error",
-  "const child = spawn(input.command[0], input.command.slice(1), { cwd: input.cwd, env: input.environment, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true })",
+  "let stdoutBytes = 0, stderrBytes = 0, error, cleanupError",
+  "const grouped = process.platform !== 'win32'",
+  "const child = spawn(input.command[0], input.command.slice(1), { cwd: input.cwd, env: input.environment, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true, detached: grouped })",
   "const write = (descriptor, chunk) => { let offset = 0; while (offset < chunk.length) offset += writeSync(descriptor, chunk, offset, chunk.length - offset) }",
   "const record = (descriptor, chunk) => { write(descriptor, chunk); if (log !== null) write(log, chunk) }",
   "child.stdout.on('data', chunk => { record(stdout, chunk); stdoutBytes += chunk.length })",
   "child.stderr.on('data', chunk => { record(stderr, chunk); stderrBytes += chunk.length })",
   "child.on('error', failure => { error = failure.message })",
-  "let stopped = false, forceStop",
-  "const stop = () => { if (stopped) return; stopped = true; child.kill('SIGTERM'); forceStop = setTimeout(() => child.kill('SIGKILL'), 2000); forceStop.unref() }",
-  "process.on('SIGTERM', stop); process.on('SIGINT', stop)",
-  "const parentCheck = setInterval(() => { try { process.kill(input.parentPid, 0) } catch { stop() } }, 1000)",
+  "const killTree = force => {",
+  "  if (!child.pid) return",
+  "  if (grouped) { try { process.kill(-child.pid, force ? 'SIGKILL' : 'SIGTERM') } catch (failure) { if (failure.code !== 'ESRCH') cleanupError = failure.message } }",
+  "  else { const killer = spawn('taskkill', ['/pid', String(child.pid), '/t', ...(force ? ['/f'] : [])], { stdio: 'ignore', windowsHide: true }); killer.on('error', failure => { cleanupError = failure.message }) }",
+  "}",
+  "let resolveCompletion",
+  "const completion = new Promise(resolve => { resolveCompletion = resolve })",
+  "child.once('close', (exitCode, signal) => resolveCompletion({ exitCode, signal, closeObserved: true }))",
+  "let stopped = false, timedOut = false, terminationReason, forceStop, cleanupDeadline",
+  "const stop = reason => { if (stopped) return; stopped = true; terminationReason = reason; timedOut = reason === 'deadline'; killTree(false); forceStop = setTimeout(() => killTree(true), 2000); forceStop.unref(); cleanupDeadline = setTimeout(() => { cleanupError = 'Process tree did not close after forced termination'; child.stdout.removeAllListeners('data'); child.stderr.removeAllListeners('data'); child.stdout.destroy(); child.stderr.destroy(); child.unref(); resolveCompletion({ exitCode: null, signal: null, closeObserved: false }) }, 5000); cleanupDeadline.unref() }",
+  "process.on('SIGTERM', () => stop('SIGTERM')); process.on('SIGINT', () => stop('SIGINT'))",
+  "const deadline = setTimeout(() => stop('deadline'), input.timeoutMs)",
+  "const parentCheck = setInterval(() => { try { process.kill(input.parentPid, 0) } catch { stop('parent-exited') } }, 1000)",
   "parentCheck.unref()",
-  "const result = await new Promise(resolve => child.once('close', (exitCode, signal) => resolve({ exitCode, signal })))",
-  "clearInterval(parentCheck); if (forceStop) clearTimeout(forceStop)",
+  "const result = await completion",
+  "clearInterval(parentCheck); clearTimeout(deadline); if (forceStop) clearTimeout(forceStop); if (cleanupDeadline) clearTimeout(cleanupDeadline)",
+  "if (stopped) killTree(true)",
   "closeSync(stdout); closeSync(stderr); if (log !== null) closeSync(log)",
-  "writeFileSync(input.result, JSON.stringify({ ...result, error, nodeVersion: process.version, stdoutBytes, stderrBytes }), { flag: 'wx', mode: 0o600 })",
+  "writeFileSync(input.result, JSON.stringify({ ...result, error, cleanupError, timedOut, terminationReason, timeoutMs: input.timeoutMs, processId: child.pid ?? null, nodeVersion: process.version, stdoutBytes, stderrBytes }), { flag: 'wx', mode: 0o600 })",
 ].join('\n')
 
 /** Capture real command output without Bun test's subprocess capture path. */
@@ -111,8 +127,11 @@ export async function captureTestCommand(command: string[], options: {
   cwd?: string
   environment?: NodeJS.ProcessEnv
   log?: string
-} = {}): Promise<{ exitCode: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string; nodeVersion: string }> {
+  timeoutMs?: number
+} = {}): Promise<{ exitCode: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string; nodeVersion: string; timedOut: boolean; timeoutMs: number; terminationReason?: string }> {
   if (!command[0]) throw new Error('A captured command requires an executable')
+  const timeoutMs = options.timeoutMs ?? DEFAULT_WHOLE_SUITE_TIMEOUT_MS
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 3_600_000) throw new Error('Command timeout must be a positive integer at most 3600000')
   const directory = await mkdtemp(join(tmpdir(), 'rox-test-capture-'))
   const driver = join(directory, 'capture.mjs'), input = join(directory, 'input.json'), result = join(directory, 'result.json')
   const stdoutPath = join(directory, 'stdout'), stderrPath = join(directory, 'stderr')
@@ -121,7 +140,7 @@ export async function captureTestCommand(command: string[], options: {
     await writeFile(driver, NODE_CAPTURE_DRIVER, { flag: 'wx', mode: 0o600 })
     // Environment values can include integration credentials; the protected
     // transient input is removed together with the capture directory.
-    await writeFile(input, JSON.stringify({ command, cwd: options.cwd ?? process.cwd(), environment, log: options.log,
+    await writeFile(input, JSON.stringify({ command, cwd: options.cwd ?? process.cwd(), environment, log: options.log, timeoutMs,
       stdout: stdoutPath, stderr: stderrPath, result, parentPid: process.pid }), { flag: 'wx', mode: 0o600 })
     const broker = Bun.spawn(['node', driver, input], { env: environment, stdin: 'ignore', stdout: 'ignore', stderr: 'ignore' })
     const brokerExit = await broker.exited
@@ -129,13 +148,16 @@ export async function captureTestCommand(command: string[], options: {
     const receipt = JSON.parse(await readFile(result, 'utf8'))
     if (receipt.error) throw new Error(`Command capture failed: ${receipt.error}`)
     if (!(receipt.exitCode === null || Number.isInteger(receipt.exitCode)) ||
-      !(receipt.signal === null || typeof receipt.signal === 'string') || typeof receipt.nodeVersion !== 'string') {
+      !(receipt.signal === null || typeof receipt.signal === 'string') || typeof receipt.nodeVersion !== 'string' ||
+      typeof receipt.timedOut !== 'boolean' || receipt.timeoutMs !== timeoutMs) {
       throw new Error('Node command capture returned an invalid completion receipt')
     }
     const [stdout, stderr] = await Promise.all([readFile(stdoutPath), readFile(stderrPath)])
     if (stdout.length !== receipt.stdoutBytes || stderr.length !== receipt.stderrBytes) throw new Error('Node command capture returned incomplete output')
+    if (receipt.cleanupError || receipt.closeObserved !== true) throw new Error('Command process-tree cleanup failed: ' + (receipt.cleanupError ?? 'child close was not observed'))
     return { exitCode: receipt.exitCode, signal: receipt.signal, nodeVersion: receipt.nodeVersion,
-      stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8') }
+      stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8'), timedOut: receipt.timedOut,
+      timeoutMs, terminationReason: receipt.terminationReason }
   } finally { await rm(directory, { recursive: true, force: true }) }
 }
 
@@ -172,6 +194,12 @@ function imports(source: string): Set<string> {
 function testTimeout(value: string | undefined): number {
   if (value === undefined) return 5000
   if (!/^[1-9]\d*$/.test(value) || Number(value) > 300_000) throw new Error('ROX_TEST_TIMEOUT_MS / --timeout must be a positive integer at most 300000')
+  return Number(value)
+}
+
+function wholeSuiteTimeout(value: string | undefined): number {
+  if (value === undefined) return DEFAULT_WHOLE_SUITE_TIMEOUT_MS
+  if (!/^[1-9]\d*$/.test(value) || Number(value) > 3_600_000) throw new Error('ROX_TEST_SUITE_TIMEOUT_MS / --suite-timeout must be a positive integer at most 3600000')
   return Number(value)
 }
 
@@ -370,6 +398,10 @@ export async function runSuites(options: {
   if (!options.manifest.suites.length) throw new Error('No test files discovered; refusing an empty green run')
   const environment = options.environment ?? process.env
   const bunTimeoutMs = testTimeout(environment.ROX_TEST_TIMEOUT_MS)
+  // Bun's per-test deadline cannot interrupt a synchronous native call or
+  // top-level module evaluation. This separate process envelope keeps those
+  // failures bounded without changing any test's own timeout or assertion.
+  const wholeSuiteTimeoutMs = wholeSuiteTimeout(environment.ROX_TEST_SUITE_TIMEOUT_MS)
   const artifactDirectory = await createArtifactRun(options.artifactDirectory ?? environment.ROX_TEST_ARTIFACT_DIR ?? join(root, 'work/test-all'))
   const manifestPath = join(artifactDirectory, 'manifest.json')
   const manifest = JSON.stringify(options.manifest, null, 2) + '\n'
@@ -381,7 +413,7 @@ export async function runSuites(options: {
   const report: TestReport = {
     schemaVersion: 1, status: 'running', root, artifactDirectory, manifestPath, reportPath: join(artifactDirectory, 'report.json'),
     input: { head: head?.trim() ?? null, trackedDiffSha256: diff === null ? null : hash(diff), manifestSha256: hash(manifest), runnerSha256: hash(readFileSync(import.meta.filename)), bunVersion: Bun.version, nodeVersion: node.stdout.trim() },
-    startedAt: new Date().toISOString(), serial: true, bunTimeoutMs,
+    startedAt: new Date().toISOString(), serial: true, bunTimeoutMs, wholeSuiteTimeoutMs,
     summary: { expected: options.manifest.suites.length, completed: 0, passed: 0, failed: 0, blocked: 0 }, results: [],
   }
   const checkpoint = () => writeFile(report.reportPath, JSON.stringify(report, null, 2) + '\n')
@@ -418,9 +450,15 @@ export async function runSuites(options: {
       if (suite.runner === 'playwright' && suite.config === 'tests/e2e/meeting-agents/playwright.config.ts'
         && childEnv.ROX_MEETING_USE_PACKAGED_APP !== '1') childEnv.ROX_MEETING_E2E_FIXTURE ??= '1'
       const cwd = suite.runner === 'vitest' ? resolve(root, suite.packageRoot ?? '.') : root
-      const child = await captureTestCommand(result.command, { cwd, environment: childEnv, log })
+      const child = await captureTestCommand(result.command, { cwd, environment: childEnv, log, timeoutMs: wholeSuiteTimeoutMs })
       result.exitCode = child.exitCode
+      result.signal = child.signal
+      result.timedOut = child.timedOut
       result.status = result.exitCode === 0 ? 'passed' : 'failed'
+      if (child.timedOut || child.terminationReason) {
+        result.status = 'failed'
+        throw new Error(child.timedOut ? `Whole-suite process deadline exceeded after ${wholeSuiteTimeoutMs}ms` : `Test process interrupted: ${child.terminationReason}`)
+      }
       if (result.exitCode === 0 && !child.stdout.length && !child.stderr.length) {
         result.status = 'failed'
         throw new Error('Test executor exited successfully without execution output; refusing an empty green result')
@@ -451,20 +489,23 @@ async function main() {
   let list = false
   let filter: string | undefined
   let timeout = process.env.ROX_TEST_TIMEOUT_MS
+  let suiteTimeout = process.env.ROX_TEST_SUITE_TIMEOUT_MS
   const args = process.argv.slice(2)
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]!
     if (arg === '--list') list = true
-    else if (arg === '--root' || arg === '--filter' || arg === '--timeout') {
+    else if (arg === '--root' || arg === '--filter' || arg === '--timeout' || arg === '--suite-timeout') {
       const value = args[++index]
       if (!value) throw new Error(`${arg} requires a value`)
       if (arg === '--root') root = value
       else if (arg === '--filter') filter = value
-      else timeout = value
+      else if (arg === '--timeout') timeout = value
+      else suiteTimeout = value
     } else throw new Error(`Unknown test runner option: ${arg}`)
   }
   root = resolve(root)
   const bunTimeoutMs = testTimeout(timeout)
+  const wholeSuiteTimeoutMs = wholeSuiteTimeout(suiteTimeout)
   const manifest = await discoverSuites(root)
   if (filter !== undefined) manifest.suites = manifest.suites.filter(suite => suite.path.includes(filter!))
   if (!manifest.suites.length) throw new Error('No test files discovered; refusing an empty green run')
@@ -476,7 +517,7 @@ async function main() {
     console.log(JSON.stringify({ status: 'listed', root, manifestPath, files: manifest.suites.length, filter: filter ?? null }))
     return
   }
-  const report = await runSuites({ root, manifest, artifactDirectory, environment: { ...process.env, ROX_TEST_TIMEOUT_MS: String(bunTimeoutMs) }, onResult: (result, completed, expected) => {
+  const report = await runSuites({ root, manifest, artifactDirectory, environment: { ...process.env, ROX_TEST_TIMEOUT_MS: String(bunTimeoutMs), ROX_TEST_SUITE_TIMEOUT_MS: String(wholeSuiteTimeoutMs) }, onResult: (result, completed, expected) => {
     console.log(`[${completed}/${expected}] ${result.status} ${result.path} (${result.durationMs}ms)${result.error ? ': ' + result.error : ''}`)
   } })
   console.log(JSON.stringify({ status: report.status, root, reportPath: report.reportPath, summary: report.summary, filter: filter ?? null }))

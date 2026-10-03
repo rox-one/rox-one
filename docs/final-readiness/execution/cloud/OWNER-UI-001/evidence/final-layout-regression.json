@@ -1,0 +1,21 @@
+{
+  "label": "final-layout-regression",
+  "command": [
+    "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "test",
+    "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+  ],
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "startedAt": "2026-10-03T10:51:16.086916+00:00",
+  "finishedAt": "2026-10-03T10:51:16.580852+00:00",
+  "exitCode": 1,
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+    "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+  },
+  "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-layout-regression.log",
+  "logSha256": "6d21018d181a9631a0a67c1f96479217a2772d5e127821a58a78975165583006"
+}
