@@ -155,5 +155,21 @@
       "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "uncompressed_bytes": 0
     }
-  ]
+  ],
+  "final_reconciliation": {
+    "main_sha": "4053bfc6c03b2f677689f68177a91dc6d71e78db",
+    "commit": "53a80dca39fa85e363ea1ad41b27c5c24a465a28",
+    "all_owned_toolchain_dependencies_unchanged_since_qualified_source": true,
+    "doc_diff_against_main": {
+      "spec": {
+        "add": 6,
+        "delete": 0
+      },
+      "plan": {
+        "add": 6,
+        "delete": 0
+      }
+    },
+    "additional_gate_policy": "No repeat of passing source tests for independent runtime-view/docs-only dependency composition; exact qualified source and current dependency hashes retained."
+  }
 }
