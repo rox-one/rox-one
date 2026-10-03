@@ -17,3 +17,5 @@ python3 reports/pocket-sso-ci-validation-repair/run-clean-home.py \
 ```
 
 The runner reads the actual workflow step, rejects a changed command shape, owns home/config/CLI seam, clears ambient OMP/key overrides, and retains a result plus log. It writes only its own report output and temporary fixtures. The caller should remove the receipt's ownedRoot after review. The runner models unavailable OS storage and uses actual OmpAgent/NDJSON/profile/credential storage with the existing fake provider process seam; it does not perform external inference.
+
+Lead independently reviewed the setup-safe diff and repeated the exact10-file workflow step at65d6945:47pass/0fail/253assertions under pinnedBun1.3.14 in a new owned clean HOME/config. The local unavailable-keychain CLI seam is explicit; separate native aa80 OS-backed proofs remain separate. All input hashes were read back, the owned fixture root was removed, and the runner ended0. Fresh GitHub validation remains pending.

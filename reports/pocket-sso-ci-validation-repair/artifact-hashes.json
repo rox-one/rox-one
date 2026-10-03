@@ -1,7 +1,7 @@
 {
   "README.md": {
-    "sha256": "bb982fe22331adf608d8c54b6dd35a10871d9b53dc20307e33a4815126d1dc87",
-    "bytes": 4057
+    "sha256": "d09bb5b2f24c87ae89ced638fa64b2c87cd22cdba2e196fd11aeab706fa9662f",
+    "bytes": 4484
   },
   "baseline-active.json": {
     "sha256": "4413fa546f56ed80e98269e4999be2995ef6a54ae089e4a97a45be67ce7f0539",
@@ -66,6 +66,14 @@
   "fixed-clean-home-workflow-step.log": {
     "sha256": "703919d014827a11ef6816f2841d8479883f10366949653f567a3a8e5b01681b",
     "bytes": 7763
+  },
+  "lead-independent-clean-home-workflow-step-result.json": {
+    "sha256": "bf50e7d05bdcaa151d8784ece452290863892708c4176382669e9902f238e123",
+    "bytes": 1984
+  },
+  "lead-independent-clean-home-workflow-step.log": {
+    "sha256": "f840c3cbb7f365a6134619440667b7abd47e9a542a2a9015206636a29016d0c3",
+    "bytes": 6638
   },
   "original-ci-result.json": {
     "sha256": "f77831e652ea70802301d566551002991ebe95e1a30636ff58046332998c6a08",
