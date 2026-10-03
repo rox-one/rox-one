@@ -62,7 +62,7 @@ import type {
 import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
 import { getCredentialManager } from '@rox/shared/credentials'
 import assertKnowledgeActionAllowed from '@rox/shared/agent/knowledge-permissions'
-import { pushTyped, type RpcServer } from '@rox/server-core/transport'
+import { pushTyped, type RpcServer, type RequestContext } from '@rox/server-core/transport'
 import { registerKnowledgeToolRuntime } from '@rox/session-tools-core'
 import type { HandlerDeps } from '../handler-deps'
 import {
@@ -488,6 +488,9 @@ function assertKnowledgeRef(ref: unknown): asserts ref is KnowledgeRef {
   }
 }
 
+import { nativeNotesKnowledgeAccess } from './notes'
+import { NativeNotesKnowledgeProvider } from '../../knowledge/native-notes-provider'
+
 export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
 
@@ -532,6 +535,9 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   }
 
   async function resolveProvider(connectionId: string): Promise<KnowledgeProvider> {
+    if (connectionId?.startsWith('local-markdown:')) {
+      throw new KnowledgeError('CAPABILITY_DISABLED', 'Native Notes agent reads require authenticated session delegation')
+    }
     const record = requireConnection(connectionId)
     tokensByConnection.set(record.id, await readToken(record))
     try {
@@ -541,8 +547,15 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     }
   }
 
-  async function callProvider<T>(connectionId: string, fn: (provider: KnowledgeProvider) => Promise<T>): Promise<T> {
+  async function callProvider<T>(connectionId: string, fn: (provider: KnowledgeProvider) => Promise<T>, ctx?: RequestContext): Promise<T> {
     try {
+      if (connectionId?.startsWith('local-markdown:')) {
+        if (!ctx?.principal || !ctx.workspaceId || connectionId !== `local-markdown:${ctx.workspaceId}`) {
+          throw new CodedError('AUTH_FAILED', 'Native Notes Knowledge requires an authenticated matching workspace')
+        }
+        return await fn(new NativeNotesKnowledgeProvider(nativeNotesKnowledgeAccess(deps, ctx)))
+      }
+      if (ctx?.principal) throw new CodedError('AUTH_FAILED', 'Native Knowledge reads are limited to this workspace Notes')
       return await fn(await resolveProvider(connectionId))
     } catch (error) {
       throw toTransportError(error)
@@ -659,48 +672,54 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— LIST_CONNECTIONS({}) → KnowledgeConnection[] ———
   // Pure read: local Notes must work before any optional knowledge engine is
   // configured. ENGINE_START is the explicit opt-in that can seed a connection.
-  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, () => {
+  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, (ctx) => {
+    if (ctx.principal) {
+      const access = nativeNotesKnowledgeAccess(deps, ctx)
+      return [{ id: access.connectionId, provider: 'local-markdown', baseUrl: 'local-markdown://native-notes',
+        mode: 'external-local', status: 'ok' }]
+    }
     const listed = rpcKnowledgeListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     return new KnowledgeConnectionsStore().list().map(toContractConnection)
-  })
+  }, { nativeAction: 'read' })
 
   // ——— CAPABILITIES({connectionId}) → KnowledgeCapabilities ———
-  server.handle(RPC_CHANNELS.knowledge.CAPABILITIES, (_ctx, args: KnowledgeConnectionArgs) =>
-    callProvider(args.connectionId, (provider) => provider.capabilities()),
+  server.handle(RPC_CHANNELS.knowledge.CAPABILITIES, (ctx, args: KnowledgeConnectionArgs) =>
+    callProvider(args.connectionId, (provider) => provider.capabilities(), ctx),
+    { nativeAction: 'read' },
   )
 
   // ——— SEARCH({connectionId, input}) → SearchPage ———
-  server.handle(RPC_CHANNELS.knowledge.SEARCH, (_ctx, args: KnowledgeSearchArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.SEARCH, (ctx, args: KnowledgeSearchArgs) => {
     if (!args?.input || typeof args.input.query !== 'string') {
       throw new Error('knowledge.search: input.query must be a string')
     }
-    return callProvider(args.connectionId, (provider) => provider.search(args.input))
-  })
+    return callProvider(args.connectionId, (provider) => provider.search(args.input), ctx)
+  }, { nativeAction: 'read' })
 
   // ——— GET({connectionId, ref}) → KnowledgeNode ———
-  server.handle(RPC_CHANNELS.knowledge.GET, (_ctx, args: KnowledgeRefArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.GET, (ctx, args: KnowledgeRefArgs) => {
     const read = rpcKnowledgeReadResult({ source: 'native', nativeId: args?.connectionId })
     if (!isClaimableLive(read.result)) throw new Error('knowledge node is not live')
     assertKnowledgeRef(args?.ref)
-    return callProvider(args.connectionId, (provider) => provider.get(args.ref))
-  })
+    return callProvider(args.connectionId, (provider) => provider.get(args.ref), ctx)
+  }, { nativeAction: 'read' })
 
   // ——— GET_CONTEXT({connectionId, ref, mode}) → ContextPayload ———
-  server.handle(RPC_CHANNELS.knowledge.GET_CONTEXT, (_ctx, args: KnowledgeGetContextArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.GET_CONTEXT, (ctx, args: KnowledgeGetContextArgs) => {
     assertKnowledgeRef(args?.ref)
     assertContextMode(args.mode)
-    return callProvider(args.connectionId, (provider) => provider.getContext(args.ref, args.mode))
-  })
+    return callProvider(args.connectionId, (provider) => provider.getContext(args.ref, args.mode), ctx)
+  }, { nativeAction: 'read' })
 
   // ——— GET_BACKLINKS({connectionId, ref}) → ContextPayload['backlinks'] ———
-  server.handle(RPC_CHANNELS.knowledge.GET_BACKLINKS, async (_ctx, args: KnowledgeRefArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.GET_BACKLINKS, async (ctx, args: KnowledgeRefArgs) => {
     assertKnowledgeRef(args?.ref)
     const payload = await callProvider(args.connectionId, (provider) =>
-      provider.getContext(args.ref, 'snapshot'),
+      provider.getContext(args.ref, 'snapshot'), ctx,
     )
     return payload.backlinks
-  })
+  }, { nativeAction: 'read' })
 
   // ——— GET_EXPORT_PAYLOAD({connectionId, ref, formats?}) → KnowledgeExportPayload ———
   // P4.3 Craft chrome copy/export. Read-only: deep link always; content via provider.get
