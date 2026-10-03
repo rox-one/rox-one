@@ -1,3 +1,4 @@
+import { writeSecureFile } from "../../browse/src/file-permissions";
 /**
  * Screenshot-to-Mockup Evolution.
  * Takes a screenshot of the live site and generates a mockup showing
@@ -91,7 +92,7 @@ export async function evolve(options: EvolveOptions): Promise<void> {
 
     fs.mkdirSync(path.dirname(options.output), { recursive: true });
     const imageBuffer = Buffer.from(imageItem.result, "base64");
-    fs.writeFileSync(options.output, imageBuffer);
+    writeSecureFile(options.output, imageBuffer);
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.error(`Generated (${elapsed}s, ${(imageBuffer.length / 1024).toFixed(0)}KB) → ${options.output}`);

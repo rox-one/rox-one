@@ -1,3 +1,4 @@
+import { writeSecureFile } from "../../browse/src/file-permissions";
 /**
  * Generate HTML comparison board for user review of design variants.
  * Opens in headed Chrome via $B goto. User picks favorite, rates, comments, submits.
@@ -634,6 +635,6 @@ export function compare(options: CompareOptions): void {
   const html = generateCompareHtml(options.images);
   const outputDir = path.dirname(options.output);
   fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(options.output, html);
+  writeSecureFile(options.output, html);
   console.log(JSON.stringify({ outputPath: options.output, variants: options.images.length }));
 }

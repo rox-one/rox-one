@@ -1,3 +1,4 @@
+import { readBoundedStable } from "../../../lib/cso/bounded-file";
 // Single-instance enforcement. Daemon takes an exclusive flock on
 // ~/.gstack/ios-qa-daemon.pid on startup. Second invocation discovers the
 // existing daemon's port + connects. Stale lock (PID dead) is reclaimed.
@@ -5,11 +6,19 @@
 // Readiness protocol: daemon writes `READY: port=<n> pid=<pid>` to stdout
 // once both listeners are up; the spawner reads stdout with a 5s timeout.
 
-import { readFile, mkdir, unlink } from 'fs/promises';
-import { existsSync, openSync, writeSync, closeSync, unlinkSync } from 'fs';
+import { mkdir } from 'fs/promises';
+import { existsSync, openSync, writeSync, closeSync, unlinkSync, mkdirSync, rmdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { spawn } from 'child_process';
 import { resolveStateRoot } from '../../../lib/state-root';
+
+// Serialize every compliant pidfile mutation, including stale recovery and release.
+// Never reclaim a possibly live mutation lock automatically after a crash.
+function lockPidfileMutation(path: string): () => void {
+  const mutex = path + '.mutation-lock';
+  mkdirSync(mutex, { mode: 0o700 });
+  return () => rmdirSync(mutex);
+}
 
 export interface PidfileContents {
   pid: number;
@@ -37,22 +46,25 @@ export async function tryClaim(opts: {
   | { claimed: true; release: () => Promise<void> }
   | { claimed: false; existing: PidfileContents }
 > {
+  if (!Number.isInteger(opts.port) || opts.port < 1 || opts.port > 65535) throw new Error('Invalid daemon port');
   const path = opts.path ?? defaultPidfilePath();
   await mkdir(dirname(path), { recursive: true, mode: 0o700 });
 
+  const unlockMutation = lockPidfileMutation(path);
+  try {
   // Check for an existing pidfile.
   if (existsSync(path)) {
     try {
-      const raw = await readFile(path, 'utf-8');
+      const raw = readBoundedStable(path, 8192, 'Daemon pidfile').toString('utf8');
       const existing = JSON.parse(raw) as PidfileContents;
       if (isAlive(existing.pid)) {
         return { claimed: false, existing };
       }
       // Stale — drop it and continue to claim.
-      await unlink(path).catch(() => {});
+      try { unlinkSync(path); } catch { /* already absent */ }
     } catch {
       // Unparseable pidfile — treat as stale.
-      await unlink(path).catch(() => {});
+      try { unlinkSync(path); } catch { /* already absent */ }
     }
   }
 
@@ -76,7 +88,7 @@ export async function tryClaim(opts: {
     const e = err as { code?: string };
     if (e.code === 'EEXIST') {
       // Race: another caller won.
-      const raw = await readFile(path, 'utf-8').catch(() => '{}');
+      const raw = readBoundedStable(path, 8192, 'Daemon pidfile').toString('utf8');
       const existing = JSON.parse(raw || '{}') as PidfileContents;
       return { claimed: false, existing };
     }
@@ -89,26 +101,22 @@ export async function tryClaim(opts: {
   }
 
   // Cleanup on exit.
-  const cleanup = async () => {
+  const cleanupSync = () => {
+    let unlock: (() => void) | undefined;
     try {
-      // Verify we still own it before unlinking.
-      const raw = await readFile(path, 'utf-8');
-      const cur = JSON.parse(raw) as PidfileContents;
-      if (cur.pid === process.pid) {
-        await unlink(path);
-      }
-    } catch {
-      // best-effort
-    }
+      unlock = lockPidfileMutation(path);
+      const cur = JSON.parse(readBoundedStable(path, 8192, 'Daemon pidfile').toString('utf8')) as PidfileContents;
+      if (cur.pid === process.pid && cur.startedAt === contents.startedAt) unlinkSync(path);
+    } catch { /* busy or changed: leave another generation untouched */ }
+    finally { unlock?.(); }
   };
-
-  process.on('exit', () => {
-    try { unlinkSync(path); } catch { /* ignore */ }
-  });
+  const cleanup = async () => cleanupSync();
+  process.on('exit', cleanupSync);
   process.on('SIGINT', () => { cleanup().finally(() => process.exit(0)); });
   process.on('SIGTERM', () => { cleanup().finally(() => process.exit(0)); });
 
   return { claimed: true, release: cleanup };
+  } finally { unlockMutation(); }
 }
 
 function isAlive(pid: number): boolean {

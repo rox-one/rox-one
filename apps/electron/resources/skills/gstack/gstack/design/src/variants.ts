@@ -1,3 +1,4 @@
+import { writeSecureFile } from "../../browse/src/file-permissions";
 /**
  * Generate N design variants from a brief.
  * Uses staggered parallel: 1s delay between API calls to avoid rate limits.
@@ -127,7 +128,7 @@ export async function generateVariant(
         return { path: outputPath, success: false, error: "No image data in response" };
       }
 
-      fs.writeFileSync(outputPath, Buffer.from(imageItem.result, "base64"));
+      writeSecureFile(outputPath, Buffer.from(imageItem.result, "base64"));
       return { path: outputPath, success: true };
     } catch (err: any) {
       clearTimeout(timeout);

@@ -1,3 +1,5 @@
+import { readBoundedStable } from "../../lib/cso/bounded-file";
+import { writeSecureFile } from "../../browse/src/file-permissions";
 /**
  * HTTP server for the design comparison board feedback loop.
  *
@@ -150,7 +152,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     const feedbackDir = path.dirname(html);
     const feedbackFile = isSubmit ? "feedback.json" : "feedback-pending.json";
     const feedbackPath = path.join(feedbackDir, feedbackFile);
-    fs.writeFileSync(feedbackPath, JSON.stringify(body, null, 2));
+    writeSecureFile(feedbackPath, JSON.stringify(body, null, 2));
 
     if (isSubmit) {
       state = "done";
@@ -218,7 +220,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     }
 
     // Swap the HTML content
-    htmlContent = fs.readFileSync(resolvedReload, "utf-8");
+    htmlContent = readBoundedStable(resolvedReload, 64 * 1024 * 1024, "Design input").toString("utf8");
     state = "serving";
 
     console.error(`SERVE_RELOADED: html=${newHtmlPath}`);

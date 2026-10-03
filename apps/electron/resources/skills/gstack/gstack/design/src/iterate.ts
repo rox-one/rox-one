@@ -1,3 +1,4 @@
+import { writeSecureFile } from "../../browse/src/file-permissions";
 /**
  * Multi-turn design iteration using OpenAI Responses API.
  *
@@ -40,7 +41,7 @@ export async function iterate(options: IterateOptions): Promise<void> {
     responseId = result.responseId;
 
     fs.mkdirSync(path.dirname(options.output), { recursive: true });
-    fs.writeFileSync(options.output, Buffer.from(result.imageData, "base64"));
+    writeSecureFile(options.output, Buffer.from(result.imageData, "base64"));
     success = true;
   } catch (err: any) {
     console.error(`  Threading failed: ${err.message}`);
@@ -56,7 +57,7 @@ export async function iterate(options: IterateOptions): Promise<void> {
     responseId = result.responseId;
 
     fs.mkdirSync(path.dirname(options.output), { recursive: true });
-    fs.writeFileSync(options.output, Buffer.from(result.imageData, "base64"));
+    writeSecureFile(options.output, Buffer.from(result.imageData, "base64"));
     success = true;
   }
 

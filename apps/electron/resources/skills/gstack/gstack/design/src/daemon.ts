@@ -1,3 +1,4 @@
+import { readBoundedStable } from "../../lib/cso/bounded-file";
 /**
  * Persistent design board daemon.
  *
@@ -331,7 +332,7 @@ async function handlePublish(req: Request, origin: string): Promise<Response> {
   }
 
   const id = newBoardId();
-  const htmlContent = fs.readFileSync(resolvedHtml, "utf-8");
+  const htmlContent = readBoundedStable(resolvedHtml, 64 * 1024 * 1024, "Design input").toString("utf8");
   const now = Date.now();
   const board: Board = {
     id,
@@ -445,7 +446,7 @@ async function handleBoardReload(board: Board, req: Request): Promise<Response> 
       { status: 400 },
     );
   }
-  board.htmlContent = fs.readFileSync(resolvedReload, "utf-8");
+  board.htmlContent = readBoundedStable(resolvedReload, 64 * 1024 * 1024, "Design input").toString("utf8");
   board.state = "serving";
   board.lastTouched = Date.now();
   markMeaningfulActivity();

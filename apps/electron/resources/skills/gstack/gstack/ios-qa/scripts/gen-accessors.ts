@@ -1,4 +1,6 @@
 #!/usr/bin/env bun
+import { writeSecureFile } from "../../browse/src/file-permissions";
+import { readBoundedStable } from "../../lib/cso/bounded-file";
 //
 // gen-accessors (TS port). Mirrors the SwiftPM tool's logic for the cases
 // where a user doesn't want to wait 2-5min for swift-syntax to build the
@@ -804,7 +806,7 @@ export function generate(inputs: GenInputs): GenResult {
   mkdirSync(outputDir, { recursive: true });
 
   if (existsSync(cachedOutput)) {
-    copyFileSync(cachedOutput, finalOutput);
+    writeSecureFile(finalOutput, readBoundedStable(cachedOutput, 16 * 1024 * 1024, "Generated accessor cache"));
     // Parse for return value but use cached content as truth.
     return {
       outputPath: finalOutput,
@@ -816,12 +818,12 @@ export function generate(inputs: GenInputs): GenResult {
   }
 
   const rendered = render(allSpecs, buildId, accessorHash);
-  writeFileSync(finalOutput, rendered);
+  writeSecureFile(finalOutput, rendered);
 
   // Populate cache (best-effort — cache failures don't break codegen).
   try {
     mkdirSync(join(cacheRoot, cacheKey), { recursive: true });
-    writeFileSync(cachedOutput, rendered);
+    writeSecureFile(cachedOutput, rendered);
   } catch {
     // best-effort
   }

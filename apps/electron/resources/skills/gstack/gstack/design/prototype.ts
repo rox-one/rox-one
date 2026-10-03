@@ -1,3 +1,5 @@
+import { writeSecureFile } from "../browse/src/file-permissions";
+import os from "node:os";
 /**
  * Commit 0: Prototype validation
  * Sends 3 design briefs to GPT Image API via Responses API.
@@ -16,7 +18,7 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-const OUTPUT_DIR = "/tmp/gstack-prototype-" + Date.now();
+const OUTPUT_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "gstack-prototype-"));
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
 const briefs = [
@@ -87,7 +89,7 @@ async function generateMockup(brief: { name: string; prompt: string }) {
   const safeName = brief.name.replace(/[^a-zA-Z0-9_-]/g, "_");
   const outputPath = OUTPUT_DIR + "/" + safeName + ".png";
   const imageBuffer = Buffer.from(imageItem.result, "base64");
-  fs.writeFileSync(outputPath, imageBuffer);
+  writeSecureFile(outputPath, imageBuffer);
 
   console.log(`OK (${elapsed}s) → ${outputPath}`);
   console.log(`   Size: ${(imageBuffer.length / 1024).toFixed(0)} KB`);

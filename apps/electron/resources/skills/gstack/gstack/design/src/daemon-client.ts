@@ -1,3 +1,4 @@
+import { readBoundedStable } from "../../lib/cso/bounded-file";
 /**
  * CLI-side client for the design daemon.
  *
@@ -186,6 +187,7 @@ export interface PublishBoardResult {
 }
 
 export async function publishBoard(opts: PublishBoardOptions): Promise<PublishBoardResult> {
+  if (!Number.isInteger(opts.port) || opts.port < 1 || opts.port > 65535) throw new Error('Invalid loopback daemon port');
   const body: Record<string, unknown> = {
     html: opts.html,
     publisherPid: opts.publisherPid ?? process.pid,
@@ -194,6 +196,7 @@ export async function publishBoard(opts: PublishBoardOptions): Promise<PublishBo
   const resp = await fetch(`http://127.0.0.1:${opts.port}/api/boards`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    redirect: "manual",
     body: JSON.stringify(body),
   });
   if (!resp.ok) {
@@ -302,7 +305,7 @@ async function spawnDaemon(opts: SpawnDaemonOpts): Promise<number> {
   // instead of "daemon failed silently."
   let tail = "";
   try {
-    tail = fs.readFileSync(logPath, "utf-8").trim();
+    tail = readBoundedStable(logPath, 64 * 1024 * 1024, "Design input").toString("utf8").trim();
   } catch {
     // log file may not exist
   }
@@ -313,9 +316,11 @@ async function spawnDaemon(opts: SpawnDaemonOpts): Promise<number> {
 }
 
 async function gracefulShutdownExistingDaemon(port: number): Promise<void> {
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid loopback daemon port');
   try {
     await fetch(`http://127.0.0.1:${port}/shutdown`, {
       method: "POST",
+      redirect: "manual",
       signal: AbortSignal.timeout(2000),
     });
   } catch {

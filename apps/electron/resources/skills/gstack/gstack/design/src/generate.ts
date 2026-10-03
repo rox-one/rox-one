@@ -1,3 +1,4 @@
+import { writeSecureFile } from "../../browse/src/file-permissions";
 /**
  * Generate UI mockups via OpenAI Responses API with image_generation tool.
  */
@@ -123,7 +124,7 @@ export async function generate(options: GenerateOptions): Promise<GenerateResult
     const outputDir = path.dirname(options.output);
     fs.mkdirSync(outputDir, { recursive: true });
     const imageBuffer = Buffer.from(imageData, "base64");
-    fs.writeFileSync(options.output, imageBuffer);
+    writeSecureFile(options.output, imageBuffer);
 
     // Create session
     const session = createSession(responseId, prompt, options.output);

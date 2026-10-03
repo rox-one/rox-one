@@ -1,3 +1,4 @@
+import { writeSecureFile } from "../../browse/src/file-permissions";
 /**
  * Design history gallery — generates an HTML timeline of all design explorations
  * for a project. Shows every approved/rejected variant, feedback notes, organized
@@ -246,6 +247,6 @@ export function gallery(options: GalleryOptions): void {
   const html = generateGalleryHtml(options.designsDir);
   const outputDir = path.dirname(options.output);
   fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(options.output, html);
+  writeSecureFile(options.output, html);
   console.log(JSON.stringify({ outputPath: options.output }));
 }
