@@ -49,7 +49,7 @@ import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { mkdirSync, readFileSync, readdirSync, copyFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, copyFileSync, writeFileSync } from 'node:fs';
 import { getSessionPath } from '../sessions/storage.ts';
 import { loadProjectById, getProjectAssetsPath, listProjectAssets, getProjectMemoryPath, loadProjectMemory } from '../projects/storage.ts';
 import { loadProjectRoadmapPromptText } from '../projects/roadmap-storage.ts';
@@ -109,6 +109,7 @@ import { saveBinaryResponse } from '../utils/binary-detection.ts';
 import { isRoxPublicModelId, ROX_PUBLIC_MODEL_IDS, type OmpModelCandidate } from '../config/rox-public-models.ts';
 import { ompStateHasModel, resolveVerifiedOmpModelTarget } from './omp-model-selection.ts';
 import { OmpRpcLineGuard, OmpRpcTransport, supportsOmpRpcV2 } from './omp-rpc-transport.ts';
+import { serializeOmpUserBranch, type OmpBranchEntry } from './omp-user-branch.ts';
 import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
@@ -262,12 +263,7 @@ function isOmpModelNotFoundError(error: unknown): boolean {
  * `id` is a short 8-hex entry id; `parentId` chains entries. Verified in
  * docs/omp-rpc-notes.md §Branching.
  */
-interface OmpTranscriptEntry {
-  type?: string;
-  id?: string;
-  parentId?: string | null;
-  message?: { role?: string };
-}
+type OmpTranscriptEntry = OmpBranchEntry;
 
 interface OmpUsage {  input?: number;
   output?: number;
@@ -597,7 +593,7 @@ export class OmpAgent extends BaseAgent {
 
   /**
    * Fork the branch session from the parent OMP transcript at the persisted
-   * anchor (branchFromSdkTurnId = assistant transcript entry id).
+   * anchor (branchFromSdkTurnId = native user or assistant entry id).
    *
    * OMP's `branch` RPC accepts only a USER message entry id and cuts the new
    * session at that entry's parentId (VERIFIED probes, docs/omp-rpc-notes.md
@@ -643,7 +639,14 @@ export class OmpAgent extends BaseAgent {
       .slice(anchorIdx + 1)
       .find((e) => e.type === 'message' && e.message?.role === 'user' && e.id);
 
-    if (cutUserEntry) {
+    if (entries[anchorIdx]?.message?.role === 'user') {
+      // OMP's branch RPC excludes the selected user. A precise transcript copy
+      // preserves that message and excludes its answer and every later turn.
+      const copyPath = join(this.getOmpSessionDir(session.id), `branched-${Date.now()}.jsonl`);
+      writeFileSync(copyPath, serializeOmpUserBranch(entries, anchorId), { mode: 0o600 });
+      await this.sendCommand('switch_session', { sessionPath: copyPath });
+      this.debug(`OMP branch applied: exact user-message fork at ${anchorId}`);
+    } else if (cutUserEntry) {
       await this.sendCommand('switch_session', { sessionPath: parentFile });
       const result = (await this.sendCommand('branch', { entryId: cutUserEntry.id }, 30_000)) as
         | { text?: string; cancelled?: boolean }

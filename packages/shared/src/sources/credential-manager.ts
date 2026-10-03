@@ -60,6 +60,7 @@ import {
   refreshGenericOAuthToken,
 } from '../auth/generic-oauth.ts';
 import { debug } from '../utils/debug.ts';
+import { getBuiltinSourceCredential } from './builtin-sources.ts';
 import { markSourceAuthenticated, loadSourceConfig, saveSourceConfig } from './storage.ts';
 
 /**
@@ -171,7 +172,8 @@ export class SourceCredentialManager {
       debug(`[SourceCredentialManager] Found ${credentialId.type} for ${source.config.slug}`);
     }
 
-    return cred;
+    const sharedKey = !cred?.value ? getBuiltinSourceCredential(source) : undefined;
+    return cred?.value ? cred : (sharedKey ? { value: sharedKey } : cred);
   }
 
   /**
@@ -1345,6 +1347,7 @@ export function sourceNeedsAuthentication(source: LoadedSource): boolean {
 
   // API sources with auth requirements
   if (source.config.type === 'api' && api) {
+    if (getBuiltinSourceCredential(source)) return false;
     if (api.authType !== 'none' && api.authType !== undefined && !source.config.isAuthenticated) {
       return true;
     }

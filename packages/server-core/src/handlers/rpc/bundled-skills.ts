@@ -1,6 +1,6 @@
 /**
  * Bundled skill packs RPC (runtime-context-marketplace PRD §7).
- * LOCAL_ONLY: packs live under ~/.agents/skills + config.bundledSkills.disabled.
+ * LOCAL_ONLY: packs live under <config>/skills with optional global agent links.
  */
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getBundledSkillsDisabled, setBundledSkillsDisabled } from '@craft-agent/shared/config'

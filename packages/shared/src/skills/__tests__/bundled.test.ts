@@ -8,7 +8,7 @@
  * 2. `bundledSkills.disabled` packs are skipped entirely — files on disk untouched.
  * 3. User edits inside an installed skill survive a pack upgrade (hash-merge)
  *    and are reported as localModified, while untouched files still upgrade.
- * Plus: cross-pack name conflicts defer to the first installed owner.
+ * Plus: same-named skills coexist under stable application-owned identities.
  *
  * Uses real temp directories; no network, no mocks of the filesystem.
  */
@@ -213,18 +213,26 @@ describe('ensureBundledSkills upgrade merge', () => {
 // ============================================================
 
 describe('ensureBundledSkills conflicts', () => {
-  it('second pack shipping an already-owned skill dir is skipped with a conflict', () => {
+  it('keeps same-named skills from separate packs in separate directories', () => {
     writeFile(bundleRoot, 'superpowers/shared-skill/SKILL.md', skillMd('shared-a', 'v1'));
     writeFile(bundleRoot, 'pack-b/shared-skill/SKILL.md', skillMd('shared-b', 'v1'));
 
     const result = ensureBundledSkills({ bundleRoot, targetRoot });
 
-    // pack-b sorts after superpowers? 'pack-b' < 'superpowers' — pack-b wins the dir.
+    // Existing identities remain stable; the second pack receives an explicit alias.
     expect(statusFor(result.packs, 'pack-b').installed).toEqual(['shared-skill']);
     const sp = statusFor(result.packs, 'superpowers');
-    expect(sp.conflicts).toEqual(['shared-skill']);
-    expect(sp.installed).toEqual([]);
+    expect(sp.conflicts).toEqual([]);
+    expect(sp.installed).toContain('superpowers--shared-skill');
+    expect(readTarget('superpowers--shared-skill/SKILL.md')).toBe(skillMd('shared-a', 'v1'));
     expect(readTarget('shared-skill/SKILL.md')).toBe(skillMd('shared-b', 'v1'));
+    const second = ensureBundledSkills({ bundleRoot, targetRoot });
+    expect(statusFor(second.packs, 'superpowers').installed).toEqual(['superpowers--shared-skill']);
+    expect(second.packs.every(pack => pack.conflicts.length === 0 && !pack.localModified)).toBe(true);
+    // Removing the original owner does not rename the surviving skill.
+    rmSync(join(bundleRoot, 'pack-b', 'shared-skill'), { recursive: true });
+    const third = ensureBundledSkills({ bundleRoot, targetRoot });
+    expect(statusFor(third.packs, 'superpowers').installed).toEqual(['superpowers--shared-skill']);
   });
 });
 
@@ -248,6 +256,7 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
         `const result = ensureBundledSkills({ bundleRoot: ${JSON.stringify(join(REPO_ROOT, 'apps/electron/resources/skills'))} });`,
         `const skills = loadAllSkills(${JSON.stringify(workspace)});`,
         `console.log(JSON.stringify({`,
+        `  targetRoot: result.targetRoot,`,
         `  packs: result.packs.map(p => ({ slug: p.slug, installed: p.installed.length, localModified: p.localModified, error: p.error })),`,
         `  slugs: skills.map(s => s.slug),`,
         `}));`,
@@ -257,7 +266,7 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
 
     const proc = Bun.spawnSync({
       cmd: [process.execPath, scriptPath],
-      env: { ...process.env, HOME: home },
+      env: { ...process.env, HOME: home, ROX_CONFIG_DIR: join(home, '.rox'), CRAFT_CONFIG_DIR: undefined },
       cwd: home,
       stdout: 'pipe',
       stderr: 'pipe',
@@ -266,6 +275,7 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
     expect(proc.exitCode).toBe(0);
 
     const out = JSON.parse(proc.stdout.toString().trim()) as {
+      targetRoot: string;
       packs: { slug: string; installed: number; localModified: boolean; error?: string }[];
       slugs: string[];
     };
@@ -294,7 +304,7 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
 
     // Discovery ignores the internal state directory.
     expect(out.slugs).not.toContain('.bundled');
-    expect(existsSync(join(home, '.agents', 'skills', '.bundled', 'superpowers.json'))).toBe(true);
+    expect(existsSync(join(out.targetRoot, '.bundled', 'superpowers.json'))).toBe(true);
   }, 30_000);
 });
 

@@ -7,7 +7,8 @@ import {
   SettingsToggle,
 } from '@/components/settings'
 import {
-  ROCKS_T1_MODEL_ID,
+  DEEPGRAM_TRANSCRIPTION_MODEL,
+  DEEPGRAM_TRANSCRIPTION_NAME,
   type AudioRetention,
   type EnhancementMode,
   type HotkeyMode,
@@ -77,6 +78,7 @@ export function VoiceSettingsSection() {
   )
 
   const healthLabel = (() => {
+    if (prefs.sttEngine === 'cloud-rox') return t('settings.input.voiceModelEvidenceDesc', { model: health?.asrModelId ?? DEEPGRAM_TRANSCRIPTION_MODEL })
     switch (health?.whisper) {
       case 'ready': return t('settings.input.voiceHealthReady')
       case 'downloading': return t('settings.input.voiceHealthDownloading')
@@ -96,13 +98,13 @@ export function VoiceSettingsSection() {
           <SettingsMenuSelectRow
             label={t('settings.input.sttEngine')}
             description={prefs.sttEngine === 'cloud-rox'
-              ? `${t('settings.input.sttEngineDesc')} · ${t('settings.input.voiceModelEvidenceDesc', { model: ROCKS_T1_MODEL_ID })}`
+              ? `${t('settings.input.sttEngineDesc')} · ${t('settings.input.voiceModelEvidenceDesc', { model: health?.asrModelId ?? DEEPGRAM_TRANSCRIPTION_MODEL })}`
               : `${t('settings.input.sttEngineDesc')} · ${t('settings.input.voiceLocalModelEvidenceDesc', { model: prefs.asrModelId })}`}
             value={prefs.sttEngine}
             onValueChange={(value) => void save({ sttEngine: value as SttEngine })}
             options={[
               { value: 'local-whisper', label: t('settings.input.sttLocal'), description: t('settings.input.sttLocalDesc') },
-              { value: 'cloud-rox', label: t('settings.input.voiceRocksT1'), description: t('settings.input.sttCloudRoxDesc') },
+              { value: 'cloud-rox', label: DEEPGRAM_TRANSCRIPTION_NAME, description: t('meetings.local.deepgramConsent') },
             ]}
           />
           <SettingsMenuSelectRow
@@ -135,7 +137,7 @@ export function VoiceSettingsSection() {
           />
           <SettingsToggle
             label={t('settings.input.voiceAsrConsent')}
-            description={t('settings.input.voiceAsrConsentDesc')}
+            description={t('meetings.local.deepgramConsent')}
             checked={prefs.cloudAsrConsent}
             onCheckedChange={(cloudAsrConsent) => void save({ cloudAsrConsent, privacyMigrationPending: false })}
           />
@@ -189,7 +191,7 @@ export function VoiceSettingsSection() {
 
       <SettingsSection title={t('settings.input.voiceGroupModels')} description={healthLabel}>
         <SettingsCard>
-          <p className="px-4 py-3 text-xs text-muted-foreground">{t('settings.input.voiceModelsHint')}</p>
+          <p className="px-4 py-3 text-xs text-muted-foreground">{t(prefs.sttEngine === 'cloud-rox' ? 'meetings.local.deepgramConsent' : 'settings.input.voiceModelsHint')}</p>
         </SettingsCard>
       </SettingsSection>
 

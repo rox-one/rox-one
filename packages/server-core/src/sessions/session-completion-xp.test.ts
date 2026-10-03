@@ -55,3 +55,30 @@ it('profile storage failure cannot prevent session completion delivery', () => {
   expect(() => complete(manager, event)).not.toThrow()
   expect(events).toEqual([event])
 })
+
+it('failed turns and native-owned completions never award the legacy host profile', () => {
+  const manager = new SessionManager()
+  const events: SessionCompletionEvent[] = []
+  manager.onSessionComplete(event => events.push(event))
+  const event: SessionCompletionEvent = { sessionId: 'native-session', workspaceId: 'native-workspace', reason: 'complete' }
+  for (const reason of ['error', 'interrupted', 'timeout'] as const) complete(manager, { ...event, reason })
+  expect(loadGamificationState(root).xp).toBe(0)
+  const release = manager.setLegacyCompletionXpPolicy(() => false)
+  complete(manager, event)
+  expect(loadGamificationState(root).xp).toBe(0)
+  expect(events).toHaveLength(4)
+  release()
+  complete(manager, event)
+  expect(loadGamificationState(root).xp).toBe(getXpReward('session_completed'))
+})
+
+it('a failed completion authority check cannot award host XP or stop fan-out', () => {
+  const manager = new SessionManager()
+  const events: SessionCompletionEvent[] = []
+  manager.setLegacyCompletionXpPolicy(() => { throw new Error('authority closed') })
+  manager.onSessionComplete(event => events.push(event))
+  const event: SessionCompletionEvent = { sessionId: 'native-session', workspaceId: 'native-workspace', reason: 'complete' }
+  expect(() => complete(manager, event)).not.toThrow()
+  expect(events).toEqual([event])
+  expect(loadGamificationState(root).xp).toBe(0)
+})

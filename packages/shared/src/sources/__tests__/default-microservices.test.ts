@@ -27,7 +27,7 @@ describe('default microservice sources', () => {
     expect(collectDefaultEnabledSourceSlugs()).toEqual([...DEFAULT_ENABLED_SOURCE_SLUGS]);
     expect(DEFAULT_ENABLED_SOURCE_SLUGS).toContain('notes');
     expect(DEFAULT_ENABLED_SOURCE_SLUGS).toContain('craft-agents-docs');
-    expect(DEFAULT_ENABLED_SOURCE_SLUGS).not.toContain('exa');
+    expect(DEFAULT_ENABLED_SOURCE_SLUGS).toContain('exa');
   });
 
   it('seeds enabled local folder sources without inventing importers', () => {

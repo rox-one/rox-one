@@ -13,6 +13,10 @@ import type { StoredAttachment, SessionMemoryMode } from '@craft-agent/core/type
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { perf } from '@craft-agent/shared/utils'
 import { isValidThinkingLevel, THINKING_LEVEL_IDS } from '@craft-agent/shared/agent/thinking-levels'
+import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { assertNativeSession, assertNativeWorkspace, nativeAnnotation, nativeSession } from './native-session-scope'
+import { awardNativeXpAndBroadcast } from './gamification'
+import type { RequestContext } from '../../transport/types'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
@@ -155,6 +159,43 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   const { sessionManager, platform } = deps
   const log = platform.logger
   server.onShutdown?.(disposeBroInviteService)
+  // Provenance comes from the persistence acknowledgement, never an optimistic
+  // renderer id or a workspace event subscriber. Completed replies credit only
+  // the actor who submitted the preceding canonical user message.
+  const nativeTurnOrigins = new Map<string, { context: RequestContext; sessionId: string; messageId: string }>()
+  const originKey = (sessionId: string, messageId: string) => JSON.stringify([sessionId, messageId])
+  const releaseXpPolicy = sessionManager.setLegacyCompletionXpPolicy?.(event => !deps.nativeData?.authority.isRegisteredWorkspace(event.workspaceId))
+  const unsubscribeCompletion = sessionManager.onSessionComplete?.(event => {
+    const origins = [...nativeTurnOrigins.entries()].filter(([, origin]) => origin.sessionId === event.sessionId && origin.context.workspaceId === event.workspaceId)
+    if (!origins.length) return
+    if (event.reason !== 'complete' || !event.finalMessageId) {
+      for (const [key] of origins) nativeTurnOrigins.delete(key)
+      return
+    }
+    void (async () => {
+      try {
+        const session = await sessionManager.getSession(event.sessionId)
+        if (!session || session.workspaceId !== event.workspaceId) return
+        const finalIndex = session.messages.findIndex(message => message.id === event.finalMessageId)
+        const reply = session.messages[finalIndex]
+        if (!reply || reply.role !== 'assistant' || reply.isIntermediate || reply.hidden || !reply.content.trim()) return
+        const userMessage = session.messages.slice(0, finalIndex).findLast(message => message.role === 'user' && !message.hidden)
+        if (!userMessage) return
+        const origin = nativeTurnOrigins.get(originKey(event.sessionId, userMessage.id))
+        if (!origin || origin.context.workspaceId !== event.workspaceId) return
+        assertNativeSession(origin.context, deps, server, event.sessionId)
+        awardNativeXpAndBroadcast(server, deps, origin.context, 'session_completed',
+          JSON.stringify([event.workspaceId, event.sessionId, userMessage.id, event.finalMessageId]))
+      } catch { /* A revoked/disconnected actor never falls back to host XP. */ }
+      finally { for (const [key] of origins) nativeTurnOrigins.delete(key) }
+    })()
+  })
+  const unsubscribeOrigins = server.onClientDisconnect?.(clientId => {
+    for (const [key, origin] of nativeTurnOrigins) if (origin.context.clientId === clientId) nativeTurnOrigins.delete(key)
+  })
+  server.onShutdown?.(() => {
+    unsubscribeOrigins?.(); unsubscribeCompletion?.(); releaseXpPolicy?.(); nativeTurnOrigins.clear()
+  })
 
   // Get all sessions for the calling window's workspace
   // Waits for initialization to complete so sessions are never returned empty during startup
@@ -171,6 +212,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       ? deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId)
       : undefined
     const workspaceId = ctx.workspaceId ?? windowWorkspaceId
+    if (ctx.principal) assertNativeWorkspace(ctx, deps, workspaceId ?? '')
     const sessions = sessionManager.getSessions(workspaceId ?? undefined)
     end()
 
@@ -184,8 +226,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       returnedIds: summarizeIds(sessions.map(s => s.id)),
     })
 
-    return sessions
-  })
+    return ctx.principal ? sessions.map(nativeSession) : sessions
+  }, { nativeAction: 'read' })
 
   // Get unread summary across all workspaces
   server.handle(RPC_CHANNELS.sessions.GET_UNREAD_SUMMARY, async () => {
@@ -202,17 +244,45 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   // Get a single session with messages (for lazy loading)
-  server.handle(RPC_CHANNELS.sessions.GET_MESSAGES, async (_ctx, sessionId: string) => {
+  server.handle(RPC_CHANNELS.sessions.GET_MESSAGES, async (ctx, sessionId: string) => {
+    assertNativeSession(ctx, deps, server, sessionId)
     const read = rpcSessionsReadResult({ source: 'native', nativeId: sessionId })
     if (!isClaimableLive(read.result)) return null
     const end = perf.start('rpc.getSessionMessages')
     const session = await sessionManager.getSession(sessionId)
     end()
-    return session
-  })
+    assertNativeSession(ctx, deps, server, sessionId)
+    return ctx.principal && session ? nativeSession(session) : session
+  }, { nativeAction: 'read' })
 
   // Create a new session
-  server.handle(RPC_CHANNELS.sessions.CREATE, async (_ctx, workspaceId: string, options?: import('@craft-agent/shared/protocol').CreateSessionOptions) => {
+  server.handle(RPC_CHANNELS.sessions.CREATE, async (ctx, workspaceId: string, options?: import('@craft-agent/shared/protocol').CreateSessionOptions) => {
+    assertNativeWorkspace(ctx, deps, workspaceId)
+    if (ctx.principal) {
+      if (!server.isRequestContextCurrent?.(ctx)) throw new CodedError('AUTH_FAILED', 'Workspace permission changed')
+      if (options?.branchFromSessionId) assertNativeSession(ctx, deps, server, options.branchFromSessionId)
+      if (options?.parentSessionId) assertNativeSession(ctx, deps, server, options.parentSessionId)
+      const workspace = getWorkspaceByNameOrId(workspaceId)
+      if (!workspace) throw new CodedError('FORBIDDEN', 'Workspace access denied')
+      const configuredConnection = loadWorkspaceConfig(workspace.rootPath)?.defaults?.defaultLlmConnection
+      const branchParentId = options?.branchFromSessionId
+      const parentConnection = branchParentId
+        ? sessionManager.getSessions(workspaceId).find(session => session.id === branchParentId)?.llmConnection : undefined
+      if (options?.llmConnection && options.llmConnection !== configuredConnection && options.llmConnection !== parentConnection) {
+        throw new CodedError('FORBIDDEN', 'Connection access denied')
+      }
+      if (options?.workingDirectory && !['none', 'user_default'].includes(options.workingDirectory)
+        && !deps.nativeData?.authority.authorize(ctx.principal, workspaceId, 'write', options.workingDirectory)) {
+        throw new CodedError('FORBIDDEN', 'Working directory access denied')
+      }
+      // Explicit construction prevents task/project/system-prompt fields from
+      // selecting unrelated host resources. Native sessions start in their own folder.
+      options = { name: options?.name, permissionMode: options?.permissionMode,
+        thinkingLevel: options?.thinkingLevel, model: options?.model, llmConnection: options?.llmConnection,
+        sessionStatus: options?.sessionStatus, labels: options?.labels, isFlagged: options?.isFlagged,
+        enabledSourceSlugs: options?.enabledSourceSlugs, branchFromSessionId: options?.branchFromSessionId,
+        branchFromMessageId: options?.branchFromMessageId, workingDirectory: options?.workingDirectory && options.workingDirectory !== 'user_default' ? options.workingDirectory : 'none' }
+    }
     const act = rpcSessionsActResult({ source: 'native', action: 'write', nativeId: workspaceId || 'session' })
     if (!isClaimableLive(act)) throw new Error('session create is not live')
     const end = perf.start('rpc.createSession', { workspaceId })
@@ -220,8 +290,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
     const session = await sessionManager.createSession(workspaceId, options, { emitCreatedEvent: false })
     end()
-    return session
-  })
+    return ctx.principal ? nativeSession(session) : session
+  }, { nativeAction: 'write' })
 
   // Delete a session
   server.handle(RPC_CHANNELS.sessions.DELETE, async (_ctx, sessionId: string) => {
@@ -245,6 +315,17 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   //     event stream as today.
   // attachments: FileAttachment[] for Claude (has content), storedAttachments: StoredAttachment[] for persistence (has thumbnailBase64)
   server.handle(RPC_CHANNELS.sessions.SEND_MESSAGE, async (ctx, sessionId: string, message: string, attachments?: FileAttachment[], storedAttachments?: StoredAttachment[], options?: SendMessageOptions) => {
+    assertNativeSession(ctx, deps, server, sessionId)
+    if (ctx.principal) {
+      if (attachments?.length || storedAttachments?.length || options?.badges?.length || options?.hidden) {
+        throw new CodedError('FORBIDDEN', 'Native message attachment access denied')
+      }
+      options = { skillSlugs: options?.skillSlugs, optimisticMessageId: options?.optimisticMessageId }
+      const workingDirectory = sessionManager.getSessionWorkingDirectory(sessionId)
+      if (workingDirectory && !deps.nativeData?.authority.authorize(ctx.principal, ctx.workspaceId!, 'write', workingDirectory)) {
+        throw new CodedError('FORBIDDEN', 'Working directory access denied')
+      }
+    }
     // Capture the caller's clientId for error routing
     const callerClientId = ctx.clientId
 
@@ -253,6 +334,11 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
       const onAck = (messageId: string) => {
         if (!acked) {
           acked = true
+          if (ctx.principal && server.isRequestContextCurrent?.(ctx, 'write')) {
+            nativeTurnOrigins.set(originKey(sessionId, messageId), { context: ctx, sessionId, messageId })
+            // Bound abandoned/erroring requests even if a backend never emits completion.
+            if (nativeTurnOrigins.size > 4096) nativeTurnOrigins.delete(nativeTurnOrigins.keys().next().value!)
+          }
           resolve({ accepted: true, messageId })
         }
       }
@@ -288,12 +374,13 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           } as SessionEvent)
         })
     })
-  })
+  }, { nativeAction: 'write' })
 
   // Cancel processing
-  server.handle(RPC_CHANNELS.sessions.CANCEL, async (_ctx, sessionId: string, silent?: boolean) => {
+  server.handle(RPC_CHANNELS.sessions.CANCEL, async (ctx, sessionId: string, silent?: boolean) => {
+    assertNativeSession(ctx, deps, server, sessionId)
     return sessionManager.cancelProcessing(sessionId, silent)
-  })
+  }, { nativeAction: 'write' })
 
   // Kill background shell
   server.handle(RPC_CHANNELS.sessions.KILL_SHELL, async (_ctx, sessionId: string, shellId: string) => {
@@ -333,6 +420,31 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     sessionId: string,
     command: import('@craft-agent/shared/protocol').SessionCommand
   ) => {
+    if (ctx.principal) {
+      assertNativeSession(ctx, deps, server, sessionId)
+      const allowed = new Set(['addAnnotation', 'removeAnnotation', 'updateAnnotation', 'flag', 'unflag', 'archive', 'unarchive', 'rename', 'markRead', 'markUnread', 'setActiveViewing', 'setSessionStatus'])
+      if (!allowed.has(command?.type)) throw new CodedError('FORBIDDEN', 'Native session command denied')
+      if (command.type === 'setActiveViewing' && command.workspaceId !== ctx.workspaceId) throw new CodedError('FORBIDDEN', 'Workspace access denied')
+      if (command.type === 'addAnnotation' || command.type === 'removeAnnotation' || command.type === 'updateAnnotation') {
+        const messageId = command.messageId
+        const session = await sessionManager.getSession(sessionId)
+        assertNativeSession(ctx, deps, server, sessionId)
+        const message = session?.messages.find(message => message.id === messageId)
+        if (!message || (message.role !== 'user' && message.role !== 'assistant')) throw new CodedError('FORBIDDEN', 'Message access denied')
+        if (command.type === 'addAnnotation') {
+          if (command.annotation?.target?.source?.sessionId !== sessionId || command.annotation.target.source.messageId !== command.messageId) throw new CodedError('FORBIDDEN', 'Annotation target denied')
+          command = { ...command, annotation: { ...nativeAnnotation(command.annotation), createdBy: { id: ctx.principal.subject, type: 'user' } } }
+        } else {
+          const annotationId = command.annotationId
+          const annotation = message.annotations?.find(annotation => annotation.id === annotationId)
+          if (!annotation || annotation.createdBy?.id !== ctx.principal.subject) throw new CodedError('FORBIDDEN', 'Annotation author denied')
+          if (command.type === 'updateAnnotation') command = { ...command, patch: Object.fromEntries(
+            Object.entries({ body: command.patch.body, style: command.patch.style, intent: command.patch.intent, status: command.patch.status })
+              .filter(([, value]) => value !== undefined),
+          ) }
+        }
+      }
+    }
     switch (command.type) {
       case 'flag':
         return sessionManager.flagSession(sessionId)
@@ -467,7 +579,7 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         throw new Error(`Unknown session command: ${JSON.stringify(command)}`)
       }
     }
-  })
+  }, { nativeAction: 'write' })
 
   // B4: one caller-authorized, per-target atomic collection update.
   server.handle(RPC_CHANNELS.sessions.BULK_UPDATE, async (

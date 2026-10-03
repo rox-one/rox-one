@@ -69,6 +69,7 @@
     "./extensions/browser": "./src/extensions/browser.ts",
     "./feature-flags": "./src/feature-flags.ts",
     "./gamification": "./src/gamification/index.ts",
+    "./gamification/client": "./src/gamification/client.ts",
     "./git/exec": "./src/git/exec.ts",
     "./git/status": "./src/git/status.ts",
     "./i18n": "./src/i18n/index.ts",
@@ -152,7 +153,8 @@
     "./capabilities": "./src/capabilities/index.ts",
     "./code-intelligence": "./src/code-intelligence/index.ts",
     "./security": "./src/security/index.ts",
-    "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts"
+    "./workspace-domain/licenses/contracts": "./src/workspace-domain/licenses/contracts.ts",
+    "./config/server-services": "./src/config/server-services.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",

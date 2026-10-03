@@ -6,7 +6,7 @@
  * branch-fork handshake (transcript parsing / anchor resolution).
  */
 import { afterEach, describe, expect, it } from 'bun:test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { AgentEvent } from '@craft-agent/core/types';
 import { OmpAgent } from '../omp-agent.ts';
@@ -283,6 +283,25 @@ describe('OmpAgent branch handshake', () => {
     expect(events.at(-1)?.type).toBe('complete');
     expect(agent.isProcessing()).toBe(false);
   });
+
+  it('own-message branch includes that user and excludes their answer and later messages', async () => {
+    const { agent, fake } = setup('healthy');
+    const { parentSessionPath, parentFile } = writeParentTranscript(fake);
+    const parentBytes = readFileSync(parentFile, 'utf8');
+    (agent as any).config.session.branchFromMessageId = 'craft-user-2';
+    (agent as any).config.session.branchFromSessionPath = parentSessionPath;
+    (agent as any).config.session.branchFromSdkTurnId = 'user0002';
+
+    await agent.ensureBranchReady();
+    const switched = fake.readRpcLog().find(frame => frame.type === 'switch_session');
+    expect(String(switched?.sessionPath)).toContain(join('sessions', 'session-test', 'omp'));
+    const copied = readFileSync(String(switched?.sessionPath), 'utf8').trim().split('\n').map(line => JSON.parse(line));
+    expect(copied.map(entry => entry.id)).toEqual(['user0001', 'asst0001', 'user0002']);
+    expect(fake.readRpcLog().some(frame => frame.type === 'branch')).toBe(false);
+    expect(readFileSync(parentFile, 'utf8')).toBe(parentBytes);
+    const events = await chatEvents(agent, 'continue from selected user', 8_000);
+    expect(events.at(-1)?.type).toBe('complete');
+  }, 15_000);
 });
 
 describe('OmpAgent transcript parsing (pure)', () => {

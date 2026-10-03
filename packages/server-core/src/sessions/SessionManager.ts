@@ -22,7 +22,7 @@ import { existsSync } from 'fs'
 import { randomUUID } from 'node:crypto'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
 import { readFile, writeFile, mkdir } from 'fs/promises'
-import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive } from '@craft-agent/shared/agent'
+import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive, resolveOmpUserBranchAnchor } from '@craft-agent/shared/agent'
 import {
   resolveSessionConnection,
   createBackendFromConnection,
@@ -331,10 +331,10 @@ export async function copyPiTurnAnchorsForBranch(
   )
 }
 
-// OMP turn anchors: craft message id → OMP transcript entry id (8-hex,
-// see docs/omp-rpc-notes.md §Branching). Same sidecar mechanics as the Pi
-// anchors; the anchor is the id of the ASSISTANT message entry — the child
-// OmpAgent resolves the cut (following user entry, or tail-copy) at fork time.
+// OMP turn anchors: craft message id → native transcript entry id. Replies
+// are anchored as they complete; user-message entries are resolved between
+// neighbouring reply anchors before their first branch. The child resolves
+// the provider cut, or copies the selected user entry and its ancestry.
 const OMP_TURN_ANCHORS_VERSION = 1
 const OMP_TURN_ANCHORS_FILE = 'omp-turn-anchors.json'
 
@@ -3489,7 +3489,7 @@ export class SessionManager implements ISessionManager {
             }
           }
         } else if (sourceBackendContext.provider === 'omp') {
-          // OMP: assistant transcript entry id persisted in the omp-turn-anchors
+          // OMP: native transcript entry id persisted in the omp-turn-anchors
           // sidecar. Unlike Pi there is no safe "full-history fork" fallback —
           // without the anchor the child cannot cut at the requested message,
           // and OMP's branch RPC requires a precise user-entry cut, so a missing
@@ -3498,13 +3498,24 @@ export class SessionManager implements ISessionManager {
           // branchFromSdkTurnId === undefined check below.
           if (branchFromSessionPath) {
             branchFromSdkTurnId = await getOmpTurnAnchor(branchFromSessionPath, options.branchFromMessageId)
+            if (!branchFromSdkTurnId && branchMessage?.type === 'user') {
+              const index = await loadOmpTurnAnchors(branchFromSessionPath)
+              branchFromSdkTurnId = resolveOmpUserBranchAnchor({
+                sessionPath: branchFromSessionPath,
+                sdkSessionId: branchFromSdkSessionId,
+                messages: sourceSession.messages.map(storedToMessage),
+                messageId: options.branchFromMessageId,
+                anchors: index.anchors,
+              })
+              if (branchFromSdkTurnId) await saveOmpTurnAnchor(branchFromSessionPath, options.branchFromMessageId, branchFromSdkTurnId)
+            }
             if (!branchFromSdkTurnId) {
               sessionLog.warn('OMP branch anchor missing; branch will fail preflight', {
                 workspaceId,
                 branchFromSessionId: options.branchFromSessionId,
                 branchFromMessageId: options.branchFromMessageId,
               })
-              throw new Error('Cannot create branch: this message has no OMP branch anchor. OMP branching requires a completed assistant reply whose transcript entry is known (branch from that message instead).')
+              throw new Error('Cannot create branch: this message has no known OMP transcript entry yet. Wait for the runtime to accept this message, or choose a completed reply.')
             }
           }
         } else if (sourceBackendContext.provider === 'anthropic') {
@@ -7743,6 +7754,12 @@ export class SessionManager implements ISessionManager {
    * Used by the Tasks Conductor; empty until something subscribes, so zero overhead otherwise.
    */
   private sessionCompletionListeners = new Set<(evt: SessionCompletionEvent) => void>()
+  private legacyCompletionXpPolicy: ((evt: SessionCompletionEvent) => boolean) | null = null
+
+  setLegacyCompletionXpPolicy(policy: (evt: SessionCompletionEvent) => boolean): () => void {
+    this.legacyCompletionXpPolicy = policy
+    return () => { if (this.legacyCompletionXpPolicy === policy) this.legacyCompletionXpPolicy = null }
+  }
 
   /**
    * Subscribe to in-process session completion (Tasks Conductor seam).
@@ -7757,7 +7774,9 @@ export class SessionManager implements ISessionManager {
 
   private emitSessionComplete(evt: SessionCompletionEvent): void {
     // Best-effort profile XP — never block completion fan-out.
-    awardXpSafe('session_completed')
+    try {
+      if (evt.reason === 'complete' && (!this.legacyCompletionXpPolicy || this.legacyCompletionXpPolicy(evt))) awardXpSafe('session_completed')
+    } catch { /* Failed authority checks cannot credit the host or block completion delivery. */ }
     if (this.sessionCompletionListeners.size === 0) return
     for (const listener of this.sessionCompletionListeners) {
       try {

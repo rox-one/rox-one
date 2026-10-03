@@ -63,6 +63,16 @@ export function SkillsListPanel({
   // OMP skills (~/.omp/agent/skills, {workspace}/.omp/skills) render as a
   // separate read-only group with an "Export to craft skills" action.
   const craftSkills = skills.filter((s) => s.source !== 'omp')
+  const repeatedSkillNames = React.useMemo(() => {
+    const seen = new Set<string>()
+    const repeated = new Set<string>()
+    for (const skill of skills) {
+      if (skill.source === 'omp') continue
+      if (seen.has(skill.metadata.name)) repeated.add(skill.metadata.name)
+      seen.add(skill.metadata.name)
+    }
+    return repeated
+  }, [skills])
   const ompSkills = skills.filter((s) => s.source === 'omp')
   const [exportingSlug, setExportingSlug] = React.useState<string | null>(null)
 
@@ -327,6 +337,11 @@ export function SkillsListPanel({
         title: skill.metadata.name,
         badges: (
           <span className="flex items-center gap-1.5 min-w-0">
+            {repeatedSkillNames.has(skill.metadata.name) && (
+              <span className="shrink-0 max-w-48 truncate rounded-full bg-foreground/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground" title={skill.slug}>
+                @{skill.slug}
+              </span>
+            )}
             {skill.source === 'project' && (
               <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
                 {t('skillsList.projectBadge')}

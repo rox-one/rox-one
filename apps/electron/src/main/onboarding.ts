@@ -16,8 +16,9 @@ import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
 import { validateMcpConnection } from '@craft-agent/shared/mcp'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer, RequestContext } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from './handlers/handler-deps'
+import { RoxConnectFlow } from './rox-connect-flow'
 
 // ============================================
 // IPC Handlers
@@ -197,32 +198,63 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     return { success: true }
   })
 
-  // Active device flow: abort the previous poll before starting another.
-  let roxConnectAbort: AbortController | null = null
-  let roxConnectError: string | null = null
-  let roxConnectExpiresAt: number | null = null
+  const roxFlows = new Map<string, { flow: RoxConnectFlow; context: RequestContext }>()
+  const cloudOwner = (ctx: RequestContext) => ctx.principal
+    ? { issuer: ctx.principal.issuer, subject: ctx.principal.subject } : undefined
+  const roxFlow = (ctx: RequestContext) => {
+    const owner = cloudOwner(ctx)
+    const key = owner ? JSON.stringify(owner) : 'local'
+    let record = roxFlows.get(key)
+    if (!record) {
+      const ownerContext = { current: ctx }
+      const flow = new RoxConnectFlow({
+        start: signal => startRoxDeviceFlow(undefined, { signal }),
+        wait: waitForRoxDeviceApproval,
+        save: async approved => {
+          const latest = ownerContext.current
+          if (latest.principal && (!latest.workspaceId || !deps.nativeData?.authority.authorize(latest.principal, latest.workspaceId, 'read'))) {
+            throw new Error('ROX_CONNECT_CANCELLED')
+          }
+          await getCredentialManager().setRoxCloudSession({
+            accessToken: approved.accessToken,
+            expiresAt: Date.now() + approved.expiresIn * 1000,
+            userId: approved.user.id,
+            email: approved.user.email,
+            name: approved.user.name,
+            authBaseUrl: getRoxAuthBaseUrl(),
+          }, owner)
+          log.info('[Onboarding] Rox Connect succeeded')
+        },
+        clear: () => getCredentialManager().clearRoxCloudSession(owner),
+        failed: message => log.error('[Onboarding] Rox Connect poll failed:', message),
+      })
+      record = { flow, get context() { return ownerContext.current }, set context(value) { ownerContext.current = value } }
+      roxFlows.set(key, record)
+    }
+    record.context = ctx
+    return record.flow
+  }
 
-  server.handle(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE, async () => {
+  server.handle(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE, async ctx => {
     const manager = getCredentialManager()
-    const session = await manager.getRoxCloudSession()
+    const session = await manager.getRoxCloudSession(cloudOwner(ctx))
     return {
       required: isRoxCloudRequired(),
-      connected: await manager.hasRoxCloudSession(),
+      connected: await manager.hasRoxCloudSession(cloudOwner(ctx)),
       authBaseUrl: getRoxAuthBaseUrl(),
       user: session
         ? { id: session.userId, email: session.email, name: session.name }
         : null,
-      connectError: roxConnectError,
-      connectExpiresAt: roxConnectExpiresAt,
+      ...roxFlow(ctx).state,
     }
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   // Real balance from rox.one for the connected account. The token never
   // leaves the main process; without a live session the UI keeps its «—».
-  server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async () => {
+  server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async ctx => {
     const manager = getCredentialManager()
-    if (!(await manager.hasRoxCloudSession())) return { status: 'disconnected' as const }
-    const session = await manager.getRoxCloudSession()
+    if (!(await manager.hasRoxCloudSession(cloudOwner(ctx)))) return { status: 'disconnected' as const }
+    const session = await manager.getRoxCloudSession(cloudOwner(ctx))
     if (!session?.accessToken) return { status: 'disconnected' as const }
     try {
       const { balanceRox } = await fetchRoxBalance(session.accessToken)
@@ -234,56 +266,21 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
       log.warn('[Onboarding] Rox balance fetch failed:', message)
       return { status: 'error' as const, message }
     }
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD, async () => {
-    roxConnectAbort?.abort()
-    roxConnectAbort = null
-    roxConnectError = null
-    roxConnectExpiresAt = null
-    await getCredentialManager().clearRoxCloudSession()
+  server.handle(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD, async ctx => {
+    await roxFlow(ctx).clear()
     return { success: true }
-  })
+  }, { access: 'localElectron', nativeAction: 'read' })
 
   /**
    * Start Rox Connect: create device grant, return user-facing codes.
    * Spawns background poll; renderer opens browser + watches GET_ROX_CLOUD_STATE.
    */
-  server.handle(RPC_CHANNELS.onboarding.START_ROX_CONNECT, async () => {
+  server.handle(RPC_CHANNELS.onboarding.START_ROX_CONNECT, async ctx => {
     log.info('[Onboarding] Starting Rox cloud Connect device flow')
     try {
-      roxConnectAbort?.abort()
-      roxConnectAbort = new AbortController()
-      const signal = roxConnectAbort.signal
-      roxConnectError = null
-
-      const started = await startRoxDeviceFlow()
-      const timeoutMs = Math.max(started.expiresIn, 60) * 1000
-      roxConnectExpiresAt = Date.now() + timeoutMs
-      const p = waitForRoxDeviceApproval(started.deviceCode, {
-        timeoutMs,
-        signal,
-      })
-        .then(async (approved) => {
-          const expiresAt = Date.now() + Math.max(approved.expiresIn, 60) * 1000
-          await getCredentialManager().setRoxCloudSession({
-            accessToken: approved.accessToken,
-            expiresAt,
-            userId: approved.user.id,
-            email: approved.user.email,
-            name: approved.user.name,
-            authBaseUrl: getRoxAuthBaseUrl(),
-          })
-          roxConnectError = null
-          log.info('[Onboarding] Rox Connect succeeded for', approved.user.email)
-        })
-        .catch((err) => {
-          const message = err instanceof Error ? err.message : String(err)
-          if (message === 'ROX_CONNECT_CANCELLED') return
-          roxConnectError = message
-          log.error('[Onboarding] Rox Connect poll failed:', message)
-        })
-      void p
+      const started = await roxFlow(ctx).start()
 
       return {
         success: true as const,
@@ -297,7 +294,7 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
       log.error('[Onboarding] Rox Connect start failed:', message)
       return { success: false as const, error: message }
     }
-  })
+  }, { access: 'localElectron', nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL, async (_ctx, apiKey: string) => {
     return saveOmpRoxCredential(typeof apiKey === 'string' ? apiKey : '')

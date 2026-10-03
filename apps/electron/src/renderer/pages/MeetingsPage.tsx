@@ -105,6 +105,15 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     return () => { cancelled = true }
   }, [api, workspaceId, reload])
 
+  useEffect(() => {
+    if (!api) return
+    let cancelled = false
+    const unsubscribe = window.electronAPI.onVoiceChanged?.(() => {
+      void api.engine().then((next) => { if (!cancelled) setEngine(next) }, () => {})
+    })
+    return () => { cancelled = true; unsubscribe?.() }
+  }, [api])
+
   // Main pushes every change (recording state, ASR progress, attachments…).
   useEffect(() => {
     if (!api) return

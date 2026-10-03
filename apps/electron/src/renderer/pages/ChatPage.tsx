@@ -29,6 +29,7 @@ import { coerceInputText } from '@/lib/input-text'
 import { lookupImportedNote } from '@/lib/notes-migration-map'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
 import { branchErrorDescription } from '@/lib/branch-error'
+import { messageActionId } from '@/lib/message-action-id'
 import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
 import { rememberCollectionView } from '@/components/app-shell/collection/collection-view-cycle'
@@ -616,7 +617,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (!session) return
       try {
         const child = await onCreateSession(session.workspaceId, {
-          branchFromMessageId: messageId,
+          branchFromMessageId: messageActionId(session.messages, messageId),
           branchFromSessionId: session.id,
           name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
           llmConnection: session.llmConnection,
@@ -643,7 +644,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (!session) return
       try {
         const child = await onCreateSession(session.workspaceId, {
-          branchFromMessageId: messageId,
+          branchFromMessageId: messageActionId(session.messages, messageId),
           branchFromSessionId: session.id,
           name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
           llmConnection: session.llmConnection,
@@ -672,7 +673,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       try {
         for (const job of jobs) {
           const child = await onCreateSession(session.workspaceId, {
-            branchFromMessageId: job.branchFromMessageId,
+            branchFromMessageId: messageActionId(session.messages, job.branchFromMessageId),
             branchFromSessionId: session.id,
             name: job.title.slice(0, 80),
             llmConnection: session.llmConnection,

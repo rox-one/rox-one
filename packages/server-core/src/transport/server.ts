@@ -84,6 +84,7 @@ interface RegisteredHandler {
   readonly handler: HandlerFn
   readonly access: RpcHandlerOptions['access']
   readonly nativeAction: RpcHandlerOptions['nativeAction']
+  readonly timeoutMs: number
   readonly beforeResponse?: RpcHandlerOptions['beforeResponse']
 }
 
@@ -175,6 +176,10 @@ export interface WsRpcServerOptions {
   nativeAuthority?: NativeAuthority
   /** Only these explicitly workspace-scoped events can reach native subscribers. */
   nativeEventChannels?: ReadonlySet<string>
+  /** Device effects/status must never broadcast to every member of a workspace. */
+  nativeClientEventChannels?: ReadonlySet<string>
+  /** Safe host-composed projection; null drops an event before buffering/replay. */
+  projectNativeEvent?: (channel: string, arguments_: readonly unknown[], workspaceId: string, principal: NativePrincipal) => readonly unknown[] | null
 }
 
 const transportLog = createLogger('ws-rpc-server')
@@ -217,8 +222,16 @@ export class WsRpcServer implements RpcServer {
   private readonly rpcCallCounter: RpcCallCounter | null
   private readonly nativeAuthority: NativeAuthority | null
   private readonly nativeEventChannels: ReadonlySet<string>
+  private readonly nativeClientEventChannels: ReadonlySet<string>
+  private readonly projectNativeEvent: WsRpcServerOptions['projectNativeEvent']
   private readonly disposeAuthorityListener: (() => void) | null
   private readonly shutdownHooks = new Set<() => void>()
+  private readonly disconnectHooks = new Set<(clientId: string) => void>()
+  private readonly requestContexts = new WeakMap<RequestContext, {
+    socket: WebSocket
+    registration: RegisteredHandler
+    fence: string | null
+  }>()
 
   constructor(opts?: WsRpcServerOptions) {
     this.host = opts?.host ?? '127.0.0.1'
@@ -245,6 +258,8 @@ export class WsRpcServer implements RpcServer {
     this.httpHandler = opts?.httpHandler
     this.nativeAuthority = opts?.nativeAuthority ?? null
     this.nativeEventChannels = new Set(opts?.nativeEventChannels ?? [])
+    this.nativeClientEventChannels = new Set(opts?.nativeClientEventChannels ?? [])
+    this.projectNativeEvent = opts?.projectNativeEvent
     this.disposeAuthorityListener = this.nativeAuthority?.onInvalidation(event => {
       for (const client of this.clients.values()) {
         if (client.principal?.subject !== event.subject) continue
@@ -290,7 +305,9 @@ export class WsRpcServer implements RpcServer {
       throw new Error(`Handler already registered for channel: ${channel}`)
     }
     const access = options?.access
-    this.handlers.set(channel, { handler, access, nativeAction: options?.nativeAction, beforeResponse: options?.beforeResponse })
+    const timeoutMs = options?.timeoutMs ?? WsRpcServer.HANDLER_TIMEOUT_MS
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 240_000) throw new Error('Invalid handler timeout')
+    this.handlers.set(channel, { handler, access, nativeAction: options?.nativeAction, timeoutMs, beforeResponse: options?.beforeResponse })
     if (access === 'localElectron') {
       this.localElectronChannels.add(channel)
     }
@@ -393,7 +410,9 @@ export class WsRpcServer implements RpcServer {
       return false
     }
     if (client.principal) {
-      return target.to !== 'all' && this.nativeEventChannels.has(channel) && this.refreshSubscription(client)
+      return target.to !== 'all'
+        && (!this.nativeClientEventChannels.has(channel) || target.to === 'client')
+        && this.nativeEventChannels.has(channel) && this.refreshSubscription(client)
     }
     return !this.nativeAuthority?.hasRegisteredWorkspaces()
   }
@@ -437,13 +456,17 @@ export class WsRpcServer implements RpcServer {
     for (const client of this.clients.values()) {
       if (!this.matchesTarget(client, target)) continue
       if (!this.canReceiveEvent(client, channel, target)) continue
-      this.bufferAndMaybeSendEvent(client, channel, args, timestamp, true)
+      const projected = client.principal && client.workspaceId && this.projectNativeEvent
+        ? this.projectNativeEvent(channel, args, client.workspaceId, client.principal) : args
+      if (projected) this.bufferAndMaybeSendEvent(client, channel, [...projected], timestamp, true)
     }
 
     for (const { client } of this.disconnectedClients.values()) {
       if (!this.matchesTarget(client, target)) continue
       if (!this.canReceiveEvent(client, channel, target)) continue
-      this.bufferAndMaybeSendEvent(client, channel, args, timestamp, false)
+      const projected = client.principal && client.workspaceId && this.projectNativeEvent
+        ? this.projectNativeEvent(channel, args, client.workspaceId, client.principal) : args
+      if (projected) this.bufferAndMaybeSendEvent(client, channel, [...projected], timestamp, false)
     }
   }
 
@@ -597,6 +620,19 @@ export class WsRpcServer implements RpcServer {
     return () => this.shutdownHooks.delete(dispose)
   }
 
+  onClientDisconnect(listener: (clientId: string) => void): () => void {
+    this.disconnectHooks.add(listener)
+    return () => this.disconnectHooks.delete(listener)
+  }
+
+  isRequestContextCurrent(ctx: RequestContext, nativeAction?: RpcHandlerOptions['nativeAction']): boolean {
+    const bound = this.requestContexts.get(ctx)
+    const client = this.clients.get(ctx.clientId)
+    if (!bound || !client || client.ws !== bound.socket || client.ws.readyState !== 1) return false
+    if (nativeAction && ctx.principal && nativeAction !== 'read' && bound.registration.nativeAction !== nativeAction) return false
+    return this.canReturnResponse(client, bound.registration, ctx, bound.fence)
+  }
+
   close(): void {
     for (const dispose of this.shutdownHooks) {
       try { dispose() } catch { /* Continue closing the remaining host resources. */ }
@@ -616,9 +652,13 @@ export class WsRpcServer implements RpcServer {
       this.pendingInvokes.delete(id)
     }
     for (const client of this.clients.values()) {
+      for (const listener of this.disconnectHooks) {
+        try { listener(client.id) } catch { /* Continue disposing the other clients. */ }
+      }
       client.ws.terminate()
     }
     this.clients.clear()
+    this.disconnectHooks.clear()
     // Clean up disconnected client timers
     for (const entry of this.disconnectedClients.values()) {
       clearTimeout(entry.timer)
@@ -1117,11 +1157,14 @@ export class WsRpcServer implements RpcServer {
         principal: client.principal ?? undefined,
         ...(current ? { actor: current.actor } : {}),
       }
+      this.requestContexts.set(ctx, { socket: client.ws, registration, fence: requestFence })
       const result = await Promise.race([
         registration.handler(ctx, ...(args ?? [])),
         new Promise<never>((_, reject) =>
-          handlerTimeout = setTimeout(() => reject(new Error(`Handler timeout: ${channel} (${WsRpcServer.HANDLER_TIMEOUT_MS}ms)`)),
-            WsRpcServer.HANDLER_TIMEOUT_MS),
+          handlerTimeout = setTimeout(() => {
+            this.requestContexts.delete(ctx)
+            reject(new Error(`Handler timeout: ${channel} (${registration.timeoutMs}ms)`))
+          }, registration.timeoutMs),
         ),
       ])
       if (!this.canReturnResponse(client, registration, ctx, requestFence)) {
@@ -1159,7 +1202,7 @@ export class WsRpcServer implements RpcServer {
       const message = err instanceof Error ? err.message : String(err)
       const rawCode = err && typeof err === 'object' && 'code' in err ? err.code : undefined
       const code: ErrorCode = isErrorCode(rawCode) ? rawCode : 'HANDLER_ERROR'
-      this.sendResponseError(client.ws, id, channel, code, this.workspaceAuthority ? 'Request failed' : message)
+      this.sendResponseError(client.ws, id, channel, code, this.workspaceAuthority || client.principal ? 'Request failed' : message)
     } finally {
       clearTimeout(handlerTimeout)
     }
@@ -1224,6 +1267,9 @@ export class WsRpcServer implements RpcServer {
 
       this.rejectPendingInvokesForClient(client.id)
       this.onClientDisconnected?.(client.id)
+      for (const listener of this.disconnectHooks) {
+        try { listener(client.id) } catch { /* One disposer must not prevent the others. */ }
+      }
     })
 
     ws.on('pong', () => {

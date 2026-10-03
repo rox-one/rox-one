@@ -26,8 +26,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // remote — local connectivity management (reaches out to remote server from local app)
   RPC_CHANNELS.remote.TEST_CONNECTION,
 
-  // workspaces — local workspace CRUD (workspace list is local config)
-  RPC_CHANNELS.workspaces.GET,
+  // workspaces — filesystem creation and local connection management
   RPC_CHANNELS.workspaces.CREATE,
   RPC_CHANNELS.workspaces.CHECK_SLUG,
   RPC_CHANNELS.workspaces.UPDATE_REMOTE,
@@ -125,7 +124,6 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.system.IS_DEBUG_MODE,
 
   // toolchain — local config-dir downloads/install state
-  RPC_CHANNELS.toolchain.STATUS,
   RPC_CHANNELS.toolchain.STATUS_CHANGED,
   RPC_CHANNELS.toolchain.UPDATE,
   RPC_CHANNELS.toolchain.GET_DISABLED,
@@ -418,13 +416,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.siyuan.STATE_CHANGED,
   RPC_CHANNELS.siyuan.REMOVED,
 
-  // gamification — user XP lives in local CONFIG_DIR
-  RPC_CHANNELS.gamification.GET,
+  // Desktop-only manual awards/ratings have no native product-event adapter.
   RPC_CHANNELS.gamification.AWARD,
-  RPC_CHANNELS.gamification.QUEST,
   RPC_CHANNELS.gamification.RATE,
-  RPC_CHANNELS.gamification.SET_CONSENT,
-  RPC_CHANNELS.gamification.CHANGED,
 
   // privacy — consent ledger lives in local CONFIG_DIR
   RPC_CHANNELS.privacy.GET,
@@ -434,32 +428,6 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.privacy.COMPLETE_DELETION,
   RPC_CHANNELS.privacy.CHANGED,
 
-  // voice — local prefs, capture policy and STT/TTS adapters
-  RPC_CHANNELS.voice.GET,
-  RPC_CHANNELS.voice.SAVE,
-  RPC_CHANNELS.voice.HEALTH,
-  RPC_CHANNELS.voice.TRANSCRIBE,
-  RPC_CHANNELS.voice.SPEAK,
-  RPC_CHANNELS.voice.CHANGED,
-  RPC_CHANNELS.voice.BOOTSTRAP,
-  RPC_CHANNELS.voice.CAPABILITIES,
-  RPC_CHANNELS.voice.START,
-  RPC_CHANNELS.voice.STOP,
-  RPC_CHANNELS.voice.CANCEL,
-  RPC_CHANNELS.voice.GRANT,
-  RPC_CHANNELS.voice.CHUNK,
-  RPC_CHANNELS.voice.HISTORY_LIST,
-  RPC_CHANNELS.voice.HISTORY_GET,
-  RPC_CHANNELS.voice.HISTORY_FAVORITE,
-  RPC_CHANNELS.voice.HISTORY_DELETE,
-  RPC_CHANNELS.voice.HISTORY_EXPORT,
-  RPC_CHANNELS.voice.RETRANSCRIBE,
-  RPC_CHANNELS.voice.REPROCESS,
-  RPC_CHANNELS.voice.PROCESS,
-  RPC_CHANNELS.voice.MODELS_LIST,
-  RPC_CHANNELS.voice.JOB,
-  RPC_CHANNELS.voice.OVERLAY,
-  RPC_CHANNELS.voice.HOTKEY,
 
   // environment — versioned onboarding questionnaire lives in local CONFIG_DIR
   RPC_CHANNELS.environment.GET,
@@ -480,8 +448,6 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.orgs.REVOKE_INVITE,
 
   // identity — profile + service connections (Identity Center, S-07)
-  RPC_CHANNELS.identity.GET_STATE,
-  RPC_CHANNELS.identity.UPDATE_PROFILE,
   RPC_CHANNELS.identity.CONNECT,
   RPC_CHANNELS.identity.DISCONNECT,
   RPC_CHANNELS.identity.REFRESH_STATUS,
@@ -509,6 +475,46 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
 // ---------------------------------------------------------------------------
 
 export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
+  // voice — private actor state and client-supplied audio; OS playback stays on the client
+  RPC_CHANNELS.voice.GET,
+  RPC_CHANNELS.voice.SAVE,
+  RPC_CHANNELS.voice.HEALTH,
+  RPC_CHANNELS.voice.TRANSCRIBE,
+  RPC_CHANNELS.voice.SPEAK,
+  RPC_CHANNELS.voice.CHANGED,
+  RPC_CHANNELS.voice.BOOTSTRAP,
+  RPC_CHANNELS.voice.CAPABILITIES,
+  RPC_CHANNELS.voice.START,
+  RPC_CHANNELS.voice.STOP,
+  RPC_CHANNELS.voice.CANCEL,
+  RPC_CHANNELS.voice.GRANT,
+  RPC_CHANNELS.voice.CHUNK,
+  RPC_CHANNELS.voice.HISTORY_LIST,
+  RPC_CHANNELS.voice.HISTORY_GET,
+  RPC_CHANNELS.voice.HISTORY_FAVORITE,
+  RPC_CHANNELS.voice.HISTORY_DELETE,
+  RPC_CHANNELS.voice.HISTORY_EXPORT,
+  RPC_CHANNELS.voice.RETRANSCRIBE,
+  RPC_CHANNELS.voice.REPROCESS,
+  RPC_CHANNELS.voice.PROCESS,
+  RPC_CHANNELS.voice.MODELS_LIST,
+  RPC_CHANNELS.voice.JOB,
+  RPC_CHANNELS.voice.OVERLAY,
+  RPC_CHANNELS.voice.HOTKEY,
+
+
+  // Identity profile reads/edits are caller-scoped for native principals. The
+  // RPC access gate denies unbound legacy clients; host service connections
+  // remain desktop-only and are never reflected to native callers.
+  RPC_CHANNELS.identity.GET_STATE,
+  RPC_CHANNELS.identity.UPDATE_PROFILE,
+
+  // Native own-profile XP/quests/consent never reflect host-wide progress.
+  RPC_CHANNELS.gamification.GET,
+  RPC_CHANNELS.gamification.QUEST,
+  RPC_CHANNELS.gamification.SET_CONSENT,
+  RPC_CHANNELS.gamification.CHANGED,
+
   // server — server-level operations (no workspace context needed)
   RPC_CHANNELS.server.GET_WORKSPACES,
   RPC_CHANNELS.server.CREATE_WORKSPACE,
@@ -518,6 +524,10 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.server.SHUTTING_DOWN,
   RPC_CHANNELS.server.STATUS_CHANGED,
   RPC_CHANNELS.server.HOME_DIR,
+  // Native workspace metadata is actor-scoped and excludes host paths/credentials.
+  RPC_CHANNELS.workspaces.GET,
+  // Runtime metadata can be read remotely; host installers remain local-only.
+  RPC_CHANNELS.toolchain.STATUS,
 
   // sessions — core session runtime
   RPC_CHANNELS.sessions.GET,

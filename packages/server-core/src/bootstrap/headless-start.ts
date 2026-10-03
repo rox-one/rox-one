@@ -24,6 +24,8 @@ import type { PlatformServices } from '../runtime/platform'
 import { startNativeSidecar, stopNativeSidecar } from '../native/supervisor.ts'
 import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { projectNativeWorkspaceEvent } from '../handlers/rpc/native-session-scope'
 
 interface ModelRefreshServiceLike {
   startAll(): void
@@ -475,6 +477,26 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     port: rpcPort,
     requireAuth: true,
     nativeAuthority,
+    nativeEventChannels: new Set([
+      RPC_CHANNELS.sessions.EVENT, RPC_CHANNELS.sources.CHANGED, RPC_CHANNELS.memory.CHANGED,
+      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED,
+      RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+    ]),
+    nativeClientEventChannels: new Set([
+      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED,
+      RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+    ]),
+    projectNativeEvent: (channel, args, workspaceId, principal) => {
+      if (channel === RPC_CHANNELS.sessions.EVENT || channel === RPC_CHANNELS.sources.CHANGED) {
+        const rootManager = sessionManager as unknown as { getWorkspaces?: () => Array<{ id: string; rootPath: string }> }
+        const workspace = rootManager.getWorkspaces?.().find(workspace => workspace.id === workspaceId)
+        if (!workspace || !nativeAuthority.authorize(principal, workspaceId, 'read', workspace.rootPath)) return null
+      }
+      return projectNativeWorkspaceEvent(channel, args, workspaceId, (sessionId, id) => {
+      const scopedManager = sessionManager as unknown as { getSessions?: (workspaceId: string) => Array<{ id: string; workspaceId: string }> }
+      return scopedManager.getSessions?.(id).some(session => session.id === sessionId && session.workspaceId === id) === true
+      })
+    },
     validateToken: async (t) => secureTokenCompare(t, serverToken),
     validateSessionCookie: options.validateSessionCookie,
     serverId: options.serverId ?? 'headless',

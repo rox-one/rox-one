@@ -36,13 +36,20 @@ export function registerServerHandlers(
   // Workspace discovery (moved from workspace.ts — server-level, no workspace context)
   // -----------------------------------------------------------------------
 
-  server.handle(RPC_CHANNELS.server.GET_WORKSPACES, async () => {
+  server.handle(RPC_CHANNELS.server.GET_WORKSPACES, async (context) => {
     const listed = rpcServerListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     const workspaces = sessionManager.getWorkspacesInfo()
+    if (context.principal) {
+      if (!context.workspaceId || !deps.nativeData?.authority.authorize(context.principal, context.workspaceId, 'read')) throw new Error('Workspace access denied')
+      const boundWorkspace = sessionManager.getWorkspaces().find(workspace => workspace.id === context.workspaceId)
+      if (!boundWorkspace || !deps.nativeData.authority.authorize(context.principal, context.workspaceId, 'read', boundWorkspace.rootPath)) throw new Error('Workspace access denied')
+      return workspaces.filter(workspace => workspace.id === context.workspaceId)
+        .map(({ id, name, slug, kind, orgId }) => ({ id, name, slug, kind, orgId }))
+    }
     deps.platform.logger.info(`[server:getWorkspaces] returning ${workspaces.length} workspaces: ${JSON.stringify(workspaces.map(w => ({ id: w.id, name: w.name })))}`)
     return workspaces
-  })
+  }, { nativeAction: 'read' })
 
   server.handle(
     RPC_CHANNELS.server.CREATE_WORKSPACE,

@@ -20,7 +20,7 @@ import type {
 import { validateSourceConfig } from '../config/validators.ts';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync } from '../utils/files.ts';
-import { getBuiltinSources, isBuiltinSource, getDocsSource } from './builtin-sources.ts';
+import { applyBuiltinSourceAvailability, getBuiltinSourceCredential, getBuiltinSources, isBuiltinSource, getDocsSource } from './builtin-sources.ts';
 import { expandPath, toPortablePath } from '../utils/paths.ts';
 import { getWorkspaceSourcesPath } from '../workspaces/storage.ts';
 // Circular import (credential-manager imports from this file) is safe here:
@@ -82,7 +82,7 @@ export function loadSourceConfig(
       config.local.path = expandPath(config.local.path);
     }
 
-    return config;
+    return applyBuiltinSourceAvailability(config);
   } catch {
     return null;
   }
@@ -411,7 +411,7 @@ export function isSourceUsable(source: LoadedSource): boolean {
   if (authType === 'none' || authType === undefined) return true;
 
   // Sources requiring auth must be authenticated
-  return source.config.isAuthenticated === true;
+  return source.config.isAuthenticated === true || !!getBuiltinSourceCredential(source);
 }
 
 /**
@@ -625,4 +625,3 @@ export function sourceExists(workspaceRootPath: string, sourceSlug: string): boo
 // ============================================================
 
 export { parseGuideMarkdown };
-

@@ -47,6 +47,7 @@ describe('handleUserMessage queued replay', () => {
     const message = next.state.session.messages[0]
 
     expect(message.id).toBe('optimistic-follow-up')
+    expect(message.backendMessageId).toBe('backend-follow-up')
     expect(message.timestamp).toBe(300)
     expect(message.isPending).toBe(false)
     expect(message.isQueued).toBe(false)
@@ -101,5 +102,19 @@ describe('handleUserMessage queued replay', () => {
     expect(next.state).toBe(state)
     expect(next.state.session.messages[0]?.timestamp).toBe(300)
     expect(next.state.session.messages[0]?.isQueued).toBe(false)
+  })
+
+  it('routes a later acknowledgement by the server id without a duplicate user bubble', () => {
+    const accepted = handleUserMessage(makeState([{ id: 'optimistic-follow-up', role: 'user', content: 'follow up', timestamp: 200, isPending: true }]), processingEvent(300)).state
+    const next = handleUserMessage(accepted, { ...processingEvent(400), optimisticMessageId: undefined })
+    expect(next.state.session.messages).toHaveLength(1)
+    expect(next.state.session.messages[0]?.id).toBe('optimistic-follow-up')
+    expect(next.state.session.messages[0]?.timestamp).toBe(400)
+  })
+
+  it('keeps two identical accepted prompts as distinct messages', () => {
+    const state = makeState([{ id: 'first', role: 'user', content: 'follow up', timestamp: 200, isPending: false }])
+    const next = handleUserMessage(state, { ...processingEvent(300), optimisticMessageId: undefined })
+    expect(next.state.session.messages.map(message => message.id)).toEqual(['first', 'backend-follow-up'])
   })
 })

@@ -1,5 +1,7 @@
 import * as React from "react"
 import { createMessageTts } from '@/lib/message-tts'
+import { useAuthenticatedReactionActor } from '@/hooks/useMessageReactionActor'
+import { messageActionId } from '@/lib/message-action-id'
 import { useTranslation } from "react-i18next"
 import { useEffect, useState, useMemo, useCallback } from "react"
 import {
@@ -50,6 +52,7 @@ import type { AnnotationV1 } from "@craft-agent/core"
 import type { PermissionMode } from "@craft-agent/shared/agent/modes"
 import type { ThinkingLevel } from "@craft-agent/shared/agent/thinking-levels"
 import {
+  MessageReactionActorProvider,
   TurnCard,
   UserMessageBubble,
   groupMessagesByTurn,
@@ -544,7 +547,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   connectionUnavailable = false,
 }, ref) {
   const { t } = useTranslation()
+  const reactionActor = useAuthenticatedReactionActor(workspaceId)
   const [listeningTurnId, setListeningTurnId] = React.useState<string | null>(null)
+  const activeSessionIdRef = React.useRef(session?.id)
+  activeSessionIdRef.current = session?.id
+  const branchingMessagesRef = React.useRef(new Set<string>())
+  const listeningRequestRef = React.useRef(0)
+  const sessionActionGenerationRef = React.useRef(0)
 
   const messageTts = React.useMemo(() => createMessageTts({
     speakVoice: window.electronAPI?.speakVoice,
@@ -559,23 +568,26 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       : undefined,
   }), [])
   React.useEffect(() => {
+    listeningRequestRef.current += 1
     messageTts.stop()
     setListeningTurnId(null)
-    return () => messageTts.stop()
+    return () => { listeningRequestRef.current += 1; messageTts.stop() }
   }, [session?.id, messageTts])
 
   const handleListen = useCallback(async (text: string, turnId: string) => {
     if (!text.trim()) return
     if (listeningTurnId === turnId) {
+      listeningRequestRef.current += 1
       messageTts.stop()
       setListeningTurnId(null)
       return
     }
+    const request = ++listeningRequestRef.current
     setListeningTurnId(turnId)
     const playback = await messageTts.speak(text, () => {
       setListeningTurnId((current) => current === turnId ? null : current)
     })
-    if (playback === 'unavailable') {
+    if (playback === 'unavailable' && request === listeningRequestRef.current) {
       setListeningTurnId((current) => current === turnId ? null : current)
       toast.error(t('settings.input.ttsUnavailable'))
     }
@@ -638,6 +650,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   } | null>(null)
   const [sideThreadPreview, setSideThreadPreview] = React.useState<SideThreadPreview | null>(null)
   const [sideThreadBusy, setSideThreadBusy] = React.useState(false)
+  useEffect(() => {
+    sessionActionGenerationRef.current += 1
+    activeSessionIdRef.current = session?.id
+    setSideThreadPreview(null)
+    setSideThreadBusy(false)
+    return () => { sessionActionGenerationRef.current += 1; activeSessionIdRef.current = undefined }
+  }, [session?.id])
   const followUpOpenNonceRef = React.useRef(0)
 
   // Navigation for session branching
@@ -1420,8 +1439,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     try {
       await window.electronAPI.sessionCommand(session.id, {
         type: 'addAnnotation',
-        messageId,
-        annotation,
+        messageId: messageActionId(session.messages, messageId),
+        annotation: { ...annotation, target: { ...annotation.target, source: { ...annotation.target.source, messageId: messageActionId(session.messages, messageId) } } },
       })
     } catch (error) {
       toast.error(t('toast.couldNotSaveHighlight'), {
@@ -1436,7 +1455,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     try {
       await window.electronAPI.sessionCommand(session.id, {
         type: 'removeAnnotation',
-        messageId,
+        messageId: messageActionId(session.messages, messageId),
         annotationId,
       })
     } catch (error) {
@@ -1455,26 +1474,65 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     onInputChange?.(t('chat.learnFromMessageDraft', { text }))
   }, [onInputChange, t])
 
+  const handleMessageBranch = useCallback(async (messageId: string, options?: { newPanel?: boolean }) => {
+    if (!session) return
+    const generation = sessionActionGenerationRef.current
+    const canonicalId = messageActionId(session.messages, messageId)
+    const operationId = `${session.id}:${canonicalId}`
+    if (branchingMessagesRef.current.has(operationId)) return
+    branchingMessagesRef.current.add(operationId)
+    try {
+      const child = await appShellContext.onCreateSession(session.workspaceId, {
+        branchFromMessageId: canonicalId,
+        branchFromSessionId: session.id,
+        name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
+        llmConnection: session.llmConnection,
+        model: session.model,
+        permissionMode: session.permissionMode,
+        workingDirectory: session.workingDirectory,
+        enabledSourceSlugs: session.enabledSourceSlugs,
+      })
+      if (activeSessionIdRef.current === session.id && sessionActionGenerationRef.current === generation) {
+        navigate(routes.view.allSessions(child.id), { newPanel: resolveBranchNewPanelOption(options) })
+      }
+    } catch (error) {
+      if (activeSessionIdRef.current !== session.id || sessionActionGenerationRef.current !== generation) return
+      toast.error(t('toast.couldNotCreateBranch'), {
+        description: branchErrorDescription(error, {
+          fallback: t('toast.createBranchFailed'),
+          sameProvider: t('toast.branchSameProvider'),
+        }),
+      })
+    } finally {
+      branchingMessagesRef.current.delete(operationId)
+    }
+  }, [session, appShellContext, t])
+
   const handlePickSideThread = useCallback((action: SideThreadAction, text: string, messageId: string) => {
     if (!session) return
     setSideThreadPreview({
       action,
-      messageId,
+      sessionId: session.id,
+      messageId: messageActionId(session.messages, messageId),
       prompt: buildSideThreadPrompt({
         action,
         sourceText: text,
-        sourceMessageId: messageId,
+        sourceMessageId: messageActionId(session.messages, messageId),
         sourceSessionId: session.id,
       }),
     })
   }, [session])
 
   const handleConfirmSideThread = useCallback(async () => {
-    if (!session || !sideThreadPreview) return
+    if (!session || !sideThreadPreview || sideThreadBusy || sideThreadPreview.sessionId !== session.id) return
+    const generation = sessionActionGenerationRef.current
+    const operationId = `${session.id}:side-thread`
+    if (branchingMessagesRef.current.has(operationId)) return
+    branchingMessagesRef.current.add(operationId)
     setSideThreadBusy(true)
     try {
       const child = await appShellContext.onCreateSession(session.workspaceId, {
-        branchFromMessageId: sideThreadPreview.messageId,
+        branchFromMessageId: messageActionId(session.messages, sideThreadPreview.messageId),
         branchFromSessionId: session.id,
         name: `${t(`sideThread.action.${sideThreadPreview.action}`)} · ${session.name || t('chat.session')}`,
         sessionStatus: 'in_progress',
@@ -1485,9 +1543,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         enabledSourceSlugs: session.enabledSourceSlugs,
       })
       appShellContext.onInputChange(child.id, sideThreadPreview.prompt)
+      if (activeSessionIdRef.current !== session.id || sessionActionGenerationRef.current !== generation) return
       setSideThreadPreview(null)
       navigate(routes.view.allSessions(child.id))
     } catch (error) {
+      if (activeSessionIdRef.current !== session.id || sessionActionGenerationRef.current !== generation) return
       toast.error(t('toast.couldNotCreateBranch'), {
         description: branchErrorDescription(error, {
           fallback: t('toast.createBranchFailed'),
@@ -1495,9 +1555,10 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         }),
       })
     } finally {
-      setSideThreadBusy(false)
+      branchingMessagesRef.current.delete(operationId)
+      if (activeSessionIdRef.current === session.id && sessionActionGenerationRef.current === generation) setSideThreadBusy(false)
     }
-  }, [appShellContext, permissionMode, session, sideThreadPreview, t])
+  }, [appShellContext, permissionMode, session, sideThreadPreview, sideThreadBusy, t])
 
   // Handle stop request from InputContainer
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
@@ -1757,6 +1818,7 @@ const handleFollowUpChipClick = useCallback((item: {
     && ((session?.messages?.length ?? 0) > 0 || (session?.messageCount ?? 0) > 0)
 
   return (
+    <MessageReactionActorProvider actor={reactionActor}>
     <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
       {session ? (
         <>
@@ -1919,6 +1981,9 @@ const handleFollowUpChipClick = useCallback((item: {
                             onQuote={handleQuoteMessage}
                             onLearnFromMessage={handleLearnFromMessage}
                             onPickSideThread={handlePickSideThread}
+                            onListen={(text) => { void handleListen(text, turn.message.id) }}
+                            isListening={listeningTurnId === turn.message.id}
+                            onBranch={session?.supportsBranching && !turn.message.isPending && !turn.message.isQueued ? handleMessageBranch : undefined}
                           />
                         </div>
                       )
@@ -2028,33 +2093,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         onQuote={handleQuoteMessage}
                         onLearnFromMessage={handleLearnFromMessage}
                         onPickSideThread={handlePickSideThread}
-                        onBranch={session?.supportsBranching ? async (messageId: string, options?: { newPanel?: boolean }) => {
-                          if (!session) return
-                          try {
-                            const child = await appShellContext.onCreateSession(
-                              session.workspaceId,
-                              {
-                                branchFromMessageId: messageId,
-                                branchFromSessionId: session.id,
-                                name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
-                                // Keep branch on the same backend/provider by inheriting parent session settings.
-                                llmConnection: session.llmConnection,
-                                model: session.model,
-                                permissionMode: session.permissionMode,
-                                workingDirectory: session.workingDirectory,
-                                enabledSourceSlugs: session.enabledSourceSlugs,
-                              }
-                            )
-                            navigate(routes.view.allSessions(child.id), { newPanel: resolveBranchNewPanelOption(options) })
-                          } catch (error) {
-                            toast.error(t('toast.couldNotCreateBranch'), {
-                              description: branchErrorDescription(error, {
-                                fallback: t('toast.createBranchFailed'),
-                                sameProvider: t('toast.branchSameProvider'),
-                              }),
-                            })
-                          }
-                        } : undefined}
+                        onBranch={session?.supportsBranching ? handleMessageBranch : undefined}
                         onAddAnnotation={persistAnnotation}
                         onRemoveAnnotation={removeAnnotation}
                         onUpdateAnnotation={async (messageId, annotationId, patch) => {
@@ -2413,6 +2452,7 @@ const handleFollowUpChipClick = useCallback((item: {
         )
       )}
     </div>
+    </MessageReactionActorProvider>
   )
 })
 
@@ -2450,6 +2490,9 @@ interface MessageBubbleProps {
   onQuote?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
+  onListen?: (text: string) => void
+  isListening?: boolean
+  onBranch?: (messageId: string) => void
 }
 
 /**
@@ -2542,6 +2585,9 @@ function MessageBubble({
   onQuote,
   onLearnFromMessage,
   onPickSideThread,
+  onListen,
+  isListening,
+  onBranch,
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
@@ -2558,7 +2604,7 @@ function MessageBubble({
         onUrlClick={onOpenUrl}
         onFileClick={onOpenFile}
         compactMode={compactMode}
-        messageId={message.id}
+        messageId={message.isPending ? undefined : message.backendMessageId ?? message.id}
         sessionId={sessionId}
         annotations={message.annotations}
         onAddAnnotation={onAddAnnotation}
@@ -2566,6 +2612,9 @@ function MessageBubble({
         onQuote={onQuote}
         onLearnFromMessage={onLearnFromMessage}
         onPickSideThread={onPickSideThread}
+        onListen={onListen}
+        isListening={isListening}
+        onBranch={onBranch}
       />
     )
   }
@@ -2721,6 +2770,10 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.sessionId === next.sessionId &&
     prev.compactMode === next.compactMode &&
     prev.message.annotations === next.message.annotations &&
+    prev.message.backendMessageId === next.message.backendMessageId &&
+    prev.onListen === next.onListen &&
+    prev.isListening === next.isListening &&
+    prev.onBranch === next.onBranch &&
     prev.onQuote === next.onQuote &&
     prev.onLearnFromMessage === next.onLearnFromMessage &&
     prev.onPickSideThread === next.onPickSideThread

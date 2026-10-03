@@ -146,6 +146,11 @@ export function loadWorkspaceConfig(rootPath: string): WorkspaceConfig | null {
 
   try {
     const config = readJsonFileSync<WorkspaceConfig>(configPath);
+    const services = ensureBuiltinSources(rootPath);
+    if (services.defaulted.length) {
+      config.defaults = { ...config.defaults, enabledSourceSlugs: [...new Set([...(config.defaults?.enabledSourceSlugs ?? []), ...services.defaulted])] };
+      saveWorkspaceConfig(rootPath, config);
+    }
 
     // Persisted folders created before TeamSpace had no authority metadata.
     // Normalize in memory; the next canonical save writes the discriminator.
@@ -383,7 +388,7 @@ export function createWorkspaceAtPath(
   const layout = ensureRoxLayout({ workspaceRoot: rootPath });
   const notesPath = config.notesPath ?? join(layout.root, 'notes');
 
-  // Seed credentialed API templates as disabled; they are never workspace defaults.
+  // Seed managed API services enabled by default; secrets remain on the server.
   ensureBuiltinSources(rootPath);
   // Local microservices (notes, memory, sessions, …) default ON. Existing configs win.
   ensureDefaultMicroserviceSources(rootPath, { roxRoot: layout.root, notesPath });

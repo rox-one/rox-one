@@ -411,23 +411,28 @@ function AppShellContent({
 
     const applyProfile = async () => {
       try {
-        const [identity, gamification] = await Promise.all([
+        const [identity, gamification] = await Promise.allSettled([
           window.electronAPI.identityGetState(),
           window.electronAPI.getGamificationProfile(),
         ])
         if (cancelled) return
-        setProfileStrip({
-          displayName: identity.profile.displayName || t('profile.defaultName'),
-          avatar: identity.profile.avatar,
-          plan: identity.profile.plan ?? 'standard',
-          level: gamification.level,
-          xp: gamification.xp,
-          progress: gamification.progress,
-          xpIntoLevel: gamification.xpIntoLevel,
-          xpForNext: gamification.xpForNext,
-          nextThreshold: gamification.nextThreshold,
-          balance: gamification.balance,
-        })
+        setProfileStrip((previous) => ({
+          ...previous,
+          ...(identity.status === 'fulfilled' ? {
+            displayName: identity.value.profile.displayName || t('profile.defaultName'),
+            avatar: identity.value.profile.avatar,
+            plan: identity.value.profile.plan ?? 'standard',
+          } : {}),
+          ...(gamification.status === 'fulfilled' ? {
+            level: gamification.value.level,
+            xp: gamification.value.xp,
+            progress: gamification.value.progress,
+            xpIntoLevel: gamification.value.xpIntoLevel,
+            xpForNext: gamification.value.xpForNext,
+            nextThreshold: gamification.value.nextThreshold,
+            balance: gamification.value.balance,
+          } : {}),
+        }))
       } catch (err) {
         console.error('Failed to load profile strip:', err)
       }
@@ -454,7 +459,7 @@ function AppShellContent({
       offXp()
       offIdentity?.()
     }
-  }, [t])
+  }, [t, activeWorkspaceId])
 
 
 
