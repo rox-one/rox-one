@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { TourScopeContext, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, animate } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { FreeFormInput, type FreeFormInputProps } from './FreeFormInput'
@@ -58,6 +59,8 @@ export function InputContainer({
   showCloudRunsChip = true,
   ...freeFormProps
 }: InputContainerProps) {
+  const adminRequestTarget = useTourTarget('permission.request', { sessionId: freeFormProps.sessionId, variant: compactMode ? 'compact' : 'regular' })
+  const adminActionsTarget = useTourTarget('permission.actions', { sessionId: freeFormProps.sessionId, variant: compactMode ? 'compact' : 'regular' })
   const appShellContext = useOptionalAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const mode: InputMode = structuredInput ? 'structured' : 'freeform'
@@ -261,13 +264,14 @@ export function InputContainer({
           aria-hidden="true"
         >
           <div className="rounded-[8px] bg-background overflow-hidden">
-            {renderContent(true)}
+            <TourScopeContext.Provider value={null}>{renderContent(true)}</TourScopeContext.Provider>
           </div>
         </div>
       )}
 
       {/* Visible animated container */}
       <motion.div
+        ref={structuredInput?.type === 'admin_approval' ? node => { adminRequestTarget(node); adminActionsTarget(node) } : undefined}
         className={cn(
           "input-container relative rounded-[12px] overflow-hidden transition-colors",
           isFocusedPanel ? "shadow-middle" : "shadow-minimal",

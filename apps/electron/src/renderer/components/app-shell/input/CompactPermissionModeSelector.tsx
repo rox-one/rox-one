@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import {
@@ -66,6 +68,7 @@ export function CompactPermissionModeSelector({
   onPermissionModeChange,
 }: CompactPermissionModeSelectorProps) {
   const { t } = useTranslation()
+  const permissionsTarget = useTourTarget('composer.permissions', { variant: 'compact' })
   const [open, setOpen] = React.useState(false)
 
   const handleSelect = React.useCallback((mode: PermissionMode) => {
@@ -79,6 +82,7 @@ export function CompactPermissionModeSelector({
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <button
+          ref={permissionsTarget}
           type="button"
           aria-label={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[permissionMode].name)}`}
           title={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[permissionMode].name)}`}

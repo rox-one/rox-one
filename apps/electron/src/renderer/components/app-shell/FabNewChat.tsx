@@ -1,4 +1,6 @@
 import { createPortal } from "react-dom"
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { beginChatSessionCreation } from '@/features/product-tour/adapters/chat'
 import { Plus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
@@ -21,11 +23,14 @@ interface FabNewChatProps {
  */
 export function FabNewChat({ onClick, className }: FabNewChatProps) {
   const { t } = useTranslation()
+  const target = useTourTarget('session.new', { variant: 'compact' })
+  const tourSignals = useTourSignals()
   if (typeof document === 'undefined') return null
   return createPortal(
     <button
       type="button"
-      onClick={onClick}
+      ref={target}
+      onClick={() => { beginChatSessionCreation(tourSignals.capture()); onClick() }}
       aria-label={t("menu.newChat")}
       className={cn(
         "fixed right-4 z-30 size-14 rounded-full",
