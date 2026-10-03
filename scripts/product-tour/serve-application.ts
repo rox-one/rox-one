@@ -82,6 +82,9 @@ registerNativeDataHandlers(rpc, deps)
 registerNotesHandlers(rpc, deps)
 
 const shellReplies: Record<string, unknown> = {
+  // This fixture exercises the production app/native domain in explicit
+  // non-cloud mode. Account login and billing have separate authority tests.
+  getRoxCloudState: { required: false, connected: false },
   getWorkspaces: [{ id: workspaceId, name: 'Tour QA', rootPath: workspaceRoot, kind: 'local', createdAt: Date.now() }],
   getWindowWorkspace: workspaceId, getOrgIdentity: { userId: issued.principal.subject, issuer: principal.issuer, name: 'Product Tour Test', authority: 'native' },
   getPreferences: { language: 'en', name: 'Product Tour Test' }, getAppVersion: 'acceptance-harness',
@@ -148,22 +151,25 @@ const fixtureHttp: import('connect').NextHandleFunction = async (request, respon
   }
   response.statusCode = 404; response.end('{}')
 }
-const configFile = join(repository, 'tests/e2e/product-tour/fixtures/application/vite.config.ts')
+// Import the owned config once. Bun cannot re-import Vite's already removed
+// temporary bundled config when build() is followed by preview() in one process.
+const { default: applicationViteConfig } = await import('../../tests/e2e/product-tour/fixtures/application/vite.config')
+const applicationConfig = { ...applicationViteConfig, configFile: false as const }
 // Optional bounded acceptance route exercises the built real App rather than timing cold dev-module transforms.
 const builtApplication = process.env.PRODUCT_TOUR_APPLICATION_STATIC === '1'
 if (builtApplication) {
   if (process.env.PRODUCT_TOUR_APPLICATION_PREBUILT === '1') requireApplicationBuildReceipt(repository)
   else {
     const fingerprint = applicationBuildFingerprint(repository)
-    await build({ configFile })
+    await build(applicationConfig)
     if (fingerprint !== applicationBuildFingerprint(repository)) throw new Error('Acceptance App source changed during build')
     writeApplicationBuildReceipt(repository, fingerprint)
   }
 }
 const fixturePlugin = { name: 'owned-product-tour-http', configureServer(server: import('vite').ViteDevServer) { server.middlewares.use(fixtureHttp) }, configurePreviewServer(server: import('vite').PreviewServer) { server.middlewares.use(fixtureHttp) } }
 const vite = builtApplication
-  ? await preview({ configFile, plugins: [fixturePlugin], preview: { port: 5269, strictPort: true, host: '127.0.0.1' } })
-  : await createServer({ configFile, plugins: [fixturePlugin], server: { port: 5269, strictPort: true, host: '127.0.0.1' } })
+  ? await preview({ ...applicationConfig, plugins: [...(applicationConfig.plugins ?? []), fixturePlugin], preview: { port: 5269, strictPort: true, host: '127.0.0.1' } })
+  : await createServer({ ...applicationConfig, plugins: [...(applicationConfig.plugins ?? []), fixturePlugin], server: { port: 5269, strictPort: true, host: '127.0.0.1' } })
 if ('listen' in vite) await vite.listen()
 console.log(JSON.stringify({ marker: fixtureMarker, origin: 'http://127.0.0.1:5269', evidence: 'production App + RPC + native journal, synthetic bootstrap/IPC/custody DI; not native OS' }))
 let disposed = false

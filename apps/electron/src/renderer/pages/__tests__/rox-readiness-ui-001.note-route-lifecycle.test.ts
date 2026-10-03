@@ -84,6 +84,7 @@ describe('UI-001 actual selected note read and deletion callbacks', () => {
     expect(f.states.NoteOpenError).toEqual({ workspaceId: 'workspace', noteId: 'selected', code: 'NOT_FOUND' })
     expect(f.states.ActiveNote).toBeNull()
     expect(f.states.Loading).toBe(false)
+    expect(f.events).not.toContain('toast')
     missing = false; await f.openNote('selected')
     expect(f.states.NoteOpenError).toBeNull()
     expect(f.states.ActiveNote).toEqual(note())
@@ -94,6 +95,16 @@ describe('UI-001 actual selected note read and deletion callbacks', () => {
     await f.openNote('selected')
     expect(f.states.NoteOpenError).toEqual({ workspaceId: 'workspace', noteId: 'selected', code: 'AUTH_FAILED' })
     expect(f.states.ActiveNote).toBeNull()
+    expect(f.events).toContain('toast')
+  })
+  test('real I/O and authority failures stay unavailable and report an error', async () => {
+    for (const code of ['HANDLER_ERROR', 'AUTH_FAILED', 'DOCUMENT_AUTHORITY_CHANGED']) {
+      const f = fixture({ readNote: async () => { throw { code, message: 'ENOENT: unrelated dependency' } } })
+      await f.openNote('selected')
+      expect(f.states.NoteOpenError).toEqual({ workspaceId: 'workspace', noteId: 'selected', code })
+      expect(f.events).toContain('toast')
+      expect(f.states.Loading).toBe(false)
+    }
   })
   test('older success and refusal cannot replace the latest opened note', async () => {
     for (const rejected of [false, true]) {

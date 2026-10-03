@@ -1,0 +1,70 @@
+{
+  "receipts": [
+    {
+      "phase": "write",
+      "platform": "win32",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "profileIsolated": true,
+      "backend": "DPAPI",
+      "stage": "complete",
+      "passed": true,
+      "code": null,
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": false,
+          "code": "EPERM"
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    },
+    {
+      "phase": "read",
+      "platform": "win32",
+      "electron": "39.2.7",
+      "encryptionAvailable": true,
+      "profileIsolated": true,
+      "backend": "DPAPI",
+      "stage": "complete",
+      "passed": true,
+      "code": null,
+      "fsync": [
+        {
+          "access": "readonly",
+          "opened": true,
+          "flushed": false,
+          "code": "EPERM"
+        },
+        {
+          "access": "writable",
+          "opened": true,
+          "flushed": true,
+          "code": null
+        }
+      ]
+    }
+  ],
+  "localState": [
+    {
+      "phase": "write",
+      "encryptedKeyPresent": true,
+      "encryptedKeyStable": null
+    },
+    {
+      "phase": "read",
+      "encryptedKeyPresent": true,
+      "encryptedKeyStable": true
+    }
+  ],
+  "platform": "win32",
+  "nativeStoreRestartPassed": true,
+  "failure": null,
+  "scope": "Actual OS encryption and store restart; no OAuth, provider or GUI acceptance."
+}

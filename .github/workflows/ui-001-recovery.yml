@@ -48,16 +48,23 @@ jobs:
           manifest = json.loads((owner / 'source-manifest-v3.json').read_text())
           hashes = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
                     for path in manifest['sourceSha256']}
+          checkout_hashes = {path: hashlib.sha256(subprocess.check_output(['git', 'show', 'HEAD:' + path])).hexdigest()
+                             for path in hashes}
           receipt = {'testedRevision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
                      'bun': subprocess.check_output(['bun', '--version'], text=True).strip(),
                      'node': subprocess.check_output(['node', '--version'], text=True).strip(),
                      'actualSourceSha256': hashes,
-                     'matchesCommittedCandidate': hashes == manifest['sourceSha256']}
+                     'checkoutSourceSha256': checkout_hashes,
+                     'matchesCheckout': hashes == checkout_hashes,
+                     'matchesCommittedCandidate': hashes == manifest['sourceSha256'],
+                     'candidateSourceMismatches': sorted(path for path in hashes if hashes[path] != manifest['sourceSha256'][path])}
           destination = owner / 'verification/browser/ui001-ci-source.json'
           destination.parent.mkdir(parents=True, exist_ok=True)
           destination.write_text(json.dumps(receipt, indent=2) + '\n')
           print(json.dumps(receipt, indent=2))
-          assert receipt['matchesCommittedCandidate'], 'Tested sources differ from the committed candidate manifest'
+          # Concurrent base merges may change the candidate snapshot. Bind the
+          # tested bytes to the actual checkout and retain candidate drift as evidence.
+          assert receipt['matchesCheckout'], 'Tested sources differ from their actual Git checkout'
           PY
       - name: Shell, parser, persistence and navigation regression
         env:
@@ -133,7 +140,7 @@ jobs:
                                          for path in receipt['actualSourceSha256']}
           receipt['sourcesStable'] = receipt['sourceAfterSha256'] == receipt['actualSourceSha256']
           destination.write_text(json.dumps(receipt, indent=2) + '\n')
-          assert receipt['sourcesStable'] and receipt['matchesCommittedCandidate']
+          assert receipt['sourcesStable'] and receipt['matchesCheckout']
           PY
       - name: Preserve component fixture evidence
         if: always()

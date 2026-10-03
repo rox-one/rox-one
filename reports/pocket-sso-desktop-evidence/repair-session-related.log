@@ -1,0 +1,66 @@
+bun test v1.3.14 (0d9b296a)
+
+packages/server-core/src/sessions/sendmessage-oauth-refresh.test.ts:
+[session] Cannot send event - no event sink
+[session] [OAuth] Checking if any tokens need refresh
+(pass) sendMessage OAuth refresh ordering (#710) > cold session: tokenRefreshManager runs before getOrCreateAgent [210.80ms]
+[session] Cannot send event - no event sink
+[session] [OAuth] Checking if any tokens need refresh
+[session] [OAuth] Refreshing 1 source(s): failing-mcp
+[session] [OAuth] Some sources failed token refresh: [ "failing-mcp" ]
+(pass) sendMessage OAuth refresh ordering (#710) > failed refresh: source excluded from usable set via in-memory mutation [52.67ms]
+
+packages/server-core/src/sessions/improve-draft.test.ts:
+[session] improveDraft failed for session s1: 15 | }
+16 | 
+17 | describe('improveDraft', () => {
+18 |   it('surfaces the real provider error instead of a generic failure', async () => {
+19 |     const manager = harness(async () => {
+20 |       throw new Error('Connection "ROX" is not signed in')
+                     ^
+error: Connection "ROX" is not signed in
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/improve-draft.test.ts:20:17)
+      at improveDraft (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/SessionManager.ts:6588:33)
+      at <anonymous> (/Users/t/.codex/worktrees/pocket-id-sso/rox-release-20261003/packages/server-core/src/sessions/improve-draft.test.ts:22:34)
+
+(pass) improveDraft > surfaces the real provider error instead of a generic failure [2.76ms]
+(pass) improveDraft > passes the draft to the session LLM and strips wrapping quotes [0.82ms]
+[session] improveDraft: Session missing not found
+(pass) improveDraft > rejects an empty draft and an empty model answer [0.15ms]
+(pass) improveDraft > strips code fences [0.02ms]
+
+packages/server-core/src/sessions/midstream-queue.test.ts:
+(pass) mid-stream queue runtime invariants > distinguishes non-interrupting queue mode from a failed steer [6.42ms]
+[session] replay queued {
+  sessionId: "queue-ordering",
+  messageId: "queued-user",
+  queueLengthAfterShift: 0,
+}
+(pass) mid-stream queue runtime invariants > re-stamps replay after the prior final response and emits that timestamp [1.99ms]
+
+packages/server-core/src/sessions/sendmessage-durability.test.ts:
+[session] Cannot send event - no event sink
+(pass) sendMessage durability > user message is on disk before onAck fires (normal branch) [18.83ms]
+[session] mid-stream send {
+  sessionId: "durability-midstream",
+  behavior: "steer",
+  steered: false,
+  queueLengthBefore: 0,
+  backend: "none",
+  connectionSlug: undefined,
+}
+[session] Cannot send event - no event sink
+(pass) sendMessage durability > user message is on disk before onAck fires (mid-stream / queued branch) [5.74ms]
+
+packages/server-core/src/sessions/create-managed-session.test.ts:
+(pass) createManagedSession > normalizes legacy thinkingLevel=think on restore [0.14ms]
+(pass) createManagedSession > drops invalid thinking levels instead of leaking them into runtime state [3.72ms]
+
+packages/server-core/src/sessions/execute-prompt-automation-test-mode.test.ts:
+(pass) executePromptAutomation waitForCompletion > waitForCompletion:false returns as soon as the session is created (does not await the turn) [10.40ms]
+(pass) executePromptAutomation waitForCompletion > default (waitForCompletion unset) awaits sendMessage and propagates its error [2.40ms]
+
+ 14 pass
+ 0 fail
+ 28 expect() calls
+Ran 14 tests across 6 files. [3.36s]

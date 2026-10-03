@@ -1,0 +1,10 @@
+{
+  "sourceWorkingProductRevision": "4969f9fa2dca72b2f885e850e60aa9534f4f7884",
+  "integrationBase": "63dd527439cd422d0c392cd8fce1461db333168b",
+  "observedExitCode": 0,
+  "passed": 52,
+  "failed": 0,
+  "assertions": 189,
+  "logSha256": "1afc20b5710ebeb03257a0e0f26be94c048eb0df5f916eeef6c6f80afba20f88",
+  "fullDoDClosed": false
+}
