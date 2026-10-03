@@ -14,3 +14,28 @@ bun scripts/product-tour/bundle-report.ts /path/to/baseline/apps/electron/dist/r
 `step-matrix.json` specifies all 56 expected policies. `catalogue-policy.test.ts` imports and executes the production reducer and production catalogue; every atomic ID has a positive policy case and a premature/foreign-event case. These are pure evidence checks. Verified signals supplied to the reducer are synthetic and do not claim that the corresponding domain operation succeeded. Domain operations require their own application or native evidence.
 
 Native manual evidence must record the candidate SHA, OS/build, action sequence, result, and supporting capture. On macOS inspect Start/Pause/Resume, the native menu, file picker focus, and existing sharing dialogs. On Windows inspect Start/Pause/Resume, Git Bash prerequisite/setup, menu and drawer focus. On both deny the microphone permission after an explicit voice action; verify no recording before consent and that ordinary typing still works. The automated fresh-setup smoke is narrower than these manual cases.
+# Current branch recovery qualification
+
+Historical execution reports in this directory describe their original source
+revision. Current integration receipts live in
+`docs/integration-history/product-learning-current-20261003/` and retain failed
+attempts. The built App fixture uses real App/Navigation/Notes components and a
+throwaway authenticated native journal, with controlled bootstrap/IPC/custody.
+It is not an installed Electron or OS microphone/clipboard acceptance test.
+
+On hosts where Bun stalls during Playwright cleanup, run the unchanged checked-in
+browser test bodies with Node 22 and an explicit installed Chromium executable:
+
+```sh
+CHROMIUM_EXECUTABLE=/path/to/chromium LEARNING_CHROMIUM_PATH=/path/to/chromium ROX_BROWSER_PATH=/path/to/chromium \
+node scripts/product-tour/run-browser-node.mjs \
+  apps/electron/src/renderer/components/app-shell/input/__tests__/product-learning-input.browser.test.ts \
+  apps/electron/src/renderer/features/product-tour/core/native-continuity.browser.test.ts \
+  apps/electron/src/renderer/features/product-tour/adapters/connections/source-picker.browser.test.ts \
+  apps/electron/src/renderer/features/product-tour/adapters/work/meetings-automations/native-ui.browser.test.ts
+```
+
+The Node adapter changes the test lifecycle and fixture HTTP server only. Original
+production imports, assertions and per-case timeouts remain intact. Receipts
+record source hashes; isolated children must report exactly one executed passing
+case, so inherited Node test IPC cannot produce a false successful empty run.
