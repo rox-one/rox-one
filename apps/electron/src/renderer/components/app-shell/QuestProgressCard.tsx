@@ -1,3 +1,6 @@
+import { useProductLearning } from '@/features/product-tour/runtime'
+import { navigate, routes } from '@/lib/navigate'
+import type { TourId } from '@/features/product-tour/contracts'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, Link2, CheckSquare, GitBranch, Globe, ShieldCheck, Trophy, Zap, Check, Clock3, Loader2, RefreshCw } from 'lucide-react'
@@ -37,6 +40,7 @@ interface QuestProgressCardProps {
 }
 
 export function QuestProgressCard({ cloudFeaturesEnabled = true, className, scopeKey }: QuestProgressCardProps) {
+  const learning = useProductLearning()
   const { t, i18n } = useTranslation()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [page, setPage] = useState(0)
@@ -171,6 +175,7 @@ export function QuestProgressCard({ cloudFeaturesEnabled = true, className, scop
             <div className="flex flex-wrap items-center justify-between gap-2"><span className="grid size-10 place-items-center rounded-xl bg-background/70"><Icon className="size-5" aria-hidden="true" /></span><span className="flex items-center gap-1 rounded-full bg-background/70 px-2 py-1 text-xs font-semibold">{quest.status === 'completed' ? <Check className="size-3" /> : <Zap className="size-3" />}{quest.status === 'completed' && `${t('quests.earned')} `}{t('quests.xpAmount', { xp: XP_EVENT_REWARDS[QUEST_XP_EVENT[quest.id]] })}</span></div>
             <div className="flex-1"><p className="text-[10px] uppercase tracking-wide opacity-75">{t(QUEST_SERVICE[quest.id])}</p><h4 className="mt-1 break-words text-sm font-semibold">{title}</h4></div>
             {quest.status === 'completed' ? <p className="text-xs text-muted-foreground">{quest.completedAt ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(quest.completedAt) : t('quests.completed')}</p> : quest.status === 'snoozed' && (quest.snoozeUntil ?? 0) > now ? <p className="text-xs text-muted-foreground">{t('quests.snoozedUntil', { date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(quest.snoozeUntil) })}</p> : <>
+              {(['first_note', 'first_task', 'first_workflow'] as string[]).includes(quest.id) && <button type="button" className={BUTTON} onClick={() => { const tourId = ({ first_note: 'OBT-17', first_task: 'OBT-15', first_workflow: 'OBT-23' } as Partial<Record<QuestId, TourId>>)[quest.id]; if (learning?.enabled && tourId) void learning.start(tourId); else navigate(routes.view.settings('learning')) }}>{t('productTour.questShowHow')}</button>}
               <button type="button" disabled={busy !== null} aria-label={t('quests.actionLabel', { action: t('quests.done'), quest: title })} className={cn(BUTTON, 'bg-background/80 font-semibold shadow-xs')} onClick={() => void act('complete', quest.id)}>{busy === quest.id ? <Loader2 className="mx-auto size-4 animate-spin motion-reduce:animate-none" /> : t('quests.done')}</button>
               <div className="flex flex-wrap justify-between gap-1 text-xs"><button type="button" className={BUTTON} disabled={busy !== null} aria-label={t('quests.actionLabel', { action: t('quests.snooze'), quest: title })} onClick={() => void act('snooze', quest.id)}>{t('quests.snooze')}</button><button type="button" className={BUTTON} disabled={busy !== null} aria-label={t('quests.actionLabel', { action: t('quests.dismiss'), quest: title })} onClick={() => void act('dismiss', quest.id)}>{t('quests.dismiss')}</button></div>
             </>}

@@ -35,6 +35,7 @@ export interface SettingsPageDefinition {
  * time via t(). Do NOT call i18n.t() here — this module loads before i18n init.
  */
 export const SETTINGS_PAGES = [
+  { id: 'learning' as const, labelKey: 'settings.learning.title', descriptionKey: 'settings.learning.description' },
   { id: 'account' as const, labelKey: 'settings.account.title', descriptionKey: 'settings.account.description' },
   { id: 'privacy' as const, labelKey: 'settings.privacy.title', descriptionKey: 'settings.privacy.description' },
   { id: 'runtime' as const, labelKey: 'settings.runtime.title', descriptionKey: 'settings.runtime.description' },
