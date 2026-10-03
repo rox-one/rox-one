@@ -277,7 +277,7 @@ describe('installEntry (skillpack, directory mode)', () => {
     expect(readLock(marketplacePaths(configDir).lockFile).entries).toEqual({})
   })
 
-  it('refuses to overwrite a target owned by a different marketplace entry', async () => {
+  it('installs a directory pack under a qualified name when another pack owns its name', async () => {
     // Пред-существующий пакет «foreign-pack» уже владеет директорией mega-pack.
     const target = join(skillsDir, 'mega-pack')
     mkdirSync(target, { recursive: true })
@@ -294,12 +294,10 @@ describe('installEntry (skillpack, directory mode)', () => {
       contentSha256: {},
     })
 
-    await expect(installEntry(PACK_ENTRY, { configDir, skillsDir, execFileFn: fakeGit })).rejects.toThrow(
-      /not ours|refuse overwrite|owned by foreign-pack/,
-    )
-    // Чужой контент нетронут, lock на mega-pack не создан:
+    const result = await installEntry(PACK_ENTRY, { configDir, skillsDir, execFileFn: fakeGit })
     expect(readFileSync(join(target, 'SKILL.md'), 'utf8')).toBe('# FOREIGN content')
-    expect(readLock(marketplacePaths(configDir).lockFile).entries['mega-pack']).toBeUndefined()
+    expect(result.kind === 'skillpack' && result.skills).toEqual(['mega-pack--mega-pack'])
+    expect(readFileSync(join(skillsDir, 'mega-pack--mega-pack', 'SKILL.md'), 'utf8')).toBe('# Mega Skill')
   })
 })
 
@@ -433,12 +431,13 @@ describe('installEntry (unowned target guard)', () => {
     // Юзерская директория не тронута и в collision-списке:
     expect(readFileSync(join(userSkill, 'SKILL.md'), 'utf8')).toBe('# USER content — must survive')
     expect(skillResult.collisions?.some((c) => c.includes(userSkill))).toBe(true)
-    // Соседний скилл всё-таки встал:
-    expect(skillResult.skills).toEqual(['deploy'])
+    // Both skills install, and the user's original name remains intact.
+    expect(skillResult.skills).toEqual(['deploy', 'guard-pack--review'])
+    expect(readFileSync(join(skillsDir, 'guard-pack--review', 'SKILL.md'), 'utf8')).toBe('# Pack Review')
     expect(existsSync(join(skillsDir, 'deploy', 'SKILL.md'))).toBe(true)
     // В lock попала только наша цель:
     const record = readLock(marketplacePaths(configDir).lockFile).entries['guard-pack']
-    expect(record?.targets).toEqual([join(skillsDir, 'deploy')])
+    expect(record?.targets).toEqual([join(skillsDir, 'deploy'), join(skillsDir, 'guard-pack--review')])
   })
 
 
@@ -484,33 +483,31 @@ describe('installEntry (unowned target guard)', () => {
     expect(readInstallMarker(join(skillsDir, 'review'))?.ref).toBe(REF)
   })
 
-  it('fails closed when every skill collides (no empty installed lock row)', async () => {
+  it('installs every skill with an alias when all original names belong to the user', async () => {
     // Both review and deploy already exist as unowned user dirs.
     for (const name of ['review', 'deploy']) {
       const dir = join(skillsDir, name)
       mkdirSync(dir, { recursive: true })
       writeFileSync(join(dir, 'SKILL.md'), `# USER ${name}`)
     }
-    await expect(installEntry(GUARD_ENTRY, { configDir, skillsDir, execFileFn: guardGit })).rejects.toThrow(
-      /no writable skills|unowned/,
-    )
-    expect(readLock(marketplacePaths(configDir).lockFile).entries['guard-pack']).toBeUndefined()
+    const result = await installEntry(GUARD_ENTRY, { configDir, skillsDir, execFileFn: guardGit })
+    expect(result.kind === 'skillpack' && result.skills).toEqual(['guard-pack--deploy', 'guard-pack--review'])
+    expect(readLock(marketplacePaths(configDir).lockFile).entries['guard-pack']?.targets).toHaveLength(2)
     expect(readFileSync(join(skillsDir, 'review', 'SKILL.md'), 'utf8')).toBe('# USER review')
     expect(readFileSync(join(skillsDir, 'deploy', 'SKILL.md'), 'utf8')).toBe('# USER deploy')
   })
 
-  it('directory mode: refuses to overwrite an unowned existing dir', async () => {
+  it('directory mode preserves an unowned existing dir and installs an alias', async () => {
     const userPack = join(skillsDir, 'mega-pack')
     mkdirSync(userPack, { recursive: true })
     writeFileSync(join(userPack, 'SKILL.md'), '# USER pack')
 
-    await expect(
-      installEntry(
+    const result = await installEntry(
         { ...GUARD_ENTRY, id: 'mega-pack', installMode: 'directory' as const },
         { configDir, skillsDir, execFileFn: guardGit },
-      ),
-    ).rejects.toThrow('not ours')
+      )
     expect(readFileSync(join(userPack, 'SKILL.md'), 'utf8')).toBe('# USER pack')
+    expect(result.kind === 'skillpack' && result.skills).toEqual(['mega-pack--mega-pack'])
   })
 })
 

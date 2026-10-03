@@ -15,6 +15,7 @@ export type SideThreadPreview = {
   action: SideThreadAction
   messageId: string
   prompt: string
+  sessionId?: string
 }
 
 export type SideThreadPreviewDialogProps = {

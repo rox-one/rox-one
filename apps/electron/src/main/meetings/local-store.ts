@@ -1,3 +1,5 @@
+import { readBoundedRegularFile } from '@rox/shared/utils/bounded-file'
+import { getServerServiceKey } from '@rox/shared/config/server-services'
 /**
  * Local meeting store: one folder per meeting under `<root>/<id>/`.
  *   meeting.json      — metadata (title, times, participants, actions, docs…)
@@ -25,12 +27,14 @@ import {
 } from 'node:fs'
 import { Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { basename, extname, join } from 'node:path'
 import type {
   LocalAsrEngine,
   LocalMeeting,
   LocalMeetingPatch,
+  LocalMeetingAction,
+  LocalMeetingExtractionResult,
   LocalTranscriptSegmentUpdate,
   LocalTranscript,
   MeetingsLocalResult,
@@ -49,10 +53,13 @@ import {
   uniqueName,
 } from './local-model'
 import { decodeToWav, probeDurationMs, remuxAudio, runWhisper } from './local-asr'
+import { applyExtractionResult, EXTRACTION_START_TIMEOUT_MS, EXTRACTION_RUN_TIMEOUT_MS } from './local-extraction'
+import { DeepgramTranscriptionAdapter, loadVoicePrefs, type NormalizedTranscript, type TranscriptionRequest } from '@rox/shared/voice'
 
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024 * 1024
 
-type TranscriptionJob = { id: string; generation: number }
+export type LocalTranscriptionContext = { ownerId: number; bindingGeneration: number }
+type TranscriptionJob = { id: string; generation: number; context?: LocalTranscriptionContext }
 
 async function sha256File(path: string, signal?: AbortSignal): Promise<string> {
   const hash = createHash('sha256')
@@ -79,14 +86,19 @@ type ActiveRecording = {
   ext: string
   mimeType: string
   bytes: number
+  transcriptionContext?: LocalTranscriptionContext
 }
 
 export type LocalMeetingStoreDeps = {
   root: string
-  detectEngine: () => LocalAsrEngine
+  detectEngine: (meeting?: LocalMeeting) => LocalAsrEngine
   emit: (id: string) => void
   now?: () => number
   log?: (message: string, error?: unknown) => void
+  /** Backend adapter injection for deterministic lifecycle tests. */
+  transcribeCloud?: (input: TranscriptionRequest, meeting: LocalMeeting, context?: LocalTranscriptionContext) => Promise<NormalizedTranscript>
+  /** Main-process window binding, never a renderer-supplied grant. */
+  getTranscriptionContext?: (meeting: LocalMeeting) => LocalTranscriptionContext | undefined
 }
 
 export class LocalMeetingStore {
@@ -200,8 +212,80 @@ export class LocalMeetingStore {
     return this.mutate(id, (m) => applyPatch(m, patch, this.now()))
   }
 
+  /** Claim an unscoped device meeting once, after IPC verifies the live window. */
+  bindLegacyWorkspace(id: string, workspaceId: string): LocalMeeting | null {
+    const meeting = this.read(id)
+    if (!meeting || !workspaceId || meeting.workspaceId && meeting.workspaceId !== workspaceId) return null
+    if (meeting.workspaceId === workspaceId) return meeting
+    return this.write({ ...meeting, workspaceId, updatedAt: this.now() })
+  }
+
+  claimExtraction(id: string, input: { workspaceId: string; transcriptRevision: number; automatic: boolean }): MeetingsLocalResult<LocalMeeting> {
+    const meeting = this.read(id)
+    const transcript = this.readTranscript(id)
+    if (!meeting || !transcript) return { ok: false, code: 'meeting-not-found' }
+    if (!input?.workspaceId || meeting.workspaceId !== input.workspaceId || meeting.transcript.status !== 'done' || transcript.revision !== input.transcriptRevision || !transcript.segments.length) return { ok: false, code: 'extraction-stale' }
+    const run = meeting.extraction
+    if (run?.status === 'starting' || run?.status === 'running') {
+      const timeout = run.status === 'starting' ? EXTRACTION_START_TIMEOUT_MS : EXTRACTION_RUN_TIMEOUT_MS
+      if (this.now() - run.startedAt < timeout) return { ok: false, code: 'extraction-busy' }
+      this.failExtraction(id, { runId: run.id, code: 'extraction-interrupted' })
+      return { ok: false, code: 'extraction-interrupted' }
+    }
+    if (input.automatic && meeting.summaryAutoRevision === transcript.revision) return { ok: false, code: 'extraction-already-attempted' }
+    const next = { ...meeting, summaryRun: undefined,
+      summaryAutoRevision: transcript.revision,
+      extraction: { id: `extract-${randomUUID()}`, workspaceId: input.workspaceId, transcriptRevision: transcript.revision, editRevision: meeting.analysisEditRevision ?? 0,
+        automatic: input.automatic, status: 'starting' as const, startedAt: this.now() }, updatedAt: this.now() }
+    return { ok: true, value: this.write(next) }
+  }
+
+  attachExtraction(id: string, input: { runId: string; sessionId: string }): MeetingsLocalResult<LocalMeeting> {
+    const meeting = this.read(id)
+    const run = meeting?.extraction
+    if (!meeting || !run || run.id !== input?.runId || run.status !== 'starting' || !input.sessionId) return { ok: false, code: 'extraction-conflict' }
+    if (meeting.workspaceId !== run.workspaceId || meeting.transcript.revision !== run.transcriptRevision || (meeting.analysisEditRevision ?? 0) !== run.editRevision) return { ok: false, code: 'extraction-stale' }
+    return { ok: true, value: this.write({ ...meeting, extraction: { ...run, status: 'running', sessionId: input.sessionId }, updatedAt: this.now() }) }
+  }
+
+  finishExtraction(id: string, input: { runId: string; result: LocalMeetingExtractionResult }): MeetingsLocalResult<LocalMeeting> {
+    const meeting = this.read(id)
+    const transcript = this.readTranscript(id)
+    if (!meeting || !transcript) return { ok: false, code: 'meeting-not-found' }
+    const result = applyExtractionResult(meeting, transcript, input.runId, input.result, this.now())
+    if (!result.ok) { if (result.code === 'extraction-stale') this.failExtraction(id, { runId: input.runId, code: result.code }); return result }
+    return { ok: true, value: this.write(result.value) }
+  }
+
+  failExtraction(id: string, input: { runId: string; code: string }): MeetingsLocalResult<LocalMeeting> {
+    const meeting = this.read(id)
+    const run = meeting?.extraction
+    if (!meeting || !run || run.id !== input?.runId || (run.status !== 'starting' && run.status !== 'running')) return { ok: false, code: 'extraction-conflict' }
+    const code = ['extraction-stale', 'extraction-interrupted', 'extraction-invalid', 'extraction-provider-failed', 'extraction-start-failed'].includes(input.code) ? input.code : 'extraction-provider-failed'
+    return { ok: true, value: this.write({ ...meeting, summaryRun: undefined, extraction: { ...run, status: code === 'extraction-stale' ? 'superseded' : 'failed', errorCode: code, finishedAt: this.now() }, updatedAt: this.now() }) }
+  }
+
+  /** Save one action against fresh metadata so another window cannot lose siblings. */
+  saveAction(id: string, input: { actionId: string; patch?: Partial<Pick<LocalMeetingAction, 'text' | 'done' | 'taskId'>>; remove?: boolean; create?: boolean }): MeetingsLocalResult<LocalMeeting> {
+    const meeting = this.read(id)
+    if (!meeting || !input?.actionId) return { ok: false, code: 'meeting-not-found' }
+    const exists = meeting.actions.some((action) => action.id === input.actionId)
+    if (!exists && !input.create) return { ok: false, code: 'action-not-found' }
+    const patch = input.patch ?? {}
+    if ('text' in patch && (typeof patch.text !== 'string' || !patch.text.trim())) return { ok: false, code: 'action-empty' }
+    const changes = { ...(typeof patch.text === 'string' ? { text: patch.text.trim().slice(0, 10_000) } : {}), ...(typeof patch.done === 'boolean' ? { done: patch.done } : {}), ...(typeof patch.taskId === 'string' ? { taskId: patch.taskId.slice(0, 200) } : {}), editedAt: this.now() }
+    const actions = input.remove ? meeting.actions.filter((action) => action.id !== input.actionId) : exists ? meeting.actions.map((action) => action.id === input.actionId ? { ...action, ...changes } : action)
+      : [...meeting.actions, { id: input.actionId, text: String(changes.text ?? ''), done: false, createdAt: this.now(), ...changes }]
+    if (input.create && !changes.text) return { ok: false, code: 'action-empty' }
+    return { ok: true, value: this.write(applyPatch(meeting, { actions }, this.now())) }
+  }
+
   isRecording(id: string): boolean {
     return this.active.has(id)
+  }
+
+  isRecordingOwnedBy(id: string, owner: number): boolean {
+    return this.active.get(id)?.owner === owner
   }
 
   /** Remove a meeting folder (the IPC layer moves it to the Trash instead when it can). */
@@ -213,7 +297,7 @@ export class LocalMeetingStore {
 
   // ── Recording ────────────────────────────────────────────────────────────
 
-  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; owner: number }): MeetingsLocalResult<LocalMeeting> {
+  recStart(input: { meetingId?: string; title: string; workspaceId: string | null; mimeType: string; owner: number; transcriptionContext?: LocalTranscriptionContext }): MeetingsLocalResult<LocalMeeting> {
     if (this.active.size > 0) return { ok: false, code: 'already-recording' }
     let meeting = input.meetingId ? this.read(input.meetingId) : null
     if (input.meetingId && !meeting) return { ok: false, code: 'meeting-not-found' }
@@ -222,7 +306,7 @@ export class LocalMeetingStore {
     const ext = extForRecorderMime(input.mimeType)
     const partPath = join(this.dir(meeting.id), `audio.part.${ext}`)
     writeFileSync(partPath, new Uint8Array())
-    this.active.set(meeting.id, { meetingId: meeting.id, owner: input.owner, partPath, ext, mimeType: input.mimeType || 'audio/webm', bytes: 0 })
+    this.active.set(meeting.id, { meetingId: meeting.id, owner: input.owner, transcriptionContext: input.transcriptionContext, partPath, ext, mimeType: input.mimeType || 'audio/webm', bytes: 0 })
     const now = this.now()
     const next = this.write({
       ...meeting,
@@ -282,7 +366,7 @@ export class LocalMeetingStore {
       const next = this.write({ ...meeting, status: 'ready', endedAt: this.now(), audio: null, updatedAt: this.now() })
       return { ok: false, code: 'empty-recording', message: next.id }
     }
-    const engine = this.deps.detectEngine()
+    const engine = this.deps.detectEngine(meeting)
     const finalName = `audio.${ext}`
     const finalPath = join(dir, finalName)
     const remuxed = await remuxAudio(engine.ffmpeg, partPath, finalPath)
@@ -310,7 +394,7 @@ export class LocalMeetingStore {
       },
       updatedAt: this.now(),
     })
-    if (engine.ready) this.enqueue({ id, generation })
+    if (engine.ready) this.enqueue({ id, generation, context: rec?.transcriptionContext })
     return { ok: true, value: next }
   }
 
@@ -346,7 +430,7 @@ export class LocalMeetingStore {
     return true
   }
 
-  async importAudio(input: { requestId: string; path: string; meetingId?: string; workspaceId: string | null }): Promise<MeetingsLocalResult<LocalMeeting>> {
+  async importAudio(input: { requestId: string; path: string; meetingId?: string; workspaceId: string | null; transcriptionContext?: LocalTranscriptionContext }): Promise<MeetingsLocalResult<LocalMeeting>> {
     if (!input || typeof input.requestId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(input.requestId)) {
       return { ok: false, code: 'invalid-import-request' }
     }
@@ -399,7 +483,7 @@ export class LocalMeetingStore {
       writeFileSync(markerTemp, JSON.stringify({ meetingId: meeting.id, createdMeeting, fileName: finalName, sourceHash }))
       renameSync(markerTemp, markerPath)
       renameSync(stagedPath, finalPath)
-      const engine = this.deps.detectEngine()
+      const engine = this.deps.detectEngine(meeting)
       const durationMs = (await probeDurationMs(engine.ffmpeg, finalPath, controller.signal)) ?? 0
       if (controller.signal.aborted) throw new DOMException('Import cancelled', 'AbortError')
       const startedAt = meeting.startedAt ?? Math.max(0, Math.round(st.mtimeMs) - durationMs)
@@ -425,7 +509,7 @@ export class LocalMeetingStore {
       })
       committed = true
       try { unlinkSync(markerPath) } catch { /* startup verifies the committed source hash */ }
-      if (engine.ready) this.enqueue({ id: meeting.id, generation })
+      if (engine.ready) this.enqueue({ id: meeting.id, generation, context: input.transcriptionContext })
       return { ok: true, value: next }
     } catch (error) {
       try { rmSync(stagedPath, { force: true }) } catch { /* ignore */ }
@@ -535,14 +619,14 @@ export class LocalMeetingStore {
   // ── Transcription ────────────────────────────────────────────────────────
 
   /** Re-run (or first run) ASR for a meeting with audio. */
-  transcribe(id: string): MeetingsLocalResult<LocalMeeting> {
+  transcribe(id: string, context?: LocalTranscriptionContext): MeetingsLocalResult<LocalMeeting> {
     const meeting = this.read(id)
     if (!meeting) return { ok: false, code: 'meeting-not-found' }
     if (!meeting.audio) return { ok: false, code: 'no-audio' }
     if (meeting.transcript.status === 'queued' || meeting.transcript.status === 'running') {
       return { ok: true, value: meeting }
     }
-    const engine = this.deps.detectEngine()
+    const engine = this.deps.detectEngine(meeting)
     const generation = (meeting.transcript.generation ?? 0) + 1
     const attempt = (meeting.transcript.attempt ?? 0) + 1
     if (!engine.ready) {
@@ -569,7 +653,7 @@ export class LocalMeetingStore {
         revision: this.readTranscript(id)?.revision ?? 0,
       },
     })
-    this.enqueue({ id, generation })
+    this.enqueue({ id, generation, context })
     return { ok: true, value: next }
   }
 
@@ -674,7 +758,8 @@ export class LocalMeetingStore {
   private enqueue(job: TranscriptionJob): void {
     if (this.transcribing?.id === job.id && this.transcribing.generation === job.generation) return
     if (this.queue.some((queued) => queued.id === job.id && queued.generation === job.generation)) return
-    this.queue.push(job)
+    const meeting = this.read(job.id)
+    this.queue.push({ ...job, context: job.context ?? (meeting ? this.deps.getTranscriptionContext?.(meeting) : undefined) })
     void this.pump()
   }
 
@@ -742,8 +827,8 @@ export class LocalMeetingStore {
   private async runTranscription(job: TranscriptionJob, signal: AbortSignal): Promise<void> {
     let meeting = this.isCurrentJob(job, 'queued')
     if (!meeting?.audio) return
-    const engine = this.deps.detectEngine()
-    if (!engine.ready || !engine.ffmpeg) {
+    const engine = this.deps.detectEngine(meeting)
+    if (!engine.ready || (engine.engine !== 'deepgram' && !engine.ffmpeg)) {
       this.mutate(job.id, (m) => m.transcript.generation === job.generation
         ? { ...m, transcript: { ...m.transcript, status: 'unavailable', progress: 0, error: engine.missing.join(',') } }
         : m)
@@ -770,31 +855,56 @@ export class LocalMeetingStore {
           ? { ...m, audio: m.audio ? { ...m.audio, sourceHash } : null }
           : m) ?? meeting
       }
-      const decoded = await decodeToWav(engine.ffmpeg, audioPath, wav, signal)
-      if (signal.aborted || !this.isCurrentJob(job, 'running')) return
-      if (decoded.code !== 0) throw new Error(`ffmpeg: ${decoded.stderr.trim().split('\n').pop() ?? 'decode failed'}`)
-      let lastEmit = 0
-      const res = await runWhisper(engine, wav, outBase, (pct) => {
-        const t = this.now()
-        if (t - lastEmit < 800 && pct < 100) return
-        lastEmit = t
-        if (this.isCurrentJob(job, 'running') && !signal.aborted) {
-          this.mutate(job.id, (m) => ({ ...m, transcript: { ...m.transcript, progress: pct } }))
+      let parsed: ReturnType<typeof parseWhisperJson>
+      let res: { code: number | null; stderr: string }
+      let resolvedModel = engine.model ?? 'unknown'
+      let modelRevision: string | undefined
+      let diarizationModel: string | undefined
+      if (engine.engine === 'deepgram') {
+        const audio = readBoundedRegularFile(audioPath, { maxBytes: 200 * 1024 * 1024 })
+        const prefs = loadVoicePrefs()
+        const input: TranscriptionRequest = { audio: new Uint8Array(audio), mimeType: meeting.audio!.mimeType,
+          language: prefs.recognitionLanguage === 'auto' ? undefined : prefs.recognitionLanguage, signal }
+        const result = this.deps.transcribeCloud
+          ? await this.deps.transcribeCloud(input, meeting, job.context)
+          : await new DeepgramTranscriptionAdapter({ apiKey: getServerServiceKey('DEEPGRAM_API_KEY') ?? '', model: process.env.DEEPGRAM_MODEL }).transcribe(input)
+        if (signal.aborted || !this.isCurrentJob(job, 'running')) return
+        resolvedModel = result.resolvedModelId ?? result.requestedModelId
+        modelRevision = result.modelRevision
+        diarizationModel = result.diarizationModel
+        parsed = { language: result.detectedLanguage ?? null, segments: result.segments.map((segment, index) => ({ ...segment, id: `s${index}` })) }
+        res = { code: 0, stderr: '' }
+        if (result.durationMs > meeting.durationMs) {
+          meeting = this.mutate(job.id, (m) => m.transcript.generation === job.generation ? { ...m, durationMs: result.durationMs } : m) ?? meeting
         }
-      }, signal)
-      if (signal.aborted || !this.isCurrentJob(job, 'running')) return
-      const hasOutput = existsSync(`${outBase}.json`)
-      if (!hasOutput) throw new Error(`whisper-cli exit ${res.code}: ${res.stderr.trim().split('\n').slice(-2).join(' ').slice(0, 300)}`)
-      const parsed = parseWhisperJson(JSON.parse(readFileSync(`${outBase}.json`, 'utf8')))
-      if (res.code !== 0 && parsed.segments.length === 0) {
-        throw new Error(`whisper-cli exit ${res.code}: ${res.stderr.trim().split('\n').slice(-2).join(' ').slice(0, 300)}`)
+      } else {
+        const decoded = await decodeToWav(engine.ffmpeg!, audioPath, wav, signal)
+        if (signal.aborted || !this.isCurrentJob(job, 'running')) return
+        if (decoded.code !== 0) throw new Error(`ffmpeg: ${decoded.stderr.trim().split('\n').pop() ?? 'decode failed'}`)
+        let lastEmit = 0
+        res = await runWhisper(engine, wav, outBase, (pct) => {
+          const t = this.now()
+          if (t - lastEmit < 800 && pct < 100) return
+          lastEmit = t
+          if (this.isCurrentJob(job, 'running') && !signal.aborted) {
+            this.mutate(job.id, (m) => ({ ...m, transcript: { ...m.transcript, progress: pct } }))
+          }
+        }, signal)
+        if (signal.aborted || !this.isCurrentJob(job, 'running')) return
+        const hasOutput = existsSync(`${outBase}.json`)
+        if (!hasOutput) throw new Error(`whisper-cli exit ${res.code}: ${res.stderr.trim().split('\n').slice(-2).join(' ').slice(0, 300)}`)
+        parsed = parseWhisperJson(JSON.parse(readFileSync(`${outBase}.json`, 'utf8')))
+        if (res.code !== 0 && parsed.segments.length === 0) {
+          throw new Error(`whisper-cli exit ${res.code}: ${res.stderr.trim().split('\n').slice(-2).join(' ').slice(0, 300)}`)
+        }
       }
+      if (signal.aborted || !this.isCurrentJob(job, 'running')) return
       const finishedAt = this.now()
       const previous = this.readTranscript(job.id)
       const revision = (previous?.revision ?? 0) + 1
       const transcript: LocalTranscript = {
         engine: engine.engine ?? 'whisper.cpp',
-        model: engine.model ?? 'unknown',
+        model: resolvedModel,
         language: parsed.language,
         createdAt: finishedAt,
         elapsedMs: finishedAt - startedAt,
@@ -804,7 +914,9 @@ export class LocalMeetingStore {
           sourceKind: meeting.source,
           sourceHash,
           engine: engine.engine ?? 'whisper.cpp',
-          model: engine.model ?? 'unknown',
+          model: resolvedModel,
+          modelRevision,
+          diarizationModel,
           generatedAt: finishedAt,
         },
         segments: parsed.segments,
@@ -821,6 +933,7 @@ export class LocalMeetingStore {
             status: res.code === 0 ? 'done' : 'partial',
             progress: res.code === 0 ? 100 : Math.min(m.transcript.progress, 99),
             revision,
+            model: resolvedModel,
             provenance: transcript.provenance,
             language: transcript.language ?? undefined,
             segments: transcript.segments.length,

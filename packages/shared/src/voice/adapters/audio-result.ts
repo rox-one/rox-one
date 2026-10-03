@@ -1,5 +1,5 @@
-export interface TranscriptSegment { startMs: number; endMs: number; text: string }
-export interface TranscriptWord { startMs: number; endMs: number; text: string }
+export interface TranscriptSegment { startMs: number; endMs: number; text: string; speakerId?: string }
+export interface TranscriptWord { startMs: number; endMs: number; text: string; speakerId?: string }
 export interface NormalizedTranscript {
   text: string
   detectedLanguage?: string
@@ -7,6 +7,8 @@ export interface NormalizedTranscript {
   words?: TranscriptWord[]
   requestedModelId: string
   resolvedModelId?: string
+  modelRevision?: string
+  diarizationModel?: string
   routeVersion?: string
   requestId: string
   durationMs: number
