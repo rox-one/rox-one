@@ -151,6 +151,7 @@
     "./environment": "./src/environment/index.ts",
     "./voice": "./src/voice/index.ts",
     "./meeting-agents": "./src/meeting-agents/index.ts",
+    "./meeting-agents/browser": "./src/meeting-agents/browser.ts",
     "./cli": "./src/cli/index.ts",
     "./capabilities": "./src/capabilities/index.ts",
     "./capabilities/packs": "./src/capabilities/packs.ts",

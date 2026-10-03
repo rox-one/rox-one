@@ -426,12 +426,17 @@ export function ThemeProvider({
 
   // === System preference listener ===
   useEffect(() => {
+    let active = true
+    let revision = 0
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (!active) return
+      revision += 1
       setSystemPreference(e.matches ? 'dark' : 'light')
     }
     const contrastQuery = window.matchMedia('(prefers-contrast: more)')
     const handleContrastChange = (e: MediaQueryListEvent) => {
+      if (!active) return
       setSystemPrefersMoreContrast(e.matches)
     }
 
@@ -442,18 +447,21 @@ export function ThemeProvider({
     let cleanup: (() => void) | undefined
     if (window.electronAPI?.onSystemThemeChange) {
       cleanup = window.electronAPI.onSystemThemeChange((isDark) => {
+        if (!active) return
+        revision += 1
         setSystemPreference(isDark ? 'dark' : 'light')
       })
     }
 
     // Fetch initial system theme from Electron
     if (window.electronAPI?.getSystemTheme) {
-      window.electronAPI.getSystemTheme().then((isDark) => {
-        setSystemPreference(isDark ? 'dark' : 'light')
-      })
+      void window.electronAPI.getSystemTheme().then((isDark) => {
+        if (active && revision === 0) setSystemPreference(isDark ? 'dark' : 'light')
+      }).catch(() => {})
     }
 
     return () => {
+      active = false
       mediaQuery.removeEventListener('change', handleMediaChange)
       contrastQuery.removeEventListener('change', handleContrastChange)
       cleanup?.()

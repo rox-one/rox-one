@@ -80,6 +80,7 @@ export interface RouterDeps {
   /** Optional pending-senders store; rejected attempts are recorded here so
    *  the Settings UI can surface them with one-click "Allow" buttons. */
   pendingStore?: PendingSendersStore
+  getNativeContext?: (binding: import('./types').ChannelBinding) => import('./types').NativeMessagingContext | undefined
 }
 interface ResolvedAttachments {
   fileAttachments: FileAttachment[]
@@ -107,6 +108,8 @@ export class Router {
     const binding = this.bindingStore.findByChannel(msg.platform, msg.channelId, msg.threadId)
 
     if (binding) {
+      const nativeContext = this.deps.getNativeContext?.(binding)
+      if (binding.nativeOwner && !nativeContext) return
       // Discord guild-trigger gate: in a bound guild channel, a message that
       // does not @mention the bot is ignored unless the binding opts into
       // 'all'. DMs (isDM) always route. Non-Discord platforms leave isDM /
@@ -163,6 +166,7 @@ export class Router {
           resolved?.fileAttachments,
           resolved?.storedAttachments,
           undefined, // SendMessageOptions
+          undefined, undefined, undefined, { nativeMemoryContext: nativeContext },
         )
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Unknown error'

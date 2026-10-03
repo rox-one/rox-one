@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
 import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
+import type { StartupRuntimeSummary } from '@rox/shared/protocol'
 import type { SessionDraft, DraftAttachmentRef } from '@rox/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
@@ -102,6 +103,7 @@ import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
 import { toast } from 'sonner'
 import { initializeAuthenticatedWebRenderer, type AuthenticatedWebTransportBootstrap } from '@/lib/authenticated-web-bootstrap'
+import { runPersonalTaskScopeTransition, setPersonalTaskScope } from '@/lib/personal-tasks'
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
@@ -300,9 +302,13 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   // Initialize renderer perf tracking early (debug mode = running from source)
   // Uses useEffect with empty deps to run once on mount before any session switches
   useEffect(() => {
-    window.electronAPI.isDebugMode().then((isDebug) => {
-      initRendererPerf(isDebug)
+    let active = true
+    void window.electronAPI.isDebugMode().then((isDebug) => {
+      if (active) initRendererPerf(isDebug)
+    }).catch(() => {
+      if (active) initRendererPerf(false)
     })
+    return () => { active = false }
   }, [])
 
   // App state: loading -> check auth -> onboarding or ready
@@ -362,6 +368,23 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Window's workspace ID — shared atom so Root/ThemeProvider stays in sync on switch
   const [windowWorkspaceId, setWindowWorkspaceId] = useAtom(windowWorkspaceIdAtom)
+  const sessionScopeRef = useRef({ authority: callerAuthority, workspaceId: windowWorkspaceId })
+  if (sessionScopeRef.current.authority !== callerAuthority || sessionScopeRef.current.workspaceId !== windowWorkspaceId) {
+    sessionScopeRef.current = { authority: callerAuthority, workspaceId: windowWorkspaceId }
+  }
+  useEffect(() => {
+    let cancelled = false
+    setPersonalTaskScope(null)
+    if (!webTransportBootstrap && callerAuthority && windowWorkspaceId) {
+      void (async () => {
+        const identity = await window.electronAPI.getOrgIdentity()
+        const currentWorkspace = await window.electronAPI.getWindowWorkspace()
+        if (cancelled || identity.authority !== callerAuthority || currentWorkspace !== windowWorkspaceId) return
+        setPersonalTaskScope({ ...identity, workspaceId: currentWorkspace })
+      })().catch(() => {})
+    }
+    return () => { cancelled = true; setPersonalTaskScope(null) }
+  }, [callerAuthority, windowWorkspaceId, webTransportBootstrap])
 
   // Derive workspace slug for SDK skill qualification
   const windowWorkspaceSlug = useMemo(() => {
@@ -388,6 +411,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // LLM connections with authentication status (for provider selection)
   const [llmConnections, setLlmConnections] = useState<LlmConnectionWithStatus[]>([])
+  const [runtimeSummary, setRuntimeSummary] = useState<StartupRuntimeSummary | null>(null)
+  const runtimeRefreshGeneration = useRef(0)
   // Workspace default LLM connection (for new sessions)
   const [workspaceDefaultLlmConnection, setWorkspaceDefaultLlmConnection] = useState<string | undefined>()
   // Global default LLM connection slug (from app config)
@@ -560,11 +585,13 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [])
 
   const refreshSessionFromServer = useCallback(async (sessionId: string): Promise<'refreshed' | 'preserved_stale_messages' | 'failed'> => {
-    if (callerAuthorityRef.current !== 'local') return 'failed'
+    const scope = sessionScopeRef.current
+    if (!scope.authority || scope.authority === 'native' && !scope.workspaceId) return 'failed'
     try {
       const fresh = await window.electronAPI.getSessionMessages(sessionId)
-      if (callerAuthorityRef.current !== 'local') return 'failed'
+      if (sessionScopeRef.current !== scope) return 'failed'
       if (!fresh) return 'failed'
+      if (scope.authority === 'native' && fresh.workspaceId !== scope.workspaceId) return 'failed'
 
       const prevSession = store.get(sessionAtomFamily(sessionId))
       const preservedStaleMessages = !!prevSession && prevSession.messages.length > 0 && (!fresh.messages || fresh.messages.length === 0)
@@ -592,6 +619,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   const readCallerSessionInventory = useCallback(() => loadCallerSessionInventory({
     getAuthority: () => callerAuthorityRef.current,
+    getNativeWorkspaceId: () => sessionScopeRef.current.workspaceId,
+    getScopeKey: () => sessionScopeRef.current,
     request: () => window.electronAPI.getSessions(),
     markUnavailable: markHostSessionsUnavailable,
   }), [markHostSessionsUnavailable])
@@ -601,7 +630,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
     try {
       const inventory = await readCallerSessionInventory()
-      if (inventory.kind === 'unavailable' || callerAuthorityRef.current !== 'local') return
+      if (inventory.kind === 'unavailable' || !callerAuthorityRef.current) return
       const loadedSessions = inventory.sessions
 
       // Initialize per-session atoms and metadata map
@@ -642,6 +671,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }
     } catch (err) {
       console.error('[App] Failed to load sessions:', err)
+      if (callerAuthorityRef.current === 'native') {
+        setSessionLoadError(t('chat.failedToLoadConversation'))
+        setSessionsLoaded(true)
+        return
+      }
       const transport = await readLocalSessionCapability({
         getAuthority: () => callerAuthorityRef.current,
         request: () => window.electronAPI.getTransportConnectionState().catch(() => null),
@@ -662,7 +696,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       setSessionLoadError(formatSessionLoadFailure(err))
       setSessionsLoaded(true)
     }
-  }, [initializeSessions, initialSessionId, reconcilePermissionModeState, windowWorkspaceId, readCallerSessionInventory, markHostSessionsUnavailable])
+  }, [initializeSessions, initialSessionId, reconcilePermissionModeState, windowWorkspaceId, readCallerSessionInventory, markHostSessionsUnavailable, t])
 
   const refreshSessionListMetadataFromServer = useCallback(async (options: SessionListRefreshOptions = {}): Promise<Map<string, SessionMeta> | null> => {
     const {
@@ -676,7 +710,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
     try {
       const inventory = await readCallerSessionInventory()
-      if (inventory.kind === 'unavailable' || callerAuthorityRef.current !== 'local') return null
+      if (inventory.kind === 'unavailable' || !callerAuthorityRef.current) return null
       const sessions = inventory.sessions
       const returnedIds = new Set(sessions.map(s => s.id))
       const missingIds = Array.from(beforeIds).filter(id => !returnedIds.has(id))
@@ -751,22 +785,29 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     // Cookie-authenticated web transport conveys no desktop/native identity
     // and cannot read host provider credentials or seed a runtime default.
     if (webTransportBootstrap) return
+    const generation = ++runtimeRefreshGeneration.current
     const identity = await window.electronAPI.getOrgIdentity()
     if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
       throw new Error('runtime-identity-unavailable')
     }
     if (identity.authority === 'native') {
       const summary = await window.electronAPI.getStartupRuntimeSummary()
+      if (generation !== runtimeRefreshGeneration.current) return
       setLlmConnections([])
+      setRuntimeSummary(summary)
       setDefaultLlmConnectionSlug(summary?.slug)
+      setWorkspaceDefaultLlmConnection(summary?.slug)
       return
     }
     const connections = await window.electronAPI.listLlmConnectionsWithStatus()
+    if (generation !== runtimeRefreshGeneration.current) return
+    setRuntimeSummary(null)
     setLlmConnections(connections)
     setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
     // Also refresh workspace default
     if (windowWorkspaceId) {
       const settings = await window.electronAPI.getWorkspaceSettings(windowWorkspaceId)
+      if (generation !== runtimeRefreshGeneration.current) return
       setWorkspaceDefaultLlmConnection(settings?.defaultLlmConnection)
     }
   }, [resolveDefaultConnectionSlug, windowWorkspaceId, webTransportBootstrap])
@@ -815,6 +856,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Reauth login handler - placeholder (reauth is not currently used)
   const handleReauthLogin = useCallback(async () => {
+    setPersonalTaskScope(null)
     try {
       const identity = await window.electronAPI.getOrgIdentity()
       if (!identity || identity.authority !== 'native' && identity.authority !== 'local') {
@@ -853,6 +895,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   useEffect(() => {
     let cancelled = false
     const initialize = async () => {
+      setPersonalTaskScope(null)
       try {
         if (webTransportBootstrap) {
           await initializeAuthenticatedWebRenderer(window.electronAPI, webTransportBootstrap, {
@@ -899,6 +942,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         const startupState = decideStartupAppState({ identityProbe, workspaceProbe })
         if (startupState === 'transport-unavailable') throw new Error('runtime-identity-unavailable')
         let startupConnections: LlmConnectionWithStatus[] | null = null
+        let startupRuntimeSummary: StartupRuntimeSummary | null = null
         let startupDefaultSlug: string | undefined
         if (startupState !== 'onboarding') {
           const runtimeProbe = await probeWithRetry(
@@ -912,6 +956,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             // never request host accounts or credentials for a native caller.
             startupConnections = []
             startupDefaultSlug = runtimeProbe.value.slug
+            startupRuntimeSummary = runtimeProbe.value.runtimeSummary ?? null
           } else {
             const connectionsProbe = await probeWithRetry(() => window.electronAPI.listLlmConnectionsWithStatus())
             if (cancelled) return
@@ -946,7 +991,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         setSetupNeeds(startupSetupNeeds)
         if (startupConnections !== null && finalStartupState !== 'onboarding') {
           setLlmConnections(startupConnections)
+          setRuntimeSummary(startupRuntimeSummary)
           setDefaultLlmConnectionSlug(startupDefaultSlug)
+          if (startupRuntimeSummary) setWorkspaceDefaultLlmConnection(startupRuntimeSummary.slug)
         }
         setAppState(finalStartupState)
       } catch (error) {
@@ -992,8 +1039,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     window.electronAPI.getWorkspaces().then(setWorkspaces).catch(() => {})
     if (callerAuthority === 'native') {
       void refreshLlmConnections().catch(() => {})
-      // Native grants do not authorize legacy host session inventory. The caller
-      // loader marks that capability unavailable without an unauthorized RPC.
+      // The native handler returns only this actor's authorized workspace sessions.
       void loadSessionsFromServer()
       return
     }
@@ -1169,8 +1215,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       }
     }
 
+    const eventScope = sessionScopeRef.current
     const cleanup = window.electronAPI.onSessionEvent((event: SessionEvent) => {
-      if (callerAuthorityRef.current !== 'local') return
+      const scope = eventScope
+      if (sessionScopeRef.current !== scope || !scope.authority || scope.workspaceId !== windowWorkspaceId) return
       if (!('sessionId' in event)) return
 
       const sessionId = event.sessionId
@@ -1180,8 +1228,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       if (event.type === 'session_created') {
         window.electronAPI.getSessionMessages(sessionId)
           .then((createdSession: Session | null) => {
-            if (callerAuthorityRef.current !== 'local') return
+            if (sessionScopeRef.current !== scope) return
             if (createdSession) {
+              if (scope.authority === 'native' && createdSession.workspaceId !== scope.workspaceId) return
               const existingMeta = store.get(sessionMetaMapAtom).has(sessionId)
               if (existingMeta) {
                 replaceLoadedSession(createdSession)
@@ -1192,7 +1241,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
               return
             }
             return readCallerSessionInventory().then(inventory => {
-              if (inventory.kind === 'available' && callerAuthorityRef.current === 'local') initializeSessions(inventory.sessions)
+              if (inventory.kind === 'available' && sessionScopeRef.current === scope) initializeSessions(inventory.sessions)
             })
           })
           .catch((error: unknown) => console.error('Failed to handle session_created event:', error))
@@ -1207,7 +1256,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       if (event.type === 'messages_replaced') {
         window.electronAPI.getSessionMessages(sessionId)
           .then((updatedSession) => {
-            if (updatedSession) replaceLoadedSession(updatedSession)
+            if (sessionScopeRef.current === scope && updatedSession
+              && (scope.authority !== 'native' || updatedSession.workspaceId === scope.workspaceId)) replaceLoadedSession(updatedSession)
           })
           .catch((error: unknown) => console.error('Failed to refresh messages after undo:', error))
         return
@@ -1346,6 +1396,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     return cleanup
   }, [
     processAgentEvent,
+    callerAuthority,
     trackSessionActivity,
     windowWorkspaceId,
     store,
@@ -1451,7 +1502,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [])
 
   const handleCreateSession = useCallback(async (workspaceId: string, options?: import('../shared/types').CreateSessionOptions): Promise<Session> => {
+    const scope = sessionScopeRef.current
     const session = await window.electronAPI.createSession(workspaceId, options)
+    if (sessionScopeRef.current !== scope || scope.authority === 'native' && (workspaceId !== scope.workspaceId || session.workspaceId !== scope.workspaceId)) {
+      throw new Error('session-workspace-changed')
+    }
     // Add to per-session atom and metadata map (no sessionsAtom)
     addSession(session)
     syncSessionOptionsFromSession(session)
@@ -1593,7 +1648,13 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
   }, [updateSessionById])
 
   const handleSendMessage = useCallback(async (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], externalBadges?: ContentBadge[]) => {
+    const scope = sessionScopeRef.current
     try {
+      if (!scope.authority || scope.authority === 'native' && (!scope.workspaceId
+        || store.get(sessionMetaMapAtom).get(sessionId)?.workspaceId !== scope.workspaceId)) {
+        throw new Error('session-workspace-unavailable')
+      }
+      if (scope.authority === 'native' && attachments?.length) throw new Error('attachment-upload-unavailable')
       // Capture pre-send processing state so we can flag mid-stream sends
       // for the queued badge (#616 follow-up — covers Pi steer path which
       // returns status 'accepted', not 'queued').
@@ -1709,6 +1770,11 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         })
       }
 
+      if (sessionScopeRef.current !== scope) return
+      // Native sends carry text and actor-scoped skill references; local badges may
+      // contain host file paths and are not part of the native transport contract.
+      const persistedBadges = scope.authority === 'native' ? undefined : badges.length > 0 ? badges : undefined
+
       // Step 5: Create user message with StoredAttachments (for UI display)
       // Mark as isPending for optimistic UI — will be confirmed by user_message
       // event. Flag mid-stream sends as queued so the bubble renders with the
@@ -1723,7 +1789,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
         content: message,
         timestamp: Date.now(),
         attachments: storedAttachments,
-        badges: badges.length > 0 ? badges : undefined,
+        badges: persistedBadges,
         isPending: true,  // Optimistic - will be confirmed by backend
         isQueued: sendingMidStream,
       }
@@ -1738,11 +1804,12 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       // Step 6: Send to Claude with processed attachments + stored attachments for persistence
       await window.electronAPI.sendMessage(sessionId, message, processedAttachments, storedAttachments, {
         skillSlugs,
-        badges: badges.length > 0 ? badges : undefined,
+        badges: persistedBadges,
         optimisticMessageId: userMessage.id,
       })
     } catch (error) {
       console.error('Failed to send message:', error)
+      if (sessionScopeRef.current !== scope) return
       updateSessionById(sessionId, (s) => ({
         isProcessing: false,
         messages: [
@@ -1751,7 +1818,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
             id: generateMessageId(),
             role: 'error' as const,
             content: t('chat.failedToSendMessage', {
-              error: error instanceof Error ? error.message : t('toast.unknownError'),
+              error: scope.authority === 'native' ? t('toast.unknownError') : error instanceof Error ? error.message : t('toast.unknownError'),
             }),
             timestamp: Date.now()
           }
@@ -2136,8 +2203,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
 
   // Execute reset after user confirms in dialog
   const executeReset = useCallback(async () => {
+    const scope = sessionScopeRef.current
     try {
-      await window.electronAPI.logout()
+      await runPersonalTaskScopeTransition(() => window.electronAPI.logout(), () => sessionScopeRef.current === scope, scope)
       // Reset all state
       // Clear session atoms - initialize with empty array clears all per-session atoms
       initializeSessions([])
@@ -2170,9 +2238,10 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
       // Open (or focus) the window for the selected workspace
       window.electronAPI.openWorkspace(workspaceId)
     } else {
+      const scope = sessionScopeRef.current
       // Switch workspace in current window
       // 1. Update the main process's window-workspace mapping
-      await window.electronAPI.switchWorkspace(workspaceId)
+      await runPersonalTaskScopeTransition(() => window.electronAPI.switchWorkspace(workspaceId), () => sessionScopeRef.current === scope, scope)
 
       // 2. Update React state to trigger re-renders
       setWindowWorkspaceId(workspaceId)
@@ -2241,6 +2310,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     activeWorkspaceId: windowWorkspaceId,
     activeWorkspaceSlug: windowWorkspaceSlug,
     llmConnections,
+    runtimeSummary,
     workspaceDefaultLlmConnection,
     refreshLlmConnections,
     pendingPermissions,
@@ -2287,6 +2357,7 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
     windowWorkspaceId,
     windowWorkspaceSlug,
     llmConnections,
+    runtimeSummary,
     workspaceDefaultLlmConnection,
     refreshLlmConnections,
     pendingPermissions,
@@ -2438,7 +2509,8 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           <WindowCloseHandler />
           <WorkspacePicker
             onSelectWorkspace={async (id) => {
-              await window.electronAPI.switchWorkspace(id)
+              const scope = sessionScopeRef.current
+              await runPersonalTaskScopeTransition(() => window.electronAPI.switchWorkspace(id), () => sessionScopeRef.current === scope, scope)
               setWindowWorkspaceId(id)
               setAppState('ready')
             }}

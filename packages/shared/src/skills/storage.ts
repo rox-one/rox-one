@@ -134,6 +134,10 @@ function loadSkillFromDir(skillsDir: string, slug: string, source: SkillSource):
   // Dot entries (.pending, .versions) are internal state, never skills.
   if (!isSafeSkillName(slug)) return null;
   const skillDir = join(skillsDir, slug);
+  return loadSkillAtPath(skillDir, slug, source);
+}
+
+function loadSkillAtPath(skillDir: string, slug: string, source: SkillSource): LoadedSkill | null {
   const skillFile = join(skillDir, 'SKILL.md');
 
   // Check directory exists
@@ -190,6 +194,23 @@ function loadSkillsFromDir(skillsDir: string, source: SkillSource): LoadedSkill[
       const skill = loadSkillFromDir(skillsDir, entry.name, source);
       if (skill) {
         skills.push(skill);
+      } else if (skillsDir === APP_MANAGED_SKILLS_DIR) {
+        // Directory-mode marketplace packs keep their pinned repository intact.
+        // Their provenance marker exposes bounded views of nested SKILL.md files.
+        try {
+          const packDir = join(skillsDir, entry.name);
+          const state = JSON.parse(readFileSync(join(packDir, '.craft-marketplace.lock.json'), 'utf8')) as {
+            id?: string; kind?: string; targets?: string[]; skillViews?: Record<string, string>;
+          };
+          if (state.kind !== 'skillpack' || !state.id || !isSafeSkillName(state.id) || !state.targets?.includes(packDir)) continue;
+          for (const [slug, rel] of Object.entries(state.skillViews ?? {}).slice(0, 10_000)) {
+            if (!isSafeSkillName(slug) || typeof rel !== 'string' || isAbsolute(rel)) continue;
+            const path = resolve(packDir, rel);
+            if (!isInsideSkillStore(path, packDir)) continue;
+            const nested = loadSkillAtPath(path, slug, source);
+            if (nested) skills.push(nested);
+          }
+        } catch { /* A malformed marker never makes application startup fail. */ }
       }
     }
   } catch {
@@ -398,7 +419,7 @@ export function loadSkillBySlug(workspaceRoot: string, slug: string, projectRoot
   const applicationSkill = getDisabledBundledSkillSlugsFromDisk().has(slug) ? null : loadSkillFromDir(APP_MANAGED_SKILLS_DIR, slug, 'global');
   if (applicationSkill) return applicationSkill;
   // Explicit collision aliases are rare; ordinary reads retain the O(1) path.
-  return slug.startsWith('rox--') ? loadAllSkills(workspaceRoot, projectRoot).find(skill => skill.slug === slug) ?? null : null;
+  return slug.includes('--') ? loadAllSkills(workspaceRoot, projectRoot).find(skill => skill.slug === slug) ?? null : null;
 }
 
 /**

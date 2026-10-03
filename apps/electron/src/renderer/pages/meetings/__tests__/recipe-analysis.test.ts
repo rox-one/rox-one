@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ts from 'typescript'
-import { planMeetingActions } from '@rox/shared/meeting-agents'
+import { planMeetingActions } from '@rox/shared/meeting-agents/browser'
 import { buildSummaryPrompt } from '../local-meetings-model'
 const renderer = resolve(import.meta.dir, '../../..')
 function evaluate(path: string, name: string, bindings: Record<string, unknown>) {
