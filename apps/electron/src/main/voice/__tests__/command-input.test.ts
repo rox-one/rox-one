@@ -30,6 +30,23 @@ describe('native voice command routing', () => {
     expect(events).toHaveLength(1)
   })
 
+  it('preserves native recording custody for stop/cancel while refusing tagged keyboard commands and malformed IDs', () => {
+    const events: unknown[] = []
+    const options = { webContentsId: 7, isManagedWindow: (id: number) => id === 7, resolveClient: () => 'owned-client',
+      channel: 'voice:hotkey', push: (...args: unknown[]) => { events.push(args) } }
+    expect(sendVoiceHotkeyToClient(options, 'toggle', 'owned-recording')).toBe(true)
+    expect(sendVoiceHotkeyToClient(options, 'cancel', 'owned-recording')).toBe(true)
+    expect(events).toEqual([
+      ['voice:hotkey', { to: 'client', clientId: 'owned-client' }, { command: 'toggle', recordingId: 'owned-recording' }],
+      ['voice:hotkey', { to: 'client', clientId: 'owned-client' }, { command: 'cancel', recordingId: 'owned-recording' }],
+    ])
+    for (const command of ['ptt-down', 'ptt-up'] as const) expect(sendVoiceHotkeyToClient(options, command, 'owned-recording')).toBe(false)
+    for (const id of ['', null, 17, {}, []]) expect(sendVoiceHotkeyToClient(options, 'toggle', id as string)).toBe(false)
+    expect(sendVoiceHotkeyToClient({ ...options, webContentsId: 9 }, 'cancel', 'owned-recording')).toBe(false)
+    expect(sendVoiceHotkeyToClient({ ...options, resolveClient: () => undefined }, 'toggle', 'owned-recording')).toBe(false)
+    expect(events).toHaveLength(2)
+  })
+
   it('pairs Right Option foreground press/release; rejects left modifier and ignores repeat', () => {
     const input = keyboard(); const commands: HotkeyCommand[] = []
     const binding = attachVoiceCommandInput(input.port, { prefs: () => ({ hotkeyMode: 'ptt', cancelAccelerator: 'Escape' }), isFocused: () => true,

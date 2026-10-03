@@ -35,6 +35,20 @@ export interface StartupRuntimeSummary {
   slug: string
   providerType: LlmProviderType
   isDefault: true
+  /** Public models of the workspace runtime, without account/auth metadata. */
+  defaultModel?: string
+  models?: Array<{ id: string; name: string; supportsThinking?: boolean; contextWindow?: number }>
+}
+
+/** Public configuration of an owned session's selected connection; no default/account/auth claim. */
+export interface SessionModelCatalog {
+  kind: 'configuration-only'
+  sessionId: string
+  workspaceId: string
+  slug: string
+  providerType: LlmProviderType
+  defaultModel?: string
+  models: NonNullable<StartupRuntimeSummary['models']>
 }
 
 // ---------------------------------------------------------------------------
@@ -410,6 +424,8 @@ export interface PermissionModeState {
 
 // turnId: Correlation ID from the API's message.id, groups all events in an assistant turn
 export type SessionEvent =
+  | { type: 'runtime_trace_health'; sessionId: string; workspaceId: string; rootRunId: string; coverage: import('@rox/core/runtime-trace').TraceCoverage }
+  | { type: 'runtime_trace'; sessionId: string; event: import('@rox/core/runtime-trace').RuntimeEvent }
   | { type: 'text_discard'; sessionId: string; turnId: string }
   | { type: 'retry'; sessionId: string; phase: 'backoff'; message: string }
   | { type: 'retry'; sessionId: string; phase: 'active' | 'end' }
@@ -419,7 +435,7 @@ export type SessionEvent =
   | { type: 'thinking_complete'; sessionId: string; text: string; turnId?: string }
   | { type: 'tool_start'; sessionId: string; toolName: string; toolUseId: string; toolInput: Record<string, unknown>; toolIntent?: string; toolDisplayName?: string; toolDisplayMeta?: ToolDisplayMeta; turnId?: string; parentToolUseId?: string; timestamp?: number }
   | { type: 'tool_result'; sessionId: string; toolUseId: string; toolName: string; result: string; turnId?: string; parentToolUseId?: string; isError?: boolean; timestamp?: number }
-  | { type: 'error'; sessionId: string; error: string; timestamp?: number }
+  | { type: 'error'; sessionId: string; error: string; errorCode?: string; timestamp?: number }
   | { type: 'typed_error'; sessionId: string; error: TypedError; timestamp?: number }
   | { type: 'complete'; sessionId: string; tokenUsage?: Session['tokenUsage']; hasUnread?: boolean; backgroundTasksAlive?: boolean; reason?: 'complete' | 'interrupted' | 'error' | 'timeout'; didReceiveNewFinalMessage?: boolean }
   | { type: 'interrupted'; sessionId: string; message?: Message; queuedMessages?: string[] }
@@ -715,6 +731,11 @@ export interface NoteMutationOptions {
   operationId: string
   expectedRevision: number | null
   schemaVersion: 1
+}
+
+export interface NoteCreateOptions extends NoteMutationOptions {
+  /** Retain this stable caller attempt in private main custody for unknown-result retries. */
+  recoverCreation?: true
 }
 
 export interface NativeDataContext {

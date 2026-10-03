@@ -1,0 +1,643 @@
+$ bun test packages/shared/src/mcp/__tests__ && bun test packages/shared/src/sources/__tests__/builtin-mcp.test.ts packages/shared/src/sources/__tests__/builtin-mcp-installer.test.ts packages/shared/src/sources/__tests__/builtin-mcp-qmd.test.ts packages/shared/src/sources/__tests__/builtin-sources-seed.test.ts packages/shared/src/sources/__tests__/source-config-validation.test.ts packages/shared/src/sources/__tests__/server-builder-flow.test.ts packages/shared/src/sources/__tests__/server-builder-authScheme.test.ts packages/shared/src/workspaces/__tests__/builtin-mcp-install.test.ts packages/shared/src/prompts/__tests__/mcp-guidance.test.ts packages/shared/src/agent/core/__tests__/source-manager.test.ts packages/shared/src/agent/__tests__/source-state.test.ts packages/shared/src/agent/__tests__/base-agent.test.ts packages/shared/src/agent/__tests__/omp-session-flow.test.ts packages/shared/src/agent/__tests__/omp-rpc-transport.test.ts packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts packages/shared/src/agent/__tests__/omp-history-recovery.test.ts packages/shared/src/agent/__tests__/omp-permission-mode.test.ts packages/shared/src/agent/__tests__/omp-query-llm.test.ts packages/shared/src/agent/__tests__/omp-source-proxy.test.ts packages/shared/src/agent/__tests__/claude-context-mcp-runtime.test.ts packages/session-tools-core/src/handlers/source-test.test.ts packages/server-core/src/sources/__tests__/builtin-mcp-startup.test.ts packages/server-core/src/sources/__tests__/default-session-sources.test.ts packages/server-core/src/handlers/rpc/__tests__/mcp-tools-runtime.test.ts packages/server-core/src/sessions/first-session-welcome.test.ts packages/server-core/src/sessions/first-session-welcome-persistence.test.ts packages/server-core/src/sessions/workspace-mcp-defaults.test.ts apps/electron/src/renderer/components/onboarding/__tests__/first-session-welcome.test.ts packages/shared/src/skills/__tests__/bundled.test.ts scripts/build/__tests__/bundled-assets.test.ts scripts/build/__tests__/electron-packaging-files.test.ts && bun test packages/server-core/src/handlers/rpc/__tests__/sources.test.ts
+bun test v1.3.14 (0d9b296a)
+
+packages/shared/src/mcp/__tests__/credentialed-urls.test.ts:
+(pass) validateSourceConfig — credentialed MCP URLs > rejects an MCP URL with username and password [300.86ms]
+(pass) validateSourceConfig — credentialed MCP URLs > rejects an MCP URL with a bare username [0.10ms]
+(pass) validateSourceConfig — credentialed MCP URLs > accepts a clean MCP URL [0.04ms]
+(pass) validateSourceConfig — credentialed MCP URLs > still accepts stdio configs (no URL involved) [0.06ms]
+(pass) CraftMcpClient — userinfo defense in depth > strips userinfo from the SSE transport URL [3.05ms]
+(pass) CraftMcpClient — userinfo defense in depth > strips userinfo from the Streamable HTTP transport URL [0.53ms]
+(pass) formatMcpUrlForLog > strips userinfo, query, and hash [0.03ms]
+(pass) formatMcpUrlForLog > keeps a clean URL origin + pathname [0.01ms]
+(pass) formatMcpUrlForLog > never throws on an unparseable URL [0.03ms]
+
+packages/shared/src/mcp/__tests__/redirect-guard.test.ts:
+(pass) createMcpGuardedFetch > passes non-redirect responses through untouched [228.70ms]
+(pass) createMcpGuardedFetch > follows a same-origin redirect [173.44ms]
+(pass) createMcpGuardedFetch > preserves method and body across a same-origin 307 [389.87ms]
+(pass) createMcpGuardedFetch > throws McpRedirectError on a cross-origin redirect and never issues the second request [369.19ms]
+(pass) createMcpGuardedFetch > refuses a redirect chain that starts same-origin and escapes cross-origin [654.03ms]
+(pass) createMcpGuardedFetch > caps same-origin redirect loops with McpRedirectError [704.07ms]
+(pass) createMcpGuardedFetch > returns a 3xx without a Location header as-is (no redirect to follow) [438.41ms]
+(pass) CraftMcpClient — redirect SSRF guard > SSE transport never follows a cross-origin 302 from the MCP endpoint [2613.39ms]
+(pass) CraftMcpClient — redirect SSRF guard > Streamable HTTP transport rejects a cross-origin 302 with a typed error [175.54ms]
+(pass) CraftMcpClient — redirect SSRF guard > Streamable HTTP still completes the handshake across a same-origin 307 [951.82ms]
+
+packages/shared/src/mcp/__tests__/mcp-pool-recovery.test.ts:
+(pass) McpClientPool transport recovery > cleans up a failed handshake and retries a transient connection error once [1.77ms]
+(pass) McpClientPool transport recovery > bounds failed attempts and retries the configured source on the next sync [0.34ms]
+(pass) McpClientPool transport recovery > does not retry an authentication failure [0.09ms]
+(pass) McpClientPool transport recovery > reconnects a known disconnected transport before calling a tool and refreshes tools [0.85ms]
+(pass) McpClientPool transport recovery > reconnects after an ambiguous tool failure without replaying the request [0.31ms]
+(pass) McpClientPool transport recovery > keeps a healthy connection on a tool validation failure [0.08ms]
+(pass) McpClientPool transport recovery > recovers an expired HTTP MCP session without replaying its tool call [0.12ms]
+(pass) McpClientPool transport recovery > a failed recovery remains retryable on the next sync [0.25ms]
+(pass) McpClientPool transport recovery > a failed recovery retries on the next tool call without another sync [0.20ms]
+(pass) McpClientPool transport recovery > an aborted retry does not start another handshake after failed recovery [0.19ms]
+(pass) McpClientPool transport recovery > caller cancellation settles during recovery before the request while another caller can recover [32.87ms]
+(pass) McpClientPool transport recovery > caller cancellation settles during recovery after an ambiguous failure while another caller can recover [0.20ms]
+(pass) McpClientPool transport recovery > recovery respects the local MCP gate after it changes [0.36ms]
+(pass) McpClientPool transport recovery > disconnect clears retry state after failed recovery [0.22ms]
+(pass) McpClientPool transport recovery > sync removal clears retry state after failed recovery [0.10ms]
+(pass) McpClientPool transport recovery > disconnectAll clears retry state after failed recovery [0.06ms]
+(pass) McpClientPool transport recovery > starts unrelated sources while another connection is still pending [0.20ms]
+(pass) McpClientPool transport recovery > reconnects after in-place mutation of stdio credentials, arguments, command and cwd [0.60ms]
+(pass) McpClientPool transport recovery > reconnects after in-place mutation of HTTP API-key headers [0.27ms]
+(pass) McpClientPool transport recovery > coalesces simultaneous recovery before two separate tool requests [0.24ms]
+(pass) McpClientPool transport recovery > applies fresh credentials requested while the previous handshake is pending [26.81ms]
+(pass) McpClientPool transport recovery > serializes two credential updates while closing the previous connection [42.08ms]
+(pass) McpClientPool transport recovery > a concurrent config change during recovery settles without waiting on itself [0.48ms]
+(pass) McpClientPool transport recovery > a newer empty sync prevents an older sync from starting connections [0.11ms]
+(pass) McpClientPool transport recovery > a newer sync cancels a handshake for a source that it removed [0.18ms]
+(pass) McpClientPool transport recovery > teardown cancels a queued connection before its handshake starts [0.11ms]
+(pass) McpClientPool transport recovery > does not execute a tool removed by the reconnecting server [0.11ms]
+(pass) McpClientPool transport recovery > sync reconnects a closed transport even when the config is unchanged [0.10ms]
+(pass) McpClientPool transport recovery > teardown cancels and drains an in-flight handshake without registering tools [0.13ms]
+(pass) McpClientPool transport recovery > teardown during recovery cannot resurrect a disconnected source [0.10ms]
+
+packages/shared/src/mcp/__tests__/proxy-tool-name.test.ts:
+(pass) proxy-tool-name > sanitizes characters outside [A-Za-z0-9_-] so OpenAI/Codex accept the name [52.92ms]
+(pass) proxy-tool-name > disambiguates post-sanitization collisions with _2, _3, … [0.14ms]
+(pass) proxy-tool-name > keeps generated names within the 128-char provider limit [0.34ms]
+(pass) proxy-tool-name > exposes prefix / strip / restore so pool-server and local-name lookup cannot drift [0.07ms]
+(pass) proxy-tool-name > production builders import this module and do not keep a local mcp__${} template [0.99ms]
+
+packages/shared/src/mcp/__tests__/client-qdrant-sharing.test.ts:
+(pass) managed embedded Qdrant client leases > recognizes the pinned official stdio launch and excludes mixed remote settings [0.33ms]
+(pass) managed embedded Qdrant client leases > explicit local mode omits blank and inherited remote settings from the subprocess [532.40ms]
+(pass) managed embedded Qdrant client leases > session-scoped inherited directories do not prevent sharing across chats [287.68ms]
+(pass) managed embedded Qdrant client leases > shares one subprocess across a startup probe, session pool and direct tool caller [907.95ms]
+(pass) managed embedded Qdrant client leases > coalesces concurrent direct connects and tools/list requests [479.88ms]
+(pass) managed embedded Qdrant client leases > source validation leases the process already held by a session [676.37ms]
+(pass) managed embedded Qdrant client leases > normalizes storage paths and environment key order [1042.40ms]
+(pass) managed embedded Qdrant client leases > canonicalizes a symlinked parent before the database directory exists [825.14ms]
+(pass) managed embedded Qdrant client leases > rejects conflicting active configs for one directory and releases the directory on final close [1745.01ms]
+(pass) managed embedded Qdrant client leases > keeps different storage directories independent [697.25ms]
+(pass) managed embedded Qdrant client leases > closing one lease during initialize preserves another waiting session [362.45ms]
+(pass) managed embedded Qdrant client leases > closing one lease cancels its tools/list wait without cancelling another lease [592.55ms]
+(pass) managed embedded Qdrant client leases > closing one lease cancels its tool request while another lease keeps using the process [757.67ms]
+(pass) managed embedded Qdrant client leases > caller cancellation settles a tool call during initialize without cancelling another lease [546.94ms]
+(pass) managed embedded Qdrant client leases > final close cancels initialize, cleans up the process and permits another owner [1121.11ms]
+(pass) managed embedded Qdrant client leases > waits for the final transport shutdown before starting a replacement [1368.04ms]
+(pass) managed embedded Qdrant client leases > cleans up failed shared handshakes and removes the registry entry on final release [1914.48ms]
+(pass) managed embedded Qdrant client leases > restarts one crashed subprocess for all remaining leases [1354.93ms]
+(pass) managed embedded Qdrant client leases > remote Qdrant configurations keep independent connections even with a leftover local path [762.99ms]
+(pass) managed embedded Qdrant client leases > explicit remote mode omits an unrelated inherited local storage path [1203.73ms]
+(pass) managed embedded Qdrant client leases > custom executable launches keep independent connections [561.79ms]
+(pass) closing a stalled SSE handshake settles direct and pool connection promises [263.08ms]
+
+packages/shared/src/mcp/__tests__/client-lifecycle.test.ts:
+(pass) CraftMcpClient lifecycle > reports an exited stdio subprocess and the pool restarts it before the next tool request [784.27ms]
+(pass) CraftMcpClient lifecycle > resolves managed launchers and adds their PATH before spawning a local server [628.13ms]
+(pass) CraftMcpClient lifecycle > preserves explicit executable paths and source-specific PATH values [623.34ms]
+
+packages/shared/src/mcp/__tests__/validation-secrets.test.ts:
+(pass) stdio diagnostics redact configured vault secrets from server stderr [457.60ms]
+(pass) HTTP probe redacts echoed URL, header and access-token credentials from errors and debug logs [172.25ms]
+(pass) an invalid remote URL produces a sanitized validation result [5.27ms]
+
+packages/shared/src/mcp/__tests__/mcp-pool.test.ts:
+(pass) McpClientPool.ensureConnected > connects an absent source once [41.80ms]
+(pass) McpClientPool.ensureConnected > is a no-op when already connected with an unchanged config [0.21ms]
+(pass) McpClientPool.ensureConnected > reconnects when the auth header changed (token refresh) [0.12ms]
+(pass) McpClientPool.ensureConnected > does not touch other pool members [0.16ms]
+(pass) McpClientPool.ensureConnected > refuses stdio configs when local MCP is disabled for the workspace [7.86ms]
+
+packages/shared/src/mcp/__tests__/client-sse.test.ts:
+(pass) CraftMcpClient — SSE transport > connects to a legacy SSE-only server and lists tools [1218.85ms]
+(pass) CraftMcpClient — SSE transport > calls a tool over the SSE POST channel [910.14ms]
+(pass) CraftMcpClient — SSE transport > sends configured headers on the SSE handshake and the POST channel [491.97ms]
+(pass) CraftMcpClient — SSE transport > rejects missing authorization on both protected SSE endpoints [204.77ms]
+(pass) CraftMcpClient — SSE transport > fails cleanly when pointed at the SSE-only endpoint with HTTP transport [141.89ms]
+(pass) McpClientPool — SSE source mapping > connects a type:"sse" source via the real SSE transport (no http coercion) [636.26ms]
+(pass) validateMcpConnection — SSE transport > honors mcpTransport:"sse" instead of forcing Streamable HTTP [375.49ms]
+
+packages/shared/src/mcp/__tests__/env-blocklist.test.ts:
+(pass) stdio MCP subprocess env blocklist > excludes secrets-runtime staging vars from the spawn env (transport params) [0.65ms]
+(pass) stdio MCP subprocess env blocklist > lets explicit config.env entries win over the inherited-env filter [1.44ms]
+(pass) stdio MCP subprocess env blocklist > spawns a real MCP server whose own process env excludes blocked vars [265.83ms]
+
+packages/shared/src/mcp/__tests__/validation.test.ts:
+(pass) validateStdioMcpConnection > returns success and tool list for a spec-compliant stdio server [393.45ms]
+(pass) validateStdioMcpConnection > surfaces a framing hint when the server uses LSP-style Content-Length framing [6189.67ms]
+(pass) validateStdioMcpConnection > succeeds on a slow cold-start server that emits stderr activity throughout init [12706.47ms]
+(pass) validateStdioMcpConnection > fails at the ceiling when a server floods stderr but never completes initialize [10028.52ms]
+(pass) validateStdioMcpConnection > returns a clean "command not found" message for ENOENT [13.99ms]
+(pass) validateStdioMcpConnection > surfaces stderr output when the server exits immediately [400.56ms]
+
+ 103 pass
+ 0 fail
+ 401 expect() calls
+Ran 103 tests across 11 files. [67.77s]
+bun test v1.3.14 (0d9b296a)
+
+scripts/build/__tests__/bundled-assets.test.ts:
+(pass) headless bundled assets > packages skill metadata and nested runtime assets that bootstrap can install [183.35ms]
+
+scripts/build/__tests__/electron-packaging-files.test.ts:
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > mac/arm64: excludes source, scripts, private config and old packaged framework symlinks [443.81ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > mac/arm64: includes built application and target runtime resources only [315.44ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > mac/x64: excludes source, scripts, private config and old packaged framework symlinks [280.94ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > mac/x64: includes built application and target runtime resources only [250.03ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > win/x64: excludes source, scripts, private config and old packaged framework symlinks [43.53ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > win/x64: includes built application and target runtime resources only [451.40ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > linux/x64: excludes source, scripts, private config and old packaged framework symlinks [56.21ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > linux/x64: includes built application and target runtime resources only [335.69ms]
+  • loaded configuration  file=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/apps/electron/electron-builder.yml
+(pass) electron-builder target application file selection > preserves Windows executable extraResources source and destination [236.30ms]
+
+packages/session-tools-core/src/handlers/source-test.test.ts:
+(pass) source_test host stdio runtime resolution > probes host-resolved credentials and paths without persisting runtime secrets [10.52ms]
+(pass) source_test host stdio runtime resolution > reports host readiness failure instead of spawning the unresolved command [4.94ms]
+(pass) source_test host stdio runtime resolution > does not expose raw credential-store resolution exceptions [5.46ms]
+(pass) source_test auto-enable > flips enabled: false → true and calls activation callback on clean run [5.91ms]
+(pass) source_test auto-enable > already-enabled source still calls activation callback (session may be stale) [3.21ms]
+(pass) source_test auto-enable > autoEnable: false skips both the flag flip and the activation callback [98.39ms]
+(pass) source_test auto-enable > validation errors skip auto-enable entirely (even when autoEnable is default) [5.90ms]
+(pass) source_test auto-enable > without activateSourceInSession, flag flip still happens with restart hint [11.21ms]
+(pass) source_test auto-enable > activation failure shows warning but still persists enabled flag [1.69ms]
+(pass) source_test auto-enable > successful activation reports a single auto-restart message (backend-agnostic) [1.49ms]
+(pass) source_test API connection branches > 200 → connected, source auto-enabled, activation called [22.95ms]
+(pass) source_test API connection branches > 500 → disconnected, NOT auto-enabled, activation NOT called [5.68ms]
+(pass) source_test API connection branches > 404 → disconnected, NOT auto-enabled, activation NOT called [22.56ms]
+(pass) source_test API connection branches > 401 → connected (auth-required), auto-enabled (refresh path runs) [1.25ms]
+(pass) source_test API connection branches > basic probe honors testEndpoint.method (no HEAD→GET fallback dance) [9.29ms]
+(pass) source_test HTTP MCP probe credential forwarding (regression for #720) > OAuth MCP with cached token forwards accessToken to the probe (no refresh) [18.52ms]
+(pass) source_test HTTP MCP probe credential forwarding (regression for #720) > OAuth MCP without cached token falls back to refresh and forwards the fresh token [8.35ms]
+(pass) source_test HTTP MCP probe credential forwarding (regression for #720) > Bearer MCP without headerNames forwards accessToken (defense-in-depth) [82.28ms]
+(pass) source_test HTTP MCP probe credential forwarding (regression for #720) > headerNames flow still merges credential headers, accessToken stays undefined [1.44ms]
+(pass) source_test host HTTP runtime resolution > probes the resolved endpoint, headers and token without persisting runtime configuration [6.60ms]
+(pass) source_test host HTTP runtime resolution > does not probe an unresolved managed endpoint or activate the source [25.63ms]
+(pass) source_test host HTTP runtime resolution > accepts successful environment-only authentication even when the disk source is already authenticated [11.71ms]
+(pass) source_test host HTTP runtime resolution > fails a managed authentication rejection instead of marking it connected [4.62ms]
+(pass) source_test host HTTP runtime resolution > keeps the generic cached-token and auth-required behavior when the host returns undefined [12.53ms]
+(pass) source_test host HTTP runtime resolution > redacts returned probe errors and echoed runtime URLs from persisted diagnostics [2.95ms]
+(pass) source_test host HTTP runtime resolution > redacts thrown probe errors and echoed runtime URLs from persisted diagnostics [7.21ms]
+(pass) source_test host HTTP runtime resolution > does not expose credential-store resolution exceptions [7.94ms]
+(pass) source_test host HTTP runtime resolution > does not mark an unverified managed remote config connected when the validator is unavailable [7.30ms]
+(pass) source_test basic-auth header (regression for #824) > JSON {username,password} token → base64-encoded header [21.83ms]
+(pass) source_test basic-auth header (regression for #824) > already-base64 token → passed through unchanged [3.77ms]
+(pass) source_test basic-auth header (regression for #824) > non-JSON, non-base64 token → passed through unchanged (no throw) [9.73ms]
+
+packages/server-core/src/sessions/first-session-welcome-persistence.test.ts:
+[session] Cleaning up resources...
+[session] Cleanup complete
+(pass) first-session welcome real transcript > persists a localized assistant question without creating a user message or starting a model [861.81ms]
+
+packages/server-core/src/sessions/workspace-mcp-defaults.test.ts:
+[session] Setting up ConfigWatcher for workspace: cdf4cf30-63c8-894b-963c-da6c93a6de4e (/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/workspace-mcp-choice-UEJbu4)
+[session] Initialized AutomationSystem for workspace cdf4cf30-63c8-894b-963c-da6c93a6de4e
+[session] Cleaning up resources...
+[session] Stopped config watcher for /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/workspace-mcp-choice-UEJbu4
+[session] Disposed AutomationSystem for /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/workspace-mcp-choice-UEJbu4
+[session] Cleanup complete
+(pass) workspace startup MCP default selection > preserves the saved selection [] while provisioning missing servers [798.08ms]
+[session] Setting up ConfigWatcher for workspace: 8b278b64-ed19-6bc4-59c1-d8f3600deb4f (/var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/workspace-mcp-choice-8az4eh)
+[session] Initialized AutomationSystem for workspace 8b278b64-ed19-6bc4-59c1-d8f3600deb4f
+[session] Cleaning up resources...
+[session] Stopped config watcher for /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/workspace-mcp-choice-8az4eh
+[session] Disposed AutomationSystem for /var/folders/dp/lbmf8rn9481fygd3687q6dvw0000gn/T/workspace-mcp-choice-8az4eh
+[session] Cleanup complete
+(pass) workspace startup MCP default selection > preserves the saved selection ["notes","deepwiki"] while provisioning missing servers [498.87ms]
+
+packages/server-core/src/sessions/first-session-welcome.test.ts:
+(pass) first-session welcome persistence > creates one conversation for concurrent windows and never repeats after restart or deletion [385.31ms]
+(pass) first-session welcome persistence > does not add an onboarding conversation to an existing installation or on later workspace switches [218.70ms]
+(pass) first-session welcome persistence > allows a retry after creation fails instead of recording success or retaining the lock [52.10ms]
+
+packages/shared/src/agent/__tests__/omp-rpc-transport-agent.test.ts:
+(pass) OMP negotiated transport before provider execution > negotiates v2 and verifies a catalogue larger than the native 1,424,866-byte response before prompting [2178.27ms]
+(pass) OMP negotiated transport before provider execution > sends an exact large provider command with empty context using negotiated outbound chunks [1327.05ms]
+(pass) OMP negotiated transport before provider execution > sends an exact large provider command with source context using negotiated outbound chunks [1762.51ms]
+(pass) OMP negotiated transport before provider execution > preserves a small ordinary turn with an older v1-only peer [1626.57ms]
+(pass) OMP negotiated transport before provider execution > keeps v1 and fails the large response without prompting for transport-wrong-limits [1613.78ms]
+(pass) OMP negotiated transport before provider execution > keeps v1 and fails the large response without prompting for transport-missing-limits [1688.53ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-out-of-order [1093.43ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-bad-base64 [1019.05ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-oversize [780.91ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-interrupted [774.82ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-incomplete [1109.79ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-bad-ack [722.65ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-unterminated [1353.72ms]
+(pass) OMP negotiated transport before provider execution > fails without a provider prompt for transport-frame-error [1091.17ms]
+(pass) OMP negotiated transport before provider execution > releases a peer frame-error failure and negotiates a fresh child without an old pending request [2481.24ms]
+(pass) OMP negotiated transport before provider execution > discards unfinished assembly on a failed child and negotiates a fresh child [2771.20ms]
+(pass) OMP negotiated transport before provider execution > releases an unfinished response immediately when the current child is destroyed [2063.40ms]
+
+packages/shared/src/agent/__tests__/source-state.test.ts:
+(pass) sourceNeedsAuthentication > MCP sources > authType: "none" (no auth required) > should return false when isAuthenticated is undefined [0.23ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType: "none" (no auth required) > should return false when isAuthenticated is false [0.06ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType: "none" (no auth required) > should return false when isAuthenticated is true [0.02ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType: "oauth" (OAuth required) > should return true when not authenticated [0.02ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType: "oauth" (OAuth required) > should return true when isAuthenticated is undefined [0.01ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType: "oauth" (OAuth required) > should return false when authenticated [0.01ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType: "bearer" (bearer token required) > should return true when not authenticated [0.01ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType: "bearer" (bearer token required) > should return false when authenticated [0.01ms]
+(pass) sourceNeedsAuthentication > MCP sources > stdio transport (local subprocess) > should return false regardless of authType (stdio runs locally) [0.05ms]
+(pass) sourceNeedsAuthentication > MCP sources > stdio transport (local subprocess) > should return false even with oauth authType (ignored for stdio) [0.15ms]
+(pass) sourceNeedsAuthentication > MCP sources > authType undefined (defaults to no auth) > should return false when authType is undefined [15.11ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "none" (no auth required) > should return false when isAuthenticated is undefined [0.17ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "none" (no auth required) > should return false when isAuthenticated is false [0.04ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "bearer" (bearer token required) > should return true when not authenticated [0.11ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "bearer" (bearer token required) > should return false when authenticated [0.02ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "header" (custom header required) > should return true when not authenticated [4.66ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "header" (custom header required) > should return false when authenticated [13.99ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "basic" (username/password required) > should return true when not authenticated [0.04ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "basic" (username/password required) > should return false when authenticated [0.12ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "query" (query param required) > should return true when not authenticated [0.02ms]
+(pass) sourceNeedsAuthentication > API sources > authType: "query" (query param required) > should return false when authenticated [0.20ms]
+(pass) sourceNeedsAuthentication > API sources > authType undefined > should return false when authType is undefined (no auth required) [7.39ms]
+(pass) sourceNeedsAuthentication > local sources > should return false for local sources (no auth needed) [0.07ms]
+(pass) sourceNeedsAuthentication > edge cases > should handle source with no mcp/api/local config [5.28ms]
+(pass) sourceNeedsAuthentication > edge cases > should handle MCP source with both transport types (stdio takes precedence) [0.11ms]
+(pass) inactive source reason display > expected display values > disabled source should show "disabled" [0.02ms]
+(pass) inactive source reason display > expected display values > MCP source with authType: "none" should show "inactive" not "needs auth" [0.05ms]
+(pass) inactive source reason display > expected display values > MCP source with authType: "oauth" and no auth should show "needs auth" [0.02ms]
+(pass) inactive source reason display > expected display values > stdio source should show "inactive" not "needs auth" [0.01ms]
+
+packages/shared/src/agent/__tests__/omp-source-proxy.test.ts:
+(pass) OMP source-proxy chain > buildSessionToolDefs includes pool proxy defs only when includePoolProxyDefs is set [527.87ms]
+(pass) OMP source-proxy chain > routes a host_tool_call from OMP through mcpPool.callTool and back as host_tool_result [2250.73ms]
+
+packages/shared/src/agent/__tests__/omp-permission-mode.test.ts:
+(pass) OMP permission mode child policy > respawns allow-all as safe before the immediately following turn [3235.52ms]
+(pass) OMP permission mode child policy > respawns safe as allow-all before the immediately following turn [4420.03ms]
+(pass) OMP permission mode child policy > uses the latest mode after rapid changes without retiring the same child repeatedly [3744.18ms]
+(pass) OMP permission mode child policy > keeps the child when changing between ask and safe [1646.34ms]
+
+packages/shared/src/agent/__tests__/base-agent.test.ts:
+(pass) BaseAgent > Model Configuration > should initialize with config model [0.20ms]
+(pass) BaseAgent > Model Configuration > should allow setting model [0.04ms]
+(pass) BaseAgent > Thinking Level Configuration > should initialize with config thinking level [0.03ms]
+(pass) BaseAgent > Thinking Level Configuration > should allow setting thinking level [0.41ms]
+(pass) BaseAgent > Permission Mode > should have a permission mode [3.15ms]
+(pass) BaseAgent > Permission Mode > should allow setting permission mode [0.06ms]
+(pass) BaseAgent > Permission Mode > should notify on permission mode change [0.06ms]
+(pass) BaseAgent > Permission Mode > should cycle permission modes [5.41ms]
+(pass) BaseAgent > Permission Mode > should report safe mode correctly [0.40ms]
+(pass) BaseAgent > Workspace & Session > should return workspace from config [6.21ms]
+(pass) BaseAgent > Workspace & Session > should allow setting workspace [0.09ms]
+(pass) BaseAgent > Workspace & Session > should have session ID [0.32ms]
+(pass) BaseAgent > Workspace & Session > should allow setting session ID [0.06ms]
+(pass) BaseAgent > Source Management > should start with no active sources [0.05ms]
+(pass) BaseAgent > Source Management > should track source servers [2.73ms]
+(pass) BaseAgent > Source Management > should check if source is active [0.36ms]
+(pass) BaseAgent > Source Management > should track all sources [0.96ms]
+(pass) BaseAgent > Source Management > keeps a failed MCP selected without claiming its tools connected [11.19ms]
+(pass) BaseAgent > Source Management > refreshes availability before the next turn when a connected transport closes [882.21ms]
+(pass) BaseAgent > Source Management > should allow marking source as unseen [203.58ms]
+(pass) BaseAgent > Source Management > should track temporary clarifications [0.03ms]
+(pass) BaseAgent > Manager Accessors > should provide access to SourceManager [0.17ms]
+(pass) BaseAgent > Manager Accessors > should provide access to PermissionManager [0.05ms]
+(pass) BaseAgent > Manager Accessors > should provide access to PromptBuilder [0.03ms]
+(pass) BaseAgent > Lifecycle > should track processing state [0.50ms]
+(pass) BaseAgent > Lifecycle > should emit complete event from chat [10.83ms]
+(pass) BaseAgent > Lifecycle > should track chat calls [4.89ms]
+(pass) BaseAgent > Lifecycle > should track abort calls [0.38ms]
+(pass) BaseAgent > Lifecycle > should delegate handoff interrupts to forceAbort by default [0.10ms]
+(pass) BaseAgent > Lifecycle > should track respondToPermission calls [0.43ms]
+(pass) BaseAgent > Lifecycle > should cleanup on destroy [0.03ms]
+(pass) BaseAgent > Lifecycle > should cleanup on dispose (alias) [0.04ms]
+(pass) BaseAgent > Callbacks > should support debug callback [1.62ms]
+(pass) BaseAgent > Callbacks > should support permission mode change callback [0.63ms]
+(pass) BaseAgent > Config Watcher > should not start config watcher when skipConfigWatcher is true [0.11ms]
+(pass) BaseAgent > Config Watcher > should not start config watcher when isHeadless is true (existing behavior) [0.04ms]
+
+packages/shared/src/agent/__tests__/omp-rpc-transport.test.ts:
+(pass) OMP bounded protocol v2 framing > accepts exactly 1 MiB including newline and requires v2 for the next byte [226.68ms]
+(pass) OMP bounded protocol v2 framing > bounds unterminated stdout before readline and handles frame boundaries across stream chunks [294.82ms]
+(pass) OMP bounded protocol v2 framing > negotiates only the exact managed advertised bounds and retains older ready frames on v1 [0.22ms]
+(pass) OMP bounded protocol v2 framing > matches native constants and returns a large logical response only at its last chunk [182.46ms]
+(pass) OMP bounded protocol v2 framing > reassembles UTF-8 even when a chunk boundary splits a code point [147.12ms]
+(pass) OMP bounded protocol v2 framing > round trips small frames on v1, ignores legacy non-JSON banners and rejects unnegotiated chunks [2.76ms]
+(pass) OMP bounded protocol v2 framing > rejects negative index before any logical delivery [16.69ms]
+(pass) OMP bounded protocol v2 framing > rejects noninteger index before any logical delivery [224.36ms]
+(pass) OMP bounded protocol v2 framing > rejects zero count before any logical delivery [9.25ms]
+(pass) OMP bounded protocol v2 framing > rejects count over ceiling before any logical delivery [4.08ms]
+(pass) OMP bounded protocol v2 framing > rejects declaration over ceiling before any logical delivery [2.01ms]
+(pass) OMP bounded protocol v2 framing > rejects declaration below frame limit before any logical delivery [70.84ms]
+(pass) OMP bounded protocol v2 framing > rejects empty id before any logical delivery [9.02ms]
+(pass) OMP bounded protocol v2 framing > rejects long id before any logical delivery [10.44ms]
+(pass) OMP bounded protocol v2 framing > rejects invalid base64 before any logical delivery [3.16ms]
+(pass) OMP bounded protocol v2 framing > rejects noncanonical base64 before any logical delivery [11.53ms]
+(pass) OMP bounded protocol v2 framing > rejects empty base64 before any logical delivery [16.94ms]
+(pass) OMP bounded protocol v2 framing > rejects oversized payload before any logical delivery [108.93ms]
+(pass) OMP bounded protocol v2 framing > rejects an out of order sequence and clears unfinished memory [26.75ms]
+(pass) OMP bounded protocol v2 framing > rejects an duplicate sequence and clears unfinished memory [80.18ms]
+(pass) OMP bounded protocol v2 framing > rejects an different id sequence and clears unfinished memory [35.08ms]
+(pass) OMP bounded protocol v2 framing > rejects an different count sequence and clears unfinished memory [239.33ms]
+(pass) OMP bounded protocol v2 framing > rejects an different declared length sequence and clears unfinished memory [38.09ms]
+(pass) OMP bounded protocol v2 framing > rejects an interrupted sequence instead of resolving a different command [213.11ms]
+(pass) OMP bounded protocol v2 framing > rejects an interrupted sequence instead of resolving a different command [12.60ms]
+(pass) OMP bounded protocol v2 framing > rejects truncated EOF and resets protocol/assembly for a new child [435.61ms]
+(pass) OMP bounded protocol v2 framing > rejects a final total that disagrees with the declaration [319.28ms]
+(pass) OMP bounded protocol v2 framing > rejects invalid UTF-8 after complete reassembly [74.34ms]
+(pass) OMP bounded protocol v2 framing > rejects invalid logical JSON after complete reassembly [239.66ms]
+(pass) OMP bounded protocol v2 framing > rejects nonobject logical JSON after complete reassembly [254.56ms]
+(pass) OMP bounded protocol v2 framing > rejects oversized physical JSONL and logical outbound messages [373.45ms]
+
+packages/shared/src/agent/__tests__/claude-context-mcp-runtime.test.ts:
+(pass) session MCP runtime resolution > resolves a Firecrawl vault token while preserving a disabled disk config [64.29ms]
+(pass) session MCP runtime resolution > resolves Telegram encrypted field credentials through the runtime builder [166.84ms]
+(pass) session MCP runtime resolution > keeps custom stdio sources usable without fetching built-in credentials [39.27ms]
+(pass) session MCP runtime resolution > resolves Weaviate environment endpoint and bearer header without changing source config [9.68ms]
+(pass) session MCP runtime resolution > resolves mem0 environment credentials through the same remote runtime builder [15.94ms]
+(pass) session MCP runtime resolution > resolves context7 environment credentials through the same remote runtime builder [113.27ms]
+(pass) session MCP runtime resolution > forwards a managed OAuth vault token without replacing the source auth configuration [25.36ms]
+(pass) session MCP runtime resolution > returns readiness failure for managed remote sources with missing setup [16.97ms]
+(pass) session MCP runtime resolution > leaves ordinary remote sources to the existing credential-cache flow [28.90ms]
+(pass) session MCP runtime resolution > does not expose raw vault exceptions while resolving a remote source [23.44ms]
+(pass) session MCP runtime resolution > the complete managed Mem0 source probe verifies environment authentication once without persisting it [26.16ms]
+(pass) session MCP runtime resolution > the host probe launches managed Bun even when it is absent from PATH [1164.34ms]
+
+packages/shared/src/agent/__tests__/omp-query-llm.test.ts:
+(pass) OmpAgent.queryLlm — model honesty > passes request.model through to omp via --model and reports it as effective [2094.89ms]
+(pass) OmpAgent.queryLlm — model honesty > does not fabricate a model when no model was requested (OMP default is unknown) [1227.91ms]
+(pass) OmpAgent.queryLlm — model honesty > never persists one-shots as OMP sessions (--no-session) [4644.07ms]
+(pass) OmpAgent.queryLlm — model honesty > falls back to the OMP default with a truthful warning when the requested model is rejected [4777.10ms]
+(pass) OmpAgent.queryLlm — model honesty > prepends the system prompt to the one-shot prompt [1733.98ms]
+(pass) OmpAgent.queryLlm — model honesty > propagates non-model failures instead of silently falling back [921.38ms]
+(pass) OmpAgent.runMiniCompletion > uses the public Rox fast route for clean-install titles instead of a legacy foreign mini model [1873.42ms]
+(pass) OmpAgent.runMiniCompletion > returns trimmed stdout text from the one-shot [1313.81ms]
+
+packages/shared/src/agent/__tests__/omp-history-recovery.test.ts:
+(pass) OMP persistent history and mandatory runtime modes > restores saved identity before sending a new user prompt [5220.92ms]
+(pass) OMP persistent history and mandatory runtime modes > resumes the child transcript after destroying and recreating the adapter [5715.78ms]
+(pass) OMP persistent history and mandatory runtime modes > clearing history starts a new context rather than resuming the old transcript [5097.05ms]
+(pass) OMP persistent history and mandatory runtime modes > starts fresh after an empty clear even if old sdk identity remains persisted [5120.38ms]
+(pass) OMP persistent history and mandatory runtime modes > keeps a persisted reset across restart and reconstructs only retained ROX history [6581.62ms]
+(pass) OMP persistent history and mandatory runtime modes > kills a child after rejected restoration and retries the same saved history [4915.22ms]
+(pass) OMP persistent history and mandatory runtime modes > applies all three native magic modes on every turn without duplicating existing directives [3948.18ms]
+(pass) OMP persistent history and mandatory runtime modes > reconstructs the exact selected ROX prefix when compaction removed a persisted native anchor [1678.93ms]
+(pass) OMP persistent history and mandatory runtime modes > does not reconstruct history after a generic native fork authentication error [1884.38ms]
+(pass) OMP persistent history and mandatory runtime modes > forks a private copy at the exact assistant anchor and leaves the parent unchanged [2773.72ms]
+(pass) OMP identity and legacy reconstruction > rejects identity path traversal and does not choose another transcript [13.27ms]
+(pass) OMP identity and legacy reconstruction > a reset tombstone prevents discovery of archived native transcripts [17.89ms]
+(pass) OMP identity and legacy reconstruction > rejects a corrupt interior JSONL record rather than silently dropping context [16.73ms]
+(pass) OMP identity and legacy reconstruction > reads the native OMP18 fixed-width title slot before its session header [13.66ms]
+(pass) OMP identity and legacy reconstruction > pins an atomic active identity independently of newer transcript filenames [8.29ms]
+(pass) OMP identity and legacy reconstruction > reconstructs complete tool pairs with provenance and preserves every stored message [11.44ms]
+(pass) OMP identity and legacy reconstruction > adds native prose directives when words occur in quoted or fenced first lines [0.60ms]
+(pass) OMP identity and legacy reconstruction > adds native prose directives even when matching words occur in a code block [0.18ms]
+
+packages/shared/src/agent/__tests__/omp-session-flow.test.ts:
+(pass) OmpAgent session flow — healthy turn > re-registers a same-name MCP tool when its schema or description changes [4253.36ms]
+(pass) OmpAgent session flow — healthy turn > briefs OMP about integrations and refreshes source availability on every prompt [2769.49ms]
+(pass) OmpAgent session flow — healthy turn > streams a full turn: text deltas, text_complete, usage-bearing complete [3231.21ms]
+(pass) OmpAgent session flow — healthy turn > maps OMP thinking stream to thinking_delta / thinking_complete events [2995.01ms]
+(pass) OmpAgent session flow — healthy turn > emits an omp_turn_anchor resolved from the OMP transcript [2999.53ms]
+(pass) OmpAgent host tool bridge > registers session tools via set_host_tools with essential loadMode [1874.69ms]
+killed 1 dangling process
+(fail) OmpAgent host tool bridge > dispatches host_tool_call → host_tool_result for registry and unknown tools [6962.15ms]
+  ^ this test timed out after 5000ms.
+
+# Unhandled error between tests
+-------------------------------
+431 |       throw new Error(`event generator did not complete within ${timeoutMs}ms (got ${events.length} events)`);
+432 |     }
+433 |     const result = await Promise.race([
+434 |       gen.next(),
+435 |       new Promise<never>((_, reject) =>
+436 |         setTimeout(() => reject(new Error(`event generator stalled after ${events.length} events`)), remaining),
+                                          ^
+error: event generator stalled after 0 events
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/packages/shared/src/agent/__tests__/omp-fake-cli.ts:436:37)
+-------------------------------
+
+(pass) OmpAgent host tool bridge > executes unprefixed bash as a craft host tool [4594.60ms]
+(pass) OmpAgent model switching > negotiates v2 before querying state and switches models using a chunked catalog [4344.59ms]
+(pass) OmpAgent model switching > setModel fuzzy-resolves via get_available_models and sends set_model {provider, modelId} [2980.04ms]
+(pass) OmpAgent model switching > rejects the next prompt when the requested model has no catalog match [2379.31ms]
+(pass) OmpAgent branch handshake > mid-history branch: switch to a private parent copy and fork the assistant anchor [2288.12ms]
+(pass) OmpAgent branch handshake > tail branch: copies the parent transcript and switch_session to the copy [2345.04ms]
+(pass) OmpAgent branch handshake > fails loudly when the anchor is missing from the parent transcript [1595.78ms]
+(pass) OmpAgent branch handshake > own-message branch forks a private transcript at the selected user without editing the parent [1762.57ms]
+(pass) OmpAgent transcript parsing (pure) > parseOmpTranscript tolerantly skips malformed lines [4.25ms]
+(pass) OmpAgent transcript parsing (pure) > resolveOmpTranscriptFile prefers a sessionId match, else the newest by name [6.61ms]
+(pass) OmpAgent transcript parsing (pure) > readLastAssistantEntryId returns the last assistant entry id [7.26ms]
+
+packages/shared/src/workspaces/__tests__/builtin-mcp-install.test.ts:
+(pass) new workspace MCP installation > seeds the requested MCP catalog and automatically selects usable servers [3371.87ms]
+
+packages/shared/src/prompts/__tests__/mcp-guidance.test.ts:
+(pass) MCP guidance in the default OMP backend > includes the shared retrieval and memory policy in the spawn briefing [41.79ms]
+
+packages/shared/src/sources/__tests__/builtin-sources-seed.test.ts:
+(pass) builtin sources seed > recognizes exa and firecrawl slugs as builtin [208.85ms]
+(pass) builtin sources seed > creates enabled API source templates once [8.46ms]
+(pass) builtin sources seed > does not overwrite user-edited config [57.89ms]
+(pass) builtin sources seed > enables the docs MCP placeholder by default [1.13ms]
+(pass) builtin sources seed > computeSourceTokenStats uses guide for api builtins [3.94ms]
+(pass) builtin sources seed > makes previously unconfigured providers usable when private backend credentials arrive [16.85ms]
+(pass) builtin sources seed > migrates unchanged legacy defaults once and preserves later explicit disablement [13.56ms]
+(pass) builtin sources seed > preserves an edited legacy source and does not route shared credentials to a changed origin [12.59ms]
+(pass) builtin sources seed > keeps real upstream failure visible after credential provisioning [69.15ms]
+(pass) builtin sources seed > removes the connected badge when a provisioned shared key is withdrawn [24.29ms]
+
+packages/shared/src/sources/__tests__/builtin-mcp-qmd.test.ts:
+(pass) isolated QMD collection provisioning > creates a usable empty Markdown collection without scanning the workspace root [222.00ms]
+(pass) isolated QMD collection provisioning > recreates the explicit SQLite index parent after cache cleanup while preserving existing YAML [5.40ms]
+(pass) isolated QMD collection provisioning > uses only the enabled existing Notes vault and resolves its portable path [8.46ms]
+(pass) isolated QMD collection provisioning > respects a disabled Notes source by using the explicit documents collection [3.26ms]
+(pass) isolated QMD collection provisioning > does not mutate disabled, non-owned or customized QMD runtime configurations [0.50ms]
+(pass) isolated QMD collection provisioning > preserves existing user YAML and prevents startup from running shell hooks [10.20ms]
+
+packages/shared/src/sources/__tests__/server-builder-authScheme.test.ts:
+(pass) SourceServerBuilder.buildApiConfig > defaults to Bearer when authScheme is undefined [75.41ms]
+(pass) SourceServerBuilder.buildApiConfig > uses custom authScheme when provided [0.03ms]
+(pass) SourceServerBuilder.buildApiConfig > preserves empty string authScheme for APIs without Bearer prefix [0.02ms]
+(pass) SourceServerBuilder.buildApiConfig > handles null by defaulting to Bearer (via nullish coalescing) [0.05ms]
+(pass) SourceServerBuilder.buildApiConfig > does not add authScheme for non-bearer auth types [0.40ms]
+
+packages/shared/src/sources/__tests__/source-config-validation.test.ts:
+(pass) Multi-header source config validation > should detect headerNames with authType: "none" (our exact production bug) [74.87ms]
+(pass) Multi-header source config validation > should accept valid multi-header config [0.07ms]
+(pass) Multi-header source config validation > should warn when authType: "header" has no header name specified [0.03ms]
+(pass) Multi-header source config validation > should accept single header config with headerName [0.03ms]
+(pass) Multi-header source config validation > should accept config with authType: "none" and NO headerNames [0.12ms]
+(pass) Multi-header source config validation > should skip validation for non-API sources [0.72ms]
+(pass) Real-world API config examples > Datadog config should be valid [0.10ms]
+(pass) Real-world API config examples > Algolia config should be valid [0.08ms]
+(pass) Real-world API config examples > Cloudflare config should be valid [1.86ms]
+
+packages/shared/src/sources/__tests__/server-builder-flow.test.ts:
+(pass) SourceServerBuilder.buildApiConfig > should build correct ApiConfig.auth for header type [0.15ms]
+(pass) SourceServerBuilder.buildApiConfig > should build correct ApiConfig.auth for bearer type [0.03ms]
+(pass) SourceServerBuilder.buildApiConfig > should build correct ApiConfig.auth for none type [0.02ms]
+(pass) SourceServerBuilder.buildApiConfig > should use default headerName when not specified [0.02ms]
+(pass) SourceServerBuilder.buildApiConfig > should include baseUrl in config [0.01ms]
+(pass) SourceServerBuilder.buildApiConfig > should include defaultHeaders if present [0.02ms]
+(pass) buildHeaders with MultiHeaderCredential > should apply all headers from MultiHeaderCredential [0.17ms]
+(pass) buildHeaders with MultiHeaderCredential > should NOT apply headers when auth type is "none" [0.02ms]
+(pass) buildHeaders with MultiHeaderCredential > isMultiHeaderCredential correctly identifies credential type [0.02ms]
+(pass) Full flow: Source config → ApiConfig → Headers > Datadog-like source produces correct headers [0.05ms]
+(pass) Full flow: Source config → ApiConfig → Headers > BROKEN config (authType: none + headerNames) should NOT apply headers [0.03ms]
+(pass) Full flow: Source config → ApiConfig → Headers > Single header source still works (backward compatibility) [0.02ms]
+
+packages/shared/src/sources/__tests__/builtin-mcp.test.ts:
+(pass) built-in MCP provisioning > seeds verified servers without exposing secrets or claiming a connection [31.14ms]
+(pass) built-in MCP provisioning > preserves user edits and disables while choosing only real available sources [21.97ms]
+(pass) built-in MCP provisioning > keeps existing Firecrawl API source independent [33.93ms]
+(pass) built-in MCP provisioning > injects upstream credentials only in memory and accepts encrypted vault tokens [218.67ms]
+(pass) built-in MCP provisioning > resolves platform credentials and remote storage before the final stdio merge [41.50ms]
+(pass) built-in MCP provisioning > accepts Telegram vault fields and authorized session files without PyPI name collision [22.09ms]
+(pass) built-in MCP provisioning > resolves existing Telegram session files against the source cwd before authentication checks [50.66ms]
+(pass) built-in MCP provisioning > accepts upstream Telegram pools and named accounts from runtime environment and encrypted credentials [49.77ms]
+(pass) built-in MCP provisioning > resolves named Telegram session files and preserves vault/source/environment precedence [73.61ms]
+(pass) built-in MCP provisioning > loads encrypted Telegram pool and named-session records through the credential parser into the server builder [52.18ms]
+(pass) built-in MCP provisioning > gates native Windows servers and Everything on real dependencies [107.60ms]
+(pass) built-in MCP provisioning > allows an explicitly remote Windows server to run on a different host [265.28ms]
+(pass) built-in MCP provisioning > uses Mem0 hosted MCP with runtime-only bearer authentication and supports explicit OAuth [39.97ms]
+(pass) built-in MCP provisioning > recognizes Mem0 keys from the process environment before the background handshake [57.52ms]
+(pass) built-in MCP provisioning > requires a real Weaviate endpoint and joins URLs without repeating /v1/mcp [86.29ms]
+(pass) built-in MCP provisioning > starts Qdrant locally and omits its file-locked local path for remote overrides [36.29ms]
+(pass) built-in MCP provisioning > keeps the owned QMD index inside its source even with an unrelated inherited index path [137.15ms]
+(pass) built-in MCP provisioning > reports local account authentication requirements while respecting vault hints [51.30ms]
+(pass) built-in MCP provisioning > saving credentials does not mark managed MCP servers connected before a handshake [47.10ms]
+(pass) built-in MCP provisioning > returns useful launch errors instead of spawning incompatible servers [20.32ms]
+
+packages/shared/src/sources/__tests__/builtin-mcp-installer.test.ts:
+(pass) verified built-in Windows MCP installation > uses immutable versioned release metadata and portable catalog commands [80.28ms]
+(pass) verified built-in Windows MCP installation > installs a verified executable, records readiness, and reuses the existing tree [1585.03ms]
+(pass) verified built-in Windows MCP installation > downloads and verifies an archive before extraction and checks its known executable [761.66ms]
+(pass) verified built-in Windows MCP installation > rejects a corrupt download before extraction and removes staging files [11.88ms]
+(pass) verified built-in Windows MCP installation > preserves a prior install when extraction fails or yields a different executable [43.12ms]
+(pass) verified built-in Windows MCP installation > rejects extracted symlinks without publishing a ready marker [19.26ms]
+(pass) verified built-in Windows MCP installation > avoids network and filesystem writes on unsupported platforms or architecture [1.22ms]
+(pass) verified built-in Windows MCP installation > preserves disabled, non-owned, and user command overrides including platform overrides [13.15ms]
+(pass) verified built-in Windows MCP installation > selects the verified portable ES prerequisite and preserves custom ES_PATH [5.22ms]
+(pass) verified built-in Windows MCP installation > coalesces simultaneous workspace requests for the same managed release [654.12ms]
+(pass) verified built-in Windows MCP installation > passes cancellation to fetch and never exposes network credentials in errors [729.33ms]
+(pass) verified built-in Windows MCP installation > does not publish a release cancelled during extraction [8.72ms]
+
+packages/shared/src/skills/__tests__/bundled.test.ts:
+(pass) ensureBundledSkills seed > installs every pack skill into a fresh target root with clean status [38.97ms]
+(pass) ensureBundledSkills seed > is idempotent: a second sync over identical bundle reports no localModified [62.12ms]
+(pass) ensureBundledSkills disabled > skips the whole pack: disabled=['superpowers'] leaves its slug untouched [20.41ms]
+(pass) ensureBundledSkills upgrade merge > preserves user edits on pack upgrade, flags localModified, upgrades the rest [55.15ms]
+(pass) ensureBundledSkills upgrade merge > keeps user-modified copies of files the newer bundle dropped [63.34ms]
+(pass) ensureBundledSkills conflicts > keeps same-named skills from separate packs in separate directories [71.65ms]
+(pass) bundled packs end-to-end (real bundle, synthetic HOME) > ensureBundledSkills installs the vendored packs and loadAllSkills discovers them [63199.19ms]
+killed 1 dangling process
+320 |     const pluginRoot = join(targetRoot, 'understand', 'plugin');
+321 |     const helper = join(pluginRoot, 'skills', 'understand-domain', 'extract-domain-context.py');
+322 | 
+323 |     const proc = Bun.spawnSync({ cmd: [pythonRuntime!, helper, project], stdout: 'pipe', stderr: 'pipe' });
+324 | 
+325 |     expect(proc.exitCode, proc.stderr.toString()).toBe(0);
+                                                        ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: null
+
+      at <anonymous> (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/packages/shared/src/skills/__tests__/bundled.test.ts:325:51)
+(fail) bundled packs end-to-end (real bundle, synthetic HOME) > runs the installed Understand Anything domain scanner without plugin dependencies [36384.00ms]
+  ^ this test timed out after 30000ms.
+(pass) disabled packs hidden from discovery > getDisabledBundledSkillSlugsFromDisk reads pack state skills [234.69ms]
+(pass) legacy disabled pack migration > honors craft-knowledge preference for renamed ROX pack and native discovery [26.64ms]
+
+packages/server-core/src/sources/__tests__/default-session-sources.test.ts:
+(pass) default session MCP selection > attaches public and local servers when no explicit defaults exist [97.39ms]
+(pass) default session MCP selection > honors workspace default toggles and removes duplicate selections [330.33ms]
+(pass) default session MCP selection > respects an explicitly empty or restricted per-chat source selection [33.28ms]
+(pass) default session MCP selection > keeps a source disabled by the user out of automatic chat selection [606.27ms]
+(pass) default session MCP selection > keeps account-dependent defaults selected while credentials are being set up [122.43ms]
+
+packages/server-core/src/sources/__tests__/builtin-mcp-startup.test.ts:
+(pass) built-in MCP startup > seeds and checks each launch, closes the probe, and does not invoke normal tools [110.53ms]
+(pass) built-in MCP startup > preserves disabled and user-owned sources without starting processes [1.08ms]
+(pass) built-in MCP startup > does not overwrite connection settings edited while a handshake is in flight [0.36ms]
+(pass) built-in MCP startup > checks edited settings in a follow-up pass when the previous handshake is still running [0.31ms]
+(pass) built-in MCP startup > does not lose an explicit credential retry while the previous probe is finishing [0.44ms]
+(pass) built-in MCP startup > bounds failed network installation retries and reports actual failure [270.02ms]
+(pass) built-in MCP startup > automatically retries a transient outage after the bounded launch attempts [94.42ms]
+(pass) built-in MCP startup > retries a failed native installation after network recovery [39.39ms]
+(pass) built-in MCP startup > waits for credential changes rather than repeatedly retrying unauthorized sources [399.10ms]
+(pass) built-in MCP startup > retries a public HTTP endpoint 403 without asking for nonexistent source credentials [12.88ms]
+(pass) built-in MCP startup > recognizes optional HTTP source authentication supplied by runtime headers [56.78ms]
+(pass) built-in MCP startup > retries public embedding download failures instead of requiring credentials for local Qdrant [5.90ms]
+(pass) built-in MCP startup > requires an actual remote Qdrant key before classifying HTTP 403 as source authentication (key=%s) [15.74ms]
+(pass) built-in MCP startup > requires an actual remote Qdrant key before classifying HTTP 403 as source authentication (key=%s) [177.77ms]
+(pass) built-in MCP startup > still requests credentials for an unauthorized authenticated stdio source [174.60ms]
+(pass) built-in MCP startup > cancels scheduled retries when stopped or when the source is disabled [50.82ms]
+(pass) built-in MCP startup > isolates readiness exceptions so unrelated sources still get checked [0.57ms]
+(pass) built-in MCP startup > shutdown interrupts a stalled readiness lookup without a false failure [0.21ms]
+(pass) built-in MCP startup > shutdown interrupts a stalled server build before spawning a process [0.15ms]
+(pass) built-in MCP startup > closes a stalled installation after its timeout [42.22ms]
+(pass) built-in MCP startup > aborts outstanding transports and unsubscribes on shutdown without storing a false failure [0.71ms]
+(pass) built-in MCP startup > waits for managed package runners and retries after runtime installation completes [0.44ms]
+(pass) built-in MCP startup > passes the loaded source into credential-aware readiness and retries after a credential save [0.18ms]
+(pass) built-in MCP startup > respects the workspace local MCP switch before native install or process startup [0.09ms]
+(pass) built-in MCP startup > rechecks deferred stdio sources after the workspace local MCP switch is enabled [0.13ms]
+(pass) built-in MCP startup > does not persist credential-bearing URL query strings in errors [0.18ms]
+(pass) built-in MCP startup > provisions the pinned Playwright browser before recording a successful connection [0.33ms]
+(pass) built-in MCP startup > records failed browser provisioning instead of claiming Playwright is ready [0.18ms]
+(pass) built-in MCP startup > keeps retrying browser download 403 failures without asking for Playwright credentials [27.64ms]
+(pass) built-in MCP startup > checks the Everything engine before advertising a connected file search server [0.53ms]
+(pass) built-in MCP startup > prepares the pinned QMD collection once before its connection retries [367.85ms]
+(pass) built-in MCP startup > leaves custom QMD package commands untouched [125.06ms]
+(pass) built-in MCP startup > records failed QMD setup without repeating its updater or starting the server [24.31ms]
+
+packages/shared/src/agent/core/__tests__/source-manager.test.ts:
+(pass) SourceManager > State Management > should start with no active sources [4.90ms]
+(pass) SourceManager > State Management > should update active state from MCP and API servers [0.25ms]
+(pass) SourceManager > State Management > should track intended slugs separately from active slugs [0.09ms]
+(pass) SourceManager > State Management > should log debug messages about source state [0.06ms]
+(pass) SourceManager > Source Collection Management > should store and retrieve all sources [0.11ms]
+(pass) SourceManager > Source Visibility Tracking > should track which sources have been seen [0.02ms]
+(pass) SourceManager > Source Visibility Tracking > should mark sources as unseen [0.02ms]
+(pass) SourceManager > Source Visibility Tracking > should reset all seen sources [0.02ms]
+(pass) SourceManager > Inactive Source Detection > should detect inactive source tool errors [0.38ms]
+(pass) SourceManager > Inactive Source Detection > should not detect errors for active sources [0.03ms]
+(pass) SourceManager > Inactive Source Detection > should not detect errors for non-MCP tools [0.05ms]
+(pass) SourceManager > Inactive Source Detection > should handle "Tool not found" error pattern [0.03ms]
+(pass) SourceManager > Source State Formatting > should format source state with active and inactive sources [0.23ms]
+(pass) SourceManager > Source State Formatting > should show "Active: none" when no sources are active [0.05ms]
+(pass) SourceManager > Source State Formatting > should include taglines for new sources [0.03ms]
+(pass) SourceManager > Source State Formatting > should mark sources with failed builds [0.02ms]
+(pass) SourceManager > Source State Formatting > keeps relevant source usage and availability guidance after introductions [0.05ms]
+(pass) SourceManager > Source State Formatting > keeps missing Weaviate setup visible on later turns without calling it a failed server [0.39ms]
+(pass) SourceManager > Source State Formatting > describes a network outage on an authenticated source without asking for another credential [0.09ms]
+(pass) SourceManager > Authentication Utilities > offers credentials for a managed Telegram stdio source missing account setup [1.77ms]
+(pass) SourceManager > Authentication Utilities > does not ask for credentials for an ordinary public stdio server [0.12ms]
+(pass) SourceManager > Authentication Utilities > should return correct auth tool for OAuth MCP sources [0.04ms]
+(pass) SourceManager > Authentication Utilities > should return correct auth tool for bearer MCP sources [1.09ms]
+(pass) SourceManager > Authentication Utilities > should return correct auth tool for Google API sources [0.07ms]
+(pass) SourceManager > Authentication Utilities > should return correct auth tool for Slack API sources [0.08ms]
+(pass) SourceManager > Authentication Utilities > should return null for sources without auth [0.06ms]
+
+packages/server-core/src/handlers/rpc/__tests__/mcp-tools-runtime.test.ts:
+killed 1 dangling process
+(fail) source tool listing resolves vault credentials and portable paths and always closes the client [15009.86ms]
+  ^ this test timed out after 15000ms.
+
+apps/electron/src/renderer/components/onboarding/__tests__/first-session-welcome.test.ts:
+(pass) opening the initial assistant conversation > adds and opens the persisted greeting without sending a user message [1.49ms]
+(pass) opening the initial assistant conversation > does not request host session creation for an unavailable caller or different workspace [0.23ms]
+(pass) opening the initial assistant conversation > does not open an outdated response after switching workspaces [147.08ms]
+(pass) opening the initial assistant conversation > leaves the current screen alone when the greeting was already completed [0.21ms]
+
+3 tests failed:
+(fail) OmpAgent host tool bridge > dispatches host_tool_call → host_tool_result for registry and unknown tools [6962.15ms]
+  ^ this test timed out after 5000ms.
+(fail) bundled packs end-to-end (real bundle, synthetic HOME) > runs the installed Understand Anything domain scanner without plugin dependencies [36384.00ms]
+  ^ this test timed out after 30000ms.
+(fail) source tool listing resolves vault credentials and portable paths and always closes the client [15009.86ms]
+  ^ this test timed out after 15000ms.
+
+ 374 pass
+ 3 fail
+ 1 error
+ 1814 expect() calls
+Ran 377 tests across 31 files. [301.65s]
+error: script "test:mcp-onboarding" exited with code 1

@@ -22,6 +22,7 @@ import { getSessionSafeAllowedToolNames } from '@rox/session-tools-core';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
 import { isBrowserToolNameOrAlias } from './browser-tool-names.ts';
 import type { PermissionsContext, MergedPermissionsConfig } from './permissions-config.ts';
+import { builtinReadOnlyToolSlug, isBuiltinReadOnlyToolCall } from '../sources/builtin-permissions.ts';
 import {
   validateBashCommand,
   hasControlCharacters,
@@ -1867,6 +1868,17 @@ export function shouldAllowToolInMode(
   }
 
   // Safe mode: check against read-only allowlist
+
+  const builtinSlug = builtinReadOnlyToolSlug(toolName);
+  const context = options?.permissionsContext;
+  if (builtinSlug && !config.blockedTools.has(toolName) && context?.workspaceRootPath
+    && (!context.activeSourceSlugs || context.activeSourceSlugs.includes(builtinSlug))) {
+    // Resolve current config, rather than caching a permission after a provider
+    // is disabled, its key withdrawn, or its API origin edited.
+    const { loadSourceConfig } = require('../sources/storage.ts');
+    const sourceConfig = loadSourceConfig(context.workspaceRootPath, builtinSlug);
+    if (sourceConfig && isBuiltinReadOnlyToolCall(sourceConfig, toolName, toolInput)) return { allowed: true };
+  }
 
   // Always-allowed tools (read-only by nature)
   if (ALWAYS_ALLOWED_TOOLS.has(toolName)) {

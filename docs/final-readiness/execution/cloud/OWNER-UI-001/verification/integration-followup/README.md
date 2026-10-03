@@ -1,0 +1,7 @@
+After PR #1420 merged, its SQLite workflow exposed an omitted persistent ref in the source-extracted Notes lifecycle fixture. The repair adds only readWorkspaceGenerationRef initialized to zero; production callbacks, generation fences, all existing assertions and timeouts remain unchanged. Before/after on follow-up base4fec:2pass5fail →7pass0fail20assertions.
+
+Independent Ubuntu SQLite Runtime Recovery job111256814380 succeeded with Bun1.3.14 and Node24.21.0. The exact integrated step passed226/0/1449, all other workflow steps passed, including real durability1206pass1skip0fail, process-recovery24/0 and built HTTP/WebSocket/restart smoke4/0. Its checkoutec8e and repair commita3c are checked by Git tree; see the explicit receipt. FullCI for primary merge5c is independently qualified by complete-tree equality.
+
+Local full-step attempts remain red and preserved: Node26 first216/10, Node22 and matchedNode24 then215/11 plus1error. The isolated Node24 subprocess group passed84/0/288; parallel scout diagnostics remain explicitly qualified by overlapping execution. No fixture assertion, callback or runtime deadline was weakened to obtain remote success.
+
+Original UI-001 platform acceptance and fullDoDClosed:false are unchanged. Native evidence still belongs to8e product source; later main and this test-only repair do not imply a new native run. Delivery merge metadata is recorded separately to avoid self-referential commit receipts.

@@ -45,6 +45,8 @@ export interface MarketplaceLockRecord {
   /** Application skill root and optional external link root used for this install. */
   skillsRoot?: string
   skillsLinkRoot?: string
+  /** Qualified nested skill identity → relative directory inside a directory-mode pack. */
+  skillViews?: Record<string, string>
   /** kind:tool — toolchain manifest tool name. */
   toolName?: string
   /** target path → SHA-256 of its content at install time (soft-clean diffing). */

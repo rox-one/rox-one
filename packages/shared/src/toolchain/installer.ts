@@ -6,10 +6,11 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 import { TOOLCHAIN_INSTALL_COMPLETE_MARKER } from './types';
 import type { ToolArtifact, ToolName, ToolchainPaths } from './types';
-import { runCommand, whichTool } from './exec';
+import { prependPath, runCommand, whichTool } from './exec';
 import { getNpmLock } from './npm-locks';
 
 const isWindows = process.platform === 'win32';
@@ -349,12 +350,20 @@ export async function npmInstallDeps(
     }
     throw new Error('npm not found: toolchain node required (omp dependsOn node), fallback PATH npm');
   }
-  const env = {
-    ...process.env,
-    PATH: `${path.dirname(npm)}${path.delimiter}${process.env.PATH ?? ''}`,
-  };
+  const env = prependPath(process.env, path.dirname(npm));
   const runCmd = opts?.runCmd ?? runCommand;
-  const baseArgs = [npm, 'ci', '--omit=dev', '--no-audit', '--no-fund'];
+  let npmCommand = [npm];
+  if (isWindows && /\.(cmd|bat)$/i.test(npm)) {
+    // Plain Node cannot argv-spawn .cmd (EINVAL). Invoke npm's JS entrypoint
+    // with its sibling Node, preserving argv without cmd.exe interpolation.
+    const node = path.join(path.dirname(npm), 'node.exe');
+    const cli = path.join(path.dirname(npm), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+    if (!fs.existsSync(node) || !fs.existsSync(cli)) {
+      throw new Error('npm launcher requires sibling node.exe and node_modules/npm/bin/npm-cli.js');
+    }
+    npmCommand = [node, cli];
+  }
+  const baseArgs = [...npmCommand, 'ci', '--omit=dev', '--no-audit', '--no-fund'];
   // Default: never run lifecycle scripts (supply-chain fail-closed).
   try {
     await runCmd([...baseArgs, '--ignore-scripts'], { cwd: pkgDir, env });
@@ -402,7 +411,21 @@ export async function flipCurrent(toolRoot: string, version: string, versionDir:
     } else {
       // POSIX rename(2) атомарно заменяет symlink-назначение — rm не нужен,
       // процессы всегда видят старый или новый current, но не пусто.
-      await fs.promises.rename(tmpLink, currentLink);
+      const current = await fs.promises.lstat(currentLink).catch((error: NodeJS.ErrnoException) => {
+        if (error.code === 'ENOENT') return null;
+        throw error;
+      });
+      if (current?.isDirectory() && !current.isSymbolicLink()) {
+        // A legacy copy or damaged installation may own a real directory here.
+        // Preserve it until the replacement succeeds; rename cannot overwrite it.
+        const previous = path.join(toolRoot, `.current.previous-${randomUUID()}`);
+        await fs.promises.rename(currentLink, previous);
+        try { await fs.promises.rename(tmpLink, currentLink); }
+        catch (error) { await fs.promises.rename(previous, currentLink); throw error; }
+        await fs.promises.rm(previous, { recursive: true, force: true });
+      } else {
+        await fs.promises.rename(tmpLink, currentLink);
+      }
     }
   } catch (error) {
     await fs.promises.rm(tmpLink, { recursive: true, force: true });
@@ -504,6 +527,8 @@ export async function installTool(
 export interface GitNpmPinnedInstall {
   /** toolchain-первый bun executable. */
   bun: string;
+  /** Resolved Git executable (managed MinGit on Windows); bare git for legacy callers. */
+  git?: string;
   /** toolchain/<name>/<version> — BUN_INSTALL root (install/global + bin). */
   versionDir: string;
   /** 'owner/repo' на GitHub. */
@@ -529,9 +554,10 @@ export interface GitNpmPinnedInstall {
  *   1. clone pinned коммита (git fetch <sha> --depth 1, как marketplace.installer);
  *   2. `bun install --frozen-lockfile` В ЧЕКАУТЕ — транзитивы строго по локу,
  *      рассинхрон lock↔package.json → fail-closed (bun падает);
- *   3. `bun install --global <workDir>` — bun копирует каталог целиком, включая
- *      node_modules (проверено на 1.3.14: реальная копия, не symlink), поэтому
- *      runtime-резолв кода пакета идёт по вложенным pinned-зависимостям.
+ *   3. сохраняем checkout + node_modules в versionDir/source, затем выполняем
+ *      `bun install --global <sourceDir>` из собственного global project.
+ *      Локальные ссылки Bun остаются пригодны после удаления временного checkout;
+ *      runtime использует сохранённые frozen зависимости этой версии.
  *
  * Fail-closed (no legacy unpinned fallback):
  *   - нет bun.lock/bun.lockb в апстрим-чекауте → throw (refuse unpinned transitives);
@@ -539,25 +565,32 @@ export interface GitNpmPinnedInstall {
  */
 export async function installGitNpmPinned(req: GitNpmPinnedInstall): Promise<void> {
   const runCmd = req.runCmd ?? runCommand;
-  const env: NodeJS.ProcessEnv = {
+  const git = req.git ?? 'git';
+  const globalDir = path.join(req.versionDir, 'install', 'global');
+  const sourceDir = path.join(req.versionDir, 'source');
+  const binDirs = [path.dirname(req.bun), ...(req.git ? [path.dirname(req.git)] : [])];
+  const env: NodeJS.ProcessEnv = prependPath({
     ...process.env,
     // BUN_INSTALL направляет глобальную установку внутрь toolchain-layout:
     // versionDir/install/global/node_modules/<pkg> + лончер versionDir/bin/<bin>.
     BUN_INSTALL: req.versionDir,
+    BUN_INSTALL_GLOBAL_DIR: globalDir,
+    BUN_INSTALL_BIN: path.join(req.versionDir, 'bin'),
     // Лончеры сгенерированных npm-wrapper'ов должны находить именно этот bun.
     CRAFT_BUN_PATH: req.bun,
-  };
+  }, binDirs.join(path.delimiter));
   await fs.promises.mkdir(req.versionDir, { recursive: true });
+  await fs.promises.rm(path.join(req.versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), { force: true });
 
   let hasLockfile = false;
   await fs.promises.rm(req.workDir, { recursive: true, force: true });
   try {
     await fs.promises.mkdir(req.workDir, { recursive: true });
-    await runCmd(['git', 'init', '-q', req.workDir]);
-    await runCmd(['git', 'remote', 'add', 'origin', `https://github.com/${req.repo}.git`], { cwd: req.workDir });
+    await runCmd([git, 'init', '-q', req.workDir], { env });
+    await runCmd([git, 'remote', 'add', 'origin', `https://github.com/${req.repo}.git`], { cwd: req.workDir, env });
     // fetch по полному sha — content-addressed: FETCH_HEAD === req.commit.
-    await runCmd(['git', 'fetch', '-q', '--depth', '1', 'origin', req.commit], { cwd: req.workDir });
-    await runCmd(['git', '-c', 'advice.detachedHead=false', 'checkout', '-q', 'FETCH_HEAD'], { cwd: req.workDir });
+    await runCmd([git, 'fetch', '-q', '--depth', '1', 'origin', req.commit], { cwd: req.workDir, env });
+    await runCmd([git, '-c', 'advice.detachedHead=false', 'checkout', '-q', 'FETCH_HEAD'], { cwd: req.workDir, env });
     // Defense-in-depth: same HEAD===pin invariant as marketplace.checkoutPinnedRef.
     // runCommand is void (no stdout capture) — read detached HEAD from .git/HEAD.
     const headRaw = (await fs.promises.readFile(path.join(req.workDir, '.git', 'HEAD'), 'utf8')).trim();
@@ -587,9 +620,24 @@ export async function installGitNpmPinned(req: GitNpmPinnedInstall): Promise<voi
     // Транзитивы — строго по локфайлу апстрима; расхождение lock↔package.json
     // здесь фатально (fail-closed, зеркалит npm ci --frozen-lockfile).
     await runCmd([req.bun, 'install', '--frozen-lockfile'], { cwd: req.workDir, env });
-    // Global-install из чекаута: bun копирует каталог (включая node_modules) —
-    // pinned-транзитивы едут вместе с пакетом в versionDir/install/global.
-    await runCmd([req.bun, 'install', '--global', req.workDir], { env });
+    // Retain the frozen tree before publishing Bun's local-file links. Nested
+    // package links are materialized independently of the temporary checkout.
+    await fs.promises.rm(sourceDir, { recursive: true, force: true });
+    await fs.promises.cp(req.workDir, sourceDir, { recursive: true, dereference: true });
+    // An explicit local manifest/cwd prevents Bun from discovering and changing
+    // an ancestor workspace or a caller's global project.
+    await fs.promises.mkdir(globalDir, { recursive: true });
+    try {
+      await fs.promises.writeFile(path.join(globalDir, 'package.json'), '{"private":true}\n', {
+        flag: 'wx', mode: 0o600,
+      });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    }
+    await runCmd([req.bun, 'install', '--global', sourceDir], { cwd: globalDir, env });
+    await fs.promises.writeFile(path.join(req.versionDir, TOOLCHAIN_INSTALL_COMPLETE_MARKER), JSON.stringify({
+      format: 'git-npm-local-source-v1', repo: req.repo, commit: req.commit,
+    }) + '\n', { flag: 'wx', mode: 0o600 });
   } finally {
     await fs.promises.rm(req.workDir, { recursive: true, force: true });
   }

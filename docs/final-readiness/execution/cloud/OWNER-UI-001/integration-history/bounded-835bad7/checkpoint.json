@@ -1,0 +1,52 @@
+{
+  "objective": "Continue, verify and improve UI-001 within original owner scope",
+  "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+  "productCommit": "4c46b06c4a4b85ce903993878877216e19db9adb",
+  "acceptance": [
+    "Owned source and actual callback/component evidence delivered locally",
+    "Original full target acceptance remains open"
+  ],
+  "tasks": [
+    {
+      "id": "owned-implementation",
+      "status": "complete",
+      "productCommit": "4c46b06c4a4b85ce903993878877216e19db9adb"
+    },
+    {
+      "id": "owned-verification",
+      "status": "complete",
+      "evidence": [
+        "evidence/continuation-2-owned-stable.json",
+        "evidence/continuation-2-editor-refresh-green.json",
+        "evidence/continuation-2-original-browser-stable.json",
+        "evidence/continuation-2-typecheck-stable.json",
+        "evidence/continuation-2-renderer-stable.json",
+        "evidence/continuation-2-app-shell-stable.json",
+        "evidence/continuation-2-layout-stable.json",
+        "evidence/continuation-2-parser-gaps-stable.json",
+        "evidence/continuation-2-proposal-stable.json"
+      ]
+    },
+    {
+      "id": "shared-proposal",
+      "status": "qualified-unapplied",
+      "artifact": "lead-route-recovery-proposal-v4.patch"
+    },
+    {
+      "id": "local-delivery",
+      "status": "ready-for-replay-and-archive-readback"
+    },
+    {
+      "id": "lead-integration-and-original-targets",
+      "status": "external-prerequisite",
+      "reason": "See original contract, target-workflows and result prerequisites"
+    }
+  ],
+  "active_ids": {},
+  "decisions": [
+    "Original ownership/no delegation retained",
+    "No push/PR/main/provider/global actions",
+    "All historical failures retained; fullDoDClosed false"
+  ],
+  "next_action": "Package version 2 outputs, verify exact base replay and archive readback; integration then belongs to original lead/target owners."
+}

@@ -37,97 +37,116 @@ type LoadState =
   | { kind: 'not-found' }
   | { kind: 'ready'; run: RunRow; enabled: boolean }
 
+const CLOUD_RUN_REFRESH_INTERVAL_MS = 5_000
+
 export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const [attempt, setAttempt] = React.useState(0)
   const [snapshot, setSnapshot] = React.useState<{ runId: string | null; state: LoadState }>({ runId, state: { kind: 'loading' } })
   const state: LoadState = snapshot.runId === runId ? snapshot.state : { kind: 'loading' }
+  const [attempt, setAttempt] = React.useState(0)
+  const retry = React.useCallback(() => setAttempt((value) => value + 1), [])
 
   const openSettings = React.useCallback(() => {
     navigate(routes.view.settings('cloudRuns'))
   }, [navigate])
 
   React.useEffect(() => {
+    if (!runId) return
     let cancelled = false
-    let pending = false
+    let revision = 0
+    let inFlight = false
     const setState = (state: LoadState) => {
       if (!cancelled) setSnapshot({ runId, state })
     }
-    setState({ kind: 'loading' })
 
-    async function load() {
-      if (!runId || pending || cancelled) return
-      pending = true
+    async function load(showLoading = false) {
+      if (!runId || cancelled) return
+      const request = ++revision
+      const isCurrent = () => !cancelled && request === revision
+      const publish = (next: LoadState) => { if (isCurrent()) setState(next) }
+      inFlight = true
+      if (showLoading) publish({ kind: 'loading' })
 
       const api = typeof window !== 'undefined' ? window.electronAPI : undefined
-      if (!api?.listCloudRuns || !api?.getCloudRunsConfig) {
-        if (!cancelled) setState({ kind: 'unavailable', reason: 'no-api' })
-        pending = false
+      if (typeof api?.listCloudRuns !== 'function' || typeof api?.getCloudRunsConfig !== 'function') {
+        publish({ kind: 'unavailable', reason: 'no-api' })
+        inFlight = false
         return
       }
 
       try {
         const config = await api.getCloudRunsConfig()
+        if (!isCurrent()) return
         if (!config?.enabled) {
-          if (!cancelled) setState({ kind: 'unavailable', reason: 'disabled' })
+          publish({ kind: 'unavailable', reason: 'disabled' })
           return
         }
 
         const listed = await api.listCloudRuns()
+        if (!isCurrent()) return
+        if (!listed.enabled) {
+          publish({ kind: 'unavailable', reason: 'disabled' })
+          return
+        }
         const run = listed.runs.find((row) => row.id === runId) ?? null
 
         if (!run) {
           // Prefer status probe when list misses a still-owned run.
           try {
             const status = (await api.getCloudRunStatus?.(runId)) as RunRow['status'] | null
+            if (!isCurrent()) return
             if (status && typeof status === 'object' && 'state' in status) {
-              if (!cancelled) {
-                setState({
-                  kind: 'ready',
-                  enabled: true,
-                  run: {
-                    id: runId,
-                    name: runId,
-                    provider: listed.provider,
-                    createdAt: Date.now(),
-                    status,
-                  },
-                })
-              }
+              publish({
+                kind: 'ready',
+                enabled: true,
+                run: {
+                  id: runId,
+                  name: runId,
+                  provider: listed.provider,
+                  createdAt: Date.now(),
+                  status,
+                },
+              })
               return
             }
-          } catch {
-            // fall through to not-found
+          } catch (error) {
+            // Only a canonical missing result establishes deletion. A transport
+            // or authorization failure must remain unavailable and retryable.
+            const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : ''
+            if (code !== 'not_found' && code !== 'NOT_FOUND') throw error
           }
-          if (!cancelled) setState({ kind: 'not-found' })
+          publish({ kind: 'not-found' })
           return
         }
 
-        if (!cancelled) setState({ kind: 'ready', run, enabled: listed.enabled })
+        publish({ kind: 'ready', run, enabled: listed.enabled })
       } catch (error) {
-        if (!cancelled) {
-          setState({
-            kind: 'unavailable',
-            reason: 'error',
-            message: error instanceof Error ? error.message : String(error),
-          })
-        }
+        publish({
+          kind: 'unavailable',
+          reason: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        })
       } finally {
-        pending = false
+        if (isCurrent()) inFlight = false
       }
     }
 
-    void load()
-    // Cloud-run RPC currently has no change broadcast. Refresh boundedly while
-    // this address is mounted so completion/deletion reaches the selected host.
-    const timer = runId ? window.setInterval(() => { void load() }, 5000) : undefined
-    const onFocus = () => { void load() }
-    window.addEventListener('focus', onFocus)
+    // The canonical API has no run-change subscription. Keep the selected run
+    // current while visible; focus/visibility and Retry can recover a read that
+    // was pending when the transport changed, without submitting a new run.
+    const isVisible = () => typeof document === 'undefined' || document.visibilityState !== 'hidden'
+    const refresh = () => { if (isVisible()) void load() }
+    void load(true)
+    const timer = setInterval(() => { if (!inFlight) refresh() }, CLOUD_RUN_REFRESH_INTERVAL_MS)
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
     return () => {
       cancelled = true
-      if (timer !== undefined) window.clearInterval(timer)
-      window.removeEventListener('focus', onFocus)
+      revision += 1
+      clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
     }
   }, [runId, attempt])
 
@@ -189,8 +208,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
             {t('cloudRuns.surface.useChipHint')}
           </p>
         )}
-        <button type="button" onClick={() => setAttempt((value) => value + 1)} data-testid="cloud-run-surface-retry"
-          className="inline-flex h-8 items-center rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:ring-ring">
+        <button type="button" data-testid="cloud-run-surface-retry" onClick={retry} className="rounded-md border border-border px-3 py-1 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           {t('common.retry')}
         </button>
         <button

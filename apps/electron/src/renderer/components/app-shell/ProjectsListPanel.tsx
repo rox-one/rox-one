@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/styled-context-menu'
 import type { LoadedProject } from '@rox/shared/projects/types'
 import { SharedProjectsSection } from '@/components/projects/SharedProjectProjection'
+import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { deriveProjectSignals } from '@/features/product-tour/adapters/work/tasks-projects'
 
 export interface ProjectsListPanelProps {
   projects: LoadedProject[]
@@ -45,6 +47,18 @@ export function ProjectsListPanel({
   className,
 }: ProjectsListPanelProps) {
   const { t } = useTranslation()
+  const tourTarget = useTourTarget('projects.list', { workspaceId })
+  const tour = useTourSignals({ workspaceId })
+  const nativeProject = projects.find(project => project.workspaceId === workspaceId) ?? null
+  React.useEffect(() => tour.capability('projects.available', typeof window.electronAPI?.getProjects !== 'function'
+    ? { state: 'unavailable', reason: 'api-unavailable' }
+    : nativeProject ? { state: 'ready' } : { state: 'unavailable', reason: 'missing-entity' }), [tour, nativeProject])
+  React.useEffect(() => {
+    const observation = tour.capture()
+    for (const signal of deriveProjectSignals(observation, nativeProject, Boolean(nativeProject))) {
+      tour.emit(observation, signal.name, signal.level, signal.origin, signal.eventToken)
+    }
+  }, [tour, nativeProject])
 
   const handleDelete = React.useCallback(async (project: LoadedProject) => {
     // Deleting a project rm -rf's its folder + all assets, so confirm first — mirrors the
@@ -61,7 +75,7 @@ export function ProjectsListPanel({
 
   if (projects.length === 0) {
     return (
-      <div className={cn('flex flex-col flex-1 min-h-0', className)}>
+      <div ref={tourTarget} data-tour="projects.list" className={cn('flex flex-col flex-1 min-h-0', className)}>
         <SharedProjectsSection workspaceId={workspaceId} />
         <EntityListEmptyScreen
           icon={<FolderKanban />}
@@ -84,7 +98,7 @@ export function ProjectsListPanel({
   }
 
   return (
-    <div className={cn('flex flex-col flex-1 min-h-0', className)}>
+    <div ref={tourTarget} data-tour="projects.list" className={cn('flex flex-col flex-1 min-h-0', className)}>
       <SharedProjectsSection workspaceId={workspaceId} />
       <div className="px-4 pt-3 text-xs font-semibold">{t('sharedProjects.localHeading')}</div>
       <ScrollArea className="flex-1">

@@ -1,5 +1,5 @@
 import type { Meeting } from '@rox/core/meetings'
-import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { i18nKeyForProposalError } from './proposal-rpc'
 
 export type MeetingListItem = {

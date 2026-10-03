@@ -3,6 +3,7 @@ import {
   setDismissibleLayerBridge,
   type DismissibleLayerBridge,
   type DismissibleLayerRegistration,
+  type DismissibleLayerSnapshot,
 } from '@/lib/dismissible-layer-bridge'
 
 export interface DismissibleLayer extends Required<Pick<DismissibleLayerRegistration, 'id' | 'type' | 'priority' | 'close'>> {
@@ -12,17 +13,21 @@ export interface DismissibleLayer extends Required<Pick<DismissibleLayerRegistra
   order: number
 }
 
-interface DismissibleLayerContextValue extends DismissibleLayerBridge {}
+type DismissibleLayerContextValue = DismissibleLayerRegistry
 
 const DismissibleLayerContext = createContext<DismissibleLayerContextValue | null>(null)
 
 export interface DismissibleLayerRegistry extends DismissibleLayerBridge {
   registerLayer: (layer: DismissibleLayerRegistration) => () => void
+  getSnapshot: () => readonly DismissibleLayerSnapshot[]
+  subscribe: (listener: () => void) => () => void
 }
 
 export function createDismissibleLayerRegistry(): DismissibleLayerRegistry {
   const layers = new Map<string, DismissibleLayer>()
   let orderSeed = 0
+  const listeners = new Set<() => void>()
+  let snapshot: readonly DismissibleLayerSnapshot[] = Object.freeze([])
 
   const getOrderedOpenLayers = (): DismissibleLayer[] => {
     const open = Array.from(layers.values()).filter((layer) => layer.isOpen)
@@ -33,9 +38,14 @@ export function createDismissibleLayerRegistry(): DismissibleLayerRegistry {
     return open
   }
 
+  const publish = () => {
+    snapshot = Object.freeze(getOrderedOpenLayers().map(({ id, type, priority }) => Object.freeze({ id, type, priority })))
+    for (const listener of listeners) listener()
+  }
+
   const registerLayer = (layer: DismissibleLayerRegistration) => {
     const order = ++orderSeed
-    layers.set(layer.id, {
+    const registration: DismissibleLayer = {
       id: layer.id,
       type: layer.type,
       priority: layer.priority ?? 0,
@@ -44,10 +54,14 @@ export function createDismissibleLayerRegistry(): DismissibleLayerRegistry {
       canBack: layer.canBack,
       back: layer.back,
       order,
-    })
+    }
+    layers.set(layer.id, registration)
+    publish()
 
     return () => {
+      if (layers.get(layer.id) !== registration) return
       layers.delete(layer.id)
+      publish()
     }
   }
 
@@ -85,6 +99,11 @@ export function createDismissibleLayerRegistry(): DismissibleLayerRegistry {
   }
 
   return {
+    getSnapshot: () => snapshot,
+    subscribe: (listener) => {
+      listeners.add(listener)
+      return () => { listeners.delete(listener) }
+    },
     registerLayer,
     hasOpenLayers,
     getTopLayer,
@@ -123,6 +142,11 @@ export function DismissibleLayerProvider({ children }: { children: React.ReactNo
       {children}
     </DismissibleLayerContext.Provider>
   )
+}
+
+/** Shared primitives remain usable in isolated roots without the app registry. */
+export function useOptionalDismissibleLayerRegistry(): DismissibleLayerRegistry | null {
+  return useContext(DismissibleLayerContext)
 }
 
 export function useDismissibleLayerRegistry() {

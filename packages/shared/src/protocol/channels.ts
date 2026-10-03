@@ -4,6 +4,11 @@
  * Key paths are internal and may be reorganized freely.
  */
 export const RPC_CHANNELS = {
+  runtimeTrace: {
+    GET_SNAPSHOT: 'runtimeTrace:getSnapshot',
+    READ_EVENTS: 'runtimeTrace:readEvents',
+    READ_PAYLOAD: 'runtimeTrace:readPayload',
+  },
   cloudRuns: {
     GET_CONFIG: 'cloudRuns:getConfig',
     SET_CONFIG: 'cloudRuns:setConfig',
@@ -62,6 +67,7 @@ export const RPC_CHANNELS = {
     GET_PROVENANCE: 'sessions:getProvenance',
     EVENT: 'session:event',
     GET_MODEL: 'session:getModel',
+    GET_MODEL_CATALOG: 'session:getModelCatalog',
     SET_MODEL: 'session:setModel',
     GET_FILES: 'sessions:getFiles',
     GET_NOTES: 'sessions:getNotes',

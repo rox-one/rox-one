@@ -1,0 +1,133 @@
+--- a/apps/electron/src/shared/route-parser.ts
++++ b/apps/electron/src/shared/route-parser.ts
+@@ -426,7 +426,7 @@
+       }
+     }
+     // Unknown ref kind / missing id — degrade to nearest existing view
+-    return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
++    return null
+   }
+ 
+   // Cloud run surface — cloud-run/{runId}
+@@ -436,7 +436,7 @@
+     }
+     const runId = decodeURIComponent(segments.slice(1).join('/'))
+     if (!runId) {
+-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
++      return null
+     }
+     return { navigator: 'cloud-run', details: { type: 'cloud-run', id: runId } }
+   }
+@@ -461,7 +461,7 @@
+     }
+     const proposalId = decodeURIComponent(segments.slice(1).join('/'))
+     if (!proposalId) {
+-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
++      return null
+     }
+     return { navigator: 'diff', details: { type: 'diff', id: proposalId } }
+   }
+@@ -903,7 +903,7 @@
+     }
+   }
+ 
+-  return { type: 'view', name: 'allSessions', params: {} }
++  return null
+ }
+ 
+ // =============================================================================
+@@ -926,37 +926,42 @@
+   route: string,
+   sidebarParam?: string
+ ): NavigationState | null {
+-  // Parse compound routes
+-  if (isCompoundRoute(route)) {
+-    const compound = parseCompoundRoute(route)
+-    if (compound) {
+-      const state = convertCompoundToNavigationState(compound)
++  try {
++    // Parse compound routes
++    if (isCompoundRoute(route)) {
++      const compound = parseCompoundRoute(route)
++      if (compound) {
++        const state = convertCompoundToNavigationState(compound)
++        // Add rightSidebar if param provided
++        const rightSidebar = parseRightSidebarParam(sidebarParam)
++        if (rightSidebar) {
++          return { ...state, rightSidebar }
++        }
++        return state
++      }
++    }
++
++    // Parse as route (may be action or view)
++    const parsed = parseRoute(route)
++    if (!parsed) return { navigator: 'unavailable', route, reason: 'unsupported-route' }
++
++    // Actions don't map to navigation state
++    if (parsed.type === 'action') return null
++
++    // Convert view routes to NavigationState
++    const state = convertParsedRouteToNavigationState(parsed)
++    if (state) {
+       // Add rightSidebar if param provided
+       const rightSidebar = parseRightSidebarParam(sidebarParam)
+       if (rightSidebar) {
+         return { ...state, rightSidebar }
+       }
+-      return state
+-    }
+-  }
+-
+-  // Parse as route (may be action or view)
+-  const parsed = parseRoute(route)
+-  if (!parsed) return null
+-
+-  // Actions don't map to navigation state
+-  if (parsed.type === 'action') return null
+-
+-  // Convert view routes to NavigationState
+-  const state = convertParsedRouteToNavigationState(parsed)
+-  if (state) {
+-    // Add rightSidebar if param provided
+-    const rightSidebar = parseRightSidebarParam(sidebarParam)
+-    if (rightSidebar) {
+-      return { ...state, rightSidebar }
+-    }
+-  }
+-  return state
++    }
++    return state ?? { navigator: 'unavailable', route, reason: 'unsupported-route' }
++  } catch (error) {
++    if (error instanceof URIError) return { navigator: 'unavailable', route, reason: 'invalid-encoding' }
++    throw error
++  }
+ }
+ 
+ /**
+@@ -1616,6 +1621,7 @@
+  * Build a route string from NavigationState
+  */
+ export function buildRouteFromNavigationState(state: NavigationState): string {
++  if (state.navigator === 'unavailable') return state.route
+   return buildCompoundRoute(navigationStateToCompoundRoute(state))
+ }
+ 
+--- a/apps/electron/src/shared/types.ts
++++ b/apps/electron/src/shared/types.ts
+@@ -2690,7 +2690,15 @@
+ /**
+  * Unified navigation state
+  */
++export interface UnavailableNavigationState {
++  navigator: 'unavailable'
++  route: string
++  reason: 'unsupported-route' | 'invalid-encoding'
++  rightSidebar?: RightSidebarPanel
++}
++
+ export type NavigationState =
++  | UnavailableNavigationState
+   | SessionsNavigationState
+   | SourcesNavigationState
+   | SettingsNavigationState

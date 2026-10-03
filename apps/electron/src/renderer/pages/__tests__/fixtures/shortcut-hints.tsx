@@ -9,6 +9,11 @@ import { setupI18n } from '@rox/shared/i18n/setupI18n'
 import { PersonalTaskStore } from '@rox/core/tasks/personal'
 
 Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { platform: process.argv[2] ?? 'Win32' } })
+// Current Memory renders its read-capability state before effects run.
+// Supply the existing bridge capability without mounting effects or reading data.
+Object.defineProperty(globalThis, 'window', { configurable: true, value: {
+  electronAPI: { listMemoryLessons: async () => [] },
+} })
 const storage = new Map<string, string>()
 Object.defineProperty(globalThis, 'localStorage', { value: {
   getItem: (key: string) => storage.get(key) ?? null,

@@ -1,0 +1,263 @@
+[
+  {
+    "path": "apps/electron/src/main/__tests__/session-branch-rollback.isolated.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 4,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_main___tests___session-branch-rollback.isolated.ts.log"
+  },
+  {
+    "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 2,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_main_handlers___tests___registration-profiles.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 2,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_main_handlers___tests___registration.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 5,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___chrome-leftover-post-960.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.service-workspace-recovery.test.ts",
+    "exit": 1,
+    "counts": {
+      "pass": 0,
+      "fail": 4
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___rox-readiness-ui-001.service-workspace-recovery.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/components/app-shell/__tests__/service-panel-navigation.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 5,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___service-panel-navigation.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/components/app-shell/__tests__/terminal-cloudrun-hosts-nav.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 8,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___terminal-cloudrun-hosts-nav.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 1,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_components_app-shell___tests___zen-shell-native-browser.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/components/ui/__tests__/continue-visual-3-chrome.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 5,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_components_ui___tests___continue-visual-3-chrome.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/lib/__tests__/unknown-error-i18n.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 7,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_lib___tests___unknown-error-i18n.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/lib/__tests__/zen-shell-acceptance.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 9,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_lib___tests___zen-shell-acceptance.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.project-lifecycle.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 7,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_pages___tests___rox-readiness-ui-001.project-lifecycle.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/pages/settings/__tests__/extension-center-h4.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 3,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_pages_settings___tests___extension-center-h4.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/platform/__tests__/inspector-strip-host.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 3,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_platform___tests___inspector-strip-host.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/platform/__tests__/panel-inset-alignment.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 1,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_platform___tests___panel-inset-alignment.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/renderer/platform/__tests__/workbench-leftover-chrome.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 4,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_renderer_platform___tests___workbench-leftover-chrome.test.ts.log"
+  },
+  {
+    "path": "apps/electron/src/shared/__tests__/route-surfaces.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 57,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-apps_electron_src_shared___tests___route-surfaces.test.ts.log"
+  },
+  {
+    "path": "packages/messaging-gateway/src/__tests__/gateway-button-access.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 7,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_messaging-gateway_src___tests___gateway-button-access.test.ts.log"
+  },
+  {
+    "path": "packages/server-core/src/bootstrap/lock-identity.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 12,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_server-core_src_bootstrap_lock-identity.test.ts.log"
+  },
+  {
+    "path": "packages/server-core/src/handlers/rpc/__tests__/roadmap-model-provenance.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 2,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_server-core_src_handlers_rpc___tests___roadmap-model-provenance.test.ts.log"
+  },
+  {
+    "path": "packages/server-core/src/sessions/refresh-connection-runtime.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 8,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_server-core_src_sessions_refresh-connection-runtime.test.ts.log"
+  },
+  {
+    "path": "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 35,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_shared_src_agent_core___tests___prerequisite-manager.isolated.ts.log"
+  },
+  {
+    "path": "packages/shared/src/config/__tests__/storage-startup-migration.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 24,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_shared_src_config___tests___storage-startup-migration.test.ts.log"
+  },
+  {
+    "path": "packages/shared/src/config/theme-vibrancy.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 7,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_shared_src_config_theme-vibrancy.test.ts.log"
+  },
+  {
+    "path": "packages/shared/src/identity/__tests__/terminology-lint.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 7,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_shared_src_identity___tests___terminology-lint.test.ts.log"
+  },
+  {
+    "path": "packages/ui/src/components/annotations/__tests__/interaction-state-machine.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 4,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_ui_src_components_annotations___tests___interaction-state-machine.test.ts.log"
+  },
+  {
+    "path": "packages/ui/src/components/overlay/__tests__/rich-block-parity.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 2,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_ui_src_components_overlay___tests___rich-block-parity.test.ts.log"
+  },
+  {
+    "path": "packages/ui/src/components/overlay/__tests__/useRichBlockInteractions.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 4,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-packages_ui_src_components_overlay___tests___useRichBlockInteractions.test.ts.log"
+  },
+  {
+    "path": "tests/rox-suite/focus-native-ack.test.ts",
+    "exit": 0,
+    "counts": {
+      "pass": 3,
+      "fail": 0
+    },
+    "log": "/tmp/rox-branch-integration-20261003/ui1448-final-compat-tests_rox-suite_focus-native-ack.test.ts.log"
+  }
+]

@@ -1,0 +1,5 @@
+src/renderer/atoms/unified-shell.ts(15,15): error TS2305: Module '"jotai/vanilla/utils"' has no exported member 'SyncStorage'.
+src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts(3,40): error TS7016: Could not find a declaration file for module 'react-dom/server.browser'. '/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/node_modules/react-dom/server.browser.js' implicitly has an 'any' type.
+  If the 'react-dom' package actually exposes this module, consider sending a pull request to amend 'https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react-dom'
+src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts(46,24): error TS2774: This condition will always return true since this function is always defined. Did you mean to call it instead?
+error: "tsc" exited with code 2

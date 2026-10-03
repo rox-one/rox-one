@@ -1,0 +1,333 @@
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1352:9:
+      1352 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1326:9:
+      1326 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1354:9:
+      1354 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1328:9:
+      1328 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1352:9:
+      1352 │     case 'pages':
+           ╵          ~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1326:9:
+      1326 │     case 'pages':
+           ╵          ~~~~~~~
+
+▲ [WARNING] This case clause will never be evaluated because it duplicates an earlier case clause [duplicate-case]
+
+    apps/electron/src/shared/route-parser.ts:1354:9:
+      1354 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+  The earlier case clause is here:
+
+    apps/electron/src/shared/route-parser.ts:1328:9:
+      1328 │     case 'page-info':
+           ╵          ~~~~~~~~~~~
+
+bun test v1.3.14 (0d9b296a)
+ 
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-notes-legacy.test.js:
+(pass) route-parser: canonical Notes routes > builds canonical local Notes routes and round-trips nested note ids [2.13ms]
+(pass) route-parser: canonical Notes routes > does not expose retired legacy Notes routes [0.53ms]
+(pass) route-parser: canonical Notes routes > uses canonical Notes navigation-state keys [0.10ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.navigation-history-key.test.js:
+(pass) buildSemanticHistoryKey > changes when focused panel index changes even if routes are identical [0.06ms]
+(pass) buildSemanticHistoryKey > stays stable for identical semantic inputs [0.02ms]
+(pass) canRunInitialRestore > returns false until session metadata is ready [0.02ms]
+(pass) canRunInitialRestore > returns true only when all restore conditions are satisfied [0.01ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-board-session.test.js:
+(pass) route-parser: board session card > round-trips board without a session [0.52ms]
+(pass) route-parser: board session card > round-trips board/session/{id} as board + session details [0.04ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-legacy-settings.test.js:
+(pass) legacy settings redirects > redirects toolchain → runtime [0.21ms]
+(pass) legacy settings redirects > redirects preferences → context [0.02ms]
+(pass) legacy settings redirects > keeps Marketplace and Extensions as independent settings routes [0.21ms]
+(pass) legacy settings redirects > rejects unknown pages [0.01ms]
+(pass) legacy settings redirects > maps bare settings to Overview and keeps settings/app as App [0.02ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-inbox.test.js:
+(pass) inbox route > builds and parses inbox routes [0.36ms]
+(pass) inbox route > round-trips navigation state [0.24ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-extra-screens.test.js:
+(pass) extra screen routes > every extra screen id is a compound route prefix (rox:// accepts it) [0.05ms]
+(pass) extra screen routes > route builders [0.03ms]
+(pass) extra screen routes > segment parser rejects unknown ids [0.05ms]
+(pass) extra screen routes > dossier: parse, build and panel-key round trips [0.77ms]
+(pass) extra screen routes > radar: parse, build and panel-key round trips [0.02ms]
+(pass) extra screen routes > decisions: parse, build and panel-key round trips [0.02ms]
+(pass) extra screen routes > agents: parse, build and panel-key round trips [0.01ms]
+(pass) extra screen routes > focus: parse, build and panel-key round trips [0.01ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-automations.test.js:
+(pass) route-parser: automations routes > parses "automations" as automations navigator with no filter or details [0.29ms]
+(pass) route-parser: automations routes > parses "automations/scheduled" as automations with scheduled filter [0.03ms]
+(pass) route-parser: automations routes > parses "automations/event" as automations with event filter [0.02ms]
+(pass) route-parser: automations routes > parses "automations/agentic" as automations with agentic filter [0.02ms]
+(pass) route-parser: automations routes > parses "automations/scheduled/automation/automation-1" as filtered + details [0.02ms]
+(pass) route-parser: automations routes > parses "automations/automation/automation-1" as unfiltered + details [0.02ms]
+(pass) route-parser: automations routes > roundtrips automations (no filter, no details) [0.12ms]
+(pass) route-parser: automations routes > roundtrips automations with scheduled filter [0.01ms]
+(pass) route-parser: automations routes > roundtrips automations/scheduled/automation/automation-1 [0.02ms]
+(pass) route-parser: automations routes > roundtrips automations/automation/automation-1 [0.02ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.navigation-reconcile.test.js:
+(pass) normalizePanelRouteForReconcile > auto-selects session details for filter-only session routes [0.57ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit session details unchanged [0.02ms]
+(pass) normalizePanelRouteForReconcile > normalizes each session panel route independently [0.05ms]
+(pass) normalizePanelRouteForReconcile > keeps route unchanged when resolver leaves state without details [0.02ms]
+(pass) normalizePanelRouteForReconcile > keeps non-session routes unchanged with session-only resolver [0.03ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail route even if resolver tries to rewrite it [0.02ms]
+(pass) normalizePanelRouteForReconcile > keeps explicit detail routes distinct across multiple panels [0.03ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-meetings.test.js:
+(pass) meetings routes > route builders emit the meetings prefix [0.03ms]
+(pass) meetings routes > meetings is a compound route prefix [0.03ms]
+(pass) meetings routes > parses bare and detail meetings routes [0.34ms]
+(pass) meetings routes > round-trips navigation state and panel keys [0.43ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-connections.test.js:
+(pass) route-parser: Connections routes > round-trips the bare connections route [0.48ms]
+(pass) route-parser: Connections routes > does not throw on an unknown connections subpath [0.02ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-home.test.js:
+(pass) route-parser: Home routes > round-trips the bare home route [0.74ms]
+(pass) route-parser: Home routes > does not throw on an unknown home subpath [0.01ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-pages.test.js:
+(pass) pages routes > route builders emit the pages prefix [0.03ms]
+(pass) pages routes > pages is a compound route prefix [0.06ms]
+(pass) pages routes > parses bare pages route (library grid, no auto-selected detail) [0.51ms]
+(pass) pages routes > parses page detail route [0.04ms]
+(pass) pages routes > rejects malformed pages routes [0.02ms]
+(pass) pages routes > round-trips route ⇄ navigation state [0.32ms]
+(pass) pages routes > buildCompoundRoute emits pages routes [0.02ms]
+(pass) pages routes > round-trips navigation state ⇄ panel key [0.26ms]
+(pass) pages routes > automations panel key round-trips (regression: id had a leading slash) [0.02ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-tasks.test.js:
+(pass) tasks routes > route builders emit the tasks prefix [0.03ms]
+(pass) tasks routes > tasks is a compound route prefix [0.02ms]
+(pass) tasks routes > parses bare and detail tasks routes [0.45ms]
+(pass) tasks routes > round-trips navigation state and panel keys [0.44ms]
+
+docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001-proposal-temp-0J6irV/regression/rox-readiness-ui-001.route-parser-label-filter.test.js:
+(pass) route-parser: label filter routes > parses a plain label route [0.26ms]
+(pass) route-parser: label filter routes > round-trips a label route with session details [0.37ms]
+(pass) route-parser: label filter routes > builds label routes without details [0.01ms]
+(pass) route-parser: label filter routes > a stray query tail never leaks into the parsed labelId (slash-segment invariant) [0.02ms]
+(pass) route-parser: label filter routes > session ids extracted from label routes stay clean even with a query tail [0.02ms]
+
+ 67 pass
+ 0 fail
+ 240 expect() calls
+Ran 67 tests across 14 files. [173.00ms]
+
+{
+  "scope": "unapplied lead proposal only; patch is held in a temporary Git index and virtual compiler/bundler modules; actual shared source and existing tests are unchanged; no runtime/native integration",
+  "patch": "docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-recovery-proposal-v3.patch",
+  "patchSha256": "ec543cc7035abce76d5cf20abfec6e9b6287b7a276a87f70f522ca929b9ab57e",
+  "proposedPaths": [
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "apps/electron/src/renderer/lib/nav-helpers.ts",
+    "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts",
+    "apps/electron/src/shared/route-parser.ts",
+    "apps/electron/src/shared/types.ts"
+  ],
+  "candidateSourceSha256": {
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "a7fdb197b5f37b842113f09e400bc217a207a549c146ab16a10f120db98a595e",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts": "30aacd7544976ec684c5ec3c6b34fa7822d6bde363d79eda84db8f8971d9a3a6",
+    "apps/electron/src/shared/route-parser.ts": "c310fe7dc1674875f01bd999c1eaab72a03b0441453d918334ccd9927534aae5",
+    "apps/electron/src/shared/types.ts": "0c31972dd5cdb053d039845134cb8ff85a13d555655f7bc0f7feacf0a599681b"
+  },
+  "actualSourceUnchanged": {
+    "apps/electron/src/shared/route-parser.ts": "8afa43adf5397285211597dd6ae08199c5c7f7d8610490dad7bb0345ceadd487",
+    "apps/electron/src/shared/types.ts": "a8edf4a2b0a970b5333a7a7d017f5259ad62958e30f37d0bfafdb05b21024db4",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "b1ca9afdabd16f5be59b5d4db250b193b9b5a762b447cf7ef8575dd7fbc2df3a",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fb09c3e16677369e0df4a165e10d0b8c738b4272d0273f3bf0c277c754ba365a",
+    "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts": "cbfe2a8303669ebf0ab2e036112f40ee81547f250b476e0d648495d98b4f9cab"
+  },
+  "regression": {
+    "files": [
+      "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts",
+      "apps/electron/src/renderer/contexts/__tests__/navigation-history-key.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-pages.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-tasks.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-label-filter.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-home.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-board-session.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-legacy-settings.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-inbox.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-automations.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-meetings.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-extra-screens.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-connections.test.ts",
+      "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts"
+    ],
+    "proposedTestUpdates": [
+      "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts"
+    ],
+    "exitCode": 0
+  },
+  "results": [
+    {
+      "name": "Unavailable route unknown-surface/one retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route unknown-surface/one survives a persisted panel key",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/unknown-kind/one retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/unknown-kind/one survives a persisted panel key",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/document/%E0%A4%A retains its raw identity",
+      "pass": true
+    },
+    {
+      "name": "Unavailable route knowledge/document/%E0%A4%A survives a persisted panel key",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip allSessions/session/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip sources/source/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip skills/skill/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip projects/project/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip notes/note/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip pages/page/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip knowledge/document/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip extension/one/view",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip terminal/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip cloud-run/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip dossier/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip radar/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip decisions/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip agents/item/one",
+      "pass": true
+    },
+    {
+      "name": "Canonical candidate route round-trip focus/item/one",
+      "pass": true
+    },
+    {
+      "name": "Action routes keep their side-effect-only navigation contract",
+      "pass": true
+    },
+    {
+      "name": "Retired Notes route keeps its own unavailable identity",
+      "pass": true
+    },
+    {
+      "name": "Malformed persisted unavailable keys fail safely without a decode exception",
+      "pass": true
+    },
+    {
+      "name": "Unavailable routes stay visible as compact detail surfaces",
+      "pass": true
+    },
+    {
+      "name": "Canonical session identities survive their emitted legacy panel key",
+      "pass": true
+    },
+    {
+      "name": "Explicit missing session identity is retained through empty metadata",
+      "pass": true
+    },
+    {
+      "name": "Deleted explicit sessions do not become another available session",
+      "pass": true
+    },
+    {
+      "name": "Foreign-workspace session metadata becomes its own unavailable route",
+      "pass": true
+    },
+    {
+      "name": "Local and remote aliases keep valid explicit session identity",
+      "pass": true
+    },
+    {
+      "name": "List-only session routes retain their existing auto-selection",
+      "pass": true
+    },
+    {
+      "name": "Existing parser/history regression tests under the virtual candidate",
+      "pass": true
+    },
+    {
+      "name": "Full Electron typecheck with virtual parser/types overlay",
+      "pass": true
+    }
+  ],
+  "diagnostics": []
+}

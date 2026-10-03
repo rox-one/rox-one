@@ -33,6 +33,8 @@ export type MailState = 'disabled' | 'unreachable' | 'no-mailbox' | 'provisionin
 export interface MailStatus {
   flag: typeof MAIL_FLAG
   enabled: boolean
+  /** Explicit setup or an existing mailbox; false is the absent optional local pilot. */
+  configured?: boolean
   state: MailState
   serverUrl: string
   domain: string
@@ -42,6 +44,10 @@ export interface MailStatus {
   address: string | null
   push: 'open' | 'retry' | 'off'
   error?: string
+}
+
+export function isOptionalMailSetup(status: MailStatus | null | undefined): boolean {
+  return status?.configured === false && status.local && !status.address && status.state === 'unreachable'
 }
 
 export type MailFolderRole = 'inbox' | 'sent' | 'drafts' | 'archive' | 'junk' | 'trash'

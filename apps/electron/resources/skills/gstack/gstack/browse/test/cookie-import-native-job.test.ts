@@ -4,6 +4,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, opendirSync, readdirSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { once } from 'node:events';
 import { createHash, randomUUID } from 'node:crypto';
 import { Database } from 'bun:sqlite';
@@ -15,7 +16,9 @@ import { nativeCookieEnvironment, NATIVE_COOKIE_NODE_SCRIPT, superviseNativeCook
 import { decodeNativeCommandLine } from './fixtures/native-cookie-process-observer';
 import { createFixtureDeleteLease, FixtureDeleteError } from './fixtures/native-cookie-delete-lease';
 
-const root = mkdtempSync(path.join(tmpdir(), 'cookie-job-'));
+// Keep every fixture child in the same physical namespace as ownership checks.
+// On macOS tmpdir() may use /var while realpathSync() returns /private/var.
+const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'cookie-job-')));
 const resolvedRoot = realpathSync(root);
 const initialRootState = lstatSync(root, { bigint: true });
 const fixtureChildren = new Set<ChildProcess>();
@@ -347,6 +350,7 @@ const request: NativeCookieRequest = {
 };
 
 function kernelContract(mode: string) {
+  const entry = path.join(root, `kernel-contract-${mode}-${randomUUID()}.mjs`);
   const script = `
     const calls = [];
     globalThis.__nativeCookieFfi = {
@@ -371,7 +375,10 @@ function kernelContract(mode: string) {
     const boundary = "await import('bun:ffi')";
     if (source.split(boundary).length !== 2) throw new Error('FFI adapter boundary changed');
     const javascript = new Bun.Transpiler({ loader: 'ts' }).transformSync(source.replace(boundary, 'globalThis.__nativeCookieFfi'));
-    const { createNativeCookieJob, joinNativeCookieJob } = await import('data:text/javascript;base64,' + Buffer.from(javascript).toString('base64'));
+    // Bun 1.3.14 treats long data URLs as filesystem paths. The exact adapter
+    // bytes still execute in this owned fixture, with only the FFI seam replaced.
+    await Bun.write(${JSON.stringify(entry)}, javascript);
+    const { createNativeCookieJob, joinNativeCookieJob } = await import(${JSON.stringify(pathToFileURL(entry).href)});
     Object.defineProperty(process, 'platform', { value: 'win32' });
     if (${JSON.stringify(mode)} === 'create') {
       const job = await createNativeCookieJob();

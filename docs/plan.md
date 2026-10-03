@@ -1,6 +1,22 @@
+## MCP connection deadline/privacy recovery plan — 2026-10-03
+
+1. Freeze source1436 and current4fec, compare actual symbols. Retain current Qdrant storage ownership, local resolver authority, pool config/generation/recovery semantics; recover only proven missing budgets/diagnostic filtering.
+2. Add per-lease total startup/discovery budgets and physical startup deadline, observe fetch/start cancellation, and await SDK shutdown. Preserve another Qdrant lease and never replay failed tools. Redact SDK diagnostic credentials with linear URL handling; filter inherited validation host credentials.
+3. Exercise actual transports/children with held initialize/list responses, stale/terminal close, explicit cancellation, stubborn EOF, hostile URL/error bodies and Qdrant shared continuity, alongside current pool/source/redirect/no-replay tests. Retain failure history; run inherited strict types and actual main/preload build.
+4. Reconcile current main, freeze source/log receipt and publish/attach separate candidate. Root reviews/merges; original branches remain intact, native Windows/provider acceptance is bounded explicitly.
+
+## Windows dependency/bootstrap selective recovery plan — 2026-10-03
+
+1. Freeze source1436, enumerate137 actual diff paths and CodeQL annotations; compare current OMP/native/MCP consumers before selecting dependencies. Preserve all original branches and dirty user checkout.
+2. Recover coherent dependency/bootstrap/packaging/toolchain slice; adapt only current Electron startup and config. Preserve current upgrade identity/CJS flags/pinned OMP/native policy and current shell consumers. Remaining MCP/local-source/host Bash/perf scopes remain owned follow-ups.
+3. Fix receipt descriptor/size/replacement race with actual adversarial filesystem checks; qualify explicit modes, real private/system exclusions, companion removal, re-probes, damaged generated launcher repair/rollback, pinned payload corruption and production OEM refusal. Run inherited relevant tests/types/current builds, retaining source mismatch history and native Windows skips.
+4. Reconcile latest main, freeze revision/proof hashes, commit/push a separate attached PR. Root reviews/merges. Actual installed Windows execution, NSIS provisioning and OEM release payload remain external platform/release gates, distinct from bounded source acceptance.
+
+
 ## Inspector resize recovery task graph — 2026-10-03
 
 Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.
+
 ## Golden Gate chat output recovery plan — 2026-10-03
 
 1. Freeze source helper/current auto-scroll sites and coordinate ChatDisplay regions with Product Learning worker. pr_scout owns output scroll only; root owns merge and Inspector/credential integration.
@@ -852,3 +868,123 @@ Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating 
 Owner: voice feature worker; integration/remote merge: lead. Recover the source overlay's genuine owner/event-producer gap via current authenticated VoiceHost, rather than legacy raw SET_OVERLAY. Build the child-only preload in development, package aliases and Windows/native desktop routes; verify snapshot/subscription lifetime and rendered recording identity. Exercise foreign sender/recording, remote/background actor, revoke/disconnect/close, repeated stop, owner blur/focus and command denial; retain current consent and composer finalization. Deliver as a separate PR with revision-bound native-port, actual Chromium, WS, types and build receipts. Full OS focus/microphone/native acceptance is not established by mocks or browser fixtures.
 
 Overlay qualification: archive dependency PR1430 is merged into main d4846751fe993f076d9fce329bdc7e1f6f342899. The recovered overlay passes 110 focused tests / 381 assertions, three actual Chromium cases / seven assertions, and a real authenticated WebSocket owner/revocation control. Shared, server-core and Electron TypeScript checks and main, all three preloads and renderer builds pass. The earlier comprehensive native fixture remains unqualified on this candidate because its existing 500ms handshake gate timed out under concurrent host load before the added overlay assertions; its deadlines remain unchanged, and the new narrow actual WS control uses production client defaults. Full OS focus/microphone/provider acceptance remains separate.
+The earlier163-test runtime checkpoint and its missing-producer type errors are retained as historical evidence, not current acceptance. The current clean recovery composes the authenticated native-domain producer layer, canonical personal-task CAS/read-back, Notes per-handle custody, actual chat/input hooks and source5069 continuity/reset/presentation fixes. Foundation1434 own-data diagnostic projection and unknown signal level/origin rejection remain intact. Current qualification and failures are recorded separately in docs/integration-history/product-learning-current-20261003; no older cumulative source tree, generated report or zero-execution child run is accepted as this candidate.
+
+### Product Learning native producers — foundation slice
+
+Owner: native producer worker. Dependencies: exact runtime `0b4e79ae6`, current native Notes/Tasks authority and source-selector controls. Selectively recover source finala6 producer hunks without copying old screens. First qualify actual source-selection browser and canonical native task creation/link observations; then fix shared Notes close custody using source/current negative controls. Preserve original tests and document the overlap fixture's intentional custody change: the obsolete opening is released before awaiting the latest start, with an explicit no-premature-start control. Re-run native replica authority/receipt and current Notes revision controls. Commit a coherent reviewed slice for runtime qualification; remaining Notes/Tasks/Projects/Memory/Pages/Search/Feed/Meetings/Connections screen targets and actual observations continue in the same bounded producer branch.
+
+## Product Learning native domain producer recovery — 2026-10-03
+
+Owner: recent feature worker; dependency: current Product Learning runtime/adapters and foundation1434; lead owns ordered merge. Select only existing canonical Notes, Tasks/Projects, Memory, Pages, Search, Feed/Inbox, Meetings/Automations and Connections/Sources/Skills consumers from preserved finala6@35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5. Scope targets by their real workspace/panel/entity. Capture each original learning attempt before the native operation; publish content-free evidence only after matching native receipt/revision and required exact canonical readback, or actual trusted current view/iframe load. Unknown native availability, policy, entity, pending or rejected reads are not successful completion. Retain current Notes comment drafts/responsive/auxiliary controls, Connections request generations/workspace filters, Meetings pushed-state/lifecycle fences and personal-task import validation.
+
+Native Notes shared bridge custody serializes obsolete open/close across remount/StrictMode controllers while preserving issuer/actor/workspace/permission fences; ordinary close of one handle never globally revokes another verified handle. Task observers run only after accepted native CAS and canonical readback; observer errors cannot reverse durable saves. Task delegation requires durable session linkage before sending a prompt, exact saved task/session/prompt evidence and the original mounted workspace generation throughout. Disabled learning adds no observation-driven mutations or extra creation readback. Source picker selection intent waits for the actual App session source-changed event.
+
+Verification uses actual component callbacks with controlled native ports, real private task persistence/restart, native Notes custody/receipt controls, real production source-picker/Meeting/Automation/Feed browser surfaces, and retained current lifecycle/privacy regressions. Negative before-source controls are retained separately. Relevant package types/main/preload/renderer builds qualify delivery; physical microphone, host secrets, installed native interaction and full program acceptance remain separate. Original source branches remain unchanged.
+
+## Product Learning runtime integration graph — 2026-10-03
+
+1. pr_scout delivered final a6 contracts/core/persistence/analytics and hardened private diagnostics in1434; historical integration owns subsequent frozen5069 foundation deltas plus UI/runtime/catalogue/adapters/App/shell/settings/modal composition and all12 translation unions. recent_features owns selective existing native-domain producer target refs/committed observations without editing new adapter paths. Parent owns exact-head merges; every original source branch is retained.
+2. Apply bounded source hunks to today's App/AppShell/MainContentPanel and native UI registries; preserve current route/panel/scope/credential/consent owners rather than replace cumulative old files. Bind welcome/session events to the canonical event processor and correlate actual accepted/final responses.
+3. Qualify source catalogue/target/geometry/modal/engine policies and negative scope/lease/evidence cases; use the real source browser/native harness with isolated throwaway profile and real authenticated Notes journal. Browser/native receipts must identify actual passing cases and failure history. Feature flag stays opt-in and absent capability must remain blocked.
+4. Compose independently qualified producer layer, exercise all actual user paths and current failure/recovery controls, then source-family close each of9new tips with exact per-layer source/final commit mapping. No foundational pure test, static render or private draft PR establishes full installed-native or production acceptance.
+## Product Learning renderer runtime recovery — 2026-10-03
+
+Owner: historical integration; foundation: PR1434 contracts/core/persistence/analytics. Source finala6 `35f78fa2665e9f2e8a3ad20a07e2282bd7f0dde5` includes the substantive A1/A2/A3/A8/A9 learning system patches; separately retain a7 isolated browser-test fix, a10 required real-browser reader checks and baseline1933748 native workflow. Recover runtime, catalogue, domain adapters, measured target registry/geometry/spotlight, explicit Settings enable/replay/reset and current App/session/modal bridges. The feature remains disabled by default. Preserve current panel/workspace/session binding, canonical native domain authority, real commit/event evidence, capability refusals and twelve locale unions. Merely mounting targets or optimistic callbacks cannot complete a durable/native step. No workflow supplies new grants, credentials or provider authority.
+
+The earlier163-test runtime checkpoint and its missing-producer type errors are retained as historical evidence, not current acceptance. The current clean recovery composes the authenticated native-domain producer layer, canonical personal-task CAS/read-back, Notes per-handle custody, actual chat/input hooks and source5069 continuity/reset/presentation fixes. Foundation1434 own-data diagnostic projection and unknown signal level/origin rejection remain intact. Current qualification and failures are recorded separately in docs/integration-history/product-learning-current-20261003; no older cumulative source tree, generated report or zero-execution child run is accepted as this candidate.
+
+
+## Route recovery integration graph —2026-10-03
+
+Integration lead owns current isolatedmain plus source1420 merge, comparative1412/1417 semantic review, meaningful raw-query delta and current route/native resource consumers. Review source → execute canonical entity/source callback adverse controls → real mounted NavigationProvider/history/readiness/ABA Chromium → native query isolated callbacks → type/build/12locale gates → immutable source/qualification receipt → separate PR/merge/readback. Source execution archives remain on preserved original branches. Source1417 distinct SkillInfo watch/draft repair is delivered separately after this source owner is stable. Workers independently own ChatScroll, ProductLearning and Windows runtime.
+
+### Product Learning native domain reconciliation (2026-10-03)
+
+Voice learning observes the existing consent-gated capture and actual draft insertion only, preserving original attempt identity, single STOP, current input and explicit clipboard delivery. The native microphone prompt opens and closes the captured handoff; refusal, cancellation, no speech and clipboard-only completion emit no insertion evidence. Fresh bounded DOM evidence: 16 cases, 0 failures, 61 assertions; Notes/Meetings/current consumer callbacks: 21 cases, 0 failures, 80 assertions. These use private controlled ports, not OS microphone/clipboard acceptance. Preserve current Notes workspace generation and PageView digest-scoped error ownership. Owner: recent_features; dependencies: current main/native authority and the clean Product runtime (b001 lineage); final current-main reconciliation and scoped native task tests remain pending.
+
+
+### Current native caller integration for Product Learning (2026-10-03)
+
+The native-domain producer preserves main 4fec686d ownership: actor/workspace-scoped task cache, per-call transport fencing, current Feed caller verification, Inbox queue/detail controls, Notes committed generations, and consent-gated bounded Voice audio frames. Task delegation captures the existing task authority lifetime before session creation, commits the task/session link by native CAS with exact canonical read-back before sending the ordinary prompt, and refuses continuation after a same-workspace actor switch. A native quick-create ACK updates the cache; teaching evidence requires matching canonical read-back, and a denied read does not turn an accepted write into a retryable failure. Stable delegation errors from source5069 are translated in all12 locales and keep private native/RPC messages out of the UI. Owner: recent_features; framework/adapter composition: historical_sweep. Evidence: task/source callback controls27/0/473 plus actual private-store scope-transition child2/0; operational old3342 task callback negative0/4 then recovered callbacks7/0/37. Fresh combined framework types, browser, and build qualify final publication.
+## Skill and history recovery integration (2026-10-03)
+
+Owner: root branch integration. Dependency: route recovery #1446, current Windows bootstrap #1443 and fixture repair #1445. Adapt the remaining #1417 skill catalog/draft behavior and history switch failure signal onto current owner/revision guards; preserve newer main. Verify actual mounted callbacks and real native inputs with controlled backends, restore old source in isolated fixture bundles as negative controls, then run Electron types and renderer build. Browser fixtures compile with Node before launch. The Skill lane uses Node's test runner because the Bun host repeatedly stalled while closing Chromium; all behavior assertions and failure history are retained. Commit and merge a separate PR while retaining both source and integration branches.
+
+### Golden Tasks recovery verification — 2026-10-03
+
+Owner: recent_features; integration/remote merge owner: root. Dependencies: current native PersonalTaskPersistStore, personalTasks RPC CAS and caller-scope lifetime, current Tasks import validation and shell sidebar ownership. Implement a confirmed merge-import seam in the existing shared renderer store; connect the actual file callback and an opt-in responsive layout in the current Tasks consumer. Verify real native disk restart, denied/forged/partial ACK/readback, mid-await edits and actor/workspace ABA; exercise actual TasksPage DOM with compiled production stylesheet for pending file reads, persistence refusal, focus return, outside focus, narrow navigation and resize. Retain failures and exact source fingerprints; reconcile fresh main and current Product Learning producers before final delivery. Original source branches are preserved.
+
+
+
+## Infrastructure recovery graph — 2026-10-03
+
+1. Scout owns exact1448 installer/manager, RPC transport/types plus current Workspace License guard, serial runner/package test entry, and the reproduced extension-worker custom output-path repair. Depend on merged1443 Windows bootstrap and1450 MCP privacy; preserve all current namespaces, pins and native authority. Lead owns1448 navigation/resources/native executable harness and original branch disposition.
+2. Run actual pinned Bun local frozen CLI install and launcher replay after temporary/local dependency removal, ancestor manifest/lock isolation, same-version reload repair, malformed/linked/oversized receipt refusal, invalid partial pre-flip admission and current pointer mismatch. Retain current Windows/binary/Python/npm controls.
+3. Exercise actual WebSocket response revoke/expiry/replacement/native generation plus Workspace guard composition, zero serialization on denial. Exercise serial runner child mock/profile isolation, byte-complete output/failed prerequisites/continued failure history and actual repository inventory. Run relevant types, full default/custom main worker build and preload; preserve failed source comparison history.
+4. Freeze source and environment/hash receipt, reconcile freshmain, commit/push separate PR and attach. Parent owns merge. Native Windows/installed Electron/physical capture/provider acceptance is separate; no whole1448 or full branch-audit completion claim.
+
+### Golden voice append recovery — 2026-10-03
+
+Owner: recent_features; dependency: current native Voice capture and Product Learning consumer. Append the completed transcript to the latest draft without adding a second separator when that draft already ends in whitespace. Preserve the explicit trailing-space delivery preference, current capture identity, consent and single-STOP ownership. Verification uses the actual VoiceDictationControl DOM with deferred STOP and all six space/newline/tab × delivery-preference combinations; existing consent, cancellation, clipboard and stale-attempt controls remain required.
+## Portable resources follow-up (2026-10-03)
+
+Root owns the resource-copy/main-protocol/native-harness subset of #1448; pr_scout owns installer, runner and RPC admission; route UI is separate. Exercise actual registration AST with controlled OS callbacks, real temporary resource trees and pre-spawn executable validation. Preserve original failure history, current Windows source and every source branch; deliver separate PR. Skill/history browser logs are archived here as a documentation follow-up because global ignore rules omitted compressed files from #1451.
+
+
+## UI-001 route integration graph —2026-10-03
+Root recovers actual public parser/current route leaves and93 remaining source paths; scout14 infrastructure already1455 and native resources1452. Historical worker proves1457 against the real mounted35-case history route. Qualify isolated native/PG UTF8/current compatibility/Swift consumers, retain failed fixtures, reconcile latestmain then repeat affected build/types. Commit revision/consumer/log receipts and merge one separate UI PR preserving every source branch.
+
+- Tasks import follow-up ownership review: register the background operation before opening transport; import invalidates background epochs, drains already dispatched same-owner work, then reads current canonical storage. Cover a held earlier refresh and held earlier write ACK with real native persistence (baseline8pass/2fail; recovered10pass/0fail). Refresh/sync cannot publish or issue a later call across that import lifetime.
+
+### Recover native overlay recording custody (2026-10-03)
+
+- Owner: recent_features; integrate source A7 `eeddeb5bd0af59b93fd121c10b8a7a52956ff0b7` in a separate `codex/` branch after merged Product Learning. Preserve all original branches.
+- Carry recording ID only for authenticated overlay stop/cancel, validate command/ID and managed native client, retain current private child sender/phase/owner checks.
+- Bind queued START/permission commands to the current native recording and capture generation; clear on completion/cancel/failure; cancellation wins. Preserve current learning observation and native consent/PTT paths.
+- Verify actual two-composer/browser owner pipeline with before/after negative proof, delayed START and grant, idle/foreign/retired packets, current 25 dictation regressions, native command/owner and authority/protocol suites, full Electron types and main/preload bundles. Retain failure history; controlled browser/native ports do not establish OS microphone or clipboard acceptance. Parent owns remote merge; delivery receipt remains separate from implementation.
+
+## Legacy MCP SSE recovery graph (2026-10-03)
+
+1. Scout adapts only the missing #1436 pool negotiation onto current #1450 deadlines/privacy and #1455 infrastructure, preserving all modern recovery/config/source ownership. Root reviews and merges a separate qualified PR; source branches stay intact.
+2. Exercise real SDK legacy-SSE servers with HTTP initialize 400/404/405, header retention, mapped tool call and unchanged-config resync. Exercise actual HTTP401/403/429/500/503, health/discovery405 and both-failure credential scrub; preserve current transient retry and no-replay controls.
+3. Exercise deterministic lifecycle cancellation during HTTP cleanup and SSE initialization, shrinking connection budget, expired-budget cleanup. Run all current MCP controls and shared/Electron types with pinned Bun and exact owned workspace dependency bindings. Retain initial failed fixture/cancellation observations, source regression proof and exact revision receipt.
+4. Publish/attach the bounded PR, record exact remote head and parent merge readback, then continue local-source health/migration, host Bash and performance residuals. No whole137-path completion claim.
+
+
+## Workspace shortcut popover integration —2026-10-03
+Owner root. Depends on existing rail-links/Popover/Select and current product-tour hooks. Import1447 selectively, repair viewport constraints, qualify nine actual DOM cases and old25px negative, run full Electron types; commit proof and merge a separate PR preserving source branch. Completed local checks in docs/integration-history/workspace-link-popover-20261003.
+
+## Passive Runtime Map integration graph — 2026-10-03
+
+1. Owner historical_sweep audits all 127 exact PR #1444 source paths, retains current native/account/Product Learning authorities and recovers passive producers, canonical ingress, scoped reader and actual retained ChatPage consumers. Root reviews and merges a separate PR; original branches remain intact.
+2. Reproduce source getter/prototype disclosure and delayed child misbinding, repair own-descriptor projection and actual dispatch custody, preserve invalid-before-blob-write and native observer quota controls. Retain source and intermediate failure history.
+3. Exercise current privacy/authority/producer/failure controls, hardcoded IPC inventories, all 12 actual locale catalogues, real Chromium runtime UI/performance and retained App/Notes flows, and the actual pinned OMP SDK using a network-free controlled model. Distinguish hook-port race proof from normal native SDK execution and installed/native acceptance.
+4. Preserve append-only shared documentation when reconciling current main, publish/attach the exact qualified PR and record remote head. Receipts name disjoint later merges and the precise revision of each gate instead of claiming full release acceptance.
+
+## Local source recovery integration graph (2026-10-03)
+
+1. Scout recovers storage/local-state + actual SourceManager/BaseAgent consumers, source credential admission and public MCP builder semantics; preserve current builtin catalog, managed stdio account secrets, live MCP definitions and explicit source ownership. Adapt exact old Windows default migration through bounded same-descriptor file admission, not the original path-check/path-write race.
+2. Exercise actual local variable resolution, repeated agent context, explicit empty/disabled/missing folders, metadata arrival order, stale-type auth and current managed credential guards. Exercise real temporary-file obsolete migration/idempotence/custom prefs/old-path evidence, link/hardlink/FIFO/oversize/content replacement refusal and fresh exclusive default seeding. Keep native Windows migration controls explicitly skipped off Windows.
+3. Run source/current SourceManager and adjacent builder/builtin credential controls, shared/Electron types; freeze source and bounded receipt. Compare actual old consumers to prove the gap, retain failure history, reconcile current main and publish/attach separate PR for lead review/merge.
+4. Continue #1436 host Bash lifetime and collection/knowledge performance actual consumers and function-level ledger; no whole original branch acceptance from this slice.
+
+## Host Bash recovery graph (2026-10-03)
+
+1. Scout selectively restores the #1436 host environment/context/process slice onto current main. Preserve exact managed18.4.12/policy, current source/MCP credential context, canonical env blocklist, sandbox and cwd controls. Keep all original branches and the parent's dirty checkout untouched.
+2. Exercise the actual factory → context → core registry → Bash with an owned managed CLI, under Bun and native Node, and the same no-provider negative. Exercise fresh per-call values, blocked credentials, Windows case folding, startup-file/function refusal, private provider failure/deadline/no-late-spawn and actual inherited pipes after root exit. Retain the original native Windows fixtures and add actual configured shell/cmd/descendant lifetime controls with explicit off-platform skips.
+3. Compare baseline/source against exact startup canary and orphan-pipe probes; retain failed fixture history and bounded cleanup of fixture-owned PIDs. Run focused/adjacent session runtime and tool-definition controls plus shared/Electron typechecks. Freeze exact implementation and receipt, commit/push/attach a separate PR; root owns remote merge.
+4. Continue Knowledge availability cache and the exhaustive137-path function/caller disposition. Historical owns the independent AppShell collection persistence/grouping gap. Native Windows execution and full installed release acceptance remain separately stated.
+
+
+## Collection preference recovery — 2026-10-03
+
+1. Historical worker: reproduce reset and grouping failures on the exact current AppShell consumer with real native JSON storage (original 0/9).
+2. Restore current preference loads and sole canonical grouping; add per-store load/edit/event/ABA ownership and dispatched-write ordering, including previous-workspace projection isolation.
+3. Qualify native persistence and current related callbacks (33/0/80), mounted exact AppShell callbacks in Chromium, and current Electron types after main reconciliation. Preserve original failure history and all source branches; lead reviews and merges the separate PR. Installed/native platform acceptance remains separate.
+
+### Golden task date validation recovery — 2026-10-03
+
+Owner recent_features: restore exact ISO calendar-day validation in the current parser; verify impossible-date refusal and valid leap-day persistence through the actual TaskDetail form. Keep before-fix unit/browser failures, full personal-task regression checks and both timezone offsets; qualify current core types and production component/CSS bundle. Parent owns ordered PR merge; source branches stay preserved. Broader Golden/native release acceptance remains separate.
+
+Collection recovery qualification completed on current bb047:33/0/80 native-storage/current callbacks,5/0 mounted Chromium and full Electron Node22 types0. Prior test-type diagnostics were corrected by precise literal fixture types; all source failures remain in the archived evidence.
