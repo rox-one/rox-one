@@ -1,0 +1,5 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[PASS] retained deep-link listener cannot create or send in a former workspace 439ms
+[PASS] retained deep-link listeners stay disposed after workspace ABA and same-workspace readiness reinstall 540ms
+[PASS] current deep-link listener retains raw query views and executes current action parameters 461ms
+{"runtime":"Node actual source callbacks adapter","pass":3,"fail":0,"assertions":10,"cases":3,"registeredCases":24,"elapsedMs":1493}

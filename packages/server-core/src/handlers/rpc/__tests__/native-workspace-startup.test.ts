@@ -6,7 +6,7 @@ import { join } from 'node:path'
 test('native workspace startup projects only its authorized workspace without legacy window side effects', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'native-workspace-startup-'))
   try {
-    const proc = Bun.spawn(['bun', '-e', `
+    const proc = Bun.spawn([process.execPath, '-e', `
 const {mkdirSync,readFileSync,realpathSync}=await import('node:fs');
 const {join}=await import('node:path');
 const {NativeAuthority}=await import('./packages/server-core/src/authority/native-authority.ts');
@@ -47,8 +47,8 @@ try{
  await server.listen();const native=client();
  const projection=await native.invoke(RPC_CHANNELS.workspaces.GET);
  check('own-workspace-only',projection.length===1&&projection[0].id===own.id);
- check('exact-public-metadata-keys',JSON.stringify(Object.keys(projection[0]).sort())===JSON.stringify(['createdAt','id','kind','name','orgId','rootPath','slug']));
- check('exact-authorized-metadata',JSON.stringify(projection[0])===JSON.stringify({id:own.id,name:own.name,slug:own.slug,rootPath:'',createdAt:1,kind:own.kind,orgId:own.orgId}));
+ check('exact-public-metadata-keys',JSON.stringify(Object.keys(projection[0]).sort())===JSON.stringify(['createdAt','id','kind','name','rootPath','slug']));
+ check('exact-authorized-metadata',JSON.stringify(projection[0])===JSON.stringify({id:own.id,name:own.name,slug:'workspace-a',rootPath:'',createdAt:1,kind:'personal'}));
  check('no-native-root-or-host-metadata',projection[0].rootPath===''&&!JSON.stringify(projection).includes(ownRoot)&&!JSON.stringify(projection).includes('own-private-metadata-secret')&&!JSON.stringify(projection).includes('hostOnlyFixtureSecret'));
  check('no-roster-or-connection-secret',!JSON.stringify(projection).includes('PRIVATE FOREIGN')&&!JSON.stringify(projection).includes('private-fixture-token')&&!JSON.stringify(projection).includes('remoteServer'));
  const spoofed=await native.invoke(RPC_CHANNELS.workspaces.GET,foreign.id,{workspaceId:foreign.id,principal:{subject:'forged'}});

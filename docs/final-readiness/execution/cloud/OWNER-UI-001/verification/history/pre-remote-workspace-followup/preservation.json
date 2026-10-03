@@ -1,0 +1,49 @@
+{
+  "frozenProductRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "artifacts": [
+    {
+      "original": "verification/expanded/log-manifest.json",
+      "snapshot": "verification/history/pre-remote-workspace-followup/log-manifest.json",
+      "sha256": "554ca2cd59580a0baf2d8b68a3333145ef0820c11822b6a7997d1055f1f4288e",
+      "bytes": 108563
+    },
+    {
+      "original": "verification/expanded/failure-history.json",
+      "snapshot": "verification/history/pre-remote-workspace-followup/failure-history.json",
+      "sha256": "e5b80ca7c5c15574aab661aaa6bbf450c86428b93ab533bf053ae5fb60638836",
+      "bytes": 38052
+    },
+    {
+      "original": "verification/expanded/review-receipt.json",
+      "snapshot": "verification/history/pre-remote-workspace-followup/review-receipt.json",
+      "sha256": "11b5e186c61377a3b5711907ababe3af169e91bedcd740ff9a2fa5a37ce49664",
+      "bytes": 29429
+    },
+    {
+      "original": "verification/expanded/rox-readiness-ui-001.ci-final-receipt.json",
+      "snapshot": "verification/history/pre-remote-workspace-followup/rox-readiness-ui-001.ci-final-receipt.json",
+      "sha256": "47422d068173e8409b6e5f4b67b3a1c1bcdccd9df4e292b322123afc93d4a2f4",
+      "bytes": 458
+    },
+    {
+      "original": "verification/expanded/rox-readiness-ui-001.regression-final-receipt.json",
+      "snapshot": "verification/history/pre-remote-workspace-followup/rox-readiness-ui-001.regression-final-receipt.json",
+      "sha256": "b00e945d9a8a0dd315942e08fd7e6634b176dd195a47eccf76a071856efd81b6",
+      "bytes": 669
+    },
+    {
+      "original": "verification/expanded/native-final-source-readback.json",
+      "snapshot": "verification/history/pre-remote-workspace-followup/native-final-source-readback.json",
+      "sha256": "97e1d3ef612df4cbc604873acc34a66c093d49d590455fe8dba32f098ac0cdd3",
+      "bytes": 304
+    },
+    {
+      "original": "verification/expanded/authored-product-manifest.json",
+      "snapshot": "verification/history/pre-remote-workspace-followup/authored-product-manifest.json",
+      "sha256": "05124fe2f9ed352e3f4a1cdd13160085fbe586da6f1cc61876f6513df40a0b7b",
+      "bytes": 5910
+    }
+  ],
+  "purpose": "Immutable prior87 archive seal before subsequent remote-workspace listener source correction. No earlier receipt qualification is changed.",
+  "fullDoDClosed": false
+}

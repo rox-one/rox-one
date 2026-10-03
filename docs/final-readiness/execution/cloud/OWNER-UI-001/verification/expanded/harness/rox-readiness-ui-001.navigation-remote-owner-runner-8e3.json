@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-10-03T16:16:13.993296+00:00",
+  "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001-chrome-remote-full-3vute8bn",
+  "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-remote-full.log",
+  "outerTimeoutSeconds": 600,
+  "priorRelaunchError": "A previous orchestration command omitted the app executable suffix and raised FileNotFoundError before spawning any browser or test.",
+  "browserPid": 41005,
+  "driverExitCode": 0,
+  "finishedAt": "2026-10-03T16:19:52.233554+00:00",
+  "ownedBrowserExited": true,
+  "browserExitCode": -9
+}

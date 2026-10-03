@@ -1,0 +1,80 @@
+{
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "sourceRevision": "5a0b769b894aed2ed09ba8bcbe01a41cf8149d76",
+  "recordedAtUtc": "2026-10-03T15:12:15.988116+00:00",
+  "actualTestRuntime": "Node v26.8.2 with external headless Chrome153 and qualified Bun1.3.14 compiled immutable production/source-test bundles",
+  "testCallbackAdapter": "rox-readiness-ui-001.node-adapter.mjs",
+  "fixtureBuilder": "rox-readiness-ui-001.bundle-fixture.ts",
+  "testBuilder": "rox-readiness-ui-001.build-node-tests.ts",
+  "lanes": [
+    {
+      "runtime": "Node actual source callbacks adapter",
+      "pass": 21,
+      "fail": 0,
+      "assertions": 59,
+      "cases": 21,
+      "registeredCases": 21,
+      "elapsedMs": 103169,
+      "lane": "navigation",
+      "exitCode": 0,
+      "log": "rox-readiness-ui-001.navigation-node-final-5a0.log",
+      "fixtureManifest": "rox-readiness-ui-001.navigation-fixture-manifest-5a0.json"
+    },
+    {
+      "runtime": "Node actual source callbacks adapter",
+      "pass": 11,
+      "fail": 0,
+      "assertions": 23,
+      "cases": 11,
+      "registeredCases": 11,
+      "elapsedMs": 65915,
+      "lane": "main",
+      "exitCode": 0,
+      "log": "rox-readiness-ui-001.main-node-final-5a0.log",
+      "fixtureManifest": "rox-readiness-ui-001.main-fixture-manifest-5a0.json"
+    }
+  ],
+  "total": {
+    "passed": 32,
+    "failed": 0,
+    "assertions": 82,
+    "registeredCases": 32
+  },
+  "binding": {
+    "verification": "all Git tracked source inputs match immutable source revision; every source/dependency disk input matches its bundle manifest",
+    "detail": "rox-readiness-ui-001.source-check-5a0.json",
+    "committedSourceMismatches": [],
+    "diskInputMismatches": []
+  },
+  "commands": [
+    "ROX_UI001_BROWSER_TEST=1 ROX_UI001_NAV_FIXTURE_BUNDLE=\"$PWD/work/rox-readiness-ui-001.navigation-fixture-5a0.js\" ROX_UI001_CHROMIUM_CDP_URL=http://127.0.0.1:53229 node work/rox-readiness-ui-001.navigation-node-tests-5a0.mjs",
+    "ROX_UI001_BROWSER_TEST=1 ROX_UI001_MAIN_FIXTURE_BUNDLE=\"$PWD/work/rox-readiness-ui-001.main-fixture-5a0.js\" ROX_UI001_CHROMIUM_CDP_URL=http://127.0.0.1:53261 node work/rox-readiness-ui-001.main-node-tests-5a0.mjs"
+  ],
+  "timeoutPolicy": "Original30s per case unchanged. Concurrent native build caused higher observed durations; all cases completed within their scoped limits.",
+  "ownedProcessCleanup": [
+    {
+      "pid": 58819,
+      "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.chrome-navigation-5a0",
+      "action": "SIGTERM then SIGKILL of verified owned isolated headless process group after bounded graceful-exit timeout",
+      "source": "owned isolated headless browser only",
+      "exitObserved": true
+    },
+    {
+      "pid": 58877,
+      "profile": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.chrome-main-5a0",
+      "action": "SIGTERM then SIGKILL of verified owned isolated headless process group after bounded graceful-exit timeout",
+      "source": "owned isolated headless browser only",
+      "exitObserved": true
+    }
+  ],
+  "failureHistory": "Prior Bun runner/esbuild/CDP errors, first Node regression failures, and Main background-window failures are retained in adjacent original logs and README; this fresh candidate replay produced no failures.",
+  "limitations": [
+    "Explicit fixture IPC/backend data; backend integrations and native installed acceptance remain independent receipts.",
+    "Node adapter results are not qualified Bun test runner passes.",
+    "Installed Windows/hosted-web acceptance and real service prerequisites remain unobserved in this lane."
+  ],
+  "fullDoDClosed": false
+}

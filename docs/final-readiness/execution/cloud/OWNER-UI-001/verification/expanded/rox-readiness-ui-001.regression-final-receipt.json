@@ -1,0 +1,17 @@
+{
+  "sourceRevision": "8e3f6d841f2e5d332ee388985220de0819da4c81",
+  "command": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun test --test-name-pattern '^(?!ProfileStrip preserves its translated accessibility contracts in isolation)' ./apps/electron/src/renderer/components/app-shell/__tests__ ./apps/electron/src/renderer/contexts/__tests__ ./apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.extension-lifecycle.test.ts ./apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.note-route-lifecycle.test.ts ./apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.project-lifecycle.test.ts ./apps/electron/src/renderer/knowledge/__tests__/rox-readiness-ui-001.knowledge-projection.test.ts ./apps/electron/src/renderer/components/pages/__tests__/rox-readiness-ui-001.page-lifecycle.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.route-isolation.test.ts ./apps/electron/src/shared/__tests__ ./apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts ./apps/electron/src/renderer/lib/__tests__/rox-readiness-ui-001.panel-url.test.ts ./apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts",
+  "observedExitCode": 0,
+  "startedAtUtc": "2026-10-03T16:24:38.514735+00:00",
+  "finishedAtUtc": "2026-10-03T16:25:52.085040+00:00",
+  "log": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/expanded-regression-8e3f6d841-final.log",
+  "logSha256": "ab5e6cc026878c2b59bda74057b1068acb5138640df952382efc4e72a8927259",
+  "sourceAndTestFileHashesUnchanged": true,
+  "sourceAndTestFileHashMismatches": [],
+  "timeoutsChanged": false,
+  "runtime": {
+    "bun": "1.3.14",
+    "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+    "sha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233"
+  }
+}

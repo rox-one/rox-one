@@ -1,0 +1,20 @@
+bun test v1.3.14 (0d9b296a)
+
+apps/electron/src/renderer/pages/__tests__/rox-readiness-ui-001.note-route-lifecycle.test.ts:
+(pass) UI-001 actual selected note read and deletion callbacks > missing selected note persists explicit state and successful Retry clears it with real body [71.76ms]
+(pass) UI-001 actual selected note read and deletion callbacks > denied selected note remains explicit unavailable instead of a generic pick state [0.46ms]
+(pass) UI-001 actual selected note read and deletion callbacks > older success and refusal cannot replace the latest opened note [0.58ms]
+(pass) UI-001 actual selected note read and deletion callbacks > uncommitted calls do no RPC; actual committed lease cleanup fences late replies [0.52ms]
+(pass) UI-001 actual selected note read and deletion callbacks > delete event for a pending selected target fences late body and shows persistent missing state [0.28ms]
+(pass) UI-001 actual selected note read and deletion callbacks > external deletion retains the dirty body and blocks replacing the deleted source [0.19ms]
+(pass) UI-001 actual selected note read and deletion callbacks > foreign workspace and disposed subscriptions cannot delete the visible draft [0.20ms]
+(pass) UI-001 actual selected note read and deletion callbacks > retained listener after actual unsubscribe cannot mutate the current draft [0.53ms]
+(pass) UI-001 actual selected note read and deletion callbacks > workspace A→B→A rejects retained A callbacks while the new A subscription still works [0.15ms]
+(pass) UI-001 actual selected note read and deletion callbacks > late descriptor rejection after same-note reopen cannot deny the newer document [0.31ms]
+(pass) UI-001 actual selected note read and deletion callbacks > late descriptor success and rejection cannot publish into a new workspace owner [0.33ms]
+(pass) UI-001 actual selected note read and deletion callbacks > owned descriptor failures still deny and require source reload [0.09ms]
+
+ 12 pass
+ 0 fail
+ 50 expect() calls
+Ran 12 tests across 1 file. [7.85s]

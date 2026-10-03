@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { MeetingProposal, OperationResultV2 } from '@rox/core/meetings'
-import type { MeetingGrant } from '@rox/shared/meeting-agents'
+import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import {
   approveNativeProposalViaRpc,
   buildMeetingGrant,

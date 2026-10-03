@@ -1,3 +1,13 @@
+## Inspector resize recovery task graph — 2026-10-03
+
+Owner: branch audit lead; depends on merged Golden Gate controller/native/panels and Connections consumers. Source audit → adapt sash into current InspectorHost with transient preview/current bounds → exercise actual host pointer/keyboard/cancel/unmount/reload and old-consumer negative → package type/build/locale gates → separate reviewed PR, exact merge/readback. Shared files: currentInspectorHost and12locale keys only; original source branches remain intact. No old layout widths or section ownership are restored.
+## Golden Gate chat output recovery plan — 2026-10-03
+
+1. Freeze source helper/current auto-scroll sites and coordinate ChatDisplay regions with Product Learning worker. pr_scout owns output scroll only; root owns merge and Inspector/credential integration.
+2. Restore private viewport follow and committed incarnation ownership through real initial/ResizeObserver/submit/user-commit consumers; retain unfocused follow, user-up history, suppression and lazy height anchor, and all explicit search jumps.
+3. Exercise real production ChatDisplay/Radix/messages in nested DOM: outer/window position, reduced/normal motion, focused/unfocused history, document hidden, delayed commit, old ResizeObserver/queued frames A→B→A/unmount, history anchoring and explicit jump. Keep failure history and controlled fixture boundaries explicit; run types/build and current adjacent tests.
+4. Reconcile live main, freeze source/proof/log receipts, publish/attach separate PR, preserve every source branch. Notify dependent instrumentation owner of exact ChatDisplay source before parent merges.
+
 ## Product Learning foundation recovery plan — 2026-10-03
 
 1. Freeze final a6 source and import only contracts/core/persistence/analytics; pr_scout owns these interfaces, historical_sweep integrates dependent UI/runtime/current consumers without copying old shell/pages.
@@ -837,6 +847,11 @@ Auxiliary verification receipt: 33 tests / 142 assertions pass across six consum
 
 Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating its regular-file size and current path identity, then verify all ancestor identities before any read and after the frame. This removes reliance on a pre-open leaf path stat while retaining bounded/no-read failure controls.
 
+### Scoped native voice overlay recovery — 2026-10-03
+
+Owner: voice feature worker; integration/remote merge: lead. Recover the source overlay's genuine owner/event-producer gap via current authenticated VoiceHost, rather than legacy raw SET_OVERLAY. Build the child-only preload in development, package aliases and Windows/native desktop routes; verify snapshot/subscription lifetime and rendered recording identity. Exercise foreign sender/recording, remote/background actor, revoke/disconnect/close, repeated stop, owner blur/focus and command denial; retain current consent and composer finalization. Deliver as a separate PR with revision-bound native-port, actual Chromium, WS, types and build receipts. Full OS focus/microphone/native acceptance is not established by mocks or browser fixtures.
+
+Overlay qualification: archive dependency PR1430 is merged into main d4846751fe993f076d9fce329bdc7e1f6f342899. The recovered overlay passes 110 focused tests / 381 assertions, three actual Chromium cases / seven assertions, and a real authenticated WebSocket owner/revocation control. Shared, server-core and Electron TypeScript checks and main, all three preloads and renderer builds pass. The earlier comprehensive native fixture remains unqualified on this candidate because its existing 500ms handshake gate timed out under concurrent host load before the added overlay assertions; its deadlines remain unchanged, and the new narrow actual WS control uses production client defaults. Full OS focus/microphone/provider acceptance remains separate.
 
 ## Route recovery integration graph —2026-10-03
 

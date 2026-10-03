@@ -3,10 +3,17 @@ import { createHmac } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from '../utils/sqlite-runtime.ts';
 import { decryptBytes, encryptBytes } from './crypto.ts';
-import { isReplicaCategory, type ReplicaEnvelope, type ReplicaOperation } from './types.ts';
+import { isReplicaCategory, type ReplicaEnvelope, type ReplicaOperation, type ReplicaWriteInput } from './types.ts';
 import type { NativeDataEntitySnapshot, NativeDataReceipt } from '../protocol/dto.ts';
 
 export interface ReplicaSnapshotScope { accountId: string; workspaceId: string; permissionFence: string }
+
+/** Opaque caller retry token; canonical operation IDs remain assigned by main custody. */
+export interface ReplicaCreationAttempt {
+  callerAttemptId: string;
+  permissionFence: string;
+  writePermissionFence: string;
+}
 
 export interface ReplicaServerAcknowledgement {
   operationId: string;
@@ -16,6 +23,7 @@ export interface ReplicaServerAcknowledgement {
 
 export interface ReplicaOutboxPort {
   enqueue(operation: ReplicaOperation): void;
+  enqueueCreation?(operation: ReplicaOperation, attempt: ReplicaCreationAttempt): ReplicaOperation;
   pending(accountId: string, workspaceId: string): ReplicaOperation[];
   acknowledge(accountId: string, workspaceId: string, operationId: string, acknowledgement: Omit<ReplicaServerAcknowledgement, 'operationId'>): boolean;
   acknowledgement(accountId: string, workspaceId: string, operationId: string): ReplicaServerAcknowledgement | null;
@@ -23,6 +31,8 @@ export interface ReplicaOutboxPort {
 }
 
 const OUTBOX_SCHEMA = 1;
+const MAX_CREATION_ATTEMPTS = 4096;
+const MAX_CREATION_ATTEMPT_BYTES = 64 * 1024;
 
 /** Durable, metadata-only local outbox. The caller supplies the existing device/account key; it is never stored here. */
 export class SqliteReplicaOutbox implements ReplicaOutboxPort {
@@ -81,6 +91,11 @@ export class SqliteReplicaOutbox implements ReplicaOutboxPort {
         account_id TEXT NOT NULL, workspace_id TEXT NOT NULL, operation_id TEXT NOT NULL, envelope TEXT NOT NULL,
         PRIMARY KEY(account_id,workspace_id,operation_id)
       );
+      CREATE TABLE IF NOT EXISTS native_creation_attempts (
+        account_id TEXT NOT NULL, workspace_id TEXT NOT NULL, attempt_digest TEXT NOT NULL,
+        operation_id TEXT NOT NULL, envelope TEXT NOT NULL,
+        PRIMARY KEY(account_id,workspace_id,attempt_digest)
+      );
     `);
     if (version === 0) this.db.exec(`PRAGMA user_version=${OUTBOX_SCHEMA}`);
   }
@@ -88,24 +103,62 @@ export class SqliteReplicaOutbox implements ReplicaOutboxPort {
   enqueue(operation: ReplicaOperation): void {
     this.assertOpen();
     validateReplicaOperation(operation);
-    const serialized = JSON.stringify(operation);
-    const payloadDigest = createHmac('sha256', this.key).update(serialized).digest('hex');
-    const envelope = JSON.stringify(encryptBytes(this.key, Buffer.from(serialized, 'utf8')));
     this.db.exec('BEGIN IMMEDIATE');
     try {
-      const existing = this.db.prepare('SELECT payload_digest FROM replica_outbox WHERE account_id=? AND workspace_id=? AND operation_id=?')
-        .get(operation.accountId, operation.workspaceId, operation.id) as { payload_digest: string } | undefined;
-      if (existing) {
-        if (existing.payload_digest !== payloadDigest) throw new Error('replica operation id reused with different payload');
-        this.db.exec('COMMIT');
-        return;
-      }
-      const acknowledged = this.db.prepare('SELECT 1 AS present FROM replica_acknowledgements WHERE account_id=? AND workspace_id=? AND operation_id=?')
-        .get(operation.accountId, operation.workspaceId, operation.id);
-      if (acknowledged) throw new Error('replica operation has already been acknowledged');
-      this.db.prepare('INSERT INTO replica_outbox(account_id,workspace_id,operation_id,payload_digest,envelope) VALUES(?,?,?,?,?)')
-        .run(operation.accountId, operation.workspaceId, operation.id, payloadDigest, envelope);
+      this.insertQueuedOperation(operation);
       this.db.exec('COMMIT');
+    } catch (error) {
+      try { this.db.exec('ROLLBACK'); } catch { /* transaction already ended */ }
+      throw error;
+    }
+  }
+
+  /** Recover only this exact authored attempt, including after its queue entry was acknowledged. */
+  creationAttempt(accountId: string, workspaceId: string, attempt: ReplicaCreationAttempt, input: ReplicaWriteInput): ReplicaOperation | null {
+    this.assertOpen();
+    validateCreationAttempt(attempt);
+    const row = this.db.prepare('SELECT operation_id,envelope FROM native_creation_attempts WHERE account_id=? AND workspace_id=? AND attempt_digest=?')
+      .get(accountId, workspaceId, this.attemptDigest(attempt.callerAttemptId)) as { operation_id: string; envelope: string } | undefined;
+    if (!row) return null;
+    const value = JSON.parse(decryptBytes(this.key, JSON.parse(row.envelope)).toString('utf8')) as { attempt: ReplicaCreationAttempt; operation: ReplicaOperation };
+    validateReplicaOperation(value.operation);
+    if (value.operation.accountId !== accountId || value.operation.workspaceId !== workspaceId || value.operation.id !== row.operation_id ||
+        value.attempt.callerAttemptId !== attempt.callerAttemptId || value.attempt.permissionFence !== attempt.permissionFence ||
+        value.attempt.writePermissionFence !== attempt.writePermissionFence || creationPayload(value.operation) !== creationPayload(input)) {
+      throw new Error('native Notes creation attempt does not match its original scope or intent');
+    }
+    return value.operation;
+  }
+
+  /** The durable attempt mapping and first queued operation commit in the same transaction. */
+  enqueueCreation(operation: ReplicaOperation, attempt: ReplicaCreationAttempt): ReplicaOperation {
+    this.assertOpen();
+    validateReplicaOperation(operation);
+    validateCreationAttempt(attempt);
+    if (operation.category !== 'notes' || operation.expectedRevision !== null || operation.changes.length !== 1 ||
+        operation.changes[0]?.path !== `notes/${operation.nativeId}.md` || typeof operation.changes[0]?.content !== 'string') {
+      throw new Error('native creation attempt requires a canonical Notes creation operation');
+    }
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const existing = this.creationAttempt(operation.accountId, operation.workspaceId, attempt, operation);
+      if (existing) {
+        this.db.exec('COMMIT');
+        return existing;
+      }
+      const count = this.db.prepare('SELECT COUNT(*) AS count FROM native_creation_attempts WHERE account_id=? AND workspace_id=?')
+        .get(operation.accountId, operation.workspaceId) as { count: number };
+      const serialized = JSON.stringify({ attempt, operation });
+      // Never evict accepted unknown-result attempts: a full scope rejects new intent atomically.
+      if (count.count >= MAX_CREATION_ATTEMPTS || Buffer.byteLength(serialized, 'utf8') > MAX_CREATION_ATTEMPT_BYTES) {
+        throw new Error('native Notes creation attempt custody limit reached');
+      }
+      this.insertQueuedOperation(operation);
+      const envelope = encryptBytes(this.key, Buffer.from(serialized, 'utf8'));
+      this.db.prepare('INSERT INTO native_creation_attempts(account_id,workspace_id,attempt_digest,operation_id,envelope) VALUES(?,?,?,?,?)')
+        .run(operation.accountId, operation.workspaceId, this.attemptDigest(attempt.callerAttemptId), operation.id, JSON.stringify(envelope));
+      this.db.exec('COMMIT');
+      return operation;
     } catch (error) {
       try { this.db.exec('ROLLBACK'); } catch { /* transaction already ended */ }
       throw error;
@@ -222,6 +275,37 @@ export class SqliteReplicaOutbox implements ReplicaOutboxPort {
   private assertOpen(): void {
     if (this.closed) throw new Error('replica outbox is closed');
   }
+
+  private attemptDigest(callerAttemptId: string): string {
+    return createHmac('sha256', this.key).update(callerAttemptId).digest('hex');
+  }
+
+  private insertQueuedOperation(operation: ReplicaOperation): void {
+    const serialized = JSON.stringify(operation);
+    const payloadDigest = createHmac('sha256', this.key).update(serialized).digest('hex');
+    const existing = this.db.prepare('SELECT payload_digest FROM replica_outbox WHERE account_id=? AND workspace_id=? AND operation_id=?')
+      .get(operation.accountId, operation.workspaceId, operation.id) as { payload_digest: string } | undefined;
+    if (existing) {
+      if (existing.payload_digest !== payloadDigest) throw new Error('replica operation id reused with different payload');
+      return;
+    }
+    if (this.acknowledgement(operation.accountId, operation.workspaceId, operation.id)) throw new Error('replica operation has already been acknowledged');
+    const envelope = JSON.stringify(encryptBytes(this.key, Buffer.from(serialized, 'utf8')));
+    this.db.prepare('INSERT INTO replica_outbox(account_id,workspace_id,operation_id,payload_digest,envelope) VALUES(?,?,?,?,?)')
+      .run(operation.accountId, operation.workspaceId, operation.id, payloadDigest, envelope);
+  }
+}
+
+function validateCreationAttempt(attempt: ReplicaCreationAttempt): void {
+  if (typeof attempt?.callerAttemptId !== 'string' || !attempt.callerAttemptId || attempt.callerAttemptId.length > 512 ||
+      /[\u0000-\u001f]/.test(attempt.callerAttemptId) || !/^[a-f0-9]{64}$/.test(attempt.permissionFence) ||
+      !/^[a-f0-9]{64}$/.test(attempt.writePermissionFence)) throw new Error('invalid native Notes creation attempt');
+}
+
+function creationPayload(input: ReplicaWriteInput): string {
+  return JSON.stringify({ deviceId: input.deviceId, workspaceId: input.workspaceId, category: input.category,
+    nativeId: input.nativeId, expectedRevision: input.expectedRevision, schemaVersion: input.schemaVersion,
+    changes: input.changes.map(({ path, content }) => ({ path, content })) });
 }
 
 export function validateReplicaOperation(operation: ReplicaOperation): void {
