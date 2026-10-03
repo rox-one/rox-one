@@ -32,7 +32,7 @@ for(const [dir,platform,arch] of [['macos','darwin','arm64'],['windows','win32',
     records.push(local);console.log('Verified',local.name,local.size,local.sha256);
   }
   records.push(await record(manifestPath,manifestName));
-  for(const name of readdirSync(folder).filter(n=>/^Rox-(arm64|x64)\.(dmg|zip|exe)\.blockmap$/.test(n)))records.push(await record(join(folder,name),name));
+  for(const name of readdirSync(folder).filter(n=>expected.some(name=>n===name+'.blockmap')))records.push(await record(join(folder,name),name));
 }
 const checksums=join(root,'SHA256SUMS.txt');
 await Bun.write(checksums,records.filter(r=>/\.(dmg|zip|exe)$/.test(r.name)).map(r=>`${r.sha256}  ${r.name}`).join('\n')+'\n');
