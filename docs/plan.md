@@ -827,3 +827,7 @@ Review qualification: each audio frame binds the opened leaf to captured BigInt 
 4. Acceptance is bounded source and renderer integration; do not claim installed native UI, old sidebar layout recovery, full Golden source-family completion or production acceptance.
 
 Voice archive follow-up: open the leaf with NOFOLLOW/NONBLOCK before validating its regular-file size and current path identity, then verify all ancestor identities before any read and after the frame. This removes reliance on a pre-open leaf path stat while retaining bounded/no-read failure controls.
+
+### Scoped native voice overlay recovery — 2026-10-03
+
+Owner: voice feature worker; integration/remote merge: lead. Recover the source overlay's genuine owner/event-producer gap via current authenticated VoiceHost, rather than legacy raw SET_OVERLAY. Build the child-only preload in development, package aliases and Windows/native desktop routes; verify snapshot/subscription lifetime and rendered recording identity. Exercise foreign sender/recording, remote/background actor, revoke/disconnect/close, repeated stop, owner blur/focus and command denial; retain current consent and composer finalization. Deliver as a separate PR with revision-bound native-port, actual Chromium, WS, types and build receipts. Full OS focus/microphone/native acceptance is not established by mocks or browser fixtures.

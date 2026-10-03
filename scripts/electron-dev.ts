@@ -480,15 +480,17 @@ async function main(): Promise<void> {
 
   const mainCjsPath = join(DIST_DIR, "main.cjs");
   const preloadCjsPath = join(DIST_DIR, "bootstrap-preload.cjs");
+  const voiceOverlayPreloadCjsPath = join(DIST_DIR, "voice-overlay-preload.cjs");
   const toolbarPreloadCjsPath = join(DIST_DIR, "browser-toolbar-preload.cjs");
 
   // Remove old build files to ensure fresh build
   if (existsSync(mainCjsPath)) rmSync(mainCjsPath);
   if (existsSync(preloadCjsPath)) rmSync(preloadCjsPath);
+  if (existsSync(voiceOverlayPreloadCjsPath)) rmSync(voiceOverlayPreloadCjsPath);
   if (existsSync(toolbarPreloadCjsPath)) rmSync(toolbarPreloadCjsPath);
 
   // Build main and preload entries in parallel
-  const [mainResult, preloadResult, toolbarPreloadResult] = await Promise.all([
+  const [mainResult, preloadResult, toolbarPreloadResult, voiceOverlayPreloadResult] = await Promise.all([
     runEsbuild(
       "apps/electron/src/main/index.ts",
       "apps/electron/dist/main.cjs",
@@ -504,6 +506,12 @@ async function main(): Promise<void> {
     runEsbuild(
       "apps/electron/src/preload/browser-toolbar.ts",
       "apps/electron/dist/browser-toolbar-preload.cjs",
+      {},
+      { external: PRELOAD_BUNDLE_EXTERNALS, alias: PRELOAD_BUNDLE_ALIAS }
+    ),
+    runEsbuild(
+      "apps/electron/src/preload/voice-overlay.ts",
+      "apps/electron/dist/voice-overlay-preload.cjs",
       {},
       { external: PRELOAD_BUNDLE_EXTERNALS, alias: PRELOAD_BUNDLE_ALIAS }
     ),
@@ -524,25 +532,32 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  if (!voiceOverlayPreloadResult.success) {
+    console.error("Voice overlay preload build failed:", voiceOverlayPreloadResult.error);
+    process.exit(1);
+  }
+
   // Wait for files to stabilize (filesystem flush)
   console.log("⏳ Waiting for build files to stabilize...");
-  const [mainStable, preloadStable, toolbarPreloadStable] = await Promise.all([
+  const [mainStable, preloadStable, toolbarPreloadStable, voiceOverlayPreloadStable] = await Promise.all([
     waitForFileStable(mainCjsPath),
     waitForFileStable(preloadCjsPath),
     waitForFileStable(toolbarPreloadCjsPath),
+    waitForFileStable(voiceOverlayPreloadCjsPath),
   ]);
 
-  if (!mainStable || !preloadStable || !toolbarPreloadStable) {
+  if (!mainStable || !preloadStable || !toolbarPreloadStable || !voiceOverlayPreloadStable) {
     console.error("❌ Build files did not stabilize");
     process.exit(1);
   }
 
   // Verify the built files are valid JavaScript
   console.log("🔍 Verifying build output...");
-  const [mainValid, preloadValid, toolbarPreloadValid] = await Promise.all([
+  const [mainValid, preloadValid, toolbarPreloadValid, voiceOverlayPreloadValid] = await Promise.all([
     verifyJsFile(mainCjsPath),
     verifyJsFile(preloadCjsPath),
     verifyJsFile(toolbarPreloadCjsPath),
+    verifyJsFile(voiceOverlayPreloadCjsPath),
   ]);
 
   if (!mainValid.valid) {
@@ -557,6 +572,11 @@ async function main(): Promise<void> {
 
   if (!toolbarPreloadValid.valid) {
     console.error("❌ browser-toolbar-preload.cjs is invalid:", toolbarPreloadValid.error);
+    process.exit(1);
+  }
+
+  if (!voiceOverlayPreloadValid.valid) {
+    console.error("Voice overlay preload is invalid:", voiceOverlayPreloadValid.error);
     process.exit(1);
   }
 
@@ -642,6 +662,15 @@ async function main(): Promise<void> {
   esbuildContexts.push(toolbarPreloadContext);
   console.log("👀 Watching browser toolbar preload...");
 
+  const voiceOverlayPreloadContext = await esbuild.context({
+    entryPoints: [join(ROOT_DIR, "apps/electron/src/preload/voice-overlay.ts")],
+    bundle: true, platform: "node", format: "cjs",
+    outfile: voiceOverlayPreloadCjsPath,
+    external: [...PRELOAD_BUNDLE_EXTERNALS], alias: PRELOAD_BUNDLE_ALIAS,
+  });
+  await voiceOverlayPreloadContext.watch();
+  esbuildContexts.push(voiceOverlayPreloadContext);
+
   // 5. Start Electron only after Vite answers, otherwise restore retries
   // hit ERR_CONNECTION_REFUSED and fall back to a missing file:// renderer.
   await Promise.race([
@@ -655,19 +684,21 @@ async function main(): Promise<void> {
   // main.cjs when Vite becomes ready. Re-stabilize + syntax-check before spawn
   // so Electron never loads a truncated bundle (SyntaxError: Unexpected end of input).
   console.log("⏳ Waiting for watch rebuild to stabilize before Electron...");
-  const [watchMainStable, watchPreloadStable, watchToolbarStable] = await Promise.all([
+  const [watchMainStable, watchPreloadStable, watchToolbarStable, watchVoiceOverlayStable] = await Promise.all([
     waitForFileStable(mainCjsPath),
     waitForFileStable(preloadCjsPath),
     waitForFileStable(toolbarPreloadCjsPath),
+    waitForFileStable(voiceOverlayPreloadCjsPath),
   ]);
-  if (!watchMainStable || !watchPreloadStable || !watchToolbarStable) {
+  if (!watchMainStable || !watchPreloadStable || !watchToolbarStable || !watchVoiceOverlayStable) {
     console.error("❌ Watch rebuild files did not stabilize");
     process.exit(1);
   }
-  const [watchMainValid, watchPreloadValid, watchToolbarValid] = await Promise.all([
+  const [watchMainValid, watchPreloadValid, watchToolbarValid, watchVoiceOverlayValid] = await Promise.all([
     verifyJsFile(mainCjsPath),
     verifyJsFile(preloadCjsPath),
     verifyJsFile(toolbarPreloadCjsPath),
+    verifyJsFile(voiceOverlayPreloadCjsPath),
   ]);
   if (!watchMainValid.valid) {
     console.error("❌ main.cjs invalid after watch rebuild:", watchMainValid.error);
@@ -679,6 +710,11 @@ async function main(): Promise<void> {
   }
   if (!watchToolbarValid.valid) {
     console.error("❌ browser-toolbar-preload.cjs invalid after watch rebuild:", watchToolbarValid.error);
+    process.exit(1);
+  }
+
+  if (!watchVoiceOverlayValid.valid) {
+    console.error("Voice overlay preload invalid after watch rebuild:", watchVoiceOverlayValid.error);
     process.exit(1);
   }
 
