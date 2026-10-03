@@ -656,3 +656,11 @@ Owner: recent feature worker; integration owner: branch audit lead. Source depen
 | LOC-05: Publish, review and merge main | Lead | LOC-04 | scoped PR and verification receipt | exact pushed HEAD, check readback, merge SHA and main ancestry; retain unrelated work |
 
 The latest user authorization explicitly permits source repair, GitHub writes and merge into main. Existing feature-program acceptance states remain independent of this credential-boundary repair.
+
+
+### Calendar synchronization ownership recovery (2026-10-03)
+
+- Owner: recent-features integration worker; dependency: current canonical CalendarStore and adapters.
+- Recover the absent per-account request fence from source `1dd90c5031087855e72cd3ecfce7dd057a2a6208`, preserving current conflict/identity and provider-readiness behavior.
+- Verification: deterministic deferred adapters reproduce stale event/cursor overwrite, stale conflict/delete replacement and newer-failure/older-success races before the fix; after the fix verify all three and independent-account/revocation controls, plus the complete calendar suite and core types.
+- Delivery: isolated `codex/recover-calendar-sync-fence-20261003` and separate PR; original branches preserved, lead owns merge.
