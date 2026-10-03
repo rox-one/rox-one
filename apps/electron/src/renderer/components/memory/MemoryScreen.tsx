@@ -9,6 +9,8 @@
  * Destructive actions (delete, merge) always go through a confirm dialog.
  */
 import * as React from 'react'
+import { useTourTarget } from '@/features/product-tour/runtime/hooks'
+import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { toast } from 'sonner'
@@ -169,6 +171,10 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const { navigate } = useNavigation()
   const sessionMap = useAtomValue(sessionMetaMapAtom)
   const sidebarTarget = useShellSidebarTarget()
+  const knowledgeSignals = useKnowledgeSignals({ workspaceId })
+  const memoryListTarget = useTourTarget('memory.list', { workspaceId })
+  const memoryScopeTarget = useTourTarget('memory.scope', { workspaceId })
+  const memoryEditorTarget = useTourTarget('memory.editor', { workspaceId })
   const [lessons, setLessons] = React.useState<Lesson[] | null>(null)
   const [archivedLessons, setArchivedLessons] = React.useState<Array<{ id: string; lesson: Lesson }>>([])
   const [candidates, setCandidates] = React.useState<PromotionCandidate[]>([])
@@ -194,6 +200,14 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const [busy, setBusy] = React.useState(false)
   const [filtersOpen, setFiltersOpen] = React.useState(false)
   const [loadError, setLoadError] = React.useState(false)
+  const [writeDenied, setWriteDenied] = React.useState(false)
+  const lessonsLoaded = lessons !== null
+  const memoryReadAvailable = typeof window.electronAPI.listMemoryLessons === 'function'
+  const memoryWriteAvailable = typeof window.electronAPI.addMemoryLesson === 'function' && typeof window.electronAPI.updateMemoryLesson === 'function'
+  React.useEffect(() => knowledgeSignals.capability('memory.available', !memoryReadAvailable || loadError
+    ? { state: 'unavailable', reason: 'api-unavailable' } : !lessonsLoaded ? { state: 'pending', reason: 'installing' } : { state: 'ready' }), [knowledgeSignals, memoryReadAvailable, loadError, lessonsLoaded])
+  React.useEffect(() => knowledgeSignals.capability('memory.write-available', writeDenied ? { state: 'denied', reason: 'not-authorized' } : memoryWriteAvailable && memoryReadAvailable && !loadError
+    ? { state: 'ready' } : { state: 'unavailable', reason: 'api-unavailable' }), [knowledgeSignals, memoryWriteAvailable, memoryReadAvailable, loadError, writeDenied])
   const loadGeneration = React.useRef(0)
   const currentWorkspace = React.useRef(workspaceId)
   currentWorkspace.current = workspaceId
@@ -206,19 +220,21 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     if (currentWorkspace.current !== workspaceId) return
     const generation = ++loadGeneration.current
     setLoadError(false)
+    if (!memoryReadAvailable) { setLoadError(true); return }
     window.electronAPI.listMemoryLessons('both', workspaceId).then((items) => {
       if (generation === loadGeneration.current) setLessons(items)
     }).catch(() => { if (generation === loadGeneration.current) setLoadError(true) })
     void Promise.allSettled([
-      window.electronAPI.listMemoryArchive('global', workspaceId),
-      window.electronAPI.listMemoryArchive('workspace', workspaceId),
+      typeof window.electronAPI.listMemoryArchive === 'function' ? window.electronAPI.listMemoryArchive('global', workspaceId) : Promise.resolve([]),
+      typeof window.electronAPI.listMemoryArchive === 'function' ? window.electronAPI.listMemoryArchive('workspace', workspaceId) : Promise.resolve([]),
     ]).then((results) => {
       if (generation === loadGeneration.current) setArchivedLessons(results.flatMap((result) => result.status === 'fulfilled' ? result.value : []))
     })
-    window.electronAPI.listPromotionCandidates().then((items) => {
+    const promotionRead = typeof window.electronAPI.listPromotionCandidates === 'function' ? window.electronAPI.listPromotionCandidates() : Promise.resolve([])
+    promotionRead.then((items) => {
       if (generation === loadGeneration.current) setCandidates(items)
     }).catch(() => { if (generation === loadGeneration.current) setCandidates([]) })
-  }, [workspaceId])
+  }, [workspaceId, memoryReadAvailable])
   React.useEffect(() => {
     setLessons(null)
     setArchivedLessons([])
@@ -226,9 +242,10 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     setSelectedId(null)
     setChecked(new Set())
     setBusy(false)
+    setWriteDenied(false)
     setFilter({})
     load()
-    const unsubscribe = window.electronAPI.onMemoryChanged(() => load())
+    const unsubscribe = typeof window.electronAPI.onMemoryChanged === 'function' ? window.electronAPI.onMemoryChanged(() => load()) : () => {}
     const invalidatePendingLoads = () => { ++loadGeneration.current }
     return () => { invalidatePendingLoads(); unsubscribe() }
   }, [load])
@@ -291,6 +308,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       await fn()
       if (okKey && currentWorkspace.current === workspaceId) toast.success(t(okKey))
     } catch (error) {
+      if (currentWorkspace.current === workspaceId && (error as { code?: string })?.code === 'AUTH_FAILED') setWriteDenied(true)
       if (currentWorkspace.current === workspaceId) toast.error(t('memory.lessonUpdateFailed'), { description: error instanceof Error ? error.message : String(error) })
     } finally {
       if (currentWorkspace.current === workspaceId) { setBusy(false); load() }
@@ -310,6 +328,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     }
   }
   const patch = async (lesson: Lesson, next: Partial<Omit<Lesson, 'scope'>>) => {
+    if (lesson.scope === 'workspace' && !workspaceId) throw new Error(t('memory.lessonUpdateFailed'))
     const updated = await window.electronAPI.updateMemoryLesson(wsFor(lesson), lesson.scope, lesson.rule, next)
     if (updated === null) throw new Error(t('memory.lessonUpdateFailed'))
     if (updated && currentWorkspace.current === workspaceId) {
@@ -341,8 +360,15 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const saveEdit = (lesson: Lesson) => {
     const rule = draft.trim()
     if (!rule || rule === lesson.rule) { setEditing(false); return }
+    const observation = knowledgeSignals.capture()
     void run(async () => {
-      await patch(lesson, { rule, editedAt: new Date().toISOString() })
+      const updated = await patch(lesson, { rule, editedAt: new Date().toISOString() })
+      if (updated && observation) {
+        try {
+          const readback = await window.electronAPI.listMemoryLessons(lesson.scope, workspaceId)
+          if (currentWorkspace.current === workspaceId && workspaceId) knowledgeSignals.publish(observation, { kind: 'memory-saved', workspaceId, scope: lesson.scope, lesson: updated, readback })
+        } catch { /* A failed read-back never completes learning. */ }
+      }
       if (currentWorkspace.current !== workspaceId) return
       setEditing(false)
       setSelectedId(lessonId({ scope: lesson.scope, rule }))
@@ -355,11 +381,20 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   }
   const submitAdd = () => {
     const rule = addRule.trim()
-    if (!rule) return
+    if (!rule || writeDenied || !memoryWriteAvailable || (addScope === 'workspace' && !workspaceId)) return
+    const observation = knowledgeSignals.capture()
+    const requestedScope = addScope
     void run(async () => {
       const result = await window.electronAPI.addMemoryLesson(addScope === 'global' ? null : workspaceId ?? null, {
         rule, category: addCategory, scope: addScope, ...(addNegative ? { negative: true } : {}),
       })
+      if (currentWorkspace.current !== workspaceId) return
+      if (observation) {
+        try {
+          const readback = await window.electronAPI.listMemoryLessons(requestedScope, workspaceId)
+          if (currentWorkspace.current === workspaceId && workspaceId) knowledgeSignals.publish(observation, { kind: 'memory-saved', workspaceId, scope: requestedScope, lesson: result.lesson, readback })
+        } catch { /* Native write succeeded; failed read-back is not evidence. */ }
+      }
       if (currentWorkspace.current !== workspaceId) return
       setLessons((previous) => {
         const items = previous ?? []
@@ -657,11 +692,11 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   ) : null
 
   const addForm = adding ? (
-    <form className="mx-3 mb-2 flex flex-col gap-2 rounded-[8px] bg-foreground/[0.04] p-2" onSubmit={(event) => { event.preventDefault(); submitAdd() }} data-testid="memory-add-form">
+    <form ref={memoryEditorTarget} className="mx-3 mb-2 flex flex-col gap-2 rounded-[8px] bg-foreground/[0.04] p-2" onSubmit={(event) => { event.preventDefault(); submitAdd() }} data-testid="memory-add-form">
       <textarea autoFocus value={addRule} onChange={(event) => setAddRule(event.target.value)} rows={2} placeholder={t('memory.rulePlaceholder')} aria-label={t('memory.addLesson')}
         onKeyDown={(event) => { if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); submitAdd() } if (event.key === 'Escape') setAdding(false) }}
         className="resize-none rounded-[6px] bg-background px-2 py-1.5 text-[13px] outline-none" />
-      <div className="flex flex-wrap items-center gap-1">
+      <div ref={memoryScopeTarget} className="flex flex-wrap items-center gap-1">
         {(['workspace', 'global'] as const).map((s) => (
           <button key={s} type="button" aria-pressed={addScope === s} onClick={() => setAddScope(s)} className={cn('h-6 rounded-[4px] px-2 text-[12px]', addScope === s ? 'bg-foreground/[0.12] font-semibold' : 'text-text-secondary hover:text-foreground')}>
             {t(s === 'global' ? 'memory.screen.scopeGlobal' : 'memory.screen.scopeWorkspace')}
@@ -687,7 +722,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const visibleCandidates = candidates.filter((c) => !all.some((l) => l.scope === 'global' && l.rule.trim().toLowerCase() === c.rule.trim().toLowerCase()))
 
   const list = (
-    <section className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', selected ? 'hidden @[920px]/memory:flex' : 'flex')} data-testid="memory-list">
+    <section ref={memoryListTarget} className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', selected ? 'hidden @[920px]/memory:flex' : 'flex')} data-testid="memory-list">
       <header className="flex shrink-0 flex-wrap items-center gap-2 px-4 pb-3 pt-4">
         <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent"><Brain aria-hidden="true" className="size-5" /></span>
         <div className="min-w-0">
@@ -695,7 +730,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           <p className="text-xs text-text-secondary">{t('memory.screen.shown', { count: visible.length, total: all.length })}</p>
         </div>
         <span className="flex-1" />
-        <Btn primary onClick={() => setAdding((v) => !v)} testId="memory-add">+ {t('memory.screen.add')}</Btn>
+        <Btn primary disabled={writeDenied || !memoryWriteAvailable || !memoryReadAvailable || loadError} onClick={() => setAdding((v) => !v)} testId="memory-add">+ {t('memory.screen.add')}</Btn>
       </header>
       <div className="flex min-w-0 flex-wrap items-center gap-2 px-4 pb-3">
         <div className="relative min-w-0 basis-[220px] grow">
@@ -715,6 +750,11 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
         />
         </div>
         {!sidebarTarget ? <button type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((value) => !value)} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-background px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent @[760px]/memory:hidden" data-testid="memory-filters-toggle"><SlidersHorizontal aria-hidden="true" className="size-4" />{t('memory.screen.facets')}{activeFacets ? <span className="font-semibold tabular-nums">{activeFacets}</span> : null}</button> : null}
+        {!adding && <select ref={memoryScopeTarget} aria-label={t('memory.screen.scope')} value={filter.scope ?? 'both'} onChange={(event) => setFacet('scope', event.target.value === 'both' ? null : event.target.value)} className="h-9 max-w-full rounded-xl border border-foreground/8 bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent">
+          <option value="both">{t('memory.screen.all')}</option>
+          <option value="workspace">{t('memory.screen.scopeWorkspace')}</option>
+          <option value="global">{t('memory.screen.scopeGlobal')}</option>
+        </select>}
         <select aria-label={t('memory.screen.sort')} value={sort} onChange={(event) => setSort(event.target.value as MemorySort)} className="h-9 max-w-full rounded-xl border border-foreground/8 bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-sort">
           {SORTS.map((id) => (
             <option key={id} value={id}>
@@ -774,7 +814,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     const history = [...(selected.usedAt ?? [])].reverse()
     const untracked = Math.max(0, (selected.usageCount ?? 0) - (selected.usedAt?.length ?? 0))
     return (
-      <div key={id} className="mx-auto flex w-full max-w-[620px] min-h-0 flex-col gap-4 px-5 py-4" data-testid="memory-detail">
+      <div ref={adding ? undefined : memoryEditorTarget} key={id} className="mx-auto flex w-full max-w-[620px] min-h-0 flex-col gap-4 px-5 py-4" data-testid="memory-detail">
         <div className="flex items-center gap-3">
           <h3 className="min-w-0 flex-1 text-sm font-semibold">{categoryLabel(selected.category)}</h3>
           <button ref={detailCloseRef} type="button" onClick={closeDetails} aria-label={t('memory.screen.closeDetails')} title={t('memory.screen.closeDetails')} className="grid size-9 shrink-0 place-items-center rounded-xl text-text-secondary outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-close-details"><X aria-hidden="true" className="size-4" /></button>

@@ -1,4 +1,8 @@
 import * as React from 'react'
+import { useTourNativeLayer } from '@/features/product-tour/runtime/native-layer'
+import { TourConnectionPolicyContext, useTourSignals } from '@/features/product-tour/runtime/hooks'
+import { beginChatCommit } from '@/features/product-tour/adapters/chat'
+import { connectionCapabilities, toggleSourceSelection } from '@/features/product-tour/adapters/connections'
 import { useTranslation } from 'react-i18next'
 import { Check, DatabaseZap } from 'lucide-react'
 import { FilterableSelectPopover } from '@rox/ui'
@@ -14,6 +18,8 @@ export interface SourceSelectorPopoverProps {
   sources: LoadedSource[]
   selectedSlugs: string[]
   onToggleSlug: (slug: string) => void
+  /** Only chat selections commit native session sources; task configuration does not. */
+  tourSessionSelection?: boolean
 }
 
 export function SourceSelectorPopover({
@@ -23,18 +29,34 @@ export function SourceSelectorPopover({
   sources,
   selectedSlugs,
   onToggleSlug,
+  tourSessionSelection = false,
 }: SourceSelectorPopoverProps) {
   const { t } = useTranslation()
+  const tour = useTourSignals()
+  const connectionPolicy = React.useContext(TourConnectionPolicyContext)
+  const policyWorkspaceId = connectionPolicy?.workspaceId
+  const policyLocalMcpEnabled = connectionPolicy?.localMcpEnabled ?? null
+  const nativeLayer = useTourNativeLayer({ open, onOpenChange }, false)
+  React.useEffect(() => {
+    if (!tourSessionSelection) return
+    const caps = connectionCapabilities({ sources, selectedSlugs, workspaceId: policyWorkspaceId, localMcpEnabled: policyLocalMcpEnabled })
+    const cleanups = [tour.capability('sources.list', caps['sources.list']!), tour.capability('sources.ready', caps['sources.ready']!)]
+    return () => cleanups.forEach(cleanup => cleanup())
+  }, [tour, tourSessionSelection, sources, selectedSlugs, policyWorkspaceId, policyLocalMcpEnabled])
+  const toggleSlug = (slug: string) => {
+    if (tourSessionSelection) beginChatCommit(tour.capture(), 'session.sources-committed', toggleSourceSelection(selectedSlugs, slug))
+    onToggleSlug(slug)
+  }
   return (
     <FilterableSelectPopover
-      open={open}
-      onOpenChange={onOpenChange}
+      open={nativeLayer.open}
+      onOpenChange={nativeLayer.onOpenChange}
       anchorRef={anchorRef}
       items={sources}
       getKey={(source) => source.config.slug}
       getLabel={(source) => source.config.name}
       isSelected={(source) => selectedSlugs.includes(source.config.slug)}
-      onToggle={(source) => onToggleSlug(source.config.slug)}
+      onToggle={(source) => toggleSlug(source.config.slug)}
       filterPlaceholder={t('sourcesList.searchPlaceholder')}
       emptyState={(
         <>

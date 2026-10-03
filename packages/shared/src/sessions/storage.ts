@@ -43,6 +43,7 @@ import { getStatusCategory } from '../statuses/storage.ts';
 import { readSessionHeader, readSessionJsonl } from './jsonl.ts';
 import { recoverSessionJournal } from './journal-recover.ts';
 import { sessionPersistenceQueue } from './persistence-queue.ts';
+import { sessionProjectIds, sessionBelongsToProject, withProjectMembership } from './membership.ts';
 
 // Re-export types for convenience
 export type { SessionConfig } from './types.ts';
@@ -189,6 +190,7 @@ export async function createSession(
     labels?: string[];
     isFlagged?: boolean;
     projectId?: string;
+    projectIds?: string[];
     parentSessionId?: string;
     taskSlug?: string;
     taskRunId?: string;
@@ -225,7 +227,7 @@ export async function createSession(
     sessionStatus: options?.sessionStatus,
     labels: options?.labels,
     isFlagged: options?.isFlagged,
-    projectId: options?.projectId,
+    ...withProjectMembership(sessionProjectIds(options ?? {})),
     parentSessionId: options?.parentSessionId,
     taskSlug: options?.taskSlug,
     taskRunId: options?.taskRunId,
@@ -561,6 +563,7 @@ export async function updateSessionMetadata(
     | 'isArchived'
     | 'archivedAt'
     | 'projectId'
+    | 'projectIds'
   >>
 ): Promise<void> {
   const session = loadSession(workspaceRootPath, sessionId);
@@ -583,7 +586,8 @@ export async function updateSessionMetadata(
   if (updates.llmConnection !== undefined) session.llmConnection = updates.llmConnection;
   if (updates.isArchived !== undefined) session.isArchived = updates.isArchived;
   if ('archivedAt' in updates) session.archivedAt = updates.archivedAt;
-  if ('projectId' in updates) session.projectId = updates.projectId;
+  if ('projectIds' in updates) Object.assign(session, withProjectMembership(updates.projectIds ?? []));
+  else if ('projectId' in updates) Object.assign(session, withProjectMembership(updates.projectId ? [updates.projectId] : []));
 
   await saveSession(session);
 }
@@ -633,9 +637,12 @@ export async function setSessionProjectId(
   sessionId: string,
   projectId: string | null
 ): Promise<void> {
-  await updateSessionMetadata(workspaceRootPath, sessionId, {
-    projectId: projectId === null ? undefined : projectId,
-  });
+  await setSessionProjectIds(workspaceRootPath, sessionId, projectId === null ? [] : [projectId]);
+}
+
+/** Persist membership metadata through the existing serialized session writer. */
+export async function setSessionProjectIds(workspaceRootPath: string, sessionId: string, projectIds: readonly string[]): Promise<void> {
+  await updateSessionMetadata(workspaceRootPath, sessionId, withProjectMembership(projectIds));
 }
 
 /**
@@ -651,8 +658,8 @@ export async function unbindProjectFromSessions(
   let touched = 0;
   for (const meta of sessions) {
     const full = loadSession(workspaceRootPath, meta.id);
-    if (full?.projectId === projectId) {
-      full.projectId = undefined;
+    if (full && sessionBelongsToProject(full, projectId)) {
+      Object.assign(full, withProjectMembership(sessionProjectIds(full).filter(id => id !== projectId)));
       await saveSession(full);
       touched++;
     }

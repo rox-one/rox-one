@@ -315,6 +315,47 @@ test('renderer-fabricated receipts cannot acknowledge an unsubmitted draft or al
   expect(ipc.sender.listenerCount('destroyed')).toBe(0)
 })
 
+test('two Notes controllers sharing one preload keep the live controller receipt when an older controller closes', async () => {
+  const f = await fixture(true)
+  const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })
+  cleanups.push(() => client.destroy())
+  const committed = Promise.withResolvers<void>()
+  const release = Promise.withResolvers<void>()
+  const delayedClient = {
+    invoke: async (channel: string, ...args: unknown[]) => {
+      const result = await client.invoke(channel, ...args)
+      if (channel === RPC_CHANNELS.nativeData.MUTATE) { committed.resolve(); await release.promise }
+      return result
+    },
+    getConnectionState: () => client.getConnectionState(),
+    onConnectionStateChanged: (listener: Parameters<WsRpcClient['onConnectionStateChanged']>[0]) => client.onConnectionStateChanged(listener),
+  }
+  const ipc = replicaIpcFixture(join(f.dir, 'shared-controller-client'))
+  const bridge = createNativeReplicaBridge({ client: delayedClient, invokeIpc: async (channel, input) => ipc.call(channel, input) })
+  cleanups.push(bridge.dispose)
+  const api = buildClientApi(client, CHANNEL_MAP)
+  api.nativeReplica = bridge.nativeReplica
+  api.nativeData.readEntity = bridge.readEntity
+  api.nativeData.mutate = bridge.mutate
+  api.getTransportConnectionState = async () => client.getConnectionState()
+  const oldController = createNativeNotesSyncController(api)
+  const liveController = createNativeNotesSyncController(api)
+  const created = await api.createNote(f.workspaceId, 'Shared controller', undefined, { operationId: 'shared-controller-create', expectedRevision: null, schemaVersion: 1 })
+  await oldController.start(f.workspaceId)
+  await liveController.start(f.workspaceId)
+  const queued = await liveController.queueSave(created, '# Current controller draft\n')
+  const flushing = liveController.flush()
+  const result = flushing.then(receipts => ({ receipts }), error => ({ error }))
+  await committed.promise
+  await oldController.stop()
+  release.resolve()
+  try {
+    expect(await result).toMatchObject({ receipts: [{ operationId: queued.operationId, revision: 2 }] })
+    expect(await liveController.flush()).toEqual([])
+    expect(await api.readNote(f.workspaceId, created.id)).toMatchObject({ nativeRevision: 2, content: '# Current controller draft\n' })
+  } finally { await liveController.stop() }
+})
+
 test('closing custody during a committed but delayed RPC response fences receipt registration until stable server replay', async () => {
   const f = await fixture(true)
   const client = new WsRpcClient(f.url, { workspaceId: f.workspaceId, token: f.issued.credential, autoReconnect: false })

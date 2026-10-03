@@ -1,0 +1,503 @@
+{
+  "contractSha": "f00ffcacc6a94a88b6e99b2f708224050842be7f",
+  "status": "PARTIAL_INTEGRATED_EVIDENCE_RELEASE_GATES_OPEN",
+  "cases": [
+    {
+      "id": "CORE-01",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-02",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-03",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-04",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-05",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-06",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-07",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-08",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-09",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "CORE-10",
+      "level": "unit",
+      "owner": "A1",
+      "releaseBlocking": true,
+      "evidenceStatus": "UNIT_PASS",
+      "verification": "Independent full feature suite: 257 pass / 0 fail, includes production reducer CORE cases. A9 separately executed all 56 positive/foreign/premature policy cases; domain signals here are synthetic."
+    },
+    {
+      "id": "UI-01",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "COMPONENT_PASS",
+      "verification": "Production registry/overlay browser suite: 6 pass. Panel scope, variant fallback, hidden/clipped/iframe rejection, stale cleanup and ordinary outside click tested in separate component fixture."
+    },
+    {
+      "id": "UI-02",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "COMPONENT_PASS",
+      "verification": "Production registry/overlay browser suite: 6 pass. Panel scope, variant fallback, hidden/clipped/iframe rejection, stale cleanup and ordinary outside click tested in separate component fixture."
+    },
+    {
+      "id": "UI-03",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "COMPONENT_PASS",
+      "verification": "Production registry/overlay browser suite: 6 pass. Panel scope, variant fallback, hidden/clipped/iframe rejection, stale cleanup and ordinary outside click tested in separate component fixture."
+    },
+    {
+      "id": "UI-04",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "COMPONENT_PASS",
+      "verification": "Production registry/overlay browser suite: 6 pass. Panel scope, variant fallback, hidden/clipped/iframe rejection, stale cleanup and ordinary outside click tested in separate component fixture."
+    },
+    {
+      "id": "UI-05",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_COMPONENT_EVIDENCE",
+      "verification": "Geometry <=2 CSS px/focus, reduced-motion, higher-layer Escape and observer cleanup pass in production component harness. Full App zoom/translation/native-layer/lease cases remain open."
+    },
+    {
+      "id": "UI-06",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "UI-07",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_COMPONENT_EVIDENCE",
+      "verification": "Geometry <=2 CSS px/focus, reduced-motion, higher-layer Escape and observer cleanup pass in production component harness. Full App zoom/translation/native-layer/lease cases remain open."
+    },
+    {
+      "id": "UI-08",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "COMPONENT_PASS",
+      "verification": "Production registry/overlay browser suite: 6 pass. Panel scope, variant fallback, hidden/clipped/iframe rejection, stale cleanup and ordinary outside click tested in separate component fixture."
+    },
+    {
+      "id": "UI-09",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_COMPONENT_EVIDENCE",
+      "verification": "Geometry <=2 CSS px/focus, reduced-motion, higher-layer Escape and observer cleanup pass in production component harness. Full App zoom/translation/native-layer/lease cases remain open."
+    },
+    {
+      "id": "UI-10",
+      "level": "component",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "COMPONENT_PASS",
+      "verification": "Production registry/overlay browser suite: 6 pass. Panel scope, variant fallback, hidden/clipped/iframe rejection, stale cleanup and ordinary outside click tested in separate component fixture."
+    },
+    {
+      "id": "UI-11",
+      "level": "application",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_COMPONENT_EVIDENCE",
+      "verification": "Geometry <=2 CSS px/focus, reduced-motion, higher-layer Escape and observer cleanup pass in production component harness. Full App zoom/translation/native-layer/lease cases remain open."
+    },
+    {
+      "id": "DATA-01",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "STORAGE_PRIVACY_PASS",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DATA-02",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "STORAGE_PRIVACY_PASS",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DATA-03",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "STORAGE_PRIVACY_PASS",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DATA-04",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "STORAGE_PRIVACY_PASS",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DATA-05",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "STORAGE_PRIVACY_PASS",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DATA-06",
+      "level": "storage",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "STORAGE_PRIVACY_PASS",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DATA-07",
+      "level": "privacy",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "STORAGE_PRIVACY_PASS",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DATA-08",
+      "level": "privacy",
+      "owner": "A3",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_STORAGE_EVIDENCE",
+      "verification": "Full feature suite executes real Chromium IndexedDB concurrency, fence/TTL, failures, future schema, scoped reset, semantic revision and diagnostics allowlist. DATA-08 disabled log tested; all application scenarios/network analytics still require acceptance."
+    },
+    {
+      "id": "DOMAIN-01",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-02",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-03",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_INTEGRATION_EVIDENCE",
+      "verification": "Production domain event processor -> chat adapter -> reducer normal/fast first-response correlation passes with synthetic external model events. Real App authorized session/model send outcome is NOT_RUN."
+    },
+    {
+      "id": "DOMAIN-04",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_INTEGRATION_EVIDENCE",
+      "verification": "Production domain event processor -> chat adapter -> reducer normal/fast first-response correlation passes with synthetic external model events. Real App authorized session/model send outcome is NOT_RUN."
+    },
+    {
+      "id": "DOMAIN-05",
+      "level": "application",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-06",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-07",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-08",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-09",
+      "level": "application",
+      "owner": "A7",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-10",
+      "level": "application",
+      "owner": "A5",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-11",
+      "level": "application",
+      "owner": "A5",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-12",
+      "level": "application",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "evidenceStatus": "APPLICATION_PASS",
+      "verification": "Actual production Notes UI -> production preload/main replica -> RPC -> native journal -> file readback -> reload -> search PASS. Custody/IPC sender adapters are test-only; no OS-native claim."
+    },
+    {
+      "id": "DOMAIN-13",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-14",
+      "level": "application",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-15",
+      "level": "application",
+      "owner": "A6",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-16",
+      "level": "application",
+      "owner": "A10",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-17",
+      "level": "application",
+      "owner": "A10",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-18",
+      "level": "application",
+      "owner": "A11",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DOMAIN-19",
+      "level": "application",
+      "owner": "A11",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-01",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "APPLICATION_PASS",
+      "verification": "Real App existing authenticated isolated profile with flag absent: no forced tour/overlay/automatic domain mutations and no rox-product-tour IndexedDB open, allSessions route."
+    },
+    {
+      "id": "APP-02",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-03",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-04",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "APP-05",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "PARTIAL_APPLICATION_EVIDENCE",
+      "verification": "Real restricted WebUI renders Sessions unavailable and direct host getSessions rejects. Remaining available routes and host FS/OAuth acceptance are NOT_RUN."
+    },
+    {
+      "id": "APP-06",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "APPLICATION_PASS",
+      "verification": "Real App existing authenticated isolated profile with flag absent: no forced tour/overlay/automatic domain mutations and no rox-product-tour IndexedDB open, allSessions route."
+    },
+    {
+      "id": "APP-07",
+      "level": "application",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "NATIVE-01",
+      "level": "native-macos",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Linux native runner exit2, releaseBlocking true. No macOS/Windows/system microphone evidence; real Electron-only fresh-setup CI harness is implemented but not executed here."
+    },
+    {
+      "id": "NATIVE-02",
+      "level": "native-windows",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Linux native runner exit2, releaseBlocking true. No macOS/Windows/system microphone evidence; real Electron-only fresh-setup CI harness is implemented but not executed here."
+    },
+    {
+      "id": "NATIVE-03",
+      "level": "native-manual",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Linux native runner exit2, releaseBlocking true. No macOS/Windows/system microphone evidence; real Electron-only fresh-setup CI harness is implemented but not executed here."
+    },
+    {
+      "id": "BUILD-01",
+      "level": "build",
+      "owner": "A9",
+      "releaseBlocking": true,
+      "evidenceStatus": "BUILD_PASS_WORKTREE_SNAPSHOT",
+      "verification": "c9b73303 baseline and integrated working-tree renderer builds exit0; consistent Bun gzip level9 JS delta+130855 bytes (2.00%), raw+513770, CSS gzip-235/raw-3042. Production artifacts contain none of six test fixture markers. Final SHA rebuild still required after subsequent runtime changes."
+    },
+    {
+      "id": "DELTA-01",
+      "level": "integration",
+      "owner": "A2",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DELTA-02",
+      "level": "integration",
+      "owner": "A4",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    },
+    {
+      "id": "DELTA-03",
+      "level": "static-contract",
+      "owner": "A0",
+      "releaseBlocking": true,
+      "evidenceStatus": "NOT_RUN",
+      "verification": "Required integrated application/native evidence has not yet been collected."
+    }
+  ],
+  "evidenceSnapshot": "root c49e76f3/302cc0d4 plus root integration working-tree changes, 2026-10-03; rerun on final immutable candidate required"
+}
