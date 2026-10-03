@@ -1047,3 +1047,8 @@ Owner recent_features; parent owns ordered integration. Retain held-prepare dest
 2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
 3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
 4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
+
+
+### Selected skill instructions custody recovery — 2026-10-04
+
+Owner recent_features; parent reviews and merges. Preserve merged1467 UI/API exactly, retain merged-source ancestor failure0/1 and legacy outside-link failure. Qualify48 storage/managed/custody cases,4 registered native RPC/workspace cases including zero body opens after revoke,7 actual SkillInfo owner/draft/OMP cases and runtime row keyboard/reset control plus full strict Electron types. Retain original fixture/default-timeout failures and exact hashes; reconcile docs additively, preserve all source branches. Installed platform/full release acceptance stays separate.
