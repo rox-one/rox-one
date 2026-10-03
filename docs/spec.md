@@ -734,6 +734,14 @@ Source: `fix/ui-001-owner3-recovery-e61c84b1` at `20842365c55889d8dec7b3a164ad7d
 
 Acceptance: mounted production NavigationProvider and SkillInfoPage with real React/history/native form controls and explicitly controlled data/transport seams; stale watcher/read/save, rejected write, deletion/recreation, workspace ABA and failed history scenarios. Installed desktop, real source providers and native workspace switching are separate acceptance scopes.
 
+### Golden Tasks import and responsive consumer recovery — 2026-10-03
+
+Owner: recent_features. Source: codex/golden-gate-workspace@5def9ffd36dc160fdc7c908784e0ef97ba6a732e, TasksPage file import and CatalogPanel/content-width focus exchange. Recover these behaviors in the current Things-style TasksPage; preserve all current link kinds, import validation, canonical native caller scope and CAS. Explicit import belongs to its captured mounted panel and actor/workspace generation, merges the current store after file reading, and reports success only after an exact native receipt and canonical readback. Local edits during commit remain pending and are rebased on that readback. Import serializes its own lifecycle and defers background sync/push reconciliation rather than treating uncommitted rows as deletions.
+
+Tasks explicitly opts into the shared layout's content-width master/detail exchange below 720px. Other mode consumers retain their existing layout. The selected detail has a Back control; standalone navigation remains available in a bounded dialog, while an existing contextual sidebar keeps its original owner. Moving focus follows only a hidden pane owned by this panel, with outside focus and inert/hidden roots protected. New labels use all twelve current locales.
+
+
+
 ## Persistent git-npm and RPC response admission recovery — 2026-10-03
 
 Owner: PR scout; integration/remote merge: lead. Source PR1448 exact1eb2c8289 supplies substantive git-npm permanent frozen-source isolation, same-version repair, serial test execution, and final shared response admission. Compose onto current managed Git/PATH/Windows receipts and hasInstalledFiles; do not replay old whole manager or navigation. A version is ready only with its contained retained source pin/lock, bounded regular no-follow identity receipt, executable launcher and exact current pointer; validate before flipping current. Frozen local Bun install owns its cwd/manifest/global/bin directories and retains source/dependencies across temporary checkout deletion and reload.
@@ -746,3 +754,20 @@ Owner: recent_features; dependency: current native Voice capture and Product Lea
 ## Portable resources and isolated protocol verification (2026-10-03)
 
 Owner: root integration. Recover #1448 at `1eb2c8289b68e9103880c3f2aee2c57e70c3409a`: packaged resources exclude development caches only under skills, retain required subprocess resources and reject ordinary vendored symlinks. Stale generated skill symlinks are removed without deleting their external target. A qualified native Electron path must exist, be absolute and be executable before a disposable meeting profile starts. Explicit developer protocol verification can avoid OS association changes; default and packaged aliases and the existing test-only gate remain intact. Windows startup/bootstrap/path resolution and thin-client native Notes custody remain authoritative.
+
+
+Confirmed Tasks import also drains native background work dispatched before the import lifetime. Its registered import barrier invalidates old sync/refresh continuations before a subsequent transport or publication; fresh canonical CAS starts after those existing acknowledgements settle. Two actual native negative controls reproduce the prior overlapping read/write race, and ten isolated native controls pass with the barrier. Current actor/workspace fences and queued local edits remain intact.
+
+### Native overlay recording custody recovery (2026-10-03)
+
+Restore the late A7 addition from `eeddeb5bd0af59b93fd121c10b8a7a52956ff0b7` through the current authenticated native owner. An overlay stop/cancel carries the verified recording ID through the private child handler, managed-window/client router, protocol event and current composer. Ordinary keyboard/PTT commands retain their existing payload. A tagged command never starts an idle composer, never affects another recording and cannot cancel a replacement capture. START phase events may arrive before its reply: the current capture queues commands by returned native ID, cancellation takes priority over stop, and grant/recording continuation retains the existing capture-generation fence. Current consent, clipboard/privacy, 1 MiB frames, one STOP, latest-draft whitespace and Product Learning attempt/handoff ownership remain intact. Owner: recent_features; dependencies: merged archive/owned overlay/Product Learning and current main. No new permission or native action is introduced.
+
+## Legacy MCP SSE compatibility recovery (2026-10-03)
+
+Owner: pr_scout; integration lead owns merge. Source: preserved #1436 @384843bfc4cf7d4a1f34c902a66a9a3198043c9f; current baseline #1455 main5211746270f5005d551ddc103970714520b25b67. The actual MCP pool may negotiate legacy SSE only after a typed Streamable HTTP initialize rejection 400/404/405. Authorization/quota/server failures, initialized-server health/discovery failures, and executed tool failures never select a different transport. Keep declared HTTP configuration as canonical source identity, configured headers on both SSE channels, current closed-client/source generation fences, shared Qdrant leases and no replay of executed calls.
+
+Each existing bounded connection attempt shares its 30-second budget across HTTP initialization/health, failed-client cleanup, SSE initialization/health and final discovery. The established one transient retry remains; an attempt receives no extra discovery budget. Cancellation during failed HTTP cleanup or SSE initialization creates no tool mappings and refuses late publication. Diagnostics retain both scrubbed failure contexts without raw SDK causes. This is actual loopback protocol qualification; no external provider or native Windows acceptance is inferred. Remaining #1436 source health/migration, host Bash and collection/knowledge changes are separate unfinished obligations.
+
+
+## Workspace shortcut popover integration —2026-10-03
+Move the existing per-workspace shortcut editor to an accessible bounded Radix portal; preserve native storage, draft cancellation, keyboard submit and current TourTarget. Acceptance: real desktop/narrow320px DOM, all three kinds, reload/workspace isolation, validation, nested Escape and no-write cancellation; full installed native release remains open.

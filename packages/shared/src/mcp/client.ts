@@ -98,7 +98,7 @@ export interface McpConnectOptions {
   timeoutMs?: number;
 }
 
-const DEFAULT_CONNECTION_TIMEOUT_MS = 30_000;
+export const DEFAULT_CONNECTION_TIMEOUT_MS = 30_000;
 
 function operationBudget(timeoutMs: number, lifetime: AbortSignal, caller: AbortSignal | undefined, label: string) {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error(`Invalid ${label} timeout`);
@@ -165,7 +165,9 @@ function errorSanitizer(config: McpClientConfig): (error: unknown) => Error {
  * Both CraftMcpClient (remote MCP sources) and ApiSourcePoolClient (API sources) implement this.
  */
 export interface PoolClient {
-  listTools(): Promise<Tool[]>;
+  /** Explicit negotiation, when supported; separates initialize from later discovery. */
+  connect?(options?: McpConnectOptions): Promise<void>;
+  listTools(options?: McpConnectOptions): Promise<Tool[]>;
   callTool(name: string, args: Record<string, unknown>, options?: PoolCallToolOptions): Promise<unknown>;
   close(): Promise<void>;
   /** Transport health, when available. Older/in-process clients may omit it. */
