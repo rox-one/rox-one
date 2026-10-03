@@ -1,0 +1,55 @@
+# Dedicated desktop pipeline definition: no gateway deployment jobs.
+version: 2.1
+jobs:
+  desktop-macos:
+    macos:
+      xcode: '16.4.0'
+    resource_class: macos.m1.medium.gen2
+    environment:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - checkout
+      - run:
+          name: Install desktop toolchain
+          command: |
+            brew install node@24
+            echo 'export PATH="/opt/homebrew/opt/node@24/bin:$HOME/.bun/bin:$PATH"' >> "$BASH_ENV"
+            curl -fsSL https://bun.sh/install | bash -s bun-v1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run validate:ci
+      - run: bun scripts/desktop-release.ts
+      - store_artifacts:
+          path: apps/electron/release
+          destination: desktop-darwin-arm64
+  desktop-windows:
+    machine:
+      image: windows-server-2022-gui:current
+      shell: powershell.exe -ExecutionPolicy Bypass
+    resource_class: windows.medium
+    environment:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - checkout
+      - run:
+          name: Install desktop toolchain
+          command: |
+            choco install nodejs-lts -y --force
+            Invoke-WebRequest https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-windows-x64.zip -OutFile bun-ci.zip
+            Expand-Archive bun-ci.zip -DestinationPath "$env:USERPROFILE\bun-ci" -Force
+            Remove-Item bun-ci.zip
+      - run:
+          name: Package and verify Windows
+          command: |
+            $env:PATH = "$env:USERPROFILE\bun-ci\bun-windows-x64;C:\Program Files\nodejs;C:\Program Files\Git\usr\bin;" + $env:PATH
+            bun install --frozen-lockfile
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            bun scripts/desktop-release.ts
+            exit $LASTEXITCODE
+      - store_artifacts:
+          path: apps/electron/release
+          destination: desktop-win32-x64
+workflows:
+  desktop-release:
+    jobs:
+      - desktop-macos
+      - desktop-windows
