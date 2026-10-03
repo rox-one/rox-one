@@ -812,3 +812,9 @@ Recover the strict local calendar-day check from preserved Golden source5def9ffd
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
+
+
+### OMP hidden Windows launch recovery — 2026-10-04
+
+- Owner: `pr_scout`; source #1436 `384843bfc4cf7d4a1f34c902a66a9a3198043c9f`. Set `windowsHide: true` at the current RPC and one-shot native OMP spawn boundaries, without restoring old external batch launchers or changing models, account generation, native policy, observer lifetime, stdin EOF or prompt argv.
+- Acceptance: both actual OmpAgent callers request hidden windows; literal prompt, private helper model/no-session and shell-free execution remain intact. Controlled protocol fixtures prove launch configuration, not native Windows console visibility or installed18.4.12 acceptance.
