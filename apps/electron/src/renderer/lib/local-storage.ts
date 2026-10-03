@@ -13,6 +13,7 @@ export const KEYS = {
   featureProductTourV1: 'feature-product-tour-v1',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
+  sidebarDismissedGuidance: 'sidebar-dismissed-guidance',
   sidebarWidth: 'sidebar-width',
   sessionListWidth: 'session-list-width',
   sidebarMode: 'sidebar-mode',
