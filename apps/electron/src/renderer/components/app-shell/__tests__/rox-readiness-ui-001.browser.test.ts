@@ -15,7 +15,7 @@ let server: Server, browser: Browser, context: BrowserContext, page: Page, base:
 function productionFunctions(): string {
   const source = readFileSync(process.env.ROX_UI001_MAIN_SOURCE ?? join(import.meta.dir, '../MainContentPanel.tsx'), 'utf8')
   const file = ts.createSourceFile('MainContentPanel.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  const names = new Set(['useSelectedResourceAvailability', 'MainContentPanel'])
+  const names = new Set(['useSelectedResourceAvailability', 'UnavailableAutomationTour', 'MainContentPanel'])
   return file.statements.filter((node) => (ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node)) ? names.has(node.name?.text ?? '') : ts.isVariableStatement(node) && node.declarationList.declarations.some(decl => names.has(decl.name.getText(file))))
     .map((node) => node.getText(file).replace(/^export /, '')).join('\n')
 }
@@ -40,6 +40,8 @@ async function fixtureBundle() {
   const contents = `
     import * as React from 'react';
     import { lazyRoutePage, RouteErrorBoundary } from './apps/electron/src/renderer/lib/route-recovery';
+    import { TourPanelScope, useTourSignals } from './apps/electron/src/renderer/features/product-tour/runtime/hooks';
+    import { navigationEntity } from './apps/electron/src/renderer/features/product-tour/runtime/routes';
     import { useCallback, useEffect, useMemo, useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { flushSync } from 'react-dom';
@@ -58,7 +60,7 @@ async function fixtureBundle() {
       isDiffNavigation, isExtensionNavigation, isConnectionsNavigation, isHomeNavigation, isCloudRunNavigation,
       isTerminalNavigation, isScreenNavigation } = guards;
     const sources = [{ config: { slug: 'a', name: 'Source A', type: 'local' } }];
-    let sessionRows = new Map();
+    let sessionRows = new Map(), sessionsReady = true;
     let rows = sources, workspace = 'ws-a', nav = parseRouteToNavigationState('home');
     const sourceListeners = new Set(), skillListeners = new Set(), reads = [];
     let deferredSource, deferredCloud, delaySource = false, delayCloud = false, failSource = false, failPage = false, rejectLazy = false, lazyAttempts = 0, cloudRows = ['a','b'], failCloud = false;
@@ -75,6 +77,7 @@ async function fixtureBundle() {
       }))}), getCloudRunStatus: async () => null,
     };
     const useNavigationState = () => nav;
+    const useNavigation = () => ({isSessionsReady:sessionsReady,unavailableWorkspaceSlug:null});
     const useAppShellContext = () => ({activeWorkspaceId:workspace,workspaces:[{id:workspace}],sessionStatuses:[],projects:[],loadedProjects:[],labels:[]});
     const useTranslation = () => ({ t: key => key });
     const useAtomValue = atom => atom === sessionMetaMapAtom ? sessionRows : [];
@@ -134,6 +137,7 @@ async function fixtureBundle() {
       emitSources(next, ws=workspace) { rows=next; sourceListeners.forEach(callback=>callback(ws, next)); },
       sourceRows: sources, reads,
       sessions(rows) {sessionRows = new Map(rows.map(row=>[row.id,row]));rerender()},
+      sessionsReady(ready) {sessionsReady=ready;rerender()},
       dockOpen() {return getDefaultStore().get(bottomTerminalOpenAtom)},
       failSource() { failSource=true; },
       failPage(value) { failPage=value; }, rejectLazy() { rejectLazy=true; }, lazyAttempts() { return lazyAttempts; }, delaySource() { delaySource=true; }, resolveSource(next) { deferredSource(next); },
@@ -198,12 +202,28 @@ describe.skipIf(!enabled)('UI-001 real Chromium component and persistence fixtur
     await page.evaluate(()=>{(window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'},{id:'foreign',workspaceId:'ws-b'}]);(window as any).ui001.navigate('allSessions/session/a')})
     await page.locator('[data-fixture-chat="a"]').waitFor()
     await page.evaluate(()=>(window as any).ui001.sessions([{id:'foreign',workspaceId:'ws-b'}]))
-    await page.locator('[data-testid="route-session-unavailable"][data-session-id="a"]').waitFor()
+    await page.locator('[data-testid="route-session-missing"][data-route-entity="a"]').waitFor()
+    expect(await page.locator('[data-testid="route-session-missing"] p').textContent()).toBe('chat.sessionNoLongerExists')
     expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
     await page.evaluate(()=>(window as any).ui001.navigate('allSessions/session/foreign'))
     await page.locator('[data-testid="route-unavailable"]').waitFor()
     expect((await page.evaluate(()=>(window as any).ui001.address())).nav.details.sessionId).toBe('foreign')
     expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
+  })
+
+  browserTest('session readiness keeps the requested address pending until its workspace metadata is ready', async () => {
+    await page.evaluate(() => {
+      (window as any).ui001.sessionsReady(false);
+      (window as any).ui001.navigate('allSessions/session/a');
+    })
+    await page.locator('[data-testid="route-session-loading"][data-route-entity="a"]').waitFor()
+    expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
+    await page.evaluate(() => (window as any).ui001.sessions([{id:'a',workspaceId:'ws-a'}]))
+    expect(await page.locator('[data-testid="route-session-loading"]').count()).toBe(1)
+    expect(await page.locator('[data-fixture-chat]').count()).toBe(0)
+    await page.evaluate(() => (window as any).ui001.sessionsReady(true))
+    await page.locator('[data-fixture-chat="a"]').waitFor()
+    expect((await page.evaluate(() => (window as any).ui001.address())).nav.details.sessionId).toBe('a')
   })
 
   browserTest('malformed and unsupported terminal addresses show specific unavailable surfaces', async () => {

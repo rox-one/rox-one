@@ -44,8 +44,8 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
       if (host === 'ChatPage') {
         // This fixture has no session metadata. Preserve the requested ID
         // without starting a chat load whose workspace cannot be verified.
-        expect(html).toContain('data-testid="route-session-unavailable"')
-        expect(html).toContain(`data-session-id="${value}"`)
+        expect(html).toContain('data-testid="route-session-missing"')
+        expect(html).toContain(`data-route-entity="${value}"`)
         expect(html).not.toContain('data-route-host="ChatPage"')
         return
       }
@@ -68,5 +68,42 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
     expect(html).toContain('data-testid="route-unavailable"')
     expect(html).toContain('common.unavailable')
     expect(html).not.toContain('data-route-host="ChatPage"')
+  })
+
+  for (const [workspaceId, remoteWorkspaceId] of [
+    ['workspace-a', undefined],
+    ['remote-workspace-a', 'remote-workspace-a'],
+  ] as const) {
+    it(`mounts the selected session only with ready matching ${remoteWorkspaceId ? 'remote' : 'local'} metadata`, async () => {
+      const html = await rendered({
+        route: 'allSessions/session/session-one', workspace: 'workspace-a', remoteWorkspaceId,
+        sessions: [{ id: 'session-one', workspaceId }], sessionsReady: true,
+      })
+      expect(html).toContain('data-route-host="ChatPage"')
+      expect(html).toContain('&quot;sessionId&quot;:&quot;session-one&quot;')
+      expect(html).not.toContain('route-session-missing')
+      expect(html).not.toContain('route-unavailable')
+    })
+  }
+
+  it('keeps a selected session loading until metadata readiness even if a previous snapshot contains it', async () => {
+    const html = await rendered({
+      route: 'allSessions/session/session-one', workspace: 'workspace-a',
+      sessions: [{ id: 'session-one', workspaceId: 'workspace-a' }], sessionsReady: false,
+    })
+    expect(html).toContain('data-testid="route-session-loading"')
+    expect(html).toContain('data-route-entity="session-one"')
+    expect(html).not.toContain('data-route-host="ChatPage"')
+    expect(html).not.toContain('chat.sessionNoLongerExists')
+  })
+
+  it('rejects known foreign-workspace metadata before mounting ChatPage', async () => {
+    const html = await rendered({
+      route: 'allSessions/session/session-one', workspace: 'workspace-a',
+      sessions: [{ id: 'session-one', workspaceId: 'workspace-b' }], sessionsReady: true,
+    })
+    expect(html).toContain('data-testid="route-unavailable"')
+    expect(html).not.toContain('data-route-host="ChatPage"')
+    expect(html).not.toContain('session.selectConversation')
   })
 })

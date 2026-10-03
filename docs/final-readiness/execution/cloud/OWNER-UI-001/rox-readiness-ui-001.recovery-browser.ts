@@ -328,4 +328,7 @@ try {
   assert.deepEqual(errors, [])
   console.log(JSON.stringify({ environment: 'isolated local headless Chromium; actual MainContentPanel, SourceInfoPage, SkillInfoPage, route parser and Jotai atoms; presentation and IPC fixtures; history adapter is a fixture, not NavigationProvider; no installed/native/hosted/backend acceptance', browserVersion: browser.version(), results }, null, 2))
   if (results.some(result => !result.pass)) process.exitCode = 1
+} catch (error) {
+  console.error(JSON.stringify({ executionFailure: String(error), errors, results, body: await page.locator('body').innerText().catch(() => '') }, null, 2))
+  throw error
 } finally { await browser.close(); server.stop(); rmSync(temp, { recursive: true, force: true }) }

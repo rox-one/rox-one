@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "owner": "OWNER-UI-001",
+  "taskIds": [
+    "UI-001.1",
+    "UI-001.2"
+  ],
+  "phase": "local-verification-complete",
+  "originalInputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
+  "initialFetchedMain": "57871f492d1b21177ab767454d90395d72496b4e",
+  "inputRevision": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "localBranch": "codex/ui-001-current-main-recheck-20261003",
+  "originalAcceptancePreserved": {
+    "UI-001.1": {
+      "Requirements": "Preserve workspace and entity selection through direct links, restart, browser history and missing/deleted entities. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+      "DoD": "Every link resolves to its own surface or a specific missing/unavailable state; no unrelated chat fallback.",
+      "Full functional verification": "Open direct links for session, source, skill, project, note, page, knowledge, extension, terminal, cloud-run and all extra screens; remove each entity while selected.",
+      "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+    },
+    "UI-001.2": {
+      "Requirements": "Verify all shell variants, native overlays and modal focus at supported DPI/zoom; persist only valid layout sizes. Target coverage: A Windows 10/11; B macOS; C hosted web, following the explicit platform contract in the parent task.",
+      "DoD": "Content remains usable without clipped actions, native view overlap or inaccessible resize handles.",
+      "Full functional verification": "Resize panels while opening dialogs, browser and extension hosts; repeat Windows 100/150/200% scaling and macOS Retina plus browser zoom.",
+      "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
+    }
+  },
+  "fullDoDClosed": false,
+  "productPatchRequired": false,
+  "productSourceChanges": [],
+  "implementedClauses": [
+    "Retained integrated route-specific recovery, canonical geometry normalization, metadata readiness and workspace ownership behavior.",
+    "Restored failing verification fixtures to current product contracts with original browser history assertions/timeouts retained.",
+    "Added canonical/stale-event, local/remote metadata and pending-readiness negative controls.",
+    "Rebound CI source manifest to24 unchanged current-main inputs, retaining the hash assertion and prior manifest."
+  ],
+  "alreadyIntegratedPRs": [
+    {
+      "number": 1400,
+      "url": "https://github.com/rox-one/rox-one/pull/1400"
+    },
+    {
+      "number": 1420,
+      "url": "https://github.com/rox-one/rox-one/pull/1420"
+    },
+    {
+      "number": 1457,
+      "url": "https://github.com/rox-one/rox-one/pull/1457"
+    },
+    {
+      "number": 1468,
+      "url": "https://github.com/rox-one/rox-one/pull/1468"
+    }
+  ],
+  "otherMainReadback": [
+    {
+      "number": 1424,
+      "scope": "credential own-data validation; no duplicate UI change"
+    },
+    {
+      "number": 1470,
+      "scope": "task-date validation; fast-forwarded before final validation,24 UI source hashes unchanged"
+    }
+  ],
+  "runtime": {
+    "host": "macOS-27.0-arm64-arm-64bit",
+    "architecture": "arm64",
+    "bun": "1.3.14",
+    "bunBinarySha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233",
+    "bunInstall": "official release binary used only through task-scoped path; global toolchain unchanged",
+    "node": "v26.8.2",
+    "codex": "codex-cli 0.160.0",
+    "taskRuntimeIdentity": "01a1012d-dd8d-7e92-87b6-c871629d1a1b",
+    "runnerId": null,
+    "modelMetadata": "not independently exposed by trusted task-runtime tooling",
+    "codegraph": "absent; gap retained; bounded source exploration",
+    "dependencies": "independent bun install --frozen-lockfile --ignore-scripts; no package or lockfile changes",
+    "chromiumVersion": "153.0.8010.12",
+    "chromiumExecutable": "/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell"
+  },
+  "testCommandsResults": [
+    {
+      "command": "CHROMIUM_EXECUTABLE=/nonexistent/ui001-browser-separate bun test --timeout 30000 ./apps/electron/src/renderer/components/app-shell/__tests__ ./apps/electron/src/shared/__tests__ ./apps/electron/src/renderer/contexts/__tests__ ./apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts ./apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.panels.test.ts ./apps/electron/src/renderer/atoms/rox-readiness-ui-001.route-isolation.test.ts",
+      "exitCode": 0,
+      "passed": 891,
+      "skipped": 141,
+      "failed": 0,
+      "assertions": 3810,
+      "log": "final-regression.log",
+      "skipBoundary": "Browser opt-in tests run separately; skipped cases are not counted as passes."
+    },
+    {
+      "command": "cd apps/electron && bun run tsc --noEmit",
+      "exitCode": 0,
+      "log": "final-typecheck.log"
+    },
+    {
+      "command": "bun run electron:build:renderer",
+      "exitCode": 0,
+      "log": "final-renderer-build.log",
+      "warnings": "existing large chunk and Node module.register deprecation warnings"
+    },
+    {
+      "command": "ROX_UI001_BROWSER_TEST=1 ROX_UI001_CHROMIUM_EXECUTABLE=<pinned Chromium> bun test --timeout 60000 apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts",
+      "exitCode": 0,
+      "passed": 37,
+      "failed": 0,
+      "assertions": 117,
+      "log": "final-navigation-mounted.log"
+    },
+    {
+      "command": "ROX_UI001_BROWSER_TEST=1 ROX_UI001_CHROMIUM_EXECUTABLE=<pinned Chromium> bun test --timeout 60000 apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+      "exitCode": 0,
+      "passed": 12,
+      "failed": 0,
+      "assertions": 29,
+      "log": "final-browser.log"
+    },
+    {
+      "command": "ROX_UI001_BROWSER_EXECUTABLE=<pinned Chromium> bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts",
+      "exitCode": 0,
+      "passed": 17,
+      "failed": 0,
+      "log": "final-navigation-script.log"
+    },
+    {
+      "command": "ROX_UI001_BROWSER_EXECUTABLE=<pinned Chromium> bun docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts",
+      "exitCode": 0,
+      "passed": 22,
+      "failed": 0,
+      "log": "recovery-provider-green.log"
+    },
+    {
+      "command": "CI24-source SHA256 gate reproduced locally; see source-receipt.json",
+      "exitCode": 0,
+      "matchedFiles": 24
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "broaderValidation": {
+    "command": "bun run validate:ci",
+    "exitCode": 0,
+    "status": "passed",
+    "bunTests": 391,
+    "pythonDocToolsTests": 19,
+    "log": "final-validate-ci.log",
+    "limits": "workers/pages absent and skipped by canonical script; other package types and workspace-service passed; no hosted deployment proved."
+  },
+  "testedFixtureSha256": {
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts": "ff3f1f94c64e51a5ad61d2e20dedaf15bbac332bf117631e4855ff61451d3f92",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts": "3ca680bb15edf3284703141cdb85e20c2b3e0736d415b6adc4dd0957055b2227",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness.ts": "e8ed1c8446ed62f960d6a9eca89c2066abd30a2a08f3e4d8f1783910730b153b",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts": "0910c904e0b285aff5d086bcadcf8c36c7f5b1c8bc7cf36d6a6135ba91e14726",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts": "512182e84da18567641d3df27edb42c95168defb19187b01f8b799d5be0b841d",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts": "2b4993a8c8caf2ec09ed29604f5afea0eb2dcd437bea7326fc05a4d5687c204f"
+  },
+  "additionalActualCollaboratorSha256": {
+    "apps/electron/src/renderer/pages/SourceInfoPage.tsx": "0d8f5fec1b3b4aa2afcee68176bc7221c0e9bcf2a3bf443b77b56e541ee13b34",
+    "apps/electron/src/renderer/components/ui/source-status-indicator.tsx": "f46211aed722550cd09270d17717dbd20892083e487075e52b8a53aaa78558be",
+    "packages/ui/src/components/tooltip.tsx": "022a4513f9ada2b8870192a8e6764e9253345a04dbb60d7c070452314125d8ab",
+    "apps/electron/src/renderer/features/product-tour/runtime/hooks.tsx": "eb0551b997ed6410bcfe9da5c65c063b59637ca683e762e969f5a871d15d6d84",
+    "apps/electron/src/renderer/features/product-tour/runtime/routes.ts": "fe13c830d7602d27631ed3c54ffbcc6c9493f65140b27ad2c7a20c52ccd7df43"
+  },
+  "sourceReceipt": "source-receipt.json",
+  "fixtureBoundary": "Isolated local headless Chromium on macOS; actual MainContentPanel, SourceInfoPage, SkillInfoPage, route parser, Jotai, navigation and callback logic with IPC/presentation fixtures. Standalone recovery uses a fixture history adapter; navigation script/mounted tests use actual NavigationProvider. No installed Windows/macOS or hosted/service acceptance.",
+  "failureHistory": [
+    {
+      "log": "current-main-ci-failure.log",
+      "cause": "Observed current-main UI001 CI37152487633 stopped at mismatching committed source manifest before tests.",
+      "url": "https://github.com/rox-one/rox-one/actions/runs/37152487633"
+    },
+    {
+      "logs": [
+        "current-regression.log",
+        "current-typecheck.log",
+        "browser-red.log",
+        "route-dispatch-red.log"
+      ],
+      "cause": "Initial dependency symlink targeted the older workspace before the @rox package rename; retained and replaced with independent frozen install."
+    },
+    {
+      "log": "geometry-red.log",
+      "cause": "Four obsolete event-snapshot expectations; current atoms correctly re-read canonical storage."
+    },
+    {
+      "logs": [
+        "route-dispatch-qualified-contract-red.log",
+        "route-dispatch-alias-red.log"
+      ],
+      "cause": "Obsolete missing-session selector and generated helper/import alias collision; fixed fixtures, retained current product behavior."
+    },
+    {
+      "log": "browser-qualified-red.log",
+      "cause": "Extracted actual MainContentPanel lacked current useNavigation and tour collaborators in its test bootstrap."
+    },
+    {
+      "log": "navigation-script.log",
+      "cause": "Three obsolete selector checks stopped before completion of workspace lifecycle; following history check also failed. No independent product history defect reproduced; original history assertions pass after lifecycle completion."
+    },
+    {
+      "logs": [
+        "recovery-script.log",
+        "component-real-entity-build.log",
+        "recovery-runtime-diagnostic.log"
+      ],
+      "cause": "Real SourceInfoPage introduced status collaborator; generic stub omitted exports. Passing actual status/Tooltip imports initially pulled broad-index fonts, then lacked the actual TooltipProvider. All fixed in test shell, without mocking status logic."
+    }
+  ],
+  "externalPrerequisites": [
+    "Installed Windows10 and Windows11 acceptance for full original direct-link/remove-selected/restart/history workflow and100/150/200% scaling.",
+    "Native macOS installed acceptance at Retina/DPI/zoom for overlays, modal focus, browser/extension hosts and usable resize handles.",
+    "Actual hosted-web workflow and backend/persistence receipts for the original acceptance matrix.",
+    "Immutable integrated-candidate replay across the original target platforms; headless IPC/presentation fixtures do not close it."
+  ],
+  "delivery": "Authorized ordinary commit/push and new PR; exact commit and remote/PR readback recorded separately in the session outputs after publication. No force push or edits to foreign worktrees/branches; rox-release-20261003 untouched.",
+  "observedAt": "2026-10-03T21:10:15.985671+00:00",
+  "preservedLogs": {
+    "index": "logs/index.json",
+    "count": 36,
+    "format": "gzip with mtime=0; SHA256 of both raw and compressed logs retained"
+  },
+  "ownedChangedPaths": [
+    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.geometry.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/source-manifest-v3.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/README.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/browser-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/browser-qualified-red.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/browser-red.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/component-real-entity-build-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/component-real-entity-build.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/current-dependency-install.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/current-main-ci-failure.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/current-regression-qualified.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/current-regression.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/current-typecheck-qualified.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/current-typecheck.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/final-browser.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/final-navigation-mounted.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/final-navigation-script.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/final-regression.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/final-renderer-build.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/final-typecheck.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/final-validate-ci.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/geometry-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/geometry-layout-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/geometry-red.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/index.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/navigation-current-selectors.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/navigation-history-diagnostic.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/navigation-history-steps-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/navigation-mounted.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/navigation-script.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/recovery-provider-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/recovery-runtime-diagnostic.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/recovery-script-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/recovery-script.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/route-dispatch-alias-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/route-dispatch-alias-red.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/route-dispatch-contract-red.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/route-dispatch-green.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/route-dispatch-qualified-contract-red.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/logs/route-dispatch-red.log.gz",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/original-contract.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/plan.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/result.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/source-manifest-before.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/source-receipt.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/current-main-test-recheck/spec.md"
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "integrationBase": "bb047b946da41346301cffe88a43db0adf621dcf",
-  "sourceSha256": {
+  "testedBaseRevision": "bb047b946da41346301cffe88a43db0adf621dcf",
+  "actualSourceSha256": {
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "47de25aa61eac95f05c5c8e092171d3ab9eea8a748983b794045d225b0cd5a9c",
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "284020622cacdae95efd48727a59a98ae5f1f4c1984ee7ec20e054dd58260d60",
     "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
@@ -26,5 +26,7 @@
     "apps/electron/src/renderer/lib/route-recovery.tsx": "532d3690f2bda1321cb4d95cf29e6bbe4821f041678feb1758e00aa0019ab5d7",
     "apps/electron/src/renderer/contexts/navigation-reconcile.ts": "f5f04a4484d2d596cc3b450fedf0a05026e69203236e96e8305e2d35bc9ce011"
   },
-  "candidateSourceRevision": "bb047b946da41346301cffe88a43db0adf621dcf"
+  "matchesCommittedCandidate": true,
+  "sourcesStableAfterTestsAndRendererBuild": true,
+  "productSourceDiffFromMain": []
 }

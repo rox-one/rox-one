@@ -28,10 +28,11 @@ export const getSettingsPageComponent=(subpage)=>leaf('Settings:'+subpage);
 `
 const bindings = `import * as React from 'react'; import {atom} from 'jotai';
 export const ShellContext=React.createContext(null); export const NavContext=React.createContext(null);
+export const NavigationStatusContext=React.createContext({isSessionsReady:true,unavailableWorkspaceSlug:null});
 export const AppShellProvider=ShellContext.Provider;
 export const useAppShellContext=()=>React.useContext(ShellContext);
 export const useNavigationState=()=>React.useContext(NavContext);
-export const useNavigation=()=>({navigateToSource:()=>{}});
+export const useNavigation=()=>({...React.useContext(NavigationStatusContext),navigateToSource:()=>{}});
 export const useActiveWorkspace=()=>({id:React.useContext(ShellContext)?.activeWorkspaceId});
 export { isSessionsNavigation,isSourcesNavigation,isSettingsNavigation,isSkillsNavigation,isMemoryNavigation,
  isTasksNavigation,isMeetingsNavigation,isInboxNavigation,isFeedNavigation,isNotesNavigation,isAutomationsNavigation,
@@ -77,13 +78,23 @@ export async function buildMainFixture(
   const entry = resolve(outdir, 'rox-readiness-ui-001.entry.tsx')
   writeFileSync(entry, `import * as React from 'react';
 import {MainContentPanel} from ${JSON.stringify(main)};
-import {ShellContext,NavContext} from 'rox-ui001-bindings';
+import {Provider as FixtureProvider,createStore as createFixtureStore} from 'jotai';
+import {ShellContext,NavContext,NavigationStatusContext,sessionMetaMapAtom as fixtureSessionMetaMapAtom} from 'rox-ui001-bindings';
 import {parseRouteToNavigationStateOrUnavailable as parseRouteToNavigationState} from ${JSON.stringify(parser)};
-export function Fixture({route='sources/source/one',workspace='workspace-a',directory,override}) {
+${options.realEntityPages ? `import {TooltipProvider as FixtureTooltipProvider} from ${JSON.stringify(resolve(import.meta.dir, '../../../../../../../packages/ui/src/components/tooltip.tsx'))};` : ''}
+const emptyFixtureSessions=[];
+export function Fixture({route='sources/source/one',workspace='workspace-a',directory,override,sessions=emptyFixtureSessions,sessionsReady=true,remoteWorkspaceId,unavailableWorkspaceSlug=null}) {
  const nav=override??parseRouteToNavigationState(route);
- return <ShellContext.Provider value={{activeWorkspaceId:workspace,workspaces:[],sessionStatuses:[],projects:[],loadedProjects:[],labels:[],activeSessionWorkingDirectory:directory}}>
+ // Initialize an unpublished store before subscribers mount; replacing the
+ // fixture's metadata never mutates a store subscribed by the previous render.
+ const fixtureStore=React.useMemo(()=>{const store=createFixtureStore();
+  store.set(fixtureSessionMetaMapAtom,new Map(sessions.map(session=>[session.id,session])));return store;
+ },[sessions]);
+ const workspaces=remoteWorkspaceId?[{id:workspace,remoteServer:{remoteWorkspaceId}}]:[];
+ return ${options.realEntityPages ? '<FixtureTooltipProvider>' : ''}<FixtureProvider store={fixtureStore}><ShellContext.Provider value={{activeWorkspaceId:workspace,workspaces,sessionStatuses:[],projects:[],loadedProjects:[],labels:[],activeSessionWorkingDirectory:directory}}>
+ <NavigationStatusContext.Provider value={{isSessionsReady:sessionsReady,unavailableWorkspaceSlug}}>
   <NavContext.Provider value={nav}><MainContentPanel panelId="fixture-panel" /></NavContext.Provider>
- </ShellContext.Provider>
+ </NavigationStatusContext.Provider></ShellContext.Provider></FixtureProvider>${options.realEntityPages ? '</FixtureTooltipProvider>' : ''}
 }
 ${browser ? options.browserBootstrap ?? `import {createRoot} from 'react-dom/client';
 const sourceListeners=new Set(),skillListeners=new Set();
@@ -111,9 +122,18 @@ window.ui001.render({});` : ''}
     plugins: [{ name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
       build.onResolve({ filter: /.*/ }, args => {
+        if (options.realEntityPages && args.path === '@rox/ui'
+          && /\/components\/ui\/source-status-indicator\.tsx$/.test(args.importer)) {
+          // Keep its real tooltip exports without pulling unrelated markdown
+          // font assets from the UI package's broad index into this fixture.
+          return { path: resolve(import.meta.dir, '../../../../../../../packages/ui/src/components/tooltip.tsx') }
+        }
         if (options.realNavigation && /\/contexts\/NavigationContext\.tsx$/.test(args.importer)
           && ['react-i18next', 'sonner'].includes(args.path)) return { path: 'bindings', namespace: 'ui001' }
         if (options.realEntityPages && /\/pages\/(SourceInfoPage|SkillInfoPage)\.tsx$/.test(args.importer)) {
+          // Source availability uses the shipped status derivation; the detail
+          // fixture must not replace that collaborator with a generic UI stub.
+          if (args.path === '@/components/ui/source-status-indicator') return
           if (['react-i18next', '@/contexts/NavigationContext', '@/context/AppShellContext'].includes(args.path)) {
             return { path: 'bindings', namespace: 'ui001' }
           }

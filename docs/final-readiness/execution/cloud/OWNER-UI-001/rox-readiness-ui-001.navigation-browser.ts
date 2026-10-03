@@ -30,6 +30,11 @@ import {useSession} from ${JSON.stringify(join(renderer, 'hooks/useSession.ts'))
 import {panelStackAtom} from ${JSON.stringify(join(renderer, 'atoms/panel-stack.ts'))};
 import {PanelSlot} from ${JSON.stringify(join(renderer, 'components/app-shell/PanelSlot.tsx'))};
 const store=createStore();
+const historyWrites=[];
+for(const operation of ['pushState','replaceState']) {
+ const write=history[operation].bind(history);
+ history[operation]=(state,title,url)=>{historyWrites.push({operation,state,url:String(url)});return write(state,title,url)};
+}
 const sourceListeners=new Set(),skillListeners=new Set(),deepLinkListeners=new Set();
 const requests=[],actions=[];
 const source=slug=>({config:{slug,name:slug,type:'api',api:{baseUrl:'https://fixture.invalid'},enabled:true},folderPath:'/fixture/'+slug});
@@ -82,7 +87,7 @@ window.ui001={navigation:null,ready:()=>{props={...props,ready:true,sessionsRead
  switchWorkspace,requests:()=>requests,actions:()=>actions,source,
  beginWorkspaceSwitch:()=>{props={...props,workspace:'workspace-b',sessionsReady:false};window.ui001.setSelected(null);store.set(sessionMetaMapAtom,new Map());render()},
  completeWorkspaceSwitch:()=>{store.set(sessionMetaMapAtom,new Map([['foreign',metadata[1]]]));props={...props,sessionsReady:true};render()},
- chatMounts:()=>window.__ui001ChatMounts??[],switchRequests:()=>switchRequests,
+ chatMounts:()=>window.__ui001ChatMounts??[],switchRequests:()=>switchRequests,historyWrites:()=>historyWrites,
  unmount:()=>root.unmount(),listeners:()=>deepLinkListeners.size};
 render();
 `
@@ -100,7 +105,7 @@ const errors: string[] = []
 page.on('pageerror', error => errors.push(error.message))
 async function check(name: string, action: () => Promise<void>) {
   try { await action(); results.push({ name, pass: true }) }
-  catch (error) { results.push({ name, pass: false, error: `${String(error)}; url=${page.url()}; state=${await page.locator('#navigation-state').textContent()}; actions=${JSON.stringify(await page.evaluate(() => (window as any).ui001?.actions()))}` }) }
+  catch (error) { results.push({ name, pass: false, error: `${String(error)}; url=${page.url()}; state=${await page.locator('#navigation-state').textContent()}; actions=${JSON.stringify(await page.evaluate(() => (window as any).ui001?.actions()))}; history=${JSON.stringify(await page.evaluate(() => (window as any).ui001?.historyWrites()))}` }) }
 }
 async function state() { return JSON.parse((await page.locator('#navigation-state').textContent())!) }
 async function selected(navigator: string, id?: string) {
@@ -136,16 +141,16 @@ try {
   await check('Missing and deleted explicit sessions stay selected instead of choosing another chat', async () => {
     await page.goto(`${origin}?ws=workspace-a&route=allSessions/session/missing`)
     await selected('sessions', 'missing')
-    await page.locator('[data-testid="route-session-unavailable"]').waitFor()
+    await page.locator('[data-testid="route-session-missing"]').waitFor()
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
     await page.reload(); await selected('sessions', 'missing')
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/local'))
     await selected('sessions', 'local')
     await page.evaluate(() => (window as any).ui001.removeSession('local'))
     await selected('sessions', 'local')
-    await page.locator('[data-testid="route-session-unavailable"]').waitFor()
+    await page.locator('[data-testid="route-session-missing"]').waitFor()
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
-    assert.equal(await page.locator('[data-testid="route-session-unavailable"]').getAttribute('data-session-id'), 'local')
+    assert.equal(await page.locator('[data-testid="route-session-missing"]').getAttribute('data-route-entity'), 'local')
   })
   await check('A foreign workspace session is unavailable and the remote alias remains valid', async () => {
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/foreign'))
@@ -184,7 +189,9 @@ try {
     await page.locator('[data-route-host="ChatPage"]').waitFor()
     const before = await page.evaluate(() => (window as any).ui001.chatMounts().length)
     await page.evaluate(() => (window as any).ui001.beginWorkspaceSwitch())
-    await page.locator('[data-testid="route-session-unavailable"]').waitFor({ timeout: 3500 })
+    await page.locator('[data-testid="route-unavailable"]').waitFor({ timeout: 3500 })
+    await selected('unavailable')
+    assert.equal((await state()).route, 'allSessions/session/local')
     assert.equal(await page.locator('[data-route-host="ChatPage"]').count(), 0)
     assert.equal(await page.evaluate(() => (window as any).ui001.chatMounts().length), before)
     await page.evaluate(() => (window as any).ui001.completeWorkspaceSwitch())
@@ -198,7 +205,9 @@ try {
     await page.waitForFunction(() => (window as any).ui001.selected() === 'local')
     const before = await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').length)
     await page.evaluate(() => (window as any).ui001.beginWorkspaceSwitch())
-    await page.locator('[data-testid="route-session-unavailable"]').waitFor({ timeout: 3500 })
+    await page.locator('[data-testid="route-unavailable"]').waitFor({ timeout: 3500 })
+    await selected('unavailable')
+    assert.equal((await state()).route, 'allSessions/session/local')
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
     assert.equal(await page.evaluate(() => (window as any).ui001.selected()), null)
     assert.equal(await page.evaluate(() => (window as any).ui001.requests().filter((row: string[]) => row[0] === 'messages').length), before)
