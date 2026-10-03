@@ -1,3 +1,12 @@
+## Golden Gate persisted panel workspace recovery plan — 2026-10-03
+
+Closing a focused panel restores DOM focus only when the disconnected node belongs to that removed panel or tab. Preserve another live focus owner, dialog, IME, resize and hidden targets; exercise actual closePanelAtom and production PanelStackContainer in browser adverse controls.
+
+1. Establish the live gap: current main horizontal flex has no workspace grid modes or persisted row/column tracks. Bind the missing closure to the source manifest.
+2. Recover state/parser/atom/hook/menu/sash and adapt current container/slot/axis resize; preserve current native focus and UI-001 guards.
+3. Verify mode and committed fraction persistence, preview/cancel, workspace isolation, malformed stored data, ragged focus, route identity and retained drafts with production renderer components.
+4. Run complete types, WebUI/Electron renderer and i18n gates; publish separate candidate and exact remote readback. Root retains independent review and serial merge; all source branches remain.
+
 # Golden Gate meeting request ownership integration (2026-10-03)
 
 Owner: pr_scout; merge owner: root. Depends on main UI/native/profile contracts; preserve LocalMeetingDetail profile and analysis work owned by historical_sweep. Graph: source/consumer comparison → committed request tracker + current callbacks → executed production-callback adverse timing tests and current Notes equivalence controls → renderer typecheck/build/localization → exact source readback and separate PR. Original branches are retained. Tests cover duplicate submission, edited draft, rejection/retry, A→B→A, disposal, latest record/deletion, stale subscriber, pending catalogue overlay and transcript success/refusal.
