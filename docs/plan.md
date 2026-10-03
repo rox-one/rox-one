@@ -558,3 +558,8 @@ Dependencies: current server entry point and helper build commands at main
    token rotation, plus failed install/entropy negative controls — complete.
 4. Deliver a separate PR preserving the original branch; main integration remains
    owned by the lead. Hosted Cursor provisioning remains unverified.
+
+
+## Legacy binding replay recovery (2026-10-03)
+
+Binding replay recovery: compare the exact legacy identity alongside the canonical encoded identity; verify raw-key migration followed by repeated imports, and negative controls for wrong kind, unrelated ID and foreign workspace. Run the existing platform-contract tests before separate PR publication.
