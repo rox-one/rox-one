@@ -1036,3 +1036,10 @@ Owner recent_features; depends on current Tasks1456, strict date1470 and Product
 ### Native OMP launch cancellation recovery — 2026-10-04
 
 Owner recent_features; parent owns ordered integration. Retain held-prepare destroy baseline failure, execute all 27 pinned native controls and 317 current account/domain/helper/observer/i18n checks, and qualify full strict Electron types. Preserve all failure history, current SSO/RuntimeMap authority and original branches; reconcile current main without document deletion, publish a separate scoped PR. Installed Windows and full release acceptance stay separate.
+
+## Runtime trace origin recovery — 2026-10-04
+
+1. Historical worker freezes c2e8 source and separates seven collector/core/DTO files from pr_scout's actual producer ownership. Retain current authorization, descriptor privacy and every original branch.
+2. Reproduce origin/privacy/artifact/verdict negatives, including the explicitly pending TaskRunner producer fixture. Restore only the bounded collector layer, then qualify four independent suites (53/0/247), core and server-core Node22 types. Archive source failures and the initial dependent-fixture type diagnostics.
+3. Publish a separate collector PR with qualified hashes and pending producer/UI boundaries. pr_scout preserves current third suppliedExecution argument and spawn authority bind while implementing tagged actual producers in its separate PR. Root owns sequential merge.
+4. Historical worker recovers current renderer context/export/link/retry behavior from the same finite source head; end-to-end producer/UI acceptance needs its own actual consumers and refreshed scoped proof.
