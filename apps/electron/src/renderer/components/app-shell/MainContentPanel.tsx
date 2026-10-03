@@ -50,46 +50,8 @@ import {
   knowledgeHomeViewAtom,
 } from '../../knowledge/KnowledgeHome'
 
-const RouteRecoveryContext = React.createContext<object>({})
-
-/** Cache across suspended renders; replace the promise only for a new attempt. */
-export function lazyRoutePage<Component extends React.ComponentType<any>>(loadPage: () => Promise<{ default: Component }>) {
-  const attempts = new WeakMap<object, React.LazyExoticComponent<Component>>()
-  return function LazyRoutePage(props: React.ComponentProps<Component>) {
-    const scope = React.useContext(RouteRecoveryContext)
-    let LazyPage = attempts.get(scope)
-    if (!LazyPage) {
-      LazyPage = React.lazy(loadPage)
-      attempts.set(scope, LazyPage)
-    }
-    const Page = LazyPage as React.ComponentType<React.ComponentProps<Component>>
-    return <Page {...props} />
-  }
-}
-
-class RouteErrorBoundary extends React.Component<{
-  children: React.ReactNode
-  fallback: (retry: () => void) => React.ReactNode
-}, { failed: boolean; attempt: number; scope: object }> {
-  state = { failed: false, attempt: 0, scope: {} }
-
-  static getDerivedStateFromError() {
-    return { failed: true }
-  }
-
-  private retry = () => {
-    this.setState(({ attempt }) => ({ failed: false, attempt: attempt + 1, scope: {} }))
-  }
-
-  render() {
-    if (this.state.failed) return this.props.fallback(this.retry)
-    return (
-      <RouteRecoveryContext.Provider value={this.state.scope}>
-        <React.Fragment key={this.state.attempt}>{this.props.children}</React.Fragment>
-      </RouteRecoveryContext.Provider>
-    )
-  }
-}
+import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
+export { lazyRoutePage } from '@/lib/route-recovery'
 
 const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
 const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
@@ -214,12 +176,13 @@ export function MainContentPanel({
   } = useAppShellContext()
 
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const remoteWorkspaceId = workspaces.find((workspace) => workspace.id === activeWorkspaceId)?.remoteServer?.remoteWorkspaceId
   const visibleSessionIds = useMemo(
     () =>
       [...sessionMetaMap.values()]
-        .filter((meta) => !activeWorkspaceId || meta.workspaceId === activeWorkspaceId)
+        .filter((meta) => !activeWorkspaceId || meta.workspaceId === activeWorkspaceId || meta.workspaceId === remoteWorkspaceId)
         .map((meta) => meta.id),
-    [sessionMetaMap, activeWorkspaceId],
+    [sessionMetaMap, activeWorkspaceId, remoteWorkspaceId],
   )
   const automations = useAtomValue(automationsAtom)
   const setKnowledgeHomeView = useSetAtom(knowledgeHomeViewAtom)
@@ -698,9 +661,22 @@ export function MainContentPanel({
       />
     )
     if (navState.details) {
+      const sessionId = navState.details.sessionId
+      const meta = sessionMetaMap.get(sessionId)
+      const belongsToWorkspace = meta && (!activeWorkspaceId || meta.workspaceId === activeWorkspaceId || meta.workspaceId === remoteWorkspaceId)
+      if (!belongsToWorkspace) {
+        return wrapWithStoplight(
+          <Panel variant="grow" className={className}>
+            <div role="status" aria-live="polite" data-testid="route-session-missing" data-route-entity={sessionId}
+              className="flex h-full items-center justify-center p-4 text-muted-foreground">
+              <p className="text-sm">{t('chat.sessionNoLongerExists')}</p>
+            </div>
+          </Panel>
+        )
+      }
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
-          <ChatPage sessionId={navState.details.sessionId} />
+          <ChatPage sessionId={sessionId} />
           {sessionsBulkBar}
         </Panel>
       )
@@ -723,6 +699,7 @@ export function MainContentPanel({
         role="status"
         className="flex items-center justify-center h-full text-muted-foreground"
         data-testid="route-unavailable"
+        data-route={navState.navigator === 'unavailable' ? navState.route : undefined}
         data-route={navState.navigator === 'unavailable' ? navState.route : undefined}
       >
         {/* Unknown/stale deep links must not masquerade as an unrelated chat route. */}

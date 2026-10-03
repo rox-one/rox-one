@@ -63,7 +63,7 @@ describe('parseDeepLink view routes', () => {
 
   it('forwards view queries while retaining separate window and sidebar controls', () => {
     const target = parseDeepLink('rox://search?q=two%20words&mode=future&window=focused&sidebar=history')
-    expect(target?.view).toBe('search?q=two+words&mode=future')
+    expect(target?.view).toBe('search?q=two%20words&mode=future')
     expect(target?.windowMode).toBe('focused')
     expect(target?.rightSidebar).toBe('history')
     expect(parseDeepLink('rox://workspace/ws1/tasks?view=calendar&view=other&window=full')?.view)

@@ -195,6 +195,8 @@ export interface FeedListResult {
   generatedAt: number
   /** Tags/colors/star/read per item id. Absent on older servers. */
   annotations?: Record<string, FeedItemAnnotation>
+  /** Native scope capability; read-only actors never schedule a write refresh. */
+  refreshAllowed?: boolean
 }
 
 export const FEED_INTERVALS_MIN: readonly number[] = [15, 30, 60, 180, 720, 1440] as const

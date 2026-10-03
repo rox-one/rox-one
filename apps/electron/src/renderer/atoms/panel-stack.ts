@@ -5,7 +5,7 @@
  */
 
 import { atom } from 'jotai'
-import { resolveViewRoute } from '../../shared/route-parser'
+import { parseRouteToNavigationState, parseRouteToNavigationStateOrUnavailable } from '../../shared/route-parser'
 import type { ViewRoute } from '../../shared/routes'
 
 let nextPanelId = 0
@@ -63,7 +63,8 @@ export const focusedPanelRouteAtom = atom((get) => {
 })
 
 export function getPanelTypeFromRoute(route: ViewRoute): PanelType {
-  const navState = resolveViewRoute(route)
+  const navState = parseRouteToNavigationStateOrUnavailable(route)
+  if (!navState) return 'other'
 
   switch (navState.navigator) {
     case 'sessions':
@@ -117,7 +118,7 @@ function normalizeProportions(stack: PanelStackEntry[]): PanelStackEntry[] {
 }
 
 export function parseSessionIdFromRoute(route: ViewRoute): string | null {
-  const state = resolveViewRoute(route)
+  const state = parseRouteToNavigationStateOrUnavailable(route)
   return state.navigator === 'sessions' ? state.details?.sessionId ?? null : null
 }
 
@@ -204,7 +205,11 @@ export const pushPanelAtom = atom(
       insertAt = afterIndex + 1
     }
 
-    const newEntry = createEntry(route, 0)
+    // Reserve an average panel share before normalization. A zero weight
+    // creates an invisible pane and cannot be restored from the URL.
+    const newEntry = createEntry(route, stack.length > 0
+      ? stack.reduce((sum, panel) => sum + panel.proportion, 0) / stack.length
+      : 1)
     const newStack = [
       ...stack.slice(0, insertAt),
       newEntry,

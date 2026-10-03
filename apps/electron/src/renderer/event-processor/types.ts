@@ -141,6 +141,7 @@ export interface ErrorEvent {
   type: 'error'
   sessionId: string
   error: string
+  errorCode?: string
   code?: string
   title?: string
   details?: string

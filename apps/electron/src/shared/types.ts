@@ -484,6 +484,7 @@ import type {
   NoteAssetRenameResult,
   NoteBacklink,
   NoteDocument,
+  NoteCreateOptions,
   NoteMutationOptions,
   NativeDataReadEntityInput,
   NativeDataMutationInput,
@@ -980,7 +981,7 @@ export interface ElectronAPI {
   checkProjectRepositoryFreshness(input: import('@rox/shared/code-intelligence').RepositorySnapshotInput): Promise<import('@rox/shared/code-intelligence').RepositoryFreshness>
   cancelProjectRepositoryRequest(input: import('@rox/shared/code-intelligence').RepositoryProjectInput): Promise<boolean>
   saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
-  createNote(workspaceId: string, title: string, folder?: string, operation?: NoteMutationOptions): Promise<NoteDocument>
+  createNote(workspaceId: string, title: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string, operation?: NoteMutationOptions): Promise<NoteRenameResult>
   moveNote(workspaceId: string, noteId: string, targetFolder: string, operation: NoteMutationOptions): Promise<{ note: NoteDocument }>
   deleteNote(workspaceId: string, noteId: string, operation?: NoteMutationOptions): Promise<boolean>
@@ -1679,6 +1680,7 @@ export interface ElectronAPI {
 
   // Session-specific model (overrides global)
   getSessionModel(sessionId: string, workspaceId: string): Promise<string | null>
+  getSessionModelCatalog(sessionId: string): Promise<import('@rox/shared/protocol').SessionModelCatalog | null>
   setSessionModel(sessionId: string, workspaceId: string, model: string | null, connection?: string): Promise<void>
 
   // Workspace Settings (per-workspace configuration)
@@ -1811,6 +1813,10 @@ export interface ElectronAPI {
   cancelVoiceCapture(): Promise<import('@rox/shared/voice').VoiceJob | null>
   grantVoicePermission(): Promise<import('@rox/shared/voice').VoiceJob>
   sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
+  editVoiceTranscript(payload: { id: string; expectedRevisionId: string; text: string }): Promise<{ ok: true; revisionId: string }>
+  selectVoiceTranscript(payload: { id: string; expectedRevisionId: string; revisionId: string }): Promise<{ ok: true; revisionId: string }>
+  readVoiceRecordingAudio(payload: { id: string; offset: number; token?: string }): Promise<{ audioBase64: string; offset: number; totalBytes: number; token: string; hash: string; mimeType: string }>
+  copyVoiceText(payload: { text: string }): Promise<{ ok: true }>
   listVoiceHistory(query?: { cursor?: string; limit?: number; search?: string; favorite?: boolean }): Promise<{ page: unknown[]; continueCursor: string | null; isDone: boolean }>
   getVoiceHistoryItem(payload: { id: string }): Promise<{ recording: unknown; revisions: unknown[]; runs: unknown[] }>
   favoriteVoiceRecording(payload: { id: string; favorite: boolean }): Promise<{ ok: true }>
@@ -2784,7 +2790,7 @@ export interface TerminalNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
-/** An external/stored view address that cannot be resolved by this build. */
+/** A view address that cannot be resolved; retain it for recovery and history. */
 export interface UnavailableNavigationState {
   navigator: 'unavailable'
   route: string
@@ -2796,7 +2802,6 @@ export interface UnavailableNavigationState {
  * Unified navigation state
  */
 export type NavigationState =
-  | UnavailableNavigationState
   | SessionsNavigationState
   | SourcesNavigationState
   | SettingsNavigationState
@@ -2820,6 +2825,11 @@ export type NavigationState =
   | ConnectionsNavigationState
   | HomeNavigationState
   | ScreenNavigationState
+  | UnavailableNavigationState
+
+export const isUnavailableNavigation = (
+  state: NavigationState
+): state is UnavailableNavigationState => state.navigator === 'unavailable'
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2920,7 +2930,8 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 
 export const getNavigationStateKey = (state: NavigationState): string => {
   if (state.navigator === 'unavailable') {
-    return `unavailable:${encodeURIComponent(state.route)}`
+    // JSON also preserves invalid percent escapes and lone surrogates safely.
+    return `unavailable:${JSON.stringify(state.route)}`
   }
   if (state.navigator === 'search') {
     return `search${state.query ? `?q=${encodeURIComponent(state.query)}` : ''}`
@@ -3044,12 +3055,17 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
+  try {
+    return parseNavigationStateKeyUnchecked(key)
+  } catch {
+    return null
+  }
+}
+
+const parseNavigationStateKeyUnchecked = (key: string): NavigationState | null => {
   if (key.startsWith('unavailable:')) {
-    try {
-      return { navigator: 'unavailable', route: decodeURIComponent(key.slice('unavailable:'.length)), details: null }
-    } catch {
-      return null
-    }
+    const route: unknown = JSON.parse(key.slice('unavailable:'.length))
+    return typeof route === 'string' ? { navigator: 'unavailable', route, details: null } : null
   }
   // Handle sources
   if (key === 'sources') return { navigator: 'sources', details: null }

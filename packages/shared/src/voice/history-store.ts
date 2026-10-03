@@ -69,7 +69,7 @@ export function deleteRecording(index: HistoryIndex, recordingId: string): Histo
 export function exportRecording(index: HistoryIndex, recordingId: string, format: 'txt' | 'srt' | 'json'): string {
   const recording = index.recordings.find((item) => item.id === recordingId)
   if (!recording) throw new Error('Recording not found')
-  const revision = index.revisions.find((item) => item.id === recording.selectedRevisionId)
+  const revision = index.revisions.find((item) => item.id === recording.selectedRevisionId && item.recordingId === recordingId)
     ?? index.revisions.filter((item) => item.recordingId === recordingId).at(-1)
   if (format === 'json') return JSON.stringify({ recording, revision }, null, 2)
   if (format === 'srt') return srtFromSegments(revision?.segments ?? [])

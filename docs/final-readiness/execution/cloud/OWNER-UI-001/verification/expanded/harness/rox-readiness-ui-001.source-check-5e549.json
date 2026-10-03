@@ -1,0 +1,36 @@
+{
+  "sourceRevision": "5e5493b4e0772fb448712d9926163ec86943008d",
+  "checkedAtUtc": "2026-10-03T15:44:58.514774+00:00",
+  "lanes": [
+    {
+      "lane": "navigation",
+      "inputCount": 169,
+      "gitTrackedInputCount": 49,
+      "dependencyInputCount": 120,
+      "committedSourceMismatches": [],
+      "diskInputMismatches": [],
+      "bundleSha256": "d86fffc48a27e0e9fe83881690b8f890d138753213c288b2a7df19a58b53cfcd"
+    },
+    {
+      "lane": "main",
+      "inputCount": 125,
+      "gitTrackedInputCount": 33,
+      "dependencyInputCount": 92,
+      "committedSourceMismatches": [],
+      "diskInputMismatches": [],
+      "bundleSha256": "e87895f4c29b62b218d72e773da103d0a7bd0a411696a1577e66541a37e82285"
+    }
+  ],
+  "navigationOriginalRunBinding": {
+    "originalBundledAtHead": "2247242d557442976422d40217cf43fc74e7ebfe",
+    "allInputHashesEqualToFreshCommittedBundle": true,
+    "bundleBytesEqual": true,
+    "freshBundleSha256": "d86fffc48a27e0e9fe83881690b8f890d138753213c288b2a7df19a58b53cfcd",
+    "reason": "Full24 run happened before commit; a fresh build from frozen HEAD reproduced every input hash and bundle byte. Actual observed run is reused without relabeling its original build context."
+  },
+  "toolchainConfigurationSha256": {
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff",
+    "bunfig.toml": "deeae6086535bc87b723805491fb04850c07c23f730fc8764137432cf15bd529",
+    "apps/electron/tsconfig.json": "0abc5838632fa096cd000193b40545140f6046fefb17a654c986662ec81730ff"
+  }
+}

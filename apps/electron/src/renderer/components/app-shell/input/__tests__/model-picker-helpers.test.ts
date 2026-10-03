@@ -11,9 +11,24 @@ import {
   formatTokenCount,
   groupConnectionsByProvider,
   getConnectionModelsForPicker,
+  getRuntimeModelsForPicker,
   stripPiPrefixForDisplay,
 } from '../model-picker-helpers'
 import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
+import type { StartupRuntimeSummary } from '@rox/shared/protocol'
+
+describe('native workspace model catalog', () => {
+  const summary: StartupRuntimeSummary = {
+    kind: 'configuration-only', slug: 'rox', providerType: 'omp', isDefault: true,
+    defaultModel: 'rox/r1-max', models: [{ id: 'rox/r1-max', name: 'Rox R1 Max' }],
+  }
+  test('uses only the configured public catalog and never another connection for a locked session', () => {
+    expect(getRuntimeModelsForPicker(summary)).toEqual(summary.models!)
+    expect(getRuntimeModelsForPicker(summary, 'rox')).toEqual(summary.models!)
+    expect(getRuntimeModelsForPicker(summary, 'removed-connection')).toEqual([])
+    expect(getRuntimeModelsForPicker({ ...summary, models: undefined })).toEqual([])
+  })
+})
 
 // -----------------------------------------------------------------------------
 // stripPiPrefixForDisplay

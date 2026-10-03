@@ -95,13 +95,13 @@ function parseRightSidebar(parsed: URL): string | undefined {
   return parsed.searchParams.get('sidebar') || undefined
 }
 
-/** Forward view parameters separately from native window/sidebar controls. */
-function buildViewRoute(parsed: URL, path: string): string {
-  const params = new URLSearchParams(parsed.searchParams)
-  params.delete('window')
-  params.delete('sidebar')
-  const query = params.toString()
-  return query ? `${path}?${query}` : path
+/** Retain view query bytes so malformed escapes reach the recovery boundary. */
+function withViewQuery(route: string, parsed: URL): string {
+  const query = parsed.search.slice(1).split('&').filter(part => {
+    const key = new URLSearchParams(part).keys().next().value
+    return key !== 'window' && key !== 'sidebar'
+  }).join('&')
+  return `${route}${query ? `?${query}` : ''}${parsed.hash}`
 }
 
 /**
@@ -119,7 +119,9 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     // e.g., rox://workspace/ws123 → hostname='workspace', pathname='/ws123'
     // e.g., rox://allSessions/chat/abc → hostname='allSessions', pathname='/chat/abc'
     const host = parsed.hostname
-    const pathParts = parsed.pathname.split('/').filter(Boolean)
+    // Keep empty segments: collapsing them can turn a malformed link into a
+    // different view or an action on an unintended entity.
+    const pathParts = parsed.pathname.split('/').slice(1)
     const windowMode = parseWindowMode(parsed)
     const rightSidebar = parseRightSidebar(parsed)
 
@@ -134,10 +136,10 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     // rox://allSessions/..., rox://settings/..., etc. (compound routes)
     if (COMPOUND_ROUTE_PREFIXES.includes(host)) {
       // Reconstruct the full compound route from host + pathname
-      const viewRoute = pathParts.length > 0 ? `${host}/${pathParts.join('/')}` : host
+      const viewRoute = withViewQuery(`${host}${parsed.pathname}`, parsed)
       return {
         workspaceId: undefined,
-        view: buildViewRoute(parsed, viewRoute),
+        view: viewRoute,
         windowMode,
         rightSidebar,
       }
@@ -147,22 +149,26 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     if (host === 'workspace') {
       const workspaceId = pathParts[0]
       if (!workspaceId) return null
+      decodeURIComponent(workspaceId)
 
       const result: DeepLinkTarget = { workspaceId, windowMode, rightSidebar }
 
       // Check what type of route follows the workspace ID
       const routeType = pathParts[1]
+      if (pathParts.length > 1 && !routeType) return null
 
       // Parse compound routes: /workspace/{id}/{compoundRoute}
       // e.g., /workspace/ws123/allSessions/session/abc123
       if (routeType && COMPOUND_ROUTE_PREFIXES.includes(routeType)) {
-        const viewRoute = pathParts.slice(1).join('/')
-        result.view = buildViewRoute(parsed, viewRoute)
+        const viewRoute = withViewQuery(pathParts.slice(1).join('/'), parsed)
+        result.view = viewRoute
         return result
       }
 
       // Parse /action/{actionName}/...
       if (routeType === 'action') {
+        if (pathParts.length < 3 || pathParts.length > 4 || pathParts.some(part => !part) || parsed.hash) return null
+        decodeURIComponent(`${parsed.pathname}${parsed.search}`)
         result.action = pathParts[2]
         result.actionParams = {}
         // Handle path-based ID (e.g., /action/delete-session/{sessionId})
@@ -183,6 +189,8 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
 
     // rox://action/... (no workspace - uses active window)
     if (host === 'action') {
+      if (pathParts.length < 1 || pathParts.length > 2 || pathParts.some(part => !part) || parsed.hash) return null
+      decodeURIComponent(`${parsed.pathname}${parsed.search}`)
       const result: DeepLinkTarget = {
         workspaceId: undefined,
         action: pathParts[0],

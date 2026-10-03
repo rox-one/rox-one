@@ -4,6 +4,7 @@ import { registerCoreRpcHandlers, type ServerHandlerContext } from '@rox/server-
 export { registerCoreRpcHandlers }
 
 // GUI-only handlers remain local (Electron-specific imports)
+import { registerVoiceClipboardGuiHandlers } from './voice-clipboard'
 import { registerSystemGuiHandlers } from './system'
 import { registerWorkspaceGuiHandlers } from './workspace'
 import { registerBrowserHandlers } from './browser'
@@ -17,6 +18,7 @@ import type { WorkGraphKernel } from '@rox/server-core/workgraph'
 
 export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): void {
   registerSystemGuiHandlers(server, deps)
+  registerVoiceClipboardGuiHandlers(server, deps)
   registerWorkspaceGuiHandlers(server, deps)
   registerBrowserHandlers(server, deps)
   registerSettingsGuiHandlers(server, deps)

@@ -110,6 +110,7 @@ import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } f
 import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
 import { createApplicationMenu } from './menu'
 import { WindowManager } from './window-manager'
+import { readBoundWindowWorkspace } from './bootstrap-window-workspace'
 import { stopAllExtensionHosts } from './extension-host-manager'
 import { loadWindowState, saveWindowState } from './window-state'
 import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@rox/shared/config'
@@ -143,7 +144,7 @@ import { createLocalClientBindingRegistry } from './local-client-binding'
 import { registerMeetingCaptureIpc } from './meetings/ipc'
 import { registerLocalMeetingsIpc } from './meetings/local-ipc'
 import { registerMailIpc } from './mail/local-ipc'
-import { registerNativeReplicaIpc } from './native-replica'
+import { registerNativeReplicaForWindows } from './native-replica-bootstrap'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@rox/server-core/openclaw'
 
 // Initialize electron-log for renderer process support
@@ -277,9 +278,13 @@ function registerDeeplinkScheme(scheme: string): void {
   }
 }
 
-registerDeeplinkScheme(DEEPLINK_SCHEME)
-if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
-  registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+// Isolated product tests still exercise deep-link dispatch, while avoiding
+// changes to the user's OS protocol handlers for either supported scheme.
+if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRATION === '1')) {
+  registerDeeplinkScheme(DEEPLINK_SCHEME)
+  if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
+    registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
+  }
 }
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
@@ -539,7 +544,7 @@ app.whenReady().then(async () => {
 
     const { registerVoiceHotkeys } = await import('./voice/overlay-window')
     const { sendVoiceHotkeyToClient } = await import('./voice/command-input')
-    const disposeVoiceHotkeys = registerVoiceHotkeys((command, webContentsId) => {
+    const sendVoiceCommand = (command: import('@rox/shared/voice/hotkey-types').HotkeyCommand, webContentsId?: number) => {
       const target = webContentsId === undefined
         ? windowManager?.getLastActiveWindow()
         : windowManager?.getWindowByWebContentsId(webContentsId)
@@ -551,8 +556,19 @@ app.whenReady().then(async () => {
         push: windowManager?.getRpcEventSink(),
         channel: RPC_CHANNELS.voice.HOTKEY,
       }, command)
-    }, id => windowManager?.getFocusedWindow()?.webContents.id === id)
-    app.once('will-quit', disposeVoiceHotkeys)
+    }
+    const disposeVoiceHotkeys = registerVoiceHotkeys(sendVoiceCommand, id => windowManager?.getFocusedWindow()?.webContents.id === id)
+    const { createNativeVoiceOverlayHost } = await import('./voice/overlay-owner')
+    const voiceOverlay = !isHeadless && !isClientOnly ? createNativeVoiceOverlayHost({
+      resolveOwner(context) {
+        if (context.webContentsId == null || !context.workspaceId) return null
+        const owner = windowManager?.getWindowByWebContentsId(context.webContentsId)
+        return owner && !owner.isDestroyed() && windowManager?.getWorkspaceForWindow(context.webContentsId) === context.workspaceId
+          && windowManager?.getClientIdForWindow(context.webContentsId) === context.clientId ? owner : null
+      },
+      sendCommand: (context, command) => context.webContentsId != null && sendVoiceCommand(command, context.webContentsId),
+    }) : undefined
+    app.once('will-quit', () => { disposeVoiceHotkeys(); voiceOverlay?.dispose() })
     registerMeetingCaptureIpc()
     registerLocalMeetingsIpc((message, error) => (error ? mainLog.warn(message, error) : mainLog.info(message)), {
       getWorkspaceForWindow: (id) => windowManager?.getWorkspaceForWindow(id) ?? null,
@@ -589,13 +605,39 @@ app.whenReady().then(async () => {
       e.returnValue = e.sender.id
     })
     ipcMain.on('__get-workspace-id', (e) => {
-      e.returnValue = windowManager?.getWorkspaceForWindow(e.sender.id) ?? ''
+      e.returnValue = readBoundWindowWorkspace(e, windowManager)
     })
     ipcMain.on('__get-local-client-proof', (e) => {
       const owner = windowManager?.getWindowByWebContentsId(e.sender.id)
       e.returnValue = owner && !owner.isDestroyed() && owner.webContents === e.sender
         ? localClientBindingRegistry.issue(e.sender)
         : ''
+    })
+
+    // Language change: sync from renderer to main process, persist, and rebuild native menu.
+    // Persistence here is what lets the next app launch hydrate main's i18n correctly —
+    // see the `getPersistedUiLanguage()` block at the top of this file.
+    ipcMain.handle('i18n:changeLanguage', async (_event, lang: unknown) => {
+      const previousResolved = i18n.resolvedLanguage ?? null
+      if (typeof lang !== 'string' || !SUPPORTED_LANGUAGE_CODES.includes(lang as LanguageCode)) {
+        // Defense-in-depth: renderer guarantees a supported code, but if a renegade
+        // caller hands us garbage we drop it silently rather than poison i18n state.
+        mainLog.warn('[i18n] changeLanguage IPC rejected — unsupported code', {
+          incoming: lang,
+          previousResolved,
+        })
+        return
+      }
+      const code = lang as LanguageCode
+      await i18n.changeLanguage(code)
+      setPersistedUiLanguage(code)
+      mainLog.info('[i18n] changeLanguage IPC applied', {
+        incoming: code,
+        previousResolved,
+        newResolved: i18n.resolvedLanguage ?? null,
+      })
+      const { rebuildMenu } = await import('./menu')
+      await rebuildMenu()
     })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
@@ -690,17 +732,15 @@ app.whenReady().then(async () => {
       },
     )
 
+    // Thin clients also keep local encrypted Notes custody; the remote server
+    // supplies canonical actor/workspace context through the preload bridge.
+    cleanupNativeReplicaIpc = registerNativeReplicaForWindows(ipcMain, {
+      configDir: realpathSync(CONFIG_DIR),
+      credentials: getCredentialManager(),
+      getWindowManager: () => windowManager,
+    })
+
     if (!isClientOnly) {
-      // Keep durable Notes replica custody in main and the existing encrypted credential store.
-      cleanupNativeReplicaIpc = registerNativeReplicaIpc(ipcMain, {
-        configDir: realpathSync(CONFIG_DIR),
-        credentials: getCredentialManager(),
-        getWorkspaceForWindow: webContentsId => {
-          const owner = windowManager?.getWindowByWebContentsId(webContentsId)
-          if (!owner || owner.isDestroyed() || owner.webContents.id !== webContentsId) return null
-          return windowManager?.getWorkspaceForWindow(webContentsId) ?? null
-        },
-      })
       // Restore persisted Git Bash path on Windows (must happen before any SDK subprocess spawn)
       if (process.platform === 'win32') {
         const { getGitBashPath, clearGitBashPath } = await import('@rox/shared/config')
@@ -938,6 +978,7 @@ app.whenReady().then(async () => {
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
             ...(!isHeadless ? { browserCredentials } : {}),
+            ...(voiceOverlay ? { voiceOverlay } : {}),
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
             nativeData: { authority: nativeAuthority, journal: nativeJournal, sync: collaborationSync },
           }
@@ -1188,32 +1229,6 @@ app.whenReady().then(async () => {
       ipcMain.handle('app:relaunch', () => {
         app.relaunch()
         app.exit(0)
-      })
-
-      // Language change: sync from renderer to main process, persist, and rebuild native menu.
-      // Persistence here is what lets the next app launch hydrate main's i18n correctly —
-      // see the `getPersistedUiLanguage()` block at the top of this file.
-      ipcMain.handle('i18n:changeLanguage', async (_event, lang: unknown) => {
-        const previousResolved = i18n.resolvedLanguage ?? null
-        if (typeof lang !== 'string' || !SUPPORTED_LANGUAGE_CODES.includes(lang as LanguageCode)) {
-          // Defense-in-depth: renderer guarantees a supported code, but if a renegade
-          // caller hands us garbage we drop it silently rather than poison i18n state.
-          mainLog.warn('[i18n] changeLanguage IPC rejected — unsupported code', {
-            incoming: lang,
-            previousResolved,
-          })
-          return
-        }
-        const code = lang as LanguageCode
-        await i18n.changeLanguage(code)
-        setPersistedUiLanguage(code)
-        mainLog.info('[i18n] changeLanguage IPC applied', {
-          incoming: code,
-          previousResolved,
-          newResolved: i18n.resolvedLanguage ?? null,
-        })
-        const { rebuildMenu } = await import('./menu')
-        await rebuildMenu()
       })
 
       ipcMain.on('__get-ws-port', (e) => {

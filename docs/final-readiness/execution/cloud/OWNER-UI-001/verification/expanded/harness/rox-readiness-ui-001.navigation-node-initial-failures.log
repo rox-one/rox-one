@@ -1,0 +1,45 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[PASS] initial missing entity never auto-selects an existing chat and survives reload 898ms
+[PASS] unknown and malformed routes preserve raw addresses on initial load/reload/deep link 1288ms
+[PASS] legacy known-root incomplete shapes remain unavailable through auto-selection effects 1034ms
+[FAIL] raw commas, colon suffixes and malformed escapes round-trip within a multi-panel URL
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+-   'home',
+    'unknown/a,b:0.25?x=%ZZ&nested=one%2Ftwo'
+  ]
+
+    at toEqual (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:31:35)
+    at matcher.<computed> [as toEqual] (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:43:12)
+    at file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:272:67
+    at async bounded (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:61:5)
+    at async globalThis.__ui001NodeRun (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:86:7)
+    at async file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:562:1
+[PASS] queued nested/encoded raw view and new-panel option are replayed after readiness 590ms
+[PASS] queued malformed view survives a session-readiness-only race 602ms
+[PASS] actual back/forward, deletion and workspace restoration preserve explicit selection 992ms
+[PASS] canonical page broadcasts beat stale list replies and former workspace replies are ignored 714ms
+[PASS] popstate received before metadata readiness is reconciled when readiness returns 794ms
+[PASS] queued page broadcast from the former A owner cannot publish after A to B to A 868ms
+[PASS] blocked popstate retains its exact target through an actual panel resize 1249ms
+[PASS] workspace restoration waits for full readiness and resize cannot overwrite stored selection 838ms
+[FAIL] late create replies from former A ownership cannot navigate, prefill or send after A to B to A
+page.evaluate: TypeError: window.ui001nav.resolveCreate(...) is not a function
+    at eval (eval at evaluate (:234:30), <anonymous>:2:55)
+    at UtilityScript.evaluate (<anonymous>:236:17)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:403:16
+    at async bounded (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:61:5)
+    at async globalThis.__ui001NodeRun (/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:86:7)
+    at /Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/async file:/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/ui001-navigation-node-tests.mjs:562:1
+[PASS] already scheduled input and send callbacks retain the original committed owner 1009ms
+[PASS] new navigation in the same workspace cancels an older deferred create response 1138ms
+[PASS] actual same-workspace Back cancels an older deferred create response 1477ms
+[PASS] focusing another existing panel cancels the former panel deferred create response 2034ms
+[PASS] focus away and back cannot regain an old deferred-create continuation 1217ms
+[PASS] the current new-panel create retains its own committed focus and delayed prefill 1304ms
+[PASS] current create actions still navigate, rename, prefill and send using actual callbacks 1156ms
+[PASS] session-created metadata cannot steal a pending list-route new-chat action and its prefill 1060ms
+{"runtime":"Node actual source callbacks adapter","pass":19,"fail":2,"assertions":56,"cases":21,"elapsedMs":21968}

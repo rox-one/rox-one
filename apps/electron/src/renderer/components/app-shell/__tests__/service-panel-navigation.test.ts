@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import ts from 'typescript'
 import { panelStackAtom, focusedPanelIdAtom, getPanelTypeFromRoute, type PanelStackEntry } from '../../../atoms/panel-stack'
 import { routes, type ViewRoute } from '../../../../shared/routes'
-import { focusServicePanelAtom } from '../service-navigation'
+import { findServicePanel, focusServicePanelAtom } from '../service-navigation'
 import { APP_NAV_DESTINATIONS_BY_ID, type AppNavDestinationId } from '../nav-destinations'
 
 const source = readFileSync(join(import.meta.dir, '../AppShell.tsx'), 'utf8')
@@ -37,7 +37,23 @@ describe('actual AppShell service selection over current panel owner', () => {
   const f = fixture(panels, 'chat'); const before = f.store.get(panelStackAtom); const drafts = f.store.get(f.draftAtom)
   f.callbacks.handleNotesClick!()
   expect(f.store.get(focusedPanelIdAtom)).toBe('notes'); expect(f.store.get(panelStackAtom)).toBe(before); expect(f.store.get(f.draftAtom)).toBe(drafts); expect(f.calls).toEqual([])
-  f.callbacks.handleAllSessionsClick!(); expect(f.store.get(focusedPanelIdAtom)).toBe('chat'); expect(f.calls).toEqual([])
+ f.callbacks.handleAllSessionsClick!(); expect(f.store.get(focusedPanelIdAtom)).toBe('chat'); expect(f.calls).toEqual([])
+ })
+ test('malformed selected addresses cannot block the valid root fallback or hide a supported service panel', () => {
+  for (const raw of ['notes/note/a/%GG', 'notes/note/%E0%A4%A', 'notes//a']) {
+   const invalid = panel('invalid', raw as ViewRoute)
+   expect(findServicePanel([invalid], 'invalid', 'notes')).toBeUndefined()
+   const unavailable = fixture([invalid], 'invalid')
+   unavailable.callbacks.handleNotesClick!()
+   expect(unavailable.calls).toEqual([routes.view.notes()])
+   expect(unavailable.store.get(panelStackAtom)).toEqual([invalid])
+   const valid = panel('valid', routes.view.notes('selected-note'))
+   const recoverable = fixture([invalid, valid], 'invalid')
+   recoverable.callbacks.handleNotesClick!()
+   expect(recoverable.store.get(focusedPanelIdAtom)).toBe('valid')
+   expect(recoverable.calls).toEqual([])
+   expect(recoverable.store.get(panelStackAtom)).toEqual([invalid, valid])
+  }
  })
  test('same-service focus is preferred among multiple matching panels; absent service navigates current registry route', () => {
   const panels = [panel('note-a', routes.view.notes('a')), panel('note-b', routes.view.notes('b'))]; const f = fixture(panels, 'note-b')
@@ -58,4 +74,9 @@ describe('actual AppShell service selection over current panel owner', () => {
   expect(f.calls).toEqual([...ids.map(id => APP_NAV_DESTINATIONS_BY_ID[id].route!()), routes.view.connections()])
   expect(source).toContain("onClick: () => handleServiceClick('connections')")
  })
+ test('a complete legacy nested note ID focuses its own panel rather than a different note prefix', () => {
+  const nested = panel('nested', 'notes/note/folder/name' as ViewRoute)
+  expect(findServicePanel([nested], 'nested', 'notes')).toBe(nested)
+ })
+
 })

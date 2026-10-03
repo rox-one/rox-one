@@ -58,6 +58,7 @@ function shellNavigatorExpressions() {
 async function bundle() {
   const contents = `
     import * as React from 'react';
+    import {lazyRoutePage,RouteErrorBoundary} from './apps/electron/src/renderer/lib/route-recovery';
     import {useCallback,useEffect,useMemo,useState} from 'react';
     import {createRoot} from 'react-dom/client';
     import {Provider,atom,createStore,useAtomValue,useSetAtom} from 'jotai';
@@ -285,22 +286,26 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     expect((await snapshot()).calls).toEqual([['deleteSession', 's1']])
   }, 30000)
 
-  it('explicit navigation preserves spelling only after session workspace validation', async () => {
+  it('missing or foreign session links retain their requested address and cannot mount an unrelated chat', async () => {
     await open('allSessions/session/s1')
-    for (const invalidId of ['missing', 's2']) {
-      await page.evaluate(id => (window as any).ui001.navigate(`allSessions/session/${id}?keep=1`, { skipAutoSelect: true }), invalidId)
-      await page.waitForFunction(() => !(window as any).ui001.snapshot().state.details)
+    for (const id of ['missing', 's2']) {
+      await page.evaluate(id => (window as any).ui001.navigate(`allSessions/session/${id}?keep=1`, { skipAutoSelect: true }), id)
+      await page.locator('[data-testid="route-session-missing"]').waitFor()
       const state = await snapshot()
-      expect(state.session).toBeNull()
-      expect(new URLSearchParams(state.search).get('route')).toBe('allSessions?keep=1')
-      expect(await page.locator(`[data-entity="${invalidId}"]`).count()).toBe(0)
+      expect(state.state.details.sessionId).toBe(id)
+      expect(new URLSearchParams(state.search).get('route')).toBe(`allSessions/session/${id}?keep=1`)
+      expect(await page.locator('[data-focused="true"] [data-leaf="session"]').count()).toBe(0)
+      expect(await page.locator('[data-testid="route-session-missing"]').getAttribute('data-route-entity')).toBe(id)
+      await page.reload()
+      await page.locator('[data-testid="route-session-missing"]').waitFor()
+      expect(new URLSearchParams((await snapshot()).search).get('route')).toBe(`allSessions/session/${id}?keep=1`)
     }
     await page.evaluate(() => (window as any).ui001.navigate('allSessions/session/s1?keep=1'))
     expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1?keep=1')
     await page.evaluate(() => (window as any).ui001.deepLink({ view: 'allSessions/session/s2?keep=1' }))
-    await page.waitForFunction(() => (window as any).ui001.snapshot().session === 's1')
-    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s1?keep=1')
-    expect(await page.locator('[data-entity="s2"]').count()).toBe(0)
+    await page.locator('[data-testid="route-session-missing"]').waitFor()
+    expect(new URLSearchParams((await snapshot()).search).get('route')).toBe('allSessions/session/s2?keep=1')
+    expect(await page.locator('[data-focused="true"] [data-leaf="session"]').count()).toBe(0)
   }, 30000)
 
   it('pending search replay retains query and new-panel options', async () => {

@@ -331,6 +331,7 @@ export const CHANNEL_MAP = {
 
   // Session-specific model
   getSessionModel: invoke(RPC_CHANNELS.sessions.GET_MODEL),
+  getSessionModelCatalog: invoke(RPC_CHANNELS.sessions.GET_MODEL_CATALOG),
   setSessionModel: invoke(RPC_CHANNELS.sessions.SET_MODEL),
 
   // Workspace Settings
@@ -546,6 +547,10 @@ export const CHANNEL_MAP = {
   favoriteVoiceRecording: invoke(RPC_CHANNELS.voice.HISTORY_FAVORITE),
   deleteVoiceRecording: invoke(RPC_CHANNELS.voice.HISTORY_DELETE),
   exportVoiceRecording: invoke(RPC_CHANNELS.voice.HISTORY_EXPORT),
+  editVoiceTranscript: invoke(RPC_CHANNELS.voice.HISTORY_EDIT),
+  selectVoiceTranscript: invoke(RPC_CHANNELS.voice.HISTORY_SELECT),
+  readVoiceRecordingAudio: invoke(RPC_CHANNELS.voice.HISTORY_AUDIO),
+  copyVoiceText: invoke(RPC_CHANNELS.voice.COPY_TEXT),
   retranscribeVoice: invoke(RPC_CHANNELS.voice.RETRANSCRIBE),
   reprocessVoice: invoke(RPC_CHANNELS.voice.REPROCESS),
   processVoiceTranscript: invoke(RPC_CHANNELS.voice.PROCESS),

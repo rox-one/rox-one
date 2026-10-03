@@ -108,6 +108,16 @@ export function isCompoundRoute(route: string): boolean {
 }
 
 export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
+  try {
+    // URLSearchParams silently repairs malformed escapes; reject them first.
+    decodeURIComponent(route)
+    return parseCompoundRouteUnchecked(route)
+  } catch {
+    return null
+  }
+}
+
+function parseCompoundRouteUnchecked(route: string): ParsedCompoundRoute | null {
   // Keep the query separate from slash-delimited route segments.
   const [pathPart, queryPart] = route.split('?')
   const segments = pathPart.split('/').filter(Boolean)
@@ -293,7 +303,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     if (segments[1] === 'instance' && segments[2]) {
       return {
         navigator: 'browser',
-        details: { type: 'browser', id: segments[2] },
+        details: { type: 'browser', id: decodeURIComponent(segments[2]) },
       }
     }
     return null
@@ -619,7 +629,7 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
 
   if (parsed.navigator === 'browser') {
     if (!parsed.details) return 'browser'
-    return `browser/instance/${parsed.details.id}`
+    return `browser/instance/${encodeURIComponent(parsed.details.id)}`
   }
 
   if (parsed.navigator === 'projects') {
@@ -720,6 +730,7 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
  */
 export function parseRoute(route: string): ParsedRoute | null {
   try {
+    decodeURIComponent(route)
     // Check if this is a compound route (preferred format)
     if (isCompoundRoute(route)) {
       const compound = parseCompoundRoute(route)
@@ -911,6 +922,11 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
 // NavigationState Parsing (new unified system)
 // =============================================================================
 
+/** Shared runtime boundary; retain the current public name for all callers. */
+export function parseRouteToNavigationStateOrUnavailable(route: string, sidebarParam?: string): NavigationState {
+  return resolveViewRoute(route, sidebarParam)
+}
+
 /**
  * Parse a route string directly to NavigationState (the unified state)
  *
@@ -971,6 +987,7 @@ export function resolveViewRoute(route: string, sidebarParam?: string): Navigati
   const rightSidebar = parseRightSidebarParam(sidebarParam)
   if (rightSidebar) unavailable.rightSidebar = rightSidebar
   try {
+    if (route.includes('#') || /[\u0000-\u001f\u007f]/.test(route)) return unavailable
     // Some legacy routes retain encoded slugs, but malformed encoding is never
     // a valid entity address, even when that parser branch does not decode it.
     const path = route.split('?')[0]

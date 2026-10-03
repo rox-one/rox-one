@@ -1,0 +1,33 @@
+Actual test callbacks via task-local Node adapter; Node v26.8.2; external Chromium; no Bun pass claim
+[FAIL] retained deep-link listener cannot create or send in a former workspace
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   {
++     workspaceId: 'ws-b'
++   }
++ ]
+- []
+
+    at toEqual (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:32:35)
+    at matcher.<computed> [as toEqual] (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:44:12)
+    at file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:579:68
+    at async bounded (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:62:5)
+    at async globalThis.__ui001NodeRun (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:88:7)
+    at async file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:628:1
+[FAIL] retained deep-link listeners stay disposed after workspace ABA and same-workspace readiness reinstall
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'notes/note/stale-a'
+- 'home'
+
+    at toBe (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:30:32)
+    at matcher.<computed> [as toBe] (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:44:12)
+    at file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:592:48
+    at async bounded (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:62:5)
+    at async globalThis.__ui001NodeRun (file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:88:7)
+    at async file:///Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-11/work/ui-001/work/rox-readiness-ui-001.navigation-node-tests-deep-owner.mjs:628:1
+[PASS] current deep-link listener retains raw query views and executes current action parameters 1617ms
+{"runtime":"Node actual source callbacks adapter","pass":1,"fail":2,"assertions":7,"cases":3,"registeredCases":24,"elapsedMs":4389}

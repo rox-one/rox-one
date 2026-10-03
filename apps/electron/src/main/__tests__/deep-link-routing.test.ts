@@ -31,7 +31,7 @@ describe('handleDeepLink routing', () => {
     const result = await handleDeepLink('rox://search?q=two%20words&mode=future', manager,
       (_channel, _target, ...args) => { sent.push(args) }, () => 'client-target')
     expect(result.success).toBe(true)
-    expect(sent).toEqual([[{ view: 'search?q=two+words&mode=future', action: undefined, actionParams: undefined }]])
+    expect(sent).toEqual([[{ view: 'search?q=two%20words&mode=future', action: undefined, actionParams: undefined }]])
   })
   it('prefers resolved target client over preferred caller client', async () => {
     const targetWindow = createMockWindow(22)

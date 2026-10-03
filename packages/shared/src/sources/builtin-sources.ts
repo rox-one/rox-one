@@ -50,7 +50,6 @@ export function hasFirecrawlKey(): boolean {
 }
 
 function buildExaConfig(now: number): FolderSourceConfig {
-  const keyed = hasExaKey();
   return {
     id: 'builtin-exa',
     name: 'Exa',
@@ -66,15 +65,14 @@ function buildExaConfig(now: number): FolderSourceConfig {
     },
     tagline: 'Neural web search & research (Exa)',
     icon: '🔎',
-    isAuthenticated: keyed,
-    connectionStatus: keyed ? 'connected' : 'needs_auth',
+    isAuthenticated: false,
+    connectionStatus: 'needs_auth',
     createdAt: now,
     updatedAt: now,
   };
 }
 
 function buildFirecrawlConfig(now: number): FolderSourceConfig {
-  const keyed = hasFirecrawlKey();
   return {
     id: 'builtin-firecrawl',
     name: 'Firecrawl',
@@ -89,8 +87,8 @@ function buildFirecrawlConfig(now: number): FolderSourceConfig {
     },
     tagline: 'Crawl & extract clean page content (Firecrawl)',
     icon: '🔥',
-    isAuthenticated: keyed,
-    connectionStatus: keyed ? 'connected' : 'needs_auth',
+    isAuthenticated: false,
+    connectionStatus: 'needs_auth',
     createdAt: now,
     updatedAt: now,
   };
@@ -130,15 +128,34 @@ export function getBuiltinSourceCredential(source: Pick<LoadedSource, 'config'>)
 
 /** Reconcile availability on every load, including workspaces created before provisioning. */
 export function applyBuiltinSourceAvailability(config: FolderSourceConfig): FolderSourceConfig {
-  if (!getBuiltinSourceCredential({ config })) return config
-  if (config.connectionStatus === 'failed') return { ...config, isAuthenticated: true }
-  return { ...config, isAuthenticated: true, connectionStatus: 'connected', connectionError: undefined }
+  const stored = removeBuiltinSourceAvailability(config)
+  if (!getBuiltinSourceCredential({ config: stored })) return stored
+  const builtinCredentialProjection = {
+    isAuthenticated: stored.isAuthenticated,
+    connectionStatus: stored.connectionStatus,
+    connectionError: stored.connectionError,
+  }
+  if (stored.connectionStatus === 'failed') return { ...stored, isAuthenticated: true, builtinCredentialProjection }
+  return { ...stored, isAuthenticated: true, connectionStatus: 'connected', connectionError: undefined, builtinCredentialProjection }
+}
+
+/** A shared key's live badge must never become a saved user credential. */
+export function removeBuiltinSourceAvailability(config: FolderSourceConfig): FolderSourceConfig {
+  const { builtinCredentialProjection, ...stored } = config
+  if (!builtinCredentialProjection) return config
+  return {
+    ...stored,
+    isAuthenticated: config.isAuthenticated === true ? builtinCredentialProjection.isAuthenticated : config.isAuthenticated,
+    ...(config.connectionStatus === 'connected' ? {
+      connectionStatus: builtinCredentialProjection.connectionStatus,
+      connectionError: builtinCredentialProjection.connectionError,
+    } : {}),
+  }
 }
 
 function buildBuiltinConfig(slug: BuiltinSourceSlug, now: number): FolderSourceConfig {
   if (slug === 'exa') return buildExaConfig(now)
   if (slug === 'firecrawl') return buildFirecrawlConfig(now)
-  const keyed = !!firstEnv(SERVICE_ENV[slug])
   const brave = slug === 'brave'
   return {
     id: `builtin-${slug}`, name: brave ? 'Brave Search' : 'E2B', slug, provider: slug, type: 'api', enabled: true,
@@ -148,7 +165,7 @@ function buildBuiltinConfig(slug: BuiltinSourceSlug, now: number): FolderSourceC
       testEndpoint: { method: 'GET', path: brave ? '/res/v1/web/search?q=Rox&count=1' : '/v2/sandboxes' },
     },
     icon: brave ? '🌐' : '🧪', tagline: brave ? 'Web search with cited results' : 'Isolated code execution sandboxes',
-    isAuthenticated: keyed, connectionStatus: keyed ? 'connected' : 'needs_auth', createdAt: now, updatedAt: now,
+    isAuthenticated: false, connectionStatus: 'needs_auth', createdAt: now, updatedAt: now,
   }
 }
 
@@ -349,7 +366,7 @@ export function getBuiltinSources(workspaceId: string, workspaceRootPath: string
   return BUILTIN_SOURCE_SLUGS.map((slug) => ({
     workspaceId, workspaceRootPath,
     folderPath: join(sourcesDir(workspaceRootPath), slug),
-    config: buildBuiltinConfig(slug, now), guide: { raw: GUIDES[slug] }, isBuiltin: true,
+    config: applyBuiltinSourceAvailability(buildBuiltinConfig(slug, now)), guide: { raw: GUIDES[slug] }, isBuiltin: true,
   }));
 }
 
