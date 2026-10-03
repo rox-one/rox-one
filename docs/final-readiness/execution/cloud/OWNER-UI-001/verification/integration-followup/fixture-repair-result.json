@@ -95,6 +95,27 @@
       "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/expanded-durable-a3c-ubuntu-success-job.log.gz",
       "gzipSha256": "725abdfb45aacbb43b5f7053339c6ee7ad37014ff1c611389066467b792de3f0",
       "kind": "successful-independent-CI"
+    },
+    {
+      "originalName": "rox-readiness-ui-001.cli-native-notes-pair.log",
+      "sha256": "01093045f288d7770dba88bfeef4dd2b023b65e56d29c1f5904f7684edb902f6",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/rox-readiness-ui-001.cli-native-notes-pair.log.gz",
+      "gzipSha256": "9f63c73471abba8a07adcdf0084f93999772e644704493f6ff7a3671bfe24fb2",
+      "kind": "concurrent-local-scout-diagnostic"
+    },
+    {
+      "originalName": "rox-readiness-ui-001.cli-webui-pair.log",
+      "sha256": "0aec7becbbefae0375d8fe4d842426b4aaf7717e9cbe038d0fc93a9c71b308ad",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/rox-readiness-ui-001.cli-webui-pair.log.gz",
+      "gzipSha256": "a0832fa84cb5dfdf3bbb93b2a7d3d6afa574f444b6a9ca3d454afa0c12bde550",
+      "kind": "concurrent-local-scout-diagnostic"
+    },
+    {
+      "originalName": "rox-readiness-ui-001.cli-single-scout.log",
+      "sha256": "6eb270708c1cbceae5ca62f9ddbb1ec022ed87278952e4c847874671b5e8e199",
+      "gzipPath": "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/integration-followup/rox-readiness-ui-001.cli-single-scout.log.gz",
+      "gzipSha256": "d3dd444939b9314591eaaa019c94f55c27c383c6e2234b1ede98d0e701a714f4",
+      "kind": "concurrent-local-scout-diagnostic"
     }
   ],
   "originalTaskContractChanged": false,
