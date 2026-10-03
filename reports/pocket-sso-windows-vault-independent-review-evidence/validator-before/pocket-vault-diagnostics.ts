@@ -30,15 +30,13 @@ export function nativeFsyncFixture(directory: string): FsyncDiagnostic[] {
   } finally { rmSync(path, { force: true }) }
 }
 /** Project child JSON; never forward raw stdout, stderr, paths, messages or extra fields. */
-export function projectNativeVaultReceipt(value: unknown, phase: 'write' | 'read', expectedPlatform: NodeJS.Platform = process.platform) {
+export function projectNativeVaultReceipt(value: unknown, phase: 'write' | 'read') {
   if (!value || typeof value !== 'object') return null
   const v = value as Record<string, unknown>
-  if (v.phase !== phase || typeof v.passed !== 'boolean' || !['darwin', 'win32'].includes(String(v.platform)) || v.platform !== expectedPlatform) return null
+  if (v.phase !== phase || typeof v.passed !== 'boolean' || !['darwin', 'win32'].includes(String(v.platform))) return null
   const fsync = Array.isArray(v.fsync) ? v.fsync.slice(0, 2).flatMap(entry => {
     if (!entry || typeof entry !== 'object' || !['readonly', 'writable'].includes(entry.access)) return []
     return [{ access: entry.access as FsyncDiagnostic['access'], opened: entry.opened === true, flushed: entry.flushed === true, code: entry.code === null ? null : safeVaultErrorCode({ code: entry.code }) }]
   }) : []
-  const electron = typeof v.electron === 'string' && /^[1-9]\d*\.\d+\.\d+$/.test(v.electron) ? v.electron : 'unknown'
-  if (v.passed && (v.stage !== 'complete' || v.encryptionAvailable !== true || v.code !== null || electron === 'unknown' || !fsync.some(entry => entry.access === 'writable' && entry.opened && entry.flushed && entry.code === null))) return null
-  return { phase, platform: v.platform as 'darwin' | 'win32', electron, encryptionAvailable: v.encryptionAvailable === true, backend: v.platform === 'darwin' ? 'Keychain' : 'DPAPI', stage: typeof v.stage === 'string' && (VAULT_STAGES as readonly string[]).includes(v.stage) ? v.stage : 'initialize', passed: v.passed, code: v.passed ? null : safeVaultErrorCode({ code: v.code }), fsync }
+  return { phase, platform: v.platform as 'darwin' | 'win32', electron: typeof v.electron === 'string' && /^\d+\.\d+\.\d+$/.test(v.electron) ? v.electron : 'unknown', encryptionAvailable: v.encryptionAvailable === true, backend: v.platform === 'darwin' ? 'Keychain' : 'DPAPI', stage: typeof v.stage === 'string' && (VAULT_STAGES as readonly string[]).includes(v.stage) ? v.stage : 'initialize', passed: v.passed, code: v.passed ? null : safeVaultErrorCode({ code: v.code }), fsync }
 }

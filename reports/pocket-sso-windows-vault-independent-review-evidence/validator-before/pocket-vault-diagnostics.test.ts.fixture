@@ -24,11 +24,11 @@ test('failure projection retains known phase/stage/code and strips secret canari
   expect(projectNativeVaultReceipt({ phase: 'write', platform: 'linux', passed: true }, 'write')).toBeNull()
 })
 test('success proof requires matching native platform and completed OS encryption plus writable flush', () => {
-  const good = { phase: 'write', platform: 'win32', passed: true, code: null, stage: 'complete', encryptionAvailable: true, electron: '39.2.7', fsync: [{ access: 'readonly', opened: true, flushed: false, code: 'EPERM' }, { access: 'writable', opened: true, flushed: true, code: null }] }
+  const good = { phase: 'write', platform: 'win32', passed: true, stage: 'complete', encryptionAvailable: true, electron: '39.2.7', fsync: [{ access: 'readonly', opened: true, flushed: false, code: 'EPERM' }, { access: 'writable', opened: true, flushed: true, code: null }] }
   expect(projectNativeVaultReceipt(good, 'write', 'win32')).toMatchObject({ passed: true, stage: 'complete', encryptionAvailable: true, electron: '39.2.7' })
   expect(projectNativeVaultReceipt({ ...good, platform: 'darwin' }, 'write', 'darwin')?.passed).toBe(true)
   for (const patch of [
-    { phase: 'read' }, { platform: 'darwin' }, { stage: 'account_write' }, { encryptionAvailable: false }, { code: 'EIO' }, { code: undefined },
+    { phase: 'read' }, { platform: 'darwin' }, { stage: 'account_write' }, { encryptionAvailable: false },
     { electron: undefined }, { electron: 'unknown' }, { electron: '0.0.0' }, { electron: '39.2.7-secret' },
     { fsync: [] }, { fsync: undefined },
     { fsync: [{ access: 'readonly', opened: true, flushed: true, code: null }] },
