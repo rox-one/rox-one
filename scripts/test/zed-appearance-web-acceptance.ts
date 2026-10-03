@@ -444,6 +444,37 @@ try {
   report.result = 'fail'
   report.failure = error instanceof Error ? error.message : String(error)
   await page.screenshot({ path: resolve(artifactDir, 'failure.png'), fullPage: true }).catch(() => {})
+  // Keep the failing page alive long enough to distinguish a persistent
+  // startup block from delayed animation completion. This opt-in callback
+  // only reads the same browser/context; it never reloads or bypasses UI.
+  if (process.env.ROX_APPEARANCE_FAILURE_READBACK === '1') {
+    report.failureReadback = []
+    const started = performance.now()
+    for (const delayMs of [0, 500, 1000, 3000, 6000]) {
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+      const state = await page.evaluate(async () => {
+        const api = (window as any).electronAPI
+        const durable = await Promise.race([
+          (async () => {
+            const workspaces = await api.getWorkspaces()
+            const id = workspaces[0]?.id
+            return { appTheme: await api.getColorTheme(), workspaceTheme: id ? await api.getWorkspaceColorTheme(id) : null }
+          })().catch(error => ({ error: String(error) })),
+          new Promise(resolve => setTimeout(() => resolve({ timeout: true }), 3000)),
+        ])
+        return { visibility: document.visibilityState, api: Boolean(api), chrome: Boolean(document.querySelector('.chrome-topbar')),
+          theme: document.documentElement.dataset.theme, visual: document.documentElement.className,
+          material: document.documentElement.dataset.shellCssMaterial, route: new URLSearchParams(location.search).get('route'), durable,
+          splashes: [...document.querySelectorAll<HTMLElement>('.z-splash')].map(element => {
+            const style = getComputedStyle(element), rect = element.getBoundingClientRect()
+            return { classes: element.className, position: style.position, opacity: style.opacity, pointerEvents: style.pointerEvents,
+              width: rect.width, height: rect.height, animations: element.getAnimations().map(animation => ({ playState: animation.playState, currentTime: animation.currentTime })) }
+          }) }
+      }).catch(() => ({ diagnosticUnavailable: true }))
+      report.failureReadback.push({ elapsedMs: performance.now() - started, ...state })
+    }
+    await writeFile(resolve(artifactDir, 'failure-live-readback.json'), JSON.stringify(report.failureReadback, null, 2))
+  }
   console.error(JSON.stringify({ result: 'fail', error: report.failure, artifactDir, completedCases: report.matrix.length }, null, 2))
   process.exitCode = 1
 } finally {
