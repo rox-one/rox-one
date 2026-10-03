@@ -63,7 +63,9 @@ jobs:
           apps/electron/src/main/__tests__/deep-link-parse.test.ts
           apps/electron/src/main/__tests__/deep-link-routing.test.ts
       - name: Actual navigation callbacks in Chromium
-        run: bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
+        run: >-
+          bun test apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
+          apps/electron/src/renderer/contexts/__tests__/rox-readiness-ui-001.navigation-browser.test.ts
         env:
           ROX_UI001_BROWSER_TEST: '1'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
