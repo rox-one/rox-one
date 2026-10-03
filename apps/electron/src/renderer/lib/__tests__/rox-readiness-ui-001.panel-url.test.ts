@@ -27,6 +27,17 @@ describe('UI-001 panel URL transport', () => {
     ])
   })
 
+  it('keeps bracket-prefixed legacy addresses and their siblings separate from tuple JSON', () => {
+    for (const route of ['[future]', '[[future]]']) {
+      expect(codec().decodePanelEntries(`${route}:0.6000,tasks:0.4000`)).toEqual([
+        { route, proportion: 0.6 }, { route: 'tasks', proportion: 0.4 },
+      ])
+      expect(codec().decodePanelEntries(`${route},tasks`)).toEqual([
+        { route, proportion: 0 }, { route: 'tasks', proportion: 0 },
+      ])
+    }
+  })
+
   it('retains legacy missing proportion and last-colon parsing behavior', () => {
     expect(codec().decodePanelEntries('home,unknown?retain=a:b:0.7500')).toEqual([
       { route: 'home', proportion: 0 }, { route: 'unknown?retain=a:b', proportion: 0.75 },

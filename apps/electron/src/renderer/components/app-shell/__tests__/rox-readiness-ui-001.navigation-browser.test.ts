@@ -138,6 +138,7 @@ async function bundle() {
     ${shellNavigatorExpressions()}
     ${desktopTabTitleExpressions()}
     let setReady,setWorkspace;
+    const requestWorkspaceBySlug=slug=>{setWorkspace(slug);return true};
     const createSession=async(ws,options)=>{calls.push(['createSession',ws,options]);return {id:'created',workspaceId:ws}};
     function View(){
       const nav=useNavigation(), panels=useAtomValue(panelStackAtom),focused=useAtomValue(focusedPanelIdAtom), [selected]=useSession();
@@ -153,7 +154,7 @@ async function bundle() {
       const [ws,changeWorkspace]=useState(new URLSearchParams(location.search).get('ws')||'ws-a');
       const [ready,changeReady]=useState(!new URLSearchParams(location.search).has('wait'));
       workspace=ws;setReady=changeReady;setWorkspace=changeWorkspace;
-      return <Provider store={store}><NavigationProvider workspaceId={ws} workspaceSlug={ws} isReady={ready} onSwitchWorkspaceBySlug={changeWorkspace} onCreateSession={createSession}><View/></NavigationProvider></Provider>;
+      return <Provider store={store}><NavigationProvider workspaceId={ws} workspaceSlug={ws} isReady={ready} onSwitchWorkspaceBySlug={requestWorkspaceBySlug} onCreateSession={createSession}><View/></NavigationProvider></Provider>;
     }
     createRoot(document.getElementById('app')).render(<App/>);
   `
@@ -250,6 +251,17 @@ describe.skipIf(!enabled)('UI-001 actual navigation in Chromium', () => {
     await unavailable(route)
     state = await snapshot()
     expect(state.panels[1].id).toBe(state.focused)
+  }, 30000)
+
+  it('legacy bracket-prefixed unknown panels keep their sibling and proportions after reload', async () => {
+    for (const route of ['[future]', '[[future]]']) {
+      await open(route, { panels: `${route}:0.6000,tasks:0.4000`, fi: '0' })
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => [p.route, p.proportion])).toEqual([[route, 0.6], ['tasks', 0.4]])
+      await page.reload()
+      await unavailable(route)
+      expect((await snapshot()).panels.map((p: any) => [p.route, p.proportion])).toEqual([[route, 0.6], ['tasks', 0.4]])
+    }
   }, 30000)
 
   for (const panels of ['[]', ' [] ', ',,', '[', '[1]', '[["tasks"]]', '  ']) {

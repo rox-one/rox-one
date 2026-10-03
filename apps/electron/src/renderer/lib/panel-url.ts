@@ -32,7 +32,13 @@ export function decodePanelEntries(value: string): PanelUrlEntry[] {
         && typeof entry[0] === 'string' && entry[0].trim().length > 0)) return []
       return entries.map(([route, weight]) => ({ route, proportion:
         typeof weight === 'number' && Number.isFinite(weight) && weight > 0 && weight <= 1 ? weight : 0 }))
-    } catch { return [] }
+    } catch {
+      // A legacy unknown address can itself start with a bracket. Reserve
+      // truncated tuple JSON only when its first route has the tuple string
+      // syntax; plain bracket-prefixed addresses still use the CSV transport.
+      const prefix = value.trimStart()
+      if (prefix === '[' || /^\[\s*\[\s*"/.test(prefix)) return []
+    }
   }
 
   // Keep legacy escapes verbatim: decoding `%2F` here would change route shape.
