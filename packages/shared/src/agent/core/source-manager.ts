@@ -15,6 +15,7 @@
 import { join } from 'node:path';
 import type { LoadedSource } from '../../sources/types.ts';
 import { sourceNeedsAuthentication } from '../../sources/credential-manager.ts';
+import { getLocalSourceFolderState } from '../../sources/storage.ts';
 import type { SourceManagerConfig } from './types.ts';
 
 /** Slugs exempt from guide.md prerequisite (internal sources) */
@@ -43,6 +44,7 @@ export class SourceManager {
   // Source state tracking
   private activeSlugs: Set<string> = new Set();
   private intendedSlugs: Set<string> = new Set();
+  private hasExplicitSelection = false;
   private allSources: LoadedSource[] = [];
   private knownSlugs: Set<string> = new Set();
 
@@ -70,17 +72,9 @@ export class SourceManager {
     this.activeSlugs = new Set([...mcpServerNames, ...apiServerNames]);
 
     // Update intended active (what UI shows, even if build failed)
+    this.hasExplicitSelection = intendedSlugs !== undefined;
     this.intendedSlugs = new Set(intendedSlugs ?? [...this.activeSlugs]);
-
-    this.config.onDebug?.(`Active sources: ${[...this.activeSlugs].join(', ') || 'none'}`);
-
-    // Log any sources with failed builds
-    if (intendedSlugs) {
-      const failed = intendedSlugs.filter((s) => !this.activeSlugs.has(s));
-      if (failed.length > 0) {
-        this.config.onDebug?.(`Sources with failed builds: ${failed.join(', ')}`);
-      }
-    }
+    this.logSourceState();
   }
 
   /**
@@ -88,6 +82,18 @@ export class SourceManager {
    */
   setAllSources(sources: LoadedSource[]): void {
     this.allSources = sources;
+    // Server state and source metadata arrive in either order. Only classify
+    // build failures once the source type is known.
+    this.logSourceState();
+  }
+
+  private logSourceState(): void {
+    const active = this.getActiveSlugs();
+    const intended = this.getIntendedSlugs();
+    this.config.onDebug?.(`Active sources: ${[...active].join(', ') || 'none'}`);
+    const failed = [...intended].filter(slug => !active.has(slug)
+      && this.allSources.find(source => source.config.slug === slug)?.config.type !== 'local');
+    if (failed.length > 0) this.config.onDebug?.(`Sources with failed builds: ${failed.join(', ')}`);
   }
 
   /**
@@ -101,28 +107,45 @@ export class SourceManager {
    * Check if a source slug is currently active.
    */
   isSourceActive(slug: string): boolean {
-    return this.activeSlugs.has(slug);
+    return this.getActiveSlugs().has(slug);
   }
 
   /**
    * Check if a source slug is intended to be active (UI shows as active).
    */
   isSourceIntendedActive(slug: string): boolean {
-    return this.intendedSlugs.has(slug);
+    return this.getIntendedSlugs().has(slug);
   }
 
   /**
-   * Get active source slugs (only those with working tools).
+   * Get active source slugs (running servers or selected readable local folders).
    */
   getActiveSlugs(): Set<string> {
-    return new Set(this.activeSlugs);
+    const active = new Set(this.activeSlugs);
+    const intended = this.getIntendedSlugs();
+    for (const source of this.allSources) {
+      if (source.config.type !== 'local') continue;
+      // Local sources never become available merely because a stale server
+      // with the same slug remains in the server snapshot.
+      active.delete(source.config.slug);
+      if (source.config.enabled && intended.has(source.config.slug) && getLocalSourceFolderState(source).available) {
+        active.add(source.config.slug);
+      }
+    }
+    return active;
   }
 
   /**
    * Get intended active source slugs (what UI shows).
    */
   getIntendedSlugs(): Set<string> {
-    return new Set(this.intendedSlugs);
+    const intended = new Set(this.intendedSlugs);
+    if (!this.hasExplicitSelection) {
+      for (const source of this.allSources) {
+        if (source.config.type === 'local' && source.config.enabled) intended.add(source.config.slug);
+      }
+    }
+    return intended;
   }
 
   /**
@@ -157,12 +180,14 @@ export class SourceManager {
    * @returns Formatted XML string for context injection
    */
   formatSourceState(): string {
+    const intendedSlugs = this.getIntendedSlugs();
+    const availableSlugs = this.getActiveSlugs();
     // Use intended active slugs (what UI shows) rather than just what built successfully
-    const activeSlugs = [...this.intendedSlugs].sort();
+    const activeSlugs = [...intendedSlugs].sort();
 
     // Find inactive sources (in allSources but not intended-active)
     const inactiveSources = this.allSources.filter(
-      (s) => !this.intendedSlugs.has(s.config.slug)
+      (s) => !intendedSlugs.has(s.config.slug)
     );
 
     // Find sources not yet seen this session
@@ -172,11 +197,13 @@ export class SourceManager {
 
     // Setup requirements remain relevant even before the first handshake.
     const activeSources = this.allSources.filter(
-      (s) => this.intendedSlugs.has(s.config.slug)
+      (s) => intendedSlugs.has(s.config.slug)
     );
     const sourcesNeedingAttention = activeSources.filter(
-      (s) => s.config.connectionStatus === 'needs_auth' || s.config.connectionStatus === 'failed'
-        || ((s.config.connectionStatus === 'untested' || s.config.connectionStatus === 'local_disabled') && !!s.config.connectionError)
+      (s) => s.config.type === 'local'
+        ? s.config.enabled && !getLocalSourceFolderState(s).available
+        : s.config.connectionStatus === 'needs_auth' || s.config.connectionStatus === 'failed'
+          || ((s.config.connectionStatus === 'untested' || s.config.connectionStatus === 'local_disabled') && !!s.config.connectionError)
     );
 
     // Check if this is the first message (no sources known yet)
@@ -191,7 +218,11 @@ export class SourceManager {
     // Active sources line - include warning for sources with failed builds
     if (activeSlugs.length > 0) {
       const activeWithStatus = activeSlugs.map((slug) => {
-        const hasWorkingTools = this.activeSlugs.has(slug);
+        const source = this.allSources.find(s => s.config.slug === slug);
+        if (source?.config.type === 'local') {
+          return `${slug} (${!source.config.enabled ? 'disabled' : availableSlugs.has(slug) ? 'local files' : 'folder unavailable'})`;
+        }
+        const hasWorkingTools = availableSlugs.has(slug);
         return hasWorkingTools ? slug : `${slug} (no tools)`;
       });
       parts.push(`Active: ${activeWithStatus.join(', ')}`);
@@ -201,6 +232,18 @@ export class SourceManager {
 
     if (this.allSources.length > 0 || activeSlugs.length > 0) {
       parts.push('Use connected source tools whenever relevant to the task. Call only tools present in the live tool definitions; sources marked "no tools", disabled or needing authentication are unavailable until restored.');
+    }
+
+    // Folder sources use the agent's filesystem tools, not source MCP tools.
+    // Keep the resolved path visible every turn, even after introductions.
+    const localSources = activeSources.filter(s => s.config.type === 'local' && s.config.enabled);
+    for (const source of localSources) {
+      const state = getLocalSourceFolderState(source);
+      parts.push(`Local folder ${source.config.slug}: ${state.path ?? '(not configured)'} (${state.available ? 'available' : 'unavailable'})`);
+      if (source.guide?.raw) parts.push(`  Guide: ${join(source.folderPath, 'guide.md')}`);
+    }
+    if (localSources.length > 0) {
+      parts.push('Local folder sources expose files, not source-specific tools. Read their guides before accessing files using the available filesystem tools. Do not call MCP tools for these folders.');
     }
 
     // Inactive sources with reason
@@ -218,7 +261,7 @@ export class SourceManager {
 
     // Persistent reminder: if any active source has a guide, remind the LLM every message
     const activeSourcesWithGuides = activeSources.filter(
-      (s) => s.guide?.raw && !GUIDE_EXEMPT_SLUGS.has(s.config.slug)
+      (s) => s.config.type !== 'local' && s.guide?.raw && !GUIDE_EXEMPT_SLUGS.has(s.config.slug)
     );
     if (activeSourcesWithGuides.length > 0) {
       parts.push('Read each source\'s guide.md before first tool use — calls are blocked until guide is read.');
@@ -238,7 +281,7 @@ export class SourceManager {
         // Add guide path for sources that have guides (excluding internal sources)
         if (s.guide?.raw && !GUIDE_EXEMPT_SLUGS.has(s.config.slug)) {
           parts.push(`  Guide: ${join(s.folderPath, 'guide.md')}`);
-          hasGuides = true;
+          if (s.config.type !== 'local') hasGuides = true;
         }
       }
       if (hasGuides) {
@@ -251,8 +294,16 @@ export class SourceManager {
 
     // Inject issue context for sources needing attention
     for (const s of sourcesNeedingAttention) {
-      const status = s.config.connectionStatus;
+      const status = s.config.type === 'local' ? 'failed' : s.config.connectionStatus;
       output += `\n\n<source_issue source="${s.config.slug}" status="${status}">`;
+
+      if (s.config.type === 'local') {
+        const state = getLocalSourceFolderState(s);
+        output += `\nError: ${state.error}\nPath: ${state.path ?? '(not configured)'}`;
+        output += '\nThis is a local folder source. Check the folder path and filesystem permissions; no source server or authentication is involved.';
+        output += '\n</source_issue>';
+        continue;
+      }
 
       if (s.config.connectionError) {
         output += `\nError: ${s.config.connectionError}`;
@@ -326,7 +377,7 @@ export class SourceManager {
     const sourceSlug = parts[1]!;
 
     // Check if source exists but is inactive
-    const sourceExists = this.allSources.some((s) => s.config.slug === sourceSlug);
+    const sourceExists = this.allSources.some((s) => s.config.slug === sourceSlug && s.config.type !== 'local');
     const isActive = this.activeSlugs.has(sourceSlug);
 
     if (sourceExists && !isActive) {
