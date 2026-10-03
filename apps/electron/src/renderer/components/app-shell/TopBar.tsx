@@ -37,6 +37,7 @@ import { AppMenu } from "../AppMenu"
 import { HeaderStatusLane } from "./HeaderStatusLane"
 import { MeetingRecordingIndicator } from "../meetings/MeetingRecordingIndicator"
 import { CompactWorkspaceMenu } from "./CompactWorkspaceMenu"
+import { DeviceStatusChip } from './DeviceStatusChip'
 import type { ReactNode } from "react"
 import {
   featureUnifiedShellAtom,
@@ -414,6 +415,7 @@ export function TopBar({
       {!isCompact && (
       <div ref={rightSlotRef} className="rox-topbar-right-actions flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8, maxWidth: showModePill ? modePillLayout?.rightMax : undefined }}>
         <PanelWorkspaceMenu />
+        <DeviceStatusChip />
         {!chrome.hideBrowserTabStrip && (
         <div className="rox-topbar-browser-strip min-w-0 shrink overflow-hidden">
           <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />

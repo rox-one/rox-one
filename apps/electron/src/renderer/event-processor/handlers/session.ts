@@ -560,13 +560,22 @@ export function handleUserMessage(
   const { message, status } = event
 
   // Find existing message by ID match (backend ID, optimistic ID, or content+timestamp fallback)
-  const existingIndex = session.messages.findIndex(m =>
+  let existingIndex = session.messages.findIndex(m =>
     m.role === 'user' && (
       m.id === message.id ||
-      (event.optimisticMessageId && m.id === event.optimisticMessageId) ||
-      (m.content === message.content && Math.abs(m.timestamp - message.timestamp) < 5000)
+      m.backendMessageId === message.id ||
+      (event.optimisticMessageId && m.id === event.optimisticMessageId)
     )
   )
+  if (existingIndex < 0 && !event.optimisticMessageId) {
+    const pendingMatches = session.messages.flatMap((m, index) =>
+      m.role === 'user' && m.isPending && !m.backendMessageId &&
+      m.content === message.content && Math.abs(m.timestamp - message.timestamp) < 5000 ? [index] : []
+    )
+    // Repeated prompts are distinct messages. A text fallback is safe only for
+    // one unacknowledged optimistic bubble, never for an accepted message.
+    if (pendingMatches.length === 1) existingIndex = pendingMatches[0]!
+  }
 
   let updatedMessages: Message[]
 
@@ -595,12 +604,13 @@ export function handleUserMessage(
     // ChatDisplay's `getTurnKey` keys user-message bubbles by id, and a swap
     // would unmount/remount the UserMessageBubble — wiping its local timer
     // state and dropping the queued chip mid-flight. The canonical backend
-    // id is irrelevant to subsequent events: they all use
-    // `event.optimisticMessageId` for routing (see the findIndex above).
+    // id remains the mounted UI key. backendMessageId routes annotations,
+    // branches and later queue acknowledgements to the persisted message.
     updatedMessages = session.messages.map((m, i) => {
       if (i === existingIndex) {
         return {
           ...m,
+          backendMessageId: message.id,
           ...(status === 'processing' ? { timestamp: message.timestamp } : {}),
           isPending: false,
           isQueued: status === 'queued',
@@ -648,7 +658,7 @@ export function handleMessageAnnotationsUpdated(
       session: {
         ...session,
         messages: session.messages.map(m =>
-          m.id === event.messageId
+          (m.id === event.messageId || m.backendMessageId === event.messageId)
             ? { ...m, annotations: event.annotations }
             : m
         ),
@@ -1034,4 +1044,3 @@ export function handleUsageUpdate(
     effects: [],
   }
 }
-

@@ -28,6 +28,9 @@ import {
 import { PremiumMenuSelect } from '@rox/ui'
 import { SecuritySnake, filterSecurityFindings } from './security/SecuritySnake'
 import { runConfirmedSecurityAction } from './security/security-actions'
+import { RoxRuntimeCard } from './security/RoxRuntimeCard'
+import { createSecurityResource, type SecurityResourceState } from './security/security-resource'
+import { RPC_CHANNELS } from '../../../shared/types'
 import {
   RISK_ACCEPTANCE_MAX_CODE_POINTS,
   getRiskAcceptanceDateLimits,
@@ -76,8 +79,6 @@ function securityActionLive(kind: PendingSecurityAction['kind']): boolean {
   )
 }
 
-type LoadState = 'idle' | 'unavailable' | 'failed'
-
 type SnapshotFreshness = 'unknown' | 'fresh' | 'stale'
 
 const RUNTIME_ACTIONABLE_STATES: Partial<Record<OpenClawRuntimeStatus['state'], true>> = {
@@ -109,8 +110,19 @@ export default function SecuritySettingsPage() {
   const [runtimeStatus, setRuntimeStatus] = React.useState<OpenClawRuntimeStatus | null>(null)
   const [snapshot, setSnapshot] = React.useState<SecurityAuditSnapshot | null>(null)
   const [snapshotFreshness, setSnapshotFreshness] = React.useState<SnapshotFreshness>('unknown')
-  const [loading, setLoading] = React.useState(true)
-  const [loadState, setLoadState] = React.useState<LoadState>('idle')
+  const [runtimeResource, setRuntimeResource] = React.useState<SecurityResourceState<OpenClawRuntimeStatus>>({ scope: null, phase: 'loading', data: null })
+  const [auditResource, setAuditResource] = React.useState<SecurityResourceState<SecurityAuditSnapshot | null>>({ scope: null, phase: 'loading', data: null })
+  const workspaceEpoch = React.useRef({ workspaceId, generation: 0 })
+  if (workspaceEpoch.current.workspaceId !== workspaceId) workspaceEpoch.current = { workspaceId, generation: workspaceEpoch.current.generation + 1 }
+  const runtimeLoader = React.useMemo(() => createSecurityResource<OpenClawRuntimeStatus>(state => {
+    setRuntimeResource(state)
+    if (state.phase === 'available') setRuntimeStatus(state.data)
+  }), [])
+  const auditLoader = React.useMemo(() => createSecurityResource<SecurityAuditSnapshot | null>(state => {
+    setAuditResource(state)
+    if (state.phase === 'available') { setSnapshot(state.data); setSnapshotFreshness(state.data ? 'fresh' : 'unknown') }
+    else if (state.phase === 'failed') setSnapshotFreshness('stale')
+  }), [])
   const [actionError, setActionError] = React.useState(false)
   const [auditRunning, setAuditRunning] = React.useState(false)
   const [busyAction, setBusyAction] = React.useState<PendingSecurityAction['kind'] | null>(null)
@@ -133,16 +145,13 @@ export default function SecuritySettingsPage() {
   const acceptanceValidation = validateRiskAcceptance({ rationale, expiresOn })
   const displayedRuntime = runtimeStatus?.workspaceId === workspaceId ? runtimeStatus : null
   const displayedSnapshot = snapshot?.workspaceId === workspaceId ? snapshot : null
-  const apiAvailable =
-    typeof window.electronAPI?.openclawRuntime?.getStatus === 'function' &&
-    typeof window.electronAPI?.openclawRuntime?.install === 'function' &&
-    typeof window.electronAPI?.openclawRuntime?.provision === 'function' &&
-    typeof window.electronAPI?.openclawRuntime?.start === 'function' &&
-    typeof window.electronAPI?.openclawRuntime?.stop === 'function' &&
-    typeof window.electronAPI?.securityAudit?.run === 'function' &&
-    typeof window.electronAPI?.securityAudit?.getLatest === 'function' &&
-    typeof window.electronAPI?.securityAudit?.acceptRisk === 'function' &&
-    typeof window.electronAPI?.securityAudit?.revokeRiskAcceptance === 'function'
+  const available = (channel: string, method: unknown) => typeof method === 'function'
+    && (typeof window.electronAPI?.isChannelAvailable !== 'function' || window.electronAPI.isChannelAvailable(channel))
+  const runtimeApiAvailable = available(RPC_CHANNELS.openclawRuntime.GET_STATUS, window.electronAPI?.openclawRuntime?.getStatus)
+  const auditApiAvailable = available(RPC_CHANNELS.securityAudit.GET_LATEST, window.electronAPI?.securityAudit?.getLatest)
+  const runtimeLoading = runtimeResource.scope !== workspaceId ? Boolean(workspaceId) : runtimeResource.phase === 'loading'
+  const auditLoading = auditResource.scope !== workspaceId ? Boolean(workspaceId) : auditResource.phase === 'loading'
+  const loading = runtimeLoading || auditLoading
 
   const checkInfisicalHealth = React.useCallback(async () => {
     const probe = window.electronAPI?.fabricInfisicalHealth
@@ -163,150 +172,96 @@ export default function SecuritySettingsPage() {
     void checkInfisicalHealth()
   }, [checkInfisicalHealth])
 
-  const refresh = React.useCallback(async () => {
-    if (!workspaceId) {
-      setLoading(false)
-      return
-    }
-
-    const runtimeApi = window.electronAPI?.openclawRuntime
-    const auditApi = window.electronAPI?.securityAudit
-    if (!apiAvailable || !runtimeApi || !auditApi) {
-      setLoadState('unavailable')
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    setLoadState('idle')
-    try {
-      const [runtimeResult, latestResult] = await Promise.allSettled([
-        runtimeApi.getStatus({ workspaceId }),
-        auditApi.getLatest({ workspaceId }),
-      ])
-
-      if (runtimeResult.status === 'fulfilled') {
-        setRuntimeStatus(runtimeResult.value)
-      } else {
-        setLoadState('failed')
-      }
-      if (latestResult.status === 'fulfilled') {
-        const latest = latestResult.value
-        if (latest !== null) {
-          setSnapshot(latest)
-          setSnapshotFreshness('fresh')
-        } else {
-          setSnapshot(null)
-          setSnapshotFreshness('unknown')
-        }
-      } else {
-        setSnapshotFreshness('stale')
-        setLoadState('failed')
-      }
-    } catch {
-      setLoadState('failed')
-    } finally {
-      setLoading(false)
-    }
-  }, [apiAvailable, workspaceId])
-
+  const refreshRuntime = React.useCallback(() => {
+    const api = window.electronAPI?.openclawRuntime
+    return runtimeLoader.read(workspaceId ?? null, runtimeApiAvailable && api ? async () => {
+      const result = await api.getStatus({ workspaceId: workspaceId! })
+      if (result.workspaceId !== workspaceId) throw new Error('Runtime workspace changed')
+      return result
+    } : undefined)
+  }, [runtimeApiAvailable, runtimeLoader, workspaceId])
+  const refreshAudit = React.useCallback(() => {
+    const api = window.electronAPI?.securityAudit
+    return auditLoader.read(workspaceId ?? null, auditApiAvailable && api ? async () => {
+      const result = await api.getLatest({ workspaceId: workspaceId! })
+      if (result && result.workspaceId !== workspaceId) throw new Error('Audit workspace changed')
+      return result
+    } : undefined)
+  }, [auditApiAvailable, auditLoader, workspaceId])
+  const refresh = React.useCallback(() => Promise.all([refreshRuntime(), refreshAudit()]), [refreshRuntime, refreshAudit])
+  React.useEffect(() => { void refreshRuntime(); return () => runtimeLoader.cancel() }, [refreshRuntime, runtimeLoader])
+  React.useEffect(() => { void refreshAudit(); return () => auditLoader.cancel() }, [refreshAudit, auditLoader])
   React.useEffect(() => {
-    void refresh()
-  }, [refresh])
-
-  React.useEffect(() => {
-    setPendingAction(null)
-    setAcceptanceFinding(null)
-    setSnapshotFreshness('unknown')
+    setPendingAction(null); setAcceptanceFinding(null); setSnapshotFreshness('unknown')
+    setActionError(false); setBusyAction(null); setAuditRunning(false)
   }, [workspaceId])
 
   const performPendingAction = React.useCallback(async (action: PendingSecurityAction) => {
-    if (!workspaceId) return
-
+    if (!workspaceId || !securityActionLive(action.kind)) return
+    const captured = workspaceEpoch.current
+    const isCurrent = () => workspaceEpoch.current === captured
     const runtimeApi = window.electronAPI?.openclawRuntime
     const auditApi = window.electronAPI?.securityAudit
-    if (!apiAvailable || !runtimeApi || !auditApi) {
-      setLoadState('unavailable')
-      return
+    const applyRuntime = (result: OpenClawRuntimeStatus) => {
+      if (isCurrent() && result.workspaceId === workspaceId) runtimeLoader.replace(workspaceId, result)
     }
-    if (!securityActionLive(action.kind)) return
-
     switch (action.kind) {
       case 'install':
-        setRuntimeStatus(await window.electronAPI.openclawRuntime.install({ workspaceId }))
-        break
+        if (!runtimeApi?.install) throw new Error('Runtime installation unavailable')
+        applyRuntime(await runtimeApi.install({ workspaceId })); break
       case 'provision':
-        setRuntimeStatus(await window.electronAPI.openclawRuntime.provision({ workspaceId }))
-        break
+        if (!runtimeApi?.provision) throw new Error('Runtime provisioning unavailable')
+        applyRuntime(await runtimeApi.provision({ workspaceId })); break
       case 'start':
-        setRuntimeStatus(await window.electronAPI.openclawRuntime.start({ workspaceId }))
-        break
+        if (!runtimeApi?.start) throw new Error('Runtime start unavailable')
+        applyRuntime(await runtimeApi.start({ workspaceId })); break
       case 'stop':
-        setRuntimeStatus(await window.electronAPI.openclawRuntime.stop({ workspaceId }))
-        break
+        if (!runtimeApi?.stop) throw new Error('Runtime stop unavailable')
+        applyRuntime(await runtimeApi.stop({ workspaceId })); break
       case 'audit': {
+        if (!auditApi?.run) throw new Error('Audit unavailable')
         setAuditRunning(true)
         try {
-          const nextSnapshot = await window.electronAPI.securityAudit.run({ workspaceId, mode: action.mode })
-          setSnapshot(nextSnapshot)
-          setRuntimeStatus(nextSnapshot.runtime)
-          setSnapshotFreshness('fresh')
+          const next = await auditApi.run({ workspaceId, mode: action.mode })
+          if (isCurrent() && next.workspaceId === workspaceId) {
+            auditLoader.replace(workspaceId, next); applyRuntime(next.runtime)
+          }
         } catch (error) {
-          setSnapshotFreshness('stale')
+          if (isCurrent()) setSnapshotFreshness('stale')
           throw error
-        } finally {
-          setAuditRunning(false)
-        }
+        } finally { if (isCurrent()) setAuditRunning(false) }
         break
       }
       case 'accept':
-        await window.electronAPI.securityAudit.acceptRisk({
-          workspaceId,
-          fingerprint: action.fingerprint,
-          rationale: action.rationale,
-          expiresAt: action.expiresAt,
-        })
-        setSnapshot((previous) =>
-          updateFindingAcceptance(previous, action.fingerprint, {
-            rationale: action.rationale,
-            expiresAt: action.expiresAt,
-            expired: false,
-          }),
-        )
+        if (!auditApi?.acceptRisk) throw new Error('Risk acceptance unavailable')
+        await auditApi.acceptRisk({ workspaceId, fingerprint: action.fingerprint, rationale: action.rationale, expiresAt: action.expiresAt })
+        if (isCurrent()) setSnapshot(previous => updateFindingAcceptance(previous, action.fingerprint, {
+          rationale: action.rationale, expiresAt: action.expiresAt, expired: false,
+        }))
         break
       case 'revoke':
-        await window.electronAPI.securityAudit.revokeRiskAcceptance({ workspaceId, fingerprint: action.fingerprint })
-        setSnapshot((previous) => updateFindingAcceptance(previous, action.fingerprint, undefined))
+        if (!auditApi?.revokeRiskAcceptance) throw new Error('Risk acceptance unavailable')
+        await auditApi.revokeRiskAcceptance({ workspaceId, fingerprint: action.fingerprint })
+        if (isCurrent()) setSnapshot(previous => updateFindingAcceptance(previous, action.fingerprint, undefined))
         break
-      case 'openControlUi': {
-        const nativeHostControl = window.openClawHostControl
-        if (!nativeHostControl) return
-        await nativeHostControl.openControlUi({ workspaceId })
-        break
-      }
-      case 'copySetupCredential': {
-        const nativeHostControl = window.openClawHostControl
-        if (!nativeHostControl) return
-        await nativeHostControl.copyGatewayTokenForSetup({ workspaceId })
-        break
-      }
+      case 'openControlUi':
+        if (!window.openClawHostControl) throw new Error('Host controls unavailable')
+        await window.openClawHostControl.openControlUi({ workspaceId }); break
+      case 'copySetupCredential':
+        if (!window.openClawHostControl) throw new Error('Host controls unavailable')
+        await window.openClawHostControl.copyGatewayTokenForSetup({ workspaceId }); break
     }
-  }, [apiAvailable, workspaceId])
+  }, [auditLoader, runtimeLoader, workspaceId])
 
   const confirmPendingAction = React.useCallback(async () => {
     const action = pendingAction
+    const captured = workspaceEpoch.current
     setPendingAction(null)
     if (!action) return
-
-    setBusyAction(action.kind)
-    setActionError(false)
-    try {
-      await runConfirmedSecurityAction(pendingAction, performPendingAction)
-    } catch {
-      setActionError(true)
-    } finally {
-      setBusyAction(null)
-    }
+    setBusyAction(action.kind); setActionError(false)
+    try { await runConfirmedSecurityAction(action, performPendingAction) }
+    catch { if (workspaceEpoch.current === captured) setActionError(true) }
+    finally { if (workspaceEpoch.current === captured) setBusyAction(null) }
   }, [pendingAction, performPendingAction])
 
   const findings = displayedSnapshot?.findings ?? []
@@ -345,7 +300,7 @@ export default function SecuritySettingsPage() {
         title={t('settings.security.title')}
         actions={
           <>
-            <Button size="sm" variant="outline" disabled={loading || !workspaceId || !apiAvailable} onClick={() => void refresh()}>
+            <Button size="sm" variant="outline" disabled={loading || !workspaceId} onClick={() => void refresh()}>
               {loading ? t('security.loading') : t('security.action.refresh')}
             </Button>
             <HeaderMenu route={routes.view.settings('security')} />
@@ -363,29 +318,22 @@ export default function SecuritySettingsPage() {
               {t('security.error.noWorkspace')}
             </div>
           )}
-          {workspaceId && !apiAvailable && (
-            <div role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
-              {t('security.error.apiUnavailable')}
-            </div>
-          )}
-          {loadState === 'failed' && (
-            <div role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
-              {t('security.error.loadFailed')}
-            </div>
-          )}
           {actionError && (
             <div role="alert" className="rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
               {t('security.error.actionFailed')}
             </div>
           )}
 
-          <SettingsSection title={t('security.section.overview')}>
-            <SettingsCard className="space-y-4">
+          <RoxRuntimeCard workspaceId={workspaceId} remote={Boolean(activeWorkspace?.remoteServer)} />
+
+          <SettingsSection title={t('security.openclaw.title')}>
+            <SettingsCard className="space-y-4 p-4">
+              <p className="text-sm text-muted-foreground">{t('security.openclaw.description')}</p>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="rounded-md border border-border/60 p-3">
-                  <p className="text-xs text-muted-foreground">{t('security.runtime.label')}</p>
+                  <p className="text-xs text-muted-foreground">{t('security.runtime.openclawLabel')}</p>
                   <p className="mt-1 text-sm font-medium" aria-live="polite">
-                    {loading ? t('security.loading') : t(`security.runtime.state.${displayedRuntime?.state ?? 'unavailable'}`)}
+                    {runtimeLoading ? t('security.loading') : t(`security.runtime.state.${displayedRuntime?.state ?? 'unavailable'}`)}
                   </p>
                 </div>
                 <div className="rounded-md border border-border/60 p-3">
@@ -399,7 +347,8 @@ export default function SecuritySettingsPage() {
                   <p className="mt-1 text-sm font-medium" role="status" aria-live="polite" aria-atomic="true">
                     {auditRunning
                       ? t('security.audit.running')
-                      : loading && snapshotDate
+                      : auditLoading && !snapshotDate ? t('security.loading')
+                      : auditLoading && snapshotDate
                         ? t('security.audit.refreshingLastSnapshot', { date: snapshotDate })
                         : snapshotIsStale && snapshotDate
                           ? t('security.audit.stale', { date: snapshotDate })
@@ -410,9 +359,18 @@ export default function SecuritySettingsPage() {
                 </div>
               </div>
 
+              {workspaceId && runtimeResource.scope === workspaceId && ['failed', 'unavailable'].includes(runtimeResource.phase) && <div role="status" className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="security-openclaw-error">
+                <p>{t(runtimeResource.phase === 'failed' ? 'security.openclaw.loadFailed' : 'security.openclaw.unavailable')}</p>
+                <Button size="sm" variant="outline" className="mt-2" disabled={runtimeLoading} onClick={() => void refreshRuntime()}>{t('security.openclaw.refresh')}</Button>
+              </div>}
+              {workspaceId && auditResource.scope === workspaceId && ['failed', 'unavailable'].includes(auditResource.phase) && <div role="status" className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="security-audit-error">
+                <p>{t(auditResource.phase === 'failed' ? 'security.error.loadFailed' : 'security.error.auditUnavailable')}</p>
+                <Button size="sm" variant="outline" className="mt-2" disabled={auditLoading} onClick={() => void refreshAudit()}>{t('security.audit.refresh')}</Button>
+              </div>}
               {displayedRuntime?.safeError && (
                 <p role="alert" className="text-sm text-destructive">
-                  {t('security.error.runtimeUnavailable')}
+                  {displayedRuntime.safeError === 'RUNTIME_MISSING' ? t('security.openclaw.missing') : t('security.error.runtimeUnavailable')}
+                  
                 </p>
               )}
               {displayedSnapshot?.safeError && (
@@ -423,29 +381,29 @@ export default function SecuritySettingsPage() {
 
               <div className="flex flex-wrap gap-2" aria-label={t('security.section.controls')}>
                 {(!runtimeState || runtimeState === 'unavailable' || runtimeState === 'unsupported') && (
-                  <Button size="sm" disabled={isBusy || !workspaceId || !apiAvailable} onClick={() => setPendingAction({ kind: 'install' })}>
+                  <Button size="sm" disabled={isBusy || !workspaceId || !available(RPC_CHANNELS.openclawRuntime.INSTALL, window.electronAPI?.openclawRuntime?.install)} onClick={() => setPendingAction({ kind: 'install' })}>
                     {t('security.action.install')}
                   </Button>
                 )}
                 {canProvision && (
-                  <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !apiAvailable} onClick={() => setPendingAction({ kind: 'provision' })}>
+                  <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !available(RPC_CHANNELS.openclawRuntime.PROVISION, window.electronAPI?.openclawRuntime?.provision)} onClick={() => setPendingAction({ kind: 'provision' })}>
                     {t('security.action.provision')}
                   </Button>
                 )}
                 {canStart && (
-                  <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !apiAvailable} onClick={() => setPendingAction({ kind: 'start' })}>
+                  <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !available(RPC_CHANNELS.openclawRuntime.START, window.electronAPI?.openclawRuntime?.start)} onClick={() => setPendingAction({ kind: 'start' })}>
                     {t('security.action.start')}
                   </Button>
                 )}
                 {canStop && (
-                  <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !apiAvailable} onClick={() => setPendingAction({ kind: 'stop' })}>
+                  <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !available(RPC_CHANNELS.openclawRuntime.STOP, window.electronAPI?.openclawRuntime?.stop)} onClick={() => setPendingAction({ kind: 'stop' })}>
                     {t('security.action.stop')}
                   </Button>
                 )}
-                <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !apiAvailable} onClick={() => setPendingAction({ kind: 'audit', mode: 'standard' })}>
+                <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !available(RPC_CHANNELS.securityAudit.RUN, window.electronAPI?.securityAudit?.run)} onClick={() => setPendingAction({ kind: 'audit', mode: 'standard' })}>
                   {t('security.action.audit')}
                 </Button>
-                <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !apiAvailable} onClick={() => setPendingAction({ kind: 'audit', mode: 'deep' })}>
+                <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !available(RPC_CHANNELS.securityAudit.RUN, window.electronAPI?.securityAudit?.run)} onClick={() => setPendingAction({ kind: 'audit', mode: 'deep' })}>
                   {t('security.action.deepAudit')}
                 </Button>
               </div>
@@ -629,7 +587,7 @@ export default function SecuritySettingsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                disabled={isBusy || !apiAvailable}
+                                disabled={isBusy || !available(RPC_CHANNELS.securityAudit.ACCEPT_RISK, window.electronAPI?.securityAudit?.acceptRisk)}
                                 onClick={() => {
                                   setAcceptanceFinding(finding)
                                   setRationale('')
@@ -642,7 +600,7 @@ export default function SecuritySettingsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                disabled={isBusy || !apiAvailable}
+                                disabled={isBusy || !available(RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE, window.electronAPI?.securityAudit?.revokeRiskAcceptance)}
                                 onClick={() => setPendingAction({ kind: 'revoke', fingerprint: finding.fingerprint, checkId: finding.checkId })}
                               >
                                 {t('security.finding.revokeRisk')}

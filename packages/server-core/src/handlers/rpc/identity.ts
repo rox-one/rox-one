@@ -156,20 +156,30 @@ function broadcastChanged(server: RpcServer): void {
 export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): void {
   const configDir = () => process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
 
-  server.handle(RPC_CHANNELS.identity.GET_STATE, async (_ctx, args?: IdentityGetStateArgs) => {
+  server.handle(RPC_CHANNELS.identity.GET_STATE, async (ctx, args?: IdentityGetStateArgs) => {
     const listed = rpcIdentityListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('identity state is not live')
+    if (ctx.principal) {
+      if (!deps.nativeData || !ctx.workspaceId || (args?.workspaceId && args.workspaceId !== ctx.workspaceId)) throw new Error('Native self profile unavailable')
+      return { annotationActorId: ctx.principal.subject, profile: deps.nativeData.authority.getSelfIdentityProfile(ctx.principal, ctx.workspaceId), connections: [], entitlements: [] }
+    }
     return buildAggregatedState(args?.workspaceId)
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.identity.UPDATE_PROFILE, async (_ctx, input: UpdateProfileInput = {}) => {
+  server.handle(RPC_CHANNELS.identity.UPDATE_PROFILE, async (ctx, input: UpdateProfileInput = {}) => {
     const act = rpcIdentityActResult({ source: 'native', action: 'write', nativeId: 'profile' })
     if (!isClaimableLive(act)) throw new Error('identity profile write is not live')
+    if (ctx.principal) {
+      if (!deps.nativeData || !ctx.workspaceId) throw new Error('Native self profile unavailable')
+      const profile = deps.nativeData.authority.updateSelfIdentityProfile(ctx.principal, ctx.workspaceId, input ?? {})
+      pushTyped(server, RPC_CHANNELS.identity.CHANGED, { to: 'client', clientId: ctx.clientId })
+      return { annotationActorId: ctx.principal.subject, profile, connections: [], entitlements: [] }
+    }
     const store = getIdentityStore(configDir())
     store.updateProfile(input ?? {})
     broadcastChanged(server)
     return buildAggregatedState()
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.identity.CONNECT, async (_ctx, args: IdentityConnectArgs) => {
     const act = rpcIdentityActResult({ source: 'native', action: 'write', nativeId: args?.connectionId ?? 'connection' })

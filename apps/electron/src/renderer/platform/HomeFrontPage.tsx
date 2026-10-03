@@ -46,6 +46,7 @@ import {
   persistHomeLayout,
   removeWidget,
   resizeWidget,
+  setWidgetAppearance,
   shiftWidget,
   widgetSpan,
   widgetRowSpan,
@@ -56,6 +57,7 @@ import {
 } from './home/dashboard-layout'
 import { HOME_WIDGETS } from './home/widgets'
 import type { WidgetEditProps } from './home/widget-kit'
+import { widgetAppearanceStyle } from './home/widget-appearance'
 
 interface HomeLayoutSnapshot {
   layout: HomeDashboardLayout
@@ -143,6 +145,8 @@ function SortableWidget({
   const edit: WidgetEditProps | null = editing
     ? {
         size: placement.size,
+        appearance: placement.appearance,
+        onAppearance: (appearance) => onChange(setWidgetAppearance(layout, placement.id, appearance)),
         onResize: (size) => onChange(resizeWidget(layout, placement.id, size)),
         onRemove: () => onChange(removeWidget(layout, placement.id)),
         onShift: (delta) => onChange(shiftWidget(layout, placement.id, delta)),
@@ -156,7 +160,7 @@ function SortableWidget({
       data-home-cell={placement.id}
       data-home-size={placement.size}
       className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ gridColumn: `span ${span} / span ${span}`, gridRow: `span ${widgetRowSpan(placement.size)}`, transform: CSS.Translate.toString(transform), transition }}
+      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `span ${span} / span ${span}`, gridRow: `span ${widgetRowSpan(placement.size)}`, transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={

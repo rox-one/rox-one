@@ -68,7 +68,7 @@
     "panelWorkspace.reset": "Reset panel sizes",
     "panelWorkspace.selected": "Selected"
   },
-  "integration_main": "3d04470f9be127945dd15c582775ed1e0401ed50",
+  "integration_main": "c9b7330357fb55a5e88a223783029d2768849828",
   "preserved": [
     "Native spatial focus/input/dialog/IME fences",
     "UI001 current geometry guards and route detail/storage validation",

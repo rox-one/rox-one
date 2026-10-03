@@ -1,5 +1,5 @@
 import { classifyEvidence, collectEvidenceInput } from './acceptance.ts'
-import { ROCKS_T1_DISPLAY_NAME, ROCKS_T1_MODEL_ID } from './contracts.ts'
+import { DEEPGRAM_TRANSCRIPTION_NAME, DEEPGRAM_TRANSCRIPTION_MODEL } from './contracts.ts'
 import type { VoiceEnv } from './runtime.ts'
 import {
   DEFAULT_WAKE_PHRASE,
@@ -77,8 +77,8 @@ export function buildVoiceHealth(
     offline: info.offline,
     wakeWordArmed: wake.ok,
     audioRetention: resolveAudioRetention(prefs),
-    asrModelId: prefs.asrModelId || ROCKS_T1_MODEL_ID,
-    asrBrand: ROCKS_T1_DISPLAY_NAME,
+    asrModelId: prefs.asrModelId || DEEPGRAM_TRANSCRIPTION_MODEL,
+    asrBrand: prefs.sttEngine === 'cloud-rox' ? DEEPGRAM_TRANSCRIPTION_NAME : prefs.asrModelId,
     evidenceClass: evidence.class,
   }
 }

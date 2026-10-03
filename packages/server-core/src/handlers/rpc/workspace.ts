@@ -97,13 +97,14 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
       }
       // The authenticated window observes its own workspace metadata; host
       // roster entries and remote connection credentials never enter this projection.
-      return sessionManager.getWorkspaces().filter(workspace => workspace.id === ctx.workspaceId)
-        .map(({ id, name, rootPath, createdAt }) => ({ id, name, rootPath, createdAt }))
+      return sessionManager.getWorkspaces().filter(workspace => workspace.id === ctx.workspaceId
+        && deps.nativeData?.authority.authorize(ctx.principal!, workspace.id, 'read', workspace.rootPath))
+        .map(({ id, name, slug, createdAt, kind, orgId }) => ({ id, name, slug, rootPath: '', createdAt, kind, orgId }))
     }
     const listed = rpcWorkspaceListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     return sessionManager.getWorkspaces()
-  }, { access: 'localElectron', nativeAction: 'read' })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   // Create a workspace at a folder path (Obsidian-style: folder IS the
   // workspace). Local creation uses the durable create/bind/activate lifecycle.

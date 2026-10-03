@@ -23,7 +23,7 @@ import { existsSync } from 'fs'
 import { randomUUID } from 'node:crypto'
 import { awardXpSafe } from '@rox/shared/gamification'
 import { readFile, writeFile, mkdir } from 'fs/promises'
-import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive } from '@rox/shared/agent'
+import { type AgentEvent, setPermissionMode, hydratePreviousPermissionMode, getPermissionModeDiagnostics, type PermissionMode, unregisterSessionScopedToolCallbacks, mergeSessionScopedToolCallbacks, AbortReason, AgentBudgetLedger, type AgentBudgetSnapshot, type AuthRequest, type AuthResult, type CredentialAuthRequest, type BrowserPaneFns, generateConversationSummary, resolveKeepBackgroundTasksAlive, resolveOmpUserBranchAnchor } from '@rox/shared/agent'
 import {
   resolveSessionConnection,
   createOmpSessionBackendFromConnection as createBackendFromConnection,
@@ -337,10 +337,9 @@ export async function copyPiTurnAnchorsForBranch(
   )
 }
 
-// OMP turn anchors: craft message id → OMP transcript entry id (8-hex,
-// see docs/omp-rpc-notes.md §Branching). Same sidecar mechanics as the Pi
-// anchors; the anchor is the id of the ASSISTANT message entry — the child
-// OmpAgent forks a private parent copy at this exact assistant entry.
+// OMP message anchors include both native user and assistant entries; the child
+// forks a private parent copy at the exact selected entry. Legacy sessions
+// reconstruct only the selected stored ROX prefix.
 const OMP_TURN_ANCHORS_VERSION = 1
 const OMP_TURN_ANCHORS_FILE = 'omp-turn-anchors.json'
 
@@ -3550,10 +3549,21 @@ export class SessionManager implements ISessionManager {
             }
           }
         } else if (sourceBackendContext.provider === 'omp') {
-          // Native assistant anchors support exact fork; legacy sessions without
-          // one reconstruct the selected ROX prefix in the child.
+          // Exact native user/assistant anchors fork a private child copy;
+          // legacy sessions reconstruct only the selected persisted prefix.
           if (branchFromSessionPath) {
             branchFromSdkTurnId = await getOmpTurnAnchor(branchFromSessionPath, options.branchFromMessageId)
+            if (!branchFromSdkTurnId && branchMessage?.type === 'user') {
+              const index = await loadOmpTurnAnchors(branchFromSessionPath)
+              branchFromSdkTurnId = resolveOmpUserBranchAnchor({
+                sessionPath: branchFromSessionPath,
+                sdkSessionId: branchFromSdkSessionId,
+                messages: sourceSession.messages.map(storedToMessage),
+                messageId: options.branchFromMessageId,
+                anchors: index.anchors,
+              })
+              if (branchFromSdkTurnId) await saveOmpTurnAnchor(branchFromSessionPath, options.branchFromMessageId, branchFromSdkTurnId)
+            }
             if (!branchFromSdkTurnId) {
               sessionLog.warn('OMP branch anchor missing; reconstructing selected persisted history', {
                 workspaceId,
@@ -7840,6 +7850,12 @@ export class SessionManager implements ISessionManager {
    * Used by the Tasks Conductor; empty until something subscribes, so zero overhead otherwise.
    */
   private sessionCompletionListeners = new Set<(evt: SessionCompletionEvent) => void>()
+  private legacyCompletionXpPolicy: ((evt: SessionCompletionEvent) => boolean) | null = null
+
+  setLegacyCompletionXpPolicy(policy: (evt: SessionCompletionEvent) => boolean): () => void {
+    this.legacyCompletionXpPolicy = policy
+    return () => { if (this.legacyCompletionXpPolicy === policy) this.legacyCompletionXpPolicy = null }
+  }
 
   /**
    * Subscribe to in-process session completion (Tasks Conductor seam).
@@ -7854,7 +7870,9 @@ export class SessionManager implements ISessionManager {
 
   private emitSessionComplete(evt: SessionCompletionEvent): void {
     // Best-effort profile XP — never block completion fan-out.
-    awardXpSafe('session_completed')
+    try {
+      if (evt.reason === 'complete' && (!this.legacyCompletionXpPolicy || this.legacyCompletionXpPolicy(evt))) awardXpSafe('session_completed')
+    } catch { /* Failed authority checks cannot credit the host or block completion delivery. */ }
     if (this.sessionCompletionListeners.size === 0) return
     for (const listener of this.sessionCompletionListeners) {
       try {

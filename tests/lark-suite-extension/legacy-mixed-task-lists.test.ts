@@ -10,6 +10,8 @@ import { DOMParser as XMLDOMParser, XMLSerializer } from '@xmldom/xmldom'
 import { is, selectAll, type Options as SelectorOptions } from 'css-select'
 import { Markdown } from 'tiptap-markdown'
 import { LegacyMixedTaskLists, normalizeLegacyMixedTaskLists } from '../../packages/ui/src/components/markdown/legacy-mixed-task-lists'
+import { RoxColumnsBlock, RoxColumnBlock } from '../../packages/ui/src/components/markdown/extensions/ColumnsBlock'
+import { RoxBlockCallout, PortableCalloutBlockquote, collectRoxBlockTargets, toggleRoxBlockAt } from '../../packages/ui/src/components/markdown/extensions/rox-block-syntax'
 
 // Existing transitive XML DOM + CSS selector dependencies provide a test-only
 // browser surface. Run the installed MarkdownParser and ProseMirror DOMParser,
@@ -59,6 +61,54 @@ Object.defineProperties(prototype, {
   } },
   innerHTML: { get(this: Element) { return childNodes(this).map(node => xmlSerializer.serializeToString(node)).join('') } },
 })
+
+describe('recovered presentation blocks in the actual legacy Markdown libraries', () => {
+  const portable = 'Intro\n\n:::rox-columns {widths="60% 40%"}\n\n:::rox-column\n\nLeft **bold**\n\n:::\n\n:::rox-column\n\n> [!spoiler]- Private\n> Body text\n\n:::\n\n:::\n\nOutro'
+  test('parse, edit, serialize and reopen keep columns, widths, text and portable callout markers', () => {
+    const library = fixture(true, [RoxColumnsBlock, RoxColumnBlock, RoxBlockCallout, PortableCalloutBlockquote])
+    const doc = library.parse(portable)
+    expect(doc.child(1).type.name).toBe('roxColumns')
+    expect(doc.child(1).childCount).toBe(2)
+    expect(doc.child(1).attrs.widths).toBe('60% 40%')
+    expect(collectRoxBlockTargets(doc)).toHaveLength(1)
+    const state = EditorState.create({ schema: library.schema, doc })
+    let editPos = 0
+    doc.descendants((node, pos) => { if (node.isText && node.text?.startsWith('Left')) editPos = pos + 4 })
+    expect(editPos).toBeGreaterThan(0)
+    const edited = state.apply(state.tr.insertText(' updated', editPos)).doc
+    const exported = library.serialize(edited)
+    expect(exported).toContain(':::rox-columns {widths="60% 40%"}')
+    expect(exported).toContain('[!spoiler]- Private')
+    expect(exported).toContain('Body text')
+    const reopened = library.parse(exported)
+    expect(reopened.toJSON()).toEqual(edited.toJSON())
+  })
+  test('old slash-menu column aliases remain readable and code fences remain literal', () => {
+    const library = fixture(true, [RoxColumnsBlock, RoxColumnBlock])
+    const old = ':::columns 3\n:::column\nA\n:::\n:::column\nB\n:::\n:::column\nC\n:::\n:::\n'
+    const doc = library.parse(old)
+    expect(doc.firstChild?.type.name).toBe('roxColumns')
+    expect(doc.firstChild?.childCount).toBe(3)
+    const code = library.parse('```text\n:::rox-columns\n:::rox-column\n```')
+    expect(code.textContent).toContain(':::rox-columns')
+    expect(code.toJSON().content?.some(node => node.type === 'roxColumns')).toBe(false)
+  })
+  test('read-only callout interaction cannot change canonical Markdown', () => {
+    const library = fixture(true, [RoxBlockCallout, PortableCalloutBlockquote])
+    const doc = library.parse('> [!details]- Title\n> Body')
+    const target = collectRoxBlockTargets(doc)[0]!
+    let dispatched = false
+    toggleRoxBlockAt({ editable: false, dispatch: () => { dispatched = true } } as never, target)
+    expect(dispatched).toBe(false)
+    expect(library.serialize(doc)).toContain('[!details]- Title')
+  })
+  test('styled marker-like quotes remain ordinary quotes without losing marks', () => {
+    const library = fixture(true, [RoxBlockCallout, PortableCalloutBlockquote])
+    const doc = library.parse('> **[!details]- Title**\n>\n> Body')
+    expect(collectRoxBlockTargets(doc)).toHaveLength(0)
+    expect(library.parse(library.serialize(doc)).toJSON()).toEqual(doc.toJSON())
+  })
+})
 Object.assign(prototype, {
   matches(this: Element, selector: string) { return is(this, selector, selectorOptions) },
   closest(this: Element, selector: string): Element | null {
@@ -98,10 +148,10 @@ function htmlBody(html: string): HTMLElement {
   return new XMLDOMParser().parseFromString(`<body>${html}</body>`, 'text/html').documentElement as unknown as HTMLElement
 }
 
-function fixture(fixed = true) {
+function fixture(fixed = true, additions: Extensions = []) {
   const base: Extensions = [
-    StarterKit.configure({ codeBlock: false }), TaskList, TaskItem.configure({ nested: true }),
-    ...(fixed ? [LegacyMixedTaskLists] : []), Markdown.configure({ html: false }),
+    StarterKit.configure({ codeBlock: false, ...(additions.some(extension => extension.name === 'blockquote') ? { blockquote: false as const } : {}) }), TaskList, TaskItem.configure({ nested: true }),
+    ...(fixed ? [LegacyMixedTaskLists] : []), ...additions, Markdown.configure({ html: false }),
   ]
   const extensions = resolveExtensions(base)
   const schema = getSchema(base)
