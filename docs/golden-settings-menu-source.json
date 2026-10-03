@@ -1,7 +1,7 @@
 {
   "source_sha": "5def9ffd36dc160fdc7c908784e0ef97ba6a732e",
   "source_pr": 584,
-  "integration_main": "2b18a2562d773c3d6e5103b2e020243d8e3a2d75",
+  "integration_main": "2f03faa5dcc075d4acbd364dd7bdb3ba14993596",
   "source_files": [
     {
       "path": "apps/electron/src/renderer/components/settings/settings-menu-navigation.ts",
