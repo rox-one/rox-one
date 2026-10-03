@@ -786,6 +786,11 @@ Owner: pr_scout; parent integration lead reviews/merges. Preserve source #1436 @
 Native default paths use OS-specific locations without creating app-data folders. Migrate only the exact Windows obsolete default identity/path when the original is absent and replacement is a verified readable directory; preserve disabled state, creation identity and user-authored guide. Existing files are bounded regular single-link descriptors admitted inside the canonical workspace sources directory, with no-follow/nonblocking open, descriptor/path identity and content recheck before same-descriptor write. Linked/replaced/changed/malformed/oversized files are refused; only the exact original guide is eligible after successful config migration. Fresh defaults use private exclusive creation and preserve existing guides. This optimistic bounded migration does not claim crash-atomic config/guide transactions or exclusion of arbitrary writers after the final content check. Pure OS mapping and actual POSIX temporary-file adverse tests complement retained native Windows tests, which require a Windows host for acceptance.
 
 
+### Golden task date validation recovery — 2026-10-03
+
+Recover the strict local calendar-day check from preserved Golden source5def9ffd into the current Tasks schedule form, through its existing parseDateExpression port. ISO dates must round-trip the exact year/month/day; impossible dates return no schedule change or native write. Valid leap days retain local midnight. Current native task actor/workspace custody, CAS/ACK/readback, import/background barriers and Product Learning producers remain canonical. Owner: recent_features; dependency: current Tasks1456 and runtime main; no legacy CatalogPanel or alternate store.
+
+
 ### Golden per-task form draft recovery — 2026-10-04
 
 Recover source5def9ffd per-task unsubmitted link/tag input through the existing modern TasksPage → TaskDetail consumer. Drafts remain ephemeral input only; canonical notes/task mutations, native actor/workspace CAS/ACK/readback, background import barriers and Product signals keep their owners. Input belongs to its captured caller generation and panel/workspace lifetime; scope ABA/unmount and obsolete rendered submissions cannot revive or write it. Clear only the submitted field value; keep other task drafts and link kind.
