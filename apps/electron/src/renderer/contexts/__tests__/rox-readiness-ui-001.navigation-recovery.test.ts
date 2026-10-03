@@ -4,10 +4,10 @@ import { pathToFileURL } from 'node:url'
 import ts from 'typescript'
 import {
   parseCompoundRoute, parseRoute, parseRouteToNavigationState,
-  resolveRouteNavigationState, buildRouteFromNavigationState, preserveRouteQuery,
+  resolveRouteNavigationState, buildRouteFromNavigationState,
 } from '../../../shared/route-parser'
 import { isSessionsNavigation, getNavigationStateKey, parseNavigationStateKey } from '../../../shared/types'
-import { normalizePanelRouteForReconcile } from '../navigation-reconcile'
+import { preserveRouteQuery, normalizePanelRouteForReconcile } from '../navigation-reconcile'
 import { rendererEffect as productionRendererEffect, deferred, settle } from '../../components/app-shell/__tests__/rox-readiness-ui-001.effect-harness'
 
 import { decodePanelEntries, encodePanelEntries } from '../../lib/panel-url'
@@ -20,7 +20,7 @@ const file = ts.createSourceFile('NavigationContext.tsx', source, ts.ScriptTarge
 const callbacks = new Map<string, string>()
 
 // Supply the merged production lifecycle/codec boundaries without changing any callback body.
-function mergedBindings(bindings: Record<string, any>) {
+function mergedBindings(bindings: Record<string, any>): Record<string, any> {
   const owner = bindings.pendingNavigationRef?.current?.owner ?? { active: true, revision: 0 }
   return { navigationOwnerRef: { current: owner }, decodePanelEntries, encodePanelEntries,
     parseRouteToNavigationStateOrUnavailable: resolveRouteNavigationState,

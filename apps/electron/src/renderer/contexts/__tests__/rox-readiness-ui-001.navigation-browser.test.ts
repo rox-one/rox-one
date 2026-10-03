@@ -194,7 +194,7 @@ describe.skipIf(!enabled)('UI-001 mounted NavigationProvider raw URL/readiness/h
     await page.goto(base+'/?ws=a&route=notes%2Fnote%2Fa');await routeIs('notes/note/a')
     for (const mode of ['missing','reject']) {
       await page.evaluate(mode=>{(window as any).ui001nav.switchMode(mode);(window as any).ui001nav.pop('?ws=gone&route=notes%2Fnote%2Fforeign')},mode)
-      await page.waitForFunction(()=>JSON.parse(document.querySelector('output').textContent).nav.navigator==='unavailable')
+      await page.waitForFunction(()=>JSON.parse(document.querySelector('output')!.textContent!).nav.navigator==='unavailable')
       expect(new URL(page.url()).searchParams.get('ws')).toBe('gone')
       expect((await snapshot()).ws).toBe('ws-a')
       expect((await snapshot()).nav.navigator).toBe('unavailable')
