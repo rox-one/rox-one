@@ -30,11 +30,11 @@
  */
 
 import { readBoundedStable } from "../lib/cso/bounded-file";
-import { existsSync, statSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, renameSync, realpathSync } from "fs";
+import { existsSync, statSync, mkdirSync, writeFileSync, readFileSync, unlinkSync, renameSync, realpathSync, lstatSync, rmdirSync } from "fs";
 import { join, dirname } from "path";
 import { execSync, spawnSync } from "child_process";
 import { homedir, hostname } from "os";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 
 import "../lib/conductor-env-shim";
 import { detectEngineTier, withErrorContext, canonicalizeRemote } from "../lib/gstack-memory-helpers";
@@ -793,86 +793,73 @@ function constrainSourceId(prefix: string, raw: string): string {
 interface LockInfo {
   pid: number;
   started_at: string;
+  generation?: string;
+}
+
+const ownedMarkers = new Map<string, LockInfo>();
+
+/** Serialize compliant acquisition, stale takeover and release. A crashed mutex
+ * remains fail-closed rather than deleting a potentially live writer's guard. */
+function mutateMarker(path: string, operation: () => boolean): boolean {
+  const mutex = path + ".mutation-lock";
+  try { mkdirSync(mutex, { mode: 0o700 }); } catch { return false; }
+  try { return operation(); }
+  finally { rmdirSync(mutex); }
+}
+
+function acquireMarker(path: string, staleAfterMs: number): boolean {
+  mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+  return mutateMarker(path, () => {
+    if (existsSync(path)) {
+      try {
+        const existing = JSON.parse(readBoundedStable(path, 4096, "Sync marker").toString("utf8")) as LockInfo;
+        if (!Number.isSafeInteger(existing.pid) || existing.pid <= 0) return false;
+        if (Date.now() - lstatSync(path).mtimeMs <= staleAfterMs) return false;
+        // Age alone must not steal a marker from a slow but live operation.
+        try { process.kill(existing.pid, 0); return false; }
+        catch (error) { if ((error as NodeJS.ErrnoException).code !== "ESRCH") return false; }
+        unlinkSync(path);
+      } catch { return false; }
+    }
+    const info: LockInfo = { pid: process.pid, started_at: new Date().toISOString(), generation: randomUUID() };
+    try {
+      writeFileSync(path, JSON.stringify(info), { encoding: "utf-8", flag: "wx", mode: 0o600 });
+      ownedMarkers.set(path, info);
+      return true;
+    } catch { return false; }
+  });
+}
+
+function releaseMarker(path: string): void {
+  const owned = ownedMarkers.get(path);
+  if (!owned) return;
+  try {
+    mutateMarker(path, () => {
+      const current = JSON.parse(readBoundedStable(path, 4096, "Sync marker").toString("utf8")) as LockInfo;
+      if (current.pid === owned.pid && current.started_at === owned.started_at && current.generation === owned.generation) {
+        unlinkSync(path);
+      }
+      ownedMarkers.delete(path);
+      return true;
+    });
+  } catch { /* Changed, linked or busy: preserve the current marker. */ }
 }
 
 function acquireLock(): boolean {
-  mkdirSync(GSTACK_HOME, { recursive: true });
-  if (existsSync(LOCK_PATH)) {
-    // Check if stale.
-    try {
-      const stat = statSync(LOCK_PATH);
-      const ageMs = Date.now() - stat.mtimeMs;
-      if (ageMs > STALE_LOCK_MS) {
-        // Stale; take over.
-        unlinkSync(LOCK_PATH);
-      } else {
-        return false;
-      }
-    } catch {
-      // Cannot stat; bail conservatively.
-      return false;
-    }
-  }
-  const info: LockInfo = { pid: process.pid, started_at: new Date().toISOString() };
-  try {
-    writeFileSync(LOCK_PATH, JSON.stringify(info), { encoding: "utf-8", flag: "wx" });
-    return true;
-  } catch {
-    return false;
-  }
+  return acquireMarker(LOCK_PATH, STALE_LOCK_MS);
 }
 
 function releaseLock(): void {
-  try {
-    const raw = readBoundedStable(LOCK_PATH, 4096, "Sync lock").toString("utf8");
-    const info = JSON.parse(raw) as LockInfo;
-    if (info.pid === process.pid) {
-      unlinkSync(LOCK_PATH);
-    }
-  } catch {
-    // Best-effort cleanup.
-  }
+  releaseMarker(LOCK_PATH);
 }
 
-/**
- * Acquire the dream marker (`~/.gstack/.dream-in-progress`). Returns false when
- * a FRESH marker already exists (another worktree is mid-dream) — the caller
- * then SKIPs rather than launching a duplicate ~35-min global job. A stale
- * marker (older than DREAM_MARKER_STALE_MS, i.e. a crashed run) is taken over.
- * Mirrors acquireLock but with the dream TTL and its own path.
- */
+/** Claim the brain-global dream marker under the same mutation/ownership fence. */
 export function acquireDreamMarker(): boolean {
-  const path = dreamMarkerPath();
-  mkdirSync(dirname(path), { recursive: true });
-  if (existsSync(path)) {
-    try {
-      const stat = statSync(path);
-      if (Date.now() - stat.mtimeMs > DREAM_MARKER_STALE_MS) {
-        unlinkSync(path);
-      } else {
-        return false;
-      }
-    } catch {
-      return false;
-    }
-  }
-  const info: LockInfo = { pid: process.pid, started_at: new Date().toISOString() };
-  try {
-    writeFileSync(path, JSON.stringify(info), { encoding: "utf-8", flag: "wx" });
-    return true;
-  } catch {
-    return false;
-  }
+  return acquireMarker(dreamMarkerPath(), DREAM_MARKER_STALE_MS);
 }
 
 export function releaseDreamMarker(): void {
-  try {
-    const path = dreamMarkerPath();
-    const info = JSON.parse(readBoundedStable(path, 4096, "Dream marker").toString("utf8")) as LockInfo;
-    if (info.pid === process.pid) unlinkSync(path);
-  } catch {
-    // Best-effort cleanup.
-  }
+  releaseMarker(dreamMarkerPath());
 }
 
 /** Read the pid recorded in a fresh dream marker, for the "already running" message. */

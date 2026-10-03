@@ -88,8 +88,25 @@ test('dream-marker cleanup refuses symlinks and leaves another owner intact', as
     expect(fs.existsSync(target)).toBe(true);
     fs.unlinkSync(marker); fs.writeFileSync(marker, JSON.stringify({ pid: process.pid + 100000 }));
     sync.releaseDreamMarker(); expect(fs.existsSync(marker)).toBe(true);
-    fs.writeFileSync(marker, JSON.stringify({ pid: process.pid }));
-    sync.releaseDreamMarker(); expect(fs.existsSync(marker)).toBe(false);
+    fs.unlinkSync(marker);
+    expect(sync.acquireDreamMarker()).toBe(true);
+    const owned = JSON.parse(fs.readFileSync(marker, 'utf8'));
+    expect(owned.generation).toMatch(/^[a-f0-9-]{36}$/);
+    if (process.platform !== 'win32') expect(fs.statSync(marker).mode & 0o777).toBe(0o600);
+    expect(sync.acquireDreamMarker()).toBe(false);
+    const replacement = JSON.stringify({ ...owned, generation: 'different-generation' });
+    fs.writeFileSync(marker, replacement);
+    sync.releaseDreamMarker(); expect(fs.readFileSync(marker, 'utf8')).toBe(replacement);
+    fs.unlinkSync(marker);
+    const mutex = marker + '.mutation-lock'; fs.mkdirSync(mutex);
+    expect(sync.acquireDreamMarker()).toBe(false); expect(fs.existsSync(marker)).toBe(false);
+    fs.rmdirSync(mutex);
+    expect(sync.acquireDreamMarker()).toBe(true);
+    fs.mkdirSync(mutex); sync.releaseDreamMarker(); expect(fs.existsSync(marker)).toBe(true);
+    fs.rmdirSync(mutex); sync.releaseDreamMarker(); expect(fs.existsSync(marker)).toBe(false);
+    const old = JSON.stringify({ pid: process.pid, started_at: '2000-01-01' });
+    fs.writeFileSync(marker, old); fs.utimesSync(marker, new Date(0), new Date(0));
+    expect(sync.acquireDreamMarker()).toBe(false); expect(fs.readFileSync(marker, 'utf8')).toBe(old);
   } finally {
     if (previous === undefined) delete process.env.GSTACK_STATE_ROOT; else process.env.GSTACK_STATE_ROOT = previous;
     fs.rmSync(dir, { recursive: true, force: true });

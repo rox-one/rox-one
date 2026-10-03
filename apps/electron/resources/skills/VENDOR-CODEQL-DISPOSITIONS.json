@@ -2728,7 +2728,7 @@
       "kind": "helper_or_other",
       "pack": "gstack",
       "status": "fixed",
-      "evidence": "Dream marker cleanup bounded stable descriptor max4KiB; tests preserve symlinks/another PID and remove owned regular marker. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
+      "evidence": "Serialize sync/dream marker acquisition, stale takeover and release with an exclusive mutation directory; reject live stale owners; publish private wx files and release only the acquired UUID generation. Regression covers links, mutation contention, live stale owners and same-PID replacement.",
       "verification": "pending fresh remote scan",
       "commit": "6cf004168",
       "remoteClosureVerified": false
@@ -2743,7 +2743,7 @@
       "kind": "helper_or_other",
       "pack": "gstack",
       "status": "fixed",
-      "evidence": "Sync lock cleanup bounded stable descriptor max4KiB; existing PID ownership preserved. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
+      "evidence": "Serialize sync/dream marker acquisition, stale takeover and release with an exclusive mutation directory; reject live stale owners; publish private wx files and release only the acquired UUID generation. Regression covers links, mutation contention, live stale owners and same-PID replacement.",
       "verification": "pending fresh remote scan",
       "commit": "6cf004168",
       "remoteClosureVerified": false

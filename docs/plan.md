@@ -551,3 +551,5 @@ The externally promoted main revision 3dd1f98b77b1428bb03fea4c324d87bace2ea6c6 i
 | Runtime validation recovery | Lead | PR1392 at `29e86bcc` | None | Three gstack suites, pinned Bun1.3.14 full validation/runtime regressions, remote checks |
 
 Workers use isolated new branches. The lead merges accepted PRs sequentially and refreshes main before each integration. No original branch is deleted or rewritten; the original release checkout contains an unrelated in-progress merge and is preserved. Review/code/CI failures are repaired within scope. External Vercel account blocking is reported separately from source validation.
+
+Runtime follow-up gate: marker contention, replacement generation, symlink refusal, live stale owner and private permissions are exercised by the actual imported vendor helper. Update every portable provenance SHA and keep remote security closure explicitly unverified until the new scan is read back.

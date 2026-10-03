@@ -403,8 +403,8 @@
         732,
         731
       ],
-      "change": "Dream marker cleanup bounded stable descriptor max4KiB; tests preserve symlinks/another PID and remove owned regular marker. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.; Sync lock cleanup bounded stable descriptor max4KiB; existing PID ownership preserved. Evidence: apps/electron/resources/skills/gstack/LOCAL-SECURITY-CONTEXT.md; 7 tests/41 assertions pass.",
-      "sha256": "f1e1dd9215565622b275228a70a70d7bbec36dba65cc821e5b200b3def43dd0e"
+      "change": "Serialize sync/dream marker acquisition, stale takeover and release with an exclusive mutation directory; reject live stale owners; publish private wx files and release only the acquired UUID generation. Regression covers links, mutation contention, live stale owners and same-PID replacement.",
+      "sha256": "82d04434df4e1d8a938463f452845a002a5fdf6889af5bc15d4b3e65db9579bf"
     },
     {
       "pack": "gstack",
