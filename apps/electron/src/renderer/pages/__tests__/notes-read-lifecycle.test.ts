@@ -29,7 +29,7 @@ const pending = <T>() => {
   return { promise, resolve, reject }
 }
 function fixture() {
-  const refs = { notesListRequestRef: { current: 0 }, assetsRequestRef: { current: 0 },
+  const refs = { notesListRequestRef: { current: 0 }, assetsRequestRef: { current: 0 }, readWorkspaceGenerationRef: { current: 0 },
     readWorkspaceRef: { current: undefined as string | undefined }, readsMountedRef: { current: false } }
   const events: Array<[string, unknown]> = []
   let commit!: () => () => void

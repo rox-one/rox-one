@@ -767,8 +767,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setTagDraft(note.tags.join(', '))
     } catch (error) {
       if (!isCurrent()) return
-      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code: capabilityErrorCode(error) })
-      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
+      const code = capabilityErrorCode(error)
+      setNoteOpenError({ workspaceId: activeWorkspaceId, noteId, code })
+      if (code !== 'NOT_FOUND') toast.error(code === 'DOCUMENT_AUTHORITY_CHANGED'
+        ? t('notes.content.authorityChanged')
+        : error instanceof Error ? error.message : t('notes.toast.openFailed'))
       activeNoteIdRef.current = null
       setActiveNote(null)
       contentRef.current = ''

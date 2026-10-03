@@ -15,6 +15,7 @@ import type { HandlerDeps } from '../handler-deps'
 import type { NativePrincipal } from '../../authority/native-authority.ts'
 import type { JournalEntitySnapshot, JournalReceipt } from '../../authority/native-journal.ts'
 import { registerContentHandlers, CONTENT_HANDLED_CHANNELS } from './content.ts'
+import { assertNoteReadPath, readNoteTarget } from './note-read-error.ts'
 import { markdownRevision, type MarkdownChangedEvent, type NativeMarkdownChange, type NativeFolderSnapshot } from '../../docs/markdown-commit.ts'
 
 type NativeNoteWriter = (reason: MarkdownChangedEvent['reason'], changes: NativeMarkdownChange[]) => Promise<unknown>
@@ -464,14 +465,14 @@ async function readNote(notesRoot: string, noteId: string): Promise<NoteDocument
   await ensureNotesDirs(notesRoot)
   const filePath = notePathFromId(notesRoot, noteId)
   const canonicalRoot = await realpath(notesRoot)
-  if (await realpath(filePath) !== resolve(canonicalRoot, `${assertSafeNoteId(noteId)}.md`)) throw new CodedError('AUTH_FAILED', 'Document symlink access denied')
-  const handle = await open(filePath, constants.O_RDONLY | constants.O_NOFOLLOW)
+  if (await readNoteTarget(notesRoot, filePath, () => realpath(filePath)) !== resolve(canonicalRoot, `${assertSafeNoteId(noteId)}.md`)) throw new CodedError('AUTH_FAILED', 'Document symlink access denied')
+  const handle = await readNoteTarget(notesRoot, filePath, () => open(filePath, constants.O_RDONLY | constants.O_NOFOLLOW))
   const bytes = await handle.readFile().finally(() => handle.close())
   let body: string
   try { body = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
   catch { throw new CodedError('DOCUMENT_AUTHORITY_CHANGED', 'Invalid UTF-8 source; preserve the original bytes') }
   const [summary, content, backlinks] = await Promise.all([
-    summarizeNote(notesRoot, filePath),
+    readNoteTarget(notesRoot, filePath, () => summarizeNote(notesRoot, filePath)),
     Promise.resolve(body),
     getBacklinks(notesRoot, assertSafeNoteId(noteId)),
   ])
@@ -1003,8 +1004,8 @@ async function nativeNoteDocument(
   const id = noteIdFromRelativePath(relativePath)
   const filePath = notePathFromId(notesRoot, id)
   const parsed = parseNoteContent(file.content)
-  const info = await stat(filePath)
-  assertNativeNotesFences(deps, context)
+  const info = await readNoteTarget(notesRoot, filePath, () => stat(filePath))
+    .finally(() => assertNativeNotesFences(deps, context))
   const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
     ? parsed.properties.title.trim()
     : titleFromId(id)
@@ -1049,7 +1050,9 @@ async function findNativeNote(
     const file = entity.files.find(item => item.path === relativePath)
     if (file) return { entity, file, entities }
   }
-  throw new Error('note not found in native journal')
+  await assertNoteReadPath(context.notesRoot, notePathFromId(context.notesRoot, safeId))
+  assertNativeNotesFences(deps, context)
+  throw new CodedError('NOT_FOUND', 'Note no longer exists')
 }
 
 async function commitNativeNote(
