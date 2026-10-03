@@ -29,8 +29,8 @@ function requiredFixtureValue<T>(value: T | undefined): T {
 async function connectProvisionedTestDatabase(): Promise<SQL> {
   const url = await loadProtectedWorkspaceDatabaseUrl(environmentPath)
   const parsed = new URL(url)
-  if (parsed.hostname !== '127.0.0.1' || parsed.port !== '54379' || parsed.pathname !== '/rox_compound_wp01') {
-    throw new Error('WP-01 test connection must target the explicitly provisioned loopback database')
+  if (!['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname) || parsed.pathname.length <= 1) {
+    throw new Error('WP-01 test connection must target a protected loopback database')
   }
   return new SQL(url, { max: 8 })
 }

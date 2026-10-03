@@ -34,7 +34,7 @@ const layoutEffects = provider.body.statements.filter(node => ts.isExpressionSta
   && ((ts.isIdentifier(node.expression.expression) && node.expression.expression.text === 'useLayoutEffect')
     || (ts.isPropertyAccessExpression(node.expression.expression) && node.expression.expression.name.text === 'useLayoutEffect')))
 const executable = ts.transpileModule(layoutEffects.map(node => node.getText(ast)).join('\n')
-  + '\n' + callback('finishHistoryReconcile') + '\n' + callback('handlePopState')
+  + '\n' + callback('requestWorkspaceSwitch') + '\n' + callback('finishHistoryReconcile') + '\n' + callback('handlePopState')
   + '\nreturn { handlePopState, finishHistoryReconcile };',
 { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText
 console.info(JSON.stringify({ productionSourceSha256: createHash('sha256').update(source).digest('hex'),
@@ -52,6 +52,9 @@ type Effect = { create: () => void | (() => void); deps: unknown[]; cleanup?: ()
 function fixture() {
   const refs = {
     navigationOwnerRef: { current: { active: true, revision: 0 } },
+    workspaceIdRef: { current: 'workspace-a' }, actionEpochRef: { current: 0 },
+    workspaceSwitchRequestRef: { current: 0 }, requestedWorkspaceSlugRef: { current: 'alpha' },
+    pendingNavigationRef: { current: null },
     suppressAutoSelectRef: { current: false },
     historyReconcileRevisionRef: { current: 0 }, historyMountedRef: { current: true },
     historySeqRef: { current: 0 }, isPopstateSwitchRef: { current: false },
@@ -75,7 +78,8 @@ function fixture() {
     const bindings = { ...refs, ...scope,
       useLayoutEffect: layout, React: { useLayoutEffect: layout },
       window: browser, requestAnimationFrame: (fn: () => void) => { frames.push(fn); return frames.length },
-      updateCanGoBackForward: () => {},
+      updateCanGoBackForward: () => {}, setRequestedWorkspaceSlug: () => {},
+      toast: { error: (...args: unknown[]) => { warnings.push(args) } }, t: (key: string) => key,
       onSwitchWorkspaceBySlug: (slug: string) => { const pending = deferred(); switches.push({ slug, pending }); return pending.promise },
       getSemanticHistoryKey: () => JSON.stringify([scope.workspaceSlug, focusedRoute]),
       syncUrl: (push: boolean) => {
@@ -121,7 +125,7 @@ function fixture() {
 }
 
 describe('actual popstate failed-switch history lease', () => {
-  for (const outcome of ['false', 'reject'] as const) test(`focus intent change still releases its own ${outcome} switch and restores current URL`, async () => {
+  for (const outcome of ['false', 'reject'] as const) test(`focus intent change releases its own ${outcome} switch while retaining the unknown requested URL`, async () => {
     const f = fixture(); f.pop('?ws=bravo&route=notes%2Fnote%2Fforeign')
     const lease = f.refs.historyReconcileRevisionRef.current
     f.focus('notes/note/current-focus')
@@ -131,7 +135,8 @@ describe('actual popstate failed-switch history lease', () => {
     await settle()
     expect(f.refs.isPopstateSwitchRef.current).toBe(false)
     expect(f.refs.suppressPushRef.current).toBe(false)
-    expect(f.syncs).toEqual([{ push: false, search: '?ws=alpha&route=notes%2Fnote%2Fcurrent-focus' }])
+    expect(f.syncs).toEqual([])
+    expect(f.browser.location.search).toBe('?ws=bravo&route=notes%2Fnote%2Fforeign')
   })
 
   test('remote-only action-owner rotation does not abandon the same local-workspace history lease', async () => {
@@ -143,8 +148,8 @@ describe('actual popstate failed-switch history lease', () => {
     f.switches[0]!.pending.resolve(false); await settle()
     expect(f.refs.isPopstateSwitchRef.current).toBe(false)
     expect(f.refs.suppressPushRef.current).toBe(false)
-    expect(f.syncs).toHaveLength(1)
-    expect(f.browser.location.search).toBe('?ws=alpha&route=notes%2Fnote%2Finitial')
+    expect(f.syncs).toHaveLength(0)
+    expect(f.browser.location.search).toBe('?ws=bravo&route=allSessions')
   })
 
   test('newer cross-workspace history, local-workspace ABA while not ready, and layout disposal fence old failures', async () => {
@@ -153,7 +158,8 @@ describe('actual popstate failed-switch history lease', () => {
     expect(f.refs.isPopstateSwitchRef.current).toBe(true); expect(f.refs.suppressPushRef.current).toBe(true)
     expect(f.syncs).toEqual([]); expect(f.browser.location.search).toBe('?ws=charlie&route=notes')
     f.switches[1]!.pending.resolve(false); await settle()
-    expect(f.refs.isPopstateSwitchRef.current).toBe(false); expect(f.syncs).toHaveLength(1)
+    expect(f.refs.isPopstateSwitchRef.current).toBe(false); expect(f.syncs).toHaveLength(0)
+    expect(f.browser.location.search).toBe('?ws=charlie&route=notes')
     for (const mode of ['workspace-ABA', 'layout-disposal'] as const) {
       const stale = fixture(); stale.pop('?ws=bravo&route=allSessions')
       if (mode === 'workspace-ABA') {

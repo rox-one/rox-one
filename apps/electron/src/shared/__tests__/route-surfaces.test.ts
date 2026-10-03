@@ -7,6 +7,7 @@ import {
   parseRouteToNavigationState,
   buildRouteFromNavigationState,
   degradeSurfaceNavigationState,
+  resolveRouteNavigationState,
 } from '../route-parser'
 import type { NavigationState } from '../types'
 
@@ -128,17 +129,17 @@ describe('route-parser: unified shell surfaces', () => {
   // ------------------------------------------------------------------
   // Degradation paths (until W2/W5 hosts exist)
   // ------------------------------------------------------------------
-  it('degrades knowledge route with unknown ref kind to sessions/allSessions', () => {
-    const state = parseRouteToNavigationState('knowledge/not-a-kind/doc-1')!
-    expect(state.navigator).toBe('sessions')
-    expect(state.navigator === 'sessions' && state.details).toBeNull()
-    expect(buildRouteFromNavigationState(state)).toBe('allSessions')
+  it('keeps an unknown knowledge kind unavailable at its original address', () => {
+    const route = 'knowledge/not-a-kind/doc-1'
+    expect(parseRouteToNavigationState(route)).toBeNull()
+    expect(resolveRouteNavigationState(route)).toEqual({ navigator: 'unavailable', route, details: null })
+    expect(buildRouteFromNavigationState(resolveRouteNavigationState(route))).toBe(route)
   })
 
-  it('degrades knowledge route missing its id to sessions/allSessions', () => {
-    const state = parseRouteToNavigationState('knowledge/document')!
-    expect(state.navigator).toBe('sessions')
-    expect(buildRouteFromNavigationState(state)).toBe('allSessions')
+  it('keeps a missing knowledge id unavailable without selecting a session', () => {
+    const route = 'knowledge/document'
+    expect(parseRouteToNavigationState(route)).toBeNull()
+    expect(buildRouteFromNavigationState(resolveRouteNavigationState(route))).toBe(route)
   })
 
   it('keeps bare surface roots as navigator-only states that rebuild exactly', () => {
@@ -150,9 +151,9 @@ describe('route-parser: unified shell surfaces', () => {
     }
   })
 
-  it('degrades legacy parseRoute() of a surface route to the allSessions view', () => {
+  it('retains the surface identity in parseRoute()', () => {
     const parsed = parseRoute(routes.view.siyuan({ kind: 'document', id: 'doc-1' }))
-    expect(parsed).toEqual({ type: 'view', name: 'allSessions', params: {} })
+    expect(parsed).toEqual({ type: 'view', name: 'knowledge', id: 'doc-1', params: { kind: 'document', detailType: 'knowledge' } })
   })
 
   it('maps surface states to nearest existing views via degradeSurfaceNavigationState', () => {
