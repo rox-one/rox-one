@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test'
-import { mkdtempSync, rmSync, readdirSync } from 'node:fs'
+import { mkdtempSync, rmSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { nativeFsyncFixture, projectNativeVaultReceipt, safeVaultErrorCode } from './pocket-vault-diagnostics'
+import { nativeFsyncFixture, projectNativeVaultReceipt, safeVaultErrorCode, windowsLocalStateKeyFingerprint } from './pocket-vault-diagnostics'
 
 test('native fixture records actual descriptor flush outcomes and removes fixture data', () => {
   const root = mkdtempSync(join(tmpdir(), 'pocket-fsync-'))
@@ -37,4 +37,23 @@ test('success proof requires matching native platform and completed OS encryptio
     { fsync: [{ access: 'writable', opened: true, flushed: true, code: 'EIO' }] },
   ]) expect(projectNativeVaultReceipt({ ...good, ...patch }, 'write', 'win32')).toBeNull()
   expect(projectNativeVaultReceipt({ ...good, phase: 'read' }, 'read', 'win32')?.passed).toBe(true)
+})
+test('Windows Local State fingerprint detects missing or replaced wrapped keys without exposing key bytes', () => {
+  const root = mkdtempSync(join(tmpdir(), 'pocket-local-state-'))
+  try {
+    const file = join(root, 'Local State')
+    const secret = 'synthetic-wrapped-key-canary'
+    expect(windowsLocalStateKeyFingerprint(root)).toBeNull()
+    writeFileSync(file, JSON.stringify({ os_crypt: { encrypted_key: secret } }))
+    const first = windowsLocalStateKeyFingerprint(root)
+    expect(first).toMatch(/^[a-f0-9]{64}$/)
+    expect(first).not.toContain(secret)
+    expect(windowsLocalStateKeyFingerprint(root)).toBe(first)
+    writeFileSync(file, JSON.stringify({ os_crypt: { encrypted_key: 'different-synthetic-key' } }))
+    expect(windowsLocalStateKeyFingerprint(root)).not.toBe(first)
+    for (const value of ['{invalid', '{}', JSON.stringify({ os_crypt: { encrypted_key: '' } }), JSON.stringify({ os_crypt: { encrypted_key: 42 } }), ' '.repeat(1_000_001)]) {
+      writeFileSync(file, value)
+      expect(windowsLocalStateKeyFingerprint(root)).toBeNull()
+    }
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })

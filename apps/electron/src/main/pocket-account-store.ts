@@ -17,12 +17,15 @@ export function createPocketAccountStore(options: { directory: string; safeStora
   }
   const read = (id: string): any => {
     ready(); let fd: number | undefined
+    let stage: 'open' | 'inspect' | 'read' | 'decrypt' | 'parse' = 'open'
     try {
       fd = openSync(join(options.directory, `${id}.enc`), constants.O_RDONLY | constants.O_NOFOLLOW | (constants.O_NONBLOCK ?? 0))
+      stage = 'inspect'
       const info = fstatSync(fd)
       if (!info.isFile() || info.size > 256_000) throw new Error('invalid secure store')
       // Reads stay bounded to the captured regular-file descriptor. Opening a
       // FIFO must never block account state or logout on the main process.
+      stage = 'read'
       const sealed = Buffer.alloc(info.size + 1)
       let length = 0
       while (length < sealed.length) {
@@ -33,11 +36,17 @@ export function createPocketAccountStore(options: { directory: string; safeStora
       const after = fstatSync(fd)
       if (length !== info.size || after.dev !== info.dev || after.ino !== info.ino
         || after.size !== info.size || after.mtimeMs !== info.mtimeMs) throw new Error('changed secure store')
-      try { return JSON.parse(storage.decryptString(sealed.subarray(0, length))) }
+      try {
+        stage = 'decrypt'
+        const plaintext = storage.decryptString(sealed.subarray(0, length))
+        stage = 'parse'
+        return JSON.parse(plaintext)
+      }
       finally { sealed.fill(0) }
     } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return null
-      throw new Error('ROX_SECURE_STORE_READ_FAILED')
+      if (stage === 'open' && error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return null
+      // Bounded metadata identifies the failure without leaking the OS exception or ciphertext.
+      throw Object.assign(new Error('ROX_SECURE_STORE_READ_FAILED'), { code: `secure_store_${stage}_failed` })
     } finally { if (fd !== undefined) closeSync(fd) }
   }
   const write = (id: string, value: unknown) => {

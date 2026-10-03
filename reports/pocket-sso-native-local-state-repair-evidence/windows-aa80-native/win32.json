@@ -2,11 +2,11 @@
   "receipts": [
     {
       "phase": "write",
-      "platform": "darwin",
+      "platform": "win32",
       "electron": "39.2.7",
       "encryptionAvailable": true,
       "profileIsolated": true,
-      "backend": "Keychain",
+      "backend": "DPAPI",
       "stage": "complete",
       "passed": true,
       "code": null,
@@ -14,8 +14,8 @@
         {
           "access": "readonly",
           "opened": true,
-          "flushed": true,
-          "code": null
+          "flushed": false,
+          "code": "EPERM"
         },
         {
           "access": "writable",
@@ -27,11 +27,11 @@
     },
     {
       "phase": "read",
-      "platform": "darwin",
+      "platform": "win32",
       "electron": "39.2.7",
       "encryptionAvailable": true,
       "profileIsolated": true,
-      "backend": "Keychain",
+      "backend": "DPAPI",
       "stage": "complete",
       "passed": true,
       "code": null,
@@ -39,8 +39,8 @@
         {
           "access": "readonly",
           "opened": true,
-          "flushed": true,
-          "code": null
+          "flushed": false,
+          "code": "EPERM"
         },
         {
           "access": "writable",
@@ -51,8 +51,19 @@
       ]
     }
   ],
-  "localState": [],
-  "platform": "darwin",
+  "localState": [
+    {
+      "phase": "write",
+      "encryptedKeyPresent": true,
+      "encryptedKeyStable": null
+    },
+    {
+      "phase": "read",
+      "encryptedKeyPresent": true,
+      "encryptedKeyStable": true
+    }
+  ],
+  "platform": "win32",
   "nativeStoreRestartPassed": true,
   "failure": null,
   "scope": "Actual OS encryption and store restart; no OAuth, provider or GUI acceptance."

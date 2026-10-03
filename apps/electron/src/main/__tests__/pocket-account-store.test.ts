@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
-import { mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createPocketAccountStore } from '../pocket-account-store'
@@ -39,5 +39,17 @@ describe('Pocket OS protected vault', () => {
  it('rejects a substituted vault directory', async () => {
   const f = fixture(); symlinkSync(f.root,f.directory)
   await expect(f.store.write(callerA,record)).rejects.toThrow('ROX_OS_SECURE_STORAGE_UNAVAILABLE')
+ })
+ it('reports only the failed read stage without propagating ciphertext or OS error text', async () => {
+  const f = fixture(); await f.store.write(callerA, record)
+  const broken = createPocketAccountStore({ directory: f.directory, platform: 'win32', safeStorage: { ...f.safeStorage, decryptString() { throw new Error('sensitive fixture OS failure') } } })
+  let failure: unknown
+  try { await broken.read(callerA) } catch (error) { failure = error }
+  expect(failure).toMatchObject({ message: 'ROX_SECURE_STORE_READ_FAILED', code: 'secure_store_decrypt_failed' })
+  expect(String(failure)).not.toContain('sensitive fixture')
+  const malformed = createPocketAccountStore({ directory: f.directory, platform: 'win32', safeStorage: { ...f.safeStorage, decryptString() { return 'invalid json' } } })
+  await expect(malformed.read(callerA)).rejects.toMatchObject({ code: 'secure_store_parse_failed' })
+  for (const file of readdirSync(f.directory)) writeFileSync(join(f.directory, file), Buffer.alloc(256_001))
+  await expect(f.store.read(callerA)).rejects.toMatchObject({ code: 'secure_store_inspect_failed' })
  })
 })

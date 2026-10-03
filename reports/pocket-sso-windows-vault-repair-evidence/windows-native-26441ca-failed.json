@@ -2,11 +2,10 @@
   "receipts": [
     {
       "phase": "write",
-      "platform": "darwin",
+      "platform": "win32",
       "electron": "39.2.7",
       "encryptionAvailable": true,
-      "profileIsolated": true,
-      "backend": "Keychain",
+      "backend": "DPAPI",
       "stage": "complete",
       "passed": true,
       "code": null,
@@ -14,8 +13,8 @@
         {
           "access": "readonly",
           "opened": true,
-          "flushed": true,
-          "code": null
+          "flushed": false,
+          "code": "EPERM"
         },
         {
           "access": "writable",
@@ -27,20 +26,19 @@
     },
     {
       "phase": "read",
-      "platform": "darwin",
+      "platform": "win32",
       "electron": "39.2.7",
       "encryptionAvailable": true,
-      "profileIsolated": true,
-      "backend": "Keychain",
-      "stage": "complete",
-      "passed": true,
-      "code": null,
+      "backend": "DPAPI",
+      "stage": "account_read",
+      "passed": false,
+      "code": "ROX_SECURE_STORE_READ_FAILED",
       "fsync": [
         {
           "access": "readonly",
           "opened": true,
-          "flushed": true,
-          "code": null
+          "flushed": false,
+          "code": "EPERM"
         },
         {
           "access": "writable",
@@ -51,9 +49,12 @@
       ]
     }
   ],
-  "localState": [],
-  "platform": "darwin",
-  "nativeStoreRestartPassed": true,
-  "failure": null,
+  "platform": "win32",
+  "nativeStoreRestartPassed": false,
+  "failure": {
+    "phase": "read",
+    "code": "ROX_SECURE_STORE_READ_FAILED",
+    "exitCode": 1
+  },
   "scope": "Actual OS encryption and store restart; no OAuth, provider or GUI acceptance."
 }
