@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   canAccessCredentials,
   deleteImportedProfile,
+  discoverBrowserProfileById,
   discoverBrowserProfiles,
   importProfile,
   isSecretStorePath,
@@ -84,6 +85,23 @@ function chromeSeed(): Record<string, string> {
 }
 
 describe('Issue 15 privileged profile import', () => {
+  it('resolves only the explicit import profile without reading opted-out bookmark probes or sibling profiles', () => {
+    const fs = memoryFs(chromeSeed())
+    const profile = discoverBrowserProfileById({ home: '/home/user', platform: 'linux', fs, profileId: `chromium:${defaultPath}` })!
+    expect(profile.path).toBe(defaultPath)
+    expect(fs.reads).toEqual([])
+    const result = importProfile({
+      profile, consent: { historyBookmarks: true, history: true, bookmarks: false, cookies: false, credentials: false, osCredentialsApproved: false },
+      authorizedScopes: { cookies: false, credentials: false }, fs,
+      indexPath: '/ws/browser-index.json', vaultPath: '/ws/cookie-vault.json', dryRun: false,
+    })
+    expect(result.counts.history).toBe(2)
+    expect(fs.reads).not.toContain(`${defaultPath}/Bookmarks`)
+    expect(fs.reads).not.toContain(`${chromeRoot}/Local State`)
+    expect(fs.reads.some(isSecretStorePath)).toBe(false)
+    expect(discoverBrowserProfileById({ home: '/home/user', platform: 'linux', fs, profileId: 'chromium:/unrelated/private-directory' })).toBeNull()
+  })
+
   it('discovers Safari/Chromium/Firefox paths without reading secret stores', () => {
     const linuxFs = memoryFs({
       ...chromeSeed(),
@@ -227,6 +245,24 @@ describe('Issue 15 privileged profile import', () => {
     expect(fs.reads.some((path) => path.endsWith('Login Data') || path.endsWith('logins.json'))).toBe(false)
   })
 
+  it.each(['history', 'bookmarks'] as const)('keeps %s opt-outs without opening their files or replacing previously imported data', (excluded) => {
+    const previous = { bookmarks: [{ kind: 'bookmark', url: 'https://saved.example', title: 'Saved' }], history: [{ kind: 'history', url: 'https://visited.example', title: 'Visited' }] }
+    const fs = memoryFs({ ...chromeSeed(), '/ws/browser-index.json': JSON.stringify(previous) })
+    const profile = discoverBrowserProfiles({ home: '/home/user', platform: 'linux', fs }).find((item) => item.path === defaultPath)!
+    fs.reads.length = 0
+    const summary = importProfile({
+      profile,
+      consent: { historyBookmarks: true, history: excluded !== 'history', bookmarks: excluded !== 'bookmarks', cookies: false, credentials: false, osCredentialsApproved: false },
+      authorizedScopes: { cookies: false, credentials: false },
+      fs, indexPath: '/ws/browser-index.json', vaultPath: '/ws/cookie-vault.json', dryRun: false,
+    })
+    expect(fs.reads).not.toContain(`${defaultPath}/${excluded === 'history' ? 'history.json' : 'Bookmarks'}`)
+    expect(summary.counts[excluded]).toBe(0)
+    const stored = JSON.parse(fs.files.get('/ws/browser-index.json')!)
+    expect(stored[excluded]).toEqual(previous[excluded])
+    expect(stored[excluded === 'history' ? 'bookmarks' : 'history']).not.toEqual(previous[excluded === 'history' ? 'bookmarks' : 'history'])
+  })
+
   it('seals cookies into an encrypted partition and never returns secret values', () => {
     const fs = memoryFs(chromeSeed())
     const profile = discoverBrowserProfiles({
@@ -257,9 +293,9 @@ describe('Issue 15 privileged profile import', () => {
       dryRun: false,
     })
     expect(summary.accessedStores).toContain('cookies')
-    expect(summary.accessedStores).toContain('credentials')
+    expect(summary.accessedStores).not.toContain('credentials')
     expect(summary.counts.cookies).toBeGreaterThan(0)
-    expect(summary.counts.credentials).toBe(1)
+    expect(summary.counts.credentials).toBe(0)
     const vault = fs.files.get('/ws/cookie-vault.json') ?? ''
     expect(vault).toContain('aes-256-gcm')
     expect(vault.includes(COOKIE_SECRET)).toBe(false)

@@ -19,7 +19,11 @@ import {
   decodeCredentialEnvelope,
   decodeCredentialEnvelopeOrLegacy,
 } from './envelope.ts';
-import type { CredentialKind } from '@craft-agent/core/platform';
+import type { CredentialKind } from '@rox/core/platform';
+import { createHash } from 'node:crypto';
+
+/** Authenticated caller key; only the server supplies this namespace. */
+export interface RoxCloudOwner { issuer: string; subject: string }
 
 export interface CredentialReadResult {
   readonly credential: StoredCredential;
@@ -794,15 +798,15 @@ export class CredentialManager {
   // Rox cloud session (identity on rox.one)
   // ============================================
 
-  private roxCloudId() {
+  private roxCloudId(owner?: RoxCloudOwner) {
     return {
       type: 'service_oauth' as const,
       workspaceId: 'global',
-      name: 'rox-cloud',
+      name: owner ? `rox-cloud-${createHash('sha256').update(JSON.stringify([owner.issuer, owner.subject])).digest('hex')}` : 'rox-cloud',
     }
   }
 
-  async getRoxCloudSession(): Promise<{
+  async getRoxCloudSession(owner?: RoxCloudOwner): Promise<{
     accessToken: string
     expiresAt?: number
     userId?: string
@@ -810,7 +814,7 @@ export class CredentialManager {
     name?: string
     authBaseUrl?: string
   } | null> {
-    const cred = await this.get(this.roxCloudId())
+    const cred = await this.get(this.roxCloudId(owner))
     if (!cred?.value) return null
     let meta: { userId?: string; email?: string; name?: string } = {}
     if (cred.idToken) {
@@ -837,11 +841,11 @@ export class CredentialManager {
     email?: string
     name?: string
     authBaseUrl?: string
-  }): Promise<void> {
-    await this.set(this.roxCloudId(), {
+  }, owner?: RoxCloudOwner): Promise<void> {
+    await this.set(this.roxCloudId(owner), {
       value: session.accessToken,
-      expiresAt: session.expiresAt,
-      clientId: session.authBaseUrl,
+      ...(session.expiresAt !== undefined ? { expiresAt: session.expiresAt } : {}),
+      ...(session.authBaseUrl !== undefined ? { clientId: session.authBaseUrl } : {}),
       idToken: JSON.stringify({
         userId: session.userId,
         email: session.email,
@@ -851,12 +855,20 @@ export class CredentialManager {
     })
   }
 
-  async clearRoxCloudSession(): Promise<void> {
-    await this.delete(this.roxCloudId())
+  async clearRoxCloudSession(owner?: RoxCloudOwner): Promise<void> {
+    await this.ensureInitialized()
+    if (!this.backends.length) throw new Error('ROX_CLOUD_CLEAR_FAILED')
+    let failed = false
+    for (const backend of this.backends) {
+      try { await backend.delete(this.roxCloudId(owner)) } catch { failed = true }
+    }
+    // A failed secure-store deletion must never be reported as a successful
+    // logout; otherwise the next process can restore that account again.
+    if (failed) throw new Error('ROX_CLOUD_CLEAR_FAILED')
   }
 
-  async hasRoxCloudSession(): Promise<boolean> {
-    const s = await this.getRoxCloudSession()
+  async hasRoxCloudSession(owner?: RoxCloudOwner): Promise<boolean> {
+    const s = await this.getRoxCloudSession(owner)
     if (!s?.accessToken) return false
     if (s.expiresAt && s.expiresAt < Date.now()) return false
     return true

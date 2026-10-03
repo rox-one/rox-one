@@ -8,8 +8,8 @@
  * (connection id, serialized refs, siyuan:// deep links), typed errors.
  */
 
-import type { SearchHit, SearchInput } from '@craft-agent/core/knowledge';
-import { KNOWLEDGE_KINDS } from '@craft-agent/core/knowledge';
+import type { SearchHit, SearchInput } from '@rox/core/knowledge';
+import { KNOWLEDGE_KINDS } from '@rox/core/knowledge';
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
 import { errorResponse, successResponse } from '../response.ts';

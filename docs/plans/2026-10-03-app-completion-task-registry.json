@@ -1,0 +1,105 @@
+{
+  "request": "User completion and regression request 2026-10-03",
+  "tasks": [
+    {
+      "id": "auth_profile_regression",
+      "goal": "Вход и создание профиля",
+      "status": "implementation_verified_live_error_details_missing",
+      "evidence": "178 backend/native tests, 53 username/routing checks, 8 Chromium profile/auth scenarios; exact reported live error was not supplied."
+    },
+    {
+      "id": "deepgram_transcription",
+      "goal": "Deepgram: транскрипция, диаризация и абзацы",
+      "status": "implementation_verified_live_access_blocked",
+      "evidence": "96 voice/meetings tests, 4 actual composer checks; types/lint pass. Actual provider blocked by environment HTTP policy; native and central bridge tasks separate."
+    },
+    {
+      "id": "native_voice_access",
+      "goal": "Пользовательская изоляция голосовых RPC и доступ нативных пользователей",
+      "status": "verified",
+      "evidence": "17 focused real-native WS checks incl timeout abort, late response discard and new capture; broad114 regressions passed before integration."
+    },
+    {
+      "id": "native_runtime_transport",
+      "goal": "Нативные сессии, события, права и запуск приложения под реальным пользователем",
+      "status": "in_progress",
+      "agent": "security_runtime"
+    },
+    {
+      "id": "meetings_central_transcription",
+      "goal": "Транскрипция встреч через центральный Deepgram без ключей на устройстве",
+      "status": "in_progress"
+    },
+    {
+      "id": "message_actions_fork",
+      "goal": "Лайки своих сообщений, слушать, форк и ветки",
+      "status": "verified",
+      "evidence": "57 initial tests/192 assertions; canonical native annotation actor integrated and 8 Chromium action scenarios + native identity/persistence checks passed; final integration pending."
+    },
+    {
+      "id": "default_service_connections",
+      "goal": "Рабочие ключи и стандартные сервисы",
+      "status": "implementation_verified_live_access_blocked",
+      "evidence": "199 synthetic runtime/source/key-provisioning tests; provider CONNECT blocked by environment HTTP policy; production host not identified."
+    },
+    {
+      "id": "memory_readability",
+      "goal": "Читаемая память",
+      "status": "verified",
+      "evidence": "14 Chromium behavior checks including edit failure/retry/persistence, keyboard, 320/680/920 widths and stale workspace responses; 7 existing tests; ESLint."
+    },
+    {
+      "id": "widget_design_presets",
+      "goal": "Пресеты, цвет, насыщенность и контраст виджетов",
+      "status": "verified",
+      "evidence": "16 tests/1062 assertions; Chromium 20 widgets × 5 presets, 180 size samples at 1440/400/320px, persistence/reset/cancel and accessibility themes."
+    },
+    {
+      "id": "skill_installation",
+      "goal": "Установка навыков и симлинки без конфликтов имён",
+      "status": "in_progress"
+    },
+    {
+      "id": "meeting_extraction_editing",
+      "goal": "Автоизвлечение решений/задач и ручное редактирование",
+      "status": "in_progress"
+    },
+    {
+      "id": "radar_workflow",
+      "goal": "Радар: настройка и результаты",
+      "status": "pending"
+    },
+    {
+      "id": "quest_gamification",
+      "goal": "Карточки, прогресс и соревновательные квесты",
+      "status": "in_progress"
+    },
+    {
+      "id": "security_runtime",
+      "goal": "Доступность рантайма в Безопасности",
+      "status": "in_progress",
+      "agent": "native_voice_access"
+    },
+    {
+      "id": "inbox_focus",
+      "goal": "Входящие, переключатели и спокойное пустое состояние",
+      "status": "in_progress",
+      "agent": "meeting_extraction_editing"
+    },
+    {
+      "id": "localization_completion",
+      "goal": "Переводы новых и ранее незавершённых интерфейсов",
+      "status": "pending"
+    },
+    {
+      "id": "original_scope_acceptance",
+      "goal": "Проверка полного исходного запроса в приложении",
+      "status": "pending"
+    },
+    {
+      "id": "independent_review_completion",
+      "goal": "Независимая проверка интеграции",
+      "status": "pending"
+    }
+  ]
+}

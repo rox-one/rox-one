@@ -18,18 +18,22 @@ import { PanelHost } from './PanelHost'
 import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchAvailability } from './workbench-rollout'
 import { resolveWorkbenchChrome } from './workbench-chrome'
+import { RetainedSurface } from './RetainedSurface'
 
 export interface WorkspaceSurfaceHostProps {
   children: ReactNode
   operatorCapability: unknown
   /** Optional test/integration override; omitted reads the persisted atom. */
   userPreference?: unknown
+  /** AppShell supplies the single primary sidebar with contextual navigation. */
+  ownsPrimaryNavigation?: boolean
 }
 
 export function WorkspaceSurfaceHost({
   children,
   operatorCapability,
   userPreference,
+  ownsPrimaryNavigation = false,
 }: WorkspaceSurfaceHostProps) {
   const persistedPreference = useAtomValue(featureWorkbenchAtom)
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
@@ -58,7 +62,7 @@ export function WorkspaceSurfaceHost({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 items-stretch">
-      {chrome.showRail && <ActivityRail />}
+      {chrome.showRail && !ownsPrimaryNavigation && <ActivityRail />}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {chrome.showSurfaceTabs && <SurfaceTabs />}
         {/* min-h-0 + flex-1 so chat yields height when the bottom terminal docks. */}
@@ -66,7 +70,9 @@ export function WorkspaceSurfaceHost({
         <BottomTerminalDock />
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
-      {!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />}
+      <RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>
+        <InspectorHost />
+      </RetainedSurface>
       <PanelHost slot="inspector" />
     </div>
   )

@@ -5,7 +5,7 @@ import type {
   AuditMode,
   OpenClawRuntimeStatus,
   SecurityAuditSnapshot,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import { CHANNEL_MAP } from '../channel-map'
 
 type AnyFn = (...args: any[]) => any
@@ -105,6 +105,10 @@ type ApiToChannelMapKeys = Exclude<
   | 'getProjectAuthorityConfiguration' // metadata-only direct IPC
   | 'connectProjectAuthority' // main-owned credential exchange
   | 'disconnectProjectAuthority' // main-owned encrypted credential deletion
+  | 'getLicenseAuditIntent' // existing encrypted intent slot
+  | 'queueLicenseAudit' // main persists typed audit before delivery
+  | 'retryLicenseAudit' // current canonical scope and readback
+  | 'cancelLicenseAudit' // explicit local-only cancellation
   | 'getSharedProjectCreateIntent' // window-bound encrypted intent read
   | 'queueSharedProjectCreate' // main persists intent before remote delivery
   | 'retrySharedProjectCreate' // main revalidates the stored session and command

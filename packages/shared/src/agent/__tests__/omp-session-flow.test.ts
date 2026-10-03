@@ -6,10 +6,11 @@
  * branch-fork handshake (transcript parsing / anchor resolution).
  */
 import { afterEach, describe, expect, it } from 'bun:test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { AgentEvent } from '@craft-agent/core/types';
+import type { AgentEvent } from '@rox/core/types';
 import { OmpAgent } from '../omp-agent.ts';
+import type { LoadedSource } from '../../sources/types.ts';
 import {
   createFakeOmp,
   useFakeOmpEnv,
@@ -53,6 +54,51 @@ async function waitForRpcFrame(
 }
 
 describe('OmpAgent session flow — healthy turn', () => {
+  it('briefs OMP about integrations and refreshes source availability on every prompt', async () => {
+    const { agent, fake } = setup('healthy');
+    const source = (slug: string, needsAuth = false): LoadedSource => ({
+      config: {
+        id: `builtin-${slug}`,
+        name: slug,
+        slug,
+        enabled: true,
+        provider: slug,
+        type: 'mcp',
+        mcp: { transport: 'http', url: `https://${slug}.example/mcp`, authType: needsAuth ? 'oauth' : 'none' },
+        ...(needsAuth ? { connectionStatus: 'needs_auth' as const } : {}),
+      },
+      guide: { raw: `Read the ${slug} guide before using its tools.` },
+      folderPath: join(fake.workspaceRoot, 'sources', slug),
+      workspaceRootPath: fake.workspaceRoot,
+      workspaceId: 'test-workspace',
+    });
+    agent.setAllSources([source('deepwiki'), source('context7', true)]);
+    await agent.setSourceServers({ deepwiki: { type: 'http', url: 'https://deepwiki.example/mcp' } }, {}, ['deepwiki', 'context7']);
+
+    await chatEvents(agent, 'explain this repository', 8_000);
+
+    const argv = fake.readArgvLog().find(args => args.includes('--append-system-prompt'))!;
+    const briefing = argv[argv.indexOf('--append-system-prompt') + 1]!;
+    expect(briefing).toContain('DeepWiki: understanding public repositories');
+    expect(briefing).toContain('Superpowers and Understand Anything are skills/plugins, not MCP servers');
+
+    const firstPrompt = fake.readRpcLog().find(frame => frame.type === 'prompt')?.message as string;
+    expect(firstPrompt).toContain('Active: context7 (no tools), deepwiki');
+    expect(firstPrompt).toContain('<source_issue source="context7" status="needs_auth">');
+    expect(firstPrompt).toContain(join(fake.workspaceRoot, 'sources', 'deepwiki', 'guide.md'));
+    expect(firstPrompt).toEndWith('explain this repository');
+
+    await agent.setSourceServers({}, {}, []);
+    await chatEvents(agent, 'continue with available tools', 8_000);
+
+    const secondPrompt = fake.readRpcLog().filter(frame => frame.type === 'prompt')[1]?.message as string;
+    expect(secondPrompt).toContain('Active: none');
+    expect(secondPrompt).toContain('deepwiki (inactive)');
+    expect(secondPrompt).toContain('context7 (needs auth)');
+    expect(secondPrompt).toContain('Call only tools present in the live tool definitions');
+    expect(secondPrompt).toEndWith('continue with available tools');
+  }, 20_000);
+
   it('streams a full turn: text deltas, text_complete, usage-bearing complete', async () => {
     const { agent } = setup('healthy');
 
@@ -215,6 +261,7 @@ describe('OmpAgent branch handshake', () => {
     mkdirSync(parentOmpDir, { recursive: true });
     const parentFile = join(parentOmpDir, '2026-08-12_parent.jsonl');
     const entries = [
+      { type:'session',version:3,id:'parent-omp-session',cwd:fake.workspaceRoot },
       { type: 'message', id: 'user0001', parentId: null, message: { role: 'user' } },
       { type: 'message', id: 'asst0001', parentId: 'user0001', message: { role: 'assistant' } },
       { type: 'message', id: 'user0002', parentId: 'asst0001', message: { role: 'user' } },
@@ -224,7 +271,7 @@ describe('OmpAgent branch handshake', () => {
     return { parentSessionPath, parentFile };
   }
 
-  it('mid-history branch: switch_session to the parent transcript, then branch at the user entry after the anchor', async () => {
+  it('mid-history branch: switch to a private parent copy and fork the assistant anchor', async () => {
     const { agent, fake } = setup('healthy');
     const { parentSessionPath, parentFile } = writeParentTranscript(fake);
     (agent as any).config.session.branchFromMessageId = 'craft-msg-1';
@@ -236,10 +283,11 @@ describe('OmpAgent branch handshake', () => {
 
     const log = fake.readRpcLog();
     const switchFrame = log.find((f) => f.type === 'switch_session');
-    expect(switchFrame?.sessionPath).toBe(parentFile);
-    const branchFrame = log.find((f) => f.type === 'branch');
-    // OMP's branch cuts at the USER entry following the anchor.
-    expect(branchFrame?.entryId).toBe('user0002');
+    expect(switchFrame?.sessionPath).not.toBe(parentFile);
+    expect(String(switchFrame?.sessionPath)).toContain(join('session-test', 'omp'));
+    const branchFrame = log.find((f) => f.type === 'fork');
+    // Runtime 18.4.12 fork retains the path through the selected entry.
+    expect(branchFrame?.entryId).toBe('asst0001');
     expect(events.at(-1)?.type).toBe('complete');
   });
 
@@ -250,6 +298,7 @@ describe('OmpAgent branch handshake', () => {
     mkdirSync(parentOmpDir, { recursive: true });
     const parentFile = join(parentOmpDir, '2026-08-12_parent.jsonl');
     const entries = [
+      { type:'session',version:3,id:'parent-omp-session',cwd:fake.workspaceRoot },
       { type: 'message', id: 'user0001', parentId: null, message: { role: 'user' } },
       { type: 'message', id: 'asst0001', parentId: 'user0001', message: { role: 'assistant' } },
     ];
@@ -265,7 +314,7 @@ describe('OmpAgent branch handshake', () => {
     // Tail fork: switched to a COPY inside the child's own session dir.
     expect(String(switchFrame?.sessionPath)).toContain(join('sessions', 'session-test', 'omp'));
     expect(String(switchFrame?.sessionPath)).toContain('branched-');
-    expect(log.some((f) => f.type === 'branch')).toBe(false);
+    expect(log.find((f) => f.type === 'fork')?.entryId).toBe('asst0001');
     expect(events.at(-1)?.type).toBe('complete');
   });
 
@@ -283,6 +332,30 @@ describe('OmpAgent branch handshake', () => {
     expect(events.at(-1)?.type).toBe('complete');
     expect(agent.isProcessing()).toBe(false);
   });
+
+  it('own-message branch forks a private transcript at the selected user without editing the parent', async () => {
+    const { agent, fake } = setup('healthy');
+    const { parentSessionPath, parentFile } = writeParentTranscript(fake);
+    const parentBytes = readFileSync(parentFile, 'utf8');
+    (agent as any).config.session.branchFromMessageId = 'craft-user-2';
+    (agent as any).config.session.branchFromSessionPath = parentSessionPath;
+    (agent as any).config.session.branchFromSdkTurnId = 'user0002';
+
+    await agent.ensureBranchReady();
+    const switched = fake.readRpcLog().find(frame => frame.type === 'switch_session');
+    expect(String(switched?.sessionPath)).toContain(join('sessions', 'session-test', 'omp'));
+    // The adapter sends the inclusive native fork command after attaching a
+    // private mirror. The fake CLI records this boundary; pure branch tests
+    // separately cover the selected-user prefix and later-message exclusion.
+    expect(readFileSync(String(switched?.sessionPath), 'utf8')).toBe(parentBytes);
+    const log = fake.readRpcLog();
+    expect(log.find(frame => frame.type === 'fork')?.entryId).toBe('user0002');
+    expect(log.findIndex(frame => frame.type === 'switch_session')).toBeLessThan(log.findIndex(frame => frame.type === 'fork'));
+    expect(log.some(frame => frame.type === 'branch')).toBe(false);
+    expect(readFileSync(parentFile, 'utf8')).toBe(parentBytes);
+    const events = await chatEvents(agent, 'continue from selected user', 8_000);
+    expect(events.at(-1)?.type).toBe('complete');
+  }, 15_000);
 });
 
 describe('OmpAgent transcript parsing (pure)', () => {

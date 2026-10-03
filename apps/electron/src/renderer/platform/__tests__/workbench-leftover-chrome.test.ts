@@ -26,7 +26,7 @@ describe('workbench leftover chrome (flags stay default off)', () => {
     expect(host).toContain('inspectorVisibleAtom')
     expect(host).toContain('inspectorChromeCollapsedAtom')
     expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
-    expect(host).toContain('{chrome.showRail && <ActivityRail />}')
+    expect(host).toContain('{chrome.showRail && !ownsPrimaryNavigation && <ActivityRail />}')
     expect(host).toContain('{chrome.showSurfaceTabs && <SurfaceTabs />}')
   })
 

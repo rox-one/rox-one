@@ -1,6 +1,6 @@
 /**
  * DiscordAdapter — out-of-process adapter that spawns the
- * `@craft-agent/messaging-discord-worker` subprocess.
+ * `@rox/messaging-discord-worker` subprocess.
  *
  * Discord has an official Bot API (discord.js), but we still run it in a
  * child process, mirroring the WhatsApp adapter, so that:
@@ -8,7 +8,7 @@
  *   (b) discord.js runs under Node even when the host runtime is Bun,
  *   (c) memory isolation for the gateway WebSocket + caches.
  *
- * The worker contract is defined in @craft-agent/messaging-discord-worker.
+ * The worker contract is defined in @rox/messaging-discord-worker.
  * This adapter owns the process lifecycle + translates events to the
  * PlatformAdapter interface. Unlike WhatsApp, Discord supports message
  * editing and inline buttons, so those methods are real (not no-ops).
@@ -21,7 +21,7 @@ import {
   parseFrames,
   type WorkerCommand,
   type WorkerEvent,
-} from '@craft-agent/messaging-discord-worker'
+} from '@rox/messaging-discord-worker'
 import type {
   PlatformAdapter,
   PlatformConfig,

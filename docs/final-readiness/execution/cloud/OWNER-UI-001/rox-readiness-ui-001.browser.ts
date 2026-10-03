@@ -42,8 +42,8 @@ try {
   })
   await check('A live deletion leaves the selected source on a specific missing surface', async () => {
     await page.evaluate(() => (window as any).ui001.sources('workspace-b', []))
-    await page.locator('[data-testid="route-entity-missing"][data-route-family="source"]').waitFor({ timeout: 1000 })
-    assert.equal(await page.locator('[data-testid="route-entity-missing"]').textContent(), 'sourceInfo.notFound')
+    await page.locator('[data-testid="route-resource-missing"][data-route-resource="source"]').waitFor({ timeout: 1000 })
+    assert.equal(await page.locator('[data-testid="route-resource-missing"] p').textContent(), 'sourceInfo.notFound')
   })
   await check('Recreating a selected source recovers its detail host', async () => {
     await page.evaluate(() => (window as any).ui001.sources('workspace-b', [{ config: { slug: 'two' } }]))
@@ -57,8 +57,8 @@ try {
   await page.locator('[data-route-host="SkillInfoPage"]').waitFor()
   await check('A live deletion leaves the selected skill on a specific missing surface', async () => {
     await page.evaluate(() => (window as any).ui001.skills('workspace-a', []))
-    await page.locator('[data-testid="route-entity-missing"][data-route-family="skill"]').waitFor({ timeout: 1000 })
-    assert.equal(await page.locator('[data-testid="route-entity-missing"]').textContent(), 'skillInfo.notFound')
+    await page.locator('[data-testid="route-resource-missing"][data-route-resource="skill"]').waitFor({ timeout: 1000 })
+    assert.equal(await page.locator('[data-testid="route-resource-missing"] p').textContent(), 'skillInfo.notFound')
   })
   await check('Recreating a selected skill recovers its detail host', async () => {
     await page.evaluate(() => (window as any).ui001.skills('workspace-a', [{ slug: 'one' }]))

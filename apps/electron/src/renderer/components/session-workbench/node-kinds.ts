@@ -1,5 +1,5 @@
-import type { SessionScene } from '@craft-agent/core/mindmap'
-import { CANVAS_NODE_KINDS, type CanvasNodeKind } from '@craft-agent/shared/workflows'
+import type { SessionScene } from '@rox/core/mindmap'
+import { CANVAS_NODE_KINDS, type CanvasNodeKind } from '@rox/shared/workflows'
 
 export type SessionNodeKind = CanvasNodeKind
 

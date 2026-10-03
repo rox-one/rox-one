@@ -1,6 +1,6 @@
 import type { HandlerDeps } from './handler-deps'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { registerCoreRpcHandlers, type ServerHandlerContext } from '@craft-agent/server-core/handlers/rpc'
+import type { RpcServer } from '@rox/server-core/transport'
+import { registerCoreRpcHandlers, type ServerHandlerContext } from '@rox/server-core/handlers/rpc'
 export { registerCoreRpcHandlers }
 
 // GUI-only handlers remain local (Electron-specific imports)
@@ -11,9 +11,9 @@ import { registerSettingsGuiHandlers } from './settings'
 import { registerSiyuanHandlers } from './siyuan'
 import { registerExtensionHostHandlers } from './extension-host'
 import { registerExtensionSurfaceHandlers } from './extension-surface'
-import { setGithubUserToolHost } from '@craft-agent/shared/connections'
+import { setGithubUserToolHost } from '@rox/shared/connections'
 import { createGithubEnvImportHost, registerWorkGraphHandlers } from './workgraph'
-import type { WorkGraphKernel } from '@craft-agent/server-core/workgraph'
+import type { WorkGraphKernel } from '@rox/server-core/workgraph'
 
 export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): void {
   registerSystemGuiHandlers(server, deps)

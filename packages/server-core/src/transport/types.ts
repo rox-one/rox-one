@@ -2,7 +2,7 @@
  * Transport-layer interfaces for the WS-based RPC.
  */
 
-import type { PushTarget } from '@craft-agent/shared/protocol'
+import type { PushTarget } from '@rox/shared/protocol'
 import type { NativeAuthorityAction, NativePrincipal } from '../authority/native-authority'
 import type { AuthenticatedActor } from '../../../shared/src/workspace-domain/identity/contracts'
 
@@ -45,11 +45,19 @@ export interface RpcHandlerOptions {
   readonly access?: 'localElectron' | 'nativeOrLocalElectron' | 'authenticatedWorkspace'
   /** Native clients are denied unless a handler explicitly declares its grant. */
   readonly nativeAction?: Exclude<NativeAuthorityAction, 'manage'>
+  /** Host-selected bounded timeout for long audio operations; never accepted from request args. */
+  readonly timeoutMs?: number
   /** Trusted composition-only Resource guard after fresh identity revalidation, before response serialization. */
   readonly beforeResponse?: (context: RequestContext, arguments_: readonly unknown[], result: unknown) => Promise<void>
 }
 
 export interface RpcServer {
+  /** Host-owned background tasks are disposed with the transport. */
+  onShutdown?(dispose: () => void): () => void
+  /** Dispose request-owned resources as soon as their socket disconnects. */
+  onClientDisconnect?(listener: (clientId: string) => void): () => void
+  /** True only while the original socket, workspace and grant generation remain current. */
+  isRequestContextCurrent?(context: RequestContext, nativeAction?: Exclude<NativeAuthorityAction, 'manage'>): boolean
   handle(channel: string, handler: HandlerFn, options?: RpcHandlerOptions): void
   push(channel: string, target: PushTarget, ...args: any[]): void
   invokeClient(clientId: string, channel: string, ...args: any[]): Promise<any>

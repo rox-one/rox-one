@@ -11,8 +11,8 @@ import {
   type KeychainList,
   type LocalFileSecretProvider,
   type SshAgentList,
-} from '@craft-agent/shared/credentials'
-import type { CredentialRefId } from '@craft-agent/core/platform'
+} from '@rox/shared/credentials'
+import type { CredentialRefId } from '@rox/core/platform'
 
 import type { ConnectionRecord, WorkGraphKernel } from './index'
 

@@ -7,10 +7,10 @@ import {
   isNativeIndexPrimaryEnabled,
   isNativeJournalPrimaryEnabled,
   isNativeSidecarEnabled,
-} from '@craft-agent/shared/feature-flags'
-import { setSessionJournalShadow } from '@craft-agent/shared/sessions/journal-shadow.ts'
-import { setSessionJournalPrimary } from '@craft-agent/shared/sessions/journal-primary.ts'
-import { setHostBashPort } from '@craft-agent/session-tools-core'
+} from '@rox/shared/feature-flags'
+import { setSessionJournalShadow } from '@rox/shared/sessions/journal-shadow.ts'
+import { setSessionJournalPrimary } from '@rox/shared/sessions/journal-primary.ts'
+import { setHostBashPort } from '@rox/session-tools-core'
 import type { Logger } from '../runtime/platform.ts'
 import { connectNativeSidecar, type NativeSidecarClient } from './client.ts'
 

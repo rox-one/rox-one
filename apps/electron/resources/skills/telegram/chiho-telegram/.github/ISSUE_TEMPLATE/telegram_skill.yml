@@ -1,0 +1,65 @@
+name: Telegram Skill Request
+description: Request or propose a Telegram workflow skill for Chiho.
+title: "Skill request: "
+labels: ["telegram-skill"]
+body:
+  - type: input
+    id: skill_name
+    attributes:
+      label: Skill name
+      description: Short name for the workflow skill.
+      placeholder: telegram-lead-qualification
+    validations:
+      required: true
+  - type: textarea
+    id: user_flow
+    attributes:
+      label: User flow
+      description: What should the skill help a user do?
+      placeholder: Find recent Telegram chats that look like qualified leads and create follow-up tasks.
+    validations:
+      required: true
+  - type: textarea
+    id: trigger_examples
+    attributes:
+      label: Example prompts
+      description: Prompts or requests that should trigger this skill.
+      placeholder: |
+        Qualify my recent Telegram leads.
+        Find partner chats that need a follow-up.
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk level
+      description: Choose the highest expected risk.
+      options:
+        - low: reads Telegram and mutates CRM only
+        - medium: drafts or previews messages, exports data, or handles sensitive workflows
+        - high: sends messages, invites members, leaves groups, or bulk-mutates Telegram state
+    validations:
+      required: true
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Required capabilities
+      options:
+        - label: Read Telegram chats or search messages
+        - label: Write CRM tags, companies, summaries, or tasks
+        - label: Draft or preview Telegram messages
+        - label: Send Telegram messages
+        - label: Manage Telegram folders
+        - label: Invite members or manage groups
+        - label: Export data
+  - type: textarea
+    id: approval_policy
+    attributes:
+      label: Approval expectations
+      description: When should a human approve the workflow before it mutates state or sends anything?
+      placeholder: Always require approval before sending messages. CRM task creation can be automatic.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Extra context
+      description: Add links, edge cases, templates, or safety constraints.

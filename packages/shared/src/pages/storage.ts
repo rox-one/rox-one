@@ -29,7 +29,7 @@ import type {
   PageRefreshStatus,
   PageShareInfo,
   PageThumbnailInfo,
-} from '@craft-agent/core';
+} from '@rox/core';
 import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts';
 import { generateUniqueSlug } from '../utils/slug.ts';
 import { debug } from '../utils/debug.ts';

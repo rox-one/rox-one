@@ -10,7 +10,7 @@
  *   /2/users/by/username/:u then /2/users/:id/tweets.
  * Without a token the NotConnected adapter answers honestly.
  */
-import type { XConnectionStatus } from '@craft-agent/shared/feed'
+import type { XConnectionStatus } from '@rox/shared/feed'
 import type { FetchLike } from './fetcher'
 
 export interface XPost {

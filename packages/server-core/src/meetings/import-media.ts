@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import {
   authorizeMeetingAction,
   type MeetingGrant,
-} from '@craft-agent/shared/meeting-agents'
+} from '@rox/shared/meeting-agents'
 
 export const MAX_MEETING_IMPORT_BYTES = 80 * 1024 * 1024
 

@@ -4,7 +4,7 @@ import {
   type SessionMapPin,
   type SessionScene,
   type SessionSceneGraph,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import { deriveSessionNodeKind, type SessionNodeKind } from './node-kinds'
 import { DEFAULT_SCENE_SIZE, type NodeSize } from './map-node-size'
 

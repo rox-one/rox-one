@@ -1,0 +1,77 @@
+[
+  {
+    "path": "verification/logs/dependency-install.log.gz",
+    "uncompressedSha256": "a32b7025516bbc114bd0953cf9caa11e5f0cc9df248e347930e481a987db1969",
+    "bytes": 3039
+  },
+  {
+    "path": "verification/logs/integrated-typecheck.log.gz",
+    "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "verification/logs/typecheck-final.log.gz",
+    "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "verification/logs/renderer-build-final.log.gz",
+    "uncompressedSha256": "b46af2a5d5ffa813d74cd6555b8a9c8904f8ad09f3e985e016ed2d42976d5907",
+    "bytes": 115156
+  },
+  {
+    "path": "verification/logs/focused-final.log.gz",
+    "uncompressedSha256": "f2f13dcab466ba511ca57928cdea5f21b3a529375909d39a788a45f5fcbee902",
+    "bytes": 4943
+  },
+  {
+    "path": "verification/logs/integrated-focused.log.gz",
+    "uncompressedSha256": "3f41518acc891ba09e2be8b967389b821925dd0d53a1f14769350709f85e35a2",
+    "bytes": 7033
+  },
+  {
+    "path": "verification/logs/browser-first.log.gz",
+    "uncompressedSha256": "72b16f0e2d6b3be055c4ca78ed3e2330e6210ca12b7a16a6a8799839b0a58f34",
+    "bytes": 2858
+  },
+  {
+    "path": "verification/logs/browser-final.log.gz",
+    "uncompressedSha256": "145d6e81165495550f501e8cd76c4ca665f35142e46865b4cd4365dccf0bc59a",
+    "bytes": 2180
+  },
+  {
+    "path": "verification/logs/callbacks-first.log.gz",
+    "uncompressedSha256": "964fc4110a7ef0adaa5022bc3926c4b9508e8faff9dea6388c6c92c624b31d90",
+    "bytes": 3392
+  },
+  {
+    "path": "verification/logs/regression-final.log.gz",
+    "uncompressedSha256": "9f06509b353fced287290aba553dc2d0161bea9f33e29a9c3b2743afeabacebb",
+    "bytes": 41447
+  },
+  {
+    "path": "verification/logs/geometry-negative-control.log.gz",
+    "uncompressedSha256": "5e5245a47cbe89330b6fa522b4b31275dc4ffb4169802c2bc30a572db7b4869a",
+    "bytes": 10703
+  },
+  {
+    "path": "verification/logs/baseline-tests.log.gz",
+    "uncompressedSha256": "8adcd939ca4e72f51766418353f5cc0e268282ab63279ec5d85dd3c538a22f2a",
+    "bytes": 33925
+  },
+  {
+    "path": "verification/logs/integrated-build.log.gz",
+    "uncompressedSha256": "f9f34a63845185a5661ff90cd37eb89e39441c662caac9a8a392fe54df884d57",
+    "bytes": 115156
+  },
+  {
+    "path": "verification/logs/typecheck-first.log.gz",
+    "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  {
+    "path": "verification/logs/baseline-typecheck.log.gz",
+    "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+]

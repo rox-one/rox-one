@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isClaimableLive, normalizeRox2Result } from '@craft-agent/core/rox2'
+import { isClaimableLive, normalizeRox2Result } from '@rox/core/rox2'
 import {
   BROWSER_SURFACE_ID,
   NATIVE_RAIL_SURFACE_IDS,

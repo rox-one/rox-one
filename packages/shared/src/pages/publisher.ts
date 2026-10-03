@@ -26,7 +26,7 @@
  * published page (design §12).
  */
 
-import type { PageConfig, PageShareInfo } from '@craft-agent/core';
+import type { PageConfig, PageShareInfo } from '@rox/core';
 import { isPagesSharingEnabled } from '../feature-flags.ts';
 import { deletePage, loadPageConfig, setPageShareState } from './storage.ts';
 import { buildPageShareBundle, PageShareError } from './share-bundle.ts';

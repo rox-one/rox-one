@@ -5,10 +5,10 @@
  * knowledge / LLM connection registries. Secrets only via CredentialManager.
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { getLlmConnections } from '@craft-agent/shared/config'
-import { getIdentityStore } from '@craft-agent/core/platform/identity/store'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getCredentialManager } from '@rox/shared/credentials'
+import { getLlmConnections } from '@rox/shared/config'
+import { getIdentityStore } from '@rox/core/platform/identity/store'
 import type {
   ConnectServiceInput,
   IdentityState,
@@ -16,17 +16,17 @@ import type {
   ServiceConnectionStatus,
   ServiceProvider,
   UpdateProfileInput,
-} from '@craft-agent/core/platform/identity/types'
+} from '@rox/core/platform/identity/types'
 import { KnowledgeConnectionsStore } from '../../knowledge/connections-store'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
 import {
   isClaimableLive,
   rpcIdentityActResult,
   rpcIdentityListResult,
   rpcIdentityReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.identity.GET_STATE,
@@ -156,20 +156,30 @@ function broadcastChanged(server: RpcServer): void {
 export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): void {
   const configDir = () => process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
 
-  server.handle(RPC_CHANNELS.identity.GET_STATE, async (_ctx, args?: IdentityGetStateArgs) => {
+  server.handle(RPC_CHANNELS.identity.GET_STATE, async (ctx, args?: IdentityGetStateArgs) => {
     const listed = rpcIdentityListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) throw new Error('identity state is not live')
+    if (ctx.principal) {
+      if (!deps.nativeData || !ctx.workspaceId || (args?.workspaceId && args.workspaceId !== ctx.workspaceId)) throw new Error('Native self profile unavailable')
+      return { annotationActorId: ctx.principal.subject, profile: deps.nativeData.authority.getSelfIdentityProfile(ctx.principal, ctx.workspaceId), connections: [], entitlements: [] }
+    }
     return buildAggregatedState(args?.workspaceId)
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.identity.UPDATE_PROFILE, async (_ctx, input: UpdateProfileInput = {}) => {
+  server.handle(RPC_CHANNELS.identity.UPDATE_PROFILE, async (ctx, input: UpdateProfileInput = {}) => {
     const act = rpcIdentityActResult({ source: 'native', action: 'write', nativeId: 'profile' })
     if (!isClaimableLive(act)) throw new Error('identity profile write is not live')
+    if (ctx.principal) {
+      if (!deps.nativeData || !ctx.workspaceId) throw new Error('Native self profile unavailable')
+      const profile = deps.nativeData.authority.updateSelfIdentityProfile(ctx.principal, ctx.workspaceId, input ?? {})
+      pushTyped(server, RPC_CHANNELS.identity.CHANGED, { to: 'client', clientId: ctx.clientId })
+      return { annotationActorId: ctx.principal.subject, profile, connections: [], entitlements: [] }
+    }
     const store = getIdentityStore(configDir())
     store.updateProfile(input ?? {})
     broadcastChanged(server)
     return buildAggregatedState()
-  })
+  }, { access: 'nativeOrLocalElectron', nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.identity.CONNECT, async (_ctx, args: IdentityConnectArgs) => {
     const act = rpcIdentityActResult({ source: 'native', action: 'write', nativeId: args?.connectionId ?? 'connection' })

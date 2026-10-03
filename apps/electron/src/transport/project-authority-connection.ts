@@ -10,7 +10,9 @@ import {
   type ProjectAuthorityTarget,
 } from '../shared/project-authority'
 
-const channels: ReadonlySet<string> = new Set(Object.values(DOMAIN_PROJECT_RPC))
+import { DOMAIN_LICENSE_RPC } from '../../../../packages/shared/src/workspace-domain/licenses/contracts.ts'
+
+const channels: ReadonlySet<string> = new Set([...Object.values(DOMAIN_PROJECT_RPC), ...Object.values(DOMAIN_LICENSE_RPC)])
 export function isProjectAuthorityChannel(channel: string): boolean { return channels.has(channel) }
 export type ResolveProjectAuthority = (localWorkspaceId: string) => Promise<ProjectAuthorityTarget | null>
 
@@ -97,7 +99,7 @@ export class ProjectAuthorityConnection {
       throw new ProjectAuthorityError('WORKSPACE_MISMATCH')
     }
     let body = arguments_[1]
-    if (channel === DOMAIN_PROJECT_RPC.CREATE_SHARED && body && typeof body === 'object' && !Array.isArray(body)) {
+    if ((channel === DOMAIN_PROJECT_RPC.CREATE_SHARED || channel === DOMAIN_LICENSE_RPC.AUDIT) && body && typeof body === 'object' && !Array.isArray(body)) {
       if (!('workspaceId' in body) || body.workspaceId !== this.localWorkspaceId) throw new ProjectAuthorityError('WORKSPACE_MISMATCH')
       body = { ...body, workspaceId: target.workspaceId }
     }

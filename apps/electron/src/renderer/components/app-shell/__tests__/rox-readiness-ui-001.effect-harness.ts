@@ -1,13 +1,14 @@
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import { pathToFileURL } from 'node:url'
 
 /** Compile the production effect closure; no copy of its logic or module-wide mocks. */
-export function appShellEffect(needle: string, bindings: Record<string, unknown>) {
-  const source = readFileSync(new URL('../AppShell.tsx', import.meta.url), 'utf8')
+export function rendererEffect(path: URL, needle: string, bindings: Record<string, unknown>) {
+  const source = readFileSync(path, 'utf8')
   const file = ts.createSourceFile('AppShell.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const effects: ts.Expression[] = []
   function visit(node: ts.Node) {
-    if (ts.isCallExpression(node) && /(?:^|\.)useEffect$/.test(node.expression.getText(file))) {
+    if (ts.isCallExpression(node) && /(?:^|\.)use(?:Layout)?Effect$/.test(node.expression.getText(file))) {
       const effect = node.arguments[0]
       if (effect?.getText(file).includes(needle)) effects.push(effect)
     }
@@ -19,6 +20,13 @@ export function appShellEffect(needle: string, bindings: Record<string, unknown>
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText
   return Function(...Object.keys(bindings), javascript)(...Object.values(bindings)) as undefined | (() => void)
+}
+
+export function appShellEffect(needle: string, bindings: Record<string, unknown>) {
+  return rendererEffect(process.env.ROX_UI001_SHELL_SOURCE ? pathToFileURL(process.env.ROX_UI001_SHELL_SOURCE) : new URL('../AppShell.tsx', import.meta.url), needle, bindings)
+}
+export function mainPanelEffect(bindings: Record<string, unknown>) {
+  return rendererEffect(process.env.ROX_UI001_MAIN_SOURCE ? pathToFileURL(process.env.ROX_UI001_MAIN_SOURCE) : new URL('../MainContentPanel.tsx', import.meta.url), 'api.onSourcesChanged', bindings)
 }
 
 export function deferred<T>() {

@@ -1,12 +1,12 @@
 import { existsSync } from 'node:fs'
 import { join } from 'path'
 import { homedir } from 'os'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { createAndActivateLocalWorkspace } from '@craft-agent/shared/config'
-import { getDefaultWorkspacesDir, ensureDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
-import type { ServerStatus, ServerHealth } from '@craft-agent/core/types'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { createAndActivateLocalWorkspace } from '@rox/shared/config'
+import { getDefaultWorkspacesDir, ensureDefaultWorkspacesDir } from '@rox/shared/workspaces'
+import type { ServerStatus, ServerHealth } from '@rox/core/types'
 import { nativeSidecarHealthCheck } from '../../native/supervisor.ts'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { ServerHandlerContext } from '../../bootstrap/headless-start'
 import {
@@ -14,7 +14,7 @@ import {
   rpcServerActResult,
   rpcServerListResult,
   rpcServerReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.server.GET_WORKSPACES,
@@ -36,13 +36,20 @@ export function registerServerHandlers(
   // Workspace discovery (moved from workspace.ts — server-level, no workspace context)
   // -----------------------------------------------------------------------
 
-  server.handle(RPC_CHANNELS.server.GET_WORKSPACES, async () => {
+  server.handle(RPC_CHANNELS.server.GET_WORKSPACES, async (context) => {
     const listed = rpcServerListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return []
     const workspaces = sessionManager.getWorkspacesInfo()
+    if (context.principal) {
+      if (!context.workspaceId || !deps.nativeData?.authority.authorize(context.principal, context.workspaceId, 'read')) throw new Error('Workspace access denied')
+      const boundWorkspace = sessionManager.getWorkspaces().find(workspace => workspace.id === context.workspaceId)
+      if (!boundWorkspace || !deps.nativeData.authority.authorize(context.principal, context.workspaceId, 'read', boundWorkspace.rootPath)) throw new Error('Workspace access denied')
+      return workspaces.filter(workspace => workspace.id === context.workspaceId)
+        .map(({ id, name, slug, kind, orgId }) => ({ id, name, slug, kind, orgId }))
+    }
     deps.platform.logger.info(`[server:getWorkspaces] returning ${workspaces.length} workspaces: ${JSON.stringify(workspaces.map(w => ({ id: w.id, name: w.name })))}`)
     return workspaces
-  })
+  }, { nativeAction: 'read' })
 
   server.handle(
     RPC_CHANNELS.server.CREATE_WORKSPACE,

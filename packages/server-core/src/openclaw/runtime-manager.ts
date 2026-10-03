@@ -7,15 +7,15 @@ import {
   openClawGatewayCredentialId,
   type CredentialId,
   type StoredCredential,
-} from '@craft-agent/shared/credentials'
-import type { ManagedOpenClawLauncher } from '@craft-agent/shared/toolchain/types'
+} from '@rox/shared/credentials'
+import type { ManagedOpenClawLauncher } from '@rox/shared/toolchain/types'
 import {
   redactSecurityText,
   type OpenClawRuntimeStatus,
   type OpenClawSafeErrorCode,
   type OpenClawRuntimeSafeErrorCode,
   type RuntimeState,
-} from '@craft-agent/shared/openclaw'
+} from '@rox/shared/openclaw'
 import {
   buildHardenedOpenClawConfig,
   deriveOpenClawPortBlock,

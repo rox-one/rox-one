@@ -29,7 +29,7 @@ import type {
   PanelRegistry,
   PanelRegistryState,
   PanelSlot,
-} from '@craft-agent/core/platform'
+} from '@rox/core/platform'
 import {
   featureWorkbenchConationInspectorAtom,
   featureWorkbenchConationShellAtom,

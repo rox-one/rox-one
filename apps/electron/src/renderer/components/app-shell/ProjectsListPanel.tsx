@@ -21,7 +21,7 @@ import {
   ContextMenuTrigger,
   StyledContextMenuContent,
 } from '@/components/ui/styled-context-menu'
-import type { LoadedProject } from '@craft-agent/shared/projects/types'
+import type { LoadedProject } from '@rox/shared/projects/types'
 import { SharedProjectsSection } from '@/components/projects/SharedProjectProjection'
 
 export interface ProjectsListPanelProps {

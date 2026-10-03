@@ -3,14 +3,14 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 import { afterEach, describe, expect, it } from 'bun:test'
-import { CredentialRefRegistry, isCredentialRefId } from '@craft-agent/core/platform'
-import type { CredentialBackend } from '@craft-agent/shared/credentials'
-import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
+import { CredentialRefRegistry, isCredentialRefId } from '@rox/core/platform'
+import type { CredentialBackend } from '@rox/shared/credentials'
+import type { CredentialId, StoredCredential } from '@rox/shared/credentials'
 import {
   credentialIdToAccount,
   InProcessCredentialBroker,
   LocalFileSecretProvider,
-} from '@craft-agent/shared/credentials'
+} from '@rox/shared/credentials'
 
 import { createWorkGraphKernel } from './index'
 import { commitGithubEnvImport, previewGithubEnvImport } from './github-import.ts'

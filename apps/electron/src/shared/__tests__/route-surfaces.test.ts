@@ -126,19 +126,18 @@ describe('route-parser: unified shell surfaces', () => {
   })
 
   // ------------------------------------------------------------------
-  // Degradation paths (until W2/W5 hosts exist)
+  // Unavailable addresses must not masquerade as sessions.
   // ------------------------------------------------------------------
-  it('degrades knowledge route with unknown ref kind to sessions/allSessions', () => {
+  it('keeps a knowledge route with an unknown ref kind unavailable', () => {
     const state = parseRouteToNavigationState('knowledge/not-a-kind/doc-1')!
-    expect(state.navigator).toBe('sessions')
-    expect(state.navigator === 'sessions' && state.details).toBeNull()
-    expect(buildRouteFromNavigationState(state)).toBe('allSessions')
+    expect(state).toEqual({ navigator: 'unavailable', route: 'knowledge/not-a-kind/doc-1', reason: 'unsupported-route' })
+    expect(buildRouteFromNavigationState(state)).toBe('knowledge/not-a-kind/doc-1')
   })
 
-  it('degrades knowledge route missing its id to sessions/allSessions', () => {
+  it('keeps a knowledge route missing its id unavailable', () => {
     const state = parseRouteToNavigationState('knowledge/document')!
-    expect(state.navigator).toBe('sessions')
-    expect(buildRouteFromNavigationState(state)).toBe('allSessions')
+    expect(state).toEqual({ navigator: 'unavailable', route: 'knowledge/document', reason: 'unsupported-route' })
+    expect(buildRouteFromNavigationState(state)).toBe('knowledge/document')
   })
 
   it('keeps bare surface roots as navigator-only states that rebuild exactly', () => {
@@ -150,9 +149,9 @@ describe('route-parser: unified shell surfaces', () => {
     }
   })
 
-  it('degrades legacy parseRoute() of a surface route to the allSessions view', () => {
+  it('does not disguise a knowledge surface as a session in the compatibility parser', () => {
     const parsed = parseRoute(routes.view.siyuan({ kind: 'document', id: 'doc-1' }))
-    expect(parsed).toEqual({ type: 'view', name: 'allSessions', params: {} })
+    expect(parsed).toBeNull()
   })
 
   it('maps surface states to nearest existing views via degradeSurfaceNavigationState', () => {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { getXpReward, loadGamificationState } from '@craft-agent/shared/gamification'
+import { getXpReward, loadGamificationState } from '@rox/shared/gamification'
 import { SessionManager, type SessionCompletionEvent } from './SessionManager.ts'
 
 let root: string
@@ -54,4 +54,31 @@ it('profile storage failure cannot prevent session completion delivery', () => {
   const event: SessionCompletionEvent = { sessionId: 's1', workspaceId: 'ws1', reason: 'complete' }
   expect(() => complete(manager, event)).not.toThrow()
   expect(events).toEqual([event])
+})
+
+it('failed turns and native-owned completions never award the legacy host profile', () => {
+  const manager = new SessionManager()
+  const events: SessionCompletionEvent[] = []
+  manager.onSessionComplete(event => events.push(event))
+  const event: SessionCompletionEvent = { sessionId: 'native-session', workspaceId: 'native-workspace', reason: 'complete' }
+  for (const reason of ['error', 'interrupted', 'timeout'] as const) complete(manager, { ...event, reason })
+  expect(loadGamificationState(root).xp).toBe(0)
+  const release = manager.setLegacyCompletionXpPolicy(() => false)
+  complete(manager, event)
+  expect(loadGamificationState(root).xp).toBe(0)
+  expect(events).toHaveLength(4)
+  release()
+  complete(manager, event)
+  expect(loadGamificationState(root).xp).toBe(getXpReward('session_completed'))
+})
+
+it('a failed completion authority check cannot award host XP or stop fan-out', () => {
+  const manager = new SessionManager()
+  const events: SessionCompletionEvent[] = []
+  manager.setLegacyCompletionXpPolicy(() => { throw new Error('authority closed') })
+  manager.onSessionComplete(event => events.push(event))
+  const event: SessionCompletionEvent = { sessionId: 'native-session', workspaceId: 'native-workspace', reason: 'complete' }
+  expect(() => complete(manager, event)).not.toThrow()
+  expect(events).toEqual([event])
+  expect(loadGamificationState(root).xp).toBe(0)
 })

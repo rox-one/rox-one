@@ -50,43 +50,163 @@ import {
   knowledgeHomeViewAtom,
 } from '../../knowledge/KnowledgeHome'
 
-const SearchPage = React.lazy(() => import('@/pages/SearchPage'))
-const NotesPage = React.lazy(() => import('@/pages/NotesPage'))
-const ConnectionsPage = React.lazy(() => import('@/pages/ConnectionsPage'))
-const ExtraScreenHost = React.lazy(() => import('@/pages/extra-screens/ExtraScreenHost'))
-const TasksPage = React.lazy(() => import('@/pages/TasksPage'))
-const MeetingsPage = React.lazy(() => import('@/pages/MeetingsPage'))
-const InboxPage = React.lazy(() => import('@/pages/InboxPage'))
-const FeedPage = React.lazy(() => import('@/pages/FeedPage'))
-const KnowledgeEntityPage = React.lazy(() => import('@/pages/KnowledgeEntityPage'))
-const SkillInfoPage = React.lazy(() => import('@/pages/SkillInfoPage'))
-const SourceInfoPage = React.lazy(() => import('@/pages/SourceInfoPage'))
-const ProjectInfoPage = React.lazy(() => import('@/pages/ProjectInfoPage'))
-const BrowserPanelPage = React.lazy(() => import('@/pages/BrowserPanelPage'))
-const ExtensionSurfacePage = React.lazy(() => import('@/pages/ExtensionSurfacePage'))
-const TerminalSurfacePage = React.lazy(() => import('@/pages/TerminalSurfacePage'))
-const CloudRunSurfacePage = React.lazy(() => import('@/pages/CloudRunSurfacePage'))
-const PagesHome = React.lazy(() =>
+const RouteRecoveryContext = React.createContext<object>({})
+
+/** Cache across suspended renders; replace the promise only for a new attempt. */
+export function lazyRoutePage<Component extends React.ComponentType<any>>(loadPage: () => Promise<{ default: Component }>) {
+  const attempts = new WeakMap<object, React.LazyExoticComponent<Component>>()
+  return function LazyRoutePage(props: React.ComponentProps<Component>) {
+    const scope = React.useContext(RouteRecoveryContext)
+    let LazyPage = attempts.get(scope)
+    if (!LazyPage) {
+      LazyPage = React.lazy(loadPage)
+      attempts.set(scope, LazyPage)
+    }
+    const Page = LazyPage as React.ComponentType<React.ComponentProps<Component>>
+    return <Page {...props} />
+  }
+}
+
+class RouteErrorBoundary extends React.Component<{
+  children: React.ReactNode
+  fallback: (retry: () => void) => React.ReactNode
+}, { failed: boolean; attempt: number; scope: object }> {
+  state = { failed: false, attempt: 0, scope: {} }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  private retry = () => {
+    this.setState(({ attempt }) => ({ failed: false, attempt: attempt + 1, scope: {} }))
+  }
+
+  render() {
+    if (this.state.failed) return this.props.fallback(this.retry)
+    return (
+      <RouteRecoveryContext.Provider value={this.state.scope}>
+        <React.Fragment key={this.state.attempt}>{this.props.children}</React.Fragment>
+      </RouteRecoveryContext.Provider>
+    )
+  }
+}
+
+const SearchPage = lazyRoutePage(() => import('@/pages/SearchPage'))
+const NotesPage = lazyRoutePage(() => import('@/pages/NotesPage'))
+const ConnectionsPage = lazyRoutePage(() => import('@/pages/ConnectionsPage'))
+const ExtraScreenHost = lazyRoutePage(() => import('@/pages/extra-screens/ExtraScreenHost'))
+const TasksPage = lazyRoutePage(() => import('@/pages/TasksPage'))
+const MeetingsPage = lazyRoutePage(() => import('@/pages/MeetingsPage'))
+const InboxPage = lazyRoutePage(() => import('@/pages/InboxPage'))
+const FeedPage = lazyRoutePage(() => import('@/pages/FeedPage'))
+const KnowledgeEntityPage = lazyRoutePage(() => import('@/pages/KnowledgeEntityPage'))
+const SkillInfoPage = lazyRoutePage(() => import('@/pages/SkillInfoPage'))
+const SourceInfoPage = lazyRoutePage(() => import('@/pages/SourceInfoPage'))
+const ProjectInfoPage = lazyRoutePage(() => import('@/pages/ProjectInfoPage'))
+const BrowserPanelPage = lazyRoutePage(() => import('@/pages/BrowserPanelPage'))
+const ExtensionSurfacePage = lazyRoutePage(() => import('@/pages/ExtensionSurfacePage'))
+const TerminalSurfacePage = lazyRoutePage(() => import('@/pages/TerminalSurfacePage'))
+const CloudRunSurfacePage = lazyRoutePage(() => import('@/pages/CloudRunSurfacePage'))
+const PagesHome = lazyRoutePage(() =>
   import('../pages/PagesHome').then((m) => ({ default: m.PagesHome })),
 )
-const KanbanBoardContainer = React.lazy(() =>
+const KanbanBoardContainer = lazyRoutePage(() =>
   import('./kanban/KanbanBoardContainer').then((m) => ({ default: m.KanbanBoardContainer })),
 )
-const SessionTableHost = React.lazy(() =>
+const SessionTableHost = lazyRoutePage(() =>
   import('./session-table/SessionTableHost').then((m) => ({ default: m.SessionTableHost })),
 )
-const AutomationEditor = React.lazy(() =>
+const AutomationEditor = lazyRoutePage(() =>
   import('../automations/AutomationEditor').then((m) => ({ default: m.AutomationEditor })),
 )
-const KnowledgeDiff = React.lazy(() =>
+const KnowledgeDiff = lazyRoutePage(() =>
   import('../../knowledge/KnowledgeDiff').then((m) => ({ default: m.KnowledgeDiff })),
 )
-const KnowledgeHome = React.lazy(() =>
+const KnowledgeHome = lazyRoutePage(() =>
   import('../../knowledge/KnowledgeHome').then((m) => ({ default: m.KnowledgeHome })),
 )
-const KnowledgeProposals = React.lazy(() =>
+const KnowledgeProposals = lazyRoutePage(() =>
   import('../../knowledge/KnowledgeProposals').then((m) => ({ default: m.KnowledgeProposals })),
 )
+
+type SelectedResourceStatus = 'loading' | 'ready' | 'missing' | 'unavailable'
+
+/** Observe canonical source/skill snapshots without changing the selected URL. */
+function useSelectedResourceAvailability(
+  workspaceId: string | null | undefined,
+  kind: 'source' | 'skill' | null,
+  slug: string | null,
+  workingDirectory?: string,
+): { status: SelectedResourceStatus; retry: () => void } {
+  const [attempt, setAttempt] = useState(0)
+  const identity = JSON.stringify([workspaceId, kind, slug, workingDirectory])
+  const [state, setState] = useState<{
+    identity: string
+    status: SelectedResourceStatus
+    editableSkill?: boolean
+  }>({
+    identity,
+    status: kind ? 'loading' : 'ready',
+  })
+  useEffect(() => {
+    if (!kind || !slug) return
+    let active = true
+    let revision = 0
+    const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+    if (!workspaceId || !api || (kind === 'source' ? !api.getSources : !api.getSkills)) {
+      setState({ identity, status: 'unavailable' })
+      return
+    }
+    const load = async (background = false) => {
+      const request = ++revision
+      // Keep a mounted editor while a background snapshot is pending. An
+      // invalidation alone does not prove that its entity was deleted.
+      if (!background) setState({ identity, status: 'loading' })
+      try {
+        const rows = kind === 'source'
+          ? await api.getSources(workspaceId)
+          : await api.getSkills(workspaceId, workingDirectory)
+        if (!Array.isArray(rows)) throw new Error('Invalid resource snapshot')
+        if (!active || request !== revision) return
+        if (kind === 'source') {
+          const exists = (rows as LoadedSource[]).some((source) => source.config.slug === slug)
+          setState({ identity, status: exists ? 'ready' : 'missing' })
+        } else {
+          const skill = (rows as LoadedSkill[]).find((skill) => skill.slug === slug)
+          setState({
+            identity, status: skill ? 'ready' : 'missing',
+            editableSkill: skill?.source === 'workspace',
+          })
+        }
+      } catch {
+        if (active && request === revision) {
+          setState((previous) => background && previous.identity === identity
+            && previous.status === 'ready' && previous.editableSkill
+            ? previous : { identity, status: 'unavailable' })
+        }
+      }
+    }
+    const off = kind === 'source'
+      ? api.onSourcesChanged?.((changedWorkspaceId, sources) => {
+          if (!active || changedWorkspaceId !== workspaceId) return
+          revision += 1
+          const valid = Array.isArray(sources) && sources.every((source) => typeof source?.config?.slug === 'string')
+          setState({ identity, status: valid ? (sources.some((source) => source.config.slug === slug) ? 'ready' : 'missing') : 'unavailable' })
+        })
+      : api.onSkillsChanged?.((changedWorkspaceId) => {
+          if (!active || changedWorkspaceId !== workspaceId) return
+          // Workspace watcher payloads need not contain project/global skills.
+          // Re-read the same resolution context as the selected skill host.
+          void load(true)
+        })
+    void load()
+    return () => { active = false; revision += 1; off?.() }
+  }, [identity, workspaceId, kind, slug, workingDirectory, attempt])
+  return {
+    status: state.identity === identity ? state.status : kind ? 'loading' : 'ready',
+    retry: () => setAttempt((value) => value + 1),
+  }
+}
 
 export interface MainContentPanelProps {
   isSidebarAndNavigatorHidden?: boolean
@@ -118,94 +238,14 @@ export function MainContentPanel({
   const routeKey = JSON.stringify([
     activeWorkspaceId,
     navState.navigator,
+    isSessionsNavigation(navState) ? navState.viewMode : null,
     'details' in navState ? navState.details : null,
     isSettingsNavigation(navState) ? navState.subpage : null,
     isScreenNavigation(navState) ? navState.screen : null,
     navState.navigator === 'search' ? navState.query : null,
+    navState.navigator === 'unavailable' ? [navState.route, navState.reason] : null,
     isSkillsNavigation(navState) ? activeSessionWorkingDirectory : null,
   ])
-  const selectedSourceSlug = isSourcesNavigation(navState) ? navState.details?.sourceSlug : undefined
-  const selectedSkillSlug = isSkillsNavigation(navState) && navState.details?.type === 'skill'
-    ? navState.details.skillSlug : undefined
-  const entityApi = typeof window === 'undefined' ? undefined : window.electronAPI
-  const supportsEntityLookup = Boolean(activeWorkspaceId && (
-    selectedSourceSlug ? entityApi?.getSources : selectedSkillSlug ? entityApi?.getSkills : undefined
-  ))
-  const [entityPresence, setEntityPresence] = useState<{
-    routeKey: string
-    status: 'present' | 'missing' | 'unavailable'
-    detailEpoch?: number
-    editableSkill?: boolean
-  } | null>(null)
-  useEffect(() => {
-    setEntityPresence(null)
-    if (!activeWorkspaceId || (!selectedSourceSlug && !selectedSkillSlug)) return
-    let cancelled = false
-    let receivedUpdate = false
-    let lookupVersion = 0
-    const sourcePresence = (sources: LoadedSource[]) => setEntityPresence({
-      routeKey,
-      status: sources.some(source => source.config.slug === selectedSourceSlug) ? 'present' : 'missing',
-    })
-    const skillPresence = (skills: LoadedSkill[], refreshEpoch = 0) => {
-      const skill = skills.find(skill => skill.slug === selectedSkillSlug)
-      setEntityPresence({
-        routeKey,
-        status: skill ? 'present' : 'missing',
-        // Non-workspace pages also subscribe to the partial workspace snapshot.
-        // Remount their read-only detail from the full, correctly scoped catalog.
-        detailEpoch: skill && skill.source !== 'workspace' ? refreshEpoch : 0,
-        editableSkill: skill?.source === 'workspace',
-      })
-    }
-    const refreshPresence = async (fromUpdate = false) => {
-      const version = ++lookupVersion
-      try {
-        const entities = selectedSourceSlug
-          ? await entityApi?.getSources(activeWorkspaceId)
-          : await entityApi?.getSkills(activeWorkspaceId, activeSessionWorkingDirectory)
-        if (cancelled || version !== lookupVersion) return
-        if (!Array.isArray(entities)) throw new Error('Invalid entity snapshot')
-        if (selectedSourceSlug) sourcePresence(entities as LoadedSource[])
-        else skillPresence(entities as LoadedSkill[], fromUpdate ? version : 0)
-      } catch {
-        if (!cancelled && version === lookupVersion) {
-          setEntityPresence(previous => (
-            // A failed background read does not prove deletion. Retain a mounted
-            // workspace editor and its draft until a complete snapshot arrives.
-            previous?.routeKey === routeKey && previous.status === 'present' && previous.editableSkill
-              ? previous
-              : { routeKey, status: 'unavailable' }
-          ))
-        }
-      }
-    }
-    // These snapshots are authoritative only for the selected workspace. Keep the
-    // route selected after deletion so its missing state survives subsequent events.
-    const cleanup = selectedSourceSlug
-      ? entityApi?.onSourcesChanged?.((workspaceId, sources) => {
-        if (cancelled || workspaceId !== activeWorkspaceId) return
-        receivedUpdate = true
-        lookupVersion++
-        sourcePresence(sources)
-      })
-      : entityApi?.onSkillsChanged?.((workspaceId, skills) => {
-        if (cancelled || workspaceId !== activeWorkspaceId) return
-        receivedUpdate = true
-        // Broadcasts omit project/OMP skills; absence there does not mean deletion.
-        if (supportsEntityLookup) void refreshPresence(true)
-        else skillPresence(skills)
-      })
-    // Resolve presence before mounting a detail page whose first error could stick
-    // through later live updates. Newer snapshots outrank this initial read.
-    if (supportsEntityLookup && !receivedUpdate) void refreshPresence()
-    return () => { cancelled = true; cleanup?.() }
-  }, [activeWorkspaceId, selectedSourceSlug, selectedSkillSlug, routeKey, activeSessionWorkingDirectory, supportsEntityLookup])
-  const selectedEntityStatus = entityPresence?.routeKey === routeKey ? entityPresence.status : null
-  const selectedEntityPending = supportsEntityLookup && selectedEntityStatus === null
-  const detailKey = entityPresence?.routeKey === routeKey && entityPresence.detailEpoch
-    ? `${routeKey}:${entityPresence.detailEpoch}` : routeKey
-
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const visibleSessionIds = useMemo(
     () =>
@@ -249,6 +289,17 @@ export function MainContentPanel({
   const selectedAutomationIds = automationSelection.useSelectedIds()
   const { clearMultiSelect: clearAutomationSelection } = automationSelection.useSelection()
 
+  const resourceKind = isSourcesNavigation(navState) && navState.details
+    ? 'source'
+    : isSkillsNavigation(navState) && navState.details?.type === 'skill' ? 'skill' : null
+  const resourceSlug = isSourcesNavigation(navState) && navState.details
+    ? navState.details.sourceSlug
+    : isSkillsNavigation(navState) && navState.details?.type === 'skill' ? navState.details.skillSlug : null
+  const { status: resourceStatus, retry: retryResource } = useSelectedResourceAvailability(
+    activeWorkspaceId, resourceKind, resourceSlug,
+    resourceKind === 'skill' ? activeSessionWorkingDirectory : undefined,
+  )
+
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
   const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
   const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
@@ -272,10 +323,19 @@ export function MainContentPanel({
   )
 
   const wrapWithStoplight = (content: React.ReactNode) => (
-    <StoplightProvider key={detailKey} value={isSidebarAndNavigatorHidden}>
-      <React.Suspense fallback={pageFallback}>
-        {content}
-      </React.Suspense>
+    <StoplightProvider key={routeKey} value={isSidebarAndNavigatorHidden}>
+      <RouteErrorBoundary key={routeKey} fallback={(retry) => (
+        <Panel variant="grow" className={className}>
+          <div role="alert" data-testid="route-error" className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center">
+            <p className="text-sm text-muted-foreground">{t('common.errorLoadingContent')}</p>
+            <button type="button" onClick={retry} className="rounded-md border px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {t('common.retry')}
+            </button>
+          </div>
+        </Panel>
+      )}>
+        <React.Suspense fallback={pageFallback}>{content}</React.Suspense>
+      </RouteErrorBoundary>
       <SendResourceToWorkspaceDialog
         open={sendDialogOpen}
         onOpenChange={setSendDialogOpen}
@@ -288,27 +348,38 @@ export function MainContentPanel({
     </StoplightProvider>
   )
 
-  const entityRecoveryPanel = (
-    family: 'source' | 'skill',
-    message: string,
-    status: 'missing' | 'unavailable' = 'missing',
-  ) => wrapWithStoplight(
-    <Panel variant="grow" className={className}>
-      <div
-        role="status"
-        className="flex h-full items-center justify-center text-muted-foreground"
-        data-testid={`route-entity-${status}`}
-        data-route-family={family}
-      >
-        <p className="text-sm">{message}</p>
-      </div>
-    </Panel>,
-  )
-  const entityLoadingPanel = () => wrapWithStoplight(
-    <Panel variant="grow" className={className}>
-      <div aria-busy="true" data-testid="route-entity-loading" className="h-full">{pageFallback}</div>
-    </Panel>,
-  )
+  const resourceMultiSelect = resourceKind === 'source' ? isSourceMultiSelectActive : isSkillMultiSelectActive
+  if (resourceKind && !resourceMultiSelect && resourceStatus !== 'ready') {
+    const message = resourceStatus === 'loading'
+      ? t('common.loading')
+      : resourceStatus === 'missing'
+        ? t(resourceKind === 'source' ? 'sourceInfo.notFound' : 'skillInfo.notFound')
+        : t('common.unavailable')
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div
+          className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground"
+          role="status"
+          aria-live="polite"
+          data-testid={`route-resource-${resourceStatus}`}
+          data-route-resource={resourceKind}
+          data-route-entity={resourceSlug}
+        >
+          <p className="text-sm">{message}</p>
+          {resourceStatus !== 'loading' && (
+            <button
+              type="button"
+              className="rounded-md border border-border px-3 py-1 text-sm text-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              data-testid="route-resource-retry"
+              onClick={retryResource}
+            >
+              {t('common.retry')}
+            </button>
+          )}
+        </div>
+      </Panel>
+    )
+  }
 
   if (isSettingsNavigation(navState)) {
     if (navState.subpage === null) {
@@ -340,9 +411,6 @@ export function MainContentPanel({
       )
     }
     if (navState.details) {
-      if (selectedEntityPending) return entityLoadingPanel()
-      if (selectedEntityStatus === 'missing') return entityRecoveryPanel('source', t('sourceInfo.notFound'))
-      if (selectedEntityStatus === 'unavailable') return entityRecoveryPanel('source', t('sourceInfo.failedToLoad'), 'unavailable')
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <SourceInfoPage sourceSlug={navState.details.sourceSlug} workspaceId={activeWorkspaceId || ''} />
@@ -373,9 +441,6 @@ export function MainContentPanel({
       )
     }
     if (navState.details?.type === 'skill') {
-      if (selectedEntityPending) return entityLoadingPanel()
-      if (selectedEntityStatus === 'missing') return entityRecoveryPanel('skill', t('skillInfo.notFound'))
-      if (selectedEntityStatus === 'unavailable') return entityRecoveryPanel('skill', t('skillInfo.failedToLoad'), 'unavailable')
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <SkillInfoPage
@@ -677,6 +742,7 @@ export function MainContentPanel({
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
       <div
+        role="status"
         className="flex items-center justify-center h-full text-muted-foreground"
         data-testid="route-unavailable"
       >

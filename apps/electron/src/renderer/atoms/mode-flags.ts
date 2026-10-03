@@ -5,7 +5,7 @@
  */
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
-import { WORKBENCH_FLAG } from '@craft-agent/core/platform'
+import { WORKBENCH_FLAG } from '@rox/core/platform'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 
 export type ModeScreenId = 'tasks' | 'meetings' | 'inbox' | 'feed'

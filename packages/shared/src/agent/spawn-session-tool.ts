@@ -12,6 +12,7 @@
 import { tool } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
 import type { SpawnSessionResult, SpawnSessionHelpResult } from './base-agent.ts';
+import { ROX_PUBLIC_MODEL_IDS } from '../config/rox-public-models.ts';
 
 export type SpawnSessionFn = (input: Record<string, unknown>) => Promise<SpawnSessionResult | SpawnSessionHelpResult>;
 
@@ -47,7 +48,7 @@ Use this to delegate tasks to parallel sessions — research, analysis, drafts, 
 Call with help=true first to discover available connections, models, and sources.
 When spawning, the 'prompt' parameter is required.
 
-Optional overrides: model, llmConnection, permissionMode, thinkingLevel, enabledSourceSlugs, labels, workingDirectory. Omitted fields inherit from the spawning session or the workspace default, except model on a public ROX parent (rox/explore, rox/standard, rox/max, rox/vision, rox/fast): omitted model uses rox/fast. Pass model explicitly to keep another public endpoint.
+Optional overrides: model, llmConnection, permissionMode, thinkingLevel, enabledSourceSlugs, labels, workingDirectory. Omitted fields inherit from the spawning session or the workspace default, except model on a public ROX parent (${ROX_PUBLIC_MODEL_IDS.join(', ')}): omitted model uses rox/fast. Pass model explicitly to keep another public endpoint.
 
 thinkingLevel is silently ignored on non-reasoning models (e.g. gpt-4o, gemini-2.5-flash) — the SDK drops the reasoning param rather than erroring.
 

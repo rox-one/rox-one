@@ -1,6 +1,6 @@
 import { createHash, randomUUID, X509Certificate } from 'node:crypto'
 import tls from 'node:tls'
-import type { RemoteTlsTrust } from '@craft-agent/core/types'
+import type { RemoteTlsTrust } from '@rox/core/types'
 
 export { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 

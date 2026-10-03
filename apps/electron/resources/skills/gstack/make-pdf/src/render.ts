@@ -1,0 +1,421 @@
+/**
+ * Markdown → HTML renderer. Pure function, no I/O, no browser.
+ *
+ * Pipeline:
+ *   1. marked parses markdown → HTML
+ *   2. Sanitize: strip <script>, <iframe>, <object>, <embed>, <link>,
+ *      <meta>, <base>, <form>, and all on* event handlers + javascript:
+ *      URLs. (Codex round 2 #9: untrusted markdown can embed raw HTML.)
+ *   3. Smartypants transform (code/URL-safe).
+ *   4. Assemble full HTML document with print CSS inlined and
+ *      semantic structure (cover, TOC placeholder, body).
+ */
+
+import { marked } from "marked";
+import { sanitizeParsedHtml } from "./safe-html";
+import { smartypants } from "./smartypants";
+import { printCss, type PrintCssOptions } from "./print-css";
+import { applyImageDirectives } from "./image-policy";
+
+export interface RenderOptions {
+  markdown: string;
+
+  // Document-level metadata (used for cover, PDF metadata, running header).
+  title?: string;
+  author?: string;
+  date?: string;                  // ISO or human string
+  subtitle?: string;
+
+  // Features
+  cover?: boolean;
+  toc?: boolean;
+  watermark?: string;
+  noChapterBreaks?: boolean;
+  confidential?: boolean;         // default: true
+
+  // Page layout
+  pageSize?: "letter" | "a4" | "legal" | "tabloid";
+  margins?: string;
+  // Per-side margins (override `margins`). Must reach the CSS @page rule:
+  // when a landscape promotion flips preferCSSPageSize on, the CSS margins
+  // are the ones Chromium honors — dropping per-side flags there would
+  // silently change the whole document's layout (Codex P2).
+  marginTop?: string;
+  marginRight?: string;
+  marginBottom?: string;
+  marginLeft?: string;
+
+  // Footer behavior. pageNumbers defaults to true. When footerTemplate is set,
+  // CSS page numbers are suppressed so the custom Chromium footer wins cleanly.
+  pageNumbers?: boolean;
+  footerTemplate?: string;
+}
+
+export interface RenderResult {
+  html: string;                   // full HTML document, staged and printed through the browser
+  printCss: string;               // for debugging / preview
+  bodyHtml: string;               // just the rendered body (tests, snapshots)
+  meta: {
+    title: string;
+    author: string;
+    date: string;
+    wordCount: number;
+  };
+}
+
+/**
+ * Pure renderer. No side effects.
+ */
+export function render(opts: RenderOptions): RenderResult {
+  // 1. Markdown → HTML (strip a leading YAML frontmatter block first; marked
+  //    has no frontmatter awareness and would otherwise render it as a literal
+  //    paragraph of body text on its own first page).
+  const rawHtml = marked.parse(stripFrontmatter(opts.markdown), { async: false }) as string;
+
+  // 1.5. Image directive suffixes: `![a](x.png){width=50%}` → data-gstack-*
+  // attributes. Before the sanitizer (which keeps data- attrs) so the brace
+  // text never reaches smartypants or the final page.
+  const directedHtml = applyImageDirectives(rawHtml);
+
+  // 2. Sanitize
+  const cleanHtml = sanitizeUntrustedHtml(directedHtml);
+
+  // 3. Decode common entities so smartypants can match raw " and '.
+  //    marked HTML-encodes quotes in text ("hello" → &quot;hello&quot;);
+  //    without decoding, smartypants' regex never fires. These get re-encoded
+  //    implicitly by the browser's HTML parser downstream, and for the ones
+  //    that should stay as curly-quote Unicode, that IS the final form.
+  const decoded = cleanHtml; // Never decode escaped quotes inside serialized attributes.
+
+  // 4. Smartypants (code-safe)
+  const typographicHtml = smartypants(decoded);
+
+  // 4. Derive metadata (title from first H1 if not provided)
+  const derivedTitle = opts.title ?? extractFirstHeading(typographicHtml) ?? "Document";
+  const derivedAuthor = opts.author ?? "";
+  const derivedDate = opts.date ?? formatToday();
+
+  // 5. Build CSS
+  // CSS is the single source of truth for page numbers (Chromium native
+  // numbering is always off in orchestrator). If the caller supplied a custom
+  // footerTemplate, suppress CSS page numbers too so their footer wins.
+  const showPageNumbers = opts.pageNumbers !== false && !opts.footerTemplate;
+  const cssOptions: PrintCssOptions = {
+    cover: opts.cover,
+    toc: opts.toc,
+    noChapterBreaks: opts.noChapterBreaks,
+    watermark: opts.watermark,
+    confidential: opts.confidential !== false,
+    runningHeader: derivedTitle,
+    pageSize: opts.pageSize,
+    // Compose per-side margins into the CSS shorthand so @page stays the
+    // single source of truth even under preferCSSPageSize.
+    margins: composeMargins(opts),
+    pageNumbers: showPageNumbers,
+  };
+  const css = printCss(cssOptions);
+
+  // 6. Assemble document
+  const coverBlock = opts.cover
+    ? buildCoverBlock({
+        title: derivedTitle,
+        subtitle: opts.subtitle,
+        author: derivedAuthor,
+        date: derivedDate,
+      })
+    : "";
+
+  // TOC anchors must resolve: assign id="toc-N" to each H1-H3 in the same
+  // order buildTocBlock scans them, or every TOC link is a dead href (masked
+  // in PDFs by Chromium outline bookmarks, glaring in --to html). Headings
+  // that already carry an id keep it — the ids array records the ACTUAL id
+  // per heading so TOC entries always link to something real.
+  const anchored = opts.toc ? addHeadingIds(typographicHtml) : { html: typographicHtml, ids: [] };
+  const anchoredHtml = anchored.html;
+
+  const tocBlock = opts.toc
+    ? buildTocBlock(anchoredHtml, anchored.ids)
+    : "";
+
+  // Wrap body in .chapter sections at H1 boundaries if chapter breaks are on.
+  const chapterHtml = opts.noChapterBreaks
+    ? `<section class="chapter">${anchoredHtml}</section>`
+    : wrapChaptersByH1(anchoredHtml);
+
+  const watermarkBlock = opts.watermark
+    ? `<div class="watermark">${escapeHtml(opts.watermark)}</div>`
+    : "";
+
+  const fullHtml = [
+    `<!doctype html>`,
+    `<html lang="en">`,
+    `<head>`,
+    `<meta charset="utf-8">`,
+    `<title>${escapeHtml(derivedTitle)}</title>`,
+    derivedAuthor ? `<meta name="author" content="${escapeHtml(derivedAuthor)}">` : ``,
+    `<style>`,
+    css,
+    `</style>`,
+    `</head>`,
+    `<body>`,
+    watermarkBlock,
+    coverBlock,
+    tocBlock,
+    chapterHtml,
+    `</body>`,
+    `</html>`,
+  ].filter(Boolean).join("\n");
+
+  return {
+    html: fullHtml,
+    printCss: css,
+    bodyHtml: typographicHtml,
+    meta: {
+      title: derivedTitle,
+      author: derivedAuthor,
+      date: derivedDate,
+      wordCount: countWords(stripTags(typographicHtml)),
+    },
+  };
+}
+
+/**
+ * Decode the HTML entities that marked emits for text-node quotes/apostrophes.
+ * Only the four that matter for smartypants — leaves &amp; alone because it
+ * can be legitimately doubled (&amp;amp;) and we don't want to double-decode.
+ */
+function decodeTypographicEntities(html: string): string {
+  return html
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x27;/g, "'");
+}
+
+// ─── Sanitizer ────────────────────────────────────────────────────────
+
+/** Conservative parser-based allowlist for untrusted markdown HTML. */
+export function sanitizeUntrustedHtml(html: string): string {
+  return sanitizeParsedHtml(html);
+}
+
+// ─── Cover / TOC / Chapter helpers ────────────────────────────────────
+
+function buildCoverBlock(opts: {
+  title: string;
+  subtitle?: string;
+  author?: string;
+  date: string;
+}): string {
+  const title = escapeHtml(opts.title);
+  const subtitle = opts.subtitle ? escapeHtml(opts.subtitle) : "";
+  const author = opts.author ? escapeHtml(opts.author) : "";
+  const date = escapeHtml(opts.date);
+  return [
+    `<section class="cover">`,
+    `  <h1 class="cover-title">${title}</h1>`,
+    subtitle ? `  <p class="cover-subtitle">${subtitle}</p>` : ``,
+    `  <hr class="rule">`,
+    `  <div class="cover-meta">`,
+    author ? `    <div><strong>${author}</strong></div>` : ``,
+    `    <div>${date}</div>`,
+    `  </div>`,
+    `</section>`,
+  ].filter(Boolean).join("\n");
+}
+
+/**
+ * Scan HTML for H1/H2/H3 headings and emit a TOC placeholder.
+ * Page numbers are filled in by Paged.js (when --toc is passed and Paged.js
+ * polyfill is injected).
+ */
+function buildTocBlock(html: string, ids: string[] = []): string {
+  const headings = extractHeadings(html);
+  if (headings.length === 0) return "";
+
+  const items = headings.map((h, i) => {
+    const level = h.level >= 2 ? "level-2" : "level-1";
+    const id = ids[i] ?? `toc-${i}`;
+    return [
+      `  <li class="${level}">`,
+      `    <span class="toc-title"><a href="#${id}">${escapeHtml(h.text)}</a></span>`,
+      `    <span class="toc-dots"></span>`,
+      `    <span class="toc-page" data-toc-target="${id}"></span>`,
+      `  </li>`,
+    ].join("\n");
+  }).join("\n");
+
+  return [
+    `<section class="toc">`,
+    `  <h2>Contents</h2>`,
+    `  <ol>`,
+    items,
+    `  </ol>`,
+    `</section>`,
+  ].join("\n");
+}
+
+/**
+ * Assign id="toc-N" to every H1-H3 in document order — the same order
+ * extractHeadings/buildTocBlock use, so anchors and entries line up by index.
+ * A heading that already carries an id keeps it, and the returned ids array
+ * records the actual id for that slot so the TOC links to the real anchor
+ * instead of a nonexistent toc-N.
+ */
+function addHeadingIds(html: string): { html: string; ids: string[] } {
+  const ids: string[] = [];
+  const out = html.replace(/<(h[1-3])([^>]*)>/gi, (full, tag: string, attrs: string) => {
+    const existing = attrs.match(/\bid\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (existing) {
+      ids.push(existing);
+      return full;
+    }
+    const id = `toc-${ids.length}`;
+    ids.push(id);
+    return `<${tag}${attrs} id="${id}">`;
+  });
+  return { html: out, ids };
+}
+
+function extractHeadings(html: string): Array<{ level: number; text: string }> {
+  const re = /<(h[1-3])[^>]*>([\s\S]*?)<\/\1>/gi;
+  const headings: Array<{ level: number; text: string }> = [];
+  let match;
+  while ((match = re.exec(html)) !== null) {
+    const level = parseInt(match[1].slice(1), 10);
+    const text = decodeTextEntities(stripTags(match[2]).trim());
+    if (text) headings.push({ level, text });
+  }
+  return headings;
+}
+
+/**
+ * Wrap H1-rooted sections in <section class="chapter">. When chapter breaks
+ * are on (default), CSS `.chapter { break-before: page }` fires between them.
+ */
+function wrapChaptersByH1(html: string): string {
+  // Split on H1 openings. Everything before the first H1 is a preamble.
+  const h1Re = /<h1\b[^>]*>/gi;
+  const matches: number[] = [];
+  let m;
+  while ((m = h1Re.exec(html)) !== null) {
+    matches.push(m.index);
+  }
+  if (matches.length === 0) {
+    return `<section class="chapter">${html}</section>`;
+  }
+  const chunks: string[] = [];
+  const preamble = html.slice(0, matches[0]);
+  // A preamble that renders nothing visible (a leading <style> block, an HTML
+  // comment) must NOT become its own .chapter. That section would take the
+  // `.chapter:first-of-type { break-before: auto }` exception, so the first
+  // *real* chapter inherits `break-before: page` and starts on page 2 — leaving
+  // a blank page 1. Keep the non-rendering markup (so its styling still applies)
+  // but fold it into the first real chapter instead of giving it a page break.
+  let carriedPreamble = "";
+  if (preamble.trim().length > 0) {
+    if (stripNonRendering(preamble).trim().length > 0) {
+      chunks.push(`<section class="chapter">${preamble}</section>`);
+    } else {
+      carriedPreamble = preamble;
+    }
+  }
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i];
+    const end = i + 1 < matches.length ? matches[i + 1] : html.length;
+    const body = i === 0 ? carriedPreamble + html.slice(start, end) : html.slice(start, end);
+    chunks.push(`<section class="chapter">${body}</section>`);
+  }
+  return chunks.join("\n");
+}
+
+/**
+ * Strip leading YAML frontmatter (`---\n...\n---`). Only a block at the very
+ * start of the document is removed, so a `---` thematic break elsewhere is
+ * untouched.
+ */
+function stripFrontmatter(md: string): string {
+  return md.replace(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, "");
+}
+
+/**
+ * Remove non-rendering markup (style/script blocks, HTML comments) so an
+ * otherwise-empty preamble is recognized as visually empty. Used only to decide
+ * whether a preamble deserves its own page — the original markup is preserved in
+ * the output.
+ */
+function stripNonRendering(html: string): string {
+  return html
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "");
+}
+
+function extractFirstHeading(html: string): string | null {
+  const m = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
+  return m ? decodeTextEntities(stripTags(m[1]).trim()) : null;
+}
+
+/**
+ * Decode HTML entities in plain text extracted from rendered HTML. Distinct
+ * from decodeTypographicEntities (which runs on in-pipeline HTML and preserves
+ * &amp; because &amp;amp; can be legitimate there). This runs on text destined
+ * for <title>, cover, and TOC entries where &amp; MUST become & or escapeHtml
+ * produces &amp;amp;.
+ *
+ * Amp-last ordering: input "&amp;#169;" decodes to "&#169;" in the named pass,
+ * then the numeric pass decodes "&#169;" to "©". Decoding &amp; first would
+ * produce "&#169;" and the numeric pass would consume it — different end state
+ * but risks double-decode on inputs like "&amp;lt;".
+ */
+function decodeTextEntities(s: string): string {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&amp;/g, "&");
+}
+
+/** Compose `margin: top right bottom left` from per-side overrides + base. */
+function composeMargins(opts: {
+  margins?: string; marginTop?: string; marginRight?: string;
+  marginBottom?: string; marginLeft?: string;
+}): string | undefined {
+  const base = opts.margins ?? "1in";
+  if (!opts.marginTop && !opts.marginRight && !opts.marginBottom && !opts.marginLeft) {
+    return opts.margins;
+  }
+  return [
+    opts.marginTop ?? base,
+    opts.marginRight ?? base,
+    opts.marginBottom ?? base,
+    opts.marginLeft ?? base,
+  ].join(" ");
+}
+
+function stripTags(html: string): string {
+  return html.replace(/<[^>]+>/g, "");
+}
+
+export function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function countWords(text: string): number {
+  return text.split(/\s+/).filter(w => w.length > 0).length;
+}
+
+function formatToday(): string {
+  const now = new Date();
+  return now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}

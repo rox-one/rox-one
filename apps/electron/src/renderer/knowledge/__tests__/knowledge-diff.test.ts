@@ -10,7 +10,7 @@
  * - apply exists on the approved face only — never for non-approved statuses.
  */
 import { describe, expect, it } from 'bun:test'
-import type { MutationProposalStatus } from '@craft-agent/shared/protocol'
+import type { MutationProposalStatus } from '@rox/shared/protocol'
 import { conflictActionsFor, type KnowledgeDiffActionId } from '../KnowledgeDiff'
 
 const ALL_STATUSES: MutationProposalStatus[] = [

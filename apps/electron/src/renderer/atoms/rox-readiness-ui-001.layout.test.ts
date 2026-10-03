@@ -29,7 +29,7 @@ const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorag
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')
 Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true })
 Object.defineProperty(globalThis, 'window', { value: fakeWindow, configurable: true })
-const { inspectorPanelWidthAtom, bottomDockHeightAtom } = await import('./unified-shell')
+const { inspectorPanelWidthAtom, bottomDockHeightAtom, clampPersistedLayoutSize, INSPECTOR_PANEL_WIDTH_MIN, INSPECTOR_PANEL_WIDTH_MAX, BOTTOM_DOCK_HEIGHT_MIN, BOTTOM_DOCK_HEIGHT_MAX } = await import('./unified-shell')
 const subscriptions: Array<() => void> = []
 
 function mountedStore() {
@@ -117,5 +117,36 @@ describe('ROX UI-001 real persisted layout atoms', () => {
     for (const off of subscriptions.splice(0)) off()
     emit(getKeyString(KEYS.bottomDockHeight), '300')
     expect(store.get(bottomDockHeightAtom)).toBe(104)
+  })
+
+  it('does not replay an older queued storage value or clear over the current preference', () => {
+    const store = mountedStore()
+    const key = getKeyString(KEYS.bottomDockHeight)
+    storage.setItem(key, '300')
+    fakeWindow.dispatchEvent(Object.assign(new Event('storage'), { key, newValue: '100', storageArea: storage }))
+    expect(store.get(bottomDockHeightAtom)).toBe(300)
+    fakeWindow.dispatchEvent(Object.assign(new Event('storage'), { key: null, newValue: null, storageArea: storage }))
+    expect(store.get(bottomDockHeightAtom)).toBe(300)
+  })
+})
+
+describe('ROX UI-001 persisted shell geometry', () => {
+  it('rounds and bounds preferences within the controls existing supported ranges', () => {
+    expect(INSPECTOR_PANEL_WIDTH_MIN).toBe(280)
+    expect(INSPECTOR_PANEL_WIDTH_MAX).toBe(1400)
+    expect(BOTTOM_DOCK_HEIGHT_MIN).toBe(88)
+    expect(BOTTOM_DOCK_HEIGHT_MAX).toBe(480)
+    expect(clampPersistedLayoutSize(319.6, INSPECTOR_PANEL_WIDTH_MIN, INSPECTOR_PANEL_WIDTH_MAX, 320)).toBe(320)
+    expect(clampPersistedLayoutSize(-1, INSPECTOR_PANEL_WIDTH_MIN, INSPECTOR_PANEL_WIDTH_MAX, 320)).toBe(280)
+    expect(clampPersistedLayoutSize(1000, INSPECTOR_PANEL_WIDTH_MIN, INSPECTOR_PANEL_WIDTH_MAX, 320)).toBe(1000)
+    expect(clampPersistedLayoutSize(10_000, INSPECTOR_PANEL_WIDTH_MIN, INSPECTOR_PANEL_WIDTH_MAX, 320)).toBe(1400)
+    expect(clampPersistedLayoutSize(1, BOTTOM_DOCK_HEIGHT_MIN, BOTTOM_DOCK_HEIGHT_MAX, 104)).toBe(88)
+    expect(clampPersistedLayoutSize(10_000, BOTTOM_DOCK_HEIGHT_MIN, BOTTOM_DOCK_HEIGHT_MAX, 104)).toBe(480)
+  })
+
+  it('recovers malformed and non-finite reload values to a usable default', () => {
+    for (const value of [undefined, null, '480', {}, [], true, Number.NaN, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY]) {
+      expect(clampPersistedLayoutSize(value, 88, 480, 104)).toBe(104)
+    }
   })
 })

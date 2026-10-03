@@ -1,5 +1,5 @@
 /**
- * Chat component exports for @craft-agent/ui
+ * Chat component exports for @rox/ui
  */
 
 // Turn utilities (pure functions, no React)
@@ -28,3 +28,5 @@ export { FileTypeIcon, getFileTypeLabel, type FileTypeIconProps } from './attach
 
 // Accept plan dropdown (for plan cards)
 export { AcceptPlanDropdown } from './AcceptPlanDropdown'
+
+export { MessageReactionActorProvider, useMessageReactionActor } from './message-reaction-actor'

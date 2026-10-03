@@ -44,8 +44,8 @@ describe('main-process i18n bootstrap', () => {
       const r = runScript(
         configDir,
         `
-          import { setupI18n, i18n } from '@craft-agent/shared/i18n';
-          import { setPersistedUiLanguage, getPersistedUiLanguage } from '@craft-agent/shared/config';
+          import { setupI18n, i18n } from '@rox/shared/i18n';
+          import { setPersistedUiLanguage, getPersistedUiLanguage } from '@rox/shared/config';
           setupI18n();
           setPersistedUiLanguage('ru');
           const persisted = getPersistedUiLanguage();
@@ -67,8 +67,8 @@ describe('main-process i18n bootstrap', () => {
       const r = runScript(
         configDir,
         `
-          import { setupI18n, i18n } from '@craft-agent/shared/i18n';
-          import { getPersistedUiLanguage } from '@craft-agent/shared/config';
+          import { setupI18n, i18n } from '@rox/shared/i18n';
+          import { getPersistedUiLanguage } from '@rox/shared/config';
           setupI18n();
           const persisted = getPersistedUiLanguage();
           console.log(JSON.stringify({ persisted: getPersistedUiLanguage(), resolved: i18n.resolvedLanguage }));
@@ -94,7 +94,7 @@ describe('main-process i18n bootstrap', () => {
       const r = runScript(
         configDir,
         `
-          import { getPersistedUiLanguage } from '@craft-agent/shared/config';
+          import { getPersistedUiLanguage } from '@rox/shared/config';
           console.log(JSON.stringify({ value: getPersistedUiLanguage() }));
         `,
       )

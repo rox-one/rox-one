@@ -6,8 +6,8 @@
  * exported helpers with a mocked `window.electronAPI.knowledge`.
  */
 import { afterEach, describe, expect, it, mock } from 'bun:test'
-import type { SearchHit } from '@craft-agent/core/knowledge'
-import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views'
+import type { SearchHit } from '@rox/core/knowledge'
+import type { ViewConfig as KnowledgeViewConfig } from '@rox/shared/views'
 import {
   firstSetAttributeAction,
   groupKeyForHit,

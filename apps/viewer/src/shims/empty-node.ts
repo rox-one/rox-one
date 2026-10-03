@@ -1,5 +1,5 @@
 
-// Browser shim for accidental node built-in imports pulled via @craft-agent/ui → core.
+// Browser shim for accidental node built-in imports pulled via @rox/ui → core.
 export const userInfo = () => ({ username: 'viewer', uid: 0, gid: 0, shell: '', homedir: '/' })
 export const homedir = () => '/'
 export const tmpdir = () => '/tmp'

@@ -100,13 +100,13 @@ try {
   })
   await check('An initial source load failure recovers after an authoritative live update', async () => {
     await page.evaluate(() => (window as any).ui001.configure({ route: 'sources/source/one', failure: true }))
-    await page.waitForFunction(() => document.body.textContent?.includes('temporary fixture unavailable') || document.body.textContent?.includes('sourceInfo.failedToLoad'))
+    await page.waitForFunction(() => document.body.textContent?.includes('temporary fixture unavailable') || document.body.textContent?.includes('common.unavailable'))
     await page.evaluate(() => { const x = (window as any).ui001; x.ready(); x.sources('workspace-a', [x.source('one')]) })
     await waitText('Source one')
   })
   await check('An initial skill load failure recovers after an authoritative live update', async () => {
     await page.evaluate(() => (window as any).ui001.configure({ route: 'skills/skill/one', failure: true }))
-    await page.waitForFunction(() => document.body.textContent?.includes('temporary fixture unavailable') || document.body.textContent?.includes('skillInfo.failedToLoad'))
+    await page.waitForFunction(() => document.body.textContent?.includes('temporary fixture unavailable') || document.body.textContent?.includes('common.unavailable'))
     await page.evaluate(() => { const x = (window as any).ui001; x.ready(); x.skills('workspace-a', [x.skill('one')]) })
     await waitText('Skill one')
   })
@@ -162,7 +162,7 @@ try {
     await page.evaluate(() => (window as any).ui001.configure({ route: 'sources/source/one', delayed: true }))
     await page.waitForFunction(() => (window as any).ui001.pendingCount() > 0)
     await page.evaluate(() => { const x = (window as any).ui001; x.ready(); x.sources('workspace-a', []); x.release() })
-    await page.locator('[data-testid="route-entity-missing"][data-route-family="source"]').waitFor()
+    await page.locator('[data-testid="route-resource-missing"][data-route-resource="source"]').waitFor()
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
     assert.equal(await page.locator('[data-entity-page]').count(), 0)
   })
@@ -254,6 +254,22 @@ try {
       return field.isConnected && field === document.activeElement && field.value === 'Local unsaved draft'
     }),true)
     await page.evaluate(() => (window as any).ui001.ready())
+  })
+  await check('An ordinary skill watcher update preserves an edited field and its focus', async () => {
+    await page.evaluate(() => (window as any).ui001.configure({ route: 'skills/skill/one' }))
+    await waitText('Skill one')
+    const field = page.locator('[data-entity-page] input:not(:disabled)').first()
+    await field.fill('Unsaved local name')
+    await field.focus()
+    await page.evaluate(() => {
+      const x = (window as any).ui001
+      ;(window as any).ui001DraftField = document.activeElement
+      const updated = x.skill('one'); updated.metadata.name = 'Watcher name'
+      x.skills('workspace-a', [updated])
+    })
+    await page.waitForFunction(() => document.querySelector('[data-entity-page]')?.textContent?.includes('Watcher name'))
+    assert.equal(await field.inputValue(), 'Unsaved local name')
+    assert.equal(await page.evaluate(() => document.activeElement === (window as any).ui001DraftField), true)
   })
   await check('Real browser atom writes persist rounded bounded values through reload', async () => {
     await page.evaluate(() => { const x = (window as any).ui001; x.layout.set(5000,119.6); x.layout.increment() })

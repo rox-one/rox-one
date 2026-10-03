@@ -10,9 +10,9 @@ import {
   type KnowledgeNode,
   type KnowledgeRef,
   type PublishDraft,
-} from '@craft-agent/core/knowledge'
-import type { KnowledgeAutomationAction } from '@craft-agent/shared/automations'
-import { CodedError } from '@craft-agent/shared/protocol'
+} from '@rox/core/knowledge'
+import type { KnowledgeAutomationAction } from '@rox/shared/automations'
+import { CodedError } from '@rox/shared/protocol'
 import { KnowledgeConnectionsStore } from '../connections-store'
 import {
   KnowledgeMetricsStore,

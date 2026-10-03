@@ -57,6 +57,7 @@ import {
   buildMcpServers,
   getPlatformKey,
 } from './build/common';
+import { copyServerBundledAssets } from './build/bundled-assets';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -117,13 +118,8 @@ function assembleResources(config: ServerBuildConfig): void {
   const srcResources = join(electronDir, 'resources');
   const destResources = join(outputDir, 'resources');
 
-  console.log('  Copying docs, themes, permissions, tool-icons...');
-  for (const dir of ['docs', 'themes', 'permissions', 'tool-icons']) {
-    const src = join(srcResources, dir);
-    if (existsSync(src)) {
-      cpSync(src, join(destResources, dir), { recursive: true });
-    }
-  }
+  console.log('  Copying docs, themes, permissions, tool-icons, skills...');
+  copyServerBundledAssets(srcResources, destResources);
 
   // Config defaults
   const configDefaults = join(srcResources, 'config-defaults.json');
@@ -331,7 +327,7 @@ function collectNestedPackageJsons(modulesDir: string): string[] {
 /**
  * Scan all .ts files in a directory tree for import/require statements
  * and return the set of external npm package names (not relative paths,
- * not node: builtins, not workspace @craft-agent/* packages).
+ * not node: builtins, not workspace @rox/* packages).
  */
 function scanImports(dir: string): Set<string> {
   const packages = new Set<string>();
@@ -350,7 +346,7 @@ function scanImports(dir: string): Set<string> {
         while ((match = importRe.exec(content)) !== null) {
           const spec = match[1]!;
           // Skip relative imports, node: builtins, workspace packages
-          if (spec.startsWith('.') || spec.startsWith('node:') || spec.startsWith('@craft-agent/')) continue;
+          if (spec.startsWith('.') || spec.startsWith('node:') || spec.startsWith('@rox/')) continue;
           // Extract package name (handle scoped: @scope/name)
           const parts = spec.split('/');
           const pkgName = spec.startsWith('@') ? `${parts[0]}/${parts[1]}` : parts[0]!;
@@ -528,7 +524,7 @@ function copyWorkspacePackages(config: ServerBuildConfig): void {
 function createRootConfig(config: ServerBuildConfig): void {
   const { outputDir, version } = config;
 
-  // Root package.json with workspaces (Bun resolves @craft-agent/* through this)
+  // Root package.json with workspaces (Bun resolves @rox/* through this)
   const rootPkg = {
     name: 'craft-server-dist',
     version,
@@ -544,18 +540,18 @@ function createRootConfig(config: ServerBuildConfig): void {
       module: 'ESNext',
       moduleResolution: 'bundler',
       paths: {
-        '@craft-agent/server-core/*': ['./packages/server-core/src/*'],
-        '@craft-agent/shared/*': ['./packages/shared/src/*'],
-        '@craft-agent/core/*': ['./packages/core/src/*'],
-        '@craft-agent/session-tools-core/*': ['./packages/session-tools-core/src/*'],
+        '@rox/server-core/*': ['./packages/server-core/src/*'],
+        '@rox/shared/*': ['./packages/shared/src/*'],
+        '@rox/core/*': ['./packages/core/src/*'],
+        '@rox/session-tools-core/*': ['./packages/session-tools-core/src/*'],
       },
     },
   };
   writeFileSync(join(outputDir, 'tsconfig.json'), JSON.stringify(rootTsconfig, null, 2) + '\n');
 
-  // Create workspace symlinks in node_modules/@craft-agent/
+  // Create workspace symlinks in node_modules/@rox/
   // Bun needs these to resolve workspace package imports at runtime
-  const scopeDir = join(outputDir, 'node_modules', '@craft-agent');
+  const scopeDir = join(outputDir, 'node_modules', '@rox');
   mkdirSync(scopeDir, { recursive: true });
 
   const packagesDir = join(outputDir, 'packages');
@@ -567,8 +563,8 @@ function createRootConfig(config: ServerBuildConfig): void {
       try {
         const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
         const name: string = pkgJson.name || '';
-        if (name.startsWith('@craft-agent/')) {
-          const shortName = name.replace('@craft-agent/', '');
+        if (name.startsWith('@rox/')) {
+          const shortName = name.replace('@rox/', '');
           const linkPath = join(scopeDir, shortName);
           const target = join('..', '..', 'packages', pkg);
           if (!existsSync(linkPath)) {

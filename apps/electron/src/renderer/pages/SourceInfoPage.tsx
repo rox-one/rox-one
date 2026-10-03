@@ -29,7 +29,7 @@ import {
   type ToolRow,
 } from '@/components/info'
 import type { LoadedSource, McpToolWithPermission } from '../../shared/types'
-import type { PermissionsConfigFile } from '@craft-agent/shared/agent/modes'
+import type { PermissionsConfigFile } from '@rox/shared/agent/modes'
 
 interface SourceInfoPageProps {
   sourceSlug: string

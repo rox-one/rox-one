@@ -19,7 +19,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import {
   focusedPanelIdAtom,
   focusedPanelRouteAtom,
@@ -43,7 +43,7 @@ import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/co
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
 import { CENTER_MIN_WIDTH, PANEL_MIN_WIDTH } from '@/components/app-shell/panel-constants'
 import { projectConnectionInspector } from './connection-inspector-model'
@@ -390,18 +390,6 @@ export function InspectorHost() {
       setVisible(true)
     }
   }, [sessionMode, navigationState.rightSidebar, setChromeCollapsed, setSection, setVisible])
-
-  useEffect(() => {
-    if (panelShown && !terminalOpen && activeSection === 'browser') return
-    void (async () => {
-      const list = await window.electronAPI.browserPane.list().catch(() => [])
-      await Promise.all(
-        list
-          .filter((item) => item.embedded)
-          .map((item) => window.electronAPI.browserPane.syncBounds(item.id, null).catch(() => undefined)),
-      )
-    })()
-  }, [panelShown, terminalOpen, activeSection])
 
   const handleSectionClick = (clicked: InspectorSectionId) => {
     if (terminalOpen) setBottomTerminalOpen(true)

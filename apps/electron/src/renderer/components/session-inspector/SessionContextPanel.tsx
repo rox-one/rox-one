@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { applyMcpLens } from '@craft-agent/session-tools-core'
+import { applyMcpLens } from '@rox/session-tools-core'
 import {
   assembleContextShares,
   sessionMessagesToTranscript,
   type ContextShareKind,
-} from '@craft-agent/shared/agent/context-budget'
+} from '@rox/shared/agent/context-budget'
 import { featureWorkbenchHarnessAgentIntelV1Atom } from '@/atoms/unified-shell'
 import { useOptionalAppShellContext, useSession } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'

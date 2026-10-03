@@ -15,9 +15,12 @@ import type { LoadedSource, ApiConfig } from './types.ts';
 import { isMultiHeaderCredential, type ApiCredential } from './credential-manager.ts';
 import { isSourceUsable } from './storage.ts';
 import { createApiServer, type SummarizeCallback } from './api-tools.ts';
+import { createE2bApiServer } from './e2b-tools.ts';
+import { isManagedBuiltinSource } from './builtin-sources.ts';
 import { createSdkMcpServer } from '@anthropic-ai/claude-agent-sdk';
 import { debug } from '../utils/debug.ts';
 import { expandVars, resolveStdioConfig } from '../utils/paths.ts';
+import { buildRuntimeBuiltinMcpConfig, getBuiltinMcpReadiness } from './builtin-mcp.ts';
 
 /**
  * Standard error messages for server build failures.
@@ -89,7 +92,16 @@ export class SourceServerBuilder {
       return null;
     }
 
-    const mcp = source.config.mcp;
+    const builtinOptions = {
+      token,
+      credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+    };
+    const readiness = getBuiltinMcpReadiness(source.config, builtinOptions);
+    if (readiness.status !== 'ready') {
+      debug(`[SourceServerBuilder] Source ${source.config.slug} cannot start: ${readiness.reason || readiness.status}`);
+      return null;
+    }
+    const mcp = buildRuntimeBuiltinMcpConfig(source.config, builtinOptions).mcp!;
 
     // Handle stdio transport (local subprocess servers)
     if (mcp.transport === 'stdio') {
@@ -188,6 +200,10 @@ export class SourceServerBuilder {
     const apiConfig = source.config.api;
     const authType = apiConfig.authType;
     const provider = source.config.provider;
+    if (source.config.slug === 'e2b' && isManagedBuiltinSource(source.config)) {
+      const resolved = getCredential ?? credential;
+      return resolved ? createE2bApiServer(this.buildApiConfig(source), resolved, sessionPath, summarize) : null;
+    }
 
     // Google APIs - use token getter with auto-refresh
     // Note: Direct isAuthenticated check is safe - Google OAuth always requires auth
@@ -280,6 +296,7 @@ export class SourceServerBuilder {
     const config: ApiConfig = {
       name: source.config.slug,
       baseUrl: api.baseUrl,
+      rejectRedirects: isManagedBuiltinSource(source.config),
       // documentation is no longer inlined into the tool description (see #683
       // and api-tools.ts:buildToolDescription). The model reads guide.md via
       // the prerequisite-manager-enforced Read instead.
@@ -344,6 +361,15 @@ export class SourceServerBuilder {
           if (config) {
             debug(`[SourceServerBuilder] Built MCP server for ${source.config.slug}`);
             mcpServers[source.config.slug] = config;
+          } else if (getBuiltinMcpReadiness(source.config, {
+            token,
+            credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+          }).status !== 'ready') {
+            const readiness = getBuiltinMcpReadiness(source.config, {
+              token,
+              credential: credential && isMultiHeaderCredential(credential) ? credential : undefined,
+            });
+            errors.push({ sourceSlug: source.config.slug, error: readiness.reason || readiness.status });
           } else if (source.config.mcp?.transport !== 'stdio' && source.config.mcp?.authType !== 'none') {
             // Only report auth error for HTTP/SSE sources that need auth
             // Stdio sources don't need auth

@@ -78,7 +78,7 @@ async function ensureBundledUvForCurrentPlatform(): Promise<void> {
 }
 
 // Multi-instance detection (matches detect-instance.sh logic)
-// Detects instance number from folder name suffix (e.g., craft-agents-1 → instance 1)
+// Detects instance number from folder name suffix (e.g., rox-1 → instance 1)
 function detectInstance(): void {
   const vitePort = resolveVitePort(process.env, ROOT_DIR);
   process.env.CRAFT_VITE_PORT = vitePort;
@@ -91,9 +91,10 @@ function detectInstance(): void {
   if (instanceNum) {
     process.env.CRAFT_INSTANCE_NUMBER = instanceNum;
     process.env.CRAFT_APP_NAME = `Rox [${instanceNum}]`;
-    process.env.CRAFT_CONFIG_DIR = join(process.env.HOME || "", `.craft-agent-${instanceNum}`);
-    process.env.CRAFT_DEEPLINK_SCHEME = `craftagents${instanceNum}`;
-    console.log(`🔢 Instance ${instanceNum} detected: port=${vitePort}, config=${process.env.CRAFT_CONFIG_DIR}`);
+    process.env.ROX_CONFIG_DIR ??= process.env.CRAFT_CONFIG_DIR || join(process.env.HOME || "", `.rox-${instanceNum}`);
+    process.env.CRAFT_CONFIG_DIR = process.env.ROX_CONFIG_DIR;
+    process.env.CRAFT_DEEPLINK_SCHEME = `rox${instanceNum}`;
+    console.log(`🔢 Instance ${instanceNum} detected: port=${vitePort}, config=${process.env.ROX_CONFIG_DIR}`);
   }
 }
 

@@ -1,19 +1,19 @@
 import * as React from 'react'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, SquarePen, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
-import { DndContext, useDraggable, useDroppable, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@craft-agent/ui'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@craft-agent/core/docs'
-import type { ContentFailure, ContentResolution } from '@craft-agent/server-core/docs/descriptor-resolver'
-import type { BlockTreeResult, NativeMarkerMappingPreview } from '@craft-agent/server-core/docs/block-tree-service'
-import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@craft-agent/core/docs'
-import { contentHash as blockContentHash } from '@craft-agent/core/rox2'
-import { parseNoteBlockAddress, resolveNoteBlockId } from '@craft-agent/core/mindmap/derive-note.ts'
+import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@rox/core/docs'
+import type { ContentFailure, ContentResolution } from '@rox/server-core/docs/descriptor-resolver'
+import type { BlockTreeResult, NativeMarkerMappingPreview } from '@rox/server-core/docs/block-tree-service'
+import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@rox/core/docs'
+import { contentHash as blockContentHash } from '@rox/core/rox2'
+import { parseNoteBlockAddress, resolveNoteBlockId } from '@rox/core/mindmap/derive-note.ts'
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteMutationOptions, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { NavigationContext } from '@/contexts/NavigationContext'
@@ -25,6 +25,7 @@ import {
 } from '@/components/session-workbench/right-session-shell'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import {
   contentHash,
   isClaimableLive,
@@ -32,12 +33,13 @@ import {
   soupDocumentListResult,
   soupDocumentReadResult,
   type Rox2Context,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { NotesImportButton } from '@/components/notes/NotesImportButton'
-import { ContextMenu, ContextMenuTrigger, StyledContextMenuContent, StyledContextMenuItem, StyledContextMenuSeparator } from '@/components/ui/styled-context-menu'
+import { handleSidebarTreeKeyDown } from '@/components/app-shell/sidebar-keyboard'
+import { NotesNavigationSidebar } from './notes/NotesNavigationSidebar'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
 import { NotesAIMenu } from './notes/NotesAIMenu'
@@ -49,7 +51,7 @@ import {
   useEntityView,
 } from '@/components/app-shell/EntityViewTabs'
 import { MindMapHost } from '@/mindmap/MindMapHost'
-import { deriveNoteMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
+import { deriveNoteMindMap, type MindMapGraph } from '@rox/core/mindmap'
 import { NotesCommentComposer, NotesCommentHighlights, NotesCommentTooltip, NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
 import {
   NotesBreadcrumbs,
@@ -63,7 +65,7 @@ import {
   loadPersonalTaskStore,
   persistPersonalTaskStore,
 } from '@/lib/personal-tasks'
-import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
+import { PersonalTaskStore } from '@rox/core/tasks/personal'
 import {
   applyPersistentFolds,
   defaultNoteCommands,
@@ -84,7 +86,7 @@ import {
   upsertMarkdownComment,
 } from './notes/document-ia'
 import { selectionComposerOffset } from './notes/comment-highlights'
-import { NOTES_AI_MODEL, NOTES_AI_PROMPTS_STORAGE_KEY, parseNotesAiPrompts, resolveNotesAiInstruction } from './notes/note-ai'
+import { NOTES_AI_PROMPTS_STORAGE_KEY, parseNotesAiPrompts, resolveNotesAiInstruction } from './notes/note-ai'
 import { NOTES_SURFACE_ID, bindNativeNote } from './notes-rox2-surface'
 import {
   aliasesFromProperties,
@@ -94,7 +96,7 @@ import {
   insertFootnote,
   undoEntityMerge,
   updateFootnoteDefinition,
-} from '@craft-agent/shared/knowledge/vault-insights'
+} from '@rox/shared/knowledge/vault-insights'
 import { EMPTY_NOTE_INSIGHTS } from './notes/VaultInsightsPanel'
 import { EMPTY_NOTE_INDEX_HEALTH } from './notes/VaultIndexHealthPanel'
 import {
@@ -271,305 +273,6 @@ function updateMarkdownTitle(content: string, title: string): string {
   return content
 }
 
-// ── Folder tree types & builder ──────────────────────────────────────────────
-
-interface FolderTreeNode {
-  /** Full path from vault root, e.g. "1-Daily/2026/05" */
-  fullPath: string
-  /** Display segment, e.g. "05" */
-  name: string
-  children: FolderTreeNode[]
-  notes: NoteSummary[]
-}
-
-function buildFolderTree(notes: NoteSummary[]): { rootNotes: NoteSummary[]; folders: FolderTreeNode[] } {
-  const rootNotes: NoteSummary[] = []
-  // Map from fullPath → node
-  const nodeMap = new Map<string, FolderTreeNode>()
-
-  function getOrCreate(fullPath: string): FolderTreeNode {
-    if (nodeMap.has(fullPath)) return nodeMap.get(fullPath)!
-    const segments = fullPath.split('/')
-    const name = segments[segments.length - 1] ?? fullPath
-    const node: FolderTreeNode = { fullPath, name, children: [], notes: [] }
-    nodeMap.set(fullPath, node)
-    return node
-  }
-
-  for (const note of notes) {
-    const folder = noteFolder(note)
-    if (!folder) {
-      rootNotes.push(note)
-      continue
-    }
-    // Ensure all ancestor nodes exist
-    const segments = folder.split('/')
-    for (let i = 1; i <= segments.length; i++) {
-      getOrCreate(segments.slice(0, i).join('/'))
-    }
-    getOrCreate(folder).notes.push(note)
-  }
-
-  // Wire parent→child relationships
-  const topLevel: FolderTreeNode[] = []
-  for (const [fullPath, node] of nodeMap) {
-    const segments = fullPath.split('/')
-    if (segments.length === 1) {
-      topLevel.push(node)
-    } else {
-      const parentPath = segments.slice(0, -1).join('/')
-      const parent = nodeMap.get(parentPath)
-      if (parent && !parent.children.includes(node)) {
-        parent.children.push(node)
-      }
-    }
-  }
-
-  const sortNodes = (nodes: FolderTreeNode[]) => {
-    nodes.sort((a, b) => a.name.localeCompare(b.name))
-    for (const node of nodes) sortNodes(node.children)
-  }
-  sortNodes(topLevel)
-  topLevel.sort((a, b) => a.name.localeCompare(b.name))
-
-  return { rootNotes, folders: topLevel }
-}
-
-function DroppableFolderHeader({
-  folder,
-  children,
-}: {
-  folder: string
-  children: (isOver: boolean) => React.ReactNode
-}) {
-  const { isOver, setNodeRef } = useDroppable({
-    id: `folder:${folder}`,
-    data: { type: 'folder', folder },
-  })
-  return <div ref={setNodeRef}>{children(isOver)}</div>
-}
-
-function DraggableNoteItem({
-  note,
-  children,
-}: {
-  note: NoteSummary
-  children: (isDragging: boolean, dragListeners: React.HTMLAttributes<HTMLElement>) => React.ReactNode
-}) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `note:${note.id}`,
-    data: { type: 'note', note },
-  })
-  return (
-    <div ref={setNodeRef} {...attributes}>
-      {children(isDragging, listeners ?? {})}
-    </div>
-  )
-}
-
-// ── FolderTreeItem ────────────────────────────────────────────────────────────
-// Renders one folder node recursively. depth controls indent level (0 = top).
-
-interface FolderTreeItemProps {
-  node: FolderTreeNode
-  depth: number
-  activeNoteId: string | null | undefined
-  collapsedFolders: Set<string>
-  onToggleFolder(folder: string): void
-  onOpenNote(noteId: string): void
-  onOpenCreateNoteDialog(folder?: string): void
-  onOpenRenameFolder(folder: string): void
-  onOpenDeleteFolder(folder: string): void
-  onOpenMoveDialog(note: NoteSummary): void
-  onOpenRenameDialogForNote(note: NoteSummary): void
-  onOpenDeleteDialogForNote(note: NoteSummary): void
-  onDuplicateNote(note: NoteSummary): void
-  onCopyNoteLink(note: NoteSummary): void
-  onCopyNotePath(note: NoteSummary): void
-  onRevealNote(note: NoteSummary): void
-}
-
-function FolderTreeItem({
-  node,
-  depth,
-  activeNoteId,
-  collapsedFolders,
-  onToggleFolder,
-  onOpenNote,
-  onOpenCreateNoteDialog,
-  onOpenRenameFolder,
-  onOpenDeleteFolder,
-  onOpenMoveDialog,
-  onOpenRenameDialogForNote,
-  onOpenDeleteDialogForNote,
-  onDuplicateNote,
-  onCopyNoteLink,
-  onCopyNotePath,
-  onRevealNote,
-}: FolderTreeItemProps) {
-  const { t } = useTranslation()
-  const isCollapsed = collapsedFolders.has(node.fullPath)
-  const indent = depth * 12
-
-  return (
-    <div>
-      <DroppableFolderHeader folder={node.fullPath}>
-        {(isOver) => (
-          <ContextMenu>
-            <ContextMenuTrigger asChild>
-              <div
-                className={cn(
-                  'mb-0.5 flex h-7 cursor-pointer items-center gap-1 rounded-[6px] pr-2 text-sm font-medium text-muted-foreground hover:bg-foreground/[0.04]',
-                  isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]'
-                )}
-                style={{ paddingLeft: `${8 + indent}px` }}
-                onClick={() => onToggleFolder(node.fullPath)}
-              >
-                {isCollapsed
-                  ? <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                  : <ChevronDown className="h-3.5 w-3.5 shrink-0" />}
-                {isCollapsed
-                  ? <Folder className="h-4 w-4 shrink-0" />
-                  : <FolderOpen className="h-4 w-4 shrink-0" />}
-                <span className="min-w-0 flex-1 truncate" title={node.fullPath}>
-                  {node.name}
-                </span>
-                <span className="text-xs text-muted-foreground/50 tabular-nums">
-                  {countFolderNotes(node)}
-                </span>
-              </div>
-            </ContextMenuTrigger>
-            <StyledContextMenuContent>
-              <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(node.fullPath)}>
-                <FilePlus2 className="h-3.5 w-3.5" />
-                {t('notes.menu.newInFolder')}
-              </StyledContextMenuItem>
-              <StyledContextMenuItem onClick={() => onOpenRenameFolder(node.fullPath)}>
-                <Pencil className="h-3.5 w-3.5" />
-                {t('notes.menu.renameFolder')}
-              </StyledContextMenuItem>
-              <StyledContextMenuSeparator />
-              <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteFolder(node.fullPath)}>
-                <Trash2 className="h-3.5 w-3.5" />
-                {t('notes.menu.deleteFolder')}
-              </StyledContextMenuItem>
-            </StyledContextMenuContent>
-          </ContextMenu>
-        )}
-      </DroppableFolderHeader>
-
-      {!isCollapsed && (
-        <>
-          {/* Child sub-folders first */}
-          {node.children.map(child => (
-            <FolderTreeItem
-              key={child.fullPath}
-              node={child}
-              depth={depth + 1}
-              activeNoteId={activeNoteId}
-              collapsedFolders={collapsedFolders}
-              onToggleFolder={onToggleFolder}
-              onOpenNote={onOpenNote}
-              onOpenCreateNoteDialog={onOpenCreateNoteDialog}
-              onOpenRenameFolder={onOpenRenameFolder}
-              onOpenDeleteFolder={onOpenDeleteFolder}
-              onOpenMoveDialog={onOpenMoveDialog}
-              onOpenRenameDialogForNote={onOpenRenameDialogForNote}
-              onOpenDeleteDialogForNote={onOpenDeleteDialogForNote}
-              onDuplicateNote={onDuplicateNote}
-              onCopyNoteLink={onCopyNoteLink}
-              onCopyNotePath={onCopyNotePath}
-              onRevealNote={onRevealNote}
-            />
-          ))}
-
-          {/* Notes directly inside this folder */}
-          {node.notes.map(note => (
-            <DraggableNoteItem key={note.id} note={note}>
-              {(isDragging, dragListeners) => (
-                <ContextMenu>
-                  <ContextMenuTrigger asChild>
-                    <button
-                      onClick={() => onOpenNote(note.id)}
-                      style={{
-                        paddingLeft: `${14 + indent + 12}px`,
-                        contentVisibility: 'auto',
-                        containIntrinsicSize: '0 44px',
-                      }}
-                      className={cn(
-                        'notes-list-item mb-0.5 w-full rounded-[6px] pr-2.5 py-1.5 text-left hover:bg-foreground/[0.05]',
-                        activeNoteId === note.id && 'notes-list-item-active',
-                        isDragging && 'opacity-50'
-                      )}
-                      {...dragListeners}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                        <div className="min-w-0 flex-1 truncate text-sm">{note.title}</div>
-                      </div>
-                      {note.tags.length > 0 && (
-                        <div className="mt-1 flex flex-wrap gap-1" style={{ paddingLeft: '20px' }}>
-                          {note.tags.slice(0, 3).map(tag => (
-                            <span key={tag} className="rounded-[4px] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
-                          ))}
-                        </div>
-                      )}
-                    </button>
-                  </ContextMenuTrigger>
-                  <StyledContextMenuContent>
-                    <StyledContextMenuItem onClick={() => onOpenNote(note.id)}>
-                      <FileText className="h-3.5 w-3.5" />
-                      {t('common.open')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuItem onClick={() => onOpenRenameDialogForNote(note)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                      {t('common.rename')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(noteFolder(note) || undefined)}>
-                      <FilePlus2 className="h-3.5 w-3.5" />
-                      {t('notes.menu.newHere')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuItem onClick={() => onDuplicateNote(note)}>
-                      <Copy className="h-3.5 w-3.5" />
-                      {t('notes.menu.duplicate')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuItem onClick={() => onOpenMoveDialog(note)}>
-                      <FolderInput className="h-3.5 w-3.5" />
-                      {t('notes.menu.moveToFolder')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuSeparator />
-                    <StyledContextMenuItem onClick={() => onCopyNoteLink(note)}>
-                      <Link2 className="h-3.5 w-3.5" />
-                      {t('notes.menu.copyLink')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuItem onClick={() => onCopyNotePath(note)}>
-                      <FileText className="h-3.5 w-3.5" />
-                      {t('notes.menu.copyPath')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuItem onClick={() => onRevealNote(note)}>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      {t('notes.menu.reveal')}
-                    </StyledContextMenuItem>
-                    <StyledContextMenuSeparator />
-                    <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteDialogForNote(note)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                      {t('common.delete')}
-                    </StyledContextMenuItem>
-                  </StyledContextMenuContent>
-                </ContextMenu>
-              )}
-            </DraggableNoteItem>
-          ))}
-        </>
-      )}
-    </div>
-  )
-}
-
-function countFolderNotes(node: FolderTreeNode): number {
-  return node.notes.length + node.children.reduce((sum, c) => sum + countFolderNotes(c), 0)
-}
-
 export default function NotesPage(props: NotesPageProps) {
   const { t } = useTranslation()
   const { activeWorkspaceId } = useAppShellContext()
@@ -585,6 +288,7 @@ export default function NotesPage(props: NotesPageProps) {
 }
 
 function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
+  const shellSidebarTarget = useShellSidebarTarget()
   const { t } = useTranslation()
   const navigationRevision = React.useContext(NavigationContext)?.navigationRevision
   const {
@@ -1321,7 +1025,6 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       return ia - ib
     })
   }, [notes, sidebarOrder, searchResults, query, selectedTag])
-  const folderTree = React.useMemo(() => buildFolderTree(visibleNotes), [visibleNotes])
   const allTags = React.useMemo(() => {
     const tags = new Set<string>()
     notes.forEach(note => note.tags.forEach(tag => tags.add(tag)))
@@ -2057,7 +1760,8 @@ h1,h2,h3{margin-top:1.5em}
       setRightSessionFocusToken((n) => n + 1)
       return
     }
-    const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName, model: NOTES_AI_MODEL })
+    // The session service resolves the selected workspace's provider and model.
+    const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName })
     const ctx = bindRightSessionContext({ ...surface, sessionId: session.id })
     // Prefill only — do NOT auto-send. Keep note open; open side session panel.
     onInputChange(session.id, opts.prompt)
@@ -2374,11 +2078,14 @@ h1,h2,h3{margin-top:1.5em}
     <>
     <NotesEditorHeadlineStyles />
     <div className="notes-shell flex h-full min-w-0">
-      <aside
+      <ShellSidebarPortal
         className="notes-side-surface shrink-0 flex flex-col min-h-0"
         style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
         hidden={railLayout.vaultCollapsed}
         data-testid="notes-vault-rail"
+        data-focus-zone="sidebar"
+        onKeyDown={handleSidebarTreeKeyDown}
+        aria-label={t('notes.header.title')}
       >
         <div className="shrink-0 px-3 py-2">
           <div className="flex items-center gap-2">
@@ -2388,22 +2095,31 @@ h1,h2,h3{margin-top:1.5em}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('notes.search.placeholder')}
+                aria-label={t('notes.search.placeholder')}
                 className="h-7 w-full rounded-[6px] border-0 bg-foreground/[0.06] pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/70 focus:bg-foreground/[0.09]"
               />
             </div>
-            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')}>
-              <CalendarDays className="h-4 w-4" />
+            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')} aria-label={t('notes.toolbar.daily')}>
+              <CalendarDays className="h-4 w-4 text-emerald-500" aria-hidden="true" />
             </button>
-            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')}>
-              <FolderPlus className="h-4 w-4" />
+            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')} aria-label={t('notes.toolbar.newFolder')}>
+              <FolderPlus className="h-4 w-4 text-amber-500" aria-hidden="true" />
             </button>
-            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')}>
-              <FilePlus2 className="h-4 w-4" />
+            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}>
+              <FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" />
             </button>
           </div>
           {allTags.length > 0 && (
-            <div className="mt-2 max-h-36 overflow-y-auto rounded-[10px] bg-foreground/[0.03] p-1">
+            <details open className="group/notes-tags mt-2 rounded-[10px] bg-foreground/[0.03] p-1" data-notes-disclosure>
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[6px] px-2 py-1 text-[11px] font-medium text-muted-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                <ChevronRight className="h-3 w-3 shrink-0 transition-transform duration-150 group-open/notes-tags:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
+                <Tags className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden="true" />
+                <span className="flex-1">{t('notes.inspector.tags')}</span>
+                <span className="tabular-nums">{allTags.length}</span>
+              </summary>
+              <div className="max-h-36 overflow-y-auto">
               <button
+                aria-pressed={!selectedTag}
                 className={cn(
                   'flex w-full items-center rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                   !selectedTag && 'bg-foreground/[0.08]'
@@ -2415,6 +2131,7 @@ h1,h2,h3{margin-top:1.5em}
               {allTags.map(tag => (
                 <button
                   key={tag}
+                  aria-pressed={selectedTag === tag}
                   className={cn(
                     'flex w-full items-center rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                     selectedTag === tag && 'bg-foreground/[0.08]'
@@ -2424,128 +2141,43 @@ h1,h2,h3{margin-top:1.5em}
                   #{tag}
                 </button>
               ))}
-            </div>
+              </div>
+            </details>
           )}
         </div>
         <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
         <div className="flex-1 min-h-0 overflow-y-auto p-2">
-          {(folderTree.rootNotes.length > 0 || folderTree.folders.length > 0) ? (
-            <>
-              {/* Root-level notes (no folder) */}
-              {folderTree.rootNotes.map(note => (
-                <DraggableNoteItem key={note.id} note={note}>
-                  {(isDragging, dragListeners) => (
-                    <ContextMenu>
-                      <ContextMenuTrigger asChild>
-                        <button
-                          onClick={() => handleOpenNote(note.id)}
-                          style={{ contentVisibility: 'auto', containIntrinsicSize: '0 44px' }}
-                          className={cn(
-                            'notes-list-item mb-0.5 w-full rounded-[6px] px-2.5 py-1.5 text-left hover:bg-foreground/[0.05]',
-                            activeNote?.id === note.id && 'notes-list-item-active',
-                            isDragging && 'opacity-50'
-                          )}
-                          {...dragListeners}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                            <div className="min-w-0 flex-1 truncate text-sm">{note.title}</div>
-                          </div>
-                          {note.tags.length > 0 && (
-                            <div className="mt-1 flex flex-wrap gap-1 pl-5">
-                              {note.tags.slice(0, 3).map(tag => (
-                                <span key={tag} className="rounded-[4px] bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground">#{tag}</span>
-                              ))}
-                            </div>
-                          )}
-                        </button>
-                      </ContextMenuTrigger>
-                      <StyledContextMenuContent>
-                        <StyledContextMenuItem onClick={() => handleOpenNote(note.id)}>
-                          <FileText className="h-3.5 w-3.5" />
-                          {t('common.open')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuItem onClick={() => openRenameDialogForNote(note)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                          {t('common.rename')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuItem onClick={() => openCreateNoteDialog()}>
-                          <FilePlus2 className="h-3.5 w-3.5" />
-                          {t('notes.menu.newHere')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuItem onClick={() => duplicateNote(note)}>
-                          <Copy className="h-3.5 w-3.5" />
-                          {t('notes.menu.duplicate')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuItem onClick={() => openMoveDialog(note)}>
-                          <FolderInput className="h-3.5 w-3.5" />
-                          {t('notes.menu.moveToFolder')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuSeparator />
-                        <StyledContextMenuItem onClick={() => copyNoteLink(note)}>
-                          <Link2 className="h-3.5 w-3.5" />
-                          {t('notes.menu.copyLink')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuItem onClick={() => copyNotePath(note)}>
-                          <FileText className="h-3.5 w-3.5" />
-                          {t('notes.menu.copyPath')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuItem onClick={() => revealNote(note)}>
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          {t('notes.menu.reveal')}
-                        </StyledContextMenuItem>
-                        <StyledContextMenuSeparator />
-                        <StyledContextMenuItem variant="destructive" onClick={() => openDeleteDialogForNote(note)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                          {t('common.delete')}
-                        </StyledContextMenuItem>
-                      </StyledContextMenuContent>
-                    </ContextMenu>
-                  )}
-                </DraggableNoteItem>
-              ))}
-
-              {/* Folder tree */}
-              {folderTree.folders.map(node => (
-                <FolderTreeItem
-                  key={node.fullPath}
-                  node={node}
-                  depth={0}
-                  activeNoteId={activeNote?.id}
-                  collapsedFolders={collapsedFolders}
-                  onToggleFolder={toggleFolder}
-                  onOpenNote={handleOpenNote}
-                  onOpenCreateNoteDialog={openCreateNoteDialog}
-                  onOpenRenameFolder={openRenameFolderDialog}
-                  onOpenDeleteFolder={openDeleteFolderDialog}
-                  onOpenMoveDialog={openMoveDialog}
-                  onOpenRenameDialogForNote={openRenameDialogForNote}
-                  onOpenDeleteDialogForNote={openDeleteDialogForNote}
-                  onDuplicateNote={duplicateNote}
-                  onCopyNoteLink={copyNoteLink}
-                  onCopyNotePath={copyNotePath}
-                  onRevealNote={revealNote}
-                />
-              ))}
-            </>
-          ) : (
-            <div className="px-3 py-10 text-center text-xs text-muted-foreground">
-              {query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
-            </div>
-          )}
+          <NotesNavigationSidebar
+            notes={visibleNotes}
+            activeNoteId={activeNote?.id}
+            collapsedFolders={collapsedFolders}
+            onToggleFolder={toggleFolder}
+            onOpenNote={handleOpenNote}
+            onOpenCreateNoteDialog={openCreateNoteDialog}
+            onOpenRenameFolder={openRenameFolderDialog}
+            onOpenDeleteFolder={openDeleteFolderDialog}
+            onOpenMoveDialog={openMoveDialog}
+            onOpenRenameDialogForNote={openRenameDialogForNote}
+            onOpenDeleteDialogForNote={openDeleteDialogForNote}
+            onDuplicateNote={duplicateNote}
+            onCopyNoteLink={copyNoteLink}
+            onCopyNotePath={copyNotePath}
+            onRevealNote={revealNote}
+            emptyMessage={query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
+          />
         </div>
         </DndContext>
         <div className="shrink-0 px-3 py-2 text-[11px] text-muted-foreground/80">
           {t('notes.vault.noteCount', { count: notes.length })} · {t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
-      </aside>
-      <NotesRailSash
+      </ShellSidebarPortal>
+      {!shellSidebarTarget && <NotesRailSash
         width={railLayout.vault}
         onWidth={(vault) => setRailLayout({ vault })}
         collapsed={railLayout.vaultCollapsed}
         onToggle={() => setRailLayout({ vaultCollapsed: !railLayout.vaultCollapsed })}
         label={t('notes.layout.resizeVault')}
-      />
+      />}
 
       <main className="notes-content-surface flex-1 min-w-0 flex flex-col">
         <div className="h-[42px] shrink-0 px-3 flex items-center gap-2">
@@ -2941,6 +2573,7 @@ h1,h2,h3{margin-top:1.5em}
                 }}
                 onTagClick={(tag) => setSelectedTag(selectedTag === tag ? null : tag)}
                 placeholder={t('notes.editor.placeholder')}
+                foldingStorageKey={`rox:notes:folding:${activeWorkspaceId}:${activeNote.id}`}
                 markdownEngine="legacy"
                 className="notes-editor-prose mx-auto w-full max-w-[70ch] min-h-full"
               />

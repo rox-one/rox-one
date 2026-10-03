@@ -19,7 +19,7 @@ import type {
   PersonalTasksMigrateInput,
   PersonalTasksMigrateResult,
   PersonalTasksSnapshot,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 import { PersonalTaskPersistStore } from './personal-persist.ts'
 
 export type { PersonalTasksMigrateInput, PersonalTasksMigrateResult, PersonalTasksSnapshot }

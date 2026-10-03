@@ -35,8 +35,9 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     expect(toolbar.every((l) => !l.includes('text-[11px]') && !l.includes('h-7'))).toBe(true)
   })
 
-  it('does not reopen inspector strip host from #958/#959', () => {
-    expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
+  it('retains the inspector while collapsed and honors overlay suppression', () => {
+    expect(host).toContain('<RetainedSurface visible={!inspectorSuppressed && (chrome.showInspector || inspectorVisible || chromeCollapsed)}>')
+    expect(host).toContain('<InspectorHost />')
     const start = inspector.indexOf('if (chromeCollapsed)')
     const collapsedReturn = inspector.indexOf('return (', start)
     const expandedReturn = inspector.indexOf('return (', collapsedReturn + 1)
@@ -46,7 +47,7 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     expect(collapsed).not.toContain('mt-1 mb-1')
   })
 
-  it('uses rounded pane spacing without duplicate bottom dock margins', () => {
+  it('preserves rounded shell gaps without extra terminal dock margins', () => {
     const constants = readFileSync(join(appShell, 'panel-constants.ts'), 'utf8')
     expect(constants).toContain('PANEL_STACK_TOP_INSET = 4')
     expect(constants).toContain('PANEL_STACK_BOTTOM_INSET = 0')

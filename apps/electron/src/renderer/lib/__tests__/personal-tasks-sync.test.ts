@@ -8,7 +8,7 @@ import {
   type PersonalTask,
   type PersonalTasksMigrateInput,
   type PersonalTasksSnapshot,
-} from '@craft-agent/core/tasks/personal'
+} from '@rox/core/tasks/personal'
 import {
   PERSONAL_TASKS_PRE_MIGRATION_KEY,
   diffPersonalTaskBundles,

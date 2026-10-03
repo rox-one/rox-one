@@ -1,5 +1,5 @@
 /**
- * Память — three-pane memory manager over the real lesson stores.
+ * Память — readable, responsive memory manager over the real lesson stores.
  *
  * Facets (scope · status · type · source · usage · topics · tags) → list
  * (search, sort, keyword topics, bulk select) → detail (full text, edit,
@@ -12,9 +12,10 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { toast } from 'sonner'
-import type { Lesson, LessonCategory, LessonScope, PromotionCandidate } from '@craft-agent/shared/memory/types'
-import { lessonTokens, estimateTokens } from '@craft-agent/shared/memory/context-select'
-import { LESSON_LIMITS } from '@craft-agent/shared/memory/types'
+import { Brain, CheckCheck, ChevronDown, FileText, FolderClosed, Globe2, Heart, Lightbulb, ListChecks, Pin, Power, Search, ShieldAlert, SlidersHorizontal, Sparkles, X, type LucideIcon } from 'lucide-react'
+import type { Lesson, LessonCategory, LessonScope, PromotionCandidate } from '@rox/shared/memory/types'
+import { lessonTokens, estimateTokens } from '@rox/shared/memory/context-select'
+import { LESSON_LIMITS } from '@rox/shared/memory/types'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useNavigation, routes } from '@/contexts/NavigationContext'
 import { getSessionTitle } from '@/utils/session'
@@ -23,7 +24,6 @@ import {
   clusterTopics,
   contextSelection,
   countBy,
-  duplicateIds,
   lessonId,
   matchesFilter,
   mergePatch,
@@ -36,6 +36,7 @@ import {
   type StatusFacet,
   type UsageBucket,
 } from '@/lib/memory-model'
+import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
 import { MemoryListPanel } from '@/components/app-shell/MemoryListPanel'
 
 const BUILTIN: LessonCategory[] = ['correction', 'preference', 'workflow', 'knowledge']
@@ -43,6 +44,8 @@ const SORTS: MemorySort[] = ['usage', 'recency', 'tokens', 'conflicts']
 const STATUSES: StatusFacet[] = ['inContext', 'pinned', 'negative', 'disabled', 'conflicts', 'merged']
 const USAGE: UsageBucket[] = ['often', 'some', 'never']
 const TRIGGERS = ['explicit', 'distillation', 'branch', 'interrupted', 'error'] as const
+const CATEGORY_ICONS: Record<LessonCategory, LucideIcon> = { correction: CheckCheck, preference: Heart, workflow: ListChecks, knowledge: Lightbulb }
+const STATUS_ICONS: Record<StatusFacet, LucideIcon> = { inContext: Sparkles, pinned: Pin, disabled: Power, conflicts: ShieldAlert, negative: ShieldAlert, merged: FileText }
 
 type FacetKey = keyof Omit<MemoryFilter, 'query'>
 
@@ -54,13 +57,14 @@ function FacetTitle({ children }: { children: React.ReactNode }) {
   return <div className="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-muted">{children}</div>
 }
 
-function FacetItem({ label, count, active, onClick, tone, testId }: {
+function FacetItem({ label, count, active, onClick, tone, testId, icon: Icon }: {
   label: React.ReactNode
   count?: number
   active?: boolean
   onClick: () => void
   tone?: 'danger' | 'accent'
   testId?: string
+  icon?: LucideIcon
 }) {
   return (
     <button
@@ -69,10 +73,11 @@ function FacetItem({ label, count, active, onClick, tone, testId }: {
       data-testid={testId}
       onClick={onClick}
       className={cn(
-        'flex h-7 w-full min-w-0 items-center gap-2 rounded-[6px] px-2 text-left text-[13px] outline-none focus-visible:shadow-[inset_0_0_0_1.5px_var(--accent)]',
+        'flex min-h-8 w-full min-w-0 items-center gap-2 rounded-lg px-2 text-left text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
         active ? 'bg-foreground/[0.09] font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
       )}
     >
+      {Icon ? <Icon aria-hidden="true" className={cn('size-4 shrink-0', tone === 'danger' ? 'text-destructive' : active ? 'text-accent' : 'text-text-muted')} /> : null}
       <span className={cn('min-w-0 flex-1 truncate', tone === 'danger' && 'text-destructive', tone === 'accent' && 'text-accent')}>{label}</span>
       {count != null ? <span className="shrink-0 text-[11px] tabular-nums text-text-muted">{count}</span> : null}
     </button>
@@ -81,7 +86,7 @@ function FacetItem({ label, count, active, onClick, tone, testId }: {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[112px_1fr] items-baseline gap-2 py-[3px] text-[12px]">
+    <div className="grid grid-cols-[88px_minmax(0,1fr)] items-baseline gap-3 py-1.5 text-[12px]">
       <span className="text-text-muted">{label}</span>
       <span className="min-w-0 break-words">{children}</span>
     </div>
@@ -116,7 +121,7 @@ function Btn({ children, onClick, danger, primary, disabled, testId, title }: {
       title={title}
       data-testid={testId}
       className={cn(
-        'inline-flex h-7 shrink-0 items-center gap-1 rounded-[6px] px-2.5 text-[12px] font-medium outline-none disabled:opacity-40 focus-visible:shadow-[inset_0_0_0_1.5px_var(--accent)]',
+        'inline-flex h-7 shrink-0 items-center gap-1 rounded-[6px] px-2.5 text-[12px] font-medium outline-none disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
         primary ? 'bg-accent text-[var(--accent-foreground,white)] hover:brightness-110'
           : danger ? 'bg-destructive/12 text-destructive hover:bg-destructive/20'
           : 'bg-foreground/[0.07] text-foreground hover:bg-foreground/[0.11]',
@@ -144,13 +149,13 @@ function Confirm({ title, body, confirmLabel, onConfirm, onCancel, children }: {
       onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel() }}
       onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onCancel() } }}
     >
-      <div role="alertdialog" aria-modal="true" aria-label={title} className="w-[min(520px,92vw)] rounded-[10px] bg-background p-4 shadow-xl ring-1 ring-foreground/15">
+      <div role="alertdialog" aria-modal="true" aria-label={title} className="w-[min(520px,92vw)] rounded-[10px] bg-background p-4 shadow-modal-small ring-1 ring-foreground/15">
         <h3 className="text-[15px] font-semibold">{title}</h3>
         {body ? <div className="mt-2 text-[13px] text-text-secondary">{body}</div> : null}
         {children}
         <div className="mt-4 flex justify-end gap-2">
           <Btn onClick={onCancel}>{t('memory.cancel')}</Btn>
-          <button ref={ref} type="button" onClick={onConfirm} data-testid="memory-confirm" className="inline-flex h-7 items-center rounded-[6px] bg-destructive px-2.5 text-[12px] font-medium text-white hover:brightness-110 focus-visible:shadow-[0_0_0_2px_var(--background),0_0_0_4px_var(--destructive)]">
+          <button ref={ref} type="button" onClick={onConfirm} data-testid="memory-confirm" className="inline-flex h-7 items-center rounded-[6px] bg-destructive px-2.5 text-[12px] font-medium text-white hover:brightness-110 focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background">
             {confirmLabel}
           </button>
         </div>
@@ -163,11 +168,12 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const { t, i18n } = useTranslation()
   const { navigate } = useNavigation()
   const sessionMap = useAtomValue(sessionMetaMapAtom)
+  const sidebarTarget = useShellSidebarTarget()
   const [lessons, setLessons] = React.useState<Lesson[] | null>(null)
   const [archivedLessons, setArchivedLessons] = React.useState<Array<{ id: string; lesson: Lesson }>>([])
   const [candidates, setCandidates] = React.useState<PromotionCandidate[]>([])
   const [filter, setFilter] = React.useState<MemoryFilter>({})
-  const [sort, setSort] = React.useState<MemorySort>('usage')
+  const [sort, setSort] = React.useState<MemorySort>('recency')
   const [grouped, setGrouped] = React.useState(false)
   const [filesView, setFilesView] = React.useState(false)
   const [archiveView, setArchiveView] = React.useState(false)
@@ -186,31 +192,55 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const [mergeKeeper, setMergeKeeper] = React.useState<string | null>(null)
   const [mergeText, setMergeText] = React.useState('')
   const [busy, setBusy] = React.useState(false)
+  const [filtersOpen, setFiltersOpen] = React.useState(false)
+  const [loadError, setLoadError] = React.useState(false)
+  const loadGeneration = React.useRef(0)
+  const currentWorkspace = React.useRef(workspaceId)
+  currentWorkspace.current = workspaceId
+  const optionPrefix = React.useId()
   const searchRef = React.useRef<HTMLInputElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
+  const detailCloseRef = React.useRef<HTMLButtonElement>(null)
 
   const load = React.useCallback(() => {
-    window.electronAPI.listMemoryLessons('both', workspaceId).then(setLessons).catch(() => setLessons([]))
-    window.electronAPI.listMemoryArchive('global', workspaceId).then((global) => {
-      window.electronAPI.listMemoryArchive('workspace', workspaceId).then((workspace) => setArchivedLessons([...global, ...workspace])).catch(() => setArchivedLessons(global))
-    }).catch(() => {
-      window.electronAPI.listMemoryArchive('workspace', workspaceId).then(setArchivedLessons).catch(() => setArchivedLessons([]))
+    if (currentWorkspace.current !== workspaceId) return
+    const generation = ++loadGeneration.current
+    setLoadError(false)
+    window.electronAPI.listMemoryLessons('both', workspaceId).then((items) => {
+      if (generation === loadGeneration.current) setLessons(items)
+    }).catch(() => { if (generation === loadGeneration.current) setLoadError(true) })
+    void Promise.allSettled([
+      window.electronAPI.listMemoryArchive('global', workspaceId),
+      window.electronAPI.listMemoryArchive('workspace', workspaceId),
+    ]).then((results) => {
+      if (generation === loadGeneration.current) setArchivedLessons(results.flatMap((result) => result.status === 'fulfilled' ? result.value : []))
     })
-    window.electronAPI.listPromotionCandidates().then(setCandidates).catch(() => setCandidates([]))
+    window.electronAPI.listPromotionCandidates().then((items) => {
+      if (generation === loadGeneration.current) setCandidates(items)
+    }).catch(() => { if (generation === loadGeneration.current) setCandidates([]) })
   }, [workspaceId])
   React.useEffect(() => {
+    setLessons(null)
+    setArchivedLessons([])
+    setCandidates([])
+    setSelectedId(null)
+    setChecked(new Set())
+    setBusy(false)
+    setFilter({})
     load()
-    return window.electronAPI.onMemoryChanged(() => load())
+    const unsubscribe = window.electronAPI.onMemoryChanged(() => load())
+    const invalidatePendingLoads = () => { ++loadGeneration.current }
+    return () => { invalidatePendingLoads(); unsubscribe() }
   }, [load])
 
-  const all = lessons ?? []
+  const all = React.useMemo(() => lessons ?? [], [lessons])
   const byId = React.useMemo(() => new Map(all.map((l) => [lessonId(l), l])), [all])
   const inContext = React.useMemo(() => contextSelection(all), [all])
   const budget = React.useMemo(() => tokenBudget(all, inContext), [all, inContext])
   const { topics, topicOf } = React.useMemo(() => clusterTopics(all), [all])
-  const dupes = React.useMemo(() => duplicateIds(all), [all])
   const ctx = React.useMemo(() => ({ inContext, topicOf }), [inContext, topicOf])
   const visible = React.useMemo(() => sortLessons(all.filter((l) => matchesFilter(l, filter, ctx)), sort), [all, filter, ctx, sort])
+  const visibleIndexes = React.useMemo(() => new Map(visible.map((lesson, index) => [lessonId(lesson), index])), [visible])
   const selected = selectedId ? byId.get(selectedId) : undefined
   const counts = React.useMemo(() => ({
     scope: countBy(all, (l) => l.scope),
@@ -243,9 +273,15 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const setFacet = (key: FacetKey, value: string | null) => {
     setFilesView(false)
     setArchiveView(false)
+    setSelectedId(null)
+    setFiltersOpen(false)
     setFilter((prev) => ({ ...prev, [key]: prev[key] === value ? null : value }))
   }
-  const clearFacets = () => { setFilesView(false); setArchiveView(false); setFilter((prev) => ({ query: prev.query })) }
+  const clearFacets = () => { setFilesView(false); setArchiveView(false); setSelectedId(null); setFiltersOpen(false); setFilter((prev) => ({ query: prev.query })) }
+  const closeDetails = () => {
+    setSelectedId(null)
+    requestAnimationFrame(() => listRef.current?.focus())
+  }
   const activeFacets = (Object.keys(filter) as Array<keyof MemoryFilter>).filter((k) => k !== 'query' && filter[k] != null).length
 
   const wsFor = (lesson: Lesson) => (lesson.scope === 'global' ? null : workspaceId ?? null)
@@ -253,12 +289,11 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     setBusy(true)
     try {
       await fn()
-      if (okKey) toast.success(t(okKey))
+      if (okKey && currentWorkspace.current === workspaceId) toast.success(t(okKey))
     } catch (error) {
-      toast.error(t('memory.lessonUpdateFailed'), { description: error instanceof Error ? error.message : String(error) })
+      if (currentWorkspace.current === workspaceId) toast.error(t('memory.lessonUpdateFailed'), { description: error instanceof Error ? error.message : String(error) })
     } finally {
-      setBusy(false)
-      load()
+      if (currentWorkspace.current === workspaceId) { setBusy(false); load() }
     }
   }
   const restoreArchived = async (entry: { id: string; lesson: Lesson }) => {
@@ -274,7 +309,14 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       load()
     }
   }
-  const patch = (lesson: Lesson, next: Partial<Omit<Lesson, 'scope'>>) => window.electronAPI.updateMemoryLesson(wsFor(lesson), lesson.scope, lesson.rule, next)
+  const patch = async (lesson: Lesson, next: Partial<Omit<Lesson, 'scope'>>) => {
+    const updated = await window.electronAPI.updateMemoryLesson(wsFor(lesson), lesson.scope, lesson.rule, next)
+    if (updated === null) throw new Error(t('memory.lessonUpdateFailed'))
+    if (updated && currentWorkspace.current === workspaceId) {
+      setLessons((previous) => previous?.map((item) => lessonId(item) === lessonId(lesson) ? updated : item) ?? null)
+    }
+    return updated
+  }
   const patchMany = (ids: readonly string[], next: (lesson: Lesson) => Partial<Omit<Lesson, 'scope'>> | null, okKey?: string) => run(async () => {
     for (const id of ids) {
       const lesson = byId.get(id)
@@ -298,10 +340,11 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
 
   const saveEdit = (lesson: Lesson) => {
     const rule = draft.trim()
-    setEditing(false)
-    if (!rule || rule === lesson.rule) return
+    if (!rule || rule === lesson.rule) { setEditing(false); return }
     void run(async () => {
       await patch(lesson, { rule, editedAt: new Date().toISOString() })
+      if (currentWorkspace.current !== workspaceId) return
+      setEditing(false)
       setSelectedId(lessonId({ scope: lesson.scope, rule }))
     })
   }
@@ -316,6 +359,14 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     void run(async () => {
       const result = await window.electronAPI.addMemoryLesson(addScope === 'global' ? null : workspaceId ?? null, {
         rule, category: addCategory, scope: addScope, ...(addNegative ? { negative: true } : {}),
+      })
+      if (currentWorkspace.current !== workspaceId) return
+      setLessons((previous) => {
+        const items = previous ?? []
+        const id = lessonId(result.lesson)
+        return items.some((item) => lessonId(item) === id)
+          ? items.map((item) => lessonId(item) === id ? result.lesson : item)
+          : [...items, result.lesson]
       })
       setAddRule('')
       setAddNegative(false)
@@ -398,9 +449,10 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     const target = event.target as HTMLElement
     if (target.closest('input, textarea')) return
     const index = selected ? visible.findIndex((l) => lessonId(l) === selectedId) : -1
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End') {
       event.preventDefault()
-      const next = visible[Math.min(visible.length - 1, Math.max(0, index + (event.key === 'ArrowDown' ? 1 : -1)))]
+      const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? visible.length - 1 : Math.min(visible.length - 1, Math.max(0, index + (event.key === 'ArrowDown' ? 1 : -1)))
+      const next = visible[nextIndex]
       if (next) setSelectedId(lessonId(next))
     } else if (event.key === ' ' && selected) {
       event.preventDefault()
@@ -409,7 +461,8 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       event.preventDefault()
       setChecked(new Set(visible.map(lessonId)))
     } else if (event.key === 'Escape') {
-      setChecked(new Set())
+      if (checked.size) setChecked(new Set())
+      else setSelectedId(null)
     } else if (event.key === 'Enter' && selected) {
       setDraft(selected.rule)
       setEditing(true)
@@ -420,21 +473,32 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   React.useEffect(() => {
     if (!selectedId) return
     listRef.current?.querySelector<HTMLElement>(`[data-lesson-id="${CSS.escape(selectedId)}"]`)?.scrollIntoView({ block: 'nearest' })
+    const frame = requestAnimationFrame(() => {
+      if (listRef.current && listRef.current.getClientRects().length === 0) detailCloseRef.current?.focus()
+    })
+    return () => cancelAnimationFrame(frame)
   }, [selectedId])
 
   // ── Facets ───────────────────────────────────────────────────────────────
   const categoryLabel = (c: string) => (BUILTIN.includes(c as LessonCategory) ? t(`memory.category.${c}`) : c)
   const facets = (
-    <nav className="flex w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2" aria-label={t('memory.screen.facets')} data-testid="memory-facets">
-      <FacetItem label={t('memory.screen.all')} count={all.length} active={!activeFacets && !filesView && !archiveView} onClick={clearFacets} testId="memory-facet-all" />
+    <ShellSidebarPortal className={cn(
+      'w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2',
+      selected ? 'hidden @[920px]/memory:flex' : 'hidden @[760px]/memory:flex',
+      filtersOpen && 'absolute inset-y-0 left-0 z-30 flex w-[min(280px,100%)] shadow-modal-small @[760px]/memory:static @[760px]/memory:w-[208px] @[760px]/memory:shadow-none',
+    )} aria-label={t('memory.screen.facets')} data-testid="memory-facets">
+      {!sidebarTarget ? <button type="button" onClick={() => setFiltersOpen(false)} className="mb-2 flex min-h-8 items-center justify-between rounded-lg px-2 text-sm font-medium @[760px]/memory:hidden" aria-label={t('memory.screen.closeFilters')}>
+        {t('memory.screen.facets')}<X aria-hidden="true" className="size-4" />
+      </button> : null}
+      <FacetItem icon={Brain} label={t('memory.screen.all')} count={all.length} active={!activeFacets && !filesView && !archiveView} onClick={clearFacets} testId="memory-facet-all" />
       <FacetTitle>{t('memory.screen.scope')}</FacetTitle>
-      <FacetItem label={t('memory.screen.scopeGlobal')} count={counts.scope.get('global') ?? 0} active={filter.scope === 'global'} onClick={() => setFacet('scope', 'global')} testId="memory-facet-global" />
-      <FacetItem label={t('memory.screen.scopeWorkspace')} count={counts.scope.get('workspace') ?? 0} active={filter.scope === 'workspace'} onClick={() => setFacet('scope', 'workspace')} testId="memory-facet-workspace" />
-      <FacetItem label={t('memory.screen.files')} active={filesView} onClick={() => { setArchiveView(false); setFilesView((v) => !v) }} testId="memory-facet-files" />
-      <FacetItem label={t('memory.screen.archiveTitle')} count={archivedLessons.length} active={archiveView} onClick={() => { setFilesView(false); setArchiveView((v) => !v) }} testId="memory-facet-archive" />
-      {STATUSES.map((id) => (
+      <FacetItem icon={Globe2} label={t('memory.screen.scopeGlobal')} count={counts.scope.get('global') ?? 0} active={filter.scope === 'global'} onClick={() => setFacet('scope', 'global')} testId="memory-facet-global" />
+      <FacetItem icon={FolderClosed} label={t('memory.screen.scopeWorkspace')} count={counts.scope.get('workspace') ?? 0} active={filter.scope === 'workspace'} onClick={() => setFacet('scope', 'workspace')} testId="memory-facet-workspace" />
+      <FacetTitle>{t('memory.screen.status')}</FacetTitle>
+      {STATUSES.filter((id) => ['inContext', 'pinned', 'disabled', 'conflicts'].includes(id) && (counts.status[id] || filter.status === id)).map((id) => (
         <FacetItem
           key={id}
+          icon={STATUS_ICONS[id]}
           label={t(`memory.screen.statusFacet.${id}`)}
           count={counts.status[id]}
           active={filter.status === id}
@@ -445,7 +509,12 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       ))}
       <FacetTitle>{t('memory.screen.type')}</FacetTitle>
       {[...BUILTIN, ...customCategories].filter((c) => counts.category.get(c)).map((c) => (
-        <FacetItem key={c} label={categoryLabel(c)} count={counts.category.get(c)} active={filter.category === c} onClick={() => setFacet('category', c)} />
+        <FacetItem key={c} icon={CATEGORY_ICONS[c] ?? Lightbulb} label={categoryLabel(c)} count={counts.category.get(c)} active={filter.category === c} onClick={() => setFacet('category', c)} />
+      ))}
+      <details className="group/filters mt-3 rounded-lg bg-foreground/[0.025]" open={filter.trigger || filter.usage || filter.tag || filter.topic != null || filter.status === 'negative' || filter.status === 'merged' ? true : undefined}>
+        <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-2 text-xs text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden"><SlidersHorizontal aria-hidden="true" className="size-4" />{t('memory.screen.moreFilters')}<ChevronDown aria-hidden="true" className="ml-auto size-3.5 transition-transform group-open/filters:rotate-180" /></summary>
+      {(['negative', 'merged'] as const).filter((id) => counts.status[id] || filter.status === id).map((id) => (
+        <FacetItem key={id} icon={STATUS_ICONS[id]} label={t(`memory.screen.statusFacet.${id}`)} count={counts.status[id]} active={filter.status === id} onClick={() => setFacet('status', id)} testId={`memory-facet-status-${id}`} />
       ))}
       <FacetTitle>{t('memory.screen.source')}</FacetTitle>
       {TRIGGERS.filter((id) => counts.trigger.get(id)).map((id) => (
@@ -477,21 +546,30 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           ))}
         </>
       ) : null}
-    </nav>
+      </details>
+      <div className="mt-3 border-t border-foreground/5 pt-2">
+        <FacetItem icon={FileText} label={t('memory.screen.files')} active={filesView} onClick={() => { setSelectedId(null); setArchiveView(false); setFilesView((v) => !v); setFiltersOpen(false) }} testId="memory-facet-files" />
+        <FacetItem icon={FolderClosed} label={t('memory.screen.archiveTitle')} count={archivedLessons.length} active={archiveView} onClick={() => { setSelectedId(null); setFilesView(false); setArchiveView((v) => !v); setFiltersOpen(false) }} testId="memory-facet-archive" />
+      </div>
+    </ShellSidebarPortal>
   )
 
   // ── Token meter ──────────────────────────────────────────────────────────
-  const budgetShare = budget.activeTokens ? Math.min(1, budget.injectedTokens / budget.activeTokens) : 0
+  const meterMax = Math.max(1, budget.activeTokens, budget.injectedTokens)
+  const budgetShare = budget.injectedTokens / meterMax
   const meter = (
-    <div className="flex min-w-0 items-center gap-2 px-3 pb-2 text-[12px]" data-testid="memory-token-meter" title={t('memory.screen.meterHint', { limit: LESSON_LIMITS.context })}>
-      <span className="shrink-0 font-semibold">{t('memory.screen.meterTitle')}</span>
-      <div className="relative h-1.5 min-w-[80px] flex-1 overflow-hidden rounded-full bg-foreground/[0.1]" role="meter" aria-valuemin={0} aria-valuemax={budget.activeTokens} aria-valuenow={budget.injectedTokens} aria-label={t('memory.screen.meterTitle')}>
+    <details className="group/meter mx-4 mb-3 rounded-xl bg-foreground/[0.03]" data-testid="memory-token-meter">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2 text-xs text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden"><Sparkles aria-hidden="true" className="size-3.5 text-accent" /><span>{t('memory.screen.meterTitle')}</span><span className="ml-auto font-medium tabular-nums">{budget.injectedCount}</span><ChevronDown aria-hidden="true" className="size-3.5 transition-transform group-open/meter:rotate-180" /></summary>
+      <div className="space-y-2 px-3 pb-3 text-xs text-text-secondary">
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-foreground/[0.1]" role="meter" aria-valuemin={0} aria-valuemax={meterMax} aria-valuenow={budget.injectedTokens} aria-label={t('memory.screen.meterTitle')}>
         <div className="absolute inset-y-0 left-0 rounded-full bg-accent" style={{ width: `${Math.round(budgetShare * 100)}%` }} />
       </div>
-      <span className="shrink-0 tabular-nums text-text-secondary">
+      <p className="tabular-nums">
         {t('memory.screen.meterValue', { tokens: budget.injectedTokens.toLocaleString(i18n.language), count: budget.injectedCount, total: budget.activeCount })}
-      </span>
-    </div>
+      </p>
+      <p className="leading-5">{t('memory.screen.meterHint', { limit: LESSON_LIMITS.context })}</p>
+      </div>
+    </details>
   )
 
   // ── List ─────────────────────────────────────────────────────────────────
@@ -499,17 +577,19 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     const id = lessonId(lesson)
     const isSel = id === selectedId
     const isChecked = checked.has(id)
+    const Icon = CATEGORY_ICONS[lesson.category] ?? Lightbulb
     return (
       <div
         key={id}
+        id={`${optionPrefix}-${visibleIndexes.get(id)}`}
         role="option"
-        aria-selected={isSel}
+        aria-selected={isChecked}
         data-lesson-id={id}
         data-testid="memory-row"
         onClick={() => setSelectedId(id)}
         className={cn(
-          'group mx-1.5 flex cursor-default items-start gap-2 rounded-[6px] px-2 py-1.5',
-          isSel ? 'bg-accent/15 shadow-[inset_2px_0_0_var(--accent)]' : 'hover:bg-foreground/[0.04]',
+          'group mx-4 my-2.5 flex max-w-[860px] cursor-pointer items-start gap-3 rounded-2xl border px-3 py-4 @[1000px]/memory:mx-auto @[1000px]/memory:w-[calc(100%-2rem)] transition-colors motion-reduce:transition-none',
+          isSel ? 'border-accent/30 bg-accent/8 border-l-2 border-l-accent' : 'border-foreground/6 bg-background/80 hover:border-foreground/15 hover:bg-background',
           lesson.disabled && 'opacity-55',
         )}
       >
@@ -519,24 +599,20 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           onChange={() => toggleCheck(id)}
           onClick={(event) => event.stopPropagation()}
           aria-label={t('memory.screen.select')}
-          className={cn('mt-[3px] size-3.5 shrink-0 accent-[var(--accent)]', !isChecked && !checked.size && 'opacity-0 group-hover:opacity-100 focus:opacity-100')}
+          className="mt-1 size-4 shrink-0 accent-[var(--accent)] [color-scheme:light] dark:[color-scheme:dark]"
         />
+        <span className={cn('mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg', lesson.category === 'preference' ? 'bg-pink-500/10 text-pink-500' : lesson.category === 'correction' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : lesson.category === 'workflow' ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400' : 'bg-violet-500/10 text-violet-500')}><Icon aria-hidden="true" className="size-4" /></span>
         <div className="min-w-0 flex-1">
-          <div className="line-clamp-2 text-[13px] leading-[18px]">
+          <div className="line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-[23px]">
             {lesson.negative ? <span className="mr-1 font-semibold text-destructive">{t('memory.screen.mustNot')}</span> : null}
             {lesson.rule}
           </div>
-          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1 text-[11px] text-text-muted">
-            {lesson.pinned ? <Chip tone="accent">{t('memory.screen.pinned')}</Chip> : null}
-            {lesson.disabled ? <Chip>{t('memory.screen.disabled')}</Chip> : null}
-            <Chip>{categoryLabel(lesson.category)}</Chip>
-            {lesson.scope === 'global' ? <Chip tone="accent">{t('memory.screen.scopeGlobal')}</Chip> : null}
-            {inContext.has(id) ? <span className="text-accent" title={t('memory.screen.inContextHint')}>● {t('memory.screen.inContext')}</span> : null}
-            <span className="tabular-nums">{t('memory.usedCount', { count: lesson.usageCount ?? 0 })}</span>
-            <span className="tabular-nums">≈{lessonTokens(lesson)} {t('memory.screen.tok')}</span>
+          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-secondary">
+            <span>{categoryLabel(lesson.category)}</span>
+            {lesson.scope === 'global' ? <span className="inline-flex items-center gap-1"><Globe2 aria-hidden="true" className="size-3" />{t('memory.screen.scopeGlobal')}</span> : null}
+            {lesson.pinned ? <span className="inline-flex items-center gap-1 text-accent"><Pin aria-hidden="true" className="size-3" />{t('memory.screen.pinned')}</span> : null}
+            {lesson.disabled ? <span>{t('memory.screen.disabled')}</span> : null}
             {lesson.conflicts?.length ? <span className="text-destructive">{t('memory.conflictCount', { count: lesson.conflicts.length })}</span> : null}
-            {dupes.has(id) ? <span title={t('memory.screen.dupeHint')}>≈ {t('memory.screen.dupe')}</span> : null}
-            {(lesson.tags ?? []).slice(0, 3).map((tag) => <span key={tag}>#{tag}</span>)}
           </div>
         </div>
       </div>
@@ -611,15 +687,19 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const visibleCandidates = candidates.filter((c) => !all.some((l) => l.scope === 'global' && l.rule.trim().toLowerCase() === c.rule.trim().toLowerCase()))
 
   const list = (
-    <section className="flex min-w-0 flex-1 flex-col bg-foreground/[0.025]" data-testid="memory-list">
-      <header className="flex min-h-[44px] shrink-0 items-center gap-2 px-3 pt-2">
-        <h2 className="text-[15px] font-semibold">{t('memory.screen.title')}</h2>
-        <span className="truncate text-[12px] text-text-muted">{t('memory.screen.shown', { count: visible.length, total: all.length })}</span>
+    <section className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', selected ? 'hidden @[920px]/memory:flex' : 'flex')} data-testid="memory-list">
+      <header className="flex shrink-0 flex-wrap items-center gap-2 px-4 pb-3 pt-4">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent"><Brain aria-hidden="true" className="size-5" /></span>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold">{t('memory.screen.title')}</h2>
+          <p className="text-xs text-text-secondary">{t('memory.screen.shown', { count: visible.length, total: all.length })}</p>
+        </div>
         <span className="flex-1" />
         <Btn primary onClick={() => setAdding((v) => !v)} testId="memory-add">+ {t('memory.screen.add')}</Btn>
       </header>
-      {meter}
-      <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 pb-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 px-4 pb-3">
+        <div className="relative min-w-0 basis-[220px] grow">
+        <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-2.5 size-4 text-text-muted" />
         <input
           ref={searchRef}
           value={filter.query ?? ''}
@@ -631,19 +711,23 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           placeholder={t('memory.screen.searchPlaceholder')}
           aria-label={t('memory.screen.search')}
           data-testid="memory-search"
-          className="h-7 min-w-[140px] flex-1 rounded-[6px] bg-foreground/[0.06] px-2 text-[12px] outline-none placeholder:text-text-muted"
+          className="h-9 w-full rounded-xl border border-foreground/8 bg-background/75 pl-9 pr-3 text-[13px] outline-none placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/20"
         />
-        <div className="flex items-center gap-0.5" role="group" aria-label={t('memory.screen.sort')}>
-          {SORTS.map((id) => (
-            <button key={id} type="button" aria-pressed={sort === id} onClick={() => setSort(id)} className={cn('h-7 rounded-[4px] px-1.5 text-[12px]', sort === id ? 'bg-foreground/[0.1] font-semibold text-foreground' : 'text-text-muted hover:text-foreground')}>
-              {t(`memory.screen.sortBy.${id}`)}
-            </button>
-          ))}
         </div>
-        <button type="button" aria-pressed={grouped} onClick={() => setGrouped((v) => !v)} data-testid="memory-group-toggle" className={cn('h-7 rounded-[4px] px-2 text-[12px]', grouped ? 'bg-foreground/[0.1] font-semibold' : 'text-text-muted hover:text-foreground')}>
+        {!sidebarTarget ? <button type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((value) => !value)} className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-background px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent @[760px]/memory:hidden" data-testid="memory-filters-toggle"><SlidersHorizontal aria-hidden="true" className="size-4" />{t('memory.screen.facets')}{activeFacets ? <span className="font-semibold tabular-nums">{activeFacets}</span> : null}</button> : null}
+        <select aria-label={t('memory.screen.sort')} value={sort} onChange={(event) => setSort(event.target.value as MemorySort)} className="h-9 max-w-full rounded-xl border border-foreground/8 bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-sort">
+          {SORTS.map((id) => (
+            <option key={id} value={id}>
+              {t(`memory.screen.sortBy.${id}`)}
+            </option>
+          ))}
+        </select>
+        <button type="button" aria-pressed={grouped} onClick={() => setGrouped((v) => !v)} data-testid="memory-group-toggle" className={cn('h-9 rounded-xl px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent', grouped ? 'bg-accent/10 font-semibold text-accent' : 'bg-background text-text-secondary hover:text-foreground')}>
           {t('memory.screen.groupTopics')}
         </button>
+        {activeFacets ? <button type="button" onClick={clearFacets} className="inline-flex h-9 items-center gap-1 rounded-xl px-2 text-xs text-accent outline-none focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-clear-filters"><X aria-hidden="true" className="size-3.5" />{t('memory.screen.clearFilters')}</button> : null}
       </div>
+      {meter}
       {visibleCandidates.length ? (
         <div className="mx-3 mb-2 rounded-[8px] bg-accent/10 px-2 py-1.5 text-[12px]">
           {t('memory.screen.candidates', { count: visibleCandidates.length })}
@@ -657,11 +741,13 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       ) : null}
       {addForm}
       {bulkBar}
-      <div ref={listRef} role="listbox" aria-multiselectable="true" aria-label={t('memory.screen.title')} tabIndex={0} onKeyDown={onListKey} className="min-h-0 flex-1 overflow-y-auto pb-4 outline-none">
-        {lessons === null ? (
+      <div ref={listRef} role="listbox" aria-multiselectable="true" aria-activedescendant={selectedId && visibleIndexes.has(selectedId) ? `${optionPrefix}-${visibleIndexes.get(selectedId)}` : undefined} aria-label={t('memory.screen.title')} tabIndex={0} onKeyDown={onListKey} className="min-h-0 flex-1 overflow-y-auto pb-4 outline-none focus-visible:rounded-xl focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/50">
+        {loadError ? (
+          <div className="mx-4 my-6 rounded-2xl border border-destructive/15 bg-destructive/5 p-5" role="alert" data-testid="memory-load-error"><p className="mb-3 text-sm">{t('memory.screen.loadFailed')}</p><Btn onClick={load}>{t('memory.screen.retry')}</Btn></div>
+        ) : lessons === null ? (
           <div className="px-4 py-6 text-[13px] text-text-muted">{t('memory.screen.loading')}</div>
         ) : visible.length === 0 ? (
-          <div className="px-4 py-6 text-[13px] text-text-muted">{all.length ? t('memory.screen.noMatches') : t('memory.screen.empty')}</div>
+          <div className="mx-4 my-6 flex flex-col items-center rounded-2xl border border-dashed border-foreground/12 bg-background/60 px-5 py-10 text-center" data-testid="memory-empty"><span className="mb-4 grid size-12 place-items-center rounded-2xl bg-accent/10 text-accent"><Brain aria-hidden="true" className="size-6" /></span><p className="max-w-[360px] text-sm leading-6 text-text-secondary">{all.length ? t('memory.screen.noMatches') : t('memory.screen.empty')}</p><div className="mt-4">{all.length ? <Btn onClick={() => { clearFacets(); setFilter({}) }}>{t('memory.screen.clearFilters')}</Btn> : <Btn primary onClick={() => setAdding(true)}>{t('memory.addLesson')}</Btn>}</div></div>
         ) : groups.map((group) => (
           <div key={group.key} className="pb-1">
             {group.label ? (
@@ -688,14 +774,16 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
     const history = [...(selected.usedAt ?? [])].reverse()
     const untracked = Math.max(0, (selected.usageCount ?? 0) - (selected.usedAt?.length ?? 0))
     return (
-      <div className="flex min-h-0 flex-col gap-3 px-4 py-3" data-testid="memory-detail">
-        <div className="flex flex-wrap items-center gap-1">
+      <div key={id} className="mx-auto flex w-full max-w-[620px] min-h-0 flex-col gap-4 px-5 py-4" data-testid="memory-detail">
+        <div className="flex items-center gap-3">
+          <h3 className="min-w-0 flex-1 text-sm font-semibold">{categoryLabel(selected.category)}</h3>
+          <button ref={detailCloseRef} type="button" onClick={closeDetails} aria-label={t('memory.screen.closeDetails')} title={t('memory.screen.closeDetails')} className="grid size-9 shrink-0 place-items-center rounded-xl text-text-secondary outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-close-details"><X aria-hidden="true" className="size-4" /></button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <Btn onClick={() => void run(() => patch(selected, { pinned: !selected.pinned }))} testId="memory-pin">{selected.pinned ? t('memory.screen.unpin') : t('memory.screen.pin')}</Btn>
           <Btn onClick={() => void run(() => patch(selected, { disabled: !selected.disabled }))} testId="memory-disable">{selected.disabled ? t('memory.screen.enable') : t('memory.screen.disable')}</Btn>
           {selected.scope === 'workspace' ? <Btn onClick={() => void promote([id])} testId="memory-promote">{t('memory.screen.promote')}</Btn> : null}
           {selected.mergeHistory?.lessons.length ? <Btn disabled={busy} onClick={() => restoreMerge(selected)} testId="memory-merge-restore">{t('memory.screen.undoMerge')}</Btn> : null}
-          <span className="flex-1" />
-          <Btn danger onClick={() => setConfirm({ kind: 'delete', ids: [id] })} testId="memory-delete">{t('memory.screen.delete')}</Btn>
         </div>
         {selected.disabled ? <div className="rounded-[6px] bg-foreground/[0.06] px-2 py-1.5 text-[12px] text-text-secondary">{t('memory.screen.disabledBanner')}</div> : null}
         {editing ? (
@@ -704,20 +792,21 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
               onKeyDown={(event) => { if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); saveEdit(selected) } if (event.key === 'Escape') { event.stopPropagation(); setEditing(false) } }}
               className="resize-y rounded-[6px] bg-foreground/[0.05] px-2 py-1.5 text-[14px] leading-[20px] outline-none focus:bg-foreground/[0.07]" />
             <div className="flex gap-1">
-              <Btn primary onClick={() => saveEdit(selected)}>{t('memory.save')}</Btn>
+              <Btn primary disabled={busy} onClick={() => saveEdit(selected)}>{t('memory.save')}</Btn>
               <Btn onClick={() => setEditing(false)}>{t('memory.cancel')}</Btn>
               <span className="ml-auto self-center text-[11px] text-text-muted">≈{estimateTokens(draft)} {t('memory.screen.tok')}</span>
             </div>
           </div>
         ) : (
-          <button type="button" onClick={() => { setDraft(selected.rule); setEditing(true) }} title={t('memory.editLesson')} className="whitespace-pre-wrap rounded-[6px] px-1 py-0.5 text-left text-[14px] leading-[20px] hover:bg-foreground/[0.04]" data-testid="memory-rule">
+          <button type="button" onClick={() => { setDraft(selected.rule); setEditing(true) }} title={t('memory.editLesson')} className="whitespace-pre-wrap break-words rounded-xl bg-foreground/[0.025] p-4 text-left text-[15px] leading-7 outline-none hover:bg-foreground/[0.04] focus-visible:ring-2 focus-visible:ring-accent" data-testid="memory-rule">
             {selected.negative ? <span className="mr-1 font-semibold text-destructive">{t('memory.screen.mustNot')}</span> : null}
             {selected.rule}
           </button>
         )}
 
-        <div>
-          <div className="pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-muted">{t('memory.screen.properties')}</div>
+        <details className="group/properties rounded-xl border border-foreground/7 bg-foreground/[0.015] p-3" data-testid="memory-properties">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md text-xs font-medium text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden">{t('memory.screen.properties')}<ChevronDown aria-hidden="true" className="ml-auto size-3.5 transition-transform group-open/properties:rotate-180" /></summary>
+          <div className="pt-3">
           <Row label={t('memory.screen.scope')}>{t(selected.scope === 'global' ? 'memory.screen.scopeGlobal' : 'memory.screen.scopeWorkspace')}{selected.promoted ? ` · ${t('memory.screen.promotedFrom', { count: selected.promoted.workspaceIds.length })}` : ''}</Row>
           <Row label={t('memory.screen.type')}>
             <span className="flex flex-wrap gap-1">
@@ -738,8 +827,8 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           <Row label={t('memory.screen.tags')}>
             <span className="flex flex-wrap items-center gap-1">
               {(selected.tags ?? []).map((tag) => (
-                <button key={tag} type="button" onClick={() => void run(() => patch(selected, { tags: (selected.tags ?? []).filter((x) => x !== tag) }))} title={t('memory.screen.tagRemove')} className="inline-flex h-[20px] items-center gap-1 rounded-[4px] bg-foreground/[0.07] px-1.5 text-[11px] hover:bg-destructive/12 hover:text-destructive">
-                  #{tag} ×
+                <button key={tag} type="button" onClick={() => void run(() => patch(selected, { tags: (selected.tags ?? []).filter((x) => x !== tag) }))} title={`${tag} · ${t('memory.screen.tagRemove')}`} aria-label={`${t('memory.screen.tagRemove')}: ${tag}`} className="inline-flex min-h-6 max-w-full items-center gap-1 rounded-md bg-foreground/[0.05] px-2 py-1 text-[11px] outline-none hover:bg-destructive/12 hover:text-destructive focus-visible:ring-2 focus-visible:ring-accent">
+                  <span className="min-w-0 truncate">{tag}</span><X aria-hidden="true" className="size-3 shrink-0" />
                 </button>
               ))}
               <form onSubmit={(event) => { event.preventDefault(); addTag(selected, tagDraft); setTagDraft('') }}>
@@ -749,10 +838,12 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
             </span>
           </Row>
           <Row label={t('memory.screen.tokens')}>≈{lessonTokens(selected)} {t('memory.screen.tok')} · {inContext.has(id) ? t('memory.screen.inContextNow') : selected.disabled ? t('memory.screen.notInjectedDisabled') : t('memory.screen.notInjected')}</Row>
-        </div>
+          </div>
+        </details>
 
-        <div>
-          <div className="pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-muted">{t('memory.screen.provenance')}</div>
+        <details className="group/provenance rounded-xl border border-foreground/7 bg-foreground/[0.015] p-3" data-testid="memory-provenance">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md text-xs font-medium text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden">{t('memory.screen.provenance')}<ChevronDown aria-hidden="true" className="ml-auto size-3.5 transition-transform group-open/provenance:rotate-180" /></summary>
+          <div className="pt-3">
           <Row label={t('memory.screen.created')}>{fmt(selected.ts)}</Row>
           <Row label={t('memory.screen.source')}>{t(`memory.screen.trigger.${selected.source.trigger}`)}</Row>
           {sessionId ? (
@@ -768,10 +859,12 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
               <ul className="list-disc pl-4 text-text-secondary">{selected.mergedFrom.map((rule) => <li key={rule}>{rule}</li>)}</ul>
             </Row>
           ) : null}
-        </div>
+          </div>
+        </details>
 
-        <div>
-          <div className="pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-muted">{t('memory.screen.usageHistory')}</div>
+        <details className="group/usage rounded-xl border border-foreground/7 bg-foreground/[0.015] p-3" open={selected.conflicts?.length ? true : undefined} data-testid="memory-usage">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md text-xs font-medium text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden">{t('memory.screen.usageHistory')}<span className="ml-auto tabular-nums">{selected.usageCount ?? 0}</span><ChevronDown aria-hidden="true" className="size-3.5 transition-transform group-open/usage:rotate-180" /></summary>
+          <div className="pt-3">
           <Row label={t('memory.screen.used')}>{t('memory.usedCount', { count: selected.usageCount ?? 0 })}</Row>
           <Row label={t('memory.screen.lastUsed')}>{fmt(selected.lastUsedAt)}</Row>
           {history.length ? (
@@ -793,10 +886,12 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
               </ul>
             </div>
           ) : null}
-        </div>
+          </div>
+        </details>
 
-        <div>
-          <div className="pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-muted">{t('memory.screen.similar')}</div>
+        <details className="group/similar rounded-xl border border-foreground/7 bg-foreground/[0.015] p-3" data-testid="memory-duplicates">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md text-xs font-medium text-text-secondary outline-none focus-visible:ring-2 focus-visible:ring-accent [&::-webkit-details-marker]:hidden">{t('memory.screen.similar')}<span className="ml-auto tabular-nums">{similar.length}</span><ChevronDown aria-hidden="true" className="size-3.5 transition-transform group-open/similar:rotate-180" /></summary>
+          <div className="pt-3">
           {similar.length === 0 ? (
             <p className="text-[12px] text-text-muted">{t('memory.screen.noSimilar')}</p>
           ) : (
@@ -810,7 +905,9 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
               ))}
             </ul>
           )}
-        </div>
+          </div>
+        </details>
+        <div className="border-t border-foreground/7 pt-3"><Btn danger disabled={busy} onClick={() => setConfirm({ kind: 'delete', ids: [id] })} testId="memory-delete">{t('memory.screen.delete')}</Btn></div>
       </div>
     )
   })() : (
@@ -863,7 +960,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   ) : null
 
   return (
-    <div className="flex h-full min-h-0 bg-background font-sans text-[13px] text-foreground" data-testid="memory-screen">
+    <div className="@container/memory relative flex h-full w-full min-h-0 min-w-0 bg-background font-sans text-[13px] text-foreground" data-testid="memory-screen">
       {facets}
       {filesView ? (
         <section className="min-w-0 flex-1 overflow-y-auto px-2 py-2" data-testid="memory-files">
@@ -891,7 +988,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       ) : (
         <>
           {list}
-          <section className="flex w-[clamp(300px,34%,440px)] shrink-0 flex-col overflow-y-auto bg-background">{detail}</section>
+          {selected ? <section className="flex min-w-0 w-full flex-1 flex-col overflow-y-auto bg-background @[920px]/memory:w-[clamp(300px,36%,440px)] @[920px]/memory:flex-none @[920px]/memory:border-l @[920px]/memory:border-foreground/7" onKeyDown={(event) => { if (event.key === 'Escape' && !editing) { event.stopPropagation(); closeDetails() } }} aria-label={t('memory.screen.properties')}>{detail}</section> : null}
         </>
       )}
       {confirmDialog}

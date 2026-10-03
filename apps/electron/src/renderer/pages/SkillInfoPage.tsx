@@ -44,54 +44,61 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   const [editDescription, setEditDescription] = useState('')
   const [editContent, setEditContent] = useState('')
   const [saving, setSaving] = useState(false)
+  const loadedSkillRef = React.useRef<LoadedSkill | null>(null)
 
   // Load skill data
   useEffect(() => {
     let cancelled = false
+    let revision = 0
+    loadedSkillRef.current = null
     setLoading(true)
     setError(null)
 
-    ;(async () => {
+    const load = async (background = false) => {
+      const request = ++revision
       try {
         const skills = await window.electronAPI.getSkills(workspaceId, workingDirectory)
-        if (cancelled) return
+        if (cancelled || request !== revision) return
         const found = skills.find((s) => s.slug === skillSlug) ?? null
         if (!found) {
           setError(t('skillInfo.notFound'))
           setSkill(null)
+          loadedSkillRef.current = null
           return
         }
+        const previous = loadedSkillRef.current
+        loadedSkillRef.current = found
         setSkill(found)
-        setEditName(found.metadata.name)
-        setEditDescription(found.metadata.description)
-        setEditContent(found.content || '')
+        setError(null)
+        // Refresh fields which still match the last canonical snapshot. Keep
+        // local edits when a watcher changes another field or reloads the file.
+        setEditName(value => previous && value !== previous.metadata.name ? value : found.metadata.name)
+        setEditDescription(value => previous && value !== previous.metadata.description ? value : found.metadata.description)
+        setEditContent(value => previous && value !== (previous.content || '') ? value : found.content || '')
       } catch (err) {
-        if (cancelled) return
-        setError(err instanceof Error ? err.message : t('skillInfo.failedToLoad'))
+        if (cancelled || request !== revision) return
+        if (!background || !loadedSkillRef.current) {
+          setError(err instanceof Error ? err.message : t('skillInfo.failedToLoad'))
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled && request === revision) setLoading(false)
       }
-    })()
+    }
+
+    const cleanup = window.electronAPI.onSkillsChanged?.((changedWorkspaceId) => {
+      if (cancelled || changedWorkspaceId !== workspaceId) return
+      // Watcher payloads only contain workspace skills. Resolve the complete
+      // project/global/OMP catalog with the same directory as the first read.
+      void load(true)
+    })
+    void load()
 
     return () => {
       cancelled = true
+      revision += 1
+      cleanup?.()
     }
   }, [workspaceId, skillSlug, workingDirectory, t])
-
-  // Live updates
-  useEffect(() => {
-    if (!window.electronAPI?.onSkillsChanged) return
-    return window.electronAPI.onSkillsChanged((changedWorkspaceId, skills) => {
-      if (changedWorkspaceId !== workspaceId) return
-      const found = skills.find((s) => s.slug === skillSlug)
-      if (found) {
-        setSkill(found)
-        setEditName(found.metadata.name)
-        setEditDescription(found.metadata.description)
-        setEditContent(found.content || '')
-      }
-    })
-  }, [workspaceId, skillSlug])
 
   const handleOpenInFinder = useCallback(async () => {
     if (!canRevealLocally || !skill) return
@@ -134,7 +141,11 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
         description,
         content: editContent,
       })
+      loadedSkillRef.current = updated
       setSkill(updated)
+      setEditName(value => value === editName ? updated.metadata.name : value)
+      setEditDescription(value => value === editDescription ? updated.metadata.description : value)
+      setEditContent(value => value === editContent ? updated.content || '' : value)
       toast.success(t('skillInfo.saved'))
     } catch (err) {
       toast.error(t('skillInfo.saveFailed'), {

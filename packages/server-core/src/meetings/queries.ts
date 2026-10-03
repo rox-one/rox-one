@@ -1,4 +1,4 @@
-import type { Meeting } from '@craft-agent/core/meetings'
+import type { Meeting } from '@rox/core/meetings'
 
 export type MeetingQueryItem = Meeting & { private?: boolean }
 

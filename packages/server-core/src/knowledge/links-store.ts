@@ -6,7 +6,7 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { dirname, join } from 'path'
-import type { KnowledgeLinkRecord, KnowledgeLinkRelation } from '@craft-agent/core/knowledge'
+import type { KnowledgeLinkRecord, KnowledgeLinkRelation } from '@rox/core/knowledge'
 
 export interface KnowledgeLinkFileRecord extends KnowledgeLinkRecord {
   /** Tombstone marker for unlink (append-only semantics). */

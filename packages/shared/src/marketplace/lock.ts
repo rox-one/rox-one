@@ -38,6 +38,13 @@ export interface MarketplaceLockRecord {
   targets: string[]
   /** Installed skill dir basenames (skillpack, informational). */
   skills?: string[]
+  /** Original checkout basename → stable installed basename. */
+  skillAliases?: Record<string, string>
+  /** Optional external agent link path for each application-owned target. */
+  skillLinks?: Record<string, string>
+  /** Application skill root and optional external link root used for this install. */
+  skillsRoot?: string
+  skillsLinkRoot?: string
   /** kind:tool — toolchain manifest tool name. */
   toolName?: string
   /** target path → SHA-256 of its content at install time (soft-clean diffing). */

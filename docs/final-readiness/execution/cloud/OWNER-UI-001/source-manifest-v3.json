@@ -1,0 +1,14 @@
+{
+  "integrationBase": "c9b7330357fb55a5e88a223783029d2768849828",
+  "sourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+    "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+    "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  }
+}

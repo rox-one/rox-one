@@ -7,6 +7,7 @@ export { PiAgent, PiBackend } from './pi-agent.ts';
 
 // Export OmpAgent for direct use
 export { OmpAgent, OmpBackend } from './omp-agent.ts';
+export { resolveOmpUserBranchAnchor } from './omp-user-branch.ts';
 export * from './errors.ts';
 export * from './omp-first-run.ts';
 export * from './live-turn-gate.ts';

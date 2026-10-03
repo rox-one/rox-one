@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import type { RemoteServerConfig, RemoteTlsTrust } from '@craft-agent/core/types'
+import type { RemoteServerConfig, RemoteTlsTrust } from '@rox/core/types'
 
 const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
 

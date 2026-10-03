@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react'
 import { SettingsSection, SettingsCard } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { useCommandGateway } from '@/hooks/useCommandGateway'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { getAppLocale } from '@rox/shared/i18n'
 
 export interface CommandGatewaySectionProps {
   workspaceId: string | undefined

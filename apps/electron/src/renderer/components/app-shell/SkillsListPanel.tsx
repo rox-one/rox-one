@@ -15,7 +15,7 @@ import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { getFileManagerName } from '@/lib/platform'
 import { detectSkillRiskFlags, lineDiff, RISK_FLAG_I18N_KEY, VIOLATION_I18N_KEY, type SkillRiskFlag } from '@/lib/skill-risk'
-import type { PendingSkill, PendingSkillDiff, SkillUsageMap } from '@craft-agent/shared/memory/types'
+import type { PendingSkill, PendingSkillDiff, SkillUsageMap } from '@rox/shared/memory/types'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { projectsAtom } from '@/atoms/projects'
 import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
@@ -63,6 +63,16 @@ export function SkillsListPanel({
   // OMP skills (~/.omp/agent/skills, {workspace}/.omp/skills) render as a
   // separate read-only group with an "Export to craft skills" action.
   const craftSkills = skills.filter((s) => s.source !== 'omp')
+  const repeatedSkillNames = React.useMemo(() => {
+    const seen = new Set<string>()
+    const repeated = new Set<string>()
+    for (const skill of skills) {
+      if (skill.source === 'omp') continue
+      if (seen.has(skill.metadata.name)) repeated.add(skill.metadata.name)
+      seen.add(skill.metadata.name)
+    }
+    return repeated
+  }, [skills])
   const ompSkills = skills.filter((s) => s.source === 'omp')
   const [exportingSlug, setExportingSlug] = React.useState<string | null>(null)
 
@@ -327,6 +337,11 @@ export function SkillsListPanel({
         title: skill.metadata.name,
         badges: (
           <span className="flex items-center gap-1.5 min-w-0">
+            {repeatedSkillNames.has(skill.metadata.name) && (
+              <span className="shrink-0 max-w-48 truncate rounded-full bg-foreground/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground" title={skill.slug}>
+                @{skill.slug}
+              </span>
+            )}
             {skill.source === 'project' && (
               <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
                 {t('skillsList.projectBadge')}

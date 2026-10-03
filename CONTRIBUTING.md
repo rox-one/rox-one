@@ -98,9 +98,9 @@ craft-agents/
 │   ├── electron/    # Desktop GUI (primary interface)
 │   └── tui/         # Terminal CLI (deprecated)
 └── packages/
-    ├── core/        # @craft-agent/core - Shared types
-    ├── shared/      # @craft-agent/shared - Business logic
-    └── ui/          # @craft-agent/ui - React components
+    ├── core/        # @rox/core - Shared types
+    ├── shared/      # @rox/shared - Business logic
+    └── ui/          # @rox/ui - React components
 ```
 
 ## Key Areas

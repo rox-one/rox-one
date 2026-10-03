@@ -1,5 +1,5 @@
-import { getRuntimeEnvOverrides as defaultGetRuntimeEnvOverrides } from '@craft-agent/shared/config'
-import { refreshRuntimeSecretEnv as defaultRefreshRuntimeSecretEnv } from '@craft-agent/shared/secrets'
+import { getRuntimeEnvOverrides as defaultGetRuntimeEnvOverrides } from '@rox/shared/config'
+import { refreshRuntimeSecretEnv as defaultRefreshRuntimeSecretEnv } from '@rox/shared/secrets'
 
 export interface ComposeSpawnEnvInput {
   workspaceRootPath: string

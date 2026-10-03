@@ -26,7 +26,7 @@ Include the following information:
 
 This policy applies to:
 - The Craft Agents desktop application
-- The `@craft-agent/*` npm packages
+- The `@rox/*` npm packages
 - Official Craft Agents repositories
 
 ### Out of Scope

@@ -1,8 +1,8 @@
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import type { PendingSkill, PendingSkillDiff } from '@craft-agent/shared/memory/types'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { pushTyped } from '@craft-agent/server-core/transport'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import type { PendingSkill, PendingSkillDiff } from '@rox/shared/memory/types'
+import type { RpcServer } from '@rox/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { SkillPendingQueue } from '../../memory/SkillPendingQueue'
 import {
@@ -10,7 +10,7 @@ import {
   rpcSkillsPendingActResult,
   rpcSkillsPendingListResult,
   rpcSkillsPendingReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skillsPending.LIST,

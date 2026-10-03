@@ -6,7 +6,7 @@ import {
   extractSessionVariables,
   projectSessionScenes,
   type SceneMessage,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 
 export type RelatedBranch = { id: string; name: string; fromMessageId?: string }
 

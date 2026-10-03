@@ -5,8 +5,8 @@ import {
   hashPrivilegedCommand,
   isPrivilegedCommandAllowed,
   PRIVILEGED_POLICY_REASON,
-} from '@craft-agent/shared/agent/core/privileged-policy'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+} from '@rox/shared/agent/core/privileged-policy'
+import { resolveConfigDir } from "@rox/shared/config/paths"
 
 export interface PrivilegedExecutionRequest {
   requestId: string

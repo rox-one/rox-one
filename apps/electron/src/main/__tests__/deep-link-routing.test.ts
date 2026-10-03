@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { handleDeepLink } from '../deep-link'
 import { RPC_CHANNELS } from '../../shared/types'
-import type { EventSink } from '@craft-agent/server-core/transport'
+import type { EventSink } from '@rox/server-core/transport'
 import type { WindowManager } from '../window-manager'
 
 function createMockWindow(webContentsId: number) {
@@ -130,3 +130,12 @@ describe('handleDeepLink routing', () => {
     expect(sent[0]?.target).toEqual({ to: 'client', clientId: 'client-target' })
   })
 })
+
+describe('ROX protocol compatibility', () => {
+  it('parses ROX as primary and keeps existing legacy links readable', async () => {
+    const { parseDeepLink } = await import('../deep-link');
+    expect(parseDeepLink('rox://allSessions/session/example')).toEqual(parseDeepLink('craftagents://allSessions/session/example'));
+    expect(parseDeepLink('rox://allSessions/session/example')).not.toBeNull();
+    expect(parseDeepLink('unrelated://allSessions/session/example')).toBeNull();
+  });
+});

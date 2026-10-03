@@ -24,7 +24,6 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'fs';
 import { dirname, join, basename } from 'path';
-import { homedir } from 'os';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { resolveConfigDir } from "../config/paths.ts"
@@ -107,10 +106,10 @@ export interface ContextDocsPromptOptions {
 /**
  * Runtime context docs directory: `<CONFIG_DIR>/context`.
  * Resolved lazily per call (same pattern as getAppPermissionsDir) so
- * CRAFT_CONFIG_DIR changes take effect without a module reload.
+ * ROX_CONFIG_DIR changes take effect without a module reload.
  */
 export function getContextDocsDir(): string {
-  const configDir = process.env.CRAFT_CONFIG_DIR || join(homedir(), '.craft-agent');
+  const configDir = resolveConfigDir();
   return join(configDir, 'context');
 }
 

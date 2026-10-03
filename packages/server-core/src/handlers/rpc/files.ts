@@ -3,23 +3,23 @@ import { isAbsolute, join, resolve, dirname, parse as parsePath } from 'path'
 import { homedir } from 'os'
 import { validatePathFormat } from '../../utils/path-validation'
 import { randomUUID } from 'crypto'
-import { RPC_CHANNELS, type FileAttachment, type DirectoryListingResult } from '@craft-agent/shared/protocol'
-import type { StoredAttachment } from '@craft-agent/core/types'
-import { readFileAttachment, validateImageForClaudeAPI, IMAGE_LIMITS } from '@craft-agent/shared/utils'
-import { getSessionAttachmentsPath, validateSessionId } from '@craft-agent/shared/sessions'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { resizeImageForAPI, inspectImageBuffer } from '@craft-agent/server-core/services'
-import { sanitizeFilename, validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
+import { RPC_CHANNELS, type FileAttachment, type DirectoryListingResult } from '@rox/shared/protocol'
+import type { StoredAttachment } from '@rox/core/types'
+import { readFileAttachment, validateImageForClaudeAPI, IMAGE_LIMITS } from '@rox/shared/utils'
+import { getSessionAttachmentsPath, validateSessionId } from '@rox/shared/sessions'
+import { getWorkspaceByNameOrId } from '@rox/shared/config'
+import { resizeImageForAPI, inspectImageBuffer } from '@rox/server-core/services'
+import { sanitizeFilename, validateFilePath, getWorkspaceAllowedDirs } from '@rox/server-core/handlers'
 import { MarkItDown } from 'markitdown-js'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { requestClientOpenFileDialog } from '@craft-agent/server-core/transport'
+import { requestClientOpenFileDialog } from '@rox/server-core/transport'
 import {
   isClaimableLive,
   rpcFilesActResult,
   rpcFilesListResult,
   rpcFilesReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.file.READ,

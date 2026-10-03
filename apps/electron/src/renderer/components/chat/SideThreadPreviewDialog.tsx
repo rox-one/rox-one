@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import type { SideThreadAction } from '@craft-agent/shared/side-threads'
+import type { SideThreadAction } from '@rox/shared/side-threads'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ export type SideThreadPreview = {
   action: SideThreadAction
   messageId: string
   prompt: string
+  sessionId?: string
 }
 
 export type SideThreadPreviewDialogProps = {

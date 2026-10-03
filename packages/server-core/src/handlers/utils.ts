@@ -1,8 +1,8 @@
 import { normalize, isAbsolute, dirname, basename, join } from 'path'
 import { homedir, tmpdir } from 'os'
 import { realpath } from 'fs/promises'
-import { getWorkspaceByNameOrId, type Workspace } from '@craft-agent/shared/config'
-import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { getWorkspaceByNameOrId, type Workspace } from '@rox/shared/config'
+import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import type { PlatformServices } from '../runtime/platform'
 import { isPathInsideBase } from '../utils/path-validation'
 

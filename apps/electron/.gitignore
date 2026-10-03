@@ -1,6 +1,6 @@
 # Build artifacts for DMG packaging
 vendor/
-packages/
+/packages/
 release/
 node_modules/@anthropic-ai/
 
@@ -17,3 +17,6 @@ resources/oem-kernel/*
 
 # Native database resources staged for release packaging
 release-native/
+
+# Pinned upstream runtime dependency lock for the bundled skill pack.
+!resources/skills/understand-anything/understand/plugin/pnpm-lock.yaml

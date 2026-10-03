@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 3,
   "owner": "OWNER-UI-001",
   "taskIds": [
     "UI-001.1",
@@ -6,67 +7,16 @@
   ],
   "inputRevision": "76228cc33e44518e5fab5e59f5c754f4051d1e8c",
   "sourceRevisionVerified": true,
-  "repository": "rox-one/rox-one",
-  "productCommit": "4c46b06c4a4b85ce903993878877216e19db9adb",
-  "localBranch": "fix/ui-001-recovery-20261003",
-  "continuationMode": "isolated local checkout; exact-input cloud diff reconstruction; original source ownership preserved",
-  "originalCloudArtifact": {
-    "reportedCommit": "9a8c9c996362f1344d0e92c7f09dca7441ee0809",
-    "commitObjectAvailableLocally": false,
-    "exportedDiffSha256": "c3459c271046533efd76825b36b3d765c50917ac03453e982782729c3445cd19",
-    "originalResult": "result-cloud-original.json"
-  },
-  "runtime": {
-    "identity": {
-      "client": "Codex desktop",
-      "platform": "macOS-27.0-arm64-arm-64bit",
-      "architecture": "arm64",
-      "threadId": "01a10147-44c4-7381-a97b-1215f700717b",
-      "sessionId": "01a10147-44c4-7381-a97b-1215f700717b",
-      "modelMetadata": "not exposed by a trusted task-runtime tool"
-    },
-    "codegraph": "absent; gap recorded before bounded source inspection",
-    "bun": {
-      "requested": "1.3.14",
-      "available": "1.3.14",
-      "qualified": true,
-      "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-      "binarySha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233",
-      "source": "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-darwin-aarch64.zip"
-    },
-    "defaultBunAtIntake": "1.4.2",
-    "node": "v26.8.2",
-    "dependencies": {
-      "installation": "bun install --frozen-lockfile --ignore-scripts; source workspace symlinks verified",
-      "lockfileUnchanged": true,
-      "lockfileSha256": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7",
-      "versions": {
-        "react": {
-          "version": "18.3.1",
-          "packageJsonSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c"
-        },
-        "jotai": {
-          "version": "2.16.2",
-          "packageJsonSha256": "c6bc63c7b0fd691dad1e8591a4fe0e3059d429c8eb2bfc310b621d694ed148f3"
-        },
-        "typescript": {
-          "version": "5.9.3",
-          "packageJsonSha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
-        },
-        "esbuild": {
-          "version": "0.25.12",
-          "packageJsonSha256": "cb7d5b1fe478f8cbaae566a86031b6fdf5f7d444354f35d1cb3cba9adf6d2935"
-        },
-        "@playwright/test": {
-          "version": "1.49.1",
-          "packageJsonSha256": "e695ee332923036ac32273451c5ae8ce71241107864c6664eed5c8d2552c0da1"
-        },
-        "@types/bun": {
-          "version": "1.3.6",
-          "packageJsonSha256": "27f54b20c3a8520731f86826b47b4a9c1e9007619913340fab4a60fd04ab1100"
-        }
-      }
-    }
+  "integrationBase": "c9b7330357fb55a5e88a223783029d2768849828",
+  "localBranch": "codex/ui-001-route-recovery-main-20261003",
+  "currentHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+  "continuationNumber": 3,
+  "phase": "verification",
+  "authorization": {
+    "sourceRepair": "Full task-related source repair authorized by user",
+    "githubWrites": true,
+    "mergeMain": true,
+    "exactUserInstruction": "разрешаю тебе полный ремонт исходников и любые записи в github доделывай автономно end-to-end + делай merge main"
   },
   "originalAcceptancePreserved": {
     "UI-001.1": {
@@ -82,986 +32,116 @@
       "Test method": "Regression entry point: `bun test apps/electron/src/renderer/components/app-shell/__tests__`. Add behavior coverage for the changed contract; automate the full workflow above with Playwright/Electron or supported native UI automation on A/B and actual hosted browser C. Assert canonical persistence and backend results, retaining redacted evidence."
     }
   },
+  "fullDoDClosed": false,
+  "runtime": {
+    "host": "macOS arm64",
+    "bun": "1.3.14",
+    "node": "26.8.2",
+    "taskRuntimeIdentity": "01a10147-44c4-7381-a97b-1215f700717b",
+    "modelIdentity": "not independently exposed",
+    "codegraph": "absent; bounded direct source exploration used",
+    "originalCloudClaim": {
+      "identity": {
+        "client": "Codex desktop",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "architecture": "arm64",
+        "threadId": "01a10147-44c4-7381-a97b-1215f700717b",
+        "sessionId": "01a10147-44c4-7381-a97b-1215f700717b",
+        "modelMetadata": "not exposed by a trusted task-runtime tool"
+      },
+      "codegraph": "absent; gap recorded before bounded source inspection",
+      "bun": {
+        "requested": "1.3.14",
+        "available": "1.3.14",
+        "qualified": true,
+        "path": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "binarySha256": "e0c90ec15d33363e6b70713d56bc3b2c7585c17f40a0fe0f8fd9305901d4e233",
+        "source": "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-darwin-aarch64.zip"
+      },
+      "defaultBunAtIntake": "1.4.2",
+      "node": "v26.8.2",
+      "dependencies": {
+        "installation": "bun install --frozen-lockfile --ignore-scripts; source workspace symlinks verified",
+        "lockfileUnchanged": true,
+        "lockfileSha256": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7",
+        "versions": {
+          "react": {
+            "version": "18.3.1",
+            "packageJsonSha256": "d4e68a5c96babb20cad1daafea8b78822eae45b341552cf5418d06a5304fa64c"
+          },
+          "jotai": {
+            "version": "2.16.2",
+            "packageJsonSha256": "c6bc63c7b0fd691dad1e8591a4fe0e3059d429c8eb2bfc310b621d694ed148f3"
+          },
+          "typescript": {
+            "version": "5.9.3",
+            "packageJsonSha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
+          },
+          "esbuild": {
+            "version": "0.25.12",
+            "packageJsonSha256": "cb7d5b1fe478f8cbaae566a86031b6fdf5f7d444354f35d1cb3cba9adf6d2935"
+          },
+          "@playwright/test": {
+            "version": "1.49.1",
+            "packageJsonSha256": "e695ee332923036ac32273451c5ae8ce71241107864c6664eed5c8d2552c0da1"
+          },
+          "@types/bun": {
+            "version": "1.3.6",
+            "packageJsonSha256": "27f54b20c3a8520731f86826b47b4a9c1e9007619913340fab4a60fd04ab1100"
+          }
+        }
+      }
+    },
+    "qualifiedBunExecutable": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify/../toolchain-bun-1.3.14/bun-darwin-aarch64/bun"
+  },
   "implementedClauses": [
     {
       "taskId": "UI-001.1",
-      "clause": "Retain dedicated hosts for 15 literal canonical detail routes, including all five extra screens; dispatch their actual identifiers through MainContentPanel."
+      "behavior": "Unknown/malformed routes retain their raw address on an explicit unavailable surface; no unrelated chat fallback."
     },
     {
       "taskId": "UI-001.1",
-      "clause": "Scope detail component identity to workspace, entity, settings subpage, search query, extra screen and skill working directory; selected source/workspace changes remount detail state."
+      "behavior": "Explicit missing/deleted session selection survives metadata changes; known foreign-workspace sessions are unavailable; remote aliases are retained."
     },
     {
       "taskId": "UI-001.1",
-      "clause": "Selected source and skill deletion/recreation retain their route and show existing localized missing states; complete scoped skill reads establish presence because CHANGED omits project/OMP scope; foreign events are ignored."
+      "behavior": "Queued routes preserve complete addresses, action parameters and new-panel options until navigation becomes ready."
     },
     {
       "taskId": "UI-001.1",
-      "clause": "Cancel stale workspace/directory requests; full source events and versioned scoped skill reads outrank older loads; retain a complete skill catalog on refresh failure."
+      "behavior": "Source/skill reads and live events stay scoped to workspace/directory and discard obsolete callbacks. Existing retry and lazy import error recovery from main are preserved."
     },
     {
       "taskId": "UI-001.1",
-      "clause": "Keep the explicit unavailable fallback for unsupported parsed navigation states. Raw-route coercion and deleted-session auto-selection remain lead-owned gaps."
+      "behavior": "Skill details reload the complete scoped catalog, preserve local draft fields and focus, and update untouched fields without relying on partial watcher payloads."
     },
     {
       "taskId": "UI-001.2",
-      "clause": "Normalize live Jotai writes and functional updates before publishing; persist the same finite rounded/clamped sizes."
-    },
-    {
-      "taskId": "UI-001.2",
-      "clause": "Retain the real inspector host range of 280-1400 px and terminal range of 88-480 px, with defaults 320/104; reject corrupt JSON, wrong types and infinite reload values."
-    },
-    {
-      "taskId": "UI-001.2",
-      "clause": "Keep live layout usable when reading/writing/resetting storage is denied; normalize cross-window changes, deletion and clear events and remove subscriptions on unmount."
-    },
-    {
-      "taskId": "UI-001.2",
-      "clause": "Restore workspace-scoped shell widths on restart/switch, cancel pending resize state before restoration, and prevent old filter/disclosure snapshots overwriting the next workspace during hydration."
-    },
-    {
-      "taskId": "UI-001.1",
-      "clause": "Resolve initial selected-entity presence before mounting actual SourceInfoPage/SkillInfoPage; initial read errors and missing snapshots recover on later callbacks without replacing the route."
-    },
-    {
-      "taskId": "UI-001.1",
-      "clause": "Preserve project/OMP skill details and project precedence over workspace skills of the same slug across incomplete workspace broadcasts; revalidate read-only non-workspace pages from the scoped catalog."
-    },
-    {
-      "taskId": "UI-001.1",
-      "clause": "Retain a mounted workspace skill editor, focus and unsaved draft when a background full-catalog refresh rejects; failed reads do not prove deletion. Initial failures still show unavailable."
+      "behavior": "Workspace geometry restores synchronously with pending resize cancellation; storage values are finite/rounded/bounded and obsolete cross-window events reread canonical storage."
     }
   ],
-  "productAndTestSha256": {
-    "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts": "8beab3d06987d1426850acc45085d28faddfbe0fe66deca9cbc47e081e30392e",
-    "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness.ts": "0763584f67fb558af3a5e742525ac68022569e24a4063d328cdcb2cb58e7f1b6",
-    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts": "ff0681f6f70f0a09a7f86c81638fc2b91fa5ac3cac6dfd6bdcffebfb1e9a7db3",
-    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts": "f70cf603bbd493ac4840fed01287d858bef1a40e2017d755f82e5ed4097edd50",
-    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts": "d829bae036c318d878336f3154cd1748e28a7ba22d17d07ec9b941533b30a88c"
-  },
-  "testCommands": [
-    {
-      "label": "continuation-2-owned-stable",
-      "command": [
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "test",
-        "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
-        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts",
-        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:35:17.437737+00:00",
-      "finishedAt": "2026-10-03T12:35:18.644723+00:00",
-      "exitCode": 0,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-owned-stable.log",
-      "logSha256": "ece7e24e95293fe6301b0a2f69ef3fa239baeccde7c81bd39fa409c245fcb8c1"
-    },
-    {
-      "label": "continuation-2-editor-refresh-green",
-      "command": [
-        "env",
-        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:34:40.401072+00:00",
-      "finishedAt": "2026-10-03T12:34:41.846738+00:00",
-      "exitCode": 0,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-editor-refresh-green.log",
-      "logSha256": "6daaa499e9524e99a2e09dcbb5d384ba08d2d293f387347859a05c1f2d59bc91"
-    },
-    {
-      "label": "continuation-2-original-browser-stable",
-      "command": [
-        "env",
-        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.browser.ts"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:36:53.508088+00:00",
-      "finishedAt": "2026-10-03T12:36:54.450003+00:00",
-      "exitCode": 0,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-original-browser-stable.log",
-      "logSha256": "c2ffaafcbc61d4e06a259bbbb736107a5056d8197e676fb879f8d55166086c8f"
-    },
-    {
-      "label": "continuation-2-typecheck-stable",
-      "command": [
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "run",
-        "--cwd",
-        "apps/electron",
-        "tsc",
-        "--noEmit"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:35:17.437653+00:00",
-      "finishedAt": "2026-10-03T12:35:55.855331+00:00",
-      "exitCode": 0,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-typecheck-stable.log",
-      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "label": "continuation-2-renderer-stable",
-      "command": [
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "run",
-        "--cwd",
-        "apps/electron",
-        "build:renderer"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:35:17.437776+00:00",
-      "finishedAt": "2026-10-03T12:36:02.294610+00:00",
-      "exitCode": 0,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-renderer-stable.log",
-      "logSha256": "d860b643e63a0ed05963bf1e3336cfdbcbfe7b006d3191378f1fbd9fe2963896"
-    },
-    {
-      "label": "continuation-2-app-shell-stable",
-      "command": [
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "test",
-        "apps/electron/src/renderer/components/app-shell/__tests__"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:36:53.507930+00:00",
-      "finishedAt": "2026-10-03T12:36:54.875217+00:00",
-      "exitCode": 1,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-app-shell-stable.log",
-      "logSha256": "dc11ffd67d1eba45b0f2ecd1ebe94b1401704a67446fcacb053fc645cf800081"
-    },
-    {
-      "label": "continuation-2-layout-stable",
-      "command": [
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "test",
-        "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
-        "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:40:04.207791+00:00",
-      "finishedAt": "2026-10-03T12:40:04.521091+00:00",
-      "exitCode": 1,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-layout-stable.log",
-      "logSha256": "b8518615987a70c4589b882ce4ddfa041deac880c9337641f243eff38781dc1f"
-    },
-    {
-      "label": "continuation-2-parser-gaps-stable",
-      "command": [
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.parser-probe.ts"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:36:53.507976+00:00",
-      "finishedAt": "2026-10-03T12:36:53.693811+00:00",
-      "exitCode": 0,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-parser-gaps-stable.log",
-      "logSha256": "ec1e9684ff087383a63e8267b3669f434e86922d3b9b74db61e56c86ec54fa86"
-    },
-    {
-      "label": "continuation-2-proposal-stable",
-      "command": [
-        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
-        "lead-route-recovery-proposal-v4.patch"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T12:37:32.104648+00:00",
-      "finishedAt": "2026-10-03T12:38:08.253822+00:00",
-      "exitCode": 0,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-stable.log",
-      "logSha256": "44a62d4ec38c2a1080ae7c802aae5efc944265805926212056ca2ff14f7bb533"
-    }
-  ],
-  "testSummary": {
-    "ownedBehaviorTests": {
-      "pass": 33,
-      "fail": 0,
-      "assertions": 109
-    },
-    "extendedHeadlessScenarios": {
-      "pass": 21,
-      "fail": 0,
-      "browserVersion": "153.0.8010.12",
-      "boundary": "isolated local headless Chromium; actual MainContentPanel, SourceInfoPage, SkillInfoPage, route parser and Jotai atoms; presentation and IPC fixtures; history adapter is a fixture, not NavigationProvider; no installed/native/hosted/backend acceptance",
-      "historyBoundary": "Actual browser history driven by a fixture adapter, not mounted NavigationProvider",
-      "pageErrors": []
-    },
-    "originalHeadlessMountedComponentScenarios": {
-      "pass": 7,
-      "fail": 0,
-      "boundary": "Actual MainContentPanel; leaf hosts and IPC fixtures; no installed/native/hosted/provider acceptance"
-    },
-    "appShellRegression": {
-      "pass": 251,
-      "fail": 1,
-      "assertions": 993,
-      "remainingFailure": "sash terminal clearance: source constant 4 vs non-owned fixture expectation 0",
-      "preExistingAtInput": true
-    },
-    "layoutRegression": {
-      "pass": 16,
-      "fail": 1,
-      "assertions": 72,
-      "remainingFailure": "non-owned source-text declaration assertion expects atomWithStorage shape; direct real atom tests pass",
-      "preExistingAtInput": false
-    },
-    "electronTypecheck": "pass",
-    "rendererBuild": "pass; existing duplicate-case and bundle-size warnings retained",
-    "unappliedLeadCandidate": {
-      "checks": 40,
-      "failed": 0,
-      "behaviorChecks": 38,
-      "parserHistoryTests": 67,
-      "parserHistoryFailures": 0,
-      "proposedExistingTestUpdates": 1,
-      "fullElectronTypeDiagnostics": 0,
-      "boundary": "Temporary Git index, virtual modules/compiler and actual extracted callbacks with isolated bindings; no physical shared source/test edits or mounted NavigationProvider acceptance"
-    },
-    "whitespace": {
-      "productAndTests": "pass",
-      "structuredDocs": "pass",
-      "verbatimEvidence": "original trailing spaces in raw command logs and embedded diff context preserved",
-      "rawDocsCheckReceipt": "evidence/docs-whitespace-raw.json",
-      "qualifiedCheckExcludes": [
-        "evidence/*.log",
-        "*.patch"
-      ]
-    }
-  },
-  "failureHistory": {
-    "originalCloud": "retained verbatim in result-cloud-original.json; raw original cloud failure logs were not supplied",
-    "localFailedReceipts": [
-      {
-        "label": "baseline-regression",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__",
-          "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
-          "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:26:14.220929+00:00",
-        "finishedAt": "2026-10-03T10:26:15.538216+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "5fc025c5a080a82f5f702914c3e7186ee7cf52f84a3f54397f99f1cb78e69aec",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "15f3806d5551135856e815d5d19f49d4484790f14499eca1d96b01c5b27d4545",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/baseline-regression.log",
-        "logSha256": "426de340295fee96b32e4a1a102377aac918e87c1c1e4a696da0ebf9e6744077"
-      },
-      {
-        "label": "browser-red",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.browser.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:41:29.135117+00:00",
-        "finishedAt": "2026-10-03T10:41:32.887360+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/browser-red.log",
-        "logSha256": "2f041ed559d9f294deb4f144b0d05b007579a0bb2a54289c5c4c0dab02de257d"
-      },
-      {
-        "label": "current-typecheck",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "run",
-          "--cwd",
-          "apps/electron",
-          "tsc",
-          "--noEmit"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:45:02.362499+00:00",
-        "finishedAt": "2026-10-03T10:45:34.905648+00:00",
-        "exitCode": 2,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/current-typecheck.log",
-        "logSha256": "66829d21a1735afc264151101b430ddeb691e80ee2e0e494e6e6d957be0c001a"
-      },
-      {
-        "label": "final-app-shell-regression",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:51:16.086543+00:00",
-        "finishedAt": "2026-10-03T10:51:19.588068+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-app-shell-regression.log",
-        "logSha256": "7bd40a094b2d81bf9584a9f26cf01e15cff9537fdafc324748ade23ca2f1f497"
-      },
-      {
-        "label": "final-layout-regression",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
-          "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:51:16.086916+00:00",
-        "finishedAt": "2026-10-03T10:51:16.580852+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-layout-regression.log",
-        "logSha256": "6d21018d181a9631a0a67c1f96479217a2772d5e127821a58a78975165583006"
-      },
-      {
-        "label": "final-regression",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__",
-          "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
-          "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:45:31.619349+00:00",
-        "finishedAt": "2026-10-03T10:45:33.898737+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-regression.log",
-        "logSha256": "d2bce82c81d917a39cc73798a1c17b39cad677f9fe34b4be0aa6379fd2a1218a"
-      },
-      {
-        "label": "geometry-red",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:28:36.795601+00:00",
-        "finishedAt": "2026-10-03T10:28:36.994549+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "5fc025c5a080a82f5f702914c3e7186ee7cf52f84a3f54397f99f1cb78e69aec",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "15f3806d5551135856e815d5d19f49d4484790f14499eca1d96b01c5b27d4545",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/geometry-red.log",
-        "logSha256": "79bf9ef37df4f508235d2beba85191f3335907566e33d8663a0a96ae047e2916"
-      },
-      {
-        "label": "route-harness-esbuild",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:39:41.479633+00:00",
-        "finishedAt": "2026-10-03T10:39:42.282165+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-esbuild.log",
-        "logSha256": "b444796f643512a2673e367455d86a08120def20240983c28954a2dc726ef7c1"
-      },
-      {
-        "label": "route-harness-first",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:37:49.435647+00:00",
-        "finishedAt": "2026-10-03T10:37:49.638067+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-first.log",
-        "logSha256": "afb7492ef0c4a1b5bf897763ae9026d53b0a3b484d23d8fedb91fac56b63bc60"
-      },
-      {
-        "label": "route-harness-second",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:38:14.423556+00:00",
-        "finishedAt": "2026-10-03T10:38:14.597359+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-second.log",
-        "logSha256": "9d0cf208676766a6f2412139f66c65c0b43b25d8995fad7121586721d96702a7"
-      },
-      {
-        "label": "route-harness-third",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:39:06.251927+00:00",
-        "finishedAt": "2026-10-03T10:39:06.941359+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-third.log",
-        "logSha256": "3fc88c7633fc302a43bb4bc453ab17dbe5c0ecad7856941770d7cc1f46bd0938"
-      },
-      {
-        "label": "workspace-persistence-red",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:35:01.443785+00:00",
-        "finishedAt": "2026-10-03T10:35:02.073682+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "19c6f0200f22aab108cdca311979f2d0ec1987f0e1f6dcbb9787fbe42d2f6e1e",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/workspace-persistence-red.log",
-        "logSha256": "21c98ecda761f2f4aef9061d67916ae59ceaec81f0aac854c651ad547de9972b"
-      },
-      {
-        "label": "workspace-red",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T10:31:18.834275+00:00",
-        "finishedAt": "2026-10-03T10:31:20.284313+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "5fc025c5a080a82f5f702914c3e7186ee7cf52f84a3f54397f99f1cb78e69aec",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/workspace-red.log",
-        "logSha256": "b86f477912f517a2ff1877e20507b9f52ffb9967c3769ef9bad523c227a5d019"
-      }
-    ],
-    "observedConcurrentEdit": {
-      "snapshot": "evidence/unified-shell-observed-concurrent.txt",
-      "handling": "preserved observed variant, reconciled its storage-event behavior against actual storage semantics, removed obsolete imports and reran final checks; final source hashes are stable"
-    },
-    "packagingReceipt": {
-      "label": "docs-whitespace-raw",
-      "command": [
-        "git",
-        "diff",
-        "--cached",
-        "--check"
-      ],
-      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-      "startedAt": "2026-10-03T11:11:43.241451+00:00",
-      "finishedAt": "2026-10-03T11:11:43.307504+00:00",
-      "exitCode": 2,
-      "sourceSha256": {
-        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
-        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-        "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-        "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-      },
-      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/docs-whitespace-raw.log",
-      "logSha256": "fc9212069dee5850f5aabb793f638d7a5548505070ba49054bad3f868bb41d97"
-    },
-    "continuation1Result": "result-continuation-1.json",
-    "continuation2FailedReceipts": [
-      {
-        "label": "continuation-2-app-shell-regression",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T11:50:18.195788+00:00",
-        "finishedAt": "2026-10-03T11:50:19.714229+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-app-shell-regression.log",
-        "logSha256": "9095de7ab926bb0bdd94cb485e7ebc9a45be58fd82c73ef7d34bed0755dec236"
-      },
-      {
-        "label": "continuation-2-app-shell-stable",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T12:36:53.507930+00:00",
-        "finishedAt": "2026-10-03T12:36:54.875217+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-app-shell-stable.log",
-        "logSha256": "dc11ffd67d1eba45b0f2ecd1ebe94b1401704a67446fcacb053fc645cf800081"
-      },
-      {
-        "label": "continuation-2-editor-refresh-red",
-        "command": [
-          "env",
-          "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T12:33:26.313041+00:00",
-        "finishedAt": "2026-10-03T12:33:28.140620+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-editor-refresh-red.log",
-        "logSha256": "7600a35f7718499fe0421486a32d43bf0f03cb363b7f1f06efd2159dd574cd77"
-      },
-      {
-        "label": "continuation-2-layout-stable",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
-          "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T12:40:04.207791+00:00",
-        "finishedAt": "2026-10-03T12:40:04.521091+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-layout-stable.log",
-        "logSha256": "b8518615987a70c4589b882ce4ddfa041deac880c9337641f243eff38781dc1f"
-      },
-      {
-        "label": "continuation-2-proposal-callback-red",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
-          "lead-route-recovery-proposal-v3.patch"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T12:30:29.328094+00:00",
-        "finishedAt": "2026-10-03T12:31:02.837195+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-callback-red.log",
-        "logSha256": "ebf6dca94b0dfdb67c6d7f2f658c0acddfb559703b33433f987e5a8ecae75499"
-      },
-      {
-        "label": "continuation-2-proposal-red",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T11:54:48.581491+00:00",
-        "finishedAt": "2026-10-03T11:55:36.691562+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-red.log",
-        "logSha256": "c838ffe02f37cda87da3cc4fed72be89880ba78dfb4ce0eff8a525f98ab90d0b"
-      },
-      {
-        "label": "continuation-2-proposal-v2-qualified",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
-          "lead-route-recovery-proposal-v2.patch"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T12:14:49.487536+00:00",
-        "finishedAt": "2026-10-03T12:15:41.559509+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-v2-qualified.log",
-        "logSha256": "c3a8f9a5f899fa4f4fe6985ed41c02cb679805321ee2d0af1201ed708cbd0f1f"
-      },
-      {
-        "label": "continuation-2-proposal-v2",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
-          "lead-route-recovery-proposal-v2.patch"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T12:06:03.998803+00:00",
-        "finishedAt": "2026-10-03T12:07:15.287108+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-v2.log",
-        "logSha256": "127f62b7c8f728623a8524cd223978dc388eb0bb2562f5fc5e92f674cdb72f95"
-      },
-      {
-        "label": "continuation-2-recovery-red",
-        "command": [
-          "env",
-          "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T11:29:34.593353+00:00",
-        "finishedAt": "2026-10-03T11:29:53.258185+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-recovery-red.log",
-        "logSha256": "a8cf9a7617228ed919ed682304980b6d77a89abd47786705a1d995a15d220e2a"
-      },
-      {
-        "label": "continuation-2-skill-catalog-red",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "test",
-          "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T11:44:46.107284+00:00",
-        "finishedAt": "2026-10-03T11:44:46.683724+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e344730a7e8117c30f5ee37c272e95e1e56be0baa96f69c058fdc2abd97c56cd",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-skill-catalog-red.log",
-        "logSha256": "57153f225ad2e0030e7b841fc1e75c75445c304e2c8b07c49a25f4bac5bedf96"
-      },
-      {
-        "label": "continuation-2-skill-scope-red-qualified",
-        "command": [
-          "env",
-          "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T11:45:25.927413+00:00",
-        "finishedAt": "2026-10-03T11:45:32.720000+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e344730a7e8117c30f5ee37c272e95e1e56be0baa96f69c058fdc2abd97c56cd",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-skill-scope-red-qualified.log",
-        "logSha256": "dadf079ad713ed422b5b55a288eaedf985f637fcb6a6cfd52061442d586e77bf"
-      },
-      {
-        "label": "continuation-2-skill-scope-red",
-        "command": [
-          "env",
-          "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T11:44:46.107341+00:00",
-        "finishedAt": "2026-10-03T11:44:53.702141+00:00",
-        "exitCode": 1,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e344730a7e8117c30f5ee37c272e95e1e56be0baa96f69c058fdc2abd97c56cd",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-skill-scope-red.log",
-        "logSha256": "158011385427f6282a3d1eda58b3ccfd6048fa4329f2b6079855447755b22256"
-      },
-      {
-        "label": "continuation-2-typecheck",
-        "command": [
-          "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
-          "run",
-          "--cwd",
-          "apps/electron",
-          "tsc",
-          "--noEmit"
-        ],
-        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
-        "startedAt": "2026-10-03T11:32:39.850800+00:00",
-        "finishedAt": "2026-10-03T11:35:01.577578+00:00",
-        "exitCode": 2,
-        "sourceSha256": {
-          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "f7d5dda305d6388df2af7f5e3f98202c113cd429adb1823a6957eeafe2831716",
-          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
-          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
-          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
-        },
-        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-typecheck.log",
-        "logSha256": "78fa5bc69519cf81288f2d245e852c236eedad8a55255fda446c653a2787701f"
-      }
-    ],
-    "continuation2PreparationFailure": {
-      "operation": "prepare version 3 proposal using temporary Git index",
-      "exitCode": 1,
-      "error": "FileNotFoundError: temporary directory requested inside non-existent checkout/work directory",
-      "remedy": "Use existing task scratch directory outside the repository; no source files were changed",
-      "observedAt": "2026-10-03T12:26:04.540408+00:00"
-    }
-  },
-  "sharedRouteParserProposal": {
-    "owner": "lead",
-    "artifact": "lead-route-recovery-proposal-v4.patch",
-    "sha256": "5b0b266239bd8e133d2e1d0b3dbad21fed322c08ae0c9685a96bd5bbb2984880",
-    "applied": false,
-    "proposedPaths": [
-      "apps/electron/src/renderer/contexts/NavigationContext.tsx",
-      "apps/electron/src/renderer/lib/nav-helpers.ts",
-      "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts",
-      "apps/electron/src/shared/route-parser.ts",
-      "apps/electron/src/shared/types.ts"
-    ],
-    "qualification": "40 checks passed, 67 parser/history tests with one proposed contract update, full Electron typecheck: zero diagnostics; virtual only",
-    "evidence": "evidence/continuation-2-proposal-stable.json",
-    "actualSourceUnchanged": {
-      "apps/electron/src/shared/route-parser.ts": "8afa43adf5397285211597dd6ae08199c5c7f7d8610490dad7bb0345ceadd487",
-      "apps/electron/src/shared/types.ts": "a8edf4a2b0a970b5333a7a7d017f5259ad62958e30f37d0bfafdb05b21024db4",
-      "apps/electron/src/renderer/lib/nav-helpers.ts": "b1ca9afdabd16f5be59b5d4db250b193b9b5a762b447cf7ef8575dd7fbc2df3a",
-      "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fb09c3e16677369e0df4a165e10d0b8c738b4272d0273f3bf0c277c754ba365a",
-      "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts": "cbfe2a8303669ebf0ab2e036112f40ee81547f250b476e0d648495d98b4f9cab"
-    },
-    "historicalProposals": [
-      "lead-route-parser-proposal.patch",
-      "lead-route-recovery-proposal-v2.patch",
-      "lead-route-recovery-proposal-v3.patch"
-    ],
-    "remainingAcceptance": "Lead applies/integrates at an immutable source revision and exercises mounted NavigationProvider and original native/hosted/backend workflows."
-  },
-  "remainingSourceGaps": [
-    {
-      "path": "apps/electron/src/shared/route-parser.ts",
-      "observed": "knowledge/unknown-kind/one becomes sessions/allSessions; invalid percent-encoded knowledge route throws URIError; some unsupported route conversions return null and NavigationContext uses its default sessions state"
-    },
-    {
-      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
-      "symbol": "resolveAutoSelection",
-      "observed": "explicit deleted-session selection becomes unrelated-session in the executable read-only probe"
-    },
-    {
-      "path": "apps/electron/src/shared/types.ts",
-      "observed": "Emitted legacy /chat/ panel keys do not restore explicit session identity in the unchanged implementation; unavailable identity also needs a typed key. Both are covered by the unapplied v4 proposal."
-    },
-    {
-      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
-      "symbols": [
-        "navigate",
-        "navigationState",
-        "pendingNavigationRef"
-      ],
-      "observed": "Parser-only v3 still discards unavailable links in navigate, loses full view addresses/options before readiness and converts workspace-mismatch state back to a session when the focused raw route is parsed. Six actual-callback checks reproduced these gaps; v4 passes them but remains unapplied."
-    },
-    {
-      "path": "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
-      "observed": "source-text declaration assertion needs behavior-based adaptation; proposal stored without editing the existing test"
-    },
-    {
-      "path": "apps/electron/src/renderer/components/app-shell/__tests__/sash-terminal-clearance.test.ts",
-      "observed": "existing fixture/constant top-inset mismatch; fixture and panel-constants.ts are outside this owner"
-    }
-  ],
-  "externalPrerequisites": [
-    "Lead integration of the qualified v4 parser/types/nav-helpers/NavigationContext candidate including its proposed legacy-Notes expectation, and resolution of the two actual non-owned shell regression assertions.",
-    "SVC-003 real reconnect/capability/current-workspace callbacks with independently readable actor/target receipts.",
-    "WIN-002 Windows 10 and Windows 11 patched native artifacts and authorized fixtures for DPI 100/150/200 percent and modal/native-overlay/resize interactions.",
-    "MAC-002 patched native macOS artifact, authorized fixture and real Retina/modal/native-overlay/resize/relaunch acceptance.",
-    "WEB-001/WEB-003 actual authorized hosted browser/server fixture, ingress, history/reload and canonical backend readback.",
-    "INT-016 immutable feature-preserving integrated candidate source/lockfile manifest for final target replay.",
-    "Real selected-entity removal and readback for every required family; current source/skill deletion evidence uses isolated IPC fixtures."
-  ],
-  "notExecuted": [
-    "Installed Windows 10/11 acceptance",
-    "Native macOS visible-window/Retina acceptance",
-    "Actual hosted-browser full workflow",
-    "Real-provider calls, deployment, signing, push, PR or main changes",
-    "Canonical service deletion/reconnect receipts for all entity families",
-    "Immutable integrated-candidate release replay"
-  ],
-  "boundedImplementationVerified": true,
-  "fullDoDClosed": false,
-  "scope": {
-    "existingChangedPaths": [
-      "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
-      "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
-      "apps/electron/src/renderer/atoms/unified-shell.ts"
-    ],
-    "rootMetadataLockfileTranslationsAuthStoresChanged": false,
-    "delegation": "none; original no-further-delegation boundary preserved",
-    "globalConfigOrPermissionsChanged": false,
-    "promptEvolution": "no canonical change promoted: implementation scope forbids runtime/global changes"
-  },
   "ownedChangedPaths": [
+    ".github/workflows/ui-001-recovery.yml",
     "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts",
     "apps/electron/src/renderer/atoms/unified-shell.ts",
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+    "apps/electron/src/renderer/components/app-shell/__tests__/chrome-leftover-post-960.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.component-harness.ts",
-    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.effect-harness.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts",
     "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts",
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+    "apps/electron/src/renderer/lib/nav-helpers.ts",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx",
+    "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+    "apps/electron/src/shared/__tests__/route-parser-notes-legacy.test.ts",
+    "apps/electron/src/shared/__tests__/route-surfaces.test.ts",
+    "apps/electron/src/shared/__tests__/rox-readiness-ui-001.routes.test.ts",
+    "apps/electron/src/shared/route-parser.ts",
+    "apps/electron/src/shared/types.ts",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/checkpoint.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/contract.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/docs/continuation-1-plan.md",
@@ -1143,6 +223,46 @@
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-typecheck-stable.log",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-typecheck.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-typecheck.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-green.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-green.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-regression.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-regression.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-chrome-browser.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-chrome-browser.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-electron-types.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-electron-types.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-navigation.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-navigation.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-recovery.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-recovery.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-types.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-types.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-fixture-quarantine.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-frozen-install.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-frozen-install.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-matching-chromium-install.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-corrected.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-corrected.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-encoding-green.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-encoding-green.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-navigation-browser.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-navigation-browser.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-regression.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-regression.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-types.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-types.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-recovery-browser.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-recovery-browser.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-renderer-build.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-renderer-build.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-skill-draft-red.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-skill-draft-red.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-green.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-green.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-integration.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-integration.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-validate-ci.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-validate-ci.log",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/current-typecheck.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/current-typecheck.log",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/dependency-install.log",
@@ -1190,6 +310,16 @@
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/workspace-persistence-red.log",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/workspace-red.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/workspace-red.log",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/bounded-835bad7/checkpoint.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/bounded-835bad7/docs/plan.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/bounded-835bad7/docs/spec.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/bounded-835bad7/report.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/bounded-835bad7/result.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/main-c9b7330/checkpoint.json",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/main-c9b7330/docs/plan.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/main-c9b7330/docs/spec.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/main-c9b7330/report.md",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/integration-history/main-c9b7330/result.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/lead-layout-test-proposal.patch",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.md",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/lead-route-parser-proposal.patch",
@@ -1202,37 +332,1239 @@
     "docs/final-readiness/execution/cloud/OWNER-UI-001/result-continuation-1.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/result.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.browser.ts",
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.parser-probe.ts",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/run-check.py",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/source-manifest.json",
     "docs/final-readiness/execution/cloud/OWNER-UI-001/spec.md",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/target-workflows.json",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/original-contract.json",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/verification/prior-result.json"
+    "docs/final-readiness/execution/cloud/OWNER-UI-001/target-workflows.json"
   ],
-  "scopeIntegrityReceipt": "evidence/scope-integrity-v2.json",
-  "previousDeliveryCommit": "3c014b40930f40ccc93b4a1f7fbccf121b5917ae",
-  "continuationNumber": 2,
-  "productHistory": [
+  "productSourceSha256": {
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+    "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+    "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+    "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+    "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+    "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+    "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+  },
+  "lockfileDiffAgainstIntegrationBase": "",
+  "testCommands": [
     {
-      "commit": "3b32a3e44b08d09966b336e0acf038f9dce7af5a",
-      "purpose": "first bounded product and tests"
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-green.json",
+      "label": "continuation-3-app-shell-green",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "--timeout",
+        "30000",
+        "apps/electron/src/renderer/components/app-shell/__tests__",
+        "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts",
+        "apps/electron/src/shared/__tests__",
+        "apps/electron/src/renderer/contexts/__tests__",
+        "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:28:27.842243+00:00",
+      "finishedAt": "2026-10-03T13:29:30.360713+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-green.log",
+      "logSha256": "44614cedc9b67e4330434ab9272911b9d2d90091cb15088b278dfb2f0c84eeca"
     },
     {
-      "commit": "f3e8e61838bdbefb40e7679422d6ffe29122ec2d",
-      "purpose": "initial entity recovery and correctly scoped skill catalogs"
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-regression.json",
+      "label": "continuation-3-app-shell-regression",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "apps/electron/src/renderer/components/app-shell/__tests__",
+        "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts",
+        "apps/electron/src/shared/__tests__",
+        "apps/electron/src/renderer/contexts/__tests__",
+        "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:23:07.129224+00:00",
+      "finishedAt": "2026-10-03T13:24:49.129022+00:00",
+      "exitCode": 1,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-regression.log",
+      "logSha256": "121b5a7fc308f8710ea814e5507c478332b394625e6de8e6d2f8082f2c8210f5"
     },
     {
-      "commit": "4c46b06c4a4b85ce903993878877216e19db9adb",
-      "purpose": "retain workspace skill editor and draft through failed background refresh"
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-chrome-browser.json",
+      "label": "continuation-3-chrome-browser",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_TEST=1",
+        "ROX_UI001_CHROMIUM_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "CHROMIUM_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "--timeout",
+        "30000",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.browser.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/native-surface-owners.browser.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:28:28.751617+00:00",
+      "finishedAt": "2026-10-03T13:33:01.114244+00:00",
+      "exitCode": 1,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-chrome-browser.log",
+      "logSha256": "9920e03b2d4994818ec8a7fa9afe9a40273c40693d632e504b551baed208b3b7"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-electron-types.json",
+      "label": "continuation-3-electron-types",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "--cwd",
+        "apps/electron",
+        "typecheck"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:13:52.483603+00:00",
+      "finishedAt": "2026-10-03T13:26:33.940038+00:00",
+      "exitCode": 2,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-electron-types.log",
+      "logSha256": "fec2f868679a47776be970ff08e8ffd7cb2afe22238044e9a1f2a97ba09cc819"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-navigation.json",
+      "label": "continuation-3-final-navigation",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "inputHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+      "integrationBase": "87e52fc2bce8d2a7573de0ea7fdc3dfe1a9a7b29",
+      "startedAt": "2026-10-03T13:38:31.857488+00:00",
+      "finishedAt": "2026-10-03T13:39:32.532144+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourceAfterSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourcesStable": true,
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-navigation.log",
+      "logSha256": "8947bf4cf39d0e9248770d2e5a7e03557a65e81d4b8e0c67df7eec18d6d21375"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-recovery.json",
+      "label": "continuation-3-final-recovery",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "inputHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+      "integrationBase": "87e52fc2bce8d2a7573de0ea7fdc3dfe1a9a7b29",
+      "startedAt": "2026-10-03T13:38:30.265183+00:00",
+      "finishedAt": "2026-10-03T13:40:31.786267+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourceAfterSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourcesStable": true,
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-recovery.log",
+      "logSha256": "b524ebdf06ddd46ebadaf9d8a1a26d5f8b89ccaf2471d875f932911982bdc895"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-types.json",
+      "label": "continuation-3-final-types",
+      "command": [
+        "env",
+        "PATH=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/homebrew/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/t/.codex/tmp/arg0/codex-arg0zADpNw:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/t/.cap/bin:/Users/t/.grok/bin:/Users/t/.opencode/bin:/Users/t/.local/bin:/Users/t/.cargo/bin:/Users/t/.orbstack/bin:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/t/.orbstack/bin",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "--cwd",
+        "apps/electron",
+        "typecheck"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "inputHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+      "integrationBase": "87e52fc2bce8d2a7573de0ea7fdc3dfe1a9a7b29",
+      "startedAt": "2026-10-03T13:38:33.658056+00:00",
+      "finishedAt": "2026-10-03T13:42:25.158350+00:00",
+      "exitCode": 2,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourceAfterSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourcesStable": true,
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-types.log",
+      "logSha256": "fd7739773b70ed165aded9a793dfd3fceddd6dabd7571270640c8a62e6e72c38"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-frozen-install.json",
+      "label": "continuation-3-frozen-install",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "install",
+        "--frozen-lockfile",
+        "--ignore-scripts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:11:40.345897+00:00",
+      "finishedAt": "2026-10-03T13:11:50.515560+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "ca273d4c469406dc5ba93e46102ced7178a397439053ed06ba49c56e2a1dc98b",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-frozen-install.log",
+      "logSha256": "b6496e3b899445b22b00374d70cf1c50b7b8702660d0f9aeb995bdc509da0e72"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-corrected.json",
+      "label": "continuation-3-nav-corrected",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:22:25.865989+00:00",
+      "finishedAt": "2026-10-03T13:23:05.406993+00:00",
+      "exitCode": 1,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-corrected.log",
+      "logSha256": "f2cabce67c441a85f2fcf184f12c2d30bfe6a56c8a126c996eb471c7592feaed"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-encoding-green.json",
+      "label": "continuation-3-nav-encoding-green",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:28:24.862734+00:00",
+      "finishedAt": "2026-10-03T13:28:56.913039+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-encoding-green.log",
+      "logSha256": "8947bf4cf39d0e9248770d2e5a7e03557a65e81d4b8e0c67df7eec18d6d21375"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-navigation-browser.json",
+      "label": "continuation-3-navigation-browser",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.navigation-browser.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:20:01.207497+00:00",
+      "finishedAt": "2026-10-03T13:20:41.691953+00:00",
+      "exitCode": 1,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-navigation-browser.log",
+      "logSha256": "f6a7a3caabc74fdfda62707a91f598db445be7657ccb252ec04dd95ccf73425f"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-regression.json",
+      "label": "continuation-3-qualified-regression",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "--timeout",
+        "30000",
+        "apps/electron/src/renderer/components/app-shell/__tests__",
+        "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts",
+        "apps/electron/src/shared/__tests__",
+        "apps/electron/src/renderer/contexts/__tests__",
+        "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "inputHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+      "integrationBase": "74b8de9554c34b383b6254b30479c877435bb1db",
+      "startedAt": "2026-10-03T13:45:54.647229+00:00",
+      "finishedAt": "2026-10-03T13:46:31.782941+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourceAfterSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourcesStable": true,
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-regression.log",
+      "logSha256": "ba0f5e5d076105a66f94cc78c716f558b3e28db58b850d7e6bdcf3ed8f903847"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-types.json",
+      "label": "continuation-3-qualified-types",
+      "command": [
+        "env",
+        "PATH=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/homebrew/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/t/.codex/tmp/arg0/codex-arg0zADpNw:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/t/.cap/bin:/Users/t/.grok/bin:/Users/t/.opencode/bin:/Users/t/.local/bin:/Users/t/.cargo/bin:/Users/t/.orbstack/bin:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/t/.orbstack/bin",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "--cwd",
+        "apps/electron",
+        "typecheck"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "inputHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+      "integrationBase": "74b8de9554c34b383b6254b30479c877435bb1db",
+      "startedAt": "2026-10-03T13:44:28.198167+00:00",
+      "finishedAt": "2026-10-03T13:47:51.426476+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourceAfterSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx": "ab35f26416f92e9d7b9a7c7c7feaf3176464039174295e41d446430e9e1a3187",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourcesStable": true,
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-qualified-types.log",
+      "logSha256": "8366207267355d3e3d5bf3bf6e8c94c5f93f6078c34f08973fa2b38cdda6cc92"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-recovery-browser.json",
+      "label": "continuation-3-recovery-browser",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:21:01.109388+00:00",
+      "finishedAt": "2026-10-03T13:22:32.209306+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-recovery-browser.log",
+      "logSha256": "2c16ef7227c07650ab0360b0da8b701b5c206517bf79936ce8322cc783dea2c0"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-renderer-build.json",
+      "label": "continuation-3-renderer-build",
+      "command": [
+        "env",
+        "PATH=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/homebrew/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/t/.codex/tmp/arg0/codex-arg0zADpNw:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/t/.cap/bin:/Users/t/.grok/bin:/Users/t/.opencode/bin:/Users/t/.local/bin:/Users/t/.cargo/bin:/Users/t/.orbstack/bin:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/t/.orbstack/bin",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "--cwd",
+        "apps/electron",
+        "build:renderer"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "inputHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+      "integrationBase": "075d7d81b0f6a601dfc493c003e7a52140170f5d",
+      "startedAt": "2026-10-03T13:31:40.106098+00:00",
+      "finishedAt": "2026-10-03T13:37:13.339465+00:00",
+      "exitCode": 0,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourceAfterSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "303be05da4d64532a4f0c602a2f5d31afca1aec2a1f2b699f87086a567bb2312",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "c5a1f24789b1b9910491f22dc0ef069a6a6e3152de37f350855634e29b2c0dcb",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourcesStable": false,
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-renderer-build.log",
+      "logSha256": "be8f31d312f2e04c29444855c8f2b63f761be87cf1f8b2312edd8efdfa0c1d22"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-skill-draft-red.json",
+      "label": "continuation-3-skill-draft-red",
+      "command": [
+        "env",
+        "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "inputHead": "835bad7b13a81f485ea2961820cf8bd85fc144c9",
+      "integrationBase": "075d7d81b0f6a601dfc493c003e7a52140170f5d",
+      "startedAt": "2026-10-03T13:34:07.186821+00:00",
+      "finishedAt": "2026-10-03T13:35:29.743610+00:00",
+      "exitCode": 1,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourceAfterSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "apps/electron/src/renderer/contexts/NavigationContext.tsx": "fecf352ea937ad40b940855eb6c819f7b8b23ce70e7942ef69b7c603afe74fa8",
+        "apps/electron/src/shared/route-parser.ts": "ac58d00ce84a7fad80417961353ccce14acbdd90c32eaf10811b7cfc2638468d",
+        "apps/electron/src/shared/types.ts": "32bf07c83025d71757b1aaf91684fff11498ad91d7e2a4f9f3a7d94a4b8dc340",
+        "apps/electron/src/renderer/lib/nav-helpers.ts": "132388517bcbf168f92c5c41fb4d86a235864022f969200248caad458fdd8cdd",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "sourcesStable": true,
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-skill-draft-red.log",
+      "logSha256": "fb73d02963769604fc3afa2661ba46b0f5e44f76c6be52878d14c6cbf4c37fea"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-green.json",
+      "label": "continuation-3-unit-green",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "--timeout",
+        "30000",
+        "apps/electron/src/shared/__tests__/rox-readiness-ui-001.routes.test.ts",
+        "apps/electron/src/shared/__tests__/route-parser.test.ts",
+        "apps/electron/src/shared/__tests__/legacy-notes-route-retirement.test.ts",
+        "apps/electron/src/renderer/contexts/__tests__",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts",
+        "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:20:00.796253+00:00",
+      "finishedAt": "2026-10-03T13:20:28.527440+00:00",
+      "exitCode": 1,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-green.log",
+      "logSha256": "23761092d8be4518530f502b34fa7bf454b02664f183693de4f07e7762dfa515"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-integration.json",
+      "label": "continuation-3-unit-integration",
+      "command": [
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "test",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.selected-resource.test.ts",
+        "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:12:10.358747+00:00",
+      "finishedAt": "2026-10-03T13:12:42.384497+00:00",
+      "exitCode": 1,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-integration.log",
+      "logSha256": "a8a7ce597006983093995eb13b5df580e3de4e883bce82a7fac097448edec9ed"
+    },
+    {
+      "receipt": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-validate-ci.json",
+      "label": "continuation-3-validate-ci",
+      "command": [
+        "env",
+        "PATH=/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/homebrew/bin:/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-path:/Users/t/.codex/tmp/arg0/codex-arg0zADpNw:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/t/.cap/bin:/Users/t/.grok/bin:/Users/t/.opencode/bin:/Users/t/.local/bin:/Users/t/.cargo/bin:/Users/t/.orbstack/bin:/Users/t/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources:/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS:/Users/t/.orbstack/bin",
+        "NODE_OPTIONS=--max-old-space-size=4096",
+        "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+        "run",
+        "validate:ci"
+      ],
+      "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+      "startedAt": "2026-10-03T13:29:16.241658+00:00",
+      "finishedAt": "2026-10-03T13:41:47.288342+00:00",
+      "exitCode": 2,
+      "sourceSha256": {
+        "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "027b30cf66e66f60f2600513eac60c93d39bdc175571fb8c594f26bc047e22dc",
+        "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "cb485512ffb3dfa19f30739d4333444317c58dafe1b8484ab440959a19d8a4e8",
+        "apps/electron/src/renderer/atoms/unified-shell.ts": "1b0d53da696126c7276c15a27590b6e04a9abc7451d839d13a288c904f475c35",
+        "bun.lock": "1fd88bbfbb69aa5f221c393f0256c0b677a9c7e6a145fc82b55612e41da9cfff"
+      },
+      "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-validate-ci.log",
+      "logSha256": "2290fd76b63d06d7a6c8b7bd0d37b4f91b1630a40efba573ffc7d95374e0ca41"
     }
   ],
-  "verificationArtifactsSha256": {
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.browser.ts": "d1c2439df79bd6f80224a51c9580cd5ad1aec4cad7aee9a6d88f6598d341e81f",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.parser-probe.ts": "83357f20fbd44d3a5e02a58e802d5e39f2f0083eccccb4e5acc9013edafa0cd9",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts": "c3b6609e68ea70aeae0f51da0e9e1a185a79ef8dd12cc33b946a0633f3c98b4d",
-    "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts": "529959f1233bc153c6f42dc2d5957b0019ce9133b645fb0f4912fb882f4762df"
-  }
+  "qualifiedAtCurrentSource": [
+    "continuation-3-final-navigation",
+    "continuation-3-final-recovery",
+    "continuation-3-qualified-regression",
+    "continuation-3-qualified-types"
+  ],
+  "failureHistory": {
+    "priorBounded": {
+      "originalCloud": "retained verbatim in result-cloud-original.json; raw original cloud failure logs were not supplied",
+      "localFailedReceipts": [
+        {
+          "label": "baseline-regression",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__",
+            "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:26:14.220929+00:00",
+          "finishedAt": "2026-10-03T10:26:15.538216+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "5fc025c5a080a82f5f702914c3e7186ee7cf52f84a3f54397f99f1cb78e69aec",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "15f3806d5551135856e815d5d19f49d4484790f14499eca1d96b01c5b27d4545",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/baseline-regression.log",
+          "logSha256": "426de340295fee96b32e4a1a102377aac918e87c1c1e4a696da0ebf9e6744077"
+        },
+        {
+          "label": "browser-red",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.browser.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:41:29.135117+00:00",
+          "finishedAt": "2026-10-03T10:41:32.887360+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/browser-red.log",
+          "logSha256": "2f041ed559d9f294deb4f144b0d05b007579a0bb2a54289c5c4c0dab02de257d"
+        },
+        {
+          "label": "current-typecheck",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "run",
+            "--cwd",
+            "apps/electron",
+            "tsc",
+            "--noEmit"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:45:02.362499+00:00",
+          "finishedAt": "2026-10-03T10:45:34.905648+00:00",
+          "exitCode": 2,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/current-typecheck.log",
+          "logSha256": "66829d21a1735afc264151101b430ddeb691e80ee2e0e494e6e6d957be0c001a"
+        },
+        {
+          "label": "final-app-shell-regression",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:51:16.086543+00:00",
+          "finishedAt": "2026-10-03T10:51:19.588068+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-app-shell-regression.log",
+          "logSha256": "7bd40a094b2d81bf9584a9f26cf01e15cff9537fdafc324748ade23ca2f1f497"
+        },
+        {
+          "label": "final-layout-regression",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:51:16.086916+00:00",
+          "finishedAt": "2026-10-03T10:51:16.580852+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-layout-regression.log",
+          "logSha256": "6d21018d181a9631a0a67c1f96479217a2772d5e127821a58a78975165583006"
+        },
+        {
+          "label": "final-regression",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__",
+            "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:45:31.619349+00:00",
+          "finishedAt": "2026-10-03T10:45:33.898737+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/final-regression.log",
+          "logSha256": "d2bce82c81d917a39cc73798a1c17b39cad677f9fe34b4be0aa6379fd2a1218a"
+        },
+        {
+          "label": "geometry-red",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:28:36.795601+00:00",
+          "finishedAt": "2026-10-03T10:28:36.994549+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "5fc025c5a080a82f5f702914c3e7186ee7cf52f84a3f54397f99f1cb78e69aec",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "15f3806d5551135856e815d5d19f49d4484790f14499eca1d96b01c5b27d4545",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/geometry-red.log",
+          "logSha256": "79bf9ef37df4f508235d2beba85191f3335907566e33d8663a0a96ae047e2916"
+        },
+        {
+          "label": "route-harness-esbuild",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:39:41.479633+00:00",
+          "finishedAt": "2026-10-03T10:39:42.282165+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-esbuild.log",
+          "logSha256": "b444796f643512a2673e367455d86a08120def20240983c28954a2dc726ef7c1"
+        },
+        {
+          "label": "route-harness-first",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:37:49.435647+00:00",
+          "finishedAt": "2026-10-03T10:37:49.638067+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-first.log",
+          "logSha256": "afb7492ef0c4a1b5bf897763ae9026d53b0a3b484d23d8fedb91fac56b63bc60"
+        },
+        {
+          "label": "route-harness-second",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:38:14.423556+00:00",
+          "finishedAt": "2026-10-03T10:38:14.597359+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-second.log",
+          "logSha256": "9d0cf208676766a6f2412139f66c65c0b43b25d8995fad7121586721d96702a7"
+        },
+        {
+          "label": "route-harness-third",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.route-recovery.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:39:06.251927+00:00",
+          "finishedAt": "2026-10-03T10:39:06.941359+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/route-harness-third.log",
+          "logSha256": "3fc88c7633fc302a43bb4bc453ab17dbe5c0ecad7856941770d7cc1f46bd0938"
+        },
+        {
+          "label": "workspace-persistence-red",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:35:01.443785+00:00",
+          "finishedAt": "2026-10-03T10:35:02.073682+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "19c6f0200f22aab108cdca311979f2d0ec1987f0e1f6dcbb9787fbe42d2f6e1e",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/workspace-persistence-red.log",
+          "logSha256": "21c98ecda761f2f4aef9061d67916ae59ceaec81f0aac854c651ad547de9972b"
+        },
+        {
+          "label": "workspace-red",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T10:31:18.834275+00:00",
+          "finishedAt": "2026-10-03T10:31:20.284313+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e241ebdd0f202c35f8f1abba2977190d9b5745325c2b36aa8fd030543d89883e",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "5fc025c5a080a82f5f702914c3e7186ee7cf52f84a3f54397f99f1cb78e69aec",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "2106433f1db27a3b7686d18dc4439af43d782335681fd038d3cddcf9cc5a0bb8",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/workspace-red.log",
+          "logSha256": "b86f477912f517a2ff1877e20507b9f52ffb9967c3769ef9bad523c227a5d019"
+        }
+      ],
+      "observedConcurrentEdit": {
+        "snapshot": "evidence/unified-shell-observed-concurrent.txt",
+        "handling": "preserved observed variant, reconciled its storage-event behavior against actual storage semantics, removed obsolete imports and reran final checks; final source hashes are stable"
+      },
+      "packagingReceipt": {
+        "label": "docs-whitespace-raw",
+        "command": [
+          "git",
+          "diff",
+          "--cached",
+          "--check"
+        ],
+        "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+        "startedAt": "2026-10-03T11:11:43.241451+00:00",
+        "finishedAt": "2026-10-03T11:11:43.307504+00:00",
+        "exitCode": 2,
+        "sourceSha256": {
+          "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+          "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+          "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+          "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+        },
+        "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/docs-whitespace-raw.log",
+        "logSha256": "fc9212069dee5850f5aabb793f638d7a5548505070ba49054bad3f868bb41d97"
+      },
+      "continuation1Result": "result-continuation-1.json",
+      "continuation2FailedReceipts": [
+        {
+          "label": "continuation-2-app-shell-regression",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T11:50:18.195788+00:00",
+          "finishedAt": "2026-10-03T11:50:19.714229+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-app-shell-regression.log",
+          "logSha256": "9095de7ab926bb0bdd94cb485e7ebc9a45be58fd82c73ef7d34bed0755dec236"
+        },
+        {
+          "label": "continuation-2-app-shell-stable",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T12:36:53.507930+00:00",
+          "finishedAt": "2026-10-03T12:36:54.875217+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-app-shell-stable.log",
+          "logSha256": "dc11ffd67d1eba45b0f2ecd1ebe94b1401704a67446fcacb053fc645cf800081"
+        },
+        {
+          "label": "continuation-2-editor-refresh-red",
+          "command": [
+            "env",
+            "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T12:33:26.313041+00:00",
+          "finishedAt": "2026-10-03T12:33:28.140620+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-editor-refresh-red.log",
+          "logSha256": "7600a35f7718499fe0421486a32d43bf0f03cb363b7f1f06efd2159dd574cd77"
+        },
+        {
+          "label": "continuation-2-layout-stable",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+            "apps/electron/src/renderer/atoms/rox-readiness-ui-001.layout.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T12:40:04.207791+00:00",
+          "finishedAt": "2026-10-03T12:40:04.521091+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "01847dbb22770887484e1bcddac8f5ffe4f785c051a8ab790be14f789e5a598f",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-layout-stable.log",
+          "logSha256": "b8518615987a70c4589b882ce4ddfa041deac880c9337641f243eff38781dc1f"
+        },
+        {
+          "label": "continuation-2-proposal-callback-red",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
+            "lead-route-recovery-proposal-v3.patch"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T12:30:29.328094+00:00",
+          "finishedAt": "2026-10-03T12:31:02.837195+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-callback-red.log",
+          "logSha256": "ebf6dca94b0dfdb67c6d7f2f658c0acddfb559703b33433f987e5a8ecae75499"
+        },
+        {
+          "label": "continuation-2-proposal-red",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T11:54:48.581491+00:00",
+          "finishedAt": "2026-10-03T11:55:36.691562+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-red.log",
+          "logSha256": "c838ffe02f37cda87da3cc4fed72be89880ba78dfb4ce0eff8a525f98ab90d0b"
+        },
+        {
+          "label": "continuation-2-proposal-v2-qualified",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
+            "lead-route-recovery-proposal-v2.patch"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T12:14:49.487536+00:00",
+          "finishedAt": "2026-10-03T12:15:41.559509+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-v2-qualified.log",
+          "logSha256": "c3a8f9a5f899fa4f4fe6985ed41c02cb679805321ee2d0af1201ed708cbd0f1f"
+        },
+        {
+          "label": "continuation-2-proposal-v2",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.proposal-check.ts",
+            "lead-route-recovery-proposal-v2.patch"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T12:06:03.998803+00:00",
+          "finishedAt": "2026-10-03T12:07:15.287108+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "7adb0a00da0a058776d4e2c567cfdd929c70b6a61b5e108ab33ba9505afee40a",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "71c7f5392d286388a193079a8056a4d5d31e34ba6aba0f393dcc265aeb710dd8",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-proposal-v2.log",
+          "logSha256": "127f62b7c8f728623a8524cd223978dc388eb0bb2562f5fc5e92f674cdb72f95"
+        },
+        {
+          "label": "continuation-2-recovery-red",
+          "command": [
+            "env",
+            "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T11:29:34.593353+00:00",
+          "finishedAt": "2026-10-03T11:29:53.258185+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "5a319396c87dc50d0427231623aa497ad67d1df06f542b2e898efdef83f35b72",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-recovery-red.log",
+          "logSha256": "a8cf9a7617228ed919ed682304980b6d77a89abd47786705a1d995a15d220e2a"
+        },
+        {
+          "label": "continuation-2-skill-catalog-red",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "test",
+            "apps/electron/src/renderer/components/app-shell/__tests__/rox-readiness-ui-001.workspace-recovery.test.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T11:44:46.107284+00:00",
+          "finishedAt": "2026-10-03T11:44:46.683724+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e344730a7e8117c30f5ee37c272e95e1e56be0baa96f69c058fdc2abd97c56cd",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-skill-catalog-red.log",
+          "logSha256": "57153f225ad2e0030e7b841fc1e75c75445c304e2c8b07c49a25f4bac5bedf96"
+        },
+        {
+          "label": "continuation-2-skill-scope-red-qualified",
+          "command": [
+            "env",
+            "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T11:45:25.927413+00:00",
+          "finishedAt": "2026-10-03T11:45:32.720000+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e344730a7e8117c30f5ee37c272e95e1e56be0baa96f69c058fdc2abd97c56cd",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-skill-scope-red-qualified.log",
+          "logSha256": "dadf079ad713ed422b5b55a288eaedf985f637fcb6a6cfd52061442d586e77bf"
+        },
+        {
+          "label": "continuation-2-skill-scope-red",
+          "command": [
+            "env",
+            "ROX_UI001_BROWSER_EXECUTABLE=/Users/t/Library/Caches/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "docs/final-readiness/execution/cloud/OWNER-UI-001/rox-readiness-ui-001.recovery-browser.ts"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T11:44:46.107341+00:00",
+          "finishedAt": "2026-10-03T11:44:53.702141+00:00",
+          "exitCode": 1,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "e344730a7e8117c30f5ee37c272e95e1e56be0baa96f69c058fdc2abd97c56cd",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-skill-scope-red.log",
+          "logSha256": "158011385427f6282a3d1eda58b3ccfd6048fa4329f2b6079855447755b22256"
+        },
+        {
+          "label": "continuation-2-typecheck",
+          "command": [
+            "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/toolchain-bun-1.3.14/bun-darwin-aarch64/bun",
+            "run",
+            "--cwd",
+            "apps/electron",
+            "tsc",
+            "--noEmit"
+          ],
+          "cwd": "/Users/t/Projects/2026-10-03/prior-conversation-with-codex-conversation-role-3/work/ui-001-verify",
+          "startedAt": "2026-10-03T11:32:39.850800+00:00",
+          "finishedAt": "2026-10-03T11:35:01.577578+00:00",
+          "exitCode": 2,
+          "sourceSha256": {
+            "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": "f7d5dda305d6388df2af7f5e3f98202c113cd429adb1823a6957eeafe2831716",
+            "apps/electron/src/renderer/components/app-shell/AppShell.tsx": "80cfdd3222461981729afcb0b281888473212e345cb36ab52937c136b9138e15",
+            "apps/electron/src/renderer/atoms/unified-shell.ts": "ee0ee5e4f8986594de5f69bea6f35ed211544c34bcb86ff184c1c9b619c079e5",
+            "bun.lock": "5bc53a7d9fd36758cb41cf1a5f768863f18a933e83df5aa4c28c84c9c26deab7"
+          },
+          "log": "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-2-typecheck.log",
+          "logSha256": "78fa5bc69519cf81288f2d245e852c236eedad8a55255fda446c653a2787701f"
+        }
+      ],
+      "continuation2PreparationFailure": {
+        "operation": "prepare version 3 proposal using temporary Git index",
+        "exitCode": 1,
+        "error": "FileNotFoundError: temporary directory requested inside non-existent checkout/work directory",
+        "remedy": "Use existing task scratch directory outside the repository; no source files were changed",
+        "observedAt": "2026-10-03T12:26:04.540408+00:00"
+      }
+    },
+    "originalCloud": "result-cloud-original.json",
+    "incomingMain": "integration-history/main-c9b7330/result.json",
+    "continuation3Failures": [
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-app-shell-regression.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-chrome-browser.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-electron-types.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-final-types.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-nav-corrected.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-navigation-browser.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-skill-draft-red.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-green.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-unit-integration.json",
+      "docs/final-readiness/execution/cloud/OWNER-UI-001/evidence/continuation-3-validate-ci.json"
+    ],
+    "quarantineReceipt": "evidence/continuation-3-fixture-quarantine.json"
+  },
+  "externalPrerequisites": [
+    {
+      "requirement": "Windows 10 and Windows 11 installed native workflow at 100/150/200 percent scaling",
+      "state": "not observed; authenticated repository has no self-hosted runners"
+    },
+    {
+      "requirement": "Native macOS Retina compositor/overlays/modal focus and full delete/relaunch matrix",
+      "state": "not observed; Electron binary absent after isolated frozen ignore-scripts install; renderer fixtures do not prove native acceptance"
+    },
+    {
+      "requirement": "Actual hosted web C with canonical persistence/backend readback and reconnect/capability transport",
+      "state": "not observed; local IPC fixtures do not provide service receipts"
+    },
+    {
+      "requirement": "INT-016 immutable integrated candidate replay across all original acceptance targets",
+      "state": "not observed; original acceptance remains open"
+    }
+  ],
+  "delivery": {
+    "repository": "rox-one/rox-one",
+    "branch": "codex/ui-001-route-recovery-main-20261003",
+    "githubStatus": "pending PR, CI and authorized merge readback"
+  },
+  "observedAt": "2026-10-03T13:49:50.698680+00:00"
 }

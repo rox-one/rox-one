@@ -25,6 +25,46 @@ const GIT_CONVENTIONS_HEADING = '## Git Conventions'
 const CO_AUTHOR_TRAILER = 'Co-Authored-By: Agent Rox#001 <agents-noreply@craft.do>'
 
 describe('system prompt guidance', () => {
+  it('uses available configuration tools rather than a nonexistent bundled CLI', () => {
+    const prompt = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace')
+    expect(prompt).toContain('The desktop app does not bundle a configuration management CLI')
+    expect(prompt).toContain('config_validate')
+    expect(prompt).toContain('skill_validate')
+    expect(prompt).toContain('source_test')
+    expect(prompt).not.toContain('craft-agent label --help')
+    expect(prompt).not.toContain('Prefer `craft-agent`')
+  })
+
+  it('routes relevant tasks to actual integrations and identifies skill-only products', () => {
+    const prompt = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace')
+
+    expect(prompt).toContain('Use connected MCP sources whenever their capabilities are relevant')
+    expect(prompt).toContain('Context7: current library and framework documentation')
+    expect(prompt).toContain('DeepWiki: understanding public repositories')
+    expect(prompt).toContain('Firecrawl: web search, crawling, page extraction')
+    expect(prompt).toContain('CodeGraph: repository structure')
+    expect(prompt).toContain('Playwright: browser interaction')
+    expect(prompt).toContain('Send messages only when the user has authorized sending them')
+    expect(prompt).toContain('Use Windows integrations only on a supported, connected Windows host')
+    expect(prompt).toContain('Superpowers and Understand Anything are skills/plugins, not MCP servers')
+    expect(prompt).toContain('Never invent tool names')
+  })
+
+  it('routes document retrieval and durable memory to the relevant configured store', () => {
+    const prompt = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace')
+
+    expect(prompt).toContain('QMD: keyword and semantic search over indexed local Markdown documents')
+    expect(prompt).toContain('Weaviate: retrieve knowledge from existing connected collections')
+    expect(prompt).toContain('Qdrant: retrieve relevant records from connected vector collections')
+    expect(prompt).toContain('Mem0: retrieve relevant long-term memories')
+    expect(prompt).toContain('Choose knowledge and memory stores from the actual connected sources')
+    expect(prompt).toContain('Do not copy the same information into QMD, Weaviate, Qdrant and Mem0 by default')
+    expect(prompt).toContain('Keep records in the configured user/project scope')
+    expect(prompt).toContain('If the user asks not to retain information or names a preferred memory store, follow that preference')
+    expect(prompt).not.toContain('mcp__qmd__')
+    expect(prompt).not.toContain('mcp__mem0__')
+  })
+
   it('uses backend-neutral debug log querying guidance (rg/grep via Bash)', () => {
     const prompt = getSystemPrompt(
       undefined,
@@ -95,7 +135,7 @@ describe('includeCoAuthoredBy handling', () => {
       '/tmp/workspace',
       '/tmp/workspace',
       undefined,
-      'Craft Agents Backend'
+      'ROX Backend'
       // 7th arg omitted — must not regress to `true` default
     )
 
@@ -135,8 +175,8 @@ describe('Rox agent identity in the system prompt', () => {
     expect(prompt).toContain('- Name: Agent Rox#001')
     expect(prompt).toContain('compatibility implementation metadata')
     expect(prompt).toContain('If the user asks for technical or runtime detail, you may mention the backend (OMP)')
-    expect(prompt).not.toContain('You are Craft Agent')
-    expect(prompt).not.toContain('You must refer to yourself as Craft Agent')
+    expect(prompt).not.toContain('You are ROX')
+    expect(prompt).not.toContain('You must refer to yourself as ROX')
   })
 })
 

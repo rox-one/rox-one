@@ -1,16 +1,11 @@
-# UI-001 execution plan, continuation 2
+# UI-001: план интеграции и доставки
 
-Tier: bounded workflow, one writer; original no-further-delegation scope remains. Original contract is unchanged.
+Владелец всех шагов: OWNER-UI-001. Делегирование не выполняется; исходная конкретная граница одного писателя сохраняется.
 
-| Task | Owner | Dependencies | Result and verification |
-|---|---|---|---|
-| Initial entity recovery | OWNER-UI-001 | previous delivery | Reproduced four actual-page failures, repaired owned host lifecycle; callbacks pass |
-| Complete skill scope | OWNER-UI-001 | service-source contract inspection | GET scope replaces partial CHANGED payload; project/OMP/same-slug/races/failure recovery pass |
-| Draft on read failure | OWNER-UI-001 | actual SkillInfoPage browser probe | Red/green receipt; mounted workspace editor, draft and focus retained |
-| Browser storage | OWNER-UI-001 | original bounded atoms | Actual two-window storage, reload/clear/corruption/denial/unsubscribe pass |
-| Shared proposal | OWNER-UI-001 prepares; lead integrates | read-only source probes | Unapplied v4: 40 checks, 67 tests, zero type diagnostics; actual shared files unchanged |
-| Final regression | OWNER-UI-001 | product 4c46b06c4a4b85ce903993878877216e19db9adb | 33 tests, 21+7 browser scenarios, type/build pass; actual broad entries retain two documented assertion failures |
-| Local delivery | OWNER-UI-001 | final regression | Result, patch, manifests, full failure history, base replay and archive readback |
-| Original target acceptance | WIN-002/MAC-002/WEB-001/WEB-003/SVC-003/INT-016 and lead | integrated immutable candidate | Prepared, not observed; fullDoDClosed false |
+1. Проверить исходный SHA, инструкции, literal acceptance и живой origin/main; сохранить оба конфликтующих варианта и все отрицательные результаты.
+2. Объединить новый main с ремонтом без потери возможностей; устранить проблемы в общем парсере, реальном NavigationProvider и редакторе навыка.
+3. Выполнить исходную app-shell регрессию, parser/layout проверки, реальные callbacks и mounted NavigationProvider/Chromium с reload/history/race/failure/field-draft сценариями; проверить типы и сборку.
+4. Создать PR в rox-one/rox-one, прикрепить к чату, наблюдать проверки exact HEAD и исправить причины ошибок. Дополнительный UI-001 Recovery workflow удерживает поведенческие проверки на CI; проверки Windows/macOS native/hosted не подменяются.
+5. Слить проверенный HEAD в main по явной авторизации; прочитать GitHub PR/main повторно, сверить исходники/parentage и сформировать новый outputs delivery с SHA, результатами и внешними prerequisites.
 
-Product 4c46b06c4a4b85ce903993878877216e19db9adb. Prior delivery result and report/spec/plan are preserved separately. Next executable action for OWNER-UI-001 is final local packaging/readback; the lead then integrates its shared candidate and supplies original target acceptance evidence. No remote delivery, automation or running delegated worker is claimed.
+Зависимости исходного acceptance: SVC-003 transport/backend receipts, WIN-002/MAC-002 реальные target artifacts, WEB-001/WEB-003 actual hosted target, INT-016 immutable release replay. Независимый ремонт и GitHub delivery выполняются сейчас; fullDoD остаётся открытым.

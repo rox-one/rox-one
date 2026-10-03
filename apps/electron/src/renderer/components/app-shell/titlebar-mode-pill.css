@@ -1,9 +1,8 @@
 /* =============================================================================
    TITLEBAR MODE PILL — one centered segmented control for every screen mode.
-   Flat: no borders, no shadows. The track is a faint foreground tint; the
-   active segment is an accent-tinted fill that slides between items.
-   High contrast strengthens fills (never outlines) and inverts the active
-   segment to a solid accent.
+   A soft glass track holds colored mode icons and a raised active segment.
+   The active segment slides between items without moving their labels.
+   High contrast keeps solid fills and removes decorative depth.
    ============================================================================= */
 
 .rox-mode-pill {
@@ -12,12 +11,19 @@
   display: inline-flex;
   align-items: center;
   gap: 1px;
-  height: 26px;
+  height: 30px;
   padding: 2px;
   border: 0;
-  border-radius: 8px;
-  box-shadow: none;
-  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+  border-radius: 11px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+    inset 0 0 0 1px color-mix(in oklch, var(--foreground) 6%, transparent),
+    0 2px 8px color-mix(in srgb, black 8%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--foreground) 4%, transparent),
+    color-mix(in oklch, var(--foreground) 7%, transparent)
+  );
   font-family: var(--font-sans);
   font-size: var(--chrome-font-size, 12px);
   letter-spacing: var(--chrome-tracking, normal);
@@ -34,17 +40,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  height: 22px;
+  gap: 6px;
+  height: 26px;
   padding: 0 9px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 9px;
   background: transparent;
   color: color-mix(in oklch, var(--foreground) 62%, transparent);
   font: inherit;
   cursor: default;
   outline: none;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color 160ms ease, background-color 160ms ease;
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -76,10 +82,30 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 }
 
 .rox-mode-pill-icon {
-  width: 14px;
-  height: 14px;
+  width: 19px;
+  height: 19px;
+  padding: 2px;
+  border-radius: 6px;
+  color: var(--mode-color, var(--accent));
+  background: color-mix(in oklch, var(--mode-color, var(--accent)) 12%, transparent);
   flex-shrink: 0;
 }
+
+.rox-mode-pill-item[data-mode="home"] { --mode-color: oklch(0.55 0.16 265); }
+.rox-mode-pill-item[data-mode="chat"] { --mode-color: oklch(0.52 0.13 165); }
+.rox-mode-pill-item[data-mode="meetings"] { --mode-color: oklch(0.55 0.17 310); }
+.rox-mode-pill-item[data-mode="tasks"] { --mode-color: oklch(0.58 0.16 55); }
+.rox-mode-pill-item[data-mode="notes"] { --mode-color: oklch(0.55 0.14 225); }
+.rox-mode-pill-item[data-mode="feed"] { --mode-color: oklch(0.56 0.17 25); }
+.rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.52 0.15 285); }
+
+html.dark .rox-mode-pill-item[data-mode="home"] { --mode-color: oklch(0.76 0.13 265); }
+html.dark .rox-mode-pill-item[data-mode="chat"] { --mode-color: oklch(0.77 0.13 165); }
+html.dark .rox-mode-pill-item[data-mode="meetings"] { --mode-color: oklch(0.77 0.14 310); }
+html.dark .rox-mode-pill-item[data-mode="tasks"] { --mode-color: oklch(0.8 0.14 70); }
+html.dark .rox-mode-pill-item[data-mode="notes"] { --mode-color: oklch(0.78 0.12 225); }
+html.dark .rox-mode-pill-item[data-mode="feed"] { --mode-color: oklch(0.76 0.14 25); }
+html.dark .rox-mode-pill-item[data-mode="inbox"] { --mode-color: oklch(0.76 0.13 285); }
 
 .rox-mode-pill-item:not([aria-disabled="true"]):not([aria-current="page"]):hover {
   color: var(--foreground);
@@ -87,7 +113,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 }
 
 .rox-mode-pill-item[aria-current="page"] {
-  color: var(--accent);
+  color: var(--foreground);
 }
 
 .rox-mode-pill-item[aria-disabled="true"] {
@@ -95,12 +121,17 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   cursor: not-allowed;
 }
 
+.rox-mode-pill-item[aria-disabled="true"] .rox-mode-pill-icon {
+  color: inherit;
+  background: transparent;
+}
+
 .rox-mode-pill-item:focus-visible {
   box-shadow: inset 0 0 0 2px var(--focus, var(--accent));
 }
 
 .rox-mode-pill[data-collapsed] .rox-mode-pill-item {
-  width: 28px;
+  width: 30px;
   padding: 0;
 }
 
@@ -109,9 +140,16 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   z-index: 0;
   top: 2px;
   left: 0;
-  height: 22px;
-  border-radius: 6px;
-  background: color-mix(in oklch, var(--accent) 16%, transparent);
+  height: 26px;
+  border-radius: 9px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--accent) 13%, transparent),
+    color-mix(in oklch, var(--accent) 20%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
+    0 1px 3px color-mix(in srgb, black 9%, transparent);
   opacity: 0;
   pointer-events: none;
 }
@@ -153,8 +191,14 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   z-index: 1;
 }
 
+/* Wide browser tabs yield space to the fixed titlebar actions and mode pill. */
+.rox-topbar-right-actions > :not(.rox-topbar-browser-strip) {
+  flex-shrink: 0;
+}
+
 html[data-contrast="high"] .rox-mode-pill {
   background: color-mix(in oklch, var(--foreground) 11%, transparent);
+  box-shadow: none;
 }
 
 html[data-contrast="high"] .rox-mode-pill-item {
@@ -171,10 +215,16 @@ html[data-contrast="high"] .rox-mode-pill-item:not([aria-disabled="true"]):not([
 
 html[data-contrast="high"] .rox-mode-pill-indicator {
   background: var(--accent);
+  box-shadow: none;
 }
 
 html[data-contrast="high"] .rox-mode-pill-item[aria-current="page"] {
   color: var(--background);
+}
+
+html[data-contrast="high"] .rox-mode-pill-icon {
+  color: inherit;
+  background: transparent;
 }
 
 /* Session cost chip (icon + value) in the titlebar's right group. */

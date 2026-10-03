@@ -19,7 +19,7 @@ import {
   StyledDropdownMenuItem,
   StyledDropdownMenuSeparator,
 } from './styled-dropdown'
-import { type DocFeature, getDocUrl } from '@craft-agent/shared/docs/doc-links'
+import { type DocFeature, getDocUrl } from '@rox/shared/docs/doc-links'
 
 interface HeaderMenuProps {
   /** Route string for Open in New Window action */

@@ -8,7 +8,7 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { MemoryService, type MemoryServiceDeps } from '../MemoryService'
-import { DEFAULT_MEMORY_CONFIG, type MemoryConfig } from '@craft-agent/shared/memory/types'
+import { DEFAULT_MEMORY_CONFIG, type MemoryConfig } from '@rox/shared/memory/types'
 
 const NOW = new Date('2026-08-06T12:00:00Z').getTime()
 

@@ -7,7 +7,7 @@
  * (TaskRunner / messaging inbox) call the store directly, never via RPC.
  */
 
-import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { CodedError, RPC_CHANNELS } from '@rox/shared/protocol'
 import type { RpcServer, RequestContext } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
 import {
@@ -15,7 +15,7 @@ import {
   rpcCommandGatewayActResult,
   rpcCommandGatewayListResult,
   rpcCommandGatewayReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 const WORKSPACE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,191}$/
 

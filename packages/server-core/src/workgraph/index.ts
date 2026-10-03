@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import type { Database, Transaction } from '@tursodatabase/database'
-import { atomicWriteFileSync } from '@craft-agent/shared/utils'
+import { atomicWriteFileSync } from '@rox/shared/utils'
 
 const WORKGRAPH_DIRECTORY = 'workgraph'
 const DATABASE_FILENAME = 'workgraph.db'

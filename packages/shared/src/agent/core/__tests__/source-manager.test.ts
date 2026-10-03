@@ -213,9 +213,68 @@ describe('SourceManager', () => {
 
       expect(formatted).toContain('github (no tools)');
     });
+
+    it('keeps relevant source usage and availability guidance after introductions', () => {
+      sourceManager.updateActiveState(['github'], [], ['github', 'slack']);
+
+      sourceManager.formatSourceState();
+      const nextTurn = sourceManager.formatSourceState();
+
+      expect(nextTurn).toContain('Use connected source tools whenever relevant to the task');
+      expect(nextTurn).toContain('Call only tools present in the live tool definitions');
+      expect(nextTurn).toContain('slack (no tools)');
+      expect(nextTurn).not.toContain('GitHub integration');
+    });
+
+    it('keeps missing Weaviate setup visible on later turns without calling it a failed server', () => {
+      const source = createMockSource('weaviate', {
+        id: 'builtin-mcp-weaviate', connectionStatus: 'untested',
+        connectionError: 'Set WEAVIATE_URL to a running database with MCP enabled.',
+        mcp: { transport: 'http', url: 'https://weaviate.invalid/v1/mcp', authType: 'none' },
+      });
+      sourceManager.setAllSources([source]);
+      sourceManager.updateActiveState([], [], ['weaviate']);
+      sourceManager.formatSourceState();
+      const nextTurn = sourceManager.formatSourceState();
+      expect(nextTurn).toContain('weaviate (no tools)');
+      expect(nextTurn).toContain('Set WEAVIATE_URL');
+      expect(nextTurn).toContain('awaiting setup');
+      expect(nextTurn).not.toContain("server is unreachable");
+      expect(nextTurn).not.toContain('Re-authenticate');
+    });
   });
 
   describe('Authentication Utilities', () => {
+    it('offers credentials for a managed Telegram stdio source missing account setup', () => {
+      const keys = ['TELEGRAM_API_ID', 'TELEGRAM_API_HASH', 'TELEGRAM_SESSION_STRING', 'TELEGRAM_SESSION_NAME'];
+      const saved = keys.map(key => process.env[key]);
+      try {
+        keys.forEach(key => delete process.env[key]);
+        const source = createMockSource('telegram-mcp', {
+          id: 'builtin-mcp-telegram-mcp',
+          provider: 'telegram-mcp',
+          connectionStatus: 'needs_auth',
+          mcp: { transport: 'stdio', command: 'uvx', authType: 'none' },
+        });
+        expect(sourceManager.getAuthToolName(source)).toBe('source_credential_prompt');
+        sourceManager.setAllSources([source]);
+        sourceManager.updateActiveState([], [], ['telegram-mcp']);
+        expect(sourceManager.formatSourceState()).toContain('Re-authenticate using source_credential_prompt');
+      } finally {
+        keys.forEach((key, index) => {
+          if (saved[index] === undefined) delete process.env[key];
+          else process.env[key] = saved[index];
+        });
+      }
+    });
+
+    it('does not ask for credentials for an ordinary public stdio server', () => {
+      const source = createMockSource('public-local', {
+        mcp: { transport: 'stdio', command: 'node', authType: 'none' },
+      });
+      expect(sourceManager.getAuthToolName(source)).toBeNull();
+    });
+
     it('should return correct auth tool for OAuth MCP sources', () => {
       const source = createMockSource('oauth-source', {
         type: 'mcp',

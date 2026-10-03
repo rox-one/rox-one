@@ -39,6 +39,7 @@ export const sourceSelection=selection,skillSelection=selection,automationSelect
 export const recordRecentSetting=async()=>{};
 const translate=(key)=>key;
 export const useTranslation=()=>({t:translate});
+export const toast={error:()=>{}};
 `
 
 const entityUi = `import * as React from 'react';
@@ -64,7 +65,7 @@ export const navigate=()=>{},routes={view:{skills:()=> 'skills'}};
 export async function buildMainFixture(
   outdir: string,
   browser = false,
-  options: { realEntityPages?: boolean; browserBootstrap?: string } = {},
+  options: { realEntityPages?: boolean; realNavigation?: boolean; browserBootstrap?: string } = {},
 ) {
   mkdirSync(outdir, { recursive: true })
   const entry = resolve(outdir, 'rox-readiness-ui-001.entry.tsx')
@@ -80,9 +81,10 @@ export function Fixture({route='sources/source/one',workspace='workspace-a',dire
 }
 ${browser ? options.browserBootstrap ?? `import {createRoot} from 'react-dom/client';
 const sourceListeners=new Set(),skillListeners=new Set();
-window.electronAPI={onSourcesChanged:(fn)=>{sourceListeners.add(fn);return()=>sourceListeners.delete(fn)},onSkillsChanged:(fn)=>{skillListeners.add(fn);return()=>skillListeners.delete(fn)}};
+let sources=['one','two'].map(slug=>({config:{slug}})),skills=[{slug:'one',source:'workspace'}];
+window.electronAPI={getSources:async()=>sources,getSkills:async()=>skills,onSourcesChanged:(fn)=>{sourceListeners.add(fn);return()=>sourceListeners.delete(fn)},onSkillsChanged:(fn)=>{skillListeners.add(fn);return()=>skillListeners.delete(fn)}};
 const root=createRoot(document.getElementById('root'));
-window.ui001={render:(props)=>root.render(<Fixture {...props}/>),sources:(ws,data)=>{for(const fn of sourceListeners)fn(ws,data)},skills:(ws,data)=>{for(const fn of skillListeners)fn(ws,data)}};
+window.ui001={render:(props)=>root.render(<Fixture {...props}/>),sources:(ws,data)=>{sources=data;for(const fn of sourceListeners)fn(ws,data)},skills:(ws,data)=>{skills=data;for(const fn of skillListeners)fn(ws,data)}};
 window.ui001.render({});` : ''}
 `)
   const stubs = new Set([
@@ -103,6 +105,8 @@ window.ui001.render({});` : ''}
     plugins: [{ name: 'UI-001 component boundaries', setup(build) {
       build.onResolve({ filter: /^rox-ui001-bindings$/ }, () => ({ path: 'bindings', namespace: 'ui001' }))
       build.onResolve({ filter: /.*/ }, args => {
+        if (options.realNavigation && /\/contexts\/NavigationContext\.tsx$/.test(args.importer)
+          && ['react-i18next', 'sonner'].includes(args.path)) return { path: 'bindings', namespace: 'ui001' }
         if (options.realEntityPages && /\/pages\/(SourceInfoPage|SkillInfoPage)\.tsx$/.test(args.importer)) {
           if (['react-i18next', '@/contexts/NavigationContext', '@/context/AppShellContext'].includes(args.path)) {
             return { path: 'bindings', namespace: 'ui001' }
@@ -112,6 +116,7 @@ window.ui001.render({});` : ''}
           }
         }
         if (args.importer !== main) return
+        if (options.realNavigation && ['@/contexts/NavigationContext', '@/atoms/sessions'].includes(args.path)) return
         if (bindingImports.has(args.path)) return { path: 'bindings', namespace: 'ui001' }
         if (args.path === '../../knowledge/KnowledgeHome') return { path: 'knowledge', namespace: 'ui001' }
         if (options.realEntityPages && ['@/pages/SourceInfoPage', '@/pages/SkillInfoPage'].includes(args.path)) return

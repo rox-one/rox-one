@@ -1,0 +1,30 @@
+{
+  "name": "tgchats-local",
+  "version": "1.0.0",
+  "description": "Connect Codex to a self-hosted local tgchats Telegram MCP runtime.",
+  "author": {
+    "name": "Chiho",
+    "url": "https://chiho.ai/"
+  },
+  "homepage": "https://github.com/chihoai/telegram-for-ai-agents",
+  "repository": "https://github.com/chihoai/telegram-for-ai-agents",
+  "license": "MIT",
+  "keywords": ["telegram", "self-hosted", "local", "mcp", "crm"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "tgchats local",
+    "shortDescription": "Self-hosted local Telegram MCP runtime",
+    "longDescription": "Connect Codex to a user-operated tgchats MCP process for local Telegram and CRM workflows. This package requires local Telegram API credentials, session storage, and optional Postgres and AI configuration; it does not connect to Chiho's hosted service.",
+    "developerName": "Chiho",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "websiteURL": "https://github.com/chihoai/telegram-for-ai-agents",
+    "defaultPrompt": [
+      "Show my recent local Telegram chats.",
+      "Find follow-ups in my local Telegram data.",
+      "Organize local Telegram chats with tags and tasks."
+    ],
+    "brandColor": "#64748B"
+  }
+}

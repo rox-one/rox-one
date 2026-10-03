@@ -1,0 +1,7 @@
+[
+  {
+    "id": "invite-link-fallback",
+    "title": "Invite link fallback",
+    "text": "Hi {{first_name}}, you've been invited to join {{group_name}}: {{invite_link}}"
+  }
+]

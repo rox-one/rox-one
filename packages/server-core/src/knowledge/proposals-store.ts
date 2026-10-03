@@ -35,12 +35,12 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { APPROVAL_TTL_MS, DRAFT_TTL_MS } from '@craft-agent/core/knowledge'
+import { APPROVAL_TTL_MS, DRAFT_TTL_MS } from '@rox/core/knowledge'
 import type {
   MutationProposalRecord,
   MutationProposalStatus,
   StatusHistoryEntry,
-} from '@craft-agent/shared/protocol'
+} from '@rox/shared/protocol'
 
 export interface ProposalListFilter {
   status?: MutationProposalStatus

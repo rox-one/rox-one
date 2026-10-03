@@ -2,10 +2,10 @@ import * as React from 'react'
 import { useTranslation } from "react-i18next"
 import { Command as CommandPrimitive } from 'cmdk'
 import { Check, CloudUpload, Download, Link2, Minimize2, Sparkles, Undo2 } from 'lucide-react'
-import { Icon_Folder } from '@craft-agent/ui'
+import { Icon_Folder } from '@rox/ui'
 import { cn } from '@/lib/utils'
-import { PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, type PermissionMode } from '@craft-agent/shared/agent/modes'
-import { getCliCommand, type CliCommandId } from '@craft-agent/shared/cli'
+import { PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, type PermissionMode } from '@rox/shared/agent/modes'
+import { getCliCommand, type CliCommandId } from '@rox/shared/cli'
 
 // ============================================================================
 // Types

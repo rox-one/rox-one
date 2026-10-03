@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import { mapReduceProductResult, mapReduceVisibleSessions, mapSourcesFromSessionMeta } from '../collection-map-reduce'
 import type { SessionMeta } from '@/atoms/sessions'
 

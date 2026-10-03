@@ -8,7 +8,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { parseSiYuanPluginManifest, type SiYuanBridgeManifest } from '@craft-agent/shared/extensions'
+import { parseSiYuanPluginManifest, type SiYuanBridgeManifest } from '@rox/shared/extensions'
 import { SIYUAN_DEFAULT_BASE_URL } from './siyuan-detect'
 /** Test-only override of candidate data dirs (null = use platform defaults). */
 let candidateDataDirsOverride: string[] | null = null

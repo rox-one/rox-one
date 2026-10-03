@@ -1,26 +1,28 @@
 /**
  * Built-in Sources
  *
- * Bundled API source templates (Exa research, Firecrawl crawl) are seeded into
+ * Bundled API source templates (Exa, Firecrawl, Brave Search and E2B) are seeded into
  * new workspaces under sources/{slug}/ so the normal UI/list path picks them up.
- * They always require an explicit opt-in; credentials come from env
- * (EXA_API_KEY / FIRECRAWL_API_KEY) or a future rox proxy.
+ * They are enabled by default; credentials come from server env
+ * a private backend secret file or environment, and never enter source configs.
  *
  * craft-agents-docs remains an always-available MCP server configured in
  * craft-agent.ts, not a folder source.
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FolderSourceConfig, LoadedSource } from './types.ts';
 import { toPortablePath } from '../utils/paths.ts';
+import { getServerServiceKey, SERVER_SERVICE_KEYS, type ServerServiceKey } from '../config/server-services.ts';
 import { estimateTokens } from '../utils/large-response.ts';
+import { BUILTIN_MCP_CATALOG } from './builtin-mcp.ts';
 
 function sourcesDir(workspaceRootPath: string): string {
   return join(workspaceRootPath, 'sources');
 }
 
-export const BUILTIN_SOURCE_SLUGS = ['exa', 'firecrawl'] as const;
+export const BUILTIN_SOURCE_SLUGS = ['exa', 'firecrawl', 'brave', 'e2b'] as const;
 export type BuiltinSourceSlug = (typeof BUILTIN_SOURCE_SLUGS)[number];
 
 const EXA_ENV_KEYS = ['EXA_API_KEY', 'CRAFT_EXA_API_KEY', 'ROX_EXA_API_KEY'] as const;
@@ -35,7 +37,8 @@ function firstEnv(keys: readonly string[]): string | undefined {
     const v = process.env[key];
     if (typeof v === 'string' && v.trim()) return v.trim();
   }
-  return undefined;
+  const canonical = keys.find((key) => (SERVER_SERVICE_KEYS as readonly string[]).includes(key));
+  return canonical ? getServerServiceKey(canonical as ServerServiceKey) : undefined;
 }
 
 export function hasExaKey(): boolean {
@@ -52,7 +55,7 @@ function buildExaConfig(now: number): FolderSourceConfig {
     id: 'builtin-exa',
     name: 'Exa',
     slug: 'exa',
-    enabled: false,
+    enabled: true,
     provider: 'exa',
     type: 'api',
     api: {
@@ -76,7 +79,7 @@ function buildFirecrawlConfig(now: number): FolderSourceConfig {
     id: 'builtin-firecrawl',
     name: 'Firecrawl',
     slug: 'firecrawl',
-    enabled: false,
+    enabled: true,
     provider: 'firecrawl',
     type: 'api',
     api: {
@@ -93,7 +96,75 @@ function buildFirecrawlConfig(now: number): FolderSourceConfig {
   };
 }
 
+const SERVICE_ENV: Record<BuiltinSourceSlug, readonly string[]> = {
+  exa: EXA_ENV_KEYS,
+  firecrawl: FIRECRAWL_ENV_KEYS,
+  brave: ['BRAVE_API_KEY', 'ROX_BRAVE_API_KEY'],
+  e2b: ['E2B_API_KEY', 'ROX_E2B_API_KEY'],
+}
+const SERVICE_ORIGINS: Record<BuiltinSourceSlug, string> = {
+  exa: 'https://api.exa.ai', firecrawl: 'https://api.firecrawl.dev',
+  brave: 'https://api.search.brave.com', e2b: 'https://api.e2b.dev',
+}
+const SERVICE_HEADERS: Partial<Record<BuiltinSourceSlug, string>> = {
+  exa: 'x-api-key', brave: 'X-Subscription-Token', e2b: 'X-API-Key',
+}
+
+/** Server-side shared credential, restricted to the bundled provider's own origin and header. */
+export function isManagedBuiltinSource(config: FolderSourceConfig): boolean {
+  const slug = config.slug as BuiltinSourceSlug
+  if (!BUILTIN_SOURCE_SLUGS.includes(slug) || config.id !== `builtin-${slug}`) return false
+  return config.type === 'api' && config.provider === slug
+    && config.api?.baseUrl === SERVICE_ORIGINS[slug]
+    && config.api?.authType === (slug === 'firecrawl' ? 'bearer' : 'header')
+    && config.api?.headerName === SERVICE_HEADERS[slug]
+    && !config.api?.headerNames?.length
+    && !config.api?.renewEndpoint && !config.api?.oauth
+    && (config.api?.authScheme === undefined || config.api.authScheme === 'Bearer')
+}
+
+export function getBuiltinSourceCredential(source: Pick<LoadedSource, 'config'>): string | undefined {
+  if (!isManagedBuiltinSource(source.config)) return undefined
+  return firstEnv(SERVICE_ENV[source.config.slug as BuiltinSourceSlug])
+}
+
+/** Reconcile availability on every load, including workspaces created before provisioning. */
+export function applyBuiltinSourceAvailability(config: FolderSourceConfig): FolderSourceConfig {
+  if (!getBuiltinSourceCredential({ config })) return config
+  if (config.connectionStatus === 'failed') return { ...config, isAuthenticated: true }
+  return { ...config, isAuthenticated: true, connectionStatus: 'connected', connectionError: undefined }
+}
+
+function buildBuiltinConfig(slug: BuiltinSourceSlug, now: number): FolderSourceConfig {
+  if (slug === 'exa') return buildExaConfig(now)
+  if (slug === 'firecrawl') return buildFirecrawlConfig(now)
+  const keyed = !!firstEnv(SERVICE_ENV[slug])
+  const brave = slug === 'brave'
+  return {
+    id: `builtin-${slug}`, name: brave ? 'Brave Search' : 'E2B', slug, provider: slug, type: 'api', enabled: true,
+    api: {
+      baseUrl: brave ? 'https://api.search.brave.com' : 'https://api.e2b.dev',
+      authType: 'header', headerName: brave ? 'X-Subscription-Token' : 'X-API-Key',
+      testEndpoint: { method: 'GET', path: brave ? '/res/v1/web/search?q=Rox&count=1' : '/v2/sandboxes' },
+    },
+    icon: brave ? '🌐' : '🧪', tagline: brave ? 'Web search with cited results' : 'Isolated code execution sandboxes',
+    isAuthenticated: keyed, connectionStatus: keyed ? 'connected' : 'needs_auth', createdAt: now, updatedAt: now,
+  }
+}
+
 const GUIDES: Record<BuiltinSourceSlug, string> = {
+  brave: `# Brave Search
+
+Search the web with GET /res/v1/web/search?q={query}&count=10. Cite original result URLs.
+The host supplies BRAVE_API_KEY through X-Subscription-Token; never ask the user for the shared key.
+`,
+  e2b: `# E2B
+
+Use execute_code for Python or JavaScript code: the host creates a code-interpreter-v1 sandbox, executes code and cleans up automatically.
+For management, POST /v2/sandboxes (templateID: code-interpreter-v1, timeout in seconds).
+List active environments with GET /v2/sandboxes, inspect GET /sandboxes/{sandboxID}, and delete with DELETE /sandboxes/{sandboxID}.
+The host supplies E2B_API_KEY through X-API-Key; never expose this key in code or results.
+`,
   exa: `---
 description: Exa neural search
 ---
@@ -104,8 +175,9 @@ description: Exa neural search
 
 ## Auth
 
-Задайте \`EXA_API_KEY\` (или \`CRAFT_EXA_API_KEY\` / \`ROX_EXA_API_KEY\`) в окружении
-процесса / cloud-runs env. Без ключа источник виден, но требует авторизации.
+Хост автоматически подставляет общий серверный ключ через x-api-key.
+Не запрашивай и не показывай общий ключ пользователю. Если хост не настроен,
+сообщи, что администратору нужно подключить Exa на сервере.
 
 ## Типовые вызовы
 
@@ -126,13 +198,15 @@ description: Firecrawl page crawl
 
 ## Auth
 
-Задайте \`FIRECRAWL_API_KEY\` (или \`CRAFT_FIRECRAWL_API_KEY\` / \`ROX_FIRECRAWL_API_KEY\`).
+Хост автоматически подставляет общий серверный ключ через Bearer.
+Не запрашивай и не показывай общий ключ пользователю. Если хост не настроен,
+сообщи, что администратору нужно подключить Firecrawl на сервере.
 
 ## Типовые вызовы
 
-- \`POST /v1/scrape\` — одна страница → markdown
-- \`POST /v1/crawl\` — сайт / раздел
-- \`POST /v1/map\` — карта URL
+- \`POST /v2/scrape\` — одна страница → markdown
+- \`POST /v2/crawl\` — сайт / раздел
+- \`POST /v2/map\` — карта URL
 
 Используй когда нужен чистый текст страницы, а не SERP-сниппеты.
 `,
@@ -151,7 +225,13 @@ function writeSourceFolder(
   const guidePath = join(dir, 'guide.md');
   // Never overwrite user-edited configs.
   if (!existsSync(configPath)) {
-    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
+    // Backend availability is computed on read, so removing a shared key cannot
+    // leave a persisted authenticated badge behind. User-owned credentials keep
+    // their normal saved authentication state.
+    const stored = isManagedBuiltinSource(config)
+      ? { ...config, isAuthenticated: false, connectionStatus: 'needs_auth' }
+      : config;
+    writeFileSync(configPath, `${JSON.stringify(stored, null, 2)}\n`, 'utf-8');
   }
   if (!existsSync(guidePath)) {
     writeFileSync(guidePath, guide, 'utf-8');
@@ -215,13 +295,16 @@ export function ensureLocalNotesSource(workspaceRootPath: string, notesPath: str
 }
 
 /**
- * Seed Exa + Firecrawl source folders when missing. Safe to call repeatedly.
+ * Seed managed services and migrate the old disabled template defaults once.
+ * Edited/disabled user configurations remain authoritative after migration.
  */
 export function ensureBuiltinSources(workspaceRootPath: string): {
   created: BuiltinSourceSlug[];
+  defaulted: BuiltinSourceSlug[];
 } {
   const now = Date.now();
   const created: BuiltinSourceSlug[] = [];
+  const defaulted: BuiltinSourceSlug[] = [];
   const rootSources = sourcesDir(workspaceRootPath);
   if (!existsSync(rootSources)) {
     mkdirSync(rootSources, { recursive: true });
@@ -230,12 +313,31 @@ export function ensureBuiltinSources(workspaceRootPath: string): {
   for (const slug of BUILTIN_SOURCE_SLUGS) {
     const dir = join(rootSources, slug);
     const configPath = join(dir, 'config.json');
-    if (existsSync(configPath)) continue;
-    const config = slug === 'exa' ? buildExaConfig(now) : buildFirecrawlConfig(now);
+    if (existsSync(configPath)) {
+      const marker = join(rootSources, `.default-services-v1-${slug}`);
+      if (!existsSync(marker)) {
+        try {
+          const previous = JSON.parse(readFileSync(configPath, 'utf8')) as FolderSourceConfig;
+          if (isManagedBuiltinSource(previous)) {
+            const edited = previous.createdAt === undefined || previous.updatedAt === undefined
+              || previous.createdAt !== previous.updatedAt;
+            if (previous.enabled || !edited) {
+              writeFileSync(configPath, `${JSON.stringify({ ...previous, enabled: true }, null, 2)}\n`);
+              defaulted.push(slug);
+            }
+            writeFileSync(marker, '1\n');
+          }
+        } catch { /* malformed user configuration remains untouched */ }
+      }
+      continue;
+    }
+    const config = buildBuiltinConfig(slug, now);
     writeSourceFolder(workspaceRootPath, config, GUIDES[slug]);
+    writeFileSync(join(rootSources, `.default-services-v1-${slug}`), '1\n');
     created.push(slug);
+    defaulted.push(slug);
   }
-  return { created };
+  return { created, defaulted };
 }
 
 /**
@@ -244,24 +346,11 @@ export function ensureBuiltinSources(workspaceRootPath: string): {
  */
 export function getBuiltinSources(workspaceId: string, workspaceRootPath: string): LoadedSource[] {
   const now = Date.now();
-  return [
-    {
-      workspaceId,
-      workspaceRootPath,
-      folderPath: join(sourcesDir(workspaceRootPath), 'exa'),
-      config: buildExaConfig(now),
-      guide: { raw: GUIDES.exa },
-      isBuiltin: true,
-    },
-    {
-      workspaceId,
-      workspaceRootPath,
-      folderPath: join(sourcesDir(workspaceRootPath), 'firecrawl'),
-      config: buildFirecrawlConfig(now),
-      guide: { raw: GUIDES.firecrawl },
-      isBuiltin: true,
-    },
-  ];
+  return BUILTIN_SOURCE_SLUGS.map((slug) => ({
+    workspaceId, workspaceRootPath,
+    folderPath: join(sourcesDir(workspaceRootPath), slug),
+    config: buildBuiltinConfig(slug, now), guide: { raw: GUIDES[slug] }, isBuiltin: true,
+  }));
 }
 
 /**
@@ -272,7 +361,7 @@ export function getBuiltinSources(workspaceId: string, workspaceRootPath: string
 export function getDocsSource(workspaceId: string, workspaceRootPath: string): LoadedSource {
   const placeholderConfig: FolderSourceConfig = {
     id: 'builtin-craft-agents-docs',
-    name: 'Craft Agents Docs',
+    name: 'ROX Docs',
     slug: 'craft-agents-docs',
     enabled: true,
     provider: 'mintlify',
@@ -282,7 +371,7 @@ export function getDocsSource(workspaceId: string, workspaceRootPath: string): L
       url: 'https://agents.craft.do/docs/mcp',
       authType: 'none',
     },
-    tagline: 'Search Craft Agents documentation and source setup guides',
+    tagline: 'Search ROX documentation and source setup guides',
     icon: '📚',
     isAuthenticated: true,
     connectionStatus: 'connected',
@@ -299,7 +388,9 @@ export function getDocsSource(workspaceId: string, workspaceRootPath: string): L
 }
 
 export function isBuiltinSource(slug: string): boolean {
-  return (BUILTIN_SOURCE_SLUGS as readonly string[]).includes(slug) || slug === 'craft-agents-docs';
+  return (BUILTIN_SOURCE_SLUGS as readonly string[]).includes(slug)
+    || BUILTIN_MCP_CATALOG.some(spec => spec.slug === slug)
+    || slug === 'craft-agents-docs';
 }
 
 /** Rough token estimate for a source guide / attached text (chars/4). */
@@ -314,4 +405,3 @@ export function formatTokenEstimate(tokens: number): string {
   if (tokens >= 1000) return `≈${(tokens / 1000).toFixed(tokens >= 10_000 ? 0 : 1)}k`;
   return `≈${tokens}`;
 }
-

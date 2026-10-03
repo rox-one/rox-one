@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight, GripVertical, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { HOME_WIDGET_SIZES, type HomeWidgetSize } from './dashboard-layout'
+import { type WidgetAppearance } from './widget-appearance'
+import { WidgetAppearanceControls } from './widget-appearance-controls'
 
 export interface WidgetEditProps {
   size: HomeWidgetSize
@@ -17,6 +19,8 @@ export interface WidgetEditProps {
   onRemove: () => void
   onShift: (delta: -1 | 1) => void
   dragHandle?: React.HTMLAttributes<HTMLButtonElement> & { ref?: React.Ref<HTMLButtonElement> }
+  appearance?: WidgetAppearance
+  onAppearance?: (appearance?: WidgetAppearance) => void
 }
 
 export function WidgetFrame({
@@ -74,10 +78,11 @@ export function WidgetFrame({
           <h2 className="min-w-0 truncate text-[12px] font-bold uppercase tracking-wide text-muted-foreground">{title}</h2>
         )}
         <span className="min-w-0 flex-1" />
-        {!edit && meta ? <span className="shrink-0 truncate text-[12px] text-muted-foreground">{meta}</span> : null}
+        {!edit && meta ? <span className="min-w-0 max-w-[40%] truncate text-[12px] text-muted-foreground">{meta}</span> : null}
         {!edit && action ? <span className="ml-1 flex shrink-0 items-center">{action}</span> : null}
         {edit ? (
           <div className="flex shrink-0 items-center gap-1">
+            {edit.onAppearance ? <WidgetAppearanceControls title={title} appearance={edit.appearance} onChange={edit.onAppearance} /> : null}
             <div className="flex items-center rounded-[6px] bg-foreground/[0.06] p-0.5" role="radiogroup" aria-label={t('workbench.home.edit.size')}>
               {HOME_WIDGET_SIZES.map((size) => (
                 <button
@@ -108,7 +113,7 @@ export function WidgetFrame({
           </div>
         ) : null}
       </header>
-      <div className={cn('relative min-h-0 flex-1 overflow-hidden', edit && 'pointer-events-none select-none opacity-70')}>{children}</div>
+      <div data-home-widget-body="" className={cn('relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto', edit && 'pointer-events-none select-none')}>{children}</div>
     </section>
   )
 }
@@ -156,7 +161,7 @@ export function WidgetRow({
 }
 
 export function WidgetList({ children, columns = 1 }: { children: React.ReactNode; columns?: 1 | 2 }) {
-  return <ul className={cn('-mx-1.5 min-w-0', columns === 2 ? 'grid grid-cols-2 gap-x-4' : 'flex flex-col')}>{children}</ul>
+  return <ul className={cn('min-w-0', columns === 2 ? 'grid grid-cols-2 gap-x-4' : 'flex flex-col')}>{children}</ul>
 }
 
 /** Honest empty state: what is missing and why, plus at most one action. */

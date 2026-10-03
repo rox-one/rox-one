@@ -425,8 +425,8 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
         details: { type: 'knowledge', id, kind: kind as KnowledgeRefKind },
       }
     }
-    // Unknown ref kind / missing id — degrade to nearest existing view
-    return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
+    // Unknown ref kind / missing id remains unavailable to the navigation adapter
+    return null
   }
 
   // Cloud run surface — cloud-run/{runId}
@@ -436,7 +436,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     }
     const runId = decodeURIComponent(segments.slice(1).join('/'))
     if (!runId) {
-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
+      return null
     }
     return { navigator: 'cloud-run', details: { type: 'cloud-run', id: runId } }
   }
@@ -461,7 +461,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     }
     const proposalId = decodeURIComponent(segments.slice(1).join('/'))
     if (!proposalId) {
-      return { navigator: 'sessions', sessionFilter: { kind: 'allSessions' }, details: null }
+      return null
     }
     return { navigator: 'diff', details: { type: 'diff', id: proposalId } }
   }
@@ -761,7 +761,7 @@ export function parseRoute(route: string): ParsedRoute | null {
 /**
  * Convert a parsed compound route to ParsedRoute format (type: 'view')
  */
-function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
+function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute | null {
   if (compound.navigator === 'search') {
     return { type: 'view', name: 'search', params: compound.query ? { q: compound.query } : {} }
   }
@@ -903,7 +903,7 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     }
   }
 
-  return { type: 'view', name: 'allSessions', params: {} }
+  return null
 }
 
 // =============================================================================
@@ -926,37 +926,45 @@ export function parseRouteToNavigationState(
   route: string,
   sidebarParam?: string
 ): NavigationState | null {
-  // Parse compound routes
-  if (isCompoundRoute(route)) {
-    const compound = parseCompoundRoute(route)
-    if (compound) {
-      const state = convertCompoundToNavigationState(compound)
+  try {
+    // Some legacy slug routes preserve their encoded identity. Validate the
+    // path once before those adapters can treat a broken escape as an entity.
+    decodeURIComponent(route.split('?')[0])
+    // Parse compound routes
+    if (isCompoundRoute(route)) {
+      const compound = parseCompoundRoute(route)
+      if (compound) {
+        const state = convertCompoundToNavigationState(compound)
+        // Add rightSidebar if param provided
+        const rightSidebar = parseRightSidebarParam(sidebarParam)
+        if (rightSidebar) {
+          return { ...state, rightSidebar }
+        }
+        return state
+      }
+    }
+
+    // Parse as route (may be action or view)
+    const parsed = parseRoute(route)
+    if (!parsed) return { navigator: 'unavailable', route, reason: 'unsupported-route' }
+
+    // Actions don't map to navigation state
+    if (parsed.type === 'action') return null
+
+    // Convert view routes to NavigationState
+    const state = convertParsedRouteToNavigationState(parsed)
+    if (state) {
       // Add rightSidebar if param provided
       const rightSidebar = parseRightSidebarParam(sidebarParam)
       if (rightSidebar) {
         return { ...state, rightSidebar }
       }
-      return state
     }
+    return state ?? { navigator: 'unavailable', route, reason: 'unsupported-route' }
+  } catch (error) {
+    if (error instanceof URIError) return { navigator: 'unavailable', route, reason: 'invalid-encoding' }
+    throw error
   }
-
-  // Parse as route (may be action or view)
-  const parsed = parseRoute(route)
-  if (!parsed) return null
-
-  // Actions don't map to navigation state
-  if (parsed.type === 'action') return null
-
-  // Convert view routes to NavigationState
-  const state = convertParsedRouteToNavigationState(parsed)
-  if (state) {
-    // Add rightSidebar if param provided
-    const rightSidebar = parseRightSidebarParam(sidebarParam)
-    if (rightSidebar) {
-      return { ...state, rightSidebar }
-    }
-  }
-  return state
 }
 
 /**
@@ -1344,16 +1352,6 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'projects', details: null }
-    case 'pages':
-      return { navigator: 'pages', details: null }
-    case 'page-info':
-      if (parsed.id) {
-        return {
-          navigator: 'pages',
-          details: { type: 'page', pageSlug: parsed.id },
-        }
-      }
-      return { navigator: 'pages', details: null }
     case 'session':
       if (parsed.id) {
         // Reconstruct filter from params
@@ -1428,7 +1426,7 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
 /**
  * Convert NavigationState to ParsedCompoundRoute
  */
-function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundRoute {
+function navigationStateToCompoundRoute(state: Exclude<NavigationState, { navigator: 'unavailable' }>): ParsedCompoundRoute {
   if (state.navigator === 'search') {
     return { navigator: 'search', query: state.query, details: null }
   }
@@ -1616,6 +1614,7 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
  * Build a route string from NavigationState
  */
 export function buildRouteFromNavigationState(state: NavigationState): string {
+  if (state.navigator === 'unavailable') return state.route
   return buildCompoundRoute(navigationStateToCompoundRoute(state))
 }
 

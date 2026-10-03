@@ -14,7 +14,7 @@ import {
   type SceneMessage,
   type SessionScene,
   type SessionSceneGraph,
-} from '@craft-agent/core/mindmap'
+} from '@rox/core/mindmap'
 import { SessionFanOutSheet, type FanOutChildJob, type PlaybookHole } from './SessionFanOutSheet'
 
 const SHELF_KEY: Record<DigestShelf, string> = {

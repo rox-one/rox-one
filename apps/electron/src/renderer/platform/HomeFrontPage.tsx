@@ -29,6 +29,8 @@ import { cn } from '@/lib/utils'
 import {
   DEFAULT_HOME_LAYOUT,
   HOME_GRID_COLUMNS,
+  HOME_GRID_GAP,
+  HOME_GRID_ROW_HEIGHT,
   HOME_WIDGET_DEFAULT_SIZE,
   HOME_WIDGET_GROUPS,
   HOME_WIDGET_IDS,
@@ -44,14 +46,18 @@ import {
   persistHomeLayout,
   removeWidget,
   resizeWidget,
+  setWidgetAppearance,
   shiftWidget,
   widgetSpan,
+  widgetRowSpan,
+  widgetWidth,
   type HomeDashboardLayout,
   type HomeWidgetId,
   type HomeWidgetPlacement,
 } from './home/dashboard-layout'
 import { HOME_WIDGETS } from './home/widgets'
 import type { WidgetEditProps } from './home/widget-kit'
+import { widgetAppearanceStyle } from './home/widget-appearance'
 
 interface HomeLayoutSnapshot {
   layout: HomeDashboardLayout
@@ -121,12 +127,14 @@ class WidgetBoundary extends React.Component<{ fallback: React.ReactNode; childr
 function SortableWidget({
   placement,
   span,
+  width,
   editing,
   onChange,
   layout,
 }: {
   placement: HomeWidgetPlacement
   span: number
+  width: number
   editing: boolean
   layout: HomeDashboardLayout
   onChange: (next: HomeDashboardLayout) => void
@@ -137,6 +145,8 @@ function SortableWidget({
   const edit: WidgetEditProps | null = editing
     ? {
         size: placement.size,
+        appearance: placement.appearance,
+        onAppearance: (appearance) => onChange(setWidgetAppearance(layout, placement.id, appearance)),
         onResize: (size) => onChange(resizeWidget(layout, placement.id, size)),
         onRemove: () => onChange(removeWidget(layout, placement.id)),
         onShift: (delta) => onChange(shiftWidget(layout, placement.id, delta)),
@@ -149,8 +159,8 @@ function SortableWidget({
       ref={setNodeRef}
       data-home-cell={placement.id}
       data-home-size={placement.size}
-      className={cn('min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ gridColumn: `span ${span} / span ${span}`, transform: CSS.Translate.toString(transform), transition }}
+      className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
+      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `span ${span} / span ${span}`, gridRow: `span ${widgetRowSpan(placement.size)}`, transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
         fallback={
@@ -160,7 +170,20 @@ function SortableWidget({
           </div>
         }
       >
-        <Widget edit={edit} span={span} />
+        <Widget edit={edit} width={width} size={placement.size} />
+      </WidgetBoundary>
+    </div>
+  )
+}
+
+function WidgetPreview({ id }: { id: HomeWidgetId }) {
+  const { t } = useTranslation()
+  const [ref, width] = useContainerWidth<HTMLDivElement>()
+  const Preview = HOME_WIDGETS[id].Component
+  return (
+    <div ref={ref} role="region" className="mt-2 h-[232px] min-w-0 rounded-[10px] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
+      <WidgetBoundary fallback={<p className="p-3 text-[12px] text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
+        <Preview edit={null} width={width} size="S" />
       </WidgetBoundary>
     </div>
   )
@@ -195,7 +218,6 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
               {group.widgets.map((id) => {
                 const def = HOME_WIDGETS[id]
                 const Icon = def.icon
-                const Preview = def.Component
                 const added = used.has(id)
                 return (
                   <li key={id} className="min-w-0" onMouseEnter={() => setPreviewId(id)} onMouseLeave={() => setPreviewId((current) => current === id ? null : current)}>
@@ -231,13 +253,7 @@ function WidgetPicker({ layout, onToggle, onClose }: { layout: HomeDashboardLayo
                         {added ? t('workbench.home.picker.added') : t('workbench.home.picker.add')}
                       </span>
                     </button>
-                    {previewId === id ? (
-                      <div role="region" className="mt-2 max-h-[180px] overflow-hidden rounded-[10px] border border-foreground/10" data-home-preview={id} aria-label={t('workbench.home.picker.preview')}>
-                        <WidgetBoundary fallback={<p className="p-3 text-[12px] text-muted-foreground">{t('workbench.home.widgetFailed')}</p>}>
-                          <Preview edit={null} span={12} />
-                        </WidgetBoundary>
-                      </div>
-                    ) : null}
+                    {previewId === id ? <WidgetPreview id={id} /> : null}
                   </li>
                 )
               })}
@@ -482,8 +498,8 @@ export function HomeFrontPage() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
               <SortableContext items={ids} strategy={rectSortingStrategy}>
                 <div
-                  className="grid gap-3"
-                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '232px' }}
+                  className="grid"
+                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: `${HOME_GRID_ROW_HEIGHT}px`, gap: HOME_GRID_GAP }}
                   data-home-grid=""
                 >
                   {layout.widgets.map((placement) => (
@@ -491,6 +507,7 @@ export function HomeFrontPage() {
                       key={placement.id}
                       placement={placement}
                       span={widgetSpan(placement.size, width)}
+                      width={widgetWidth(widgetSpan(placement.size, width), width)}
                       editing={editing}
                       layout={layout}
                       onChange={updateDraft}
@@ -501,7 +518,7 @@ export function HomeFrontPage() {
                       type="button"
                       onClick={() => setPickerOpen(true)}
                       className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] text-[13px] font-bold text-muted-foreground hover:text-foreground"
-                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}` }}
+                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${widgetRowSpan('S')}` }}
                     >
                       <Plus className="h-5 w-5" />
                       {t('workbench.home.edit.addWidget')}

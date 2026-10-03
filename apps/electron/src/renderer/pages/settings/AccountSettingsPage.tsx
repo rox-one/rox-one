@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -31,7 +32,7 @@ import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { buildMiniDashboard } from '@/platform/mini-dashboard'
 import { isHomeSessionInWorkspace } from '@/platform/home-model'
 import { navigate, routes } from '@/lib/navigate'
-import { isClaimableLive } from '@craft-agent/core/rox2'
+import { isClaimableLive } from '@rox/core/rox2'
 import {
   PROFILE_PLANS,
   type Profile,
@@ -44,7 +45,7 @@ import { settingsPageActionResult } from './settings-rox2-surface'
  * behind it (audit 2026-09-29: fake control). Hidden until real plans exist.
  */
 const SHOW_PLAN_PICKER = false
-import type { XpEventType } from '@craft-agent/shared/gamification'
+import type { XpEventType } from '@rox/shared/gamification'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -123,38 +124,48 @@ export default function AccountSettingsPage() {
   const [changingAvatar, setChangingAvatar] = React.useState(false)
   const [gamification, setGamification] = React.useState<GamificationSnapshot | null>(null)
   const [savingAnalyticsConsent, setSavingAnalyticsConsent] = React.useState(false)
+  const [profileLoadFailed, setProfileLoadFailed] = React.useState(false)
+  const profileGeneration = React.useRef(0)
+  const invalidateProfileRequest = React.useCallback(() => { ++profileGeneration.current }, [])
 
   const load = React.useCallback(async () => {
-    try {
-      const [identity, nextGamification] = await Promise.all([
-        window.electronAPI.identityGetState(),
-        window.electronAPI.getGamificationProfile(),
-      ])
-      setProfile(identity.profile)
-      setDisplayName(identity.profile.displayName)
-      setEmail(identity.profile.email ?? '')
-      setGamification(nextGamification)
-    } catch (error) {
-      toast.error(t('settings.account.loadFailed', { message: errorMessage(error) }))
+    const generation = ++profileGeneration.current
+    const [identity, progress] = await Promise.allSettled([
+      window.electronAPI.identityGetState(),
+      window.electronAPI.getGamificationProfile(),
+    ])
+    if (generation !== profileGeneration.current) return
+    if (identity.status === 'fulfilled') {
+      setProfile(identity.value.profile)
+      setDisplayName(identity.value.profile.displayName)
+      setEmail(identity.value.profile.email ?? '')
+      setProfileLoadFailed(false)
+    } else {
+      setProfileLoadFailed(true)
+      toast.error(t('settings.account.loadFailed', { message: errorMessage(identity.reason) }))
     }
+    // XP is a separate service. A failure there must not prevent editing the
+    // authenticated profile or turn a successful profile read into a failure.
+    if (progress.status === 'fulfilled') setGamification(progress.value)
   }, [t])
 
   React.useEffect(() => {
+    setProfile(null)
     void load()
-    const offIdentity = window.electronAPI.onIdentityChanged?.(() => {
-      void load()
-    })
-    const offXp = window.electronAPI.onGamificationChanged((payload) => {
-      setGamification(payload)
-    })
+    const offIdentity = window.electronAPI.onIdentityChanged?.(() => { void load() })
+    const offXp = window.electronAPI.onGamificationChanged((payload) => { setGamification(payload) })
     return () => {
+      invalidateProfileRequest()
       offIdentity?.()
       offXp()
     }
-  }, [load])
+  }, [load, workspace?.id, invalidateProfileRequest])
 
   const persist = async (input: Parameters<typeof window.electronAPI.identityUpdateProfile>[0]) => {
+    const generation = ++profileGeneration.current
     const next = await window.electronAPI.identityUpdateProfile(input)
+    if (generation !== profileGeneration.current) return next.profile
+    setProfileLoadFailed(false)
     setProfile(next.profile)
     setDisplayName(next.profile.displayName)
     setEmail(next.profile.email ?? '')
@@ -275,6 +286,11 @@ export default function AccountSettingsPage() {
 
         <SettingsSection title={t('settings.account.identitySection')}>
           <SettingsCard>
+            {profileLoadFailed ? (
+              <SettingsRow label={t('settings.account.loadFailed', { message: t('common.failed') })}>
+                <Button size="sm" variant="outline" onClick={() => void load()}>{t('common.retry')}</Button>
+              </SettingsRow>
+            ) : null}
             <SettingsRow label={t('settings.account.avatar')}>
               <div className="flex items-center gap-3">
                 <Avatar className="h-14 w-14">
@@ -284,11 +300,11 @@ export default function AccountSettingsPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col gap-2">
-                  <Button size="sm" variant="outline" disabled={changingAvatar} onClick={() => void handleChangeAvatar()}>
+                  <Button size="sm" variant="outline" disabled={changingAvatar || saving || !profile} onClick={() => void handleChangeAvatar()}>
                     {t('settings.account.changeAvatar')}
                   </Button>
                   {profile?.avatar ? (
-                    <Button size="sm" variant="ghost" onClick={() => void handleRemoveAvatar()}>
+                    <Button size="sm" variant="ghost" disabled={changingAvatar || saving} onClick={() => void handleRemoveAvatar()}>
                       {t('settings.account.removeAvatar')}
                     </Button>
                   ) : null}
@@ -302,6 +318,8 @@ export default function AccountSettingsPage() {
               <div className="flex items-center gap-2 min-w-[240px]">
                 <Input
                   value={displayName}
+                  maxLength={80}
+                  disabled={saving || !profile}
                   onChange={(event) => setDisplayName(event.target.value)}
                   className="h-8"
                   aria-label={t('settings.accounts.displayName')}
@@ -314,6 +332,9 @@ export default function AccountSettingsPage() {
             >
               <Input
                 value={email}
+                maxLength={254}
+                type="email"
+                disabled={saving || !profile}
                 onChange={(event) => setEmail(event.target.value)}
                 className="h-8 min-w-[240px]"
                 inputMode="email"
@@ -323,7 +344,7 @@ export default function AccountSettingsPage() {
               />
             </SettingsRow>
             <SettingsRow label="">
-              <Button size="sm" onClick={() => void handleSaveProfile()} disabled={saving || !displayName.trim()}>
+              <Button size="sm" onClick={() => void handleSaveProfile()} disabled={saving || !profile || !displayName.trim()}>
                 {t('common.save')}
               </Button>
             </SettingsRow>
@@ -360,6 +381,8 @@ export default function AccountSettingsPage() {
             />
           </SettingsCard>
         </SettingsSection>
+
+        <SettingsSection title={t('quests.sectionTitle')}><QuestProgressCard scopeKey={workspace?.id} /></SettingsSection>
 
         <SettingsSection title={t('settings.account.progressSection')}>
           <SettingsCard>

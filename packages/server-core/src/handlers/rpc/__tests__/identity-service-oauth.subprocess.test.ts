@@ -41,11 +41,11 @@ function runScript(configDir: string, script: string): RunResult {
 }
 
 const SETUP = `
-const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol');
+const { RPC_CHANNELS } = await import('@rox/shared/protocol');
 const { registerIdentityHandlers } = await import(process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/identity.ts');
 const { registerAuthHandlers } = await import(process.env.CRAFT_TEST_ROOT + '/packages/server-core/src/handlers/rpc/auth.ts');
-const { getCredentialManager } = await import('@craft-agent/shared/credentials');
-const { getIdentityStore, resetIdentityStoreCache } = await import('@craft-agent/core/platform/identity/store');
+const { getCredentialManager } = await import('@rox/shared/credentials');
+const { getIdentityStore, resetIdentityStoreCache } = await import('@rox/core/platform/identity/store');
 const { readFileSync, existsSync } = await import('node:fs');
 const { join } = await import('node:path');
 

@@ -8,10 +8,10 @@ import { buildMainFixture } from './rox-readiness-ui-001.component-harness'
 
 let Fixture: React.ComponentType<Record<string, unknown>>
 beforeAll(async () => {
-  const directory = mkdtempSync(join(import.meta.dir, 'rox-readiness-ui-001-temp-'))
+  const directory = mkdtempSync(join(import.meta.dir, '../../../../../../../node_modules/rox-readiness-ui-001-temp-'))
   try { Fixture = (await import(await buildMainFixture(directory))).Fixture }
   finally { rmSync(directory, { recursive: true, force: true }) }
-})
+}, 30_000)
 async function rendered(props: Record<string, unknown>) {
   return new Promise<string>((resolve, reject) => {
     const sink = new PassThrough()
@@ -41,6 +41,14 @@ describe('ROX UI-001 actual MainContentPanel dispatch', () => {
   for (const [route, host, prop, value] of cases) {
     it(`dispatches ${route} with its own selected entity`, async () => {
       const html = await rendered({ route, workspace: 'workspace-a' })
+      if (host === 'SourceInfoPage' || host === 'SkillInfoPage') {
+        // SSR cannot run the canonical lookup effect. The selected identity
+        // stays explicit while the real browser fixture exercises ready pages.
+        expect(html).toContain('data-testid="route-resource-loading"')
+        expect(html).toContain(`data-route-entity="${value}"`)
+        expect(html).not.toContain('data-route-host="ChatPage"')
+        return
+      }
       expect(html).toContain(`data-route-host="${host}"`)
       expect(html).toContain(`&quot;${prop}&quot;:&quot;${value}&quot;`)
       expect(html).not.toContain('session.selectConversation')

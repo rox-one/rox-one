@@ -10,7 +10,7 @@
  * ship independently. Unified shell / workbench masters default OFF.
  * Granular workbench.* experimental flags default ON (P35-08). Conation stays off.
  */
-import { atom } from 'jotai'
+import { atom, type WritableAtom } from 'jotai'
 import { atomWithStorage, RESET } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 import { SIDE_PANEL_DEFAULT_WIDTH } from '@/lib/shell-layout-preferences'
@@ -32,56 +32,77 @@ export function clampPersistedLayoutSize(
     : fallback
 }
 
+function getLayoutStorage(): Storage | undefined {
+  try {
+    return typeof localStorage === 'undefined' ? undefined : localStorage
+  } catch {
+    // Sandboxed/private windows may throw even when accessing localStorage.
+    return undefined
+  }
+}
+
 function boundedNumberStorage(min: number, max: number, fallback: number) {
+  const parse = (raw: string | null): number => {
+    try {
+      return clampPersistedLayoutSize(JSON.parse(raw ?? 'null'), min, max, fallback)
+    } catch {
+      return fallback
+    }
+  }
   return {
     getItem(key: string, initialValue: number): number {
+      const storage = getLayoutStorage()
+      if (!storage) return initialValue
       try {
-        if (typeof localStorage === 'undefined') return initialValue
-        return clampPersistedLayoutSize(JSON.parse(localStorage.getItem(key) ?? 'null'), min, max, fallback)
+        return parse(storage.getItem(key))
       } catch {
         return fallback
       }
     },
     setItem(key: string, value: number): void {
       try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem(key, JSON.stringify(clampPersistedLayoutSize(value, min, max, fallback)))
-        }
+        getLayoutStorage()?.setItem(key, JSON.stringify(clampPersistedLayoutSize(value, min, max, fallback)))
       } catch {
-        // Resizing remains usable when storage is denied or its quota is full.
+        // A full or unavailable store must not break the live resize controls.
       }
     },
     removeItem(key: string): void {
       try {
-        if (typeof localStorage !== 'undefined') localStorage.removeItem(key)
+        getLayoutStorage()?.removeItem(key)
       } catch {
-        // The live preference can still reset when persistence is unavailable.
+        // Reset still restores the in-memory default when persistence fails.
       }
     },
     subscribe(key: string, callback: (value: number) => void): () => void {
-      if (typeof window === 'undefined') return () => {}
+      const storage = getLayoutStorage()
+      if (!storage || typeof window === 'undefined') return () => {}
+      const target = window
       const onStorage = (event: StorageEvent) => {
-        try {
-          if (event.storageArea !== localStorage || (event.key !== key && event.key !== null)) return
-          callback(this.getItem(key, fallback))
-        } catch {
-          callback(fallback)
-        }
+        if (event.storageArea !== storage || (event.key !== key && event.key !== null)) return
+        // A queued event may describe an older write. Publish the current canonical value.
+        callback(this.getItem(key, fallback))
       }
-      window.addEventListener('storage', onStorage)
-      return () => window.removeEventListener('storage', onStorage)
+      target.addEventListener('storage', onStorage)
+      return () => target.removeEventListener('storage', onStorage)
     },
   }
 }
 
-/** Normalize before Jotai publishes, including functional updates and RESET. */
-function boundedLayoutAtom(key: string, min: number, max: number, fallback: number) {
-  const persisted = atomWithStorage<number>(key, fallback, boundedNumberStorage(min, max, fallback), { getOnInit: true })
+type LayoutSizeUpdate = number | typeof RESET | ((value: number) => number | typeof RESET)
+
+function withBoundedLayoutSize(
+  persistedAtom: WritableAtom<number, [LayoutSizeUpdate], void>,
+  fallback: number,
+  min: number,
+  max: number,
+) {
+  // atomWithStorage publishes writes before calling storage.setItem. Validate
+  // before that boundary so live values and restored values obey one contract.
   return atom(
-    (get) => get(persisted),
-    (get, set, update: number | typeof RESET | ((previous: number) => number | typeof RESET)) => {
-      const value = typeof update === 'function' ? update(get(persisted)) : update
-      set(persisted, value === RESET ? RESET : clampPersistedLayoutSize(value, min, max, fallback))
+    (get) => get(persistedAtom),
+    (get, set, update: LayoutSizeUpdate) => {
+      const value = typeof update === 'function' ? update(get(persistedAtom)) : update
+      set(persistedAtom, value === RESET ? RESET : clampPersistedLayoutSize(value, min, max, fallback))
     },
   )
 }
@@ -307,12 +328,16 @@ export const inspectorSectionAtom = atomWithStorage<InspectorSectionId>(
 )
 
 /** Inspector panel width in px (drag-resized). */
-export const inspectorPanelWidthAtom = boundedLayoutAtom(
-  getKeyString(KEYS.inspectorPanelWidth),
-  INSPECTOR_PANEL_WIDTH_MIN,
-  INSPECTOR_PANEL_WIDTH_MAX,
-  SIDE_PANEL_DEFAULT_WIDTH,
-)
+function createInspectorPanelWidthAtom() {
+  const inspectorPanelWidthAtom = atomWithStorage<number>(
+    getKeyString(KEYS.inspectorPanelWidth),
+    SIDE_PANEL_DEFAULT_WIDTH,
+    boundedNumberStorage(INSPECTOR_PANEL_WIDTH_MIN, INSPECTOR_PANEL_WIDTH_MAX, SIDE_PANEL_DEFAULT_WIDTH),
+    { getOnInit: true },
+  )
+  return withBoundedLayoutSize(inspectorPanelWidthAtom, SIDE_PANEL_DEFAULT_WIDTH, INSPECTOR_PANEL_WIDTH_MIN, INSPECTOR_PANEL_WIDTH_MAX)
+}
+export const inspectorPanelWidthAtom = createInspectorPanelWidthAtom()
 
 /** Terminal docked under the main column (stacks with the right inspector). */
 export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
@@ -323,9 +348,13 @@ export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
 )
 
 /** Bottom terminal dock height in px. */
-export const bottomDockHeightAtom = boundedLayoutAtom(
-  getKeyString(KEYS.bottomDockHeight),
-  BOTTOM_DOCK_HEIGHT_MIN,
-  BOTTOM_DOCK_HEIGHT_MAX,
-  104,
-)
+function createBottomDockHeightAtom() {
+  const bottomDockHeightAtom = atomWithStorage<number>(
+    getKeyString(KEYS.bottomDockHeight),
+    104,
+    boundedNumberStorage(BOTTOM_DOCK_HEIGHT_MIN, BOTTOM_DOCK_HEIGHT_MAX, 104),
+    { getOnInit: true },
+  )
+  return withBoundedLayoutSize(bottomDockHeightAtom, 104, BOTTOM_DOCK_HEIGHT_MIN, BOTTOM_DOCK_HEIGHT_MAX)
+}
+export const bottomDockHeightAtom = createBottomDockHeightAtom()

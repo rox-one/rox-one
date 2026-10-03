@@ -8,6 +8,8 @@
  * store with owner and revision metadata; it is deliberately local, not team-synchronized state.
  */
 
+import { isWidgetAppearance, type WidgetAppearance } from './widget-appearance'
+
 export const HOME_WIDGET_IDS = [
   'summary',
   'quickActions',
@@ -38,6 +40,7 @@ export const HOME_WIDGET_SIZES: readonly HomeWidgetSize[] = ['S', 'M', 'L']
 export interface HomeWidgetPlacement {
   id: HomeWidgetId
   size: HomeWidgetSize
+  appearance?: WidgetAppearance
 }
 
 export interface HomeDashboardLayout {
@@ -137,8 +140,9 @@ export function isSupportedHomeLayout(raw: unknown): boolean {
   const seen = new Set<string>()
   for (const item of value.widgets) {
     if (!item || typeof item !== 'object') return false
-    const placement = item as { id?: unknown; size?: unknown }
-    if (Object.keys(placement).some((key) => key !== 'id' && key !== 'size')) return false
+    const placement = item as { id?: unknown; size?: unknown; appearance?: unknown }
+    if (Object.keys(placement).some((key) => key !== 'id' && key !== 'size' && key !== 'appearance')) return false
+    if (placement.appearance !== undefined && !isWidgetAppearance(placement.appearance)) return false
     if (!isHomeWidgetId(placement.id) || seen.has(placement.id)) return false
     if (placement.size !== undefined && !isSize(placement.size)) return false
     seen.add(placement.id)
@@ -157,7 +161,7 @@ export function persistHomeLayout(layout: HomeDashboardLayout, ownerId: string, 
 }
 
 export function cloneLayout(layout: HomeDashboardLayout): HomeDashboardLayout {
-  return { version: 2, widgets: layout.widgets.map((w) => ({ ...w })) }
+  return { version: 2, widgets: layout.widgets.map((w) => ({ ...w, ...(w.appearance ? { appearance: { ...w.appearance } } : {}) })) }
 }
 
 /** Corrupt/unknown payload → default; unknown ids and duplicates are dropped. */
@@ -169,10 +173,10 @@ export function normalizeHomeLayout(raw: unknown): HomeDashboardLayout {
   const widgets: HomeWidgetPlacement[] = []
   for (const item of list) {
     if (!item || typeof item !== 'object') continue
-    const { id, size } = item as { id?: unknown; size?: unknown }
+    const { id, size, appearance } = item as { id?: unknown; size?: unknown; appearance?: unknown }
     if (!isHomeWidgetId(id) || seen.has(id)) continue
     seen.add(id)
-    widgets.push({ id, size: isSize(size) ? size : HOME_WIDGET_DEFAULT_SIZE[id] })
+    widgets.push({ id, size: isSize(size) ? size : HOME_WIDGET_DEFAULT_SIZE[id], ...(isWidgetAppearance(appearance) ? { appearance: { ...appearance } } : {}) })
   }
   // v1 → v2: an untouched v1 default becomes the richer v2 default; a
   // customised v1 layout keeps the user's arrangement and gains the new widgets.
@@ -205,6 +209,19 @@ export function resizeWidget(layout: HomeDashboardLayout, id: HomeWidgetId, size
   return { version: 2, widgets: layout.widgets.map((w) => (w.id === id ? { ...w, size } : w)) }
 }
 
+/** Apply or reset one widget's design without changing any other placement. */
+export function setWidgetAppearance(layout: HomeDashboardLayout, id: HomeWidgetId, appearance?: WidgetAppearance): HomeDashboardLayout {
+  return {
+    version: 2,
+    widgets: layout.widgets.map((widget) => {
+      if (widget.id !== id) return widget
+      const placement = { ...widget }
+      delete placement.appearance
+      return appearance ? { ...placement, appearance: { ...appearance } } : placement
+    }),
+  }
+}
+
 /** Move `activeId` to the position of `overId` (drag-and-drop reorder). */
 export function moveWidget(layout: HomeDashboardLayout, activeId: HomeWidgetId, overId: HomeWidgetId): HomeDashboardLayout {
   const from = layout.widgets.findIndex((w) => w.id === activeId)
@@ -226,6 +243,43 @@ export function shiftWidget(layout: HomeDashboardLayout, id: HomeWidgetId, delta
 
 /** Grid columns for a container width (px). Always 12 so spans stay simple. */
 export const HOME_GRID_COLUMNS = 12
+export const HOME_GRID_GAP = 12
+export const HOME_GRID_ROW_HEIGHT = 110
+
+/** Pixel width of a card, including the gaps between its grid columns. */
+export function widgetWidth(span: number, containerWidth: number): number {
+  const columnWidth = (containerWidth - (HOME_GRID_COLUMNS - 1) * HOME_GRID_GAP) / HOME_GRID_COLUMNS
+  return Math.max(0, columnWidth * span + (span - 1) * HOME_GRID_GAP)
+}
+
+/** A full-width card may still be narrow: use pixels for its internal layout. */
+export function widgetContentLayout(width: number): {
+  summaryColumns: 2 | 3 | 6
+  quickActionColumns: 2 | 4
+  listColumns: 1 | 2
+  splitPanels: boolean
+  calendarView: 'list' | 'week'
+  trackerColumns: 2 | 4
+} {
+  return {
+    summaryColumns: width >= 960 ? 6 : width >= 480 ? 3 : 2,
+    quickActionColumns: width >= 760 ? 4 : 2,
+    listColumns: width >= 720 ? 2 : 1,
+    splitPanels: width >= 520,
+    calendarView: width >= 840 ? 'week' : 'list',
+    trackerColumns: width >= 480 ? 4 : 2,
+  }
+}
+
+/** Two rows preserve the original small card height; larger sizes grow vertically. */
+export function widgetRowSpan(size: HomeWidgetSize): number {
+  return size === 'S' ? 2 : size === 'M' ? 3 : 4
+}
+
+/** Taller cards can show more rows; width determines how many columns fit. */
+export function widgetItemLimit(size: HomeWidgetSize, smallLimit: number, columns = 1): number {
+  return (smallLimit + (widgetRowSpan(size) - 2) * 3) * columns
+}
 
 /**
  * Column span for a widget size at a container width. Wide (≥1100): S=3,

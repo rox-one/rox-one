@@ -460,6 +460,7 @@ export const RPC_CHANNELS = {
   },
 
   onboarding: {
+    ENSURE_FIRST_SESSION: 'onboarding:ensureFirstSession',
     GET_AUTH_STATE: 'onboarding:getAuthState',
     VALIDATE_MCP: 'onboarding:validateMcp',
     START_MCP_OAUTH: 'onboarding:startMcpOAuth',
@@ -816,10 +817,12 @@ export const RPC_CHANNELS = {
     INTERACTED: 'browser-pane:interacted',
   },
   browserProfile: {
+    CREDENTIAL_CAPABILITIES: 'browserProfile:credentialCapabilities',
     DISCOVER: 'browserProfile:discover',
     IMPORT: 'browserProfile:import',
     ROLLBACK: 'browserProfile:rollback',
     DELETE: 'browserProfile:delete',
+    DATA_AUTO_IMPORT: 'browserProfile:dataAutoImport',
     COOKIE_AUTO_STATUS: 'browserProfile:cookieAutoStatus',
     COOKIE_AUTO_SET: 'browserProfile:cookieAutoSet',
     COOKIE_AUTO_RUN: 'browserProfile:cookieAutoRun',

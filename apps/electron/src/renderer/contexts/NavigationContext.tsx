@@ -41,7 +41,7 @@ import { toast } from 'sonner'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useSession } from '@/hooks/useSession'
 import { useLabels } from '@/hooks/useLabels'
-import { matchesLabelFilter } from '@craft-agent/shared/labels'
+import { matchesLabelFilter } from '@rox/shared/labels'
 import {
   parseRoute,
   parseRouteToNavigationState,
@@ -50,7 +50,7 @@ import {
   type ParsedRoute,
 } from '../../shared/route-parser'
 import { routes, type Route, type ViewRoute } from '../../shared/routes'
-import { parsePermissionMode } from '@craft-agent/shared/agent/mode-types'
+import { parsePermissionMode } from '@rox/shared/agent/mode-types'
 import { NAVIGATE_EVENT, type NavigateOptions } from '../lib/navigate'
 import { normalizePanelRouteForReconcile } from './navigation-reconcile'
 import { buildSemanticHistoryKey, canRunInitialRestore } from './navigation-history'
@@ -209,8 +209,18 @@ export function NavigationProvider({
     const base = focusedRoute
       ? parseRouteToNavigationState(focusedRoute) ?? DEFAULT_NAVIGATION_STATE
       : DEFAULT_NAVIGATION_STATE
-    return rightSidebar ? { ...base, rightSidebar } : base
-  }, [focusedRoute, rightSidebar])
+    let state = base
+    if (isSessionsNavigation(base) && base.details) {
+      const meta = sessionMetaMap.get(base.details.sessionId)
+      const matchesWorkspace = !workspaceId
+        || meta?.workspaceId === workspaceId
+        || (remoteWorkspaceId && meta?.workspaceId === remoteWorkspaceId)
+      if (meta && !matchesWorkspace) {
+        state = { navigator: 'unavailable', route: focusedRoute!, reason: 'workspace-mismatch' }
+      }
+    }
+    return rightSidebar ? { ...state, rightSidebar } : state
+  }, [focusedRoute, rightSidebar, sessionMetaMap, workspaceId, remoteWorkspaceId])
 
   // =========================================================================
   // BROWSER HISTORY TRACKING
@@ -235,7 +245,7 @@ export function NavigationProvider({
   const isPopstateSwitchRef = useRef(false)
 
   // Queue navigation if not ready yet
-  const pendingNavigationRef = useRef<ParsedRoute | null>(null)
+  const pendingNavigationRef = useRef<{ route: Route; options?: NavigateOptions } | null>(null)
 
   // Suppress auto-select for one cycle (used by skipAutoSelect to prevent the effect from re-selecting)
   const suppressAutoSelectRef = useRef(false)
@@ -620,9 +630,17 @@ export function NavigationProvider({
         const matchesWorkspace = !workspaceId
           || meta?.workspaceId === workspaceId
           || (remoteWorkspaceId && meta?.workspaceId === remoteWorkspaceId)
-        if (!meta || !matchesWorkspace) {
-          nextState = { ...nextState, details: null }
+        if (meta && !matchesWorkspace) {
+          return {
+            navigator: 'unavailable',
+            route: buildRouteFromNavigationState(nextState),
+            reason: 'workspace-mismatch',
+            ...(nextState.rightSidebar ? { rightSidebar: nextState.rightSidebar } : {}),
+          }
         }
+        // Explicit identity survives metadata loading and deletion. ChatPage
+        // handles its missing state; auto-selection belongs to list-only routes.
+        return nextState
       }
 
       // Sessions: auto-select last/first session.
@@ -844,19 +862,23 @@ export function NavigationProvider({
         suppressAutoSelectRef.current = false
       }
 
-      const parsed = parseRoute(route)
-      if (!parsed) {
+      // Resolve view failures before parsing actions: unavailable links still
+      // select their own surface, including invalid percent encodings.
+      const newNavState = parseRouteToNavigationState(route)
+      const parsed = newNavState ? null : parseRoute(route)
+      if (!newNavState && (!parsed || parsed.type !== 'action')) {
         console.warn('[Navigation] Invalid route:', route)
         return
       }
 
       if (!isReady) {
-        pendingNavigationRef.current = parsed
+        // Preserve the complete address and options until navigation is ready.
+        pendingNavigationRef.current = { route, options }
         return
       }
 
       // Handle actions (side effects)
-      if (parsed.type === 'action') {
+      if (parsed?.type === 'action') {
         await handleActionNavigation(parsed, options)
         return
       }
@@ -880,8 +902,6 @@ export function NavigationProvider({
       // navigator-only view in compact mode, App-page fallback on desktop. We
       // intentionally do NOT auto-redirect to the last-visited subpage; doing so
       // would defeat the compact-mode drill-in UX.
-      const newNavState = parseRouteToNavigationState(route)
-
       // Suppress auto-select effect
       if (options?.skipAutoSelect) {
         suppressAutoSelectRef.current = true
@@ -1071,20 +1091,9 @@ export function NavigationProvider({
       const pending = pendingNavigationRef.current
       pendingNavigationRef.current = null
 
-      if (pending.type === 'action') {
-        handleActionNavigation(pending)
-        return
-      }
-
-      const routeStr = `${pending.name}${pending.id ? `/${pending.id}` : ''}`
-      const navState = parseRouteToNavigationState(routeStr)
-      if (navState) {
-        const resolved = resolveAutoSelection(navState)
-        const finalRoute = buildRouteFromNavigationState(resolved) as ViewRoute
-        store.set(updateFocusedPanelRouteAtom, finalRoute)
-      }
+      void navigate(pending.route, pending.options)
     }
-  }, [isReady, handleActionNavigation, resolveAutoSelection, store])
+  }, [isReady, navigate])
 
   // =========================================================================
   // DEEP LINK LISTENER

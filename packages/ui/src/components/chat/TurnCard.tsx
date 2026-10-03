@@ -1,10 +1,11 @@
+import { useMessageReactionActor } from './message-reaction-actor'
 import * as React from 'react'
 import { useMemo, useEffect, useRef, useCallback, useState } from 'react'
 import i18n from 'i18next'
 import { useTranslation } from 'react-i18next'
-import type { ToolDisplayMeta, AnnotationV1 } from '@craft-agent/core'
-import { normalizePath, pathStartsWith, stripPathPrefix } from '@craft-agent/core/utils'
-import { isParentTaskTool } from '@craft-agent/shared/utils/toolNames'
+import type { ToolDisplayMeta, AnnotationV1 } from '@rox/core'
+import { normalizePath, pathStartsWith, stripPathPrefix } from '@rox/core/utils'
+import { isParentTaskTool } from '@rox/shared/utils/toolNames'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   ChevronRight,
@@ -40,13 +41,12 @@ import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
 import { getDiffStats, getUnifiedDiffStats } from '../code-viewer'
 import { TurnCardActionsMenu } from './TurnCardActionsMenu'
 import { MessageHoverDock, type MessageDockExtraAction } from './MessageHoverDock'
-import type { SideThreadAction } from '@craft-agent/shared/side-threads'
+import type { SideThreadAction } from '@rox/shared/side-threads'
 import {
   aggregateReactions,
   createReactionAnnotation,
   DEFAULT_REACTION_EMOJI,
   findOwnReaction,
-  LOCAL_REACTION_ACTOR,
   quoteMessageMarkdown,
 } from './message-reactions'
 import { ThinkingCard } from './ThinkingCard'
@@ -1476,8 +1476,7 @@ export interface ResponseCardProps {
   isLastResponse?: boolean
   /** Whether to show the Accept Plan button (default: true) */
   showAcceptPlan?: boolean
-  /** Compact-footer layout. Hides Copy / Markdown / Branch in the response footer;
-   *  keeps the Accept Plan dropdown when a plan is the last response. */
+  /** Compact-footer layout retains direct message actions and plan acceptance. */
   compactMode?: boolean
   /** Callback to branch the session from this response */
   onBranch?: (options?: { newPanel?: boolean }) => void
@@ -1802,26 +1801,27 @@ export function ResponseCard({
     sourceKey: selectionMenuSourceKey,
   })
 
-  const reactionCounts = useMemo(() => aggregateReactions(annotations, LOCAL_REACTION_ACTOR.id), [annotations])
+  const reactionActor = useMessageReactionActor()
+  const reactionCounts = useMemo(() => aggregateReactions(annotations, reactionActor?.id), [annotations, reactionActor])
+  const pendingReactions = useRef(new Set<string>())
   const handleToggleEmoji = useCallback(
-    (emoji: string) => {
-      if (!messageId || !onAddAnnotation) return
-      const existing = findOwnReaction(annotations, emoji, LOCAL_REACTION_ACTOR.id)
-      if (existing && onRemoveAnnotation) {
-        onRemoveAnnotation(messageId, existing.id)
-        return
+    async (emoji: string) => {
+      if (!reactionActor || !messageId || !onAddAnnotation || pendingReactions.current.has(emoji)) return
+      pendingReactions.current.add(emoji)
+      try {
+        const existing = findOwnReaction(annotations, emoji, reactionActor.id)
+        if (existing && onRemoveAnnotation) {
+          await onRemoveAnnotation(messageId, existing.id)
+        } else {
+          await onAddAnnotation(messageId, createReactionAnnotation({ messageId, sessionId: sessionId ?? '', emoji, actor: reactionActor }))
+        }
+      } catch {
+        // The renderer persistence handler reports save failures.
+      } finally {
+        pendingReactions.current.delete(emoji)
       }
-      onAddAnnotation(
-        messageId,
-        createReactionAnnotation({
-          messageId,
-          sessionId: sessionId ?? '',
-          emoji,
-          actor: LOCAL_REACTION_ACTOR,
-        }),
-      )
     },
-    [annotations, messageId, onAddAnnotation, onRemoveAnnotation, sessionId],
+    [annotations, messageId, onAddAnnotation, onRemoveAnnotation, sessionId, reactionActor],
   )
 
   const renderedAnnotations = useMemo(() => {
@@ -2500,7 +2500,7 @@ export function ResponseCard({
         onSelect: onListen,
       })
     }
-    if (onBranch && !compactMode) {
+    if (onBranch) {
       overflowActions.push({
         id: 'branch',
         label: t('chat.branchFromThisMessage'),
@@ -2510,7 +2510,8 @@ export function ResponseCard({
     }
     const hoverDock = (
       <MessageHoverDock
-        reactionCounts={reactionCounts}
+          reactionCounts={reactionCounts}
+          reactionsDisabled={!reactionActor || !messageId || !onAddAnnotation}
         onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
         onToggleEmoji={handleToggleEmoji}
         onCopy={() => navigator.clipboard.writeText(text)}

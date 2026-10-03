@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
-import { credentialIdToAccount } from '@craft-agent/shared/credentials'
+import type { CredentialId, StoredCredential } from '@rox/shared/credentials'
+import { credentialIdToAccount } from '@rox/shared/credentials'
 import {
   CapabilityBroker,
   capabilityAuditPath,

@@ -7,11 +7,11 @@ import { NativeJournal } from '../authority/native-journal.ts'
 import { CollaborationSyncService } from '../collaboration/sync-service.ts'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
-import { OAuthFlowStore } from '@craft-agent/shared/auth'
-import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig } from '@craft-agent/shared/config'
-import { ensureContextDocs } from '@craft-agent/shared/context-docs'
-import { ensureBundledSkills } from '@craft-agent/shared/skills'
-import { setBundledAssetsRoot } from '@craft-agent/shared/utils'
+import { OAuthFlowStore } from '@rox/shared/auth'
+import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig } from '@rox/shared/config'
+import { ensureContextDocs } from '@rox/shared/context-docs'
+import { ensureBundledSkills } from '@rox/shared/skills'
+import { setBundledAssetsRoot } from '@rox/shared/utils'
 import {
   WsRpcServer,
   type LocalClientBindingCandidate,
@@ -23,7 +23,9 @@ import { createHeadlessPlatform } from '../runtime/platform-headless'
 import type { PlatformServices } from '../runtime/platform'
 import { startNativeSidecar, stopNativeSidecar } from '../native/supervisor.ts'
 import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from "@rox/shared/config/paths"
+import { RPC_CHANNELS } from '@rox/shared/protocol'
+import { projectNativeWorkspaceEvent } from '../handlers/rpc/native-session-scope'
 
 interface ModelRefreshServiceLike {
   startAll(): void
@@ -380,7 +382,7 @@ function bootstrapConfigArtifacts(platform: PlatformServices): void {
   // Toolchain: fire-and-forget background install/update of missing/outdated
   // tools (omp et al.). ensureAll returns a status snapshot immediately and
   // continues downloading in the background; never blocks server startup.
-  void import('@craft-agent/shared/toolchain-runtime')
+  void import('@rox/shared/toolchain-runtime')
     .then(({ getToolchainManager }) => getToolchainManager().ensureAll({ background: true }))
     .then(() => platform.logger.info('[bootstrap] Toolchain ensureAll scheduled'))
     .catch((err) => {
@@ -475,6 +477,26 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     port: rpcPort,
     requireAuth: true,
     nativeAuthority,
+    nativeEventChannels: new Set([
+      RPC_CHANNELS.sessions.EVENT, RPC_CHANNELS.sources.CHANGED, RPC_CHANNELS.memory.CHANGED,
+      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED,
+      RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+    ]),
+    nativeClientEventChannels: new Set([
+      RPC_CHANNELS.identity.CHANGED, RPC_CHANNELS.gamification.CHANGED, RPC_CHANNELS.toolchain.STATUS_CHANGED,
+      RPC_CHANNELS.voice.CHANGED, RPC_CHANNELS.voice.JOB, RPC_CHANNELS.voice.OVERLAY, RPC_CHANNELS.voice.HOTKEY,
+    ]),
+    projectNativeEvent: (channel, args, workspaceId, principal) => {
+      if (channel === RPC_CHANNELS.sessions.EVENT || channel === RPC_CHANNELS.sources.CHANGED) {
+        const rootManager = sessionManager as unknown as { getWorkspaces?: () => Array<{ id: string; rootPath: string }> }
+        const workspace = rootManager.getWorkspaces?.().find(workspace => workspace.id === workspaceId)
+        if (!workspace || !nativeAuthority.authorize(principal, workspaceId, 'read', workspace.rootPath)) return null
+      }
+      return projectNativeWorkspaceEvent(channel, args, workspaceId, (sessionId, id) => {
+      const scopedManager = sessionManager as unknown as { getSessions?: (workspaceId: string) => Array<{ id: string; workspaceId: string }> }
+      return scopedManager.getSessions?.(id).some(session => session.id === sessionId && session.workspaceId === id) === true
+      })
+    },
     validateToken: async (t) => secureTokenCompare(t, serverToken),
     validateSessionCookie: options.validateSessionCookie,
     serverId: options.serverId ?? 'headless',

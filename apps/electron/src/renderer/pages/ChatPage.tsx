@@ -29,6 +29,7 @@ import { coerceInputText } from '@/lib/input-text'
 import { lookupImportedNote } from '@/lib/notes-migration-map'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
 import { branchErrorDescription } from '@/lib/branch-error'
+import { messageActionId } from '@/lib/message-action-id'
 import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
 import { rememberCollectionView } from '@/components/app-shell/collection/collection-view-cycle'
@@ -38,7 +39,7 @@ import {
   soupChatActResult,
   soupChatListResult,
   soupChatReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
 import { resolveEffectiveConnectionSlug, isSessionConnectionUnavailable } from '@config/llm-connections'
 import {
@@ -51,8 +52,9 @@ import {
 } from '@/components/app-shell/EntityViewTabs'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
-import type { SceneMessage } from '@craft-agent/core/mindmap'
+import type { SceneMessage } from '@rox/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
+import { useSessionMenuActions } from '@/hooks/useSessionMenuActions'
 
 // Secondary session tabs (workflow xyflow, knowledge surface, mindmap outline) — lazy so
 // the default standard chat transcript path stays on the eager ChatPage chunk.
@@ -575,6 +577,9 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   const isFlagged = session?.isFlagged || sessionMeta?.isFlagged || false
   const isArchived = session?.isArchived || sessionMeta?.isArchived || false
   const sharedUrl = session?.sharedUrl || sessionMeta?.sharedUrl || null
+  const sharingActions = useSessionMenuActions({
+    item: { ...sessionMeta, id: sessionId, workspaceId: sessionMeta?.workspaceId ?? activeWorkspaceId ?? '', sharedUrl: sharedUrl ?? undefined },
+  })
   const currentSessionStatus = session?.sessionStatus || sessionMeta?.sessionStatus || 'todo'
   const hasMessages = !!(session?.messages?.length || sessionMeta?.lastFinalMessageId)
   const hasUnreadMessages = sessionMeta
@@ -612,7 +617,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (!session) return
       try {
         const child = await onCreateSession(session.workspaceId, {
-          branchFromMessageId: messageId,
+          branchFromMessageId: messageActionId(session.messages, messageId),
           branchFromSessionId: session.id,
           name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
           llmConnection: session.llmConnection,
@@ -639,7 +644,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (!session) return
       try {
         const child = await onCreateSession(session.workspaceId, {
-          branchFromMessageId: messageId,
+          branchFromMessageId: messageActionId(session.messages, messageId),
           branchFromSessionId: session.id,
           name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
           llmConnection: session.llmConnection,
@@ -668,7 +673,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       try {
         for (const job of jobs) {
           const child = await onCreateSession(session.workspaceId, {
-            branchFromMessageId: job.branchFromMessageId,
+            branchFromMessageId: messageActionId(session.messages, job.branchFromMessageId),
             branchFromSessionId: session.id,
             name: job.title.slice(0, 80),
             llmConnection: session.llmConnection,
@@ -903,47 +908,11 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   }, [sessionId])
 
   // Share action handlers
-  const handleShare = React.useCallback(async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'shareToViewer' }) as { success: boolean; url?: string; error?: string } | undefined
-    if (result?.success && result.url) {
-      await navigator.clipboard.writeText(result.url)
-      toast.success(t('toast.linkCopied'), {
-        description: result.url,
-        action: { label: t('sendToWorkspace.open'), onClick: () => window.electronAPI.openUrl(result.url!) },
-      })
-    } else {
-      toast.error(t('toast.failedToShare'), { description: result?.error || t('toast.unknownError') })
-    }
-  }, [sessionId])
-
-  const handleOpenInBrowser = React.useCallback(() => {
-    if (sharedUrl) window.electronAPI.openUrl(sharedUrl)
-  }, [sharedUrl])
-
-  const handleCopyLink = React.useCallback(async () => {
-    if (sharedUrl) {
-      await navigator.clipboard.writeText(sharedUrl)
-      toast.success(t('toast.linkCopied'))
-    }
-  }, [sharedUrl])
-
-  const handleUpdateShare = React.useCallback(async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'updateShare' }) as { success: boolean; error?: string } | undefined
-    if (result?.success) {
-      toast.success(t('chat.shareUpdated'))
-    } else {
-      toast.error(t('chat.failedToUpdateShare'), { description: result?.error })
-    }
-  }, [sessionId])
-
-  const handleRevokeShare = React.useCallback(async () => {
-    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'revokeShare' }) as { success: boolean; error?: string } | undefined
-    if (result?.success) {
-      toast.success(t('chat.sharingStopped'))
-    } else {
-      toast.error(t('chat.failedToStopSharing'), { description: result?.error })
-    }
-  }, [sessionId])
+  const handleShare = sharingActions.share
+  const handleOpenInBrowser = sharingActions.openSharedInBrowser
+  const handleCopyLink = sharingActions.copySharedLink
+  const handleUpdateShare = sharingActions.updateShare
+  const handleRevokeShare = sharingActions.revokeShare
 
   // Share button with dropdown menu rendered in PanelHeader actions slot
   const shareButton = React.useMemo(() => (

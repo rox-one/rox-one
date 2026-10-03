@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { registerVoiceHandlers, HANDLED_CHANNELS } from '../voice'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { EdgeTtsError, getDefaultVoicePrefs } from '@craft-agent/shared/voice'
+import type { RpcServer } from '@rox/server-core/transport'
+import { EdgeTtsError, getDefaultVoicePrefs } from '@rox/shared/voice'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 
@@ -136,7 +136,7 @@ describe('voice RPC', () => {
     const prefs = await handlers.get(RPC_CHANNELS.voice.GET)!({})
     expect(prefs).toMatchObject({
       sttEngine: 'cloud-rox',
-      asrModelId: 'rocks-t1',
+      asrModelId: 'nova-3',
       ttsEngine: 'system',
       wakeWordEnabled: false,
       alwaysListeningConsent: false,

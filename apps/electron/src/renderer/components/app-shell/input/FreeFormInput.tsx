@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Icon_Home, Spinner } from '@craft-agent/ui'
+import { Icon_Home, Spinner } from '@rox/ui'
 
 import * as storage from '@/lib/local-storage'
 import { Button } from '@/components/ui/button'
@@ -34,11 +34,11 @@ import {
   InlineLabelMenu,
   useInlineLabelMenu,
 } from '@/components/ui/label-menu'
-import type { LabelConfig } from '@craft-agent/shared/labels'
+import type { LabelConfig } from '@rox/shared/labels'
 import { parseMentions } from '@/lib/mentions'
 import { RichTextInput, type RichTextInputHandle } from '@/components/ui/rich-text-input'
 import { useModelVisionToggle } from './useModelVisionToggle'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -54,6 +54,7 @@ import {
 } from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import { coerceInputText } from '@/lib/input-text'
+import { createSessionLink, copySessionLink, presentSessionLink, requestJoinSession } from '@/lib/session-sharing'
 import { isMac, isWebUI } from '@/lib/platform'
 import { applySmartTypography } from '@/lib/smart-typography'
 import { AttachmentPreview } from '../AttachmentPreview'
@@ -74,9 +75,9 @@ import { ConnectionIcon } from '@/components/icons/ConnectionIcon'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
 import { derivePickerMode } from './picker-mode'
 import type { FileAttachment, LoadedSource, LoadedSkill } from '../../../../shared/types'
-import type { PermissionMode } from '@craft-agent/shared/agent/modes'
-import { type ThinkingLevel, THINKING_LEVELS, getThinkingLevelNameKey } from '@craft-agent/shared/agent/thinking-levels'
-import { needsConfirmation, resolveMagicWords } from '@craft-agent/shared/workflows'
+import type { PermissionMode } from '@rox/shared/agent/modes'
+import { type ThinkingLevel, THINKING_LEVELS, getThinkingLevelNameKey } from '@rox/shared/agent/thinking-levels'
+import { needsConfirmation, resolveMagicWords } from '@rox/shared/workflows'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
 import { hasOpenOverlay } from '@/lib/overlay-detection'
 import { ToolbarStatusSlot } from './ToolbarStatusSlot'
@@ -102,12 +103,13 @@ import { CompactPermissionModeSelector } from './CompactPermissionModeSelector'
 import { CompactModelSelector } from './CompactModelSelector'
 import {
   formatTokenCount,
+  getConnectionModelsForPicker,
   getConnectionPickerMeta,
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
 import { VoiceDictationControl } from './VoiceDictationControl'
-import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@craft-agent/shared/config'
+import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@rox/shared/config/rox-public-models'
 
 function dedupModelsById<T extends string | ModelDefinition>(models: T[]): T[] {
   const seen = new Set<string>()
@@ -434,7 +436,7 @@ export function FreeFormInput({
       return ANTHROPIC_MODELS // Safety net — shouldn't happen
     }
 
-    return dedupModelsById(connection.models || ANTHROPIC_MODELS)
+    return dedupModelsById(getConnectionModelsForPicker(connection))
   }, [llmConnections, currentConnection, workspaceDefaultConnection, connectionUnavailable])
 
   const availableThinkingLevels = THINKING_LEVELS
@@ -1050,15 +1052,15 @@ export function FreeFormInput({
         }
       }).catch((err: unknown) => console.error('Undo failed:', err))
     } else if (commandId === 'share' && sessionId) {
-      window.electronAPI.sessionCommand(sessionId, { type: 'shareToViewer' }).then((result) => {
-        const payload = result as { success?: boolean; url?: string; error?: string } | undefined
-        if (payload?.success && payload.url) {
-          void navigator.clipboard.writeText(payload.url)
-          toast.success(t('toast.linkCopied'), { description: payload.url })
-        } else {
-          toast.error(t('toast.failedToShare'), { description: payload?.error || t('toast.unknownError') })
+      void (async () => {
+        try {
+          const link = await createSessionLink(window.electronAPI.sessionCommand, sessionId, 'share')
+          const copied = await copySessionLink(link.url, text => navigator.clipboard.writeText(text))
+          presentSessionLink({ ...link, copied })
+        } catch (error) {
+          toast.error(t('toast.failedToShare'), { description: error instanceof Error && error.message ? error.message : t('toast.unknownError') })
         }
-      }).catch((err: unknown) => toast.error(t('toast.failedToShare'), { description: String(err) }))
+      })()
     } else if (commandId === 'export' && sessionId) {
       void (async () => {
         try {
@@ -1081,19 +1083,7 @@ export function FreeFormInput({
         }
       })()
     } else if (commandId === 'join') {
-      void (async () => {
-        let candidate = ''
-        try {
-          candidate = (await navigator.clipboard.readText()).trim()
-        } catch {
-          candidate = ''
-        }
-        if (/^https?:\/\//i.test(candidate)) {
-          window.electronAPI.openUrl(candidate)
-          return
-        }
-        toast.info(t('toast.joinNeedsLink'))
-      })()
+      requestJoinSession()
     } else if (commandId === 'vibe') {
       toast.info(t('toast.vibeHint'))
     }
@@ -2154,12 +2144,12 @@ export function FreeFormInput({
           {isWebUI && (
             <FreeFormInputContextBadge
               icon={<Globe className="h-4 w-4" />}
-              label="浏览器"
+              label={t("browser.open")}
               isExpanded={false}
               hasSelection={false}
               showChevron={false}
               onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-              tooltip="打开 VPS 浏览器"
+              tooltip={t("browser.vps.tooltip")}
               disabled={disabled}
             />
           )}
@@ -2282,12 +2272,12 @@ export function FreeFormInput({
           {isWebUI && (
             <FreeFormInputContextBadge
               icon={<Globe className="h-4 w-4" />}
-              label="浏览器"
+              label={t("browser.open")}
               isExpanded={false}
               hasSelection={false}
               showChevron={false}
               onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-              tooltip="打开 VPS 浏览器"
+              tooltip={t("browser.vps.tooltip")}
               disabled={disabled}
             />
           )}
@@ -2511,7 +2501,7 @@ export function FreeFormInput({
                           {isAuthenticated && (
                             <StyledDropdownMenuSubContent className="min-w-[220px]">
                               {/* Show models for this connection - use provider-specific models as fallback */}
-                              {dedupModelsById(conn.models || ANTHROPIC_MODELS).map((model) => {
+                              {dedupModelsById(getConnectionModelsForPicker(conn)).map((model) => {
                                 const modelId = typeof model === 'string' ? model : model.id
                                 const modelName = typeof model === 'string'
                                   ? stripPiPrefixForDisplay(getModelShortName(model))

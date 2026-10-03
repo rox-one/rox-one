@@ -11,7 +11,7 @@ mock.module('react-i18next', () => ({
   }),
 }))
 
-mock.module('@craft-agent/ui', () => ({
+mock.module('@rox/ui', () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TooltipTrigger: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   TooltipContent: ({ children }: { children: ReactNode }) => <span>{children}</span>,

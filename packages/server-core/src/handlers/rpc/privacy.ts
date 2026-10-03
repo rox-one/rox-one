@@ -3,7 +3,7 @@
  * State lives in CONFIG_DIR/privacy.json (user-scoped, not workspace).
  */
 
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS } from '@rox/shared/protocol'
 import {
   completeDeletion,
   isConsentPurpose,
@@ -13,16 +13,16 @@ import {
   setPurpose,
   toPrivacyDto,
   type ConsentPurpose,
-} from '@craft-agent/shared/privacy'
-import type { RpcServer } from '@craft-agent/server-core/transport'
-import { pushTyped } from '@craft-agent/server-core/transport'
+} from '@rox/shared/privacy'
+import type { RpcServer } from '@rox/server-core/transport'
+import { pushTyped } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   isClaimableLive,
   rpcPrivacyActResult,
   rpcPrivacyListResult,
   rpcPrivacyReadResult,
-} from '@craft-agent/core/rox2'
+} from '@rox/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.privacy.GET,
